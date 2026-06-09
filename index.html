@@ -135,7 +135,7 @@
 <script>
   const SUPABASE_URL = 'https://yaururnkxjhtiowkpvyu.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_-k-OPNThdG0uElX0h36eug_oGaCNlL4';
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true } });
 
   let ME = null, MYROLE = 'customer', CURRENT_CLIENT = null;
 
@@ -867,9 +867,11 @@
     btn.disabled=false; btn.textContent=ot;
   }
 
-  sb.auth.onAuthStateChange(function(event, session){ if(event==='PASSWORD_RECOVERY'){ showRecovery(); } });
+  var RECOVERING = /type=recovery/.test(location.hash) || /type=recovery/.test(location.search);
+  sb.auth.onAuthStateChange(function(event, session){ if(event==='PASSWORD_RECOVERY'){ RECOVERING=true; showRecovery(); } });
 
   (async function init(){
+    if(RECOVERING){ showRecovery(); return; }
     var s=await sb.auth.getSession();
     if(s.data && s.data.session){ await routeFromSession(s.data.session); } else { showAuth(); }
   })();
