@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tsugu | Phase 7（価値の流れ・動線整理）</title>
+<title>Tsugu | Phase 9（ダッシュボード充実）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -94,7 +94,7 @@
         <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div>
         <div class="name">Tsugu</div>
       </div>
-      <div style="font-size:12px;color:#8AA0BE;margin-top:4px;">Phase 8 — デザイン統合（サイドバー構成）</div>
+      <div style="font-size:12px;color:#8AA0BE;margin-top:4px;">Phase 9 — ダッシュボード充実（KPI・要対応・専門AI）</div>
     </div>
 
     <div class="tabs">
@@ -282,7 +282,7 @@
     $('gate').classList.add('hidden');
     $('app').classList.remove('hidden');
     var r=prof.role||'customer';
-    SEC_MSGS=[];
+    SEC_MSGS=[]; SEC_MODE='経営';
     var rb=$('app-role'); rb.textContent=roleLabel(r); rb.style.background=roleColor(r); rb.style.color='#fff';
     $('app-email').textContent=email||'';
     buildNav(r);
@@ -311,6 +311,8 @@
             +'<div style="font-size:11px;color:#8AA0BE;margin-top:8px;line-height:1.6;">保険シミュレーターで計算すると、節税額が自動で反映されます。</div>'
           +'</div>'
         +'</div>'
+        +'<div class="panel"><div class="ph">経営サマリー</div><div id="kpi-cards">読み込み中...</div></div>'
+        +'<div class="panel"><div class="ph">要対応アクション</div><div id="todo-list" style="margin-top:4px;">読み込み中...</div></div>'
         +'<div class="panel" id="sec-company"><div class="ph">会社情報</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
             +'<div style="flex:1;min-width:180px;"><label class="fl">会社名</label><input id="pi-company" class="inp2" style="width:100%;" value="'+escA(prof.company_name||'')+'" placeholder="例：株式会社○○"></div>'
@@ -384,6 +386,7 @@
         +'</div>'
         +'<div class="panel" id="sec-sec"><div class="ph">AI秘書（経営の相談相手）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">日程・タスク整理、文章作成、調べ物、経営の壁打ちなどを相談できます。</div>'
+          + secModesHtml()
           +'<div id="sec-log" style="max-height:300px;overflow:auto;border:1px solid #EAF0F7;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;"><div style="font-size:12px;color:#8AA0BE;">例：「来期の経営計画づくりの進め方を相談したい」「取引先へのお礼メールを作って」</div></div>'
           +'<div style="display:flex;gap:8px;align-items:flex-end;">'
             +'<textarea id="sec-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="相談内容を入力"></textarea>'
@@ -422,6 +425,7 @@
         +'</div>'
         +'<div class="panel" id="sec-sec"><div class="ph">AI秘書（業務の相談相手）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">提案資料の文面づくり、面談準備、調べ物、考えの壁打ちなどを相談できます。</div>'
+          + secModesHtml()
           +'<div id="sec-log" style="max-height:300px;overflow:auto;border:1px solid #EAF0F7;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;"><div style="font-size:12px;color:#8AA0BE;">例：「医療法人オーナー向けの初回面談の流れを整理して」</div></div>'
           +'<div style="display:flex;gap:8px;align-items:flex-end;">'
             +'<textarea id="sec-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="相談内容を入力"></textarea>'
@@ -451,6 +455,34 @@
   }
 
   // ---- finance (customer writes / consultant reads) ----
+  function kpiCards(rows){
+    if(!rows||!rows.length) return '<div style="font-size:12px;color:#8AA0BE;">「月次財務メモ」に入力すると、ここに売上・利益のサマリーが表示されます。</div>';
+    var cur=rows[0], prev=rows[1]||null;
+    function pct(a,b){ if(b==null||b===0||a==null) return null; return (a-b)/Math.abs(b)*100; }
+    function mom(v){ if(v==null) return ''; var up=v>=0; return '<span style="font-size:11px;color:'+(up?'#1E6B45':'#A83030')+';">前月比 '+(up?'+':'')+v.toFixed(1)+'%</span>'; }
+    var rev=cur.revenue, prof=cur.profit;
+    var margin=(rev!=null&&rev!==0&&prof!=null)?(prof/rev*100):null;
+    function card(lbl,val,sub){ return '<div style="flex:1 1 150px;min-width:150px;background:#F7FAFD;border:1px solid #EAF0F7;border-radius:11px;padding:14px 16px;"><div style="font-size:12px;color:#4A6080;">'+lbl+'</div><div style="font-size:22px;font-weight:600;color:#1C3557;margin-top:2px;">'+val+'</div><div style="margin-top:3px;">'+(sub||'')+'</div></div>'; }
+    return '<div style="font-size:11px;color:#8AA0BE;margin-bottom:10px;">最新月：'+esc(cur.year_month)+'</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+      +card('売上', rev==null?'-':Number(rev).toLocaleString('ja-JP')+' 万円', prev?mom(pct(rev,prev.revenue)):'')
+      +card('営業利益', prof==null?'-':Number(prof).toLocaleString('ja-JP')+' 万円', prev?mom(pct(prof,prev.profit)):'')
+      +card('営業利益率', margin==null?'-':margin.toFixed(1)+' %', '')
+      +'</div>';
+  }
+  function todoCards(rows){
+    var open=(rows||[]).filter(function(r){ return r.status!=='done'; });
+    if(!open.length) return '<div style="font-size:12px;color:#8AA0BE;">未対応の課題はありません。</div>';
+    open.sort(function(a,b){ return (a.due_date||'9999').localeCompare(b.due_date||'9999'); });
+    var today=new Date().toISOString().slice(0,10);
+    var h='<div style="font-size:12px;color:#4A6080;margin-bottom:8px;">未対応 '+open.length+' 件</div>';
+    open.forEach(function(r){
+      var over = r.due_date && r.due_date < today;
+      var due = r.due_date ? ('期限 '+r.due_date+(over?'（超過）':'')) : '期限なし';
+      h+='<div style="display:flex;align-items:center;gap:10px;border-left:3px solid '+(over?'#A83030':'#C89620')+';background:#FFFBF3;border-radius:8px;padding:9px 12px;margin-bottom:6px;"><span style="flex:1;font-size:13px;color:#131E2E;">'+esc(r.title)+'</span><span style="font-size:11px;color:'+(over?'#A83030':'#8A6D20')+';white-space:nowrap;">'+esc(due)+'</span></div>';
+    });
+    return h;
+  }
   function finTable(rows, editable){
     if(!rows || !rows.length) return '<div style="font-size:12px;color:#8AA0BE;">まだデータがありません。</div>';
     var h='<table class="ft"><tr><th>年月</th><th>売上</th><th>営業利益</th><th>メモ</th>'+(editable?'<th></th>':'')+'</tr>';
@@ -482,6 +514,7 @@
     var res=await sb.from('financial_entries').select('*').eq('customer_id',ME).order('year_month',{ascending:false});
     if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
     box.innerHTML=finTable(res.data, true);
+    var k=$('kpi-cards'); if(k) k.innerHTML=kpiCards(res.data);
   }
 
   async function delFinance(id){
@@ -518,6 +551,7 @@
     var res=await sb.from('action_items').select('*').eq('customer_id',ME).order('status').order('created_at',{ascending:false});
     if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
     box.innerHTML=actTable(res.data,'me');
+    var td=$('todo-list'); if(td) td.innerHTML=todoCards(res.data);
   }
   async function addMyAction(){
     var t=$('act-title').value.trim(), d=$('act-due').value||null;
@@ -736,14 +770,14 @@
   function num(id){ var v=parseFloat(($(id)&&$(id).value)||''); return isNaN(v)?0:v; }
   function yen(n){ return Math.round(n).toLocaleString('ja-JP')+' 万円'; }
   function stepperHtml(){
-    function st(n,t,s,c){ return '<div style="flex:1 1 100px;min-width:100px;background:#F7FAFD;border:1px solid #EAF0F7;border-radius:10px;padding:12px 8px;text-align:center;"><div style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:'+c+';color:#fff;font-size:12px;font-weight:600;">'+n+'</div><div style="font-size:13px;font-weight:600;color:#131E2E;margin-top:6px;">'+t+'</div><div style="font-size:11px;color:#8AA0BE;margin-top:2px;line-height:1.4;">'+s+'</div></div>'; }
+    function st(n,t,s,act,tgt,c){ return '<div onclick="goSec(\''+tgt+'\')" style="flex:1 1 112px;min-width:112px;background:#F7FAFD;border:1px solid #EAF0F7;border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;"><div style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:'+c+';color:#fff;font-size:12px;font-weight:600;">'+n+'</div><div style="font-size:13px;font-weight:600;color:#131E2E;margin-top:6px;">'+t+'</div><div style="font-size:11px;color:#8AA0BE;margin-top:2px;line-height:1.4;">'+s+'</div><div style="font-size:10px;color:'+c+';margin-top:6px;font-weight:600;">'+act+' ›</div></div>'; }
     var ar='<div style="display:flex;align-items:center;color:#B7C4D6;font-size:16px;">→</div>';
     return '<div style="display:flex;align-items:stretch;gap:6px;flex-wrap:wrap;">'
-      +st('1','現状把握','財務の見える化','#2C6EBD')+ar
-      +st('2','AI活用・自動化','業務を効率化','#2C6EBD')+ar
-      +st('3','コスト削減','固定費・税の最適化','#2C6EBD')+ar
-      +st('4','生まれた余力','利益・資金の確保','#1E6B45')+ar
-      +st('5','次の投資','M&A・HD化で成長','#1E6B45')
+      +st('1','現状把握','財務の見える化','財務を見る','sec-company','#2C6EBD')+ar
+      +st('2','AI活用・自動化','業務を効率化','AI診断する','sec-ai','#2C6EBD')+ar
+      +st('3','コスト削減','固定費・税の最適化','保険を試算','sec-ins','#2C6EBD')+ar
+      +st('4','生まれた余力','利益・資金の確保','余力を見る','sec-flow','#1E6B45')+ar
+      +st('5','次の投資','M&A・HD化で成長','M&Aを見る','sec-ma','#1E6B45')
       +'</div>';
   }
   function vjCalc(){ var total=num('vj-auto')*12+num('vj-ins'); var el=$('vj-total'); if(el) el.textContent=Math.round(total).toLocaleString('ja-JP')+' 万円/年'; }
@@ -820,6 +854,17 @@
 
   // ---- AI秘書チャット ----
   var SEC_MSGS=[];
+  var SEC_MODE='経営';
+  var SEC_PROMPTS={
+    '経営':'あなたは中小企業の経営者を支える有能な経営アドバイザー兼秘書です。意思決定・段取り・文章作成・経営の壁打ちを、簡潔で実務的に日本語で支援します。不確実なことは確認を促します。',
+    '税務':'あなたは中小企業の税務に明るいアドバイザーです。法人税・消費税・節税・申告の一般的な考え方を簡潔に日本語で説明します。具体的な申告・判断は税理士の確認を促します。',
+    '労務':'あなたは中小企業の労務・人事に明るいアドバイザーです。就業規則・社会保険・採用・労働時間・助成金の一般的な考え方を簡潔に日本語で説明します。個別判断は社労士の確認を促します。',
+    'マーケ':'あなたは中小企業のマーケティングに明るいアドバイザーです。集客・販促・SNS・価格設計・顧客維持の実務的な打ち手を簡潔に日本語で提案します。',
+    '資金調達':'あなたは中小企業の資金調達に明るいアドバイザーです。融資・補助金・助成金・資金繰りの考え方と準備を簡潔に日本語で説明します。個別の可否は金融機関等の確認を促します。',
+    'M&A':'あなたは中小企業のM&A・事業承継に明るいアドバイザーです。買収・売却・承継の進め方や留意点を簡潔に日本語で説明します。実行は専門家の関与を前提とします。'
+  };
+  function secModesHtml(){ function b(m){ return '<button class="sbtn'+(m==='経営'?' on':'')+'" onclick="setSecMode(\''+m+'\',this)">'+m+'</button>'; } return '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">'+b('経営')+b('税務')+b('労務')+b('マーケ')+b('資金調達')+b('M&A')+'</div>'; }
+  function setSecMode(m,el){ SEC_MODE=m; var box=el&&el.parentNode; if(box){ Array.prototype.forEach.call(box.querySelectorAll('.sbtn'),function(b){ b.classList.remove('on'); }); } if(el) el.classList.add('on'); SEC_MSGS=[]; renderSecLog(); }
   function renderSecLog(){
     var box=$('sec-log'); if(!box)return;
     if(!SEC_MSGS.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">例：「来期の経営計画づくりの進め方を相談したい」「取引先へのお礼メールを作って」</div>'; return; }
@@ -844,7 +889,7 @@
     SEC_MSGS.push({role:'user',content:t}); inp.value='';
     SEC_MSGS.push({role:'assistant',content:'（考え中…）'}); renderSecLog();
     var btn=$('sec-send'); if(btn)btn.disabled=true;
-    var sys='あなたは中小企業の経営者を支える有能な秘書兼アシスタントです。日程・タスク整理、文章作成、情報整理、経営の壁打ちに、簡潔で実務的に、日本語で答えます。不確実なことは確認を促します。';
+    var sys=SEC_PROMPTS[SEC_MODE]||SEC_PROMPTS['経営'];
     var msgs=SEC_MSGS.filter(function(m){return m.content!=='（考え中…）';}).map(function(m){return {role:m.role,content:m.content};});
     try{
       var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:msgs, model:model, max_tokens:1400 } });
