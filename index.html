@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tsugu | Phase 9（ダッシュボード充実）</title>
+<title>Tsugu | Phase 10（役割再編：顧客/認定FDE/運営）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -94,7 +94,7 @@
         <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div>
         <div class="name">Tsugu</div>
       </div>
-      <div style="font-size:12px;color:#8AA0BE;margin-top:4px;">Phase 9 — ダッシュボード充実（KPI・要対応・専門AI）</div>
+      <div style="font-size:12px;color:#8AA0BE;margin-top:4px;">Phase 10 — 役割再編（顧客／認定FDE／運営＋FDEランク）</div>
     </div>
 
     <div class="tabs">
@@ -166,6 +166,7 @@
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true } });
 
   let ME = null, MYROLE = 'customer', CURRENT_CLIENT = null;
+  var VIEWAS = 'admin';
 
   const $ = function(id){ return document.getElementById(id); };
   function validPw(p){ return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(p); }
@@ -265,28 +266,91 @@
     renderApp(prof, session.user.email);
   }
 
-  function roleLabel(r){ return r==='consultant'?'コンサル':(r==='admin'?'運営':'顧客'); }
+  function roleLabel(r){ return r==='consultant'?'認定FDE':(r==='admin'?'運営':'顧客'); }
   function roleColor(r){ return r==='consultant'?'#2C6EBD':(r==='admin'?'#C89620':'#1E6B45'); }
   function buildNav(r){
     var nav=$('app-nav'); if(!nav)return;
-    var items = r==='customer'
-      ? [['sec-flow','ダッシュボード'],['sec-company','会社・財務'],['sec-ai','AI診断・自動化'],['sec-ins','保険試算'],['sec-ma','M&A活用'],['sec-sec','AI秘書']]
-      : [['sec-flow','ダッシュボード'],['sec-clients','担当顧客'],['sec-sec','AI秘書']];
+    var items;
+    if(r==='customer') items=[['sec-flow','ダッシュボード'],['sec-company','会社・財務'],['sec-ai','AI診断・自動化'],['sec-ins','保険試算'],['sec-ma','M&A活用'],['sec-sec','AI秘書']];
+    else if(r==='admin' && VIEWAS==='admin') items=[['sec-flow','ダッシュボード'],['sec-fde','認定FDE'],['sec-cust','顧客']];
+    else items=[['sec-flow','ダッシュボード'],['sec-clients','担当顧客'],['sec-sec','AI秘書']];
     var h='<div class="sb-sec">メニュー</div>';
     items.forEach(function(it,i){ h+='<div class="ni'+(i===0?' active':'')+'" onclick="goSec(\''+it[0]+'\',this)">'+it[1]+'</div>'; });
     nav.innerHTML=h;
   }
   function goSec(id,el){ var t=$(id); if(t) t.scrollIntoView({behavior:'smooth',block:'start'}); var nav=$('app-nav'); if(nav){ Array.prototype.forEach.call(nav.querySelectorAll('.ni'),function(n){ n.classList.remove('active'); }); } if(el) el.classList.add('active'); }
 
+  var VIEWAS_NOTE=1; // 運営の表示モードは VIEWAS で管理
+  function setAdminView(m){ VIEWAS=m; renderApp(window.__prof, window.__email); }
+  function adminSwitchHtml(active){
+    return '<div class="panel" style="padding:12px 16px;"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:12px;color:#8AA0BE;">表示モード：</span>'
+      +'<button class="sbtn'+(active==='admin'?' on':'')+'" onclick="setAdminView(\'admin\')">運営</button>'
+      +'<button class="sbtn'+(active==='fde'?' on':'')+'" onclick="setAdminView(\'fde\')">認定FDEとして見る</button>'
+      +'</div></div>';
+  }
+  function adminViewHtml(email, prof){
+    return adminSwitchHtml('admin')
+      +'<div class="panel"><span class="pill" style="background:#FAEEDA;color:#C89620;">運営コンソール</span>'
+        +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">運営管理</h2>'
+        +'<div class="kv">ログイン中：<b>'+esc(email)+'</b>　役割：<b>運営</b></div></div>'
+      +'<div class="panel" id="sec-flow"><div class="ph">成長ロードマップ</div>'
+        +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">顧客支援の共通の流れです。</div>'+ stepperHtml() +'</div>'
+      +'<div class="panel" id="sec-fde"><div class="ph">認定FDE 一覧・管理</div><div id="adm-fde" style="margin-top:6px;">読み込み中...</div></div>'
+      +'<div class="panel" id="sec-cust"><div class="ph">顧客 一覧・管理</div><div id="adm-cust" style="margin-top:6px;">読み込み中...</div></div>'
+      +'<div class="panel"><div class="ph">資金調達ロードマップ</div><div style="font-size:12px;color:#8AA0BE;">（次のフェーズで追加予定）</div></div>';
+  }
+  var FDE_RANKS=['Associate','Senior','Executive','Premium Partner'];
+  function roleSelect(u){
+    function o(v,l){ return '<option value="'+v+'"'+(u.role===v?' selected':'')+'>'+l+'</option>'; }
+    return '<select class="inp2" onchange="setUserRole(\''+u.id+'\',this.value)">'+o('customer','顧客')+o('consultant','認定FDE')+o('admin','運営')+'</select>';
+  }
+  async function loadAdmin(){
+    var res=await sb.from('profiles').select('*');
+    var fb=$('adm-fde'), cb=$('adm-cust');
+    if(res.error){ if(fb)fb.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
+    var rows=res.data||[];
+    var fdes=rows.filter(function(r){ return r.role==='consultant'; });
+    var custs=rows.filter(function(r){ return r.role==='customer'; });
+    var nameOf={}; rows.forEach(function(r){ nameOf[r.id]=r.company_name||r.contact_name||r.email; });
+    if(fb){
+      if(!fdes.length){ fb.innerHTML='<div style="font-size:12px;color:#8AA0BE;">認定FDEはまだいません。下の顧客一覧から役割を「認定FDE」に変更できます。</div>'; }
+      else { var h=''; fdes.forEach(function(u){
+        var rankOpts=FDE_RANKS.map(function(rk){ return '<option'+(u.fde_rank===rk?' selected':'')+'>'+rk+'</option>'; }).join('');
+        h+='<div style="border:1px solid #EAF0F7;border-radius:9px;padding:10px 12px;margin-bottom:6px;">'
+          +'<div style="font-size:13px;font-weight:600;color:#131E2E;">'+esc(u.contact_name||u.company_name||u.email)+'</div>'
+          +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">'+esc(u.email)+'</div>'
+          +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'
+            +'<span style="font-size:11px;color:#4A6080;">ランク</span><select class="inp2" onchange="setRank(\''+u.id+'\',this.value)"><option value="">未設定</option>'+rankOpts+'</select>'
+            +'<span style="font-size:11px;color:#4A6080;">役割</span>'+roleSelect(u)
+          +'</div></div>';
+      }); fb.innerHTML=h; }
+    }
+    if(cb){
+      if(!custs.length){ cb.innerHTML='<div style="font-size:12px;color:#8AA0BE;">顧客はまだいません。</div>'; }
+      else { var h2=''; custs.forEach(function(u){
+        var fde=u.consultant_id?('担当認定FDE：'+esc(nameOf[u.consultant_id]||u.consultant_id)):'担当認定FDE：未割当';
+        h2+='<div style="border:1px solid #EAF0F7;border-radius:9px;padding:10px 12px;margin-bottom:6px;">'
+          +'<div style="font-size:13px;font-weight:600;color:#131E2E;">'+esc(u.company_name||u.contact_name||u.email)+'</div>'
+          +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">'+esc(u.email)+'　'+fde+'</div>'
+          +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;"><span style="font-size:11px;color:#4A6080;">役割</span>'+roleSelect(u)+'</div>'
+          +'</div>';
+      }); cb.innerHTML=h2; }
+    }
+  }
+  async function setRank(id,rank){ var res=await sb.from('profiles').update({ fde_rank:(rank||null) }).eq('id',id); if(res.error) alert('ランク変更エラー：'+res.error.message); }
+  async function setUserRole(id,role){ var res=await sb.from('profiles').update({ role:role }).eq('id',id); if(res.error){ alert('役割変更エラー：'+res.error.message); } loadAdmin(); }
+
+
   function renderApp(prof, email){
     $('gate').classList.add('hidden');
     $('app').classList.remove('hidden');
     var r=prof.role||'customer';
+    window.__prof=prof; window.__email=email||'';
     SEC_MSGS=[]; SEC_MODE='経営';
     var rb=$('app-role'); rb.textContent=roleLabel(r); rb.style.background=roleColor(r); rb.style.color='#fff';
     $('app-email').textContent=email||'';
     buildNav(r);
-    var g=$('app-greet'); if(g) g.textContent = r==='customer'?'経営者ダッシュボード':(r==='admin'?'運営コンソール':'コンサルポータル');
+    var g=$('app-greet'); if(g) g.textContent = r==='customer'?'経営者ダッシュボード':(r==='admin'?'運営コンソール':'認定FDEポータル');
     var cn=$('sb-co-nm'); if(cn) cn.textContent = (prof.company_name||'—');
     var dc=$('app-date'); if(dc){ var d=new Date(); dc.textContent=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日'; }
 
@@ -319,11 +383,11 @@
             +'<div style="flex:1;min-width:160px;"><label class="fl">担当者名</label><input id="pi-contact" class="inp2" style="width:100%;" value="'+escA(prof.contact_name||'')+'" placeholder="例：山田 太郎"></div>'
             +'<button class="btn2" onclick="saveProfileInfo()">保存</button>'
           +'</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-top:6px;">設定した会社名は、担当コンサルの顧客一覧に表示されます。</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-top:6px;">設定した会社名は、担当認定FDEの顧客一覧に表示されます。</div>'
           +'<div id="pi-msg" style="font-size:12px;margin-top:6px;"></div>'
         +'</div>'
         +'<div class="panel"><div class="ph">月次財務メモ</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">ここで入力した数値は、あなたを担当に追加したコンサルの画面にもそのまま表示されます。</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">ここで入力した数値は、あなたを担当に追加した認定FDEの画面にもそのまま表示されます。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
             +'<div><label class="fl">年月</label><input id="fin-ym" type="month" class="inp2"></div>'
             +'<div><label class="fl">売上（万円）</label><input id="fin-rev" type="number" class="inp2" placeholder="例 1200"></div>'
@@ -335,7 +399,7 @@
           +'<div id="fin-list" style="margin-top:14px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel"><div class="ph">アクション・課題</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">担当コンサルと共有されます。コンサルが追加した課題もここに表示されます。</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">担当認定FDEと共有されます。認定FDEが追加した課題もここに表示されます。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
             +'<div style="flex:1;min-width:200px;"><label class="fl">課題・タスク</label><input id="act-title" class="inp2" style="width:100%;" placeholder="例：直近3期の試算表を用意"></div>'
             +'<div><label class="fl">期限（任意）</label><input id="act-due" type="date" class="inp2"></div>'
@@ -404,10 +468,11 @@
           +'<div style="margin-top:12px;"><button class="btn2" id="ma-run" onclick="runMa()">AIに提案をもらう</button></div>'
           +'<div id="ma-result" style="margin-top:14px;"></div>'
         +'</div>';
-    } else {
-      view='<div class="panel"><span class="pill" style="background:#FAEEDA;color:#C89620;">コンサル・運営コンソール</span>'
-        +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">'+(r==='admin'?'運営管理':'コンサルポータル')+'</h2>'
-        +'<div class="kv">ログイン中：<b>'+esc(email)+'</b>　役割：<b>'+roleLabel(r)+'</b></div></div>'
+    } else if(r==='consultant' || (r==='admin' && VIEWAS==='fde')){
+      view=(r==='admin'?adminSwitchHtml('fde'):'')
+        +'<div class="panel"><span class="pill" style="background:#E7F0FB;color:#2C6EBD;">認定FDEポータル</span>'
+        +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">認定FDEポータル</h2>'
+        +'<div class="kv">ログイン中：<b>'+esc(email)+'</b>　役割：<b>'+roleLabel(r)+'</b>'+(prof.fde_rank?'　ランク：<b>'+esc(prof.fde_rank)+'</b>':'')+'</div></div>'
         +'<div class="panel" id="sec-flow"><div class="ph">価値の流れ（顧客への提案軸）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">AI・自動化 → コスト削減 → 余力 → 次の投資（M&A）の流れで支援します。</div>'
           + stepperHtml()
@@ -432,18 +497,22 @@
             +'<button class="btn2" id="sec-send" onclick="secretarySend()">送信</button>'
           +'</div>'
         +'</div>';
+    } else {
+      view=adminViewHtml(email, prof);
     }
 
     var demo='<div class="panel"><div class="ph">デモ用：役割の切り替え</div>'
-      +'<div style="font-size:12px;color:#8AA0BE;line-height:1.6;margin-bottom:6px;">同じアカウントで各役割の画面を確認できます（本番では役割変更は運営のみに制限）。顧客↔コンサルの同期を試すには、顧客用とコンサル用で別々のアカウントをご利用ください。</div>'
+      +'<div style="font-size:12px;color:#8AA0BE;line-height:1.6;margin-bottom:6px;">同じアカウントで各役割の画面を確認できます（本番では役割変更は運営のみに制限）。顧客↔認定FDEの同期を試すには、顧客用と認定FDE用で別々のアカウントをご利用ください。</div>'
       +'<div class="switch">'
       +'<button class="sbtn '+(r==='customer'?'on':'')+'" onclick="setRole(\'customer\')">顧客</button>'
-      +'<button class="sbtn '+(r==='consultant'?'on':'')+'" onclick="setRole(\'consultant\')">コンサル</button>'
+      +'<button class="sbtn '+(r==='consultant'?'on':'')+'" onclick="setRole(\'consultant\')">認定FDE</button>'
       +'<button class="sbtn '+(r==='admin'?'on':'')+'" onclick="setRole(\'admin\')">運営</button>'
       +'</div></div>';
 
     $('app-body').innerHTML=view;
-    if(r==='customer'){ loadMyFinance(); loadMyActions(); buildAiChips(); } else loadClients();
+    if(r==='customer'){ loadMyFinance(); loadMyActions(); buildAiChips(); }
+    else if(r==='consultant' || (r==='admin' && VIEWAS==='fde')){ loadClients(); }
+    else { loadAdmin(); }
   }
 
   async function setRole(r){
@@ -700,7 +769,7 @@
       +'</div>';
     });
     h+='<div style="font-size:11px;color:#8AA0BE;margin-top:6px;">※ AIが生成した提案です。実際の導入可否・効果は個別精査が必要です。</div>';
-    if(selectable){ h+='<button class="btn2" style="margin-top:12px;" onclick="shareInterests()">選択した項目をコンサルに共有</button><div id="ai-share-msg" style="font-size:12px;margin-top:8px;"></div>'; }
+    if(selectable){ h+='<button class="btn2" style="margin-top:12px;" onclick="shareInterests()">選択した項目を認定FDEに共有</button><div id="ai-share-msg" style="font-size:12px;margin-top:8px;"></div>'; }
     return h;
   }
   function aiToggle(id){ var d=$(id), a=$(id+'_a'); if(!d)return; var open=d.style.display!=='none'; d.style.display=open?'none':'block'; if(a)a.textContent=open?'▸':'▾'; }
@@ -711,7 +780,7 @@
     if(areas.length===0 && !note){ result.innerHTML='<div style="font-size:12px;color:#A83030;">業務を1つ以上選ぶか、困りごとを入力してください。</div>'; return; }
     btn.disabled=true; var ot=btn.textContent; btn.textContent='AIが分析中...';
     result.innerHTML='<div style="padding:24px;text-align:center;color:#4A6080;font-size:13px;">AIが分析し、自動化案を作成しています...</div>';
-    var sys='あなたは中小企業のバックオフィス改善とAI活用に精通したコンサルタントです。後継者不在も視野に入る黒字中小企業の生産性向上と財務貢献を目的に、現実的で着手しやすい自動化案を提案します。出力は指定されたJSON配列のみとし、前置き・後置き・コードフェンスを一切付けないこと。';
+    var sys='あなたは中小企業のバックオフィス改善とAI活用に精通した認定FDEタントです。後継者不在も視野に入る黒字中小企業の生産性向上と財務貢献を目的に、現実的で着手しやすい自動化案を提案します。出力は指定されたJSON配列のみとし、前置き・後置き・コードフェンスを一切付けないこと。';
     var usr='対象企業の情報：\n業種・事業内容: '+(gyo||'（未記入）')+'\n従業員規模: '+size+'\n自動化を検討したい業務: '+(areas.length?areas.join('、'):'（指定なし）')+'\n具体的な困りごと: '+(note||'（特になし）')+'\n\nこの企業で、AIや軽量なデジタルツールで自動化・効率化できるバックオフィス業務を5件程度、効果の大きい順に提案してください。中小企業が無理なく始められる現実的な手段を優先し、推奨アプローチには「Claudeプロジェクト」「Custom GPT」「専用AIアシスタント」「RPA」「既存SaaS連携」など具体的な手段名を含めてください。\n\n必ず次の形式のJSON配列のみを出力（説明・コードフェンス禁止）：\n[{"業務":"...","現状課題":"...","自動化案":"...","推奨アプローチ":"...","期待効果":"...","難易度":"低|中|高","優先度":"高|中|低","月間削減目安":"例: 約20時間/月"}]';
     try{
       var res=await sb.functions.invoke('ai-proxy', { body: { system:sys, messages:[{role:'user',content:usr}], model:'claude-sonnet-4-6', max_tokens:2500 } });
@@ -736,7 +805,7 @@
     if(!rows.length) return;
     var res=await sb.from('automation_interests').insert(rows);
     if(res.error){ if(msg){ msg.style.color='#A83030'; msg.textContent='共有エラー：'+res.error.message; } return; }
-    if(msg){ msg.style.color='#1E6B45'; msg.textContent=rows.length+'件をコンサルに共有しました。'; }
+    if(msg){ msg.style.color='#1E6B45'; msg.textContent=rows.length+'件を認定FDEに共有しました。'; }
   }
 
   async function loadClientInterests(custId){
@@ -818,7 +887,7 @@
       +'\n[事業保障] 必要額'+yen(bpNeed)+' / 準備済み'+yen(bpReady)+' / 法人税考慮後の必要保障額'+yen(bpGapTax)
       +'\n[養老保険(向こう5年)] 加入'+emp+'人 / 年間保険料総額'+yen(premTotal)+' / 年間節税'+yen(taxSave)+' / 5年累計節税'+yen(taxSave5)+' / 5年積立'+yen(asset5)
       +'\n[損害保険] 業種: '+(ind||'未選択');
-    h+='<button class="btn2" style="margin-top:10px;" onclick="shareInsurance()">この試算結果をコンサルに共有</button><div id="ins-share-msg" style="font-size:12px;margin-top:8px;"></div>';
+    h+='<button class="btn2" style="margin-top:10px;" onclick="shareInsurance()">この試算結果を認定FDEに共有</button><div id="ins-share-msg" style="font-size:12px;margin-top:8px;"></div>';
     var vi=$('vj-ins'); if(vi){ vi.value=Math.round(taxSave); vjCalc(); }
     box.innerHTML=h;
   }
@@ -828,7 +897,7 @@
     if(!sum) return;
     var res=await sb.from('insurance_results').insert({ customer_id:ME, summary:sum });
     if(res.error){ if(msg){ msg.style.color='#A83030'; msg.textContent='共有エラー：'+res.error.message; } return; }
-    if(msg){ msg.style.color='#1E6B45'; msg.textContent='試算結果をコンサルに共有しました。'; }
+    if(msg){ msg.style.color='#1E6B45'; msg.textContent='試算結果を認定FDEに共有しました。'; }
   }
   var INDUSTRY_PC={
     '製造業':[['火災保険（建物・機械設備）','工場・設備の火災や自然災害による損害'],['機械保険・動産総合','機械の偶発的な事故・故障'],['生産物賠償責任(PL)','製品の欠陥による対人・対物事故'],['休業損害（利益保険）','操業停止中の利益・固定費'],['労災上乗せ（使用者賠償）','従業員の労災に対する企業の賠償']],
@@ -838,7 +907,7 @@
     '運送・物流業':[['業務用自動車保険','対人・対物・車両の事故'],['運送業者貨物賠償','運送中の荷物の損害・賠償'],['労災上乗せ（使用者賠償）','ドライバーの事故']],
     '医療・介護・福祉':[['医療・施設賠償責任','医療・介護行為に伴う賠償'],['施設賠償責任','来院者・利用者の事故'],['個人情報・サイバー','患者・利用者情報の漏えい'],['休業損害','診療・営業停止']],
     'IT・通信':[['IT・専門業務賠償(E&O)','システム不具合・納品物の不備による賠償'],['サイバー保険','情報漏えい・システム障害・ランサム対応'],['個人情報漏えい対応','漏えい時の調査・通知費用'],['施設賠償責任','オフィスでの事故']],
-    '士業・専門サービス':[['専門業務賠償責任(E&O)','業務上の過誤による賠償（税理士・会計・コンサル等）'],['個人情報・サイバー','顧客情報の漏えい'],['施設賠償責任','事務所での事故']],
+    '士業・専門サービス':[['専門業務賠償責任(E&O)','業務上の過誤による賠償（税理士・会計・認定FDE等）'],['個人情報・サイバー','顧客情報の漏えい'],['施設賠償責任','事務所での事故']],
     '不動産業':[['宅建業者賠償責任','仲介・重要事項説明の過誤'],['施設賠償責任','管理物件・店舗での事故'],['火災保険','自社保有物件の損害']],
     '宿泊・観光':[['火災保険（建物・設備）','火災・自然災害'],['施設賠償責任','宿泊客のケガ・食中毒'],['受託物賠償','客の荷物・貴重品'],['休業損害','営業停止中の損失']],
     '農林水産業':[['火災・農機具保険','設備・機械の損害'],['生産物賠償','出荷物による事故'],['自然災害補償（共済等）','収穫・施設の自然災害']],
@@ -922,7 +991,7 @@
         +'</div>';
     });
     h+='<div style="font-size:11px;color:#8AA0BE;margin-top:8px;">※ AIが生成した提案です。実行にはデューデリジェンスや専門家の関与が必要です。</div>';
-    if(selectable){ h+='<button class="btn2" style="margin-top:12px;" onclick="shareMaInterests()">選択した方向性をコンサルに共有</button><div id="ma-share-msg" style="font-size:12px;margin-top:8px;"></div>'; }
+    if(selectable){ h+='<button class="btn2" style="margin-top:12px;" onclick="shareMaInterests()">選択した方向性を認定FDEに共有</button><div id="ma-share-msg" style="font-size:12px;margin-top:8px;"></div>'; }
     return h;
   }
   async function shareMaInterests(){
@@ -935,7 +1004,7 @@
     if(!rows.length) return;
     var res=await sb.from('automation_interests').insert(rows);
     if(res.error){ if(msg){ msg.style.color='#A83030'; msg.textContent='共有エラー：'+res.error.message; } return; }
-    if(msg){ msg.style.color='#1E6B45'; msg.textContent=rows.length+'件をコンサルに共有しました。'; }
+    if(msg){ msg.style.color='#1E6B45'; msg.textContent=rows.length+'件を認定FDEに共有しました。'; }
   }
   async function runMa(){
     var btn=$('ma-run'), result=$('ma-result');
