@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tsugu | Phase 7（価値の流れ・動線整理）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{--navy:#1C3557;--blue:#2C6EBD;--sky:#4AADD6;--gold:#C89620;--ink:#131E2E;--muted:#4A6080;--line:#D0DCF0;--bg:#F2F5FA;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:var(--bg);}
+  .gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:auto;padding:24px;
+    background:radial-gradient(900px 520px at 82% -8%,rgba(74,173,214,.20),transparent 60%),radial-gradient(820px 480px at -5% 110%,rgba(200,150,32,.16),transparent 55%),#0F2035;}
+  .card{background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.38);max-width:430px;width:100%;padding:32px 30px;max-height:94vh;overflow:auto;}
+  .brand{display:inline-flex;align-items:center;gap:9px;}
+  .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(140deg,var(--sky),var(--navy));display:flex;align-items:center;justify-content:center;}
+  .logo svg{width:20px;height:20px;fill:#fff;}
+  .name{font-family:'DM Sans',sans-serif;font-size:30px;font-weight:500;color:var(--navy);}
+  .tabs{display:flex;border-bottom:1px solid var(--line);margin:20px 0 18px;}
+  .tab{flex:1;text-align:center;padding:9px 0;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;color:#8AA0BE;font-weight:500;}
+  .tab.on{color:var(--navy);border-bottom-color:var(--blue);font-weight:600;}
+  .field{margin-bottom:14px;}
+  .field label{font-size:12px;font-weight:700;color:var(--navy);display:block;margin:0 0 6px;}
+  .inp{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:#F2F5FA;color:var(--ink);outline:none;}
+  .inp:focus{border-color:var(--blue);background:#fff;}
+  .btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--blue),var(--navy));color:#fff;font-weight:700;font-size:15px;border:none;border-radius:11px;cursor:pointer;margin-top:6px;font-family:inherit;}
+  .btn:disabled{opacity:.6;cursor:default;}
+  .link{font-size:12px;color:var(--blue);cursor:pointer;text-align:center;margin-top:14px;}
+  .link:hover{text-decoration:underline;}
+  .msg{font-size:12px;margin-top:10px;min-height:16px;line-height:1.5;}
+  .hint{font-size:11px;color:#8AA0BE;margin-top:4px;line-height:1.5;}
+  .show{font-size:11px;color:var(--muted);margin-top:6px;display:flex;align-items:center;gap:5px;cursor:pointer;}
+  .note{margin-top:18px;font-size:11px;color:#8AA0BE;background:#F2F5FA;border-radius:9px;padding:10px 13px;line-height:1.65;}
+  .topbar{position:fixed;top:0;left:0;right:0;height:48px;background:#0F2035;display:flex;align-items:center;gap:10px;padding:0 18px;z-index:10;}
+  .topbar .tname{color:#fff;font-weight:600;font-size:15px;font-family:'DM Sans',sans-serif;}
+  .rolebadge{font-size:11px;font-weight:600;padding:3px 11px;border-radius:99px;}
+  .spacer{height:48px;}
+  .wrap{max-width:880px;margin:0 auto;padding:28px 20px;}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:16px;}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:4px 11px;border-radius:99px;background:#E6F1FB;color:var(--blue);}
+  .kv{font-size:13px;color:var(--muted);line-height:1.9;}
+  .kv b{color:var(--ink);}
+  .ph{font-size:14px;font-weight:600;color:var(--navy);margin-bottom:8px;}
+  .fl{font-size:11px;font-weight:600;color:var(--navy);display:block;margin-bottom:4px;}
+  .inp2{width:140px;padding:9px 11px;border:1.5px solid var(--line);border-radius:9px;font-size:13px;font-family:inherit;background:#fff;outline:none;}
+  .inp2:focus{border-color:var(--blue);}
+  .btn2{padding:9px 18px;background:linear-gradient(135deg,var(--blue),var(--navy));color:#fff;font-weight:600;font-size:13px;border:none;border-radius:9px;cursor:pointer;font-family:inherit;}
+  .clrow{padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;cursor:pointer;font-size:13px;display:flex;justify-content:space-between;align-items:center;}
+  .clrow:hover{border-color:var(--blue);background:#F6FAFE;}
+  .switch{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .sbtn{padding:8px 16px;border:1.5px solid var(--line);background:#fff;border-radius:9px;font-size:13px;font-family:inherit;cursor:pointer;color:var(--muted);}
+  .sbtn.on{border-color:var(--blue);background:var(--blue);color:#fff;font-weight:600;}
+  .ghost{background:none;border:none;color:#4AADD6;font-size:12px;cursor:pointer;font-family:inherit;}
+  table.ft{width:100%;border-collapse:collapse;font-size:12px;}
+  table.ft th{color:#8AA0BE;text-align:left;font-weight:600;padding:6px 4px;}
+  table.ft td{padding:6px 4px;border-top:1px solid #EAF0F7;}
+  .hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+<!-- ===== AUTH GATE ===== -->
+<div id="gate" class="gate">
+  <div class="card">
+    <div style="text-align:center;">
+      <div class="brand">
+        <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div>
+        <div class="name">Tsugu</div>
+      </div>
+      <div style="font-size:12px;color:#8AA0BE;margin-top:4px;">Phase 7 — 価値の流れ（AI・自動化→コスト削減→次の投資）</div>
+    </div>
+
+    <div class="tabs">
+      <div id="tab-login" class="tab on" onclick="showTab('login')">ログイン</div>
+      <div id="tab-signup" class="tab" onclick="showTab('signup')">新規登録</div>
+      <div id="tab-reset" class="tab" onclick="showTab('reset')">再設定</div>
+    </div>
+
+    <div id="panel-login">
+      <div class="field"><label>メールアドレス</label><input id="login-email" class="inp" type="email" placeholder="you@example.com" autocomplete="off"></div>
+      <div class="field"><label>パスワード</label><input id="login-pw" class="inp" type="password" placeholder="パスワード" autocomplete="off"></div>
+      <div class="show"><input type="checkbox" onchange="document.getElementById('login-pw').type=this.checked?'text':'password'"> パスワードを表示</div>
+      <button class="btn" id="login-btn" onclick="doLogin()">ログイン</button>
+      <div id="msg-login" class="msg"></div>
+      <div class="link" onclick="showTab('reset')">パスワードをお忘れですか？</div>
+    </div>
+
+    <div id="panel-signup" class="hidden">
+      <div class="field"><label>メールアドレス</label><input id="signup-email" class="inp" type="email" placeholder="you@example.com" autocomplete="off"></div>
+      <div class="field"><label>パスワード</label><input id="signup-pw" class="inp" type="password" placeholder="パスワード" autocomplete="off"></div>
+      <div class="hint">※ 大文字・小文字・数字をすべて含む8文字以上</div>
+      <div class="field" style="margin-top:14px;"><label>パスワード（確認）</label><input id="signup-pw2" class="inp" type="password" placeholder="もう一度入力" autocomplete="off"></div>
+      <div class="show"><input type="checkbox" onchange="var t=this.checked?'text':'password';document.getElementById('signup-pw').type=t;document.getElementById('signup-pw2').type=t;"> パスワードを表示</div>
+      <button class="btn" id="signup-btn" onclick="doSignup()">登録してはじめる</button>
+      <div id="msg-signup" class="msg"></div>
+    </div>
+
+    <div id="panel-reset" class="hidden">
+      <div class="hint" style="margin-bottom:14px;">登録済みのメールアドレスに、パスワード再設定用のリンクを送信します。</div>
+      <div class="field"><label>登録メールアドレス</label><input id="reset-email" class="inp" type="email" placeholder="you@example.com" autocomplete="off"></div>
+      <button class="btn" id="reset-btn" onclick="doReset()">再設定メールを送る</button>
+      <div id="msg-reset" class="msg"></div>
+      <div class="link" onclick="showTab('login')">ログインに戻る</div>
+    </div>
+
+    <div id="panel-recovery" class="hidden">
+      <div class="hint" style="margin-bottom:14px;">新しいパスワードを設定してください。</div>
+      <div class="field"><label>新しいパスワード</label><input id="rec-pw" class="inp" type="password" placeholder="新しいパスワード" autocomplete="off"></div>
+      <div class="hint">※ 大文字・小文字・数字をすべて含む8文字以上</div>
+      <div class="field" style="margin-top:14px;"><label>新しいパスワード（確認）</label><input id="rec-pw2" class="inp" type="password" placeholder="もう一度入力" autocomplete="off"></div>
+      <button class="btn" id="rec-btn" onclick="doUpdatePassword()">パスワードを更新</button>
+      <div id="msg-recovery" class="msg"></div>
+    </div>
+
+    <div class="note">Supabaseの本物の認証に接続しています（プロジェクト yaururnkxjhtiowkpvyu）。</div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app" class="hidden">
+  <div class="topbar">
+    <span class="tname">Tsugu</span>
+    <span id="app-role" class="rolebadge"></span>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:14px;">
+      <span id="app-email" style="color:rgba(255,255,255,.75);font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+      <span class="ghost" onclick="signOut()">ログアウト</span>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <div class="wrap" id="app-body"></div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://yaururnkxjhtiowkpvyu.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_-k-OPNThdG0uElX0h36eug_oGaCNlL4';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let ME = null, MYROLE = 'customer', CURRENT_CLIENT = null;
+
+  const $ = function(id){ return document.getElementById(id); };
+  function validPw(p){ return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(p); }
+  function validEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+  function setMsg(which, txt, ok){ var e=$('msg-'+which); if(!e)return; e.textContent=txt||''; e.style.color=ok?'#1E6B45':'#A83030'; }
+  function esc(s){ s=(s==null?'':String(s)); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function escA(s){ return esc(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+  var PANELS=['login','signup','reset','recovery'];
+  function showTab(which){
+    PANELS.forEach(function(t){
+      var p=$('panel-'+t); if(p)p.classList.toggle('hidden', t!==which);
+      var b=$('tab-'+t); if(b)b.classList.toggle('on', t===which);
+      setMsg(t,'');
+    });
+  }
+  function showRecovery(){ $('gate').classList.remove('hidden'); $('app').classList.add('hidden'); PANELS.forEach(function(t){ var p=$('panel-'+t); if(p)p.classList.toggle('hidden', t!=='recovery'); }); }
+  function showAuth(){ $('app').classList.add('hidden'); $('gate').classList.remove('hidden'); showTab('login'); }
+
+  async function doSignup(){
+    var em=($('signup-email').value||'').trim().toLowerCase();
+    var pw=$('signup-pw').value||'', pw2=$('signup-pw2').value||'';
+    if(!validEmail(em)){ setMsg('signup','正しいメールアドレスを入力してください'); return; }
+    if(!validPw(pw)){ setMsg('signup','パスワードは大文字・小文字・数字を含む8文字以上にしてください'); return; }
+    if(pw!==pw2){ setMsg('signup','パスワード（確認）が一致しません'); return; }
+    var btn=$('signup-btn'); btn.disabled=true;
+    var res=await sb.auth.signUp({ email:em, password:pw });
+    btn.disabled=false;
+    if(res.error){ setMsg('signup','登録エラー：'+res.error.message); return; }
+    if(res.data && res.data.session){ await routeFromSession(res.data.session); return; }
+    setMsg('signup','確認メールを送信しました。メール確認をオフにすると即ログインできます。', true);
+    showTab('login'); $('login-email').value=em;
+  }
+
+  async function doLogin(){
+    var em=($('login-email').value||'').trim().toLowerCase();
+    var pw=$('login-pw').value||'';
+    if(!em||!pw){ setMsg('login','メールアドレスとパスワードを入力してください'); return; }
+    var btn=$('login-btn'); btn.disabled=true;
+    var res=await sb.auth.signInWithPassword({ email:em, password:pw });
+    btn.disabled=false;
+    if(res.error){
+      var m=res.error.message||'';
+      if(/not confirmed/i.test(m)) setMsg('login','メールが未確認です。Supabase側でメール確認をオフにしてください');
+      else if(/Invalid/i.test(m)) setMsg('login','メールアドレスまたはパスワードが違います');
+      else setMsg('login','ログインエラー：'+m);
+      return;
+    }
+    await routeFromSession(res.data.session);
+  }
+
+  async function doReset(){
+    var em=($('reset-email').value||'').trim().toLowerCase();
+    if(!validEmail(em)){ setMsg('reset','正しいメールアドレスを入力してください'); return; }
+    var btn=$('reset-btn'); btn.disabled=true;
+    var res=await sb.auth.resetPasswordForEmail(em, { redirectTo: window.location.href.split('#')[0] });
+    btn.disabled=false;
+    if(res.error){ setMsg('reset','送信エラー：'+res.error.message); return; }
+    setMsg('reset','再設定メールを送信しました。メール内のリンクから新パスワードを設定してください。', true);
+  }
+
+  async function doUpdatePassword(){
+    var pw=$('rec-pw').value||'', pw2=$('rec-pw2').value||'';
+    if(!validPw(pw)){ setMsg('recovery','パスワードは大文字・小文字・数字を含む8文字以上にしてください'); return; }
+    if(pw!==pw2){ setMsg('recovery','パスワード（確認）が一致しません'); return; }
+    var btn=$('rec-btn'); btn.disabled=true;
+    var res=await sb.auth.updateUser({ password: pw });
+    btn.disabled=false;
+    if(res.error){ setMsg('recovery','更新エラー：'+res.error.message); return; }
+    setMsg('recovery','パスワードを更新しました。', true);
+    var s=await sb.auth.getSession();
+    if(s.data && s.data.session) await routeFromSession(s.data.session);
+  }
+
+  async function signOut(){
+    await sb.auth.signOut();
+    ['login-pw','signup-email','signup-pw','signup-pw2','reset-email','rec-pw','rec-pw2'].forEach(function(id){ var e=$(id); if(e)e.value=''; });
+    ME=null; showAuth();
+  }
+
+  async function getProfile(session){
+    var uid=session.user.id, email=session.user.email;
+    var q=await sb.from('profiles').select('role,full_name,email,company_name,contact_name').eq('id',uid).maybeSingle();
+    var prof=q.data;
+    if(!prof){
+      var up=await sb.from('profiles').upsert({ id:uid, email:email, role:'customer' }).select('role,full_name,email').maybeSingle();
+      prof=up.data || { role:'customer', email:email, full_name:null };
+    }
+    return prof;
+  }
+
+  async function routeFromSession(session){
+    if(!session){ showAuth(); return; }
+    ME=session.user.id;
+    var prof=await getProfile(session);
+    MYROLE=prof.role||'customer';
+    renderApp(prof, session.user.email);
+  }
+
+  function roleLabel(r){ return r==='consultant'?'コンサル':(r==='admin'?'運営':'顧客'); }
+  function roleColor(r){ return r==='consultant'?'#2C6EBD':(r==='admin'?'#C89620':'#1E6B45'); }
+
+  function renderApp(prof, email){
+    $('gate').classList.add('hidden');
+    $('app').classList.remove('hidden');
+    var r=prof.role||'customer';
+    SEC_MSGS=[];
+    var rb=$('app-role'); rb.textContent=roleLabel(r); rb.style.background=roleColor(r); rb.style.color='#fff';
+    $('app-email').textContent=email||'';
+
+    var view='';
+    if(r==='customer'){
+      view='<div class="panel"><span class="pill">顧客ポータル</span>'
+        +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">経営者ダッシュボード</h2>'
+        +'<div class="kv">ログイン中：<b>'+esc(email)+'</b>　役割：<b>顧客（経営者）</b></div></div>'
+        +'<div class="panel"><div class="ph">価値の流れ</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">AIと自動化でコストを下げ、生まれた余力を次の投資（M&A）へ。</div>'
+          + stepperHtml()
+          +'<div style="margin-top:16px;border:1px solid #D0DCF0;border-radius:11px;padding:14px 16px;background:#F5F9FF;">'
+            +'<div style="font-size:13px;font-weight:600;color:#1C3557;margin-bottom:10px;">次の投資に回せる余力（年間）</div>'
+            +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+              +'<div><label class="fl">自動化で削減できる月額コスト(万円)</label><input id="vj-auto" type="number" class="inp2" placeholder="例 20" oninput="vjCalc()"></div>'
+              +'<div><label class="fl">保険・税の最適化額(年間/万円)</label><input id="vj-ins" type="number" class="inp2" placeholder="例 150" oninput="vjCalc()"></div>'
+            +'</div>'
+            +'<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;flex-wrap:wrap;">'
+              +'<div><div style="font-size:12px;color:#4A6080;">次の投資に回せる余力</div><div id="vj-total" style="font-size:24px;font-weight:600;color:#1E6B45;">0 万円/年</div></div>'
+              +'<button class="btn2" onclick="goMa()">この余力でM&A活用を見る</button>'
+            +'</div>'
+            +'<div style="font-size:11px;color:#8AA0BE;margin-top:8px;line-height:1.6;">保険シミュレーターで計算すると、節税額が自動で反映されます。</div>'
+          +'</div>'
+        +'</div>'
+        +'<div class="panel"><div class="ph">会社情報</div>'
+          +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+            +'<div style="flex:1;min-width:180px;"><label class="fl">会社名</label><input id="pi-company" class="inp2" style="width:100%;" value="'+escA(prof.company_name||'')+'" placeholder="例：株式会社○○"></div>'
+            +'<div style="flex:1;min-width:160px;"><label class="fl">担当者名</label><input id="pi-contact" class="inp2" style="width:100%;" value="'+escA(prof.contact_name||'')+'" placeholder="例：山田 太郎"></div>'
+            +'<button class="btn2" onclick="saveProfileInfo()">保存</button>'
+          +'</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-top:6px;">設定した会社名は、担当コンサルの顧客一覧に表示されます。</div>'
+          +'<div id="pi-msg" style="font-size:12px;margin-top:6px;"></div>'
+        +'</div>'
+        +'<div class="panel"><div class="ph">月次財務メモ</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">ここで入力した数値は、あなたを担当に追加したコンサルの画面にもそのまま表示されます。</div>'
+          +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+            +'<div><label class="fl">年月</label><input id="fin-ym" type="month" class="inp2"></div>'
+            +'<div><label class="fl">売上（万円）</label><input id="fin-rev" type="number" class="inp2" placeholder="例 1200"></div>'
+            +'<div><label class="fl">営業利益（万円）</label><input id="fin-prof" type="number" class="inp2" placeholder="例 180"></div>'
+            +'<div style="flex:1;min-width:160px;"><label class="fl">メモ</label><input id="fin-memo" type="text" class="inp2" style="width:100%;" placeholder="補足（任意）"></div>'
+            +'<button class="btn2" onclick="saveFinance()">保存</button>'
+          +'</div>'
+          +'<div id="fin-msg" style="font-size:12px;margin-top:8px;"></div>'
+          +'<div id="fin-list" style="margin-top:14px;">読み込み中...</div>'
+        +'</div>'
+        +'<div class="panel"><div class="ph">アクション・課題</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">担当コンサルと共有されます。コンサルが追加した課題もここに表示されます。</div>'
+          +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+            +'<div style="flex:1;min-width:200px;"><label class="fl">課題・タスク</label><input id="act-title" class="inp2" style="width:100%;" placeholder="例：直近3期の試算表を用意"></div>'
+            +'<div><label class="fl">期限（任意）</label><input id="act-due" type="date" class="inp2"></div>'
+            +'<button class="btn2" onclick="addMyAction()">追加</button>'
+          +'</div>'
+          +'<div id="act-list" style="margin-top:12px;">読み込み中...</div>'
+        +'</div>'
+        +'<div class="panel"><div class="ph">AIバックオフィス自動化診断</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">AIで自動化・効率化できそうな業務を提案します。APIキーの入力は不要です（サーバー側で安全に処理）。</div>'
+          +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+            +'<div style="flex:1;min-width:200px;"><label class="fl">業種・事業内容</label><input id="ai-gyo" class="inp2" style="width:100%;" placeholder="例：金属加工業、調剤薬局 など"></div>'
+            +'<div><label class="fl">従業員規模</label><select id="ai-size" class="inp2"><option>〜5名</option><option selected>6〜20名</option><option>21〜50名</option><option>51名以上</option></select></div>'
+          +'</div>'
+          +'<label class="fl" style="margin-top:10px;">自動化を検討したい業務（複数選択可）</label>'
+          +'<div id="ai-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px;"></div>'
+          +'<label class="fl">具体的な困りごと（任意）</label>'
+          +'<input id="ai-note" class="inp2" style="width:100%;margin-bottom:10px;" placeholder="例：請求書の作成と入金確認に毎月20時間かかっている">'
+          +'<button class="btn2" id="ai-run" onclick="runAi()">AIに自動化提案をもらう</button>'
+          +'<div id="ai-result" style="margin-top:14px;"></div>'
+        +'</div>'
+        +'<div class="panel"><div class="ph">必要保障額シミュレーター（事業用）</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">法人向けに、経営者の万一に備える事業保障額・損害保険の目安と、養老保険(福利厚生プラン)の節税メリットを概算します（単位：万円）。</div>'
+          +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin:4px 0 8px;">法人実効税率</div>'
+          +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+            +'<div><label class="fl">会社の区分</label><select id="tax-preset" class="inp2" onchange="if(this.value){document.getElementById(\'tax-rate\').value=this.value;}"><option value="34">中小法人・標準（約34%）</option><option value="25">中小法人・所得少なめ（約25%）</option><option value="30">大法人・外形標準（約30%）</option><option value="">手入力</option></select></div>'
+            +'<div><label class="fl">実効税率(%)</label><input id="tax-rate" type="number" class="inp2" value="34"></div>'
+          +'</div>'
+          +'<div style="font-size:11px;color:#8AA0BE;margin-top:4px;line-height:1.6;">※ 実効税率は主に会社規模・所得・地域で決まります（業種では大きく変わりません）。必要に応じて手入力で調整してください。</div>'
+          +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin:16px 0 8px;">事業保障（経営者の万一に備える額）</div>'
+          +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+            +'<div><label class="fl">借入金・負債残高</label><input id="bp-debt" type="number" class="inp2" placeholder="例 8000"></div>'
+            +'<div><label class="fl">年間固定費</label><input id="bp-fixed" type="number" class="inp2" placeholder="例 6000"></div>'
+            +'<div><label class="fl">立て直しに必要な月数</label><input id="bp-months" type="number" class="inp2" value="12"></div>'
+            +'<div><label class="fl">現預金</label><input id="bp-cash" type="number" class="inp2" placeholder="例 2000"></div>'
+            +'<div><label class="fl">既存の法人保険</label><input id="bp-exist" type="number" class="inp2" placeholder="例 1000"></div>'
+          +'</div>'
+          +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin:16px 0 8px;">損害保険（事業）— 業種別に押さえるべき保障範囲を診断</div>'
+          +'<div><label class="fl">業種</label><select id="pc-industry" class="inp2" style="width:auto;min-width:200px;"><option value="">選択してください</option><option>製造業</option><option>建設業</option><option>飲食業</option><option>小売業</option><option>運送・物流業</option><option>医療・介護・福祉</option><option>IT・通信</option><option>士業・専門サービス</option><option>不動産業</option><option>宿泊・観光</option><option>農林水産業</option><option>その他</option></select></div>'
+          +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin:16px 0 8px;">養老保険（福利厚生プラン／普遍的加入）</div>'
+          +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:8px;line-height:1.6;">満期金受取人=法人、死亡保険金受取人=従業員の遺族。保険料の1/2を損金算入できます（法基通9-3-4／全員または合理的基準での普遍的加入が要件）。</div>'
+          +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+            +'<div><label class="fl">1人あたり死亡退職金額(目安・メモ)</label><input id="ec-death" type="number" class="inp2" placeholder="例 500"></div>'
+            +'<div><label class="fl">加入人数(人)</label><input id="ec-emp" type="number" class="inp2" placeholder="例 10"></div>'
+            +'<div><label class="fl">全体の年間保険料(万円)</label><input id="ec-total" type="number" class="inp2" placeholder="例 300"></div>'
+          +'</div>'
+          +'<button class="btn2" style="margin-top:16px;" onclick="insCalc()">計算する</button>'
+          +'<div id="ins-result" style="margin-top:14px;"></div>'
+        +'</div>'
+        +'<div class="panel"><div class="ph">AI秘書（経営の相談相手）</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">日程・タスク整理、文章作成、調べ物、経営の壁打ちなどを相談できます。</div>'
+          +'<div id="sec-log" style="max-height:300px;overflow:auto;border:1px solid #EAF0F7;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;"><div style="font-size:12px;color:#8AA0BE;">例：「来期の経営計画づくりの進め方を相談したい」「取引先へのお礼メールを作って」</div></div>'
+          +'<div style="display:flex;gap:8px;align-items:flex-end;">'
+            +'<textarea id="sec-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="相談内容を入力"></textarea>'
+            +'<button class="btn2" id="sec-send" onclick="secretarySend()">送信</button>'
+          +'</div>'
+        +'</div>'
+        +'<div class="panel"><div class="ph">利益のM&A活用 提案（AI）</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">利益や余剰資金を、M&A（会社・事業の買収）で活かす方向性をAIが提案します。</div>'
+          +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+            +'<div><label class="fl">年間利益・余剰資金(万円)</label><input id="ma-profit" type="number" class="inp2" placeholder="例 3000"></div>'
+            +'<div style="flex:1;min-width:200px;"><label class="fl">事業内容・強み</label><input id="ma-biz" class="inp2" style="width:100%;" placeholder="例：地域密着の電気工事、職人20名"></div>'
+          +'</div>'
+          +'<label class="fl" style="margin-top:10px;">M&Aで実現したいこと</label>'
+          +'<select id="ma-goal" class="inp2" style="width:auto;min-width:200px;"><option>売上・シェア拡大</option><option>人材・技術の獲得</option><option>エリア拡大</option><option>川上・川下への統合</option><option>新規事業への参入</option><option>後継者・事業承継の受け皿</option></select>'
+          +'<div style="margin-top:12px;"><button class="btn2" id="ma-run" onclick="runMa()">AIに提案をもらう</button></div>'
+          +'<div id="ma-result" style="margin-top:14px;"></div>'
+        +'</div>';
+    } else {
+      view='<div class="panel"><span class="pill" style="background:#FAEEDA;color:#C89620;">コンサル・運営コンソール</span>'
+        +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">'+(r==='admin'?'運営管理':'コンサルポータル')+'</h2>'
+        +'<div class="kv">ログイン中：<b>'+esc(email)+'</b>　役割：<b>'+roleLabel(r)+'</b></div></div>'
+        +'<div class="panel"><div class="ph">価値の流れ（顧客への提案軸）</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">AI・自動化 → コスト削減 → 余力 → 次の投資（M&A）の流れで支援します。</div>'
+          + stepperHtml()
+        +'</div>'
+        +'<div class="panel"><div class="ph">担当顧客を追加</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;">顧客として登録済みのメールアドレスを入力すると、担当顧客として紐づきます。</div>'
+          +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+            +'<div style="flex:1;min-width:220px;"><label class="fl">顧客のメールアドレス</label><input id="cl-email" type="email" class="inp2" style="width:100%;" placeholder="customer@example.com"></div>'
+            +'<button class="btn2" onclick="claimClient()">担当に追加</button>'
+          +'</div><div id="cl-msg" style="font-size:12px;margin-top:8px;"></div>'
+        +'</div>'
+        +'<div class="panel"><div class="ph">担当顧客一覧</div>'
+          +'<div id="cl-list" style="margin-top:6px;">読み込み中...</div>'
+          +'<div id="cl-detail" style="margin-top:16px;"></div>'
+        +'</div>'
+        +'<div class="panel"><div class="ph">AI秘書（業務の相談相手）</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">提案資料の文面づくり、面談準備、調べ物、考えの壁打ちなどを相談できます。</div>'
+          +'<div id="sec-log" style="max-height:300px;overflow:auto;border:1px solid #EAF0F7;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;"><div style="font-size:12px;color:#8AA0BE;">例：「医療法人オーナー向けの初回面談の流れを整理して」</div></div>'
+          +'<div style="display:flex;gap:8px;align-items:flex-end;">'
+            +'<textarea id="sec-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="相談内容を入力"></textarea>'
+            +'<button class="btn2" id="sec-send" onclick="secretarySend()">送信</button>'
+          +'</div>'
+        +'</div>';
+    }
+
+    var demo='<div class="panel"><div class="ph">デモ用：役割の切り替え</div>'
+      +'<div style="font-size:12px;color:#8AA0BE;line-height:1.6;margin-bottom:6px;">同じアカウントで各役割の画面を確認できます（本番では役割変更は運営のみに制限）。顧客↔コンサルの同期を試すには、顧客用とコンサル用で別々のアカウントをご利用ください。</div>'
+      +'<div class="switch">'
+      +'<button class="sbtn '+(r==='customer'?'on':'')+'" onclick="setRole(\'customer\')">顧客</button>'
+      +'<button class="sbtn '+(r==='consultant'?'on':'')+'" onclick="setRole(\'consultant\')">コンサル</button>'
+      +'<button class="sbtn '+(r==='admin'?'on':'')+'" onclick="setRole(\'admin\')">運営</button>'
+      +'</div></div>';
+
+    $('app-body').innerHTML=view;
+    if(r==='customer'){ loadMyFinance(); loadMyActions(); buildAiChips(); } else loadClients();
+  }
+
+  async function setRole(r){
+    var s=await sb.auth.getSession();
+    if(!(s.data && s.data.session)) return;
+    var res=await sb.from('profiles').update({ role:r }).eq('id', s.data.session.user.id);
+    if(res.error){ alert('役割の更新に失敗しました：'+res.error.message); return; }
+    routeFromSession(s.data.session);
+  }
+
+  // ---- finance (customer writes / consultant reads) ----
+  function finTable(rows, editable){
+    if(!rows || !rows.length) return '<div style="font-size:12px;color:#8AA0BE;">まだデータがありません。</div>';
+    var h='<table class="ft"><tr><th>年月</th><th>売上</th><th>営業利益</th><th>メモ</th>'+(editable?'<th></th>':'')+'</tr>';
+    rows.forEach(function(r){
+      h+='<tr><td>'+esc(r.year_month)+'</td>'
+        +'<td>'+(r.revenue==null?'-':esc(r.revenue))+'</td>'
+        +'<td>'+(r.profit==null?'-':esc(r.profit))+'</td>'
+        +'<td style="color:#4A6080;">'+esc(r.memo||'')+'</td>'
+        +(editable?'<td style="text-align:right;"><span onclick="delFinance(\''+r.id+'\')" style="color:#A83030;cursor:pointer;font-size:11px;">削除</span></td>':'')
+        +'</tr>';
+    });
+    return h+'</table>';
+  }
+
+  async function saveFinance(){
+    var ym=$('fin-ym').value, rev=$('fin-rev').value, prof=$('fin-prof').value, memo=$('fin-memo').value.trim();
+    var msg=$('fin-msg');
+    if(!ym){ msg.style.color='#A83030'; msg.textContent='年月を選んでください'; return; }
+    var row={ customer_id:ME, year_month:ym, revenue:(rev===''?null:Number(rev)), profit:(prof===''?null:Number(prof)), memo:(memo||null) };
+    var res=await sb.from('financial_entries').insert(row);
+    if(res.error){ msg.style.color='#A83030'; msg.textContent='保存エラー：'+res.error.message; return; }
+    $('fin-ym').value=''; $('fin-rev').value=''; $('fin-prof').value=''; $('fin-memo').value='';
+    msg.style.color='#1E6B45'; msg.textContent='保存しました';
+    loadMyFinance();
+  }
+
+  async function loadMyFinance(){
+    var box=$('fin-list'); if(!box)return;
+    var res=await sb.from('financial_entries').select('*').eq('customer_id',ME).order('year_month',{ascending:false});
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
+    box.innerHTML=finTable(res.data, true);
+  }
+
+  async function delFinance(id){
+    var res=await sb.from('financial_entries').delete().eq('id',id);
+    if(res.error){ alert('削除エラー：'+res.error.message); return; }
+    loadMyFinance();
+  }
+
+  async function saveProfileInfo(){
+    var c=$('pi-company').value.trim(), n=$('pi-contact').value.trim();
+    var res=await sb.from('profiles').update({ company_name:(c||null), contact_name:(n||null) }).eq('id',ME);
+    var msg=$('pi-msg'); if(!msg)return;
+    if(res.error){ msg.style.color='#A83030'; msg.textContent='保存エラー：'+res.error.message; return; }
+    msg.style.color='#1E6B45'; msg.textContent='保存しました';
+  }
+
+  function actTable(rows, scope){
+    if(!rows || !rows.length) return '<div style="font-size:12px;color:#8AA0BE;">課題はありません。</div>';
+    var h='';
+    rows.forEach(function(r){
+      var done=r.status==='done';
+      h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #EAF0F7;">'
+        +'<input type="checkbox" '+(done?'checked':'')+' onchange="toggleAction(\''+r.id+'\',this.checked,\''+scope+'\')">'
+        +'<span style="flex:1;font-size:13px;'+(done?'text-decoration:line-through;color:#8AA0BE;':'color:#131E2E;')+'">'+esc(r.title)+'</span>'
+        +(r.due_date?'<span style="font-size:11px;color:#8AA0BE;">期限 '+esc(r.due_date)+'</span>':'')
+        +'<span onclick="delAction(\''+r.id+'\',\''+scope+'\')" style="color:#A83030;cursor:pointer;font-size:11px;">削除</span>'
+        +'</div>';
+    });
+    return h;
+  }
+
+  async function loadMyActions(){
+    var box=$('act-list'); if(!box)return;
+    var res=await sb.from('action_items').select('*').eq('customer_id',ME).order('status').order('created_at',{ascending:false});
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
+    box.innerHTML=actTable(res.data,'me');
+  }
+  async function addMyAction(){
+    var t=$('act-title').value.trim(), d=$('act-due').value||null;
+    if(!t)return;
+    var res=await sb.from('action_items').insert({ customer_id:ME, title:t, due_date:d, created_by:ME, status:'open' });
+    if(res.error){ alert('追加エラー：'+res.error.message); return; }
+    $('act-title').value=''; $('act-due').value=''; loadMyActions();
+  }
+  async function reloadClientActions(custId){
+    var box=$('cact-list'); if(!box)return;
+    var res=await sb.from('action_items').select('*').eq('customer_id',custId).order('status').order('created_at',{ascending:false});
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
+    box.innerHTML=actTable(res.data,'cl');
+  }
+  async function addClientAction(){
+    if(!CURRENT_CLIENT)return;
+    var t=$('cact-title').value.trim(), d=$('cact-due').value||null;
+    if(!t)return;
+    var res=await sb.from('action_items').insert({ customer_id:CURRENT_CLIENT.id, title:t, due_date:d, created_by:ME, status:'open' });
+    if(res.error){ alert('追加エラー：'+res.error.message); return; }
+    $('cact-title').value=''; $('cact-due').value=''; reloadClientActions(CURRENT_CLIENT.id);
+  }
+  async function toggleAction(id, checked, scope){
+    var res=await sb.from('action_items').update({ status: checked?'done':'open' }).eq('id',id);
+    if(res.error){ alert('更新エラー：'+res.error.message); return; }
+    if(scope==='me') loadMyActions(); else if(CURRENT_CLIENT) reloadClientActions(CURRENT_CLIENT.id);
+  }
+  async function delAction(id, scope){
+    var res=await sb.from('action_items').delete().eq('id',id);
+    if(res.error){ alert('削除エラー：'+res.error.message); return; }
+    if(scope==='me') loadMyActions(); else if(CURRENT_CLIENT) reloadClientActions(CURRENT_CLIENT.id);
+  }
+
+  // ---- consultant: claim & view clients ----
+  async function claimClient(){
+    var em=($('cl-email').value||'').trim();
+    var msg=$('cl-msg');
+    if(!em){ msg.style.color='#A83030'; msg.textContent='顧客のメールアドレスを入力してください'; return; }
+    var res=await sb.rpc('claim_client', { p_email: em });
+    if(res.error){ msg.style.color='#A83030'; msg.textContent='エラー：'+res.error.message; return; }
+    if(typeof res.data==='string' && res.data.indexOf('error:')===0){ msg.style.color='#A83030'; msg.textContent=res.data.replace('error:','').trim(); return; }
+    msg.style.color='#1E6B45'; msg.textContent='担当顧客に追加しました'; $('cl-email').value='';
+    loadClients();
+  }
+
+  async function loadClients(){
+    var box=$('cl-list'); if(!box)return;
+    var res=await sb.from('profiles').select('id,email,company_name').eq('consultant_id',ME).eq('role','customer');
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
+    if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">まだ担当顧客がいません。上の欄に顧客のメールアドレスを入れて追加してください。</div>'; return; }
+    var h='';
+    res.data.forEach(function(c){ var label=c.company_name||c.email; var sub=c.company_name?(' <span style="color:#8AA0BE;font-size:11px;">'+esc(c.email)+'</span>'):''; h+='<div class="clrow" onclick="viewClient(\''+c.id+'\',\''+escA(c.email)+'\',\''+escA(c.company_name||'')+'\')"><span>'+esc(label)+sub+'</span><span style="color:#2C6EBD;font-size:11px;">詳細 →</span></div>'; });
+    box.innerHTML=h;
+  }
+
+  async function viewClient(custId, email, company){
+    CURRENT_CLIENT={ id:custId, email:email, company:company||'' };
+    var box=$('cl-detail'); if(!box)return;
+    var title=(company && company.length)?(esc(company)+'（'+esc(email)+'）'):esc(email);
+    box.innerHTML='<div style="font-weight:600;font-size:14px;margin:4px 0 12px;color:#1C3557;">'+title+'</div>'
+      +'<div class="ph" style="font-size:13px;">月次財務メモ（顧客が入力）</div><div id="cl-fin" style="margin-bottom:6px;">読み込み中...</div>'
+      +'<div class="ph" style="font-size:13px;margin-top:14px;">アクション・課題（顧客と共有・両者が編集可）</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">'
+        +'<div style="flex:1;min-width:200px;"><label class="fl">課題を追加</label><input id="cact-title" class="inp2" style="width:100%;" placeholder="例：退職金規程の確認"></div>'
+        +'<div><label class="fl">期限（任意）</label><input id="cact-due" type="date" class="inp2"></div>'
+        +'<button class="btn2" onclick="addClientAction()">追加</button>'
+      +'</div>'
+      +'<div id="cact-list" style="margin-top:10px;">読み込み中...</div>'
+      +'<div class="ph" style="font-size:13px;margin-top:16px;">顧客が興味を示した自動化項目</div>'
+      +'<div id="cl-interest" style="margin-top:6px;">読み込み中...</div>'
+      +'<div class="ph" style="font-size:13px;margin-top:16px;">顧客が興味を示したM&Aの方向性</div>'
+      +'<div id="cl-mna" style="margin-top:6px;">読み込み中...</div>'
+      +'<div class="ph" style="font-size:13px;margin-top:16px;">保険試算の共有結果</div>'
+      +'<div id="cl-ins" style="margin-top:6px;">読み込み中...</div>'
+      +'<div class="ph" style="font-size:13px;margin-top:16px;">AI自動化診断（顧客が実施した結果）</div>'
+      +'<div id="cl-diag" style="margin-top:6px;">読み込み中...</div>';
+    var f=await sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false});
+    var fb=$('cl-fin'); if(fb) fb.innerHTML = f.error?('<div style="color:#A83030;font-size:12px;">'+esc(f.error.message)+'</div>'):finTable(f.data,false);
+    reloadClientActions(custId);
+    loadClientInterests(custId);
+    loadClientMna(custId);
+    loadClientInsurance(custId);
+    loadClientDiag(custId);
+  }
+
+  async function loadClientDiag(custId){
+    var box=$('cl-diag'); if(!box)return;
+    var res=await sb.from('ai_diagnoses').select('*').eq('customer_id',custId).order('created_at',{ascending:false});
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
+    if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">この顧客はまだAI自動化診断を実施していません。</div>'; return; }
+    var h='';
+    res.data.forEach(function(d){
+      var dt=(d.created_at||'').slice(0,10);
+      h+='<div style="border:1px solid #EAF0F7;border-radius:10px;padding:12px 14px;margin-bottom:10px;">'
+        +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:8px;">実施日：'+esc(dt)+'</div>'
+        +aiCards(d.result_text||'')
+        +'</div>';
+    });
+    box.innerHTML=h;
+  }
+
+  // ---- AI: back-office automation diagnosis via Edge Function (key hidden server-side) ----
+  var AI_PAINS=['経理・記帳','請求書発行','入金消込・売掛管理','給与計算・勤怠','受発注・在庫管理','見積・営業事務','問合せ・顧客対応','データ入力・転記','文書・報告書作成','採用・人事労務','経費精算','スケジュール調整'];
+  var aiSelected={};
+  function buildAiChips(){
+    var box=$('ai-chips'); if(!box)return; aiSelected={}; box.innerHTML='';
+    AI_PAINS.forEach(function(p){
+      var c=document.createElement('span');
+      c.textContent=p;
+      c.style.cssText='display:inline-block;padding:6px 12px;border-radius:99px;border:1.5px solid #D0DCF0;background:#F2F5FA;color:#4A6080;font-size:12px;cursor:pointer;';
+      c.onclick=function(){ if(aiSelected[p]){ delete aiSelected[p]; c.style.borderColor='#D0DCF0'; c.style.background='#F2F5FA'; c.style.color='#4A6080'; } else { aiSelected[p]=1; c.style.borderColor='#2C6EBD'; c.style.background='#2C6EBD'; c.style.color='#fff'; } };
+      box.appendChild(c);
+    });
+  }
+  var __aiSeq=0;
+  function aiCards(txt, selectable){
+    var arr=null;
+    try{ var s=txt.indexOf('['), e=txt.lastIndexOf(']'); if(s>=0&&e>s) arr=JSON.parse(txt.slice(s,e+1)); }catch(err){ arr=null; }
+    if(!arr||!arr.length) return '<div style="white-space:pre-wrap;font-size:13px;color:#131E2E;line-height:1.7;">'+esc(txt)+'</div>';
+    var rank={'高':0,'中':1,'低':2};
+    arr.sort(function(a,b){ var ra=rank[a['優先度']], rb=rank[b['優先度']]; return (ra==null?9:ra)-(rb==null?9:rb); });
+    if(selectable) window.__lastProps=arr;
+    var pfx='aic'+(++__aiSeq)+'_';
+    function pc(p){ return p==='高'?'#C89620':(p==='中'?'#2C6EBD':'#8AA0BE'); }
+    function dc(d){ return d==='低'?'#1E6B45':(d==='高'?'#A83030':'#C89620'); }
+    function bdg(t,c){ return '<span style="font-size:10px;font-weight:600;padding:3px 9px;border-radius:99px;background:'+c+'22;color:'+c+';white-space:nowrap;">'+esc(t)+'</span>'; }
+    function rw(l,v){ if(!v)return ''; return '<div style="font-size:12px;line-height:1.65;margin-bottom:4px;"><span style="color:#8AA0BE;font-weight:600;">'+l+'：</span><span style="color:#1C3557;">'+esc(v)+'</span></div>'; }
+    var h='<div style="font-size:12px;color:#4A6080;margin:2px 0 12px;">'+arr.length+'件の自動化候補（優先度順／タップで詳細）'+(selectable?'。興味のある項目にチェック':'')+'</div>';
+    arr.forEach(function(it, i){
+      var pr=it['優先度']||'-', df=it['難易度']||'-';
+      var chk = selectable ? '<label style="cursor:pointer;" onclick="event.stopPropagation()"><input type="checkbox" class="ai-pick" data-i="'+i+'"></label>' : '';
+      h+='<div style="border:1px solid #D0DCF0;border-radius:11px;margin-bottom:8px;overflow:hidden;">'
+        +'<div onclick="aiToggle(\''+pfx+i+'\')" style="display:flex;align-items:center;gap:8px;padding:11px 14px;cursor:pointer;">'
+          +chk
+          +'<span style="flex:1;font-size:13px;font-weight:600;color:#131E2E;">'+esc(it['業務']||'')+'</span>'
+          +bdg('優先 '+pr,pc(pr))+bdg('難易度 '+df,dc(df))
+          +'<span id="'+pfx+i+'_a" style="color:#8AA0BE;font-size:12px;">▸</span>'
+        +'</div>'
+        +'<div id="'+pfx+i+'" style="display:none;padding:0 14px 12px;">'
+          +rw('現状の課題',it['現状課題']||it['課題'])
+          +rw('自動化案',it['自動化案'])
+          +rw('推奨アプローチ',it['推奨アプローチ'])
+          +rw('期待効果',it['期待効果'])
+          +(it['月間削減目安']?rw('削減目安',it['月間削減目安']):'')
+        +'</div>'
+      +'</div>';
+    });
+    h+='<div style="font-size:11px;color:#8AA0BE;margin-top:6px;">※ AIが生成した提案です。実際の導入可否・効果は個別精査が必要です。</div>';
+    if(selectable){ h+='<button class="btn2" style="margin-top:12px;" onclick="shareInterests()">選択した項目をコンサルに共有</button><div id="ai-share-msg" style="font-size:12px;margin-top:8px;"></div>'; }
+    return h;
+  }
+  function aiToggle(id){ var d=$(id), a=$(id+'_a'); if(!d)return; var open=d.style.display!=='none'; d.style.display=open?'none':'block'; if(a)a.textContent=open?'▸':'▾'; }
+  async function runAi(){
+    var btn=$('ai-run'), result=$('ai-result');
+    var gyo=$('ai-gyo').value.trim(), size=$('ai-size').value, note=$('ai-note').value.trim();
+    var areas=Object.keys(aiSelected);
+    if(areas.length===0 && !note){ result.innerHTML='<div style="font-size:12px;color:#A83030;">業務を1つ以上選ぶか、困りごとを入力してください。</div>'; return; }
+    btn.disabled=true; var ot=btn.textContent; btn.textContent='AIが分析中...';
+    result.innerHTML='<div style="padding:24px;text-align:center;color:#4A6080;font-size:13px;">AIが分析し、自動化案を作成しています...</div>';
+    var sys='あなたは中小企業のバックオフィス改善とAI活用に精通したコンサルタントです。後継者不在も視野に入る黒字中小企業の生産性向上と財務貢献を目的に、現実的で着手しやすい自動化案を提案します。出力は指定されたJSON配列のみとし、前置き・後置き・コードフェンスを一切付けないこと。';
+    var usr='対象企業の情報：\n業種・事業内容: '+(gyo||'（未記入）')+'\n従業員規模: '+size+'\n自動化を検討したい業務: '+(areas.length?areas.join('、'):'（指定なし）')+'\n具体的な困りごと: '+(note||'（特になし）')+'\n\nこの企業で、AIや軽量なデジタルツールで自動化・効率化できるバックオフィス業務を5件程度、効果の大きい順に提案してください。中小企業が無理なく始められる現実的な手段を優先し、推奨アプローチには「Claudeプロジェクト」「Custom GPT」「専用AIアシスタント」「RPA」「既存SaaS連携」など具体的な手段名を含めてください。\n\n必ず次の形式のJSON配列のみを出力（説明・コードフェンス禁止）：\n[{"業務":"...","現状課題":"...","自動化案":"...","推奨アプローチ":"...","期待効果":"...","難易度":"低|中|高","優先度":"高|中|低","月間削減目安":"例: 約20時間/月"}]';
+    try{
+      var res=await sb.functions.invoke('ai-proxy', { body: { system:sys, messages:[{role:'user',content:usr}], model:'claude-sonnet-4-6', max_tokens:2500 } });
+      if(res.error){ result.innerHTML='<div style="font-size:12px;color:#A83030;line-height:1.6;">呼び出しエラー：'+esc(res.error.message||String(res.error))+'<br>Edge Function「ai-proxy」が未デプロイか、ANTHROPIC_API_KEY が未設定の可能性があります。</div>'; }
+      else if(res.data && res.data.ok===false){ result.innerHTML='<div style="font-size:12px;color:#A83030;line-height:1.6;">'+esc(res.data.error||'エラーが発生しました')+'</div>'; }
+      else { var txt=(res.data && res.data.text)||''; result.innerHTML=aiCards(txt, true); saveDiagnosis(txt); }
+    }catch(e){ result.innerHTML='<div style="font-size:12px;color:#A83030;">エラー：'+esc(String((e&&e.message)||e))+'</div>'; }
+    btn.disabled=false; btn.textContent=ot;
+  }
+
+  async function saveDiagnosis(txt){
+    try{ await sb.from('ai_diagnoses').insert({ customer_id:ME, result_text:txt }); }catch(e){}
+  }
+
+  async function shareInterests(){
+    var msg=$('ai-share-msg');
+    var picks=document.querySelectorAll('.ai-pick:checked');
+    if(!picks.length){ if(msg){ msg.style.color='#A83030'; msg.textContent='興味のある項目を1つ以上選んでください。'; } return; }
+    var arr=window.__lastProps||[];
+    var rows=[];
+    picks.forEach(function(c){ var it=arr[parseInt(c.getAttribute('data-i'),10)]; if(it){ rows.push({ customer_id:ME, title:(it['業務']||''), detail:((it['自動化案']||'')+' ／ 推奨: '+(it['推奨アプローチ']||'')) }); } });
+    if(!rows.length) return;
+    var res=await sb.from('automation_interests').insert(rows);
+    if(res.error){ if(msg){ msg.style.color='#A83030'; msg.textContent='共有エラー：'+res.error.message; } return; }
+    if(msg){ msg.style.color='#1E6B45'; msg.textContent=rows.length+'件をコンサルに共有しました。'; }
+  }
+
+  async function loadClientInterests(custId){
+    var box=$('cl-interest'); if(!box)return;
+    var res=await sb.from('automation_interests').select('*').eq('customer_id',custId).eq('category','automation').order('created_at',{ascending:false});
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
+    if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">顧客が興味を示した項目はまだありません。</div>'; return; }
+    var h='';
+    res.data.forEach(function(r){ h+='<div style="border:1px solid #EAF0F7;border-radius:9px;padding:10px 12px;margin-bottom:6px;"><div style="font-size:13px;font-weight:600;color:#131E2E;">'+esc(r.title)+'</div>'+(r.detail?'<div style="font-size:12px;color:#4A6080;margin-top:3px;">'+esc(r.detail)+'</div>':'')+'</div>'; });
+    box.innerHTML=h;
+  }
+  async function loadClientMna(custId){
+    var box=$('cl-mna'); if(!box)return;
+    var res=await sb.from('automation_interests').select('*').eq('customer_id',custId).eq('category','mna').order('created_at',{ascending:false});
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
+    if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">M&Aで興味を示した方向性はまだありません。</div>'; return; }
+    var h='';
+    res.data.forEach(function(r){ h+='<div style="border:1px solid #EAF0F7;border-radius:9px;padding:10px 12px;margin-bottom:6px;"><div style="font-size:13px;font-weight:600;color:#131E2E;">'+esc(r.title)+'</div>'+(r.detail?'<div style="font-size:12px;color:#4A6080;margin-top:3px;">'+esc(r.detail)+'</div>':'')+'</div>'; });
+    box.innerHTML=h;
+  }
+  async function loadClientInsurance(custId){
+    var box=$('cl-ins'); if(!box)return;
+    var res=await sb.from('insurance_results').select('*').eq('customer_id',custId).order('created_at',{ascending:false});
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
+    if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">共有された保険試算はまだありません。</div>'; return; }
+    var h='';
+    res.data.forEach(function(r){ var dt=(r.created_at||'').slice(0,10); h+='<div style="border:1px solid #EAF0F7;border-radius:9px;padding:10px 12px;margin-bottom:6px;"><div style="font-size:11px;color:#8AA0BE;margin-bottom:4px;">'+esc(dt)+'</div><div style="font-size:12px;color:#131E2E;white-space:pre-wrap;line-height:1.6;">'+esc(r.summary||'')+'</div></div>'; });
+    box.innerHTML=h;
+  }
+
+  function num(id){ var v=parseFloat(($(id)&&$(id).value)||''); return isNaN(v)?0:v; }
+  function yen(n){ return Math.round(n).toLocaleString('ja-JP')+' 万円'; }
+  function stepperHtml(){
+    function st(n,t,s,c){ return '<div style="flex:1 1 100px;min-width:100px;background:#F7FAFD;border:1px solid #EAF0F7;border-radius:10px;padding:12px 8px;text-align:center;"><div style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:'+c+';color:#fff;font-size:12px;font-weight:600;">'+n+'</div><div style="font-size:13px;font-weight:600;color:#131E2E;margin-top:6px;">'+t+'</div><div style="font-size:11px;color:#8AA0BE;margin-top:2px;line-height:1.4;">'+s+'</div></div>'; }
+    var ar='<div style="display:flex;align-items:center;color:#B7C4D6;font-size:16px;">→</div>';
+    return '<div style="display:flex;align-items:stretch;gap:6px;flex-wrap:wrap;">'
+      +st('1','現状把握','財務の見える化','#2C6EBD')+ar
+      +st('2','AI活用・自動化','業務を効率化','#2C6EBD')+ar
+      +st('3','コスト削減','固定費・税の最適化','#2C6EBD')+ar
+      +st('4','生まれた余力','利益・資金の確保','#1E6B45')+ar
+      +st('5','次の投資','M&A・HD化で成長','#1E6B45')
+      +'</div>';
+  }
+  function vjCalc(){ var total=num('vj-auto')*12+num('vj-ins'); var el=$('vj-total'); if(el) el.textContent=Math.round(total).toLocaleString('ja-JP')+' 万円/年'; }
+  function goMa(){ var t=$('ma-profit')||$('ma-run'); if(t) t.scrollIntoView({behavior:'smooth',block:'start'}); }
+  function insCalc(){
+    var box=$('ins-result'); if(!box)return;
+    var rate=num('tax-rate')/100; if(rate<=0) rate=0.34;
+    var debt=num('bp-debt'), fixed=num('bp-fixed'), months=num('bp-months');
+    var bpNeed=debt + fixed*(months/12);
+    var bpReady=num('bp-cash')+num('bp-exist');
+    var bpGap=Math.max(0, bpNeed - bpReady);
+    var bpGapTax=(rate<1)? bpGap/(1-rate) : bpGap;
+    var emp=num('ec-emp'), premTotal=num('ec-total'), death=num('ec-death');
+    var loss=premTotal*0.5, taxSave=loss*rate, taxSave5=taxSave*5, asset5=premTotal*0.5*5;
+    var ind=($('pc-industry')&&$('pc-industry').value)||'';
+    function rowL(l,v,c){ return '<div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0;border-top:1px solid #EAF0F7;"><span style="color:#4A6080;">'+l+'</span><span style="color:'+(c||'#131E2E')+';font-weight:600;text-align:right;">'+v+'</span></div>'; }
+    function sec(t){ return '<div style="font-weight:600;font-size:13px;color:#1C3557;margin:12px 0 2px;">'+t+'</div>'; }
+    var h='<div style="border:1px solid #D0DCF0;border-radius:11px;padding:16px;">'
+      +sec('生命保険（事業保障）／実効税率 '+(rate*100).toFixed(0)+'%')
+      +rowL('必要額（負債＋固定費×月数）', yen(bpNeed))
+      +rowL('準備済み（現預金＋既存保険）', yen(bpReady))
+      +rowL('不足（税引前）', yen(bpGap))
+      +rowL('法人税を考慮した必要保障額', yen(bpGapTax), '#2C6EBD')
+      +'<div style="font-size:11px;color:#8AA0BE;margin-top:4px;line-height:1.6;">死亡保険金は法人の益金となり課税対象のため、不足額 ÷ (1−実効税率) で割り戻しています。死亡退職金・弔慰金（損金）で相殺できる場合は必要額は小さくなります。</div>'
+      +sec('養老保険（福利厚生プラン）／向こう5年・税率一定の前提')
+      +rowL('加入人数', emp+' 人')
+      +rowL('1人あたり死亡退職金（メモ）', yen(death))
+      +rowL('年間保険料総額', yen(premTotal))
+      +rowL('うち損金算入（1/2）', yen(loss))
+      +rowL('年間の節税（繰延べ）目安', yen(taxSave), '#1E6B45')
+      +rowL('5年間の累計節税目安', yen(taxSave5), '#1E6B45')
+      +rowL('5年後の簿価積立累計（退職金原資の目安）', yen(asset5))
+      +'<div style="font-size:11px;color:#8AA0BE;margin-top:4px;line-height:1.6;">1/2損金は普遍的加入(全員または合理的基準)が要件。節税は繰延べで、満期金・解約返戻金は受取時に益金になります。一人あたり保険料は年齢・性別で変わるため、保険料は総額で入力しています。</div>'
+      +'</div>';
+    h+=pcDiagnosis(ind);
+    h+='<div style="font-size:11px;color:#8AA0BE;margin-top:8px;line-height:1.7;">※ 概算・一般的な考え方です。正式な金額・税務上の取扱い・必要な補償範囲・商品選定は、個別事情をふまえた専門的な確認が必要です。</div>';
+    window.__insSummary='【保険試算サマリー】 実効税率'+(rate*100).toFixed(0)+'%'
+      +'\n[事業保障] 必要額'+yen(bpNeed)+' / 準備済み'+yen(bpReady)+' / 法人税考慮後の必要保障額'+yen(bpGapTax)
+      +'\n[養老保険(向こう5年)] 加入'+emp+'人 / 年間保険料総額'+yen(premTotal)+' / 年間節税'+yen(taxSave)+' / 5年累計節税'+yen(taxSave5)+' / 5年積立'+yen(asset5)
+      +'\n[損害保険] 業種: '+(ind||'未選択');
+    h+='<button class="btn2" style="margin-top:10px;" onclick="shareInsurance()">この試算結果をコンサルに共有</button><div id="ins-share-msg" style="font-size:12px;margin-top:8px;"></div>';
+    var vi=$('vj-ins'); if(vi){ vi.value=Math.round(taxSave); vjCalc(); }
+    box.innerHTML=h;
+  }
+  async function shareInsurance(){
+    var msg=$('ins-share-msg');
+    var sum=window.__insSummary||'';
+    if(!sum) return;
+    var res=await sb.from('insurance_results').insert({ customer_id:ME, summary:sum });
+    if(res.error){ if(msg){ msg.style.color='#A83030'; msg.textContent='共有エラー：'+res.error.message; } return; }
+    if(msg){ msg.style.color='#1E6B45'; msg.textContent='試算結果をコンサルに共有しました。'; }
+  }
+  var INDUSTRY_PC={
+    '製造業':[['火災保険（建物・機械設備）','工場・設備の火災や自然災害による損害'],['機械保険・動産総合','機械の偶発的な事故・故障'],['生産物賠償責任(PL)','製品の欠陥による対人・対物事故'],['休業損害（利益保険）','操業停止中の利益・固定費'],['労災上乗せ（使用者賠償）','従業員の労災に対する企業の賠償']],
+    '建設業':[['建設工事保険・組立保険','工事中の建物・資材の損害'],['請負業者賠償責任','工事に起因する第三者への対人・対物事故'],['労災上乗せ（使用者賠償）','現場での労災・重大事故'],['業務用自動車保険','車両・重機の事故']],
+    '飲食業':[['火災保険（店舗・設備）','火災・水濡れ・設備損害'],['生産物賠償（食中毒）','提供した飲食物による食中毒・異物'],['施設賠償責任','店内での客のケガ等'],['休業損害','営業停止中の損失'],['受託物賠償','客の手荷物・貴重品の破損・紛失']],
+    '小売業':[['火災保険（店舗・商品）','火災・水濡れ・商品損害'],['施設賠償責任','店舗での客のケガ・商品落下'],['盗難・現金','商品やレジ現金の盗難'],['休業損害','営業停止中の損失']],
+    '運送・物流業':[['業務用自動車保険','対人・対物・車両の事故'],['運送業者貨物賠償','運送中の荷物の損害・賠償'],['労災上乗せ（使用者賠償）','ドライバーの事故']],
+    '医療・介護・福祉':[['医療・施設賠償責任','医療・介護行為に伴う賠償'],['施設賠償責任','来院者・利用者の事故'],['個人情報・サイバー','患者・利用者情報の漏えい'],['休業損害','診療・営業停止']],
+    'IT・通信':[['IT・専門業務賠償(E&O)','システム不具合・納品物の不備による賠償'],['サイバー保険','情報漏えい・システム障害・ランサム対応'],['個人情報漏えい対応','漏えい時の調査・通知費用'],['施設賠償責任','オフィスでの事故']],
+    '士業・専門サービス':[['専門業務賠償責任(E&O)','業務上の過誤による賠償（税理士・会計・コンサル等）'],['個人情報・サイバー','顧客情報の漏えい'],['施設賠償責任','事務所での事故']],
+    '不動産業':[['宅建業者賠償責任','仲介・重要事項説明の過誤'],['施設賠償責任','管理物件・店舗での事故'],['火災保険','自社保有物件の損害']],
+    '宿泊・観光':[['火災保険（建物・設備）','火災・自然災害'],['施設賠償責任','宿泊客のケガ・食中毒'],['受託物賠償','客の荷物・貴重品'],['休業損害','営業停止中の損失']],
+    '農林水産業':[['火災・農機具保険','設備・機械の損害'],['生産物賠償','出荷物による事故'],['自然災害補償（共済等）','収穫・施設の自然災害']],
+    'その他':[['火災保険（建物・設備）','基本の財物補償'],['施設賠償責任','事業活動に伴う対人・対物事故'],['休業損害','被災時の利益・固定費'],['サイバー・個人情報','情報を扱う場合の漏えい対策']]
+  };
+  function pcDiagnosis(ind){
+    if(!ind || !INDUSTRY_PC[ind]) return '<div style="border:1px dashed #D0DCF0;border-radius:11px;padding:14px 16px;margin-top:12px;font-size:12px;color:#8AA0BE;">損害保険の診断：上の「業種」を選んで計算すると、押さえるべき保障範囲を表示します。</div>';
+    var rows=INDUSTRY_PC[ind];
+    var h='<div style="border:1px solid #D0DCF0;border-radius:11px;padding:16px;margin-top:12px;"><div style="font-weight:600;font-size:13px;color:#1C3557;margin-bottom:8px;">損害保険：押さえるべき保障範囲（'+esc(ind)+'）</div>';
+    rows.forEach(function(r){ h+='<div style="padding:7px 0;border-top:1px solid #EAF0F7;"><div style="font-size:13px;font-weight:600;color:#131E2E;">'+esc(r[0])+'</div><div style="font-size:12px;color:#4A6080;margin-top:2px;">'+esc(r[1])+'</div></div>'; });
+    return h+'</div>';
+  }
+
+  // ---- AI秘書チャット ----
+  var SEC_MSGS=[];
+  function renderSecLog(){
+    var box=$('sec-log'); if(!box)return;
+    if(!SEC_MSGS.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">例：「来期の経営計画づくりの進め方を相談したい」「取引先へのお礼メールを作って」</div>'; return; }
+    var h='';
+    SEC_MSGS.forEach(function(m){
+      var me=m.role==='user';
+      var tag=(!me && m.model)?'<div style="font-size:10px;color:#8AA0BE;margin-bottom:2px;">'+esc(m.model)+'</div>':'';
+      h+='<div style="display:flex;flex-direction:column;align-items:'+(me?'flex-end':'flex-start')+';margin-bottom:8px;">'+tag+'<div style="max-width:82%;padding:9px 12px;border-radius:12px;font-size:13px;line-height:1.6;white-space:pre-wrap;'+(me?'background:#2C6EBD;color:#fff;':'background:#fff;border:1px solid #D0DCF0;color:#131E2E;')+'">'+esc(m.content)+'</div></div>';
+    });
+    box.innerHTML=h; box.scrollTop=box.scrollHeight;
+  }
+  function pickModel(text){
+    var t=text||'';
+    var heavy = t.length>120 || /(戦略|分析|計画|設計|比較|検討|試算|シミュレーション|提案|レビュー|添削|文章|資料|構成|要約|長文|複雑|どうすれば|なぜ|理由|改善|方針|考え方)/.test(t);
+    return heavy ? 'claude-opus-4-8' : 'claude-sonnet-4-6';
+  }
+  async function secretarySend(){
+    var inp=$('sec-input'); if(!inp)return;
+    var t=inp.value.trim(); if(!t)return;
+    var model=pickModel(t);
+    var label=(model.indexOf('opus')>=0)?'Opus（じっくり回答）':'Sonnet（軽快に回答）';
+    SEC_MSGS.push({role:'user',content:t}); inp.value='';
+    SEC_MSGS.push({role:'assistant',content:'（考え中…）'}); renderSecLog();
+    var btn=$('sec-send'); if(btn)btn.disabled=true;
+    var sys='あなたは中小企業の経営者を支える有能な秘書兼アシスタントです。日程・タスク整理、文章作成、情報整理、経営の壁打ちに、簡潔で実務的に、日本語で答えます。不確実なことは確認を促します。';
+    var msgs=SEC_MSGS.filter(function(m){return m.content!=='（考え中…）';}).map(function(m){return {role:m.role,content:m.content};});
+    try{
+      var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:msgs, model:model, max_tokens:1400 } });
+      if(SEC_MSGS.length && SEC_MSGS[SEC_MSGS.length-1].content==='（考え中…）') SEC_MSGS.pop();
+      if(res.error){ SEC_MSGS.push({role:'assistant',content:'エラー：'+(res.error.message||'呼び出しに失敗しました')}); }
+      else if(res.data && res.data.ok===false){ SEC_MSGS.push({role:'assistant',content:res.data.error||'エラーが発生しました'}); }
+      else { SEC_MSGS.push({role:'assistant',content:(res.data&&res.data.text)||'(応答なし)', model:label}); }
+    }catch(e){ if(SEC_MSGS.length && SEC_MSGS[SEC_MSGS.length-1].content==='（考え中…）') SEC_MSGS.pop(); SEC_MSGS.push({role:'assistant',content:'エラー：'+String((e&&e.message)||e)}); }
+    renderSecLog(); if(btn)btn.disabled=false;
+  }
+
+  // ---- 利益のM&A活用 AI ----
+  function maCards(txt, selectable){
+    var arr=null;
+    try{ var s=txt.indexOf('['), e=txt.lastIndexOf(']'); if(s>=0&&e>s) arr=JSON.parse(txt.slice(s,e+1)); }catch(err){ arr=null; }
+    if(!arr||!arr.length) return '<div style="white-space:pre-wrap;font-size:13px;color:#131E2E;line-height:1.7;">'+esc(txt)+'</div>';
+    if(selectable) window.__lastMa=arr;
+    function rw(l,v){ if(!v)return''; return '<div style="font-size:12px;line-height:1.65;margin-bottom:4px;"><span style="color:#8AA0BE;font-weight:600;">'+l+'：</span><span style="color:#1C3557;">'+esc(v)+'</span></div>'; }
+    var h='';
+    arr.forEach(function(it, i){
+      var head = selectable
+        ? '<label style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><input type="checkbox" class="ma-pick" data-i="'+i+'">'+esc(it['方向性']||it['戦略']||'')+'</label>'
+        : esc(it['方向性']||it['戦略']||'');
+      h+='<div style="border:1px solid #D0DCF0;border-radius:11px;padding:14px 16px;margin-bottom:10px;">'
+        +'<div style="font-size:14px;font-weight:600;color:#131E2E;margin-bottom:8px;">'+head+'</div>'
+        +rw('狙う対象（ターゲット像）',it['ターゲット像']||it['対象'])
+        +rw('期待できるシナジー',it['期待シナジー']||it['期待効果'])
+        +rw('概算の予算感',it['予算感']||it['概算予算'])
+        +rw('留意点・リスク',it['留意点']||it['リスク'])
+        +'</div>';
+    });
+    h+='<div style="font-size:11px;color:#8AA0BE;margin-top:8px;">※ AIが生成した提案です。実行にはデューデリジェンスや専門家の関与が必要です。</div>';
+    if(selectable){ h+='<button class="btn2" style="margin-top:12px;" onclick="shareMaInterests()">選択した方向性をコンサルに共有</button><div id="ma-share-msg" style="font-size:12px;margin-top:8px;"></div>'; }
+    return h;
+  }
+  async function shareMaInterests(){
+    var msg=$('ma-share-msg');
+    var picks=document.querySelectorAll('.ma-pick:checked');
+    if(!picks.length){ if(msg){ msg.style.color='#A83030'; msg.textContent='興味のある方向性を1つ以上選んでください。'; } return; }
+    var arr=window.__lastMa||[];
+    var rows=[];
+    picks.forEach(function(c){ var it=arr[parseInt(c.getAttribute('data-i'),10)]; if(it){ rows.push({ customer_id:ME, category:'mna', title:(it['方向性']||it['戦略']||''), detail:('対象: '+(it['ターゲット像']||it['対象']||'')+' ／ シナジー: '+(it['期待シナジー']||it['期待効果']||'')) }); } });
+    if(!rows.length) return;
+    var res=await sb.from('automation_interests').insert(rows);
+    if(res.error){ if(msg){ msg.style.color='#A83030'; msg.textContent='共有エラー：'+res.error.message; } return; }
+    if(msg){ msg.style.color='#1E6B45'; msg.textContent=rows.length+'件をコンサルに共有しました。'; }
+  }
+  async function runMa(){
+    var btn=$('ma-run'), result=$('ma-result');
+    var profit=$('ma-profit').value.trim(), biz=$('ma-biz').value.trim(), goal=$('ma-goal').value;
+    if(!biz){ result.innerHTML='<div style="font-size:12px;color:#A83030;">事業内容・強みを入力してください。</div>'; return; }
+    btn.disabled=true; var ot=btn.textContent; btn.textContent='AIが分析中...';
+    result.innerHTML='<div style="padding:24px;text-align:center;color:#4A6080;font-size:13px;">AIがM&A活用の方向性を検討しています...</div>';
+    var sys='あなたは中小企業のM&A・事業承継に詳しいアドバイザーです。黒字企業が利益・余剰資金をM&A（会社や事業の買収）で活かす現実的な方向性を提案します。スモールM&Aを前提に過大な案は避けます。出力は指定のJSON配列のみ、前置き・コードフェンス禁止。';
+    var usr='企業情報：\n年間利益・余剰資金: '+(profit||'（未記入）')+'万円\n事業内容・強み: '+biz+'\nM&Aで実現したいこと: '+goal+'\n\nこの企業が利益をM&Aで活かす方向性を3〜5件、現実的な順に提案してください。\n\n必ず次の形式のJSON配列のみを出力：\n[{"方向性":"...","ターゲット像":"...","期待シナジー":"...","予算感":"例: 数百万〜数千万円","留意点":"..."}]';
+    try{
+      var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:[{role:'user',content:usr}], model:'claude-sonnet-4-6', max_tokens:2000 } });
+      if(res.error){ result.innerHTML='<div style="font-size:12px;color:#A83030;">呼び出しエラー：'+esc(res.error.message||String(res.error))+'</div>'; }
+      else if(res.data && res.data.ok===false){ result.innerHTML='<div style="font-size:12px;color:#A83030;">'+esc(res.data.error||'エラー')+'</div>'; }
+      else { result.innerHTML=maCards((res.data&&res.data.text)||'', true); }
+    }catch(e){ result.innerHTML='<div style="font-size:12px;color:#A83030;">エラー：'+esc(String((e&&e.message)||e))+'</div>'; }
+    btn.disabled=false; btn.textContent=ot;
+  }
+
+  sb.auth.onAuthStateChange(function(event, session){ if(event==='PASSWORD_RECOVERY'){ showRecovery(); } });
+
+  (async function init(){
+    var s=await sb.auth.getSession();
+    if(s.data && s.data.session){ await routeFromSession(s.data.session); } else { showAuth(); }
+  })();
+
+  document.addEventListener('keydown', function(e){
+    if(e.key!=='Enter') return;
+    if(!$('gate').classList.contains('hidden')){
+      if(!$('panel-login').classList.contains('hidden')) doLogin();
+      else if(!$('panel-signup').classList.contains('hidden')) doSignup();
+      else if(!$('panel-reset').classList.contains('hidden')) doReset();
+      else if(!$('panel-recovery').classList.contains('hidden')) doUpdatePassword();
+    }
+  });
+</script>
+</body>
+</html>
