@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tsugu | Phase 18（保険：業種拡充・税率分類）</title>
+<title>Tsugu | Phase 19（資金繰り診断・資金調達ロードマップ）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -319,7 +319,7 @@
   function buildNav(r){
     var nav=$('app-nav'); if(!nav)return;
     var items;
-    if(r==='customer') items=[['sec-flow','ダッシュボード'],['sec-company','会社・財務'],['sec-ai','AI診断・自動化'],['sec-ins','保険試算'],['sec-ma','M&A活用'],['sec-sec','AI秘書']];
+    if(r==='customer') items=[['sec-flow','ダッシュボード'],['sec-company','会社・財務'],['sec-ai','AI診断・自動化'],['sec-ins','保険試算'],['sec-cash','資金繰り診断'],['sec-ma','M&A活用'],['sec-sec','AI秘書']];
     else if(r==='admin' && VIEWAS==='admin') items=[['sec-flow','ダッシュボード'],['sec-fde','パートナー'],['sec-cust','顧客']];
     else items=[['sec-flow','ダッシュボード'],['sec-followups','対応リスト'],['sec-clients','担当顧客'],['sec-sec','AI秘書']];
     var h='<div class="sb-sec">メニュー</div>';
@@ -496,6 +496,32 @@
           +'</div>'
           +'<button class="btn2" style="margin-top:16px;" onclick="insCalc()">計算する</button>'
           +'<div id="ins-result" style="margin-top:14px;"></div>'
+        +'</div>'
+        +'<div class="panel" id="sec-cash"><div class="ph">資金繰り診断・資金調達ロードマップ</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">主要な数値を入れると、資金の健全性を100点満点で診断し、いま取るべき資金調達・改善の道筋を提示します（単位：万円）。</div>'
+          +'<div style="margin-bottom:8px;"><button class="ghost" style="border:1px solid #D0DCF0;border-radius:8px;padding:6px 12px;" onclick="cfPrefill()">↺ 直近の財務メモから取り込む</button></div>'
+          +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin:10px 0 6px;">基本</div>'
+          +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+            +'<div><label class="fl">月商（月平均売上）</label><input id="cf-sales" type="number" class="inp2" placeholder="例 2000"></div>'
+            +'<div><label class="fl">現預金残高</label><input id="cf-cash" type="number" class="inp2" placeholder="例 3000"></div>'
+            +'<div><label class="fl">月間支出（仕入＋固定費等）</label><input id="cf-outflow" type="number" class="inp2" placeholder="例 1900"></div>'
+          +'</div>'
+          +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin:14px 0 6px;">運転資金（回収・支払）</div>'
+          +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+            +'<div><label class="fl">売掛金残高</label><input id="cf-ar" type="number" class="inp2" placeholder="例 2000"></div>'
+            +'<div><label class="fl">棚卸資産（在庫）</label><input id="cf-inv" type="number" class="inp2" placeholder="例 800"></div>'
+            +'<div><label class="fl">買掛金残高</label><input id="cf-ap" type="number" class="inp2" placeholder="例 1200"></div>'
+            +'<div><label class="fl">月間仕入高（原価）</label><input id="cf-purch" type="number" class="inp2" placeholder="例 1000"></div>'
+          +'</div>'
+          +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin:14px 0 6px;">借入・返済</div>'
+          +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+            +'<div><label class="fl">有利子負債（短期＋長期）</label><input id="cf-debt" type="number" class="inp2" placeholder="例 6000"></div>'
+            +'<div><label class="fl">月間返済額（元金＋利息）</label><input id="cf-repay" type="number" class="inp2" placeholder="例 120"></div>'
+            +'<div><label class="fl">営業利益（年）</label><input id="cf-op" type="number" class="inp2" placeholder="例 1500"></div>'
+            +'<div><label class="fl">減価償却費（年）</label><input id="cf-dep" type="number" class="inp2" placeholder="例 300"></div>'
+          +'</div>'
+          +'<button class="btn2" style="margin-top:16px;" onclick="cashflowDiagnose()">資金繰りを診断する</button>'
+          +'<div id="cf-result" style="margin-top:14px;"></div>'
         +'</div>'
         +'<div class="panel" id="sec-sec"><div class="ph">AI秘書（経営の相談相手）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">日程・タスク整理、文章作成、調べ物、経営の壁打ちなどを相談できます。</div>'
@@ -1189,7 +1215,7 @@
       +st('1','現状把握','財務の見える化','財務を見る','sec-company','#2C6EBD')+ar
       +st('2','AI活用・自動化','業務を効率化','AI診断する','sec-ai','#2C6EBD')+ar
       +st('3','コスト削減','固定費・税の最適化','保険を試算','sec-ins','#2C6EBD')+ar
-      +st('4','生まれた余力','利益・資金の確保','余力を見る','sec-flow','#1E6B45')+ar
+      +st('4','生まれた余力','利益・資金の確保','資金を診断','sec-cash','#1E6B45')+ar
       +st('5','次の投資','M&A・HD化で成長','M&Aを見る','sec-ma','#1E6B45')
       +'</div>';
   }
@@ -1284,6 +1310,99 @@
     var h='<div style="border:1px solid #D0DCF0;border-radius:11px;padding:16px;margin-top:12px;"><div style="font-weight:600;font-size:13px;color:#1C3557;margin-bottom:8px;">損害保険：押さえるべき保障範囲（'+esc(ind)+'）</div>';
     rows.forEach(function(r){ h+='<div style="padding:7px 0;border-top:1px solid #EAF0F7;"><div style="font-size:13px;font-weight:600;color:#131E2E;">'+esc(r[0])+'</div><div style="font-size:12px;color:#4A6080;margin-top:2px;">'+esc(r[1])+'</div></div>'; });
     return h+'</div>';
+  }
+
+  // ---- 資金繰り診断・資金調達ロードマップ ----
+  function cfClamp(x){ return Math.max(0,Math.min(100,x)); }
+  function cfPrefill(){
+    sb.from('financial_entries').select('*').eq('customer_id',ME).order('year_month',{ascending:false}).limit(1).then(function(res){
+      if(res.error||!res.data||!res.data.length) return;
+      var f=res.data[0];
+      if(f.revenue!=null && $('cf-sales') && !$('cf-sales').value) $('cf-sales').value=f.revenue;
+      if(f.profit!=null && $('cf-op') && !$('cf-op').value) $('cf-op').value=Math.round(Number(f.profit)*12);
+    });
+  }
+  function cashflowDiagnose(){
+    var box=$('cf-result'); if(!box)return;
+    var sales=num('cf-sales'), cash=num('cf-cash'), outflow=num('cf-outflow');
+    var ar=num('cf-ar'), inv=num('cf-inv'), ap=num('cf-ap'), purch=num('cf-purch');
+    var debt=num('cf-debt'), repay=num('cf-repay'), op=num('cf-op'), dep=num('cf-dep');
+    if(sales<=0){ box.innerHTML='<div style="color:#A83030;font-size:12px;">まず「月商」を入力してください。</div>'; return; }
+    var dailySales=sales/30;
+    var dailyCogs=(purch>0?purch:sales*0.7)/30;
+    var runway = outflow>0 ? cash/outflow : (cash>0?99:0);
+    var liqMonths = cash/sales;
+    var arDays = dailySales>0 ? ar/dailySales : 0;
+    var invDays = dailyCogs>0 ? inv/dailyCogs : 0;
+    var apDays = dailyCogs>0 ? ap/dailyCogs : 0;
+    var ccc = arDays + invDays - apDays;
+    var debtRatio = debt/sales;
+    var simpleCF = op + dep;
+    var annualRepay = repay*12;
+    var repayYears = simpleCF>0 ? debt/simpleCF : (debt>0?99:0);
+    var coverage = annualRepay>0 ? (simpleCF/annualRepay) : (simpleCF>0?9:0);
+    var sRun=cfClamp(runway/3*100), sDebt=cfClamp((6-debtRatio)/(6-1.5)*100), sCcc=cfClamp((90-ccc)/(90-15)*100);
+    var sYears=simpleCF>0?cfClamp((20-repayYears)/(20-5)*100):0, sCov=cfClamp(coverage/2*100);
+    var score=Math.round(sRun*0.25+sDebt*0.20+sCcc*0.20+sYears*0.20+sCov*0.15);
+    var rank,color,label;
+    if(score>=80){ rank='A'; color='#1E6B45'; label='良好'; }
+    else if(score>=60){ rank='B'; color='#2C6EBD'; label='おおむね健全'; }
+    else if(score>=40){ rank='C'; color='#C89620'; label='要注意'; }
+    else { rank='D'; color='#A83030'; label='要対応'; }
+    function st3(v,good,warn){ return v>=good?'#1E6B45':(v>=warn?'#C89620':'#A83030'); }
+    function rowM(l,v,note,c){ return '<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:13px;padding:7px 0;border-top:1px solid #EAF0F7;"><span style="color:#4A6080;">'+l+'</span><span style="text-align:right;"><b style="color:'+(c||'#131E2E')+';">'+v+'</b>'+(note?'<span style="font-size:11px;color:#8AA0BE;display:block;">'+note+'</span>':'')+'</span></div>'; }
+
+    var h='<div style="border:1px solid #D0DCF0;border-radius:12px;padding:16px;">';
+    // gauge
+    h+='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px;">'
+      +'<div style="width:64px;height:64px;border-radius:50%;flex-shrink:0;background:conic-gradient('+color+' '+(score*3.6)+'deg,#EAF0F7 0deg);display:flex;align-items:center;justify-content:center;">'
+        +'<div style="width:48px;height:48px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:'+color+';">'+score+'</div>'
+      +'</div>'
+      +'<div><div style="font-size:13px;color:#8AA0BE;">資金繰りスコア</div><div style="font-size:18px;font-weight:700;color:'+color+';">ランク '+rank+'：'+label+'</div><div style="font-size:11px;color:#8AA0BE;">100点満点（高いほど健全）</div></div>'
+    +'</div>';
+    // metrics
+    h+='<div style="font-weight:600;font-size:13px;color:#1C3557;margin:14px 0 2px;">主要指標</div>';
+    h+=rowM('手元流動性（現預金÷月商）', liqMonths.toFixed(1)+' か月分', '目安1.5か月以上', st3(liqMonths,1.5,1));
+    h+=rowM('資金繰り余力（現預金÷月間支出）', (runway>=99?'十分':runway.toFixed(1)+' か月')+'', '何か月もつか', st3(runway,3,1.5));
+    h+=rowM('CCC（資金化までの日数）', Math.round(ccc)+' 日', '売上債権'+Math.round(arDays)+'＋在庫'+Math.round(invDays)+'−仕入債務'+Math.round(apDays)+'。短いほど良', ccc<=30?'#1E6B45':(ccc<=60?'#C89620':'#A83030'));
+    h+=rowM('借入月商倍率（有利子負債÷月商）', debtRatio.toFixed(1)+' 倍', '目安3倍以内', st3(6-debtRatio,4.5,0)==='#1E6B45'?'#1E6B45':(debtRatio<=6?'#C89620':'#A83030'));
+    h+=rowM('債務償還年数（有利子負債÷簡易CF）', (simpleCF>0?(repayYears>=99?'—':repayYears.toFixed(1)+' 年'):'算定不可（CF赤字）'), '簡易CF='+yen(simpleCF)+'。10年以内が目安', simpleCF<=0?'#A83030':(repayYears<=10?'#1E6B45':(repayYears<=15?'#C89620':'#A83030')));
+    h+=rowM('返済カバー率（簡易CF÷年間返済）', (annualRepay>0?coverage.toFixed(1)+' 倍':'返済なし'), '1.0倍以上が目安', annualRepay<=0?'#1E6B45':st3(coverage,1.5,1));
+    h+='</div>';
+
+    // roadmap
+    var phase = (runway<2||coverage<1||simpleCF<=0)?'em':((ccc>45||debtRatio>3)?'im':'gr');
+    function pcard(key,ttl,desc,items){
+      var pri=(key===phase);
+      var c=pri?color:'#D0DCF0';
+      var bg=pri?'#FBFCFE':'#fff';
+      var badge=pri?'<span style="font-size:10px;font-weight:700;color:#fff;background:'+color+';border-radius:99px;padding:2px 9px;margin-left:8px;">最優先</span>':'';
+      var h2='<div style="border:'+(pri?'2px':'1px')+' solid '+c+';border-radius:11px;padding:13px 15px;margin-bottom:8px;background:'+bg+';">'
+        +'<div style="font-size:13px;font-weight:700;color:#1C3557;">'+ttl+badge+'</div>'
+        +'<div style="font-size:11px;color:#8AA0BE;margin:2px 0 6px;">'+desc+'</div>';
+      items.forEach(function(t){ h2+='<div style="font-size:12.5px;color:#131E2E;line-height:1.6;padding:3px 0;">・'+t+'</div>'; });
+      return h2+'</div>';
+    }
+    h+='<div style="font-weight:600;font-size:13px;color:#1C3557;margin:16px 0 8px;">資金調達・改善ロードマップ</div>';
+    h+=pcard('em','① 緊急対応（資金ショートの回避）','手元資金が薄い・返済が重いときに最初に行うこと',[
+      '当面の運転資金を確保（取引銀行／日本政策金融公庫の運転資金融資、信用保証協会の保証付融資）',
+      '返済が重い場合は早めにリスケジュール（条件変更）を相談（金融機関・認定支援機関）',
+      '入金サイトの前倒し・支払サイトの延長交渉、不要不急の支出の停止'
+    ]);
+    h+=pcard('im','② 体質改善（キャッシュを生む）','資金が回りやすい体質へ整える',[
+      '売掛金の早期回収（請求・督促の自動化、着手金・前受金の導入）',
+      '在庫の適正化（過剰在庫の圧縮、発注の見直し）',
+      '借入の一本化・借換えで金利と毎月返済を圧縮',
+      '固定費の見直し（保険・通信・サブスク等。「保険試算」も活用）'
+    ]);
+    h+=pcard('gr','③ 成長投資（余力を投資へ）','生まれた余力を成長に回す',[
+      '設備・DX投資に補助金を活用（ものづくり／IT導入／省力化／事業再構築 補助金 等）',
+      'AI・自動化で生産性向上（「AI診断・自動化」の結果を実行へ）',
+      '余剰資金の運用・M&Aで成長（「M&A活用」パネル）'
+    ]);
+    h+='<div style="font-size:11px;color:#8AA0BE;margin-top:8px;line-height:1.7;">※ 金融機関へは資金繰り表・経営計画を示して対話を。認定経営革新等支援機関の関与も有効です。本診断は概算の目安であり、実際の調達可否・条件・税務上の取扱いは金融機関や専門家の確認が必要です。</div>';
+    h+='</div>';
+    box.innerHTML=h;
   }
 
   // ---- AI秘書チャット ----
