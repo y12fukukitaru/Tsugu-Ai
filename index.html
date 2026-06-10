@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tsugu | Phase 17（月次レポート）</title>
+<title>Tsugu | Phase 18（保険：業種拡充・税率分類）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -473,10 +473,10 @@
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">法人向けに、経営者の万一に備える事業保障額・損害保険の目安と、養老保険(福利厚生プラン)の節税メリットを概算します（単位：万円）。</div>'
           +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin:4px 0 8px;">法人実効税率</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
-            +'<div><label class="fl">会社の区分</label><select id="tax-preset" class="inp2" onchange="if(this.value){document.getElementById(\'tax-rate\').value=this.value;}"><option value="34">中小法人・標準（約34%）</option><option value="25">中小法人・所得少なめ（約25%）</option><option value="30">大法人・外形標準（約30%）</option><option value="">手入力</option></select></div>'
+            +'<div><label class="fl">会社の区分</label><select id="tax-preset" class="inp2" onchange="if(this.value){document.getElementById(\'tax-rate\').value=this.value;}">'+taxPresetOptions()+'</select></div>'
             +'<div><label class="fl">実効税率(%)</label><input id="tax-rate" type="number" class="inp2" value="34"></div>'
           +'</div>'
-          +'<div style="font-size:11px;color:#8AA0BE;margin-top:4px;line-height:1.6;">※ 実効税率は主に会社規模・所得・地域で決まります（業種では大きく変わりません）。必要に応じて手入力で調整してください。</div>'
+          +'<div style="font-size:11px;color:#8AA0BE;margin-top:4px;line-height:1.6;">※ 実効税率は会社区分・課税所得・地域でおおむね決まります。中小法人は所得800万円以下の部分に軽減税率、医療法人は社会保険診療分の事業税が非課税など特例があります。上の区分は概算の目安です。正確な税率は税理士にご確認のうえ、必要に応じて手入力で調整してください。</div>'
           +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin:16px 0 8px;">事業保障（経営者の万一に備える額）</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
             +'<div><label class="fl">借入金・負債残高</label><input id="bp-debt" type="number" class="inp2" placeholder="例 8000"></div>'
@@ -486,7 +486,7 @@
             +'<div><label class="fl">既存の法人保険</label><input id="bp-exist" type="number" class="inp2" placeholder="例 1000"></div>'
           +'</div>'
           +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin:16px 0 8px;">損害保険（事業）— 業種別に押さえるべき保障範囲を診断</div>'
-          +'<div><label class="fl">業種</label><select id="pc-industry" class="inp2" style="width:auto;min-width:200px;"><option value="">選択してください</option><option>製造業</option><option>建設業</option><option>飲食業</option><option>小売業</option><option>運送・物流業</option><option>医療・介護・福祉</option><option>IT・通信</option><option>士業・専門サービス</option><option>不動産業</option><option>宿泊・観光</option><option>農林水産業</option><option>その他</option></select></div>'
+          +'<div><label class="fl">業種</label><select id="pc-industry" class="inp2" style="width:auto;min-width:200px;">'+industryOptions()+'</select></div>'
           +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin:16px 0 8px;">養老保険（福利厚生プラン／普遍的加入）</div>'
           +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:8px;line-height:1.6;">満期金受取人=法人、死亡保険金受取人=従業員の遺族。保険料の1/2を損金算入できます（法基通9-3-4／全員または合理的基準での普遍的加入が要件）。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
@@ -804,7 +804,7 @@
     return '<div class="ph" style="font-size:13px;margin-top:16px;">パートナーAIツール：保険必要保障額の試算</div>'
       +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">この顧客向けに試算し、結果を顧客に共有（保存）できます（単位：万円）。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
-        +'<div><label class="fl">法人実効税率(%)</label><select id="ci-tax-preset" class="inp2" onchange="if(this.value){document.getElementById(\'ci-tax-rate\').value=this.value;}"><option value="34">中小法人・標準（約34%）</option><option value="25">所得少なめ（約25%）</option><option value="30">大法人（約30%）</option><option value="">手入力</option></select></div>'
+        +'<div><label class="fl">法人実効税率(%)</label><select id="ci-tax-preset" class="inp2" onchange="if(this.value){document.getElementById(\'ci-tax-rate\').value=this.value;}">'+taxPresetOptions()+'</select></div>'
         +'<div><label class="fl">実効税率(%)</label><input id="ci-tax-rate" type="number" class="inp2" value="34"></div>'
       +'</div>'
       +'<div style="font-weight:600;font-size:12px;color:#1C3557;margin:12px 0 6px;">事業保障（経営者の万一）</div>'
@@ -816,7 +816,7 @@
         +'<div><label class="fl">既存の法人保険</label><input id="ci-bp-exist" type="number" class="inp2" placeholder="例 1000"></div>'
       +'</div>'
       +'<div style="font-weight:600;font-size:12px;color:#1C3557;margin:12px 0 6px;">損害保険（業種診断）</div>'
-      +'<div><label class="fl">業種</label><select id="ci-pc-industry" class="inp2" style="width:auto;min-width:200px;"><option value="">選択してください</option><option>製造業</option><option>建設業</option><option>飲食業</option><option>小売業</option><option>運送・物流業</option><option>医療・介護・福祉</option><option>IT・通信</option><option>士業・専門サービス</option><option>不動産業</option><option>宿泊・観光</option><option>農林水産業</option><option>その他</option></select></div>'
+      +'<div><label class="fl">業種</label><select id="ci-pc-industry" class="inp2" style="width:auto;min-width:200px;">'+industryOptions()+'</select></div>'
       +'<div style="font-weight:600;font-size:12px;color:#1C3557;margin:12px 0 6px;">養老保険（福利厚生プラン／向こう5年）</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
         +'<div><label class="fl">1人あたり死亡退職金(メモ)</label><input id="ci-ec-death" type="number" class="inp2" placeholder="例 500"></div>'
@@ -1248,15 +1248,36 @@
     '建設業':[['建設工事保険・組立保険','工事中の建物・資材の損害'],['請負業者賠償責任','工事に起因する第三者への対人・対物事故'],['労災上乗せ（使用者賠償）','現場での労災・重大事故'],['業務用自動車保険','車両・重機の事故']],
     '飲食業':[['火災保険（店舗・設備）','火災・水濡れ・設備損害'],['生産物賠償（食中毒）','提供した飲食物による食中毒・異物'],['施設賠償責任','店内での客のケガ等'],['休業損害','営業停止中の損失'],['受託物賠償','客の手荷物・貴重品の破損・紛失']],
     '小売業':[['火災保険（店舗・商品）','火災・水濡れ・商品損害'],['施設賠償責任','店舗での客のケガ・商品落下'],['盗難・現金','商品やレジ現金の盗難'],['休業損害','営業停止中の損失']],
+    '卸売業':[['火災保険（倉庫・在庫商品）','倉庫・在庫の火災や自然災害による損害'],['動産総合（商品・輸送）','保管・輸送中の商品の損害'],['生産物賠償責任(PL)','取扱商品の欠陥に起因する事故'],['施設賠償責任','物流拠点での事故'],['休業損害','操業停止中の損失']],
     '運送・物流業':[['業務用自動車保険','対人・対物・車両の事故'],['運送業者貨物賠償','運送中の荷物の損害・賠償'],['労災上乗せ（使用者賠償）','ドライバーの事故']],
-    '医療・介護・福祉':[['医療・施設賠償責任','医療・介護行為に伴う賠償'],['施設賠償責任','来院者・利用者の事故'],['個人情報・サイバー','患者・利用者情報の漏えい'],['休業損害','診療・営業停止']],
+    '医療（病院・診療所）':[['医師賠償責任（医療過誤）','診療・処置に起因する患者への賠償'],['施設賠償責任','来院者の転倒・設備事故'],['個人情報・サイバー','患者情報の漏えい・システム障害'],['休業損害','診療停止中の損失'],['使用者賠償（労災上乗せ）','勤務医・スタッフの労災']],
+    '歯科医院':[['歯科医師賠償責任（治療過誤）','治療・補綴に起因する患者への賠償'],['施設賠償責任','来院者の事故・設備トラブル'],['個人情報・サイバー','患者情報の漏えい'],['休業損害','診療停止中の損失']],
+    '調剤薬局':[['薬剤師賠償責任（調剤過誤）','調剤・服薬指導に起因する賠償'],['生産物賠償責任','医薬品・販売品に起因する事故'],['施設賠償責任','来局者の事故'],['個人情報・サイバー','処方・患者情報の漏えい'],['休業損害','営業停止中の損失']],
+    '介護・福祉施設':[['介護事業者賠償責任','転倒・誤嚥・送迎など介護事故の賠償'],['施設賠償責任','利用者・来訪者の事故'],['個人情報・サイバー','利用者情報の漏えい'],['使用者賠償（労災上乗せ）','職員の労災・腰痛等'],['休業損害','営業停止中の損失']],
+    '動物病院':[['獣医師賠償責任（診療過誤）','診療・処置に起因する賠償'],['受託物賠償（預かり動物）','入院・預かり中の事故'],['施設賠償責任','来院者・飼い主の事故'],['休業損害','診療停止中の損失']],
     'IT・通信':[['IT・専門業務賠償(E&O)','システム不具合・納品物の不備による賠償'],['サイバー保険','情報漏えい・システム障害・ランサム対応'],['個人情報漏えい対応','漏えい時の調査・通知費用'],['施設賠償責任','オフィスでの事故']],
     '士業・専門サービス':[['専門業務賠償責任(E&O)','業務上の過誤による賠償（税理士・会計・パートナー等）'],['個人情報・サイバー','顧客情報の漏えい'],['施設賠償責任','事務所での事故']],
     '不動産業':[['宅建業者賠償責任','仲介・重要事項説明の過誤'],['施設賠償責任','管理物件・店舗での事故'],['火災保険','自社保有物件の損害']],
     '宿泊・観光':[['火災保険（建物・設備）','火災・自然災害'],['施設賠償責任','宿泊客のケガ・食中毒'],['受託物賠償','客の荷物・貴重品'],['休業損害','営業停止中の損失']],
+    '美容・理容・エステ':[['美容業賠償責任','施術による肌トラブル・ケガの賠償'],['施設賠償責任','店内での客の事故'],['受託物賠償','客の持ち物の破損・紛失'],['火災保険（店舗・設備）','火災・水濡れ・設備損害'],['休業損害','営業停止中の損失']],
+    '教育・学習塾':[['施設賠償責任','生徒・来訪者のケガ'],['傷害補償（生徒）','授業・活動中の生徒のケガ'],['個人情報・サイバー','生徒・保護者情報の漏えい'],['火災保険（教室・設備）','火災・設備損害'],['休業損害','休講中の損失']],
+    '自動車整備・販売':[['受託物賠償（預かり車両）','整備・保管中の車両の損害'],['完成作業・生産物賠償','整備不良に起因する事故'],['施設賠償責任','来店者・作業中の事故'],['火災保険（工場・在庫車両）','設備・在庫の損害'],['業務用自動車保険','試運転・回送中の事故']],
+    'クリーニング':[['受託物賠償（預かり品）','衣類の破損・変色・紛失'],['火災保険（店舗・設備）','火災・設備損害'],['施設賠償責任','来店者の事故'],['休業損害','営業停止中の損失']],
+    '警備・ビルメンテナンス':[['請負業者賠償責任','業務遂行に起因する対人・対物事故'],['施設賠償責任','業務中の事故'],['受託物賠償','管理対象物の損害'],['使用者賠償（労災上乗せ）','従業員の労災']],
+    '印刷業':[['火災保険（工場・機械・在庫）','設備・在庫の火災や損害'],['機械保険','印刷機等の偶発的事故'],['生産物賠償責任','納品物の不備に起因する賠償'],['個人情報・サイバー','受託データの漏えい'],['休業損害','操業停止中の損失']],
     '農林水産業':[['火災・農機具保険','設備・機械の損害'],['生産物賠償','出荷物による事故'],['自然災害補償（共済等）','収穫・施設の自然災害']],
     'その他':[['火災保険（建物・設備）','基本の財物補償'],['施設賠償責任','事業活動に伴う対人・対物事故'],['休業損害','被災時の利益・固定費'],['サイバー・個人情報','情報を扱う場合の漏えい対策']]
   };
+  function industryOptions(){ var h='<option value="">選択してください</option>'; Object.keys(INDUSTRY_PC).forEach(function(k){ h+='<option>'+k+'</option>'; }); return h; }
+  var TAX_PRESETS=[
+    {v:'34',l:'中小法人・標準／所得800万円超（約34%）'},
+    {v:'25',l:'中小法人・所得400〜800万円（約25%）'},
+    {v:'22',l:'中小法人・所得400万円以下（約22%）'},
+    {v:'31',l:'大法人・外形標準課税（約31%）'},
+    {v:'30',l:'医療法人・社保診療分の事業税非課税（概算 約30%）'},
+    {v:'',l:'手入力'}
+  ];
+  function taxPresetOptions(){ return TAX_PRESETS.map(function(p){ return '<option value="'+p.v+'">'+p.l+'</option>'; }).join(''); }
   function pcDiagnosis(ind){
     if(!ind || !INDUSTRY_PC[ind]) return '<div style="border:1px dashed #D0DCF0;border-radius:11px;padding:14px 16px;margin-top:12px;font-size:12px;color:#8AA0BE;">損害保険の診断：上の「業種」を選んで計算すると、押さえるべき保障範囲を表示します。</div>';
     var rows=INDUSTRY_PC[ind];
