@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tsugu | Phase 23（顧客は見る・話す／パートナーが入力）</title>
+<title>Tsugu | Phase 25（事業計画書AI・ロードマップ）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -67,11 +67,11 @@
   .rep-li{font-size:12.5px;color:#131E2E;padding:6px 0;border-top:1px solid #EAF0F7;line-height:1.6;}
   @media print{
     body *{visibility:hidden;}
-    #rep-modal, #rep-modal *{visibility:visible;}
-    #rep-modal{position:absolute;inset:0;background:#fff;padding:0;display:block;overflow:visible;}
-    #rep-modal .modal{box-shadow:none;border-radius:0;max-width:none;width:100%;margin:0;animation:none;}
-    #rep-modal .rep-bar{display:none!important;}
-    #rep-body{padding:0;}
+    #rep-modal:not(.hidden), #rep-modal:not(.hidden) *, #bp-modal:not(.hidden), #bp-modal:not(.hidden) *{visibility:visible;}
+    #rep-modal:not(.hidden), #bp-modal:not(.hidden){position:absolute;inset:0;background:#fff;padding:0;display:block;overflow:visible;}
+    #rep-modal .modal, #bp-modal .modal{box-shadow:none;border-radius:0;max-width:none;width:100%;margin:0;animation:none;}
+    .rep-bar{display:none!important;}
+    #rep-body, #bp-body{padding:0;}
     .rep-card{break-inside:avoid;}
     .rep-sec{break-inside:avoid;}
   }
@@ -205,6 +205,19 @@
       <button class="modal-close" onclick="closeReport()" aria-label="閉じる">×</button>
     </div>
     <div id="rep-body" class="modal-body">読み込み中...</div>
+  </div>
+</div>
+
+<!-- ===== BUSINESS PLAN MODAL ===== -->
+<div id="bp-modal" class="modal-back hidden" onclick="if(event.target===this)closeBizplan()">
+  <div class="modal rep-sheet" style="max-width:820px;">
+    <div class="rep-bar modal-head">
+      <span class="mt">事業計画書（ドラフト）</span>
+      <span style="flex:1;"></span>
+      <button class="btn2" onclick="window.print()">印刷 / PDFで保存</button>
+      <button class="modal-close" onclick="closeBizplan()" aria-label="閉じる">×</button>
+    </div>
+    <div id="bp-body" class="modal-body">読み込み中...</div>
   </div>
 </div>
 
@@ -407,29 +420,12 @@
     var view='';
     if(eff==='customer'){
       view=(r==='admin'?adminSwitchHtml('customer'):'')
-        +'<div class="panel"><span class="pill">顧客ポータル</span>'
-        +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">経営者ダッシュボード</h2>'
-        +'<div class="kv">ログイン中：<b>'+esc(email)+'</b>　役割：<b>顧客（経営者）</b></div></div>'
-        +'<div class="panel" id="sec-flow"><div class="ph">価値の流れ</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">AIと自動化でコストを下げ、生まれた余力を次の投資（M&A）へ。</div>'
-          + stepperHtml(prof.stage||1)
-          +'<div style="margin-top:16px;border:1px solid #D0DCF0;border-radius:11px;padding:14px 16px;background:#F5F9FF;">'
-            +'<div style="font-size:13px;font-weight:600;color:#1C3557;margin-bottom:10px;">次の投資に回せる余力（年間）</div>'
-            +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
-              +'<div><label class="fl">自動化で削減できる月額コスト(万円)</label><input id="vj-auto" type="number" class="inp2" placeholder="例 20" oninput="vjCalc()"></div>'
-              +'<div><label class="fl">保険・税の最適化額(年間/万円)</label><input id="vj-ins" type="number" class="inp2" placeholder="例 150" oninput="vjCalc()"></div>'
-            +'</div>'
-            +'<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;flex-wrap:wrap;">'
-              +'<div><div style="font-size:12px;color:#4A6080;">次の投資に回せる余力</div><div id="vj-total" style="font-size:24px;font-weight:600;color:#1E6B45;">0 万円/年</div></div>'
-              +'<button class="btn2" onclick="goMa()">この余力でM&A活用を見る</button>'
-            +'</div>'
-            +'<div style="font-size:11px;color:#8AA0BE;margin-top:8px;line-height:1.6;">保険シミュレーターで計算すると、節税額が自動で反映されます。</div>'
-          +'</div>'
-        +'</div>'
-        +'<div class="panel"><div class="ph">経営サマリー</div><div id="kpi-cards">読み込み中...</div></div>'
+        +'<div class="panel" id="sec-flow"><span class="pill">顧客ポータル</span>'
+        +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">'+esc(prof.company_name||'経営者ダッシュボード')+'</h2>'
+        +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b></div>'
+        +'<div id="dash-hero">読み込み中...</div></div>'
         +'<div class="panel" id="sec-status"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">資金繰りステータス<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadCashStatus()">↺ 更新</span></div><div id="cash-status" style="margin-top:4px;">読み込み中...</div></div>'
-        +'<div class="panel"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">要対応アクション<span class="ghost" style="font-size:11px;font-weight:400;" onclick="goSec(\'sec-act\')">課題の追加・一覧 →</span></div><div id="todo-list" style="margin-top:4px;">読み込み中...</div></div>'
-        +'<div class="panel"><div class="ph">担当パートナーからの提案</div><div id="my-notes" style="margin-top:4px;">読み込み中...</div></div>'
+        +'<div class="panel"><div class="ph">経営サマリー</div><div id="kpi-cards">読み込み中...</div></div>'
         +'<div class="panel" id="sec-chat"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">担当パートナーとのメッセージ<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMyChat()">↺ 更新</span></div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;line-height:1.6;">数値の報告・質問・相談など、何でもお送りください。月次の売上などはメッセージで伝えるだけでOK（入力はパートナーが代行します）。</div>'
           +'<div id="chat-log" style="max-height:320px;overflow:auto;border:1px solid #EAF0F7;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;">読み込み中...</div>'
@@ -438,6 +434,18 @@
             +'<button class="btn2" id="chat-send" onclick="sendMyChat()">送信</button>'
           +'</div>'
           +'<div style="font-size:11px;color:#8AA0BE;margin-top:6px;line-height:1.6;">※ 返信には少しお時間をいただく場合があります（目安：2〜3営業日以内）。お急ぎの場合はお電話等でご連絡ください。</div>'
+        +'</div>'
+        +'<div class="panel"><div class="ph">担当パートナーからの提案</div><div id="my-notes" style="margin-top:4px;">読み込み中...</div></div>'
+        +'<div class="panel"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">要対応アクション<span class="ghost" style="font-size:11px;font-weight:400;" onclick="goSec(\'sec-act\')">課題の追加・一覧 →</span></div><div id="todo-list" style="margin-top:4px;">読み込み中...</div></div>'
+        +'<div class="panel" id="sec-roadmap"><div class="ph">Tsuguでこれから出来ること</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">プラットフォーム内で資金調達から投資・M&Aまで完結する仕組みを準備中です。ご興味があれば「メッセージ」で担当パートナーにお知らせください（優先案内します）。</div>'
+          +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+          +'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">🏦</span><span style="font-size:13px;font-weight:700;color:#1C3557;">Tsugu融資</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">資金繰りステータスのスコアと財務データをもとに、提携金融機関への融資申込・取次がワンクリックで完結。事業計画書も自動添付。</div>'+'</div>'+'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">📈</span><span style="font-size:13px;font-weight:700;color:#1C3557;">Tsugu投資・M&Aマーケット</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">生まれた余力の運用や、買収・売却の相手探しをプラットフォーム内で。匿名での打診から成約まで伴走します。</div>'+'</div>'+'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">📂</span><span style="font-size:13px;font-weight:700;color:#1C3557;">ファイル読み込み</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">試算表・決算書・通帳データをアップロードするだけで、財務メモや資金繰りに自動反映。入力ゼロへ。</div>'+'</div>'
+          +'</div>'
+        +'</div>'
+        +'<div class="panel" id="sec-journey"><div class="ph">価値の流れ（Tsuguの支援ステップ）</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">AIと自動化でコストを下げ、生まれた余力を次の投資（M&A）へ。あなたの現在地はパートナーが面談ごとに更新します。</div>'
+          + stepperHtml(prof.stage||1)
         +'</div>'
         +'<div class="panel" id="sec-company"><div class="ph">会社情報</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
@@ -508,14 +516,11 @@
         +'</div>';
     } else if(eff==='consultant'){
       view=(r==='admin'?adminSwitchHtml('fde'):'')
-        +'<div class="panel"><span class="pill" style="background:#E7F0FB;color:#2C6EBD;">パートナーポータル</span>'
+        +'<div class="panel" id="sec-flow"><span class="pill" style="background:#E7F0FB;color:#2C6EBD;">パートナーポータル</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">パートナーポータル</h2>'
-        +'<div style="font-size:12px;color:#4A6080;margin:0 0 8px;line-height:1.5;">AIを活用し、お客様に寄り添って伴走する身近なパートナーです。</div>'
-        +'<div class="kv">ログイン中：<b>'+esc(email)+'</b>　役割：<b>'+roleLabel(r)+'</b>'+(prof.fde_rank?'　ランク：<b>'+esc(prof.fde_rank)+'</b>':'')+'</div></div>'
-        +'<div class="panel" id="sec-flow"><div class="ph">価値の流れ（顧客への提案軸）</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">AI・自動化 → コスト削減 → 余力 → 次の投資（M&A）の流れで支援します。</div>'
-          + stepperHtml()
-        +'</div>'
+        +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b>'+(prof.fde_rank?'　ランク：<b>'+esc(prof.fde_rank)+'</b>':'')+'</div>'
+        +'<div id="fde-hero" style="display:flex;gap:8px;flex-wrap:wrap;">読み込み中...</div></div>'
+        +'<div class="panel" id="sec-followups"><div class="ph">対応リスト（要返信・顧客からの共有）</div><div id="fde-followups" style="margin-top:6px;">読み込み中...</div></div>'
         +'<div class="panel" id="sec-clients"><div class="ph">担当顧客を追加</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;">顧客として登録済みのメールアドレスを入力すると、担当顧客として紐づきます。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
@@ -523,7 +528,16 @@
             +'<button class="btn2" onclick="claimClient()">担当に追加</button>'
           +'</div><div id="cl-msg" style="font-size:12px;margin-top:8px;"></div>'
         +'</div>'
-        +'<div class="panel" id="sec-followups"><div class="ph">対応リスト（顧客からの共有）</div><div id="fde-followups" style="margin-top:6px;">読み込み中...</div></div>'
+        +'<div class="panel" id="sec-roadmap2"><div class="ph">パートナー向け：今後追加される機能</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">提案の幅が広がる機能を順次リリースします。先行利用のご希望は運営までお知らせください。</div>'
+          +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+          +'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">🎙️</span><span style="font-size:13px;font-weight:700;color:#1C3557;">議事録作成</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">面談を録音すると自動で文字起こし・議事録化。要点とToDoを抽出し、顧客の課題・提案メモへワンクリック反映。</div>'+'</div>'+'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">📂</span><span style="font-size:13px;font-weight:700;color:#1C3557;">ファイル読み込み</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">顧客の試算表・決算書を取り込み、月次財務・資金繰り診断へ自動反映。代行入力の手間を大幅削減。</div>'+'</div>'+'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">🏦</span><span style="font-size:13px;font-weight:700;color:#1C3557;">Tsugu融資 取次</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">資金繰りスコア・事業計画書とセットで提携金融機関へ送客。進捗管理と成約フィーの仕組みを提供予定。</div>'+'</div>'+'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">📈</span><span style="font-size:13px;font-weight:700;color:#1C3557;">Tsugu投資・M&Aマーケット</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">担当顧客の譲渡・買収ニーズを匿名登録し、プラットフォーム内でマッチング。M&A案件の組成を支援。</div>'+'</div>'
+          +'</div>'
+        +'</div>'
+        +'<div class="panel" id="sec-journey2"><div class="ph">価値の流れ（顧客への提案軸）</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">①現状把握 → ②AI・自動化 → ③コスト削減 → ④余力 → ⑤次の投資（M&A）の流れで支援します。</div>'
+          + stepperHtml()
+        +'</div>'
         +'<div class="panel"><div class="ph">担当顧客一覧</div>'
           +'<div id="cl-list" style="margin-top:6px;">読み込み中...</div>'
         +'</div>'
@@ -541,7 +555,7 @@
     }
 
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); }
+    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); }
     else if(eff==='consultant'){ loadClients(); loadFollowups(); }
     else { loadAdmin(); }
   }
@@ -822,6 +836,147 @@
     if(scope==='cl' && CURRENT_CLIENT) loadClientPayments(CURRENT_CLIENT.id); else loadMyPayments();
   }
 
+  // ---- 事業計画書（AI・パートナー用）----
+  function closeBizplan(){ var m=$('bp-modal'); if(m){ m.classList.add('hidden'); document.body.style.overflow=''; } }
+  async function runBizplan(custId){
+    var btn=$('bp-run'), msg=$('bp-msg');
+    if(btn){ btn.disabled=true; btn.textContent='作成中...（30秒ほどかかります）'; }
+    if(msg){ msg.style.color='#8AA0BE'; msg.textContent='財務データを読み込み、AIが計画書を作成しています...'; }
+    try{
+      var goal=$('bp-goal')?$('bp-goal').value:'銀行融資の申込';
+      var amount=$('bp-amount')?$('bp-amount').value:'';
+      var use=$('bp-use')?$('bp-use').value.trim():'';
+      var r=await Promise.all([
+        sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false}).limit(12),
+        sb.from('cashflow_snapshots').select('*').eq('customer_id',custId).order('created_at',{ascending:false}).limit(1),
+        sb.from('upcoming_payments').select('*').eq('customer_id',custId).order('due_date',{ascending:true}).limit(20),
+        sb.from('ai_diagnoses').select('result_text').eq('customer_id',custId).order('created_at',{ascending:false}).limit(1)
+      ]);
+      var fin=(r[0].data||[]), snap=(r[1].data&&r[1].data[0])||null, pays=(r[2].data||[]), diag=(r[3].data&&r[3].data[0])||null;
+      var co=(CURRENT_CLIENT&&CURRENT_CLIENT.company)||'対象企業';
+      var finTxt=fin.length?fin.map(function(f){return f.year_month+': 売上'+(f.revenue==null?'-':f.revenue)+'万円/営業利益'+(f.profit==null?'-':f.profit)+'万円'+(f.memo?('（'+f.memo+'）'):'');}).join('\n'):'（月次財務データなし）';
+      var snapTxt=snap?('現預金'+(snap.cash||'-')+'万円、月商'+(snap.monthly_in||'-')+'万円、月間支出'+(snap.monthly_out||'-')+'万円、月間返済'+(snap.monthly_repay||'-')+'万円、資金繰りスコア'+(snap.score||'-')+'点'):'（資金繰り診断なし）';
+      var payTxt=pays.length?pays.map(function(p){return p.due_date+' '+p.title+' '+p.amount+'万円';}).join('、'):'（支払予定なし）';
+      var sys='あなたは中小企業の資金調達支援に精通した経営コンサルタントです。金融機関に提出できる水準の、誠実で現実的な事業計画書ドラフトを日本語で作成します。誇張や根拠のない数値は書かず、与えられたデータに基づき、不明な項目は「（要記入）」と明示します。出力は必ず次のJSON形式のみ：{"sections":[{"title":"見出し","body":"本文（改行は\\nで）"}]}。セクション構成：1.エグゼクティブサマリー 2.会社概要（要記入欄含む） 3.事業内容と強み 4.市場環境と顧客 5.財務状況（実績データの要約と分析） 6.資金計画（調達額・使途・自己資金） 7.返済計画・収支見通し 8.リスクと対応策 9.実行スケジュール。';
+      var usr='企業名：'+co+'\n目的：'+goal+(amount?('\n調達希望額：'+amount+'万円'):'')+(use?('\n資金使途・補足：'+use):'')+'\n\n【月次財務実績（直近）】\n'+finTxt+'\n\n【資金繰り状況】\n'+snapTxt+'\n\n【今後の支払予定】\n'+payTxt+(diag?('\n\n【AI業務診断の要点】\n'+String(diag.result_text||'').slice(0,800)):'');
+      var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:[{role:'user',content:usr}], model:'claude-sonnet-4-6', max_tokens:4000 } });
+      if(res.error) throw new Error(res.error.message||'AI呼び出しエラー');
+      var txt=''; try{ var d=res.data; txt=(d&&d.content&&d.content.map?d.content.map(function(c){return c.text||'';}).join(''):String(d||'')); }catch(_){ txt=String(res.data||''); }
+      var plan=null; try{ var i1=txt.indexOf('{'), i2=txt.lastIndexOf('}'); plan=JSON.parse(txt.slice(i1,i2+1)); }catch(_){ plan=null; }
+      var body=$('bp-body'); if(!body) throw new Error('表示先がありません');
+      var today=new Date().toISOString().slice(0,10);
+      var h='<div class="rep-sec" style="margin-bottom:14px;">'
+        +'<div style="display:flex;align-items:flex-start;gap:10px;"><div style="font-family:\'DM Sans\',sans-serif;font-size:22px;font-weight:600;color:#1C3557;">Tsugu</div><div style="flex:1;"></div><div style="text-align:right;font-size:11px;color:#8AA0BE;">作成日：'+esc(today)+'</div></div>'
+        +'<div style="font-size:18px;font-weight:700;color:#131E2E;margin-top:8px;">事業計画書（ドラフト）</div>'
+        +'<div class="rep-meta" style="margin-top:4px;">'+esc(co)+'　／　目的：'+esc(goal)+(amount?('　／　調達希望額：'+esc(amount)+'万円'):'')+'</div></div>';
+      if(plan&&plan.sections&&plan.sections.length){
+        plan.sections.forEach(function(sec,i){ h+='<div class="rep-sec"><div class="rep-h">'+(i+1)+'. '+esc(sec.title||'')+'</div><div style="font-size:12.5px;color:#131E2E;line-height:1.8;white-space:pre-wrap;">'+esc(sec.body||'')+'</div></div>'; });
+      } else {
+        h+='<div class="rep-sec"><div style="font-size:12.5px;color:#131E2E;line-height:1.8;white-space:pre-wrap;">'+esc(txt)+'</div></div>';
+      }
+      h+='<div style="font-size:10px;color:#8AA0BE;border-top:1px solid #EAF0F7;padding-top:8px;margin-top:6px;">本計画書はTsuguで自動生成されたドラフトです。「（要記入）」欄の補完と、数値・記載内容の最終確認のうえご利用ください。提出可否・条件は金融機関・専門家の確認が必要です。</div>';
+      body.innerHTML=h;
+      var m=$('bp-modal'); if(m){ m.classList.remove('hidden'); document.body.style.overflow='hidden'; }
+      if(msg){ msg.style.color='#1E6B45'; msg.textContent='作成しました。内容を確認のうえ印刷／PDF保存できます。'; }
+    }catch(e){
+      if(msg){ msg.style.color='#A83030'; msg.textContent='作成エラー：'+(e&&e.message?e.message:e); }
+    }
+    if(btn){ btn.disabled=false; btn.textContent='計画書を作成'; }
+  }
+
+  // ---- 資金見通しの共通計算 ----
+  function cfProject(snap, pays){
+    var today=new Date(); var todayS=today.toISOString().slice(0,10);
+    var future=(pays||[]).filter(function(p){ return p.due_date && p.due_date>=todayS; });
+    var out={ future:future, months:[], shortMonth:null, runway:null, cash:null, net:null, warnLine:null };
+    if(!snap) return out;
+    var cash=Number(snap.cash||0), inflow=Number(snap.monthly_in||0), outflow=Number(snap.monthly_out||0), repay=Number(snap.monthly_repay||0);
+    var net=inflow-outflow-repay;
+    out.cash=cash; out.net=net; out.warnLine=outflow+repay;
+    out.runway=(outflow+repay)>0 ? cash/(outflow+repay) : 99;
+    var bal=cash;
+    for(var i=1;i<=6;i++){
+      var mDate=new Date(today.getFullYear(), today.getMonth()+i, 1);
+      var mStart=mDate.toISOString().slice(0,10);
+      var mEnd=new Date(today.getFullYear(), today.getMonth()+i+1, 0).toISOString().slice(0,10);
+      var mPay=future.filter(function(p){ return p.due_date>=mStart && p.due_date<=mEnd; }).reduce(function(a,p){ return a+Number(p.amount||0); },0);
+      bal=bal+net-mPay;
+      var lbl=(mDate.getMonth()+1)+'月';
+      out.months.push({lbl:lbl, bal:bal, pay:mPay});
+      if(out.shortMonth===null && bal<0) out.shortMonth=lbl;
+    }
+    return out;
+  }
+
+  // ---- 今日のサマリー（ダッシュボード最上部）----
+  async function loadDashHero(){
+    var box=$('dash-hero'); if(!box)return;
+    var todayS=new Date().toISOString().slice(0,10);
+    var r=await Promise.all([
+      sb.from('financial_entries').select('year_month,revenue,profit').eq('customer_id',ME).order('year_month',{ascending:false}).limit(2),
+      sb.from('cashflow_snapshots').select('*').eq('customer_id',ME).order('created_at',{ascending:false}).limit(1),
+      sb.from('upcoming_payments').select('amount,due_date').eq('customer_id',ME),
+      sb.from('action_items').select('status,due_date').eq('customer_id',ME),
+      sb.from('fde_notes').select('created_at').eq('customer_id',ME).order('created_at',{ascending:false}).limit(1),
+      sb.from('chat_messages').select('sender_role,created_at').eq('customer_id',ME).order('created_at',{ascending:false}).limit(1)
+    ]);
+    var fin=(r[0].data||[]), snap=(r[1].data&&r[1].data[0])||null, pays=(r[2].error?[]:(r[2].data||[]));
+    var acts=(r[3].data||[]), note=(r[4].data&&r[4].data[0])||null, lastMsg=(r[5].data&&r[5].data[0])||null;
+    function chip(label, value, color, target, sub){
+      return '<div onclick="goSec(\''+target+'\')" style="cursor:pointer;flex:1 1 130px;min-width:130px;background:#F7FAFD;border:1px solid #EAF0F7;border-radius:11px;padding:10px 14px;">'
+        +'<div style="font-size:11px;color:#4A6080;">'+label+'</div>'
+        +'<div style="font-size:17px;font-weight:700;color:'+(color||'#1C3557')+';margin-top:2px;line-height:1.3;">'+value+'</div>'
+        +(sub?'<div style="font-size:10px;color:#8AA0BE;margin-top:2px;">'+sub+'</div>':'')
+      +'</div>';
+    }
+    var h='', alerts=[];
+    var isNew = !fin.length && !snap && !acts.length && !note && !lastMsg;
+    if(isNew){
+      h+='<div style="border:1px solid #D0DCF0;border-radius:12px;padding:14px 16px;background:#F5F9FF;">'
+        +'<div style="font-size:14px;font-weight:700;color:#1C3557;margin-bottom:8px;">ようこそ。まずはこの3つだけ</div>'
+        +'<div style="font-size:13px;color:#131E2E;line-height:2;">'
+        +'① <a onclick="goSec(\'sec-company\')" style="color:#2C6EBD;cursor:pointer;font-weight:600;">会社情報</a> に会社名を登録（30秒）<br>'
+        +'② <a onclick="goSec(\'sec-chat\')" style="color:#2C6EBD;cursor:pointer;font-weight:600;">メッセージ</a> で担当パートナーにあいさつ・直近の売上を送る<br>'
+        +'③ <a onclick="goSec(\'sec-ai\')" style="color:#2C6EBD;cursor:pointer;font-weight:600;">AI自動化診断</a> を試す（タップするだけ）'
+        +'</div></div>';
+      box.innerHTML=h; return;
+    }
+    var cur=fin[0]||null, prev=fin[1]||null;
+    if(cur){
+      var rv=cur.revenue!=null?Number(cur.revenue):null, pf=cur.profit!=null?Number(cur.profit):null;
+      var arrow='';
+      if(prev && rv!=null && prev.revenue!=null){ var d=rv-Number(prev.revenue); arrow=d>=0?' <span style="color:#1E6B45;font-size:12px;">▲</span>':' <span style="color:#A83030;font-size:12px;">▼</span>'; }
+      h+=chip('売上（'+esc(cur.year_month)+'）', (rv==null?'-':rv.toLocaleString('ja-JP')+'万')+arrow, '#1C3557', 'sec-status');
+      h+=chip('営業利益', pf==null?'-':pf.toLocaleString('ja-JP')+'万', (pf!=null&&pf<0)?'#A83030':'#1C3557', 'sec-status');
+    } else {
+      h+=chip('財務データ', '未登録', '#8AA0BE', 'sec-chat', 'メッセージで数値を送る');
+    }
+    if(snap){
+      var pj=cfProject(snap, pays);
+      var score=Number(snap.score||0);
+      var scol=score>=80?'#1E6B45':(score>=60?'#2C6EBD':(score>=40?'#C89620':'#A83030'));
+      h+=chip('資金スコア', score+'点', scol, 'sec-status', '手元資金 '+(pj.runway>=99?'十分':pj.runway.toFixed(1)+'か月分'));
+      if(pj.shortMonth) alerts.push(['#A83030','⚠ このままだと <b>'+pj.shortMonth+'</b> に資金不足の見込み。早めにパートナーへご相談ください。','sec-status']);
+      else if(pj.months.some(function(m){return m.bal<pj.warnLine;})) alerts.push(['#C89620','残高が薄くなる月があります。「資金繰りステータス」をご確認ください。','sec-status']);
+    } else {
+      h+=chip('資金スコア', '未診断', '#8AA0BE', 'sec-status', 'パートナーが診断します');
+    }
+    var in30=pays.filter(function(p){ return p.due_date && p.due_date>=todayS && (new Date(p.due_date)-new Date(todayS))/86400000<=30; });
+    var sum30=in30.reduce(function(a,p){ return a+Number(p.amount||0); },0);
+    h+=chip('30日以内の支払', sum30.toLocaleString('ja-JP')+'万', sum30>0?'#1C3557':'#8AA0BE', 'sec-cash', in30.length+'件');
+    var open=acts.filter(function(a){ return a.status!=='done'; });
+    var over=open.filter(function(a){ return a.due_date && a.due_date<todayS; });
+    h+=chip('要対応', open.length+'件', over.length?'#A83030':(open.length?'#C89620':'#1E6B45'), 'sec-act', over.length?('期限超過 '+over.length+'件'):'');
+    if(over.length) alerts.push(['#A83030','期限を過ぎた課題が <b>'+over.length+'件</b> あります。','sec-act']);
+    var d7=7*86400000;
+    if(lastMsg && lastMsg.sender_role!=='customer' && (new Date()-new Date(lastMsg.created_at))<d7) alerts.push(['#2C6EBD','パートナーから新しいメッセージが届いています。','sec-chat']);
+    else if(note && (new Date()-new Date(note.created_at))<d7) alerts.push(['#2C6EBD','パートナーから新しい提案が届いています。','sec-flow']);
+    var out='<div style="display:flex;gap:8px;flex-wrap:wrap;">'+h+'</div>';
+    alerts.forEach(function(a){ out+='<div onclick="goSec(\''+a[2]+'\')" style="cursor:pointer;border-left:3px solid '+a[0]+';background:'+a[0]+'14;border-radius:8px;padding:9px 12px;margin-top:8px;font-size:13px;color:'+a[0]+';font-weight:600;">'+a[1]+' <span style="font-weight:400;font-size:11px;">確認する →</span></div>'; });
+    if(!alerts.length) out+='<div style="border-left:3px solid #1E6B45;background:#F0F8F3;border-radius:8px;padding:9px 12px;margin-top:8px;font-size:13px;color:#1E6B45;">本日、緊急の対応事項はありません。</div>';
+    box.innerHTML=out;
+  }
+
   // ---- 資金繰りステータス（ダッシュボード）----
   async function loadCashStatus(){
     var box=$('cash-status'); if(!box)return;
@@ -881,6 +1036,7 @@
         +'</div>';
       });
       h+='<div style="font-size:10px;color:#8AA0BE;margin-top:4px;">※ 最終診断時の月間収支（売上−支出−返済）が続く前提＋支払予定を差し引いた概算です。診断を実行し直すと更新されます。</div>';
+      h+='<div style="font-size:11px;color:#9A7314;background:#FAEEDA;border-radius:8px;padding:8px 12px;margin-top:10px;">🏦 <b>Tsugu融資（今後実装予定）</b>：このスコアと見通しをもとに、提携金融機関への申込がここから直接できるようになります。お急ぎの資金ニーズは「メッセージ」でご相談ください。</div>';
     } else if(snapErr){
       h+='<div style="font-size:12px;color:#8AA0BE;line-height:1.7;">資金繰りステータスを使うには、Phase 22 のSQL設定が必要です。</div>';
     } else {
@@ -959,6 +1115,15 @@
     var lastMsg={};
     if(!ch.error){ (ch.data||[]).forEach(function(m){ if(!lastMsg[m.customer_id]) lastMsg[m.customer_id]=m; }); }
     var needReply={}; Object.keys(lastMsg).forEach(function(id){ if(lastMsg[id].sender_role==='customer') needReply[id]=lastMsg[id].created_at; });
+    var hero=$('fde-hero');
+    if(hero){
+      var nr=Object.keys(needReply).length;
+      var shares=Object.keys(cnt).length;
+      function fchip(l,v,c,t){ return '<div onclick="goSec(\''+t+'\')" style="cursor:pointer;flex:1 1 120px;min-width:120px;background:#F7FAFD;border:1px solid #EAF0F7;border-radius:11px;padding:10px 14px;"><div style="font-size:11px;color:#4A6080;">'+l+'</div><div style="font-size:17px;font-weight:700;color:'+c+';margin-top:2px;">'+v+'</div></div>'; }
+      hero.innerHTML=fchip('要返信', nr+'件', nr?'#A83030':'#1E6B45', 'sec-followups')
+        +fchip('共有あり顧客', shares+'社', shares?'#C89620':'#8AA0BE', 'sec-followups')
+        +fchip('担当顧客', clients.length+'社', '#1C3557', 'sec-clients');
+    }
     var rows=clients.filter(function(c){ return cnt[c.id] || needReply[c.id]; });
     if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">対応が必要な項目はありません。顧客がメッセージや「興味あり」の共有を行うと、ここに表示されます。</div>'; return; }
     rows.sort(function(a,b){ var ra=needReply[a.id]?0:1, rb=needReply[b.id]?0:1; return ra-rb; });
@@ -1073,7 +1238,7 @@
 
   function openClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.remove('hidden'); document.body.style.overflow='hidden'; }
   function closeClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.add('hidden'); document.body.style.overflow=''; }
-  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var m=$('cl-modal'); if(m && !m.classList.contains('hidden')) closeClientModal(); var r=$('rep-modal'); if(r && !r.classList.contains('hidden')) closeReport(); } });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var m=$('cl-modal'); if(m && !m.classList.contains('hidden')) closeClientModal(); var r=$('rep-modal'); if(r && !r.classList.contains('hidden')) closeReport(); var b=$('bp-modal'); if(b && !b.classList.contains('hidden')) closeBizplan(); } });
   // Enterキーで送信（ログイン系フォーム／AI秘書）
   document.addEventListener('keydown',function(e){
     if(e.key!=='Enter') return;
@@ -1309,6 +1474,15 @@
         +'<button class="btn2" id="ma2-run" onclick="runMaFor(\''+custId+'\')">AIで提案を作成</button>'
       +'</div>'
       +'<div id="ma2-result" style="margin-top:12px;"></div>'
+      +'<div class="ph" style="font-size:13px;margin-top:18px;">事業計画書の作成（AI）</div>'
+      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">登録済みの財務データと資金繰り診断を自動で読み込み、金融機関提出用ドラフトを作成します（印刷／PDF可）。</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+        +'<div><label class="fl">目的</label><select id="bp-goal" class="inp2"><option>銀行融資の申込</option><option>公庫融資の申込</option><option>補助金申請の事業計画</option><option>経営改善計画</option><option>社内計画・中期経営計画</option></select></div>'
+        +'<div><label class="fl">調達希望額（万円・任意）</label><input id="bp-amount" type="number" class="inp2" placeholder="例 1000"></div>'
+        +'<div style="flex:1;min-width:200px;"><label class="fl">資金使途・補足（任意）</label><input id="bp-use" class="inp2" style="width:100%;" placeholder="例：設備更新500万・運転資金500万。新店舗出店を計画。"></div>'
+        +'<button class="btn2" id="bp-run" onclick="runBizplan(\''+custId+'\')">計画書を作成</button>'
+      +'</div>'
+      +'<div id="bp-msg" style="font-size:12px;margin-top:6px;"></div>'
       + insPanelHtmlClient(custId)
     +'</div>';
     // ---- タブ4：顧客からの共有 ----
