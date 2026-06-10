@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tsugu | Phase 25（事業計画書AI・ロードマップ）</title>
+<title>Tsugu | Phase 26（資金調達パイプライン管理）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -333,7 +333,7 @@
     var nav=$('app-nav'); if(!nav)return;
     var items;
     if(r==='customer') items=[['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','保険試算'],['sec-ma','M&A活用'],['sec-sec','パートナーAI']];
-    else if(r==='admin') items=[['sec-flow','ダッシュボード'],['sec-fde','パートナー'],['sec-cust','顧客']];
+    else if(r==='admin') items=[['sec-flow','ダッシュボード'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達']];
     else items=[['sec-flow','ダッシュボード'],['sec-followups','対応リスト'],['sec-clients','担当顧客'],['sec-sec','AI秘書']];
     var h='<div class="sb-sec">メニュー</div>';
     items.forEach(function(it,i){ h+='<div class="ni'+(i===0?' active':'')+'" onclick="goSec(\''+it[0]+'\',this)">'+it[1]+'</div>'; });
@@ -359,7 +359,9 @@
         +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">顧客支援の共通の流れです。</div>'+ stepperHtml() +'</div>'
       +'<div class="panel" id="sec-fde"><div class="ph">パートナー 一覧・管理</div><div id="adm-fde" style="margin-top:6px;">読み込み中...</div></div>'
       +'<div class="panel" id="sec-cust"><div class="ph">顧客 一覧・管理</div><div id="adm-cust" style="margin-top:6px;">読み込み中...</div></div>'
-      +'<div class="panel"><div class="ph">資金調達ロードマップ</div><div style="font-size:12px;color:#8AA0BE;">（次のフェーズで追加予定）</div></div>';
+      +'<div class="panel" id="sec-fund"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">資金調達パイプライン（全顧客）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadFundingPipeline()">↺ 更新</span></div>'
+        +'<div style="font-size:12px;color:#8AA0BE;margin:0 0 8px;">パートナーが登録した全顧客の調達案件を一元管理できます。状態はここから直接変更できます（Tsugu融資の取次台帳としてそのまま発展させます）。</div>'
+        +'<div id="adm-fund" style="margin-top:4px;">読み込み中...</div></div>';
   }
   var FDE_RANKS=['Associate','Senior','Executive','Premium Partner'];
   function roleSelect(u){
@@ -367,6 +369,7 @@
     return '<select class="inp2" onchange="setUserRole(\''+u.id+'\',this.value)">'+o('customer','顧客')+o('consultant','パートナー')+o('admin','運営')+'</select>';
   }
   async function loadAdmin(){
+    loadFundingPipeline();
     var res=await sb.from('profiles').select('*');
     var fb=$('adm-fde'), cb=$('adm-cust');
     if(res.error){ if(fb)fb.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
@@ -828,6 +831,7 @@
     $('cpay-title').value=''; $('cpay-amount').value=''; $('cpay-due').value='';
     if(msg){msg.style.color='#1E6B45'; msg.textContent='追加しました（顧客の資金繰りステータスに反映されます）';}
     loadClientPayments(custId);
+    loadClientFunding(custId);
   }
   async function delPayment(id, scope){
     if(!confirm('この支払予定を削除します。よろしいですか？')) return;
@@ -882,6 +886,112 @@
       if(msg){ msg.style.color='#A83030'; msg.textContent='作成エラー：'+(e&&e.message?e.message:e); }
     }
     if(btn){ btn.disabled=false; btn.textContent='計画書を作成'; }
+  }
+
+  // ---- 資金調達ロードマップ ----
+  var FUND_STATUS=['検討中','準備中','申請中','審査中','承認','実行済','見送り'];
+  var FUND_TYPES=['日本政策金融公庫','銀行融資（プロパー）','保証協会付融資','ビジネスローン','リスケジュール','補助金・助成金','投資・出資','その他'];
+  function fundColor(st){ return st==='実行済'?'#1E6B45':(st==='承認'?'#2C9E5F':(st==='申請中'||st==='審査中'?'#C89620':(st==='準備中'?'#2C6EBD':(st==='見送り'?'#A83030':'#8AA0BE')))); }
+  function fundBadge(st){ var c=fundColor(st); return '<span style="font-size:10px;font-weight:600;color:#fff;background:'+c+';border-radius:99px;padding:2px 9px;white-space:nowrap;">'+esc(st)+'</span>'; }
+  function fundStatusSelect(id, cur, scope){
+    var h='<select class="inp2" style="font-size:11px;padding:4px 8px;" onchange="setFundStatus(\''+id+'\',this.value,\''+scope+'\')">';
+    FUND_STATUS.forEach(function(st){ h+='<option'+(st===cur?' selected':'')+'>'+st+'</option>'; });
+    return h+'</select>';
+  }
+  function fundTable(rows, scope, editable){
+    if(!rows||!rows.length) return '<div style="font-size:12px;color:#8AA0BE;">調達案件はまだ登録されていません。</div>';
+    var h='<table class="ft"><tr><th>手段</th><th>案件名</th><th style="text-align:right;">金額(万円)</th><th>目標日</th><th>状態</th>'+(editable?'<th></th>':'')+'</tr>';
+    rows.forEach(function(r){
+      h+='<tr><td style="color:#4A6080;">'+esc(r.source_type||'')+'</td>'
+        +'<td>'+esc(r.title)+(r.note?'<div style="font-size:10px;color:#8AA0BE;">'+esc(r.note)+'</div>':'')+'</td>'
+        +'<td style="text-align:right;font-weight:600;">'+Number(r.amount||0).toLocaleString('ja-JP')+'</td>'
+        +'<td style="color:#4A6080;">'+esc(r.target_date||'-')+'</td>'
+        +'<td>'+(editable?fundStatusSelect(r.id, r.status, scope):fundBadge(r.status))+'</td>'
+        +(editable?'<td style="text-align:right;"><span onclick="delFundItem(\''+r.id+'\',\''+scope+'\')" style="color:#A83030;cursor:pointer;font-size:11px;">削除</span></td>':'')
+        +'</tr>';
+    });
+    return h+'</table>';
+  }
+  function fundProgressHtml(funds){
+    var act=(funds||[]).filter(function(f){ return f.status!=='見送り'; });
+    if(!act.length) return '';
+    var total=act.reduce(function(a,f){ return a+Number(f.amount||0); },0);
+    var done=act.filter(function(f){ return f.status==='実行済'; }).reduce(function(a,f){ return a+Number(f.amount||0); },0);
+    var pct=total>0?Math.round(done/total*100):0;
+    var h='<div style="font-weight:600;font-size:13px;color:#1C3557;margin:16px 0 8px;">資金調達の進捗（担当パートナーが管理）</div>';
+    h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><div style="flex:1;background:#EEF3FA;border-radius:6px;height:14px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:linear-gradient(90deg,#2C9E5F,#1E6B45);border-radius:6px;"></div></div><span style="font-size:12px;font-weight:700;color:#1E6B45;white-space:nowrap;">'+done.toLocaleString('ja-JP')+'万 / '+total.toLocaleString('ja-JP')+'万円（'+pct+'%）</span></div>';
+    act.forEach(function(f){
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid #EAF0F7;font-size:12.5px;">'
+        +fundBadge(f.status)
+        +'<span style="flex:1;color:#131E2E;">'+esc(f.title)+'<span style="color:#8AA0BE;font-size:11px;">（'+esc(f.source_type||'')+'）</span></span>'
+        +'<span style="font-weight:600;color:#1C3557;white-space:nowrap;">'+Number(f.amount||0).toLocaleString('ja-JP')+'万円</span>'
+        +(f.target_date?'<span style="font-size:11px;color:#8AA0BE;white-space:nowrap;">'+esc(f.target_date)+'</span>':'')
+      +'</div>';
+    });
+    return h;
+  }
+  async function loadClientFunding(custId){
+    var box=$('cl-fund'); if(!box)return;
+    var res=await sb.from('funding_roadmap_items').select('*').eq('customer_id',custId).order('created_at',{ascending:false});
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(res.error.message)+'<br><span style="color:#8AA0BE;">（Phase26のSQL未実施の可能性があります）</span></div>'; return; }
+    box.innerHTML=fundTable(res.data,'cl',true);
+  }
+  async function addFundItem(custId){
+    var t=$('fr-title').value.trim(), ty=$('fr-type').value, a=$('fr-amount').value, d=$('fr-date').value, n=$('fr-note').value.trim();
+    var msg=$('fr-msg');
+    if(!t){ if(msg){msg.style.color='#A83030'; msg.textContent='案件名を入力してください';} return; }
+    var res=await sb.from('funding_roadmap_items').insert({ customer_id:custId, source_type:ty, title:t, amount:(a===''?0:Number(a)), target_date:(d||null), note:(n||null), created_by:ME });
+    if(res.error){ if(msg){msg.style.color='#A83030'; msg.textContent='登録エラー：'+res.error.message+'（Phase26のSQL未実施の可能性があります）';} return; }
+    $('fr-title').value=''; $('fr-amount').value=''; $('fr-date').value=''; $('fr-note').value='';
+    if(msg){msg.style.color='#1E6B45'; msg.textContent='登録しました（顧客の資金繰りステータスにも表示されます）';}
+    loadClientFunding(custId);
+  }
+  async function setFundStatus(id, st, scope){
+    var res=await sb.from('funding_roadmap_items').update({ status:st, updated_at:new Date().toISOString() }).eq('id',id);
+    if(res.error){ alert('更新エラー：'+res.error.message); return; }
+    if(scope==='adm') loadFundingPipeline(); else if(CURRENT_CLIENT) loadClientFunding(CURRENT_CLIENT.id);
+  }
+  async function delFundItem(id, scope){
+    if(!confirm('この調達案件を削除します。よろしいですか？')) return;
+    var res=await sb.from('funding_roadmap_items').delete().eq('id',id);
+    if(res.error){ alert('削除エラー：'+res.error.message); return; }
+    if(scope==='adm') loadFundingPipeline(); else if(CURRENT_CLIENT) loadClientFunding(CURRENT_CLIENT.id);
+  }
+  async function loadFundingPipeline(){
+    var box=$('adm-fund'); if(!box)return;
+    var r=await Promise.all([
+      sb.from('funding_roadmap_items').select('*').order('updated_at',{ascending:false}),
+      sb.from('profiles').select('id,email,company_name')
+    ]);
+    if(r[0].error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(r[0].error.message)+'<br><span style="color:#8AA0BE;">（Phase26のSQL未実施の可能性があります）</span></div>'; return; }
+    var items=r[0].data||[]; var profs={}; (r[1].data||[]).forEach(function(p){ profs[p.id]=p; });
+    if(!items.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">調達案件はまだありません。パートナーが顧客詳細から登録すると、ここに全社のパイプラインが表示されます。</div>'; return; }
+    var active=items.filter(function(i){ return i.status!=='見送り'; });
+    var sumAll=active.reduce(function(a,i){ return a+Number(i.amount||0); },0);
+    var sumDone=items.filter(function(i){ return i.status==='実行済'; }).reduce(function(a,i){ return a+Number(i.amount||0); },0);
+    var sumProg=items.filter(function(i){ return i.status==='申請中'||i.status==='審査中'||i.status==='承認'; }).reduce(function(a,i){ return a+Number(i.amount||0); },0);
+    function fchip(l,v,c){ return '<div style="flex:1 1 130px;min-width:130px;background:#F7FAFD;border:1px solid #EAF0F7;border-radius:11px;padding:10px 14px;"><div style="font-size:11px;color:#4A6080;">'+l+'</div><div style="font-size:17px;font-weight:700;color:'+c+';margin-top:2px;">'+v+'</div></div>'; }
+    var h='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">'
+      +fchip('案件数（見送り除く）', active.length+'件', '#1C3557')
+      +fchip('調達予定総額', sumAll.toLocaleString('ja-JP')+'万円', '#2C6EBD')
+      +fchip('申請〜承認中', sumProg.toLocaleString('ja-JP')+'万円', '#C89620')
+      +fchip('実行済', sumDone.toLocaleString('ja-JP')+'万円', '#1E6B45')
+    +'</div>';
+    h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">';
+    FUND_STATUS.forEach(function(st){ var n=items.filter(function(i){return i.status===st;}).length; if(n) h+='<span style="font-size:11px;color:'+fundColor(st)+';border:1px solid '+fundColor(st)+'44;border-radius:99px;padding:3px 10px;">'+st+' '+n+'</span>'; });
+    h+='</div>';
+    h+='<table class="ft"><tr><th>顧客</th><th>手段</th><th>案件名</th><th style="text-align:right;">金額(万円)</th><th>目標日</th><th>状態（変更可）</th></tr>';
+    items.forEach(function(i){
+      var pr=profs[i.customer_id]||{};
+      h+='<tr><td style="font-weight:600;color:#1C3557;">'+esc(pr.company_name||pr.email||'-')+'</td>'
+        +'<td style="color:#4A6080;">'+esc(i.source_type||'')+'</td>'
+        +'<td>'+esc(i.title)+(i.note?'<div style="font-size:10px;color:#8AA0BE;">'+esc(i.note)+'</div>':'')+'</td>'
+        +'<td style="text-align:right;font-weight:600;">'+Number(i.amount||0).toLocaleString('ja-JP')+'</td>'
+        +'<td style="color:#4A6080;">'+esc(i.target_date||'-')+'</td>'
+        +'<td>'+fundStatusSelect(i.id, i.status, 'adm')+'</td></tr>';
+    });
+    h+='</table>';
+    box.innerHTML=h;
   }
 
   // ---- 資金見通しの共通計算 ----
@@ -982,9 +1092,11 @@
     var box=$('cash-status'); if(!box)return;
     var snapQ=sb.from('cashflow_snapshots').select('*').eq('customer_id',ME).order('created_at',{ascending:false}).limit(1);
     var payQ=sb.from('upcoming_payments').select('*').eq('customer_id',ME).order('due_date',{ascending:true});
-    var r=await Promise.all([snapQ,payQ]);
+    var fundQ=sb.from('funding_roadmap_items').select('*').eq('customer_id',ME).order('created_at',{ascending:false});
+    var r=await Promise.all([snapQ,payQ,fundQ]);
     var snapErr=r[0].error, snap=(r[0].data&&r[0].data[0])||null;
     var pays=(r[1].error?[]:(r[1].data||[]));
+    var funds=(r[2].error?[]:(r[2].data||[]));
     var today=new Date(); var todayS=today.toISOString().slice(0,10);
     var future=pays.filter(function(p){ return p.due_date && p.due_date>=todayS; });
     var in30=future.filter(function(p){ return (new Date(p.due_date)-new Date(todayS))/86400000<=30; });
@@ -1036,6 +1148,7 @@
         +'</div>';
       });
       h+='<div style="font-size:10px;color:#8AA0BE;margin-top:4px;">※ 最終診断時の月間収支（売上−支出−返済）が続く前提＋支払予定を差し引いた概算です。診断を実行し直すと更新されます。</div>';
+      h+=fundProgressHtml(funds);
       h+='<div style="font-size:11px;color:#9A7314;background:#FAEEDA;border-radius:8px;padding:8px 12px;margin-top:10px;">🏦 <b>Tsugu融資（今後実装予定）</b>：このスコアと見通しをもとに、提携金融機関への申込がここから直接できるようになります。お急ぎの資金ニーズは「メッセージ」でご相談ください。</div>';
     } else if(snapErr){
       h+='<div style="font-size:12px;color:#8AA0BE;line-height:1.7;">資金繰りステータスを使うには、Phase 22 のSQL設定が必要です。</div>';
@@ -1043,6 +1156,7 @@
       h+='<div style="font-size:12px;color:#8AA0BE;line-height:1.7;">担当パートナーが資金繰り診断を行うと、ここにスコアと資金残高の見通しが常時表示されます。'
         +(future.length?'<br>（支払予定 '+future.length+' 件は登録済みです）':'')
         +'<br><button class="btn2" style="margin-top:8px;" onclick="goSec(\'sec-chat\')">パートナーに相談する →</button></div>';
+      h+=fundProgressHtml(funds);
     }
     box.innerHTML=h;
   }
@@ -1455,6 +1569,17 @@
       +'<button class="btn2" style="margin-top:12px;" onclick="cashflowDiagnose(\''+custId+'\')">資金繰りを診断する</button>'
       +'<div id="cf-saved" style="font-size:12px;margin-top:6px;"></div>'
       +'<div id="cf-result" style="margin-top:10px;"></div>'
+      +'<div class="ph" style="font-size:13px;margin-top:18px;">資金調達ロードマップ（登録すると顧客にも進捗が表示されます）</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">'
+        +'<div><label class="fl">手段</label><select id="fr-type" class="inp2">'+FUND_TYPES.map(function(t){return '<option>'+t+'</option>';}).join('')+'</select></div>'
+        +'<div style="flex:1;min-width:160px;"><label class="fl">案件名</label><input id="fr-title" class="inp2" style="width:100%;" placeholder="例：公庫 運転資金"></div>'
+        +'<div><label class="fl">金額（万円）</label><input id="fr-amount" type="number" class="inp2" placeholder="例 1000"></div>'
+        +'<div><label class="fl">目標日（任意）</label><input id="fr-date" type="date" class="inp2"></div>'
+        +'<div style="flex:1;min-width:140px;"><label class="fl">メモ（任意）</label><input id="fr-note" class="inp2" style="width:100%;" placeholder="例：事業計画書を添付予定"></div>'
+        +'<button class="btn2" onclick="addFundItem(\''+custId+'\')">登録</button>'
+      +'</div>'
+      +'<div id="fr-msg" style="font-size:12px;margin-top:6px;"></div>'
+      +'<div id="cl-fund" style="margin-top:8px;">読み込み中...</div>'
       +'<div class="ph" style="font-size:13px;margin-top:18px;">アクション・課題（顧客と共有・両者が編集可）</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">'
         +'<div style="flex:1;min-width:200px;"><label class="fl">課題を追加</label><input id="cact-title" class="inp2" style="width:100%;" placeholder="例：退職金規程の確認"></div>'
@@ -1502,6 +1627,7 @@
     var cy=$('cfin-ym'); if(cy&&!cy.value) cy.value=new Date().toISOString().slice(0,7);
     loadClientChat(custId);
     loadClientPayments(custId);
+    loadClientFunding(custId);
     reloadClientActions(custId);
     loadClientInterests(custId);
     loadClientMna(custId);
