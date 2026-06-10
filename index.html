@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tsugu | Phase 19（資金繰り診断・資金調達ロードマップ）</title>
+<title>Tsugu | Phase 21（メッセージ・パートナー代行入力）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -165,7 +165,7 @@
       <div id="msg-recovery" class="msg"></div>
     </div>
 
-    <div class="note">Supabaseの本物の認証に接続しています（プロジェクト yaururnkxjhtiowkpvyu）。</div>
+    <div class="note">通信は暗号化されています。パスワードは大文字・小文字・数字を含む8文字以上で設定してください。ログインでお困りの場合は、担当パートナーまたは運営までご連絡ください。</div>
   </div>
 </div>
 
@@ -245,7 +245,7 @@
     btn.disabled=false;
     if(res.error){ setMsg('signup','登録エラー：'+res.error.message); return; }
     if(res.data && res.data.session){ await routeFromSession(res.data.session); return; }
-    setMsg('signup','確認メールを送信しました。メール確認をオフにすると即ログインできます。', true);
+    setMsg('signup','確認メールを送信しました。メール内のリンクを開いてから、こちらの画面でログインしてください。', true);
     showTab('login'); $('login-email').value=em;
   }
 
@@ -258,7 +258,7 @@
     btn.disabled=false;
     if(res.error){
       var m=res.error.message||'';
-      if(/not confirmed/i.test(m)) setMsg('login','メールが未確認です。Supabase側でメール確認をオフにしてください');
+      if(/not confirmed/i.test(m)) setMsg('login','メールアドレスの確認が完了していません。届いた確認メールのリンクを開いてからログインしてください（届かない場合は運営までご連絡ください）');
       else if(/Invalid/i.test(m)) setMsg('login','メールアドレスまたはパスワードが違います');
       else setMsg('login','ログインエラー：'+m);
       return;
@@ -319,8 +319,8 @@
   function buildNav(r){
     var nav=$('app-nav'); if(!nav)return;
     var items;
-    if(r==='customer') items=[['sec-flow','ダッシュボード'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','保険試算'],['sec-ma','M&A活用'],['sec-sec','AI秘書']];
-    else if(r==='admin' && VIEWAS==='admin') items=[['sec-flow','ダッシュボード'],['sec-fde','パートナー'],['sec-cust','顧客']];
+    if(r==='customer') items=[['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','保険試算'],['sec-ma','M&A活用'],['sec-sec','AI秘書']];
+    else if(r==='admin') items=[['sec-flow','ダッシュボード'],['sec-fde','パートナー'],['sec-cust','顧客']];
     else items=[['sec-flow','ダッシュボード'],['sec-followups','対応リスト'],['sec-clients','担当顧客'],['sec-sec','AI秘書']];
     var h='<div class="sb-sec">メニュー</div>';
     items.forEach(function(it,i){ h+='<div class="ni'+(i===0?' active':'')+'" onclick="goSec(\''+it[0]+'\',this)">'+it[1]+'</div>'; });
@@ -334,6 +334,7 @@
     return '<div class="panel" style="padding:12px 16px;"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:12px;color:#8AA0BE;">表示モード：</span>'
       +'<button class="sbtn'+(active==='admin'?' on':'')+'" onclick="setAdminView(\'admin\')">運営</button>'
       +'<button class="sbtn'+(active==='fde'?' on':'')+'" onclick="setAdminView(\'fde\')">パートナーとして見る</button>'
+      +'<button class="sbtn'+(active==='customer'?' on':'')+'" onclick="setAdminView(\'customer\')">顧客として見る</button>'
       +'</div></div>';
   }
   function adminViewHtml(email, prof){
@@ -393,18 +394,20 @@
     $('gate').classList.add('hidden');
     $('app').classList.remove('hidden');
     var r=prof.role||'customer';
+    var eff = (r==='admin') ? (VIEWAS==='fde'?'consultant':(VIEWAS==='customer'?'customer':'admin')) : r;
     window.__prof=prof; window.__email=email||'';
     SEC_MSGS=[]; SEC_MODE='経営';
     var rb=$('app-role'); rb.textContent=roleLabel(r); rb.style.background=roleColor(r); rb.style.color='#fff';
     $('app-email').textContent=email||'';
-    buildNav(r);
-    var g=$('app-greet'); if(g) g.textContent = r==='customer'?'経営者ダッシュボード':(r==='admin'?'運営コンソール':'パートナーポータル');
+    buildNav(eff);
+    var g=$('app-greet'); if(g) g.textContent = (eff==='customer'?'経営者ダッシュボード':(eff==='admin'?'運営コンソール':'パートナーポータル'))+((r==='admin'&&eff!=='admin')?'（プレビュー）':'');
     var cn=$('sb-co-nm'); if(cn) cn.textContent = (prof.company_name||'—');
     var dc=$('app-date'); if(dc){ var d=new Date(); dc.textContent=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日'; }
 
     var view='';
-    if(r==='customer'){
-      view='<div class="panel"><span class="pill">顧客ポータル</span>'
+    if(eff==='customer'){
+      view=(r==='admin'?adminSwitchHtml('customer'):'')
+        +'<div class="panel"><span class="pill">顧客ポータル</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">経営者ダッシュボード</h2>'
         +'<div class="kv">ログイン中：<b>'+esc(email)+'</b>　役割：<b>顧客（経営者）</b></div></div>'
         +'<div class="panel" id="sec-flow"><div class="ph">価値の流れ</div>'
@@ -424,8 +427,17 @@
           +'</div>'
         +'</div>'
         +'<div class="panel"><div class="ph">経営サマリー</div><div id="kpi-cards">読み込み中...</div></div>'
-        +'<div class="panel"><div class="ph">要対応アクション</div><div id="todo-list" style="margin-top:4px;">読み込み中...</div></div>'
+        +'<div class="panel"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">要対応アクション<span class="ghost" style="font-size:11px;font-weight:400;" onclick="goSec(\'sec-act\')">課題の追加・一覧 →</span></div><div id="todo-list" style="margin-top:4px;">読み込み中...</div></div>'
         +'<div class="panel"><div class="ph">担当パートナーからの提案</div><div id="my-notes" style="margin-top:4px;">読み込み中...</div></div>'
+        +'<div class="panel" id="sec-chat"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">担当パートナーとのメッセージ<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMyChat()">↺ 更新</span></div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;line-height:1.6;">数値の報告・質問・相談など、何でもお送りください。月次の売上などはメッセージで伝えるだけでOK（入力はパートナーが代行します）。</div>'
+          +'<div id="chat-log" style="max-height:320px;overflow:auto;border:1px solid #EAF0F7;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;">読み込み中...</div>'
+          +'<div style="display:flex;gap:8px;align-items:flex-end;">'
+            +'<textarea id="chat-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="メッセージを入力（Enterで送信／Shift+Enterで改行）"></textarea>'
+            +'<button class="btn2" id="chat-send" onclick="sendMyChat()">送信</button>'
+          +'</div>'
+          +'<div style="font-size:11px;color:#8AA0BE;margin-top:6px;line-height:1.6;">※ 返信には少しお時間をいただく場合があります（目安：2〜3営業日以内）。お急ぎの場合はお電話等でご連絡ください。</div>'
+        +'</div>'
         +'<div class="panel" id="sec-company"><div class="ph">会社情報</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
             +'<div style="flex:1;min-width:180px;"><label class="fl">会社名</label><input id="pi-company" class="inp2" style="width:100%;" value="'+escA(prof.company_name||'')+'" placeholder="例：株式会社○○"></div>'
@@ -437,7 +449,7 @@
         +'</div>'
         +'<div class="panel" id="sec-cash"><div class="ph">財務・資金繰り</div>'
           +'<div style="font-weight:600;font-size:14px;color:#1C3557;margin:2px 0 6px;">① 月次財務メモ</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">毎月の売上・営業利益を記録します。担当パートナーの画面にも表示され、下の「② 資金繰り診断」にも自動で反映されます。</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">毎月の売上・営業利益を記録します（担当パートナーが代わりに入力することもできます。数値は「メッセージ」で伝えるだけでもOK）。下の「② 資金繰り診断」にも自動で反映されます。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
             +'<div><label class="fl">年月</label><input id="fin-ym" type="month" class="inp2"></div>'
             +'<div><label class="fl">売上（万円）</label><input id="fin-rev" type="number" class="inp2" placeholder="例 1200"></div>'
@@ -474,7 +486,7 @@
           +'<button class="btn2" style="margin-top:16px;" onclick="cashflowDiagnose()">資金繰りを診断する</button>'
           +'<div id="cf-result" style="margin-top:14px;"></div>'
         +'</div>'
-        +'<div class="panel"><div class="ph">アクション・課題</div>'
+        +'<div class="panel" id="sec-act"><div class="ph">アクション・課題</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">担当パートナーと共有されます。パートナーが追加した課題もここに表示されます。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
             +'<div style="flex:1;min-width:200px;"><label class="fl">課題・タスク</label><input id="act-title" class="inp2" style="width:100%;" placeholder="例：直近3期の試算表を用意"></div>'
@@ -524,15 +536,6 @@
           +'<button class="btn2" style="margin-top:16px;" onclick="insCalc()">計算する</button>'
           +'<div id="ins-result" style="margin-top:14px;"></div>'
         +'</div>'
-        +'<div class="panel" id="sec-sec"><div class="ph">AI秘書（経営の相談相手）</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">日程・タスク整理、文章作成、調べ物、経営の壁打ちなどを相談できます。</div>'
-          + secModesHtml()
-          +'<div id="sec-log" style="max-height:300px;overflow:auto;border:1px solid #EAF0F7;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;"><div style="font-size:12px;color:#8AA0BE;">例：「来期の経営計画づくりの進め方を相談したい」「取引先へのお礼メールを作って」</div></div>'
-          +'<div style="display:flex;gap:8px;align-items:flex-end;">'
-            +'<textarea id="sec-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="相談内容を入力"></textarea>'
-            +'<button class="btn2" id="sec-send" onclick="secretarySend()">送信</button>'
-          +'</div>'
-        +'</div>'
         +'<div class="panel" id="sec-ma"><div class="ph">利益のM&A活用 提案（AI）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">利益や余剰資金を、M&A（会社・事業の買収）で活かす方向性をAIが提案します。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
@@ -543,8 +546,17 @@
           +'<select id="ma-goal" class="inp2" style="width:auto;min-width:200px;"><option>売上・シェア拡大</option><option>人材・技術の獲得</option><option>エリア拡大</option><option>川上・川下への統合</option><option>新規事業への参入</option><option>後継者・事業承継の受け皿</option></select>'
           +'<div style="margin-top:12px;"><button class="btn2" id="ma-run" onclick="runMa()">AIに提案をもらう</button></div>'
           +'<div id="ma-result" style="margin-top:14px;"></div>'
+        +'</div>'
+        +'<div class="panel" id="sec-sec"><div class="ph">AI秘書（経営の相談相手）</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">日程・タスク整理、文章作成、調べ物、経営の壁打ちなどを相談できます。</div>'
+          + secModesHtml()
+          +'<div id="sec-log" style="max-height:300px;overflow:auto;border:1px solid #EAF0F7;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;"><div style="font-size:12px;color:#8AA0BE;">例：「来期の経営計画づくりの進め方を相談したい」「取引先へのお礼メールを作って」</div></div>'
+          +'<div style="display:flex;gap:8px;align-items:flex-end;">'
+            +'<textarea id="sec-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="相談内容を入力（Enterで送信／Shift+Enterで改行）"></textarea>'
+            +'<button class="btn2" id="sec-send" onclick="secretarySend()">送信</button>'
+          +'</div>'
         +'</div>';
-    } else if(r==='consultant' || (r==='admin' && VIEWAS==='fde')){
+    } else if(eff==='consultant'){
       view=(r==='admin'?adminSwitchHtml('fde'):'')
         +'<div class="panel"><span class="pill" style="background:#E7F0FB;color:#2C6EBD;">パートナーポータル</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">パートナーポータル</h2>'
@@ -570,7 +582,7 @@
           + secModesHtml()
           +'<div id="sec-log" style="max-height:300px;overflow:auto;border:1px solid #EAF0F7;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;"><div style="font-size:12px;color:#8AA0BE;">例：「医療法人オーナー向けの初回面談の流れを整理して」</div></div>'
           +'<div style="display:flex;gap:8px;align-items:flex-end;">'
-            +'<textarea id="sec-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="相談内容を入力"></textarea>'
+            +'<textarea id="sec-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="相談内容を入力（Enterで送信／Shift+Enterで改行）"></textarea>'
             +'<button class="btn2" id="sec-send" onclick="secretarySend()">送信</button>'
           +'</div>'
         +'</div>';
@@ -578,31 +590,15 @@
       view=adminViewHtml(email, prof);
     }
 
-    var demo='<div class="panel"><div class="ph">デモ用：役割の切り替え</div>'
-      +'<div style="font-size:12px;color:#8AA0BE;line-height:1.6;margin-bottom:6px;">同じアカウントで各役割の画面を確認できます（本番では役割変更は運営のみに制限）。顧客↔パートナーの同期を試すには、顧客用とパートナー用で別々のアカウントをご利用ください。</div>'
-      +'<div class="switch">'
-      +'<button class="sbtn '+(r==='customer'?'on':'')+'" onclick="setRole(\'customer\')">顧客</button>'
-      +'<button class="sbtn '+(r==='consultant'?'on':'')+'" onclick="setRole(\'consultant\')">パートナー</button>'
-      +'<button class="sbtn '+(r==='admin'?'on':'')+'" onclick="setRole(\'admin\')">運営</button>'
-      +'</div></div>';
-
     $('app-body').innerHTML=view;
-    if(r==='customer'){ loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); cfPrefill(); }
-    else if(r==='consultant' || (r==='admin' && VIEWAS==='fde')){ loadClients(); loadFollowups(); }
+    if(eff==='customer'){ loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); cfPrefill(); var fy=$('fin-ym'); if(fy&&!fy.value) fy.value=new Date().toISOString().slice(0,7); }
+    else if(eff==='consultant'){ loadClients(); loadFollowups(); }
     else { loadAdmin(); }
-  }
-
-  async function setRole(r){
-    var s=await sb.auth.getSession();
-    if(!(s.data && s.data.session)) return;
-    var res=await sb.from('profiles').update({ role:r }).eq('id', s.data.session.user.id);
-    if(res.error){ alert('役割の更新に失敗しました：'+res.error.message); return; }
-    routeFromSession(s.data.session);
   }
 
   // ---- finance (customer writes / consultant reads) ----
   function kpiCards(rows){
-    if(!rows||!rows.length) return '<div style="font-size:12px;color:#8AA0BE;">下の「財務・資金繰り」→「月次財務メモ」に入力すると、ここに売上・利益のサマリーと推移が表示されます。</div>';
+    if(!rows||!rows.length) return '<div style="font-size:12px;color:#8AA0BE;line-height:1.7;">まだ財務データがありません。月次の数値は担当パートナーが入力します（「メッセージ」で伝えるだけでOK）。ご自身で入力する場合は「財務・資金繰り」からどうぞ。<br><button class="btn2" style="margin-top:8px;" onclick="goSec(\'sec-chat\')">パートナーに伝える →</button> <button class="btn2" style="margin-top:8px;background:#fff;color:#2C6EBD;border:1.5px solid #2C6EBD;" onclick="goSec(\'sec-cash\')">自分で入力する →</button></div>';
     function nv(v){ return v==null?null:Number(v); }
     function yen0(v){ return v==null?'-':Number(v).toLocaleString('ja-JP')+' 万円'; }
     function pct(a,b){ if(b==null||b===0||a==null) return null; return (a-b)/Math.abs(b)*100; }
@@ -651,7 +647,8 @@
     });
     return h;
   }
-  function finTable(rows, editable){
+  function finTable(rows, editable, scope){
+    scope=scope||'me';
     if(!rows || !rows.length) return '<div style="font-size:12px;color:#8AA0BE;">まだデータがありません。</div>';
     var h='<table class="ft"><tr><th>年月</th><th>売上</th><th>営業利益</th><th>メモ</th>'+(editable?'<th></th>':'')+'</tr>';
     rows.forEach(function(r){
@@ -659,7 +656,7 @@
         +'<td>'+(r.revenue==null?'-':esc(r.revenue))+'</td>'
         +'<td>'+(r.profit==null?'-':esc(r.profit))+'</td>'
         +'<td style="color:#4A6080;">'+esc(r.memo||'')+'</td>'
-        +(editable?'<td style="text-align:right;"><span onclick="delFinance(\''+r.id+'\')" style="color:#A83030;cursor:pointer;font-size:11px;">削除</span></td>':'')
+        +(editable?'<td style="text-align:right;"><span onclick="delFinance(\''+r.id+'\',\''+scope+'\')" style="color:#A83030;cursor:pointer;font-size:11px;">削除</span></td>':'')
         +'</tr>';
     });
     return h+'</table>';
@@ -672,7 +669,7 @@
     var row={ customer_id:ME, year_month:ym, revenue:(rev===''?null:Number(rev)), profit:(prof===''?null:Number(prof)), memo:(memo||null) };
     var res=await sb.from('financial_entries').insert(row);
     if(res.error){ msg.style.color='#A83030'; msg.textContent='保存エラー：'+res.error.message; return; }
-    $('fin-ym').value=''; $('fin-rev').value=''; $('fin-prof').value=''; $('fin-memo').value='';
+    $('fin-ym').value=new Date().toISOString().slice(0,7); $('fin-rev').value=''; $('fin-prof').value=''; $('fin-memo').value='';
     msg.style.color='#1E6B45'; msg.textContent='保存しました';
     loadMyFinance(); cfPrefill();
   }
@@ -681,14 +678,32 @@
     var box=$('fin-list'); if(!box)return;
     var res=await sb.from('financial_entries').select('*').eq('customer_id',ME).order('year_month',{ascending:false});
     if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
-    box.innerHTML=finTable(res.data, true);
+    box.innerHTML=finTable(res.data, true, 'me');
     var k=$('kpi-cards'); if(k) k.innerHTML=kpiCards(res.data);
   }
 
-  async function delFinance(id){
+  async function delFinance(id, scope){
+    if(!confirm('この月の財務メモを削除します。よろしいですか？')) return;
     var res=await sb.from('financial_entries').delete().eq('id',id);
     if(res.error){ alert('削除エラー：'+res.error.message); return; }
-    loadMyFinance();
+    if(scope==='cl' && CURRENT_CLIENT) reloadClientFin(CURRENT_CLIENT.id); else loadMyFinance();
+  }
+
+  async function reloadClientFin(custId){
+    var fb=$('cl-fin'); if(!fb)return;
+    var f=await sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false});
+    fb.innerHTML = f.error?('<div style="color:#A83030;font-size:12px;">'+esc(f.error.message)+'</div>'):finTable(f.data,true,'cl');
+  }
+  async function saveFinanceFor(custId){
+    var ym=$('cfin-ym').value, rev=$('cfin-rev').value, prof=$('cfin-prof').value, memo=$('cfin-memo').value.trim();
+    var msg=$('cfin-msg');
+    if(!ym){ if(msg){msg.style.color='#A83030'; msg.textContent='年月を選んでください';} return; }
+    var row={ customer_id:custId, year_month:ym, revenue:(rev===''?null:Number(rev)), profit:(prof===''?null:Number(prof)), memo:(memo||null) };
+    var res=await sb.from('financial_entries').insert(row);
+    if(res.error){ if(msg){msg.style.color='#A83030'; msg.textContent='保存エラー：'+res.error.message+'（Phase21のSQL未実施の可能性があります）';} return; }
+    $('cfin-ym').value=new Date().toISOString().slice(0,7); $('cfin-rev').value=''; $('cfin-prof').value=''; $('cfin-memo').value='';
+    if(msg){msg.style.color='#1E6B45'; msg.textContent='保存しました（顧客の画面にも反映されます）';}
+    reloadClientFin(custId);
   }
 
   async function saveProfileInfo(){
@@ -748,6 +763,7 @@
     if(scope==='me') loadMyActions(); else if(CURRENT_CLIENT) reloadClientActions(CURRENT_CLIENT.id);
   }
   async function delAction(id, scope){
+    if(!confirm('この課題を削除します。よろしいですか？')) return;
     var res=await sb.from('action_items').delete().eq('id',id);
     if(res.error){ alert('削除エラー：'+res.error.message); return; }
     if(scope==='me') loadMyActions(); else if(CURRENT_CLIENT) reloadClientActions(CURRENT_CLIENT.id);
@@ -789,6 +805,50 @@
     if(res.error){ alert('送信エラー：'+res.error.message); return; }
     ta.value=''; loadClientNotes(custId);
   }
+  // ---- 顧客⇔パートナー メッセージ ----
+  function chatBubbles(rows, myRole){
+    if(!rows||!rows.length) return '<div style="font-size:12px;color:#8AA0BE;">まだメッセージはありません。最初のメッセージを送ってみましょう。</div>';
+    var h='';
+    rows.forEach(function(m){
+      var mine=(m.sender_role===myRole);
+      var who=mine?'':(m.sender_role==='customer'?'顧客':'パートナー');
+      var dt=(m.created_at||'').replace('T',' ').slice(5,16);
+      h+='<div style="display:flex;flex-direction:column;align-items:'+(mine?'flex-end':'flex-start')+';margin-bottom:8px;">'
+        +'<div style="font-size:10px;color:#8AA0BE;margin-bottom:2px;">'+(who?esc(who)+'　':'')+esc(dt)+'</div>'
+        +'<div style="max-width:82%;padding:9px 12px;border-radius:12px;font-size:13px;line-height:1.6;white-space:pre-wrap;'+(mine?'background:#2C6EBD;color:#fff;':'background:#fff;border:1px solid #D0DCF0;color:#131E2E;')+'">'+esc(m.body)+'</div>'
+      +'</div>';
+    });
+    return h;
+  }
+  async function loadMyChat(){
+    var box=$('chat-log'); if(!box)return;
+    var res=await sb.from('chat_messages').select('*').eq('customer_id',ME).order('created_at',{ascending:true}).limit(200);
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'<br><span style="color:#8AA0BE;">（メッセージ機能のSQL設定が未実施の可能性があります）</span></div>'; return; }
+    box.innerHTML=chatBubbles(res.data,'customer'); box.scrollTop=box.scrollHeight;
+  }
+  async function sendMyChat(){
+    var inp=$('chat-input'); if(!inp)return; var b=inp.value.trim(); if(!b)return;
+    var btn=$('chat-send'); if(btn)btn.disabled=true;
+    var res=await sb.from('chat_messages').insert({ customer_id:ME, sender_id:ME, sender_role:'customer', body:b });
+    if(btn)btn.disabled=false;
+    if(res.error){ alert('送信エラー：'+res.error.message); return; }
+    inp.value=''; loadMyChat();
+  }
+  async function loadClientChat(custId){
+    var box=$('cchat-log'); if(!box)return;
+    var res=await sb.from('chat_messages').select('*').eq('customer_id',custId).order('created_at',{ascending:true}).limit(200);
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
+    box.innerHTML=chatBubbles(res.data,'consultant'); box.scrollTop=box.scrollHeight;
+  }
+  async function sendClientChat(custId){
+    var inp=$('cchat-input'); if(!inp)return; var b=inp.value.trim(); if(!b)return;
+    var btn=$('cchat-send'); if(btn)btn.disabled=true;
+    var res=await sb.from('chat_messages').insert({ customer_id:custId, sender_id:ME, sender_role:'consultant', body:b });
+    if(btn)btn.disabled=false;
+    if(res.error){ alert('送信エラー：'+res.error.message); return; }
+    inp.value=''; loadClientChat(custId); loadFollowups();
+  }
+
   async function loadMyNotes(){
     var box=$('my-notes'); if(!box)return;
     var res=await sb.from('fde_notes').select('*').eq('customer_id',ME).order('created_at',{ascending:false});
@@ -805,14 +865,20 @@
     if(!clients.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">担当顧客がいません。</div>'; return; }
     var ai=await sb.from('automation_interests').select('customer_id,category');
     var ins=await sb.from('insurance_results').select('customer_id');
+    var ch=await sb.from('chat_messages').select('customer_id,sender_role,created_at').order('created_at',{ascending:false}).limit(400);
     var cnt={};
     function bump(id,k){ if(!cnt[id])cnt[id]={auto:0,mna:0,ins:0}; cnt[id][k]++; }
     (ai.data||[]).forEach(function(r){ bump(r.customer_id, r.category==='mna'?'mna':'auto'); });
     (ins.data||[]).forEach(function(r){ bump(r.customer_id,'ins'); });
-    var rows=clients.filter(function(c){ return cnt[c.id]; });
-    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">顧客からの共有はまだありません。顧客が「興味あり」や「保険試算の共有」を行うと、ここに表示されます。</div>'; return; }
+    var lastMsg={};
+    if(!ch.error){ (ch.data||[]).forEach(function(m){ if(!lastMsg[m.customer_id]) lastMsg[m.customer_id]=m; }); }
+    var needReply={}; Object.keys(lastMsg).forEach(function(id){ if(lastMsg[id].sender_role==='customer') needReply[id]=lastMsg[id].created_at; });
+    var rows=clients.filter(function(c){ return cnt[c.id] || needReply[c.id]; });
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">対応が必要な項目はありません。顧客がメッセージや「興味あり」の共有を行うと、ここに表示されます。</div>'; return; }
+    rows.sort(function(a,b){ var ra=needReply[a.id]?0:1, rb=needReply[b.id]?0:1; return ra-rb; });
     var h=''; rows.forEach(function(c){
-      var k=cnt[c.id]; var tags='';
+      var k=cnt[c.id]||{auto:0,mna:0,ins:0}; var tags='';
+      if(needReply[c.id]) tags+='<span style="font-size:11px;font-weight:600;background:#FDECEC;color:#A83030;padding:2px 8px;border-radius:99px;margin-right:4px;">要返信 '+esc((needReply[c.id]||'').slice(5,10))+'</span>';
       if(k.auto) tags+='<span style="font-size:11px;background:#E7F0FB;color:#2C6EBD;padding:2px 8px;border-radius:99px;margin-right:4px;">自動化 '+k.auto+'</span>';
       if(k.mna) tags+='<span style="font-size:11px;background:#FAEEDA;color:#9A7314;padding:2px 8px;border-radius:99px;margin-right:4px;">M&A '+k.mna+'</span>';
       if(k.ins) tags+='<span style="font-size:11px;background:#E6F4EC;color:#1E6B45;padding:2px 8px;border-radius:99px;margin-right:4px;">保険 '+k.ins+'</span>';
@@ -917,11 +983,21 @@
   }
 
   async function loadClientStage(custId){ var sel=$('cl-stage'); if(!sel)return; var res=await sb.from('profiles').select('stage').eq('id',custId).single(); if(!res.error && res.data && res.data.stage) sel.value=String(res.data.stage); }
-  async function setStage(custId,n){ var res=await sb.from('profiles').update({ stage: parseInt(n,10) }).eq('id',custId); if(res.error) alert('ステージ更新エラー：'+res.error.message); }
+  async function setStage(custId,n){ var res=await sb.from('profiles').update({ stage: parseInt(n,10) }).eq('id',custId); var m=$('stage-msg'); if(res.error){ alert('ステージ更新エラー：'+res.error.message); return; } if(m){ m.textContent='保存しました'; m.style.color='#1E6B45'; setTimeout(function(){ if(m) m.textContent=''; },2000); } }
 
   function openClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.remove('hidden'); document.body.style.overflow='hidden'; }
   function closeClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.add('hidden'); document.body.style.overflow=''; }
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var m=$('cl-modal'); if(m && !m.classList.contains('hidden')) closeClientModal(); var r=$('rep-modal'); if(r && !r.classList.contains('hidden')) closeReport(); } });
+  // Enterキーで送信（ログイン系フォーム／AI秘書）
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='Enter') return;
+    var t=e.target; if(!t||!t.id) return;
+    if(t.id==='sec-input'){ if(!e.shiftKey){ e.preventDefault(); secretarySend(); } return; }
+    if(t.id==='chat-input'){ if(!e.shiftKey){ e.preventDefault(); sendMyChat(); } return; }
+    if(t.id==='cchat-input'){ if(!e.shiftKey){ e.preventDefault(); if(CURRENT_CLIENT) sendClientChat(CURRENT_CLIENT.id); } return; }
+    var map={ 'login-email':doLogin, 'login-pw':doLogin, 'signup-email':doSignup, 'signup-pw':doSignup, 'signup-pw2':doSignup, 'reset-email':doReset, 'rec-pw':doUpdatePassword, 'rec-pw2':doUpdatePassword };
+    if(map[t.id]){ e.preventDefault(); map[t.id](); }
+  });
 
   var REP=null;
   var STAGE_NAMES=['','現状把握','AI活用・自動化','コスト削減','生まれた余力','次の投資'];
@@ -1054,9 +1130,15 @@
     var titleTxt=(company && company.length)?(company+'（'+email+'）'):email;
     var mt=$('cl-modal-title'); if(mt) mt.textContent=titleTxt;
     openClientModal();
-    box.innerHTML='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;"><span style="font-size:12px;color:#4A6080;">進捗ステージ</span><select id="cl-stage" class="inp2" onchange="setStage(\''+custId+'\',this.value)"><option value="1">1. 現状把握</option><option value="2">2. AI活用・自動化</option><option value="3">3. コスト削減</option><option value="4">4. 生まれた余力</option><option value="5">5. 次の投資</option></select></div>'
+    box.innerHTML='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;"><span style="font-size:12px;color:#4A6080;">進捗ステージ</span><select id="cl-stage" class="inp2" onchange="setStage(\''+custId+'\',this.value)"><option value="1">1. 現状把握</option><option value="2">2. AI活用・自動化</option><option value="3">3. コスト削減</option><option value="4">4. 生まれた余力</option><option value="5">5. 次の投資</option></select><span id="stage-msg" style="font-size:11px;"></span></div>'
       +'<div style="margin:0 0 14px;"><button class="btn2" onclick="openMonthlyReport()" style="background:#fff;color:#2C6EBD;border:1.5px solid #2C6EBD;">📄 月次レポート（印刷 / PDF）</button></div>'
-      +'<div class="ph" style="font-size:13px;">パートナーからの提案メモ（顧客にも表示）</div>'
+      +'<div class="ph" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;">メッセージ（顧客とのやり取り）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientChat(\''+custId+'\')">↺ 更新</span></div>'
+      +'<div id="cchat-log" style="max-height:280px;overflow:auto;border:1px solid #EAF0F7;border-radius:10px;padding:12px;margin:4px 0 8px;background:#FBFCFE;">読み込み中...</div>'
+      +'<div style="display:flex;gap:8px;align-items:flex-end;">'
+        +'<textarea id="cchat-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="返信を入力（Enterで送信／Shift+Enterで改行）"></textarea>'
+        +'<button class="btn2" id="cchat-send" onclick="sendClientChat(\''+custId+'\')">送信</button>'
+      +'</div>'
+      +'<div class="ph" style="font-size:13px;margin-top:16px;">パートナーからの提案メモ（顧客にも表示）</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">'
         +'<div style="flex:1;min-width:200px;"><label class="fl">提案・メモを書く</label><textarea id="cnote-body" rows="2" class="inp2" style="width:100%;" placeholder="例：養老保険の福利厚生プランをご提案します。次回、必要保障額の試算をお持ちします。"></textarea></div>'
         +'<button class="btn2" onclick="addClientNote(\''+custId+'\')">送信</button>'
@@ -1072,7 +1154,17 @@
       +'</div>'
       +'<div id="ma2-result" style="margin-top:12px;"></div>'
       + insPanelHtmlClient(custId)
-      +'<div class="ph" style="font-size:13px;margin-top:16px;">月次財務メモ（顧客が入力）</div><div id="cl-fin" style="margin-bottom:6px;">読み込み中...</div>'
+      +'<div class="ph" style="font-size:13px;margin-top:16px;">月次財務メモ（パートナーが代行入力できます）</div>'
+      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">ここで保存すると、顧客のダッシュボード（経営サマリー・資金繰り診断）にも反映されます。</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+        +'<div><label class="fl">年月</label><input id="cfin-ym" type="month" class="inp2"></div>'
+        +'<div><label class="fl">売上（万円）</label><input id="cfin-rev" type="number" class="inp2" placeholder="例 1200"></div>'
+        +'<div><label class="fl">営業利益（万円）</label><input id="cfin-prof" type="number" class="inp2" placeholder="例 180"></div>'
+        +'<div style="flex:1;min-width:140px;"><label class="fl">メモ</label><input id="cfin-memo" type="text" class="inp2" style="width:100%;" placeholder="補足（任意）"></div>'
+        +'<button class="btn2" onclick="saveFinanceFor(\''+custId+'\')">保存</button>'
+      +'</div>'
+      +'<div id="cfin-msg" style="font-size:12px;margin-top:6px;"></div>'
+      +'<div id="cl-fin" style="margin:8px 0 6px;">読み込み中...</div>'
       +'<div class="ph" style="font-size:13px;margin-top:14px;">アクション・課題（顧客と共有・両者が編集可）</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">'
         +'<div style="flex:1;min-width:200px;"><label class="fl">課題を追加</label><input id="cact-title" class="inp2" style="width:100%;" placeholder="例：退職金規程の確認"></div>'
@@ -1089,7 +1181,9 @@
       +'<div class="ph" style="font-size:13px;margin-top:16px;">AI自動化診断（顧客が実施した結果）</div>'
       +'<div id="cl-diag" style="margin-top:6px;">読み込み中...</div>';
     var f=await sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false});
-    var fb=$('cl-fin'); if(fb) fb.innerHTML = f.error?('<div style="color:#A83030;font-size:12px;">'+esc(f.error.message)+'</div>'):finTable(f.data,false);
+    var fb=$('cl-fin'); if(fb) fb.innerHTML = f.error?('<div style="color:#A83030;font-size:12px;">'+esc(f.error.message)+'</div>'):finTable(f.data,true,'cl');
+    var cy=$('cfin-ym'); if(cy&&!cy.value) cy.value=new Date().toISOString().slice(0,7);
+    loadClientChat(custId);
     reloadClientActions(custId);
     loadClientInterests(custId);
     loadClientMna(custId);
