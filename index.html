@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tsugu | Phase 15（進捗ステージ管理）</title>
+<title>Tsugu | Phase 16（顧客詳細のモーダル化）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -49,6 +49,15 @@
   .btn2{padding:9px 18px;background:linear-gradient(135deg,var(--blue),var(--navy));color:#fff;font-weight:600;font-size:13px;border:none;border-radius:9px;cursor:pointer;font-family:inherit;}
   .clrow{padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;cursor:pointer;font-size:13px;display:flex;justify-content:space-between;align-items:center;}
   .clrow:hover{border-color:var(--blue);background:#F6FAFE;}
+  .modal-back{position:fixed;inset:0;background:rgba(15,32,53,.55);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);display:flex;align-items:flex-start;justify-content:center;padding:32px 16px;z-index:50;overflow-y:auto;}
+  .modal{background:#fff;border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.42);max-width:760px;width:100%;margin:auto;animation:mpop .18s ease;}
+  @keyframes mpop{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+  .modal-head{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);border-radius:16px 16px 0 0;display:flex;align-items:center;gap:12px;padding:15px 22px;z-index:2;}
+  .modal-head .mt{font-weight:600;font-size:15px;color:var(--navy);line-height:1.4;}
+  .modal-close{margin-left:auto;flex-shrink:0;width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:#F7FAFD;color:#4A6080;font-size:20px;cursor:pointer;line-height:1;font-family:inherit;}
+  .modal-close:hover{background:#EAF0F7;color:#1C3557;}
+  .modal-body{padding:18px 22px 26px;}
+  @media(max-width:760px){.modal-back{padding:12px 10px;}.modal-body{padding:14px 16px 22px;}.modal-head{padding:13px 16px;}}
   .switch{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
   .sbtn{padding:8px 16px;border:1.5px solid var(--line);background:#fff;border-radius:9px;font-size:13px;font-family:inherit;cursor:pointer;color:var(--muted);}
   .sbtn.on{border-color:var(--blue);background:var(--blue);color:#fff;font-weight:600;}
@@ -158,6 +167,14 @@
     <div class="topbar2"><div id="app-greet" class="greet">ダッシュボード</div><div id="app-date" class="datechip"></div></div>
     <div class="wrap" id="app-body"></div>
   </main>
+</div>
+
+<!-- ===== CLIENT DETAIL MODAL ===== -->
+<div id="cl-modal" class="modal-back hidden" onclick="if(event.target===this)closeClientModal()">
+  <div class="modal">
+    <div class="modal-head"><span id="cl-modal-title" class="mt">顧客の詳細</span><button class="modal-close" onclick="closeClientModal()" aria-label="閉じる">×</button></div>
+    <div class="modal-body"><div id="cl-detail"></div></div>
+  </div>
 </div>
 
 <script>
@@ -489,7 +506,6 @@
         +'<div class="panel" id="sec-followups"><div class="ph">対応リスト（顧客からの共有）</div><div id="fde-followups" style="margin-top:6px;">読み込み中...</div></div>'
         +'<div class="panel"><div class="ph">担当顧客一覧</div>'
           +'<div id="cl-list" style="margin-top:6px;">読み込み中...</div>'
-          +'<div id="cl-detail" style="margin-top:16px;"></div>'
         +'</div>'
         +'<div class="panel" id="sec-sec"><div class="ph">AI秘書（業務の相談相手）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">提案資料の文面づくり、面談準備、調べ物、考えの壁打ちなどを相談できます。</div>'
@@ -823,12 +839,17 @@
   async function loadClientStage(custId){ var sel=$('cl-stage'); if(!sel)return; var res=await sb.from('profiles').select('stage').eq('id',custId).single(); if(!res.error && res.data && res.data.stage) sel.value=String(res.data.stage); }
   async function setStage(custId,n){ var res=await sb.from('profiles').update({ stage: parseInt(n,10) }).eq('id',custId); if(res.error) alert('ステージ更新エラー：'+res.error.message); }
 
+  function openClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.remove('hidden'); document.body.style.overflow='hidden'; }
+  function closeClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.add('hidden'); document.body.style.overflow=''; }
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var m=$('cl-modal'); if(m && !m.classList.contains('hidden')) closeClientModal(); } });
+
   async function viewClient(custId, email, company){
     CURRENT_CLIENT={ id:custId, email:email, company:company||'' };
     var box=$('cl-detail'); if(!box)return;
-    var title=(company && company.length)?(esc(company)+'（'+esc(email)+'）'):esc(email);
-    box.innerHTML='<div style="font-weight:600;font-size:14px;margin:4px 0 12px;color:#1C3557;">'+title+'</div>'
-      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;"><span style="font-size:12px;color:#4A6080;">進捗ステージ</span><select id="cl-stage" class="inp2" onchange="setStage(\''+custId+'\',this.value)"><option value="1">1. 現状把握</option><option value="2">2. AI活用・自動化</option><option value="3">3. コスト削減</option><option value="4">4. 生まれた余力</option><option value="5">5. 次の投資</option></select></div>'
+    var titleTxt=(company && company.length)?(company+'（'+email+'）'):email;
+    var mt=$('cl-modal-title'); if(mt) mt.textContent=titleTxt;
+    openClientModal();
+    box.innerHTML='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;"><span style="font-size:12px;color:#4A6080;">進捗ステージ</span><select id="cl-stage" class="inp2" onchange="setStage(\''+custId+'\',this.value)"><option value="1">1. 現状把握</option><option value="2">2. AI活用・自動化</option><option value="3">3. コスト削減</option><option value="4">4. 生まれた余力</option><option value="5">5. 次の投資</option></select></div>'
       +'<div class="ph" style="font-size:13px;">パートナーからの提案メモ（顧客にも表示）</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">'
         +'<div style="flex:1;min-width:200px;"><label class="fl">提案・メモを書く</label><textarea id="cnote-body" rows="2" class="inp2" style="width:100%;" placeholder="例：養老保険の福利厚生プランをご提案します。次回、必要保障額の試算をお持ちします。"></textarea></div>'
