@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tsugu | Phase 22（モーダル整理・資金繰り見える化）</title>
+<title>Tsugu | Phase 23（顧客は見る・話す／パートナーが入力）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -319,7 +319,7 @@
   function buildNav(r){
     var nav=$('app-nav'); if(!nav)return;
     var items;
-    if(r==='customer') items=[['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','保険試算'],['sec-ma','M&A活用'],['sec-sec','AI秘書']];
+    if(r==='customer') items=[['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','保険試算'],['sec-ma','M&A活用'],['sec-sec','パートナーAI']];
     else if(r==='admin') items=[['sec-flow','ダッシュボード'],['sec-fde','パートナー'],['sec-cust','顧客']];
     else items=[['sec-flow','ダッシュボード'],['sec-followups','対応リスト'],['sec-clients','担当顧客'],['sec-sec','AI秘書']];
     var h='<div class="sb-sec">メニュー</div>';
@@ -427,7 +427,7 @@
           +'</div>'
         +'</div>'
         +'<div class="panel"><div class="ph">経営サマリー</div><div id="kpi-cards">読み込み中...</div></div>'
-        +'<div class="panel"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">資金繰りステータス<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadCashStatus()">↺ 更新</span></div><div id="cash-status" style="margin-top:4px;">読み込み中...</div></div>'
+        +'<div class="panel" id="sec-status"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">資金繰りステータス<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadCashStatus()">↺ 更新</span></div><div id="cash-status" style="margin-top:4px;">読み込み中...</div></div>'
         +'<div class="panel"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">要対応アクション<span class="ghost" style="font-size:11px;font-weight:400;" onclick="goSec(\'sec-act\')">課題の追加・一覧 →</span></div><div id="todo-list" style="margin-top:4px;">読み込み中...</div></div>'
         +'<div class="panel"><div class="ph">担当パートナーからの提案</div><div id="my-notes" style="margin-top:4px;">読み込み中...</div></div>'
         +'<div class="panel" id="sec-chat"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">担当パートナーとのメッセージ<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMyChat()">↺ 更新</span></div>'
@@ -448,54 +448,17 @@
           +'<div style="font-size:12px;color:#8AA0BE;margin-top:6px;">設定した会社名は、担当パートナーの顧客一覧に表示されます。</div>'
           +'<div id="pi-msg" style="font-size:12px;margin-top:6px;"></div>'
         +'</div>'
-        +'<div class="panel" id="sec-cash"><div class="ph">財務・資金繰り</div>'
+        +'<div class="panel" id="sec-cash"><div class="ph">財務・資金繰り（担当パートナーが入力します）</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">月次の数値や支払予定は担当パートナーが入力・更新します。数値や資料は「メッセージ」でお送りいただくだけでOKです。修正のご希望もメッセージでどうぞ。</div>'
           +'<div style="font-weight:600;font-size:14px;color:#1C3557;margin:2px 0 6px;">① 月次財務メモ</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">毎月の売上・営業利益を記録します（担当パートナーが代わりに入力することもできます。数値は「メッセージ」で伝えるだけでもOK）。下の「③ 資金繰り診断」にも自動で反映されます。</div>'
-          +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
-            +'<div><label class="fl">年月</label><input id="fin-ym" type="month" class="inp2"></div>'
-            +'<div><label class="fl">売上（万円）</label><input id="fin-rev" type="number" class="inp2" placeholder="例 1200"></div>'
-            +'<div><label class="fl">営業利益（万円）</label><input id="fin-prof" type="number" class="inp2" placeholder="例 180"></div>'
-            +'<div style="flex:1;min-width:160px;"><label class="fl">メモ</label><input id="fin-memo" type="text" class="inp2" style="width:100%;" placeholder="補足（任意）"></div>'
-            +'<button class="btn2" onclick="saveFinance()">保存</button>'
-          +'</div>'
-          +'<div id="fin-msg" style="font-size:12px;margin-top:8px;"></div>'
-          +'<div id="fin-list" style="margin-top:14px;">読み込み中...</div>'
-          +'<div style="border-top:1px solid #EAF0F7;margin:20px 0 0;"></div>'
-          +'<div style="font-weight:600;font-size:14px;color:#1C3557;margin:16px 0 6px;">② 今後の支払予定</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">借入返済・納税・賞与・大口仕入などの予定を登録すると、ダッシュボードの「資金繰りステータス」で残高の見通しに反映されます（担当パートナーが代わりに登録することもできます）。</div>'
-          +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
-            +'<div style="flex:1;min-width:160px;"><label class="fl">内容</label><input id="pay-title" class="inp2" style="width:100%;" placeholder="例：法人税納付"></div>'
-            +'<div><label class="fl">金額（万円）</label><input id="pay-amount" type="number" class="inp2" placeholder="例 300"></div>'
-            +'<div><label class="fl">支払日</label><input id="pay-due" type="date" class="inp2"></div>'
-            +'<button class="btn2" onclick="addMyPayment()">追加</button>'
-          +'</div>'
-          +'<div id="pay-list" style="margin-top:10px;">読み込み中...</div>'
-          +'<div style="border-top:1px solid #EAF0F7;margin:20px 0 0;"></div>'
-          +'<div style="font-weight:600;font-size:14px;color:#1C3557;margin:16px 0 6px;">③ 資金繰り診断・資金調達ロードマップ</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">月商・年間営業利益は上の月次財務メモから自動反映されます。残りの数値（現預金・売掛・在庫・買掛・借入・返済など）を入れて診断します（単位：万円）。</div>'
-          +'<div style="margin-bottom:8px;"><button class="ghost" style="border:1px solid #D0DCF0;border-radius:8px;padding:6px 12px;" onclick="cfPrefill()">↺ 月次財務メモから再取り込み</button></div>'
-          +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin:10px 0 6px;">基本</div>'
-          +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
-            +'<div><label class="fl">月商（月平均売上）</label><input id="cf-sales" type="number" class="inp2" placeholder="例 2000"></div>'
-            +'<div><label class="fl">現預金残高</label><input id="cf-cash" type="number" class="inp2" placeholder="例 3000"></div>'
-            +'<div><label class="fl">月間支出（仕入＋固定費等）</label><input id="cf-outflow" type="number" class="inp2" placeholder="例 1900"></div>'
-          +'</div>'
-          +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin:14px 0 6px;">運転資金（回収・支払）</div>'
-          +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
-            +'<div><label class="fl">売掛金残高</label><input id="cf-ar" type="number" class="inp2" placeholder="例 2000"></div>'
-            +'<div><label class="fl">棚卸資産（在庫）</label><input id="cf-inv" type="number" class="inp2" placeholder="例 800"></div>'
-            +'<div><label class="fl">買掛金残高</label><input id="cf-ap" type="number" class="inp2" placeholder="例 1200"></div>'
-            +'<div><label class="fl">月間仕入高（原価）</label><input id="cf-purch" type="number" class="inp2" placeholder="例 1000"></div>'
-          +'</div>'
-          +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin:14px 0 6px;">借入・返済</div>'
-          +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
-            +'<div><label class="fl">有利子負債（短期＋長期）</label><input id="cf-debt" type="number" class="inp2" placeholder="例 6000"></div>'
-            +'<div><label class="fl">月間返済額（元金＋利息）</label><input id="cf-repay" type="number" class="inp2" placeholder="例 120"></div>'
-            +'<div><label class="fl">営業利益（年）</label><input id="cf-op" type="number" class="inp2" placeholder="例 1500"></div>'
-            +'<div><label class="fl">減価償却費（年）</label><input id="cf-dep" type="number" class="inp2" placeholder="例 300"></div>'
-          +'</div>'
-          +'<button class="btn2" style="margin-top:16px;" onclick="cashflowDiagnose()">資金繰りを診断する</button>'
-          +'<div id="cf-result" style="margin-top:14px;"></div>'
+          +'<div id="fin-list" style="margin-top:6px;">読み込み中...</div>'
+          +'<div style="border-top:1px solid #EAF0F7;margin:18px 0 0;"></div>'
+          +'<div style="font-weight:600;font-size:14px;color:#1C3557;margin:14px 0 6px;">② 今後の支払予定</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:6px;">借入返済・納税・賞与などの予定です。ダッシュボードの「資金繰りステータス」の残高見通しに反映されています。</div>'
+          +'<div id="pay-list" style="margin-top:6px;">読み込み中...</div>'
+          +'<div style="border-top:1px solid #EAF0F7;margin:18px 0 0;"></div>'
+          +'<div style="font-weight:600;font-size:14px;color:#1C3557;margin:14px 0 6px;">③ 資金繰り診断</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;">担当パートナーが実施します。結果はダッシュボードの「資金繰りステータス」に表示されます。<button class="ghost" style="border:1px solid #D0DCF0;border-radius:8px;padding:5px 10px;margin-left:6px;" onclick="goSec(\'sec-status\')">ステータスを見る →</button></div>'
         +'</div>'
         +'<div class="panel" id="sec-act"><div class="ph">アクション・課題</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">担当パートナーと共有されます。パートナーが追加した課題もここに表示されます。</div>'
@@ -506,8 +469,8 @@
           +'</div>'
           +'<div id="act-list" style="margin-top:12px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-ai"><div class="ph">AIバックオフィス自動化診断</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">AIで自動化・効率化できそうな業務を提案します。APIキーの入力は不要です（サーバー側で安全に処理）。</div>'
+        +'<div class="panel" id="sec-ai"><div class="ph">AI自動化診断（全業務対応）</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">事務だけでなく、現場・営業・物流など会社のあらゆる業務を対象に、AIで自動化・効率化できるものを診断します。気になる業務をタップして実行するだけです。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
             +'<div style="flex:1;min-width:200px;"><label class="fl">業種・事業内容</label><input id="ai-gyo" class="inp2" style="width:100%;" placeholder="例：金属加工業、調剤薬局 など"></div>'
             +'<div><label class="fl">従業員規模</label><select id="ai-size" class="inp2"><option>〜5名</option><option selected>6〜20名</option><option>21〜50名</option><option>51名以上</option></select></div>'
@@ -519,33 +482,9 @@
           +'<button class="btn2" id="ai-run" onclick="runAi()">AIに自動化提案をもらう</button>'
           +'<div id="ai-result" style="margin-top:14px;"></div>'
         +'</div>'
-        +'<div class="panel" id="sec-ins"><div class="ph">必要保障額シミュレーター（事業用）</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">法人向けに、経営者の万一に備える事業保障額・損害保険の目安と、養老保険(福利厚生プラン)の節税メリットを概算します（単位：万円）。</div>'
-          +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin:4px 0 8px;">法人実効税率</div>'
-          +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
-            +'<div><label class="fl">会社の区分</label><select id="tax-preset" class="inp2" onchange="if(this.value){document.getElementById(\'tax-rate\').value=this.value;}">'+taxPresetOptions()+'</select></div>'
-            +'<div><label class="fl">実効税率(%)</label><input id="tax-rate" type="number" class="inp2" value="34"></div>'
-          +'</div>'
-          +'<div style="font-size:11px;color:#8AA0BE;margin-top:4px;line-height:1.6;">※ 実効税率は会社区分・課税所得・地域でおおむね決まります。中小法人は所得800万円以下の部分に軽減税率、医療法人は社会保険診療分の事業税が非課税など特例があります。上の区分は概算の目安です。正確な税率は税理士にご確認のうえ、必要に応じて手入力で調整してください。</div>'
-          +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin:16px 0 8px;">事業保障（経営者の万一に備える額）</div>'
-          +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
-            +'<div><label class="fl">借入金・負債残高</label><input id="bp-debt" type="number" class="inp2" placeholder="例 8000"></div>'
-            +'<div><label class="fl">年間固定費</label><input id="bp-fixed" type="number" class="inp2" placeholder="例 6000"></div>'
-            +'<div><label class="fl">立て直しに必要な月数</label><input id="bp-months" type="number" class="inp2" value="12"></div>'
-            +'<div><label class="fl">現預金</label><input id="bp-cash" type="number" class="inp2" placeholder="例 2000"></div>'
-            +'<div><label class="fl">既存の法人保険</label><input id="bp-exist" type="number" class="inp2" placeholder="例 1000"></div>'
-          +'</div>'
-          +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin:16px 0 8px;">損害保険（事業）— 業種別に押さえるべき保障範囲を診断</div>'
-          +'<div><label class="fl">業種</label><select id="pc-industry" class="inp2" style="width:auto;min-width:200px;">'+industryOptions()+'</select></div>'
-          +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin:16px 0 8px;">養老保険（福利厚生プラン／普遍的加入）</div>'
-          +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:8px;line-height:1.6;">満期金受取人=法人、死亡保険金受取人=従業員の遺族。保険料の1/2を損金算入できます（法基通9-3-4／全員または合理的基準での普遍的加入が要件）。</div>'
-          +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
-            +'<div><label class="fl">1人あたり死亡退職金額(目安・メモ)</label><input id="ec-death" type="number" class="inp2" placeholder="例 500"></div>'
-            +'<div><label class="fl">加入人数(人)</label><input id="ec-emp" type="number" class="inp2" placeholder="例 10"></div>'
-            +'<div><label class="fl">全体の年間保険料(万円)</label><input id="ec-total" type="number" class="inp2" placeholder="例 300"></div>'
-          +'</div>'
-          +'<button class="btn2" style="margin-top:16px;" onclick="insCalc()">計算する</button>'
-          +'<div id="ins-result" style="margin-top:14px;"></div>'
+        +'<div class="panel" id="sec-ins"><div class="ph">保険試算（パートナーからの共有）</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">事業保障・損害保険・養老保険などの試算は担当パートナーが行い、ここに共有されます。試算のご希望や前提条件の変更は「メッセージ」でお伝えください。</div>'
+          +'<div id="my-ins" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-ma"><div class="ph">利益のM&A活用 提案（AI）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">利益や余剰資金を、M&A（会社・事業の買収）で活かす方向性をAIが提案します。</div>'
@@ -558,8 +497,8 @@
           +'<div style="margin-top:12px;"><button class="btn2" id="ma-run" onclick="runMa()">AIに提案をもらう</button></div>'
           +'<div id="ma-result" style="margin-top:14px;"></div>'
         +'</div>'
-        +'<div class="panel" id="sec-sec"><div class="ph">AI秘書（経営の相談相手）</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">日程・タスク整理、文章作成、調べ物、経営の壁打ちなどを相談できます。</div>'
+        +'<div class="panel" id="sec-sec"><div class="ph">パートナーAI（24時間いつでも相談できるAI）</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">担当パートナーへのメッセージとは別に、AIに24時間いつでも相談できます。日程・タスク整理、文章作成、調べ物、経営の壁打ちなどにどうぞ。</div>'
           + secModesHtml()
           +'<div id="sec-log" style="max-height:300px;overflow:auto;border:1px solid #EAF0F7;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;"><div style="font-size:12px;color:#8AA0BE;">例：「来期の経営計画づくりの進め方を相談したい」「取引先へのお礼メールを作って」</div></div>'
           +'<div style="display:flex;gap:8px;align-items:flex-end;">'
@@ -602,14 +541,14 @@
     }
 
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); cfPrefill(); var fy=$('fin-ym'); if(fy&&!fy.value) fy.value=new Date().toISOString().slice(0,7); }
+    if(eff==='customer'){ loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); }
     else if(eff==='consultant'){ loadClients(); loadFollowups(); }
     else { loadAdmin(); }
   }
 
   // ---- finance (customer writes / consultant reads) ----
   function kpiCards(rows){
-    if(!rows||!rows.length) return '<div style="font-size:12px;color:#8AA0BE;line-height:1.7;">まだ財務データがありません。月次の数値は担当パートナーが入力します（「メッセージ」で伝えるだけでOK）。ご自身で入力する場合は「財務・資金繰り」からどうぞ。<br><button class="btn2" style="margin-top:8px;" onclick="goSec(\'sec-chat\')">パートナーに伝える →</button> <button class="btn2" style="margin-top:8px;background:#fff;color:#2C6EBD;border:1.5px solid #2C6EBD;" onclick="goSec(\'sec-cash\')">自分で入力する →</button></div>';
+    if(!rows||!rows.length) return '<div style="font-size:12px;color:#8AA0BE;line-height:1.7;">まだ財務データがありません。月次の数値は担当パートナーが入力します。売上・利益の数値や試算表は「メッセージ」でお送りください。<br><button class="btn2" style="margin-top:8px;" onclick="goSec(\'sec-chat\')">パートナーに伝える →</button></div>';
     function nv(v){ return v==null?null:Number(v); }
     function yen0(v){ return v==null?'-':Number(v).toLocaleString('ja-JP')+' 万円'; }
     function pct(a,b){ if(b==null||b===0||a==null) return null; return (a-b)/Math.abs(b)*100; }
@@ -694,7 +633,7 @@
     var box=$('fin-list'); if(!box)return;
     var res=await sb.from('financial_entries').select('*').eq('customer_id',ME).order('year_month',{ascending:false});
     if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
-    box.innerHTML=finTable(res.data, true, 'me');
+    box.innerHTML=finTable(res.data, false);
     var k=$('kpi-cards'); if(k) k.innerHTML=kpiCards(res.data);
   }
 
@@ -822,17 +761,18 @@
     ta.value=''; loadClientNotes(custId);
   }
   // ---- 今後の支払予定 ----
-  function payTable(rows, scope){
+  function payTable(rows, scope, editable){
+    if(editable==null) editable=true;
     if(!rows||!rows.length) return '<div style="font-size:12px;color:#8AA0BE;">支払予定はまだ登録されていません。</div>';
     var today=new Date().toISOString().slice(0,10);
-    var h='<table class="ft"><tr><th>支払日</th><th>内容</th><th style="text-align:right;">金額(万円)</th><th></th></tr>';
+    var h='<table class="ft"><tr><th>支払日</th><th>内容</th><th style="text-align:right;">金額(万円)</th>'+(editable?'<th></th>':'')+'</tr>';
     rows.forEach(function(r){
       var soon = r.due_date && r.due_date>=today && (new Date(r.due_date)-new Date(today))/86400000<=30;
       var past = r.due_date && r.due_date<today;
       h+='<tr><td style="color:'+(past?'#8AA0BE':(soon?'#A83030':'#131E2E'))+';'+(soon?'font-weight:600;':'')+'">'+esc(r.due_date||'-')+(soon?' ⚠':'')+'</td>'
         +'<td'+(past?' style="color:#8AA0BE;"':'')+'>'+esc(r.title)+'</td>'
         +'<td style="text-align:right;font-weight:600;'+(past?'color:#8AA0BE;':'')+'">'+Number(r.amount||0).toLocaleString('ja-JP')+'</td>'
-        +'<td style="text-align:right;"><span onclick="delPayment(\''+r.id+'\',\''+scope+'\')" style="color:#A83030;cursor:pointer;font-size:11px;">削除</span></td></tr>';
+        +(editable?'<td style="text-align:right;"><span onclick="delPayment(\''+r.id+'\',\''+scope+'\')" style="color:#A83030;cursor:pointer;font-size:11px;">削除</span></td>':'')+'</tr>';
     });
     return h+'</table>';
   }
@@ -840,7 +780,7 @@
     var box=$('pay-list'); if(!box)return;
     var res=await sb.from('upcoming_payments').select('*').eq('customer_id',ME).order('due_date',{ascending:true});
     if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'<br><span style="color:#8AA0BE;">（Phase22のSQL未実施の可能性があります）</span></div>'; return; }
-    box.innerHTML=payTable(res.data,'me');
+    box.innerHTML=payTable(res.data,'me',false);
     loadCashStatus();
   }
   async function addMyPayment(){
@@ -850,6 +790,14 @@
     if(res.error){ alert('追加エラー：'+res.error.message); return; }
     $('pay-title').value=''; $('pay-amount').value=''; $('pay-due').value='';
     loadMyPayments();
+  }
+  async function loadMyInsurance(){
+    var box=$('my-ins'); if(!box)return;
+    var res=await sb.from('insurance_results').select('*').eq('customer_id',ME).order('created_at',{ascending:false});
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
+    if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">共有された保険試算はまだありません。ご希望があれば「メッセージ」で担当パートナーにお伝えください。</div>'; return; }
+    var h=''; res.data.forEach(function(r){ var dt=(r.created_at||'').slice(0,10); h+='<div style="border-left:3px solid #2C6EBD;background:#F5F9FF;border-radius:8px;padding:10px 12px;margin-bottom:6px;"><div style="font-size:11px;color:#8AA0BE;margin-bottom:4px;">'+esc(dt)+'</div><div style="font-size:12.5px;color:#131E2E;white-space:pre-wrap;line-height:1.7;">'+esc(r.summary||'')+'</div></div>'; });
+    box.innerHTML=h;
   }
   async function loadClientPayments(custId){
     var box=$('cl-pay'); if(!box)return;
@@ -936,9 +884,9 @@
     } else if(snapErr){
       h+='<div style="font-size:12px;color:#8AA0BE;line-height:1.7;">資金繰りステータスを使うには、Phase 22 のSQL設定が必要です。</div>';
     } else {
-      h+='<div style="font-size:12px;color:#8AA0BE;line-height:1.7;">まだ資金繰り診断が実行されていません。「財務・資金繰り」で一度診断すると、ここにスコアと資金残高の見通しが常時表示されます。'
+      h+='<div style="font-size:12px;color:#8AA0BE;line-height:1.7;">担当パートナーが資金繰り診断を行うと、ここにスコアと資金残高の見通しが常時表示されます。'
         +(future.length?'<br>（支払予定 '+future.length+' 件は登録済みです）':'')
-        +'<br><button class="btn2" style="margin-top:8px;" onclick="goSec(\'sec-cash\')">診断してみる →</button></div>';
+        +'<br><button class="btn2" style="margin-top:8px;" onclick="goSec(\'sec-chat\')">パートナーに相談する →</button></div>';
     }
     box.innerHTML=h;
   }
@@ -1324,6 +1272,24 @@
       +'</div>'
       +'<div id="cpay-msg" style="font-size:12px;margin-top:6px;"></div>'
       +'<div id="cl-pay" style="margin-top:8px;">読み込み中...</div>'
+      +'<div class="ph" style="font-size:13px;margin-top:18px;">資金繰り診断（実行すると顧客のダッシュボードに反映）</div>'
+      +'<div style="margin:4px 0 8px;"><button class="ghost" style="border:1px solid #D0DCF0;border-radius:8px;padding:5px 10px;" onclick="cfPrefillFor(\''+custId+'\')">↺ 月次財務メモから取り込む</button></div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+        +'<div><label class="fl">月商（万円）</label><input id="cf-sales" type="number" class="inp2" placeholder="例 2000"></div>'
+        +'<div><label class="fl">現預金残高</label><input id="cf-cash" type="number" class="inp2" placeholder="例 3000"></div>'
+        +'<div><label class="fl">月間支出</label><input id="cf-outflow" type="number" class="inp2" placeholder="例 1900"></div>'
+        +'<div><label class="fl">売掛金</label><input id="cf-ar" type="number" class="inp2" placeholder="例 2000"></div>'
+        +'<div><label class="fl">在庫</label><input id="cf-inv" type="number" class="inp2" placeholder="例 800"></div>'
+        +'<div><label class="fl">買掛金</label><input id="cf-ap" type="number" class="inp2" placeholder="例 1200"></div>'
+        +'<div><label class="fl">月間仕入高</label><input id="cf-purch" type="number" class="inp2" placeholder="例 1000"></div>'
+        +'<div><label class="fl">有利子負債</label><input id="cf-debt" type="number" class="inp2" placeholder="例 6000"></div>'
+        +'<div><label class="fl">月間返済額</label><input id="cf-repay" type="number" class="inp2" placeholder="例 120"></div>'
+        +'<div><label class="fl">営業利益（年）</label><input id="cf-op" type="number" class="inp2" placeholder="例 1500"></div>'
+        +'<div><label class="fl">減価償却費（年）</label><input id="cf-dep" type="number" class="inp2" placeholder="例 300"></div>'
+      +'</div>'
+      +'<button class="btn2" style="margin-top:12px;" onclick="cashflowDiagnose(\''+custId+'\')">資金繰りを診断する</button>'
+      +'<div id="cf-saved" style="font-size:12px;margin-top:6px;"></div>'
+      +'<div id="cf-result" style="margin-top:10px;"></div>'
       +'<div class="ph" style="font-size:13px;margin-top:18px;">アクション・課題（顧客と共有・両者が編集可）</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">'
         +'<div style="flex:1;min-width:200px;"><label class="fl">課題を追加</label><input id="cact-title" class="inp2" style="width:100%;" placeholder="例：退職金規程の確認"></div>'
@@ -1388,7 +1354,7 @@
   }
 
   // ---- AI: back-office automation diagnosis via Edge Function (key hidden server-side) ----
-  var AI_PAINS=['経理・記帳','請求書発行','入金消込・売掛管理','給与計算・勤怠','受発注・在庫管理','見積・営業事務','問合せ・顧客対応','データ入力・転記','文書・報告書作成','採用・人事労務','経費精算','スケジュール調整'];
+  var AI_PAINS=['経理・記帳','請求書発行','入金消込・売掛管理','給与計算・勤怠','受発注・在庫管理','見積・営業事務','問合せ・顧客対応','データ入力・転記','文書・報告書作成','採用・人事労務','経費精算','スケジュール調整','営業・商談フォロー','マーケティング・販促','SNS・コンテンツ作成','物流・配送手配','製造・生産管理','品質管理・検査記録','予約・受付対応','シフト・人員配置','設計・開発補助','現場報告・日報','翻訳・多言語対応','契約書・法務チェック'];
   var aiSelected={};
   function buildAiChips(){
     var box=$('ai-chips'); if(!box)return; aiSelected={}; box.innerHTML='';
@@ -1445,8 +1411,8 @@
     if(areas.length===0 && !note){ result.innerHTML='<div style="font-size:12px;color:#A83030;">業務を1つ以上選ぶか、困りごとを入力してください。</div>'; return; }
     btn.disabled=true; var ot=btn.textContent; btn.textContent='AIが分析中...';
     result.innerHTML='<div style="padding:24px;text-align:center;color:#4A6080;font-size:13px;">AIが分析し、自動化案を作成しています...</div>';
-    var sys='あなたは中小企業のバックオフィス改善とAI活用に精通したパートナータントです。後継者不在も視野に入る黒字中小企業の生産性向上と財務貢献を目的に、現実的で着手しやすい自動化案を提案します。出力は指定されたJSON配列のみとし、前置き・後置き・コードフェンスを一切付けないこと。';
-    var usr='対象企業の情報：\n業種・事業内容: '+(gyo||'（未記入）')+'\n従業員規模: '+size+'\n自動化を検討したい業務: '+(areas.length?areas.join('、'):'（指定なし）')+'\n具体的な困りごと: '+(note||'（特になし）')+'\n\nこの企業で、AIや軽量なデジタルツールで自動化・効率化できるバックオフィス業務を5件程度、効果の大きい順に提案してください。中小企業が無理なく始められる現実的な手段を優先し、推奨アプローチには「Claudeプロジェクト」「Custom GPT」「専用AIアシスタント」「RPA」「既存SaaS連携」など具体的な手段名を含めてください。\n\n必ず次の形式のJSON配列のみを出力（説明・コードフェンス禁止）：\n[{"業務":"...","現状課題":"...","自動化案":"...","推奨アプローチ":"...","期待効果":"...","難易度":"低|中|高","優先度":"高|中|低","月間削減目安":"例: 約20時間/月"}]';
+    var sys='あなたは中小企業の業務改善とAI活用に精通したコンサルタントです。バックオフィスに限らず、現場・営業・物流・製造・マーケティングなど全部門が対象です。後継者不在も視野に入る黒字中小企業の生産性向上と財務貢献を目的に、現実的で着手しやすい自動化案を提案します。出力は指定されたJSON配列のみとし、前置き・後置き・コードフェンスを一切付けないこと。';
+    var usr='対象企業の情報：\n業種・事業内容: '+(gyo||'（未記入）')+'\n従業員規模: '+size+'\n自動化を検討したい業務: '+(areas.length?areas.join('、'):'（指定なし）')+'\n具体的な困りごと: '+(note||'（特になし）')+'\n\nこの企業で、AIや軽量なデジタルツールで自動化・効率化できる業務（部門を問わず：事務・営業・現場・物流・製造・マーケ等すべて対象）を5件程度、効果の大きい順に提案してください。中小企業が無理なく始められる現実的な手段を優先し、推奨アプローチには「Claudeプロジェクト」「Custom GPT」「専用AIアシスタント」「RPA」「既存SaaS連携」など具体的な手段名を含めてください。\n\n必ず次の形式のJSON配列のみを出力（説明・コードフェンス禁止）：\n[{"業務":"...","現状課題":"...","自動化案":"...","推奨アプローチ":"...","期待効果":"...","難易度":"低|中|高","優先度":"高|中|低","月間削減目安":"例: 約20時間/月"}]';
     try{
       var res=await sb.functions.invoke('ai-proxy', { body: { system:sys, messages:[{role:'user',content:usr}], model:'claude-sonnet-4-6', max_tokens:2500 } });
       if(res.error){ result.innerHTML='<div style="font-size:12px;color:#A83030;line-height:1.6;">呼び出しエラー：'+esc(res.error.message||String(res.error))+'<br>Edge Function「ai-proxy」が未デプロイか、ANTHROPIC_API_KEY が未設定の可能性があります。</div>'; }
@@ -1509,8 +1475,8 @@
     return '<div style="display:flex;align-items:stretch;gap:6px;flex-wrap:wrap;">'
       +st('1','現状把握','財務の見える化','財務を見る','sec-cash','#2C6EBD')+ar
       +st('2','AI活用・自動化','業務を効率化','AI診断する','sec-ai','#2C6EBD')+ar
-      +st('3','コスト削減','固定費・税の最適化','保険を試算','sec-ins','#2C6EBD')+ar
-      +st('4','生まれた余力','利益・資金の確保','資金を診断','sec-cash','#1E6B45')+ar
+      +st('3','コスト削減','固定費・税の最適化','保険を見る','sec-ins','#2C6EBD')+ar
+      +st('4','生まれた余力','利益・資金の確保','資金を見る','sec-status','#1E6B45')+ar
       +st('5','次の投資','M&A・HD化で成長','M&Aを見る','sec-ma','#1E6B45')
       +'</div>';
   }
@@ -1609,16 +1575,16 @@
 
   // ---- 資金繰り診断・資金調達ロードマップ ----
   function cfClamp(x){ return Math.max(0,Math.min(100,x)); }
-  function cfPrefill(){
-    sb.from('financial_entries').select('*').eq('customer_id',ME).order('year_month',{ascending:false}).limit(1).then(function(res){
+  function cfPrefillFor(custId){
+    sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false}).limit(1).then(function(res){
       if(res.error||!res.data||!res.data.length) return;
       var f=res.data[0];
-      if(f.revenue!=null && $('cf-sales') && !$('cf-sales').value) $('cf-sales').value=f.revenue;
-      if(f.profit!=null && $('cf-op') && !$('cf-op').value) $('cf-op').value=Math.round(Number(f.profit)*12);
+      if(f.revenue!=null && $('cf-sales')) $('cf-sales').value=f.revenue;
+      if(f.profit!=null && $('cf-op')) $('cf-op').value=Math.round(Number(f.profit)*12);
     });
   }
-  function cashflowDiagnose(){
-    var box=$('cf-result'); if(!box)return;
+  function cashflowDiagnose(custId){
+    var box=$('cf-result'); if(!box)return; if(!custId&&CURRENT_CLIENT) custId=CURRENT_CLIENT.id; if(!custId) return;
     var sales=num('cf-sales'), cash=num('cf-cash'), outflow=num('cf-outflow');
     var ar=num('cf-ar'), inv=num('cf-inv'), ap=num('cf-ap'), purch=num('cf-purch');
     var debt=num('cf-debt'), repay=num('cf-repay'), op=num('cf-op'), dep=num('cf-dep');
@@ -1698,8 +1664,8 @@
     h+='<div style="font-size:11px;color:#8AA0BE;margin-top:8px;line-height:1.7;">※ 金融機関へは資金繰り表・経営計画を示して対話を。認定経営革新等支援機関の関与も有効です。本診断は概算の目安であり、実際の調達可否・条件・税務上の取扱いは金融機関や専門家の確認が必要です。</div>';
     h+='</div>';
     box.innerHTML=h;
-    // スナップショット保存 → ダッシュボードの資金繰りステータスを更新
-    sb.from('cashflow_snapshots').insert({ customer_id:ME, cash:cash, monthly_in:sales, monthly_out:outflow, monthly_repay:repay, score:score }).then(function(res){ if(!res.error) loadCashStatus(); });
+    // スナップショット保存 → 顧客のダッシュボード「資金繰りステータス」に反映
+    sb.from('cashflow_snapshots').insert({ customer_id:custId, cash:cash, monthly_in:sales, monthly_out:outflow, monthly_repay:repay, score:score }).then(function(res){ var sm=$('cf-saved'); if(!sm)return; if(res.error){ sm.style.color='#A83030'; sm.textContent='結果の保存に失敗：'+res.error.message+'（Phase23のSQL未実施の可能性があります）'; } else { sm.style.color='#1E6B45'; sm.textContent='診断結果を保存しました。顧客のダッシュボード「資金繰りステータス」に反映されます。'; } });
   }
 
   // ---- AI秘書チャット ----
