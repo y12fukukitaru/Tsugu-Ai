@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tsugu | Phase 14（パートナー保険試算）</title>
+<title>Tsugu | Phase 15（進捗ステージ管理）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -94,7 +94,7 @@
         <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div>
         <div class="name">Tsugu</div>
       </div>
-      <div style="font-size:12px;color:#8AA0BE;margin-top:4px;">Phase 14 — パートナーが顧客向けに保険試算</div>
+      <div style="font-size:12px;color:#8AA0BE;margin-top:4px;">Phase 15 — 顧客の進捗ステージ管理</div>
     </div>
 
     <div class="tabs">
@@ -331,7 +331,7 @@
         var fde=u.consultant_id?('担当パートナー：'+esc(nameOf[u.consultant_id]||u.consultant_id)):'担当パートナー：未割当';
         h2+='<div style="border:1px solid #EAF0F7;border-radius:9px;padding:10px 12px;margin-bottom:6px;">'
           +'<div style="font-size:13px;font-weight:600;color:#131E2E;">'+esc(u.company_name||u.contact_name||u.email)+'</div>'
-          +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">'+esc(u.email)+'　'+fde+'</div>'
+          +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">'+esc(u.email)+'　ステージ'+(u.stage||1)+'　'+fde+'</div>'
           +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;"><span style="font-size:11px;color:#4A6080;">役割</span>'+roleSelect(u)+'</div>'
           +'</div>';
       }); cb.innerHTML=h2; }
@@ -361,7 +361,7 @@
         +'<div class="kv">ログイン中：<b>'+esc(email)+'</b>　役割：<b>顧客（経営者）</b></div></div>'
         +'<div class="panel" id="sec-flow"><div class="ph">価値の流れ</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">AIと自動化でコストを下げ、生まれた余力を次の投資（M&A）へ。</div>'
-          + stepperHtml()
+          + stepperHtml(prof.stage||1)
           +'<div style="margin-top:16px;border:1px solid #D0DCF0;border-radius:11px;padding:14px 16px;background:#F5F9FF;">'
             +'<div style="font-size:13px;font-weight:600;color:#1C3557;margin-bottom:10px;">次の投資に回せる余力（年間）</div>'
             +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
@@ -820,11 +820,15 @@
     loadClientInsurance(custId);
   }
 
+  async function loadClientStage(custId){ var sel=$('cl-stage'); if(!sel)return; var res=await sb.from('profiles').select('stage').eq('id',custId).single(); if(!res.error && res.data && res.data.stage) sel.value=String(res.data.stage); }
+  async function setStage(custId,n){ var res=await sb.from('profiles').update({ stage: parseInt(n,10) }).eq('id',custId); if(res.error) alert('ステージ更新エラー：'+res.error.message); }
+
   async function viewClient(custId, email, company){
     CURRENT_CLIENT={ id:custId, email:email, company:company||'' };
     var box=$('cl-detail'); if(!box)return;
     var title=(company && company.length)?(esc(company)+'（'+esc(email)+'）'):esc(email);
     box.innerHTML='<div style="font-weight:600;font-size:14px;margin:4px 0 12px;color:#1C3557;">'+title+'</div>'
+      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;"><span style="font-size:12px;color:#4A6080;">進捗ステージ</span><select id="cl-stage" class="inp2" onchange="setStage(\''+custId+'\',this.value)"><option value="1">1. 現状把握</option><option value="2">2. AI活用・自動化</option><option value="3">3. コスト削減</option><option value="4">4. 生まれた余力</option><option value="5">5. 次の投資</option></select></div>'
       +'<div class="ph" style="font-size:13px;">パートナーからの提案メモ（顧客にも表示）</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">'
         +'<div style="flex:1;min-width:200px;"><label class="fl">提案・メモを書く</label><textarea id="cnote-body" rows="2" class="inp2" style="width:100%;" placeholder="例：養老保険の福利厚生プランをご提案します。次回、必要保障額の試算をお持ちします。"></textarea></div>'
@@ -865,6 +869,7 @@
     loadClientInsurance(custId);
     loadClientDiag(custId);
     loadClientNotes(custId);
+    loadClientStage(custId);
   }
 
   async function loadClientDiag(custId){
@@ -999,8 +1004,8 @@
 
   function num(id){ var v=parseFloat(($(id)&&$(id).value)||''); return isNaN(v)?0:v; }
   function yen(n){ return Math.round(n).toLocaleString('ja-JP')+' 万円'; }
-  function stepperHtml(){
-    function st(n,t,s,act,tgt,c){ return '<div onclick="goSec(\''+tgt+'\')" style="flex:1 1 112px;min-width:112px;background:#F7FAFD;border:1px solid #EAF0F7;border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;"><div style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:'+c+';color:#fff;font-size:12px;font-weight:600;">'+n+'</div><div style="font-size:13px;font-weight:600;color:#131E2E;margin-top:6px;">'+t+'</div><div style="font-size:11px;color:#8AA0BE;margin-top:2px;line-height:1.4;">'+s+'</div><div style="font-size:10px;color:'+c+';margin-top:6px;font-weight:600;">'+act+' ›</div></div>'; }
+  function stepperHtml(cur){
+    function st(n,t,s,act,tgt,c){ var on=(String(cur)===String(n)); var foot= on? '<div style="font-size:9px;color:#fff;background:'+c+';border-radius:99px;padding:1px 8px;display:inline-block;margin-top:5px;">現在地</div>' : '<div style="font-size:10px;color:'+c+';margin-top:6px;font-weight:600;">'+act+' ›</div>'; return '<div onclick="goSec(\''+tgt+'\')" style="flex:1 1 112px;min-width:112px;background:'+(on?'#EAF1FB':'#F7FAFD')+';border:'+(on?'2px':'1px')+' solid '+(on?c:'#EAF0F7')+';border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;"><div style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:'+c+';color:#fff;font-size:12px;font-weight:600;">'+n+'</div><div style="font-size:13px;font-weight:600;color:#131E2E;margin-top:6px;">'+t+'</div><div style="font-size:11px;color:#8AA0BE;margin-top:2px;line-height:1.4;">'+s+'</div>'+foot+'</div>'; }
     var ar='<div style="display:flex;align-items:center;color:#B7C4D6;font-size:16px;">→</div>';
     return '<div style="display:flex;align-items:stretch;gap:6px;flex-wrap:wrap;">'
       +st('1','現状把握','財務の見える化','財務を見る','sec-company','#2C6EBD')+ar
