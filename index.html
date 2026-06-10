@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tsugu | Phase 16（顧客詳細のモーダル化）</title>
+<title>Tsugu | Phase 17（月次レポート）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -58,6 +58,23 @@
   .modal-close:hover{background:#EAF0F7;color:#1C3557;}
   .modal-body{padding:18px 22px 26px;}
   @media(max-width:760px){.modal-back{padding:12px 10px;}.modal-body{padding:14px 16px 22px;}.modal-head{padding:13px 16px;}}
+  .rep-sec{margin:0 0 18px;}
+  .rep-h{font-size:13px;font-weight:700;color:var(--navy);border-bottom:2px solid var(--line);padding-bottom:5px;margin:0 0 9px;}
+  .rep-meta{font-size:12px;color:#4A6080;line-height:1.8;}
+  .rep-card{flex:1 1 130px;min-width:130px;background:#F7FAFD;border:1px solid #EAF0F7;border-radius:9px;padding:11px 14px;}
+  .rep-card .l{font-size:11px;color:#4A6080;}
+  .rep-card .v{font-size:20px;font-weight:700;color:#1C3557;margin-top:2px;}
+  .rep-li{font-size:12.5px;color:#131E2E;padding:6px 0;border-top:1px solid #EAF0F7;line-height:1.6;}
+  @media print{
+    body *{visibility:hidden;}
+    #rep-modal, #rep-modal *{visibility:visible;}
+    #rep-modal{position:absolute;inset:0;background:#fff;padding:0;display:block;overflow:visible;}
+    #rep-modal .modal{box-shadow:none;border-radius:0;max-width:none;width:100%;margin:0;animation:none;}
+    #rep-modal .rep-bar{display:none!important;}
+    #rep-body{padding:0;}
+    .rep-card{break-inside:avoid;}
+    .rep-sec{break-inside:avoid;}
+  }
   .switch{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
   .sbtn{padding:8px 16px;border:1.5px solid var(--line);background:#fff;border-radius:9px;font-size:13px;font-family:inherit;cursor:pointer;color:var(--muted);}
   .sbtn.on{border-color:var(--blue);background:var(--blue);color:#fff;font-weight:600;}
@@ -174,6 +191,20 @@
   <div class="modal">
     <div class="modal-head"><span id="cl-modal-title" class="mt">顧客の詳細</span><button class="modal-close" onclick="closeClientModal()" aria-label="閉じる">×</button></div>
     <div class="modal-body"><div id="cl-detail"></div></div>
+  </div>
+</div>
+
+<!-- ===== MONTHLY REPORT MODAL ===== -->
+<div id="rep-modal" class="modal-back hidden" onclick="if(event.target===this)closeReport()">
+  <div class="modal rep-sheet" style="max-width:820px;">
+    <div class="rep-bar modal-head">
+      <span class="mt">月次レポート</span>
+      <input type="month" id="rep-month" class="inp2" onchange="renderReport()" style="width:auto;">
+      <span style="flex:1;"></span>
+      <button class="btn2" onclick="window.print()">印刷 / PDFで保存</button>
+      <button class="modal-close" onclick="closeReport()" aria-label="閉じる">×</button>
+    </div>
+    <div id="rep-body" class="modal-body">読み込み中...</div>
   </div>
 </div>
 
@@ -841,7 +872,132 @@
 
   function openClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.remove('hidden'); document.body.style.overflow='hidden'; }
   function closeClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.add('hidden'); document.body.style.overflow=''; }
-  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var m=$('cl-modal'); if(m && !m.classList.contains('hidden')) closeClientModal(); } });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var m=$('cl-modal'); if(m && !m.classList.contains('hidden')) closeClientModal(); var r=$('rep-modal'); if(r && !r.classList.contains('hidden')) closeReport(); } });
+
+  var REP=null;
+  var STAGE_NAMES=['','現状把握','AI活用・自動化','コスト削減','生まれた余力','次の投資'];
+  function openMonthlyReport(){
+    if(!CURRENT_CLIENT)return;
+    REP={ id:CURRENT_CLIENT.id, email:CURRENT_CLIENT.email, company:CURRENT_CLIENT.company||'' };
+    var mi=$('rep-month'); if(mi && !mi.value) mi.value=new Date().toISOString().slice(0,7);
+    var m=$('rep-modal'); if(m){ m.classList.remove('hidden'); document.body.style.overflow='hidden'; }
+    renderReport();
+  }
+  function closeReport(){ var m=$('rep-modal'); if(m){ m.classList.add('hidden'); document.body.style.overflow=''; } }
+  function repDiagTop(txt){
+    var arr=null; try{ var s=txt.indexOf('['),e=txt.lastIndexOf(']'); if(s>=0&&e>s) arr=JSON.parse(txt.slice(s,e+1)); }catch(_){ arr=null; }
+    if(!arr||!arr.length) return [];
+    var rk={'高':0,'中':1,'低':2};
+    arr.sort(function(a,b){ return (rk[a['優先度']]==null?9:rk[a['優先度']])-(rk[b['優先度']]==null?9:rk[b['優先度']]); });
+    return arr.slice(0,3);
+  }
+  async function renderReport(){
+    var box=$('rep-body'); if(!box||!REP)return;
+    box.innerHTML='<div style="font-size:13px;color:#8AA0BE;padding:20px 4px;">読み込み中...</div>';
+    var cid=REP.id;
+    var month=($('rep-month')&&$('rep-month').value)||new Date().toISOString().slice(0,7);
+    var r=await Promise.all([
+      sb.from('financial_entries').select('*').eq('customer_id',cid).order('year_month',{ascending:false}),
+      sb.from('action_items').select('*').eq('customer_id',cid),
+      sb.from('automation_interests').select('*').eq('customer_id',cid).order('created_at',{ascending:false}),
+      sb.from('insurance_results').select('*').eq('customer_id',cid).order('created_at',{ascending:false}).limit(1),
+      sb.from('ai_diagnoses').select('*').eq('customer_id',cid).order('created_at',{ascending:false}).limit(1),
+      sb.from('fde_notes').select('*').eq('customer_id',cid).order('created_at',{ascending:false}).limit(5),
+      sb.from('profiles').select('stage,contact_name').eq('id',cid).single()
+    ]);
+    var fin=(r[0].data||[]), acts=(r[1].data||[]), inter=(r[2].data||[]), ins=(r[3].data||[]), diag=(r[4].data||[]), notes=(r[5].data||[]);
+    var prof=(r[6].data||{})||{};
+    var title=(REP.company&&REP.company.length)?REP.company:REP.email;
+    var stageN=parseInt(prof.stage||1,10); if(isNaN(stageN)||stageN<1||stageN>5) stageN=1;
+    var today=new Date().toISOString().slice(0,10);
+    var monthLbl=month.replace('-','年')+'月';
+
+    // ---- header ----
+    var h='<div class="rep-sec" style="margin-bottom:14px;">'
+      +'<div style="display:flex;align-items:flex-start;gap:10px;">'
+        +'<div style="font-family:\'DM Sans\',sans-serif;font-size:22px;font-weight:600;color:#1C3557;">Tsugu</div>'
+        +'<div style="flex:1;"></div>'
+        +'<div style="text-align:right;font-size:11px;color:#8AA0BE;">作成日：'+esc(today)+'</div>'
+      +'</div>'
+      +'<div style="font-size:18px;font-weight:700;color:#131E2E;margin-top:8px;">'+esc(monthLbl)+' 月次レポート</div>'
+      +'<div class="rep-meta" style="margin-top:4px;">'+esc(title)+(prof.contact_name?'（ご担当：'+esc(prof.contact_name)+'）':'')+'<br>'+esc(REP.email)
+        +' ／ 進捗ステージ：<b style="color:#1C3557;">'+stageN+'. '+esc(STAGE_NAMES[stageN])+'</b></div>'
+      +'</div>';
+
+    // ---- financial ----
+    var cur=null; for(var i=0;i<fin.length;i++){ if(fin[i].year_month===month){ cur=fin[i]; break; } }
+    var rev=cur&&cur.revenue!=null?Number(cur.revenue):null;
+    var pf=cur&&cur.profit!=null?Number(cur.profit):null;
+    var margin=(rev!=null&&pf!=null&&rev!==0)?(pf/rev*100):null;
+    h+='<div class="rep-sec"><div class="rep-h">1. 財務サマリー（'+esc(monthLbl)+'）</div>';
+    if(cur){
+      h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">'
+        +'<div class="rep-card"><div class="l">売上</div><div class="v">'+(rev==null?'-':rev.toLocaleString('ja-JP')+'<span style="font-size:12px;font-weight:500;"> 万円</span>')+'</div></div>'
+        +'<div class="rep-card"><div class="l">営業利益</div><div class="v">'+(pf==null?'-':pf.toLocaleString('ja-JP')+'<span style="font-size:12px;font-weight:500;"> 万円</span>')+'</div></div>'
+        +'<div class="rep-card"><div class="l">営業利益率</div><div class="v">'+(margin==null?'-':margin.toFixed(1)+'<span style="font-size:12px;font-weight:500;"> %</span>')+'</div></div>'
+      +'</div>';
+      if(cur.memo) h+='<div class="rep-meta" style="margin-bottom:8px;">メモ：'+esc(cur.memo)+'</div>';
+    } else {
+      h+='<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;">'+esc(monthLbl)+'の財務入力はありません。直近の推移を掲載します。</div>';
+    }
+    if(fin.length){
+      h+='<table class="ft" style="margin-top:4px;"><tr><th>年月</th><th>売上(万円)</th><th>営業利益(万円)</th><th>利益率</th></tr>';
+      fin.slice(0,6).forEach(function(f){
+        var rv=f.revenue==null?null:Number(f.revenue), pp=f.profit==null?null:Number(f.profit);
+        var mg=(rv!=null&&pp!=null&&rv!==0)?(pp/rv*100).toFixed(1)+'%':'-';
+        h+='<tr><td>'+esc(f.year_month)+'</td><td>'+(rv==null?'-':rv.toLocaleString('ja-JP'))+'</td><td>'+(pp==null?'-':pp.toLocaleString('ja-JP'))+'</td><td>'+mg+'</td></tr>';
+      });
+      h+='</table>';
+    }
+    h+='</div>';
+
+    // ---- actions ----
+    var open=acts.filter(function(a){ return a.status!=='done'; });
+    var done=acts.filter(function(a){ return a.status==='done'; });
+    open.sort(function(a,b){ return (a.due_date||'9999').localeCompare(b.due_date||'9999'); });
+    h+='<div class="rep-sec"><div class="rep-h">2. アクション・課題（未対応 '+open.length+' 件／完了 '+done.length+' 件）</div>';
+    if(open.length){ open.forEach(function(a){ var over=a.due_date&&a.due_date<today; h+='<div class="rep-li">□ '+esc(a.title)+(a.due_date?'　<span style="color:'+(over?'#A83030':'#8AA0BE')+';">期限 '+esc(a.due_date)+(over?'（超過）':'')+'</span>':'')+'</div>'; }); }
+    else { h+='<div style="font-size:12px;color:#8AA0BE;">未対応の課題はありません。</div>'; }
+    h+='</div>';
+
+    // ---- automation interests ----
+    var auto=inter.filter(function(x){ return x.category==='automation'; });
+    var mna=inter.filter(function(x){ return x.category==='mna'; });
+    h+='<div class="rep-sec"><div class="rep-h">3. 興味を示した自動化項目</div>';
+    if(auto.length){ auto.forEach(function(x){ h+='<div class="rep-li"><b>'+esc(x.title)+'</b>'+(x.detail?'<br><span style="color:#4A6080;">'+esc(x.detail)+'</span>':'')+'</div>'; }); }
+    else { h+='<div style="font-size:12px;color:#8AA0BE;">なし</div>'; }
+    h+='</div>';
+
+    // ---- M&A interests ----
+    h+='<div class="rep-sec"><div class="rep-h">4. 興味を示したM&Aの方向性</div>';
+    if(mna.length){ mna.forEach(function(x){ h+='<div class="rep-li"><b>'+esc(x.title)+'</b>'+(x.detail?'<br><span style="color:#4A6080;">'+esc(x.detail)+'</span>':'')+'</div>'; }); }
+    else { h+='<div style="font-size:12px;color:#8AA0BE;">なし</div>'; }
+    h+='</div>';
+
+    // ---- AI diagnosis ----
+    h+='<div class="rep-sec"><div class="rep-h">5. AI自動化診断の要点</div>';
+    if(diag.length){
+      var top=repDiagTop(diag[0].result_text||'');
+      if(top.length){ top.forEach(function(d){ h+='<div class="rep-li"><b>'+esc(d['業務']||'')+'</b>（優先度 '+esc(d['優先度']||'-')+'）'+(d['自動化案']?'<br><span style="color:#4A6080;">'+esc(d['自動化案'])+'</span>':'')+'</div>'; }); }
+      else { h+='<div class="rep-meta" style="white-space:pre-wrap;">'+esc((diag[0].result_text||'').slice(0,400))+'</div>'; }
+    } else { h+='<div style="font-size:12px;color:#8AA0BE;">診断結果はまだありません。</div>'; }
+    h+='</div>';
+
+    // ---- insurance ----
+    h+='<div class="rep-sec"><div class="rep-h">6. 保険試算の共有</div>';
+    if(ins.length){ h+='<div class="rep-meta" style="white-space:pre-wrap;">'+esc(ins[0].summary||'')+'</div>'; }
+    else { h+='<div style="font-size:12px;color:#8AA0BE;">共有された保険試算はありません。</div>'; }
+    h+='</div>';
+
+    // ---- partner notes ----
+    h+='<div class="rep-sec"><div class="rep-h">7. パートナーからの提案メモ（直近）</div>';
+    if(notes.length){ notes.forEach(function(n){ var dt=(n.created_at||'').slice(0,10); h+='<div class="rep-li"><span style="color:#8AA0BE;font-size:11px;">'+esc(dt)+'</span><br>'+esc(n.body||'').replace(/\n/g,'<br>')+'</div>'; }); }
+    else { h+='<div style="font-size:12px;color:#8AA0BE;">提案メモはありません。</div>'; }
+    h+='</div>';
+
+    h+='<div style="font-size:10px;color:#8AA0BE;border-top:1px solid #EAF0F7;padding-top:8px;margin-top:6px;">本レポートはTsuguで自動生成された参考資料です。数値は顧客入力・AI生成を含み、正式な財務・税務判断には個別精査が必要です。</div>';
+    box.innerHTML=h;
+  }
 
   async function viewClient(custId, email, company){
     CURRENT_CLIENT={ id:custId, email:email, company:company||'' };
@@ -850,6 +1006,7 @@
     var mt=$('cl-modal-title'); if(mt) mt.textContent=titleTxt;
     openClientModal();
     box.innerHTML='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;"><span style="font-size:12px;color:#4A6080;">進捗ステージ</span><select id="cl-stage" class="inp2" onchange="setStage(\''+custId+'\',this.value)"><option value="1">1. 現状把握</option><option value="2">2. AI活用・自動化</option><option value="3">3. コスト削減</option><option value="4">4. 生まれた余力</option><option value="5">5. 次の投資</option></select></div>'
+      +'<div style="margin:0 0 14px;"><button class="btn2" onclick="openMonthlyReport()" style="background:#fff;color:#2C6EBD;border:1.5px solid #2C6EBD;">📄 月次レポート（印刷 / PDF）</button></div>'
       +'<div class="ph" style="font-size:13px;">パートナーからの提案メモ（顧客にも表示）</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">'
         +'<div style="flex:1;min-width:200px;"><label class="fl">提案・メモを書く</label><textarea id="cnote-body" rows="2" class="inp2" style="width:100%;" placeholder="例：養老保険の福利厚生プランをご提案します。次回、必要保障額の試算をお持ちします。"></textarea></div>'
