@@ -1824,10 +1824,19 @@
     var box=$('cl-ins'); if(!box)return;
     var res=await sb.from('insurance_results').select('*').eq('customer_id',custId).order('created_at',{ascending:false});
     if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
-    if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">共有された保険試算はまだありません。</div>'; return; }
+    if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">共有された試算結果はまだありません。</div>'; return; }
     var h='';
-    res.data.forEach(function(r){ var dt=(r.created_at||'').slice(0,10); h+='<div style="border:1px solid #EAF0F7;border-radius:9px;padding:10px 12px;margin-bottom:6px;"><div style="font-size:11px;color:#8AA0BE;margin-bottom:4px;">'+esc(dt)+'</div><div style="font-size:12px;color:#131E2E;white-space:pre-wrap;line-height:1.6;">'+esc(r.summary||'')+'</div></div>'; });
+    res.data.forEach(function(r){ var dt=(r.created_at||'').slice(0,10);
+      h+='<div style="border:1px solid #EAF0F7;border-radius:9px;padding:10px 12px;margin-bottom:6px;">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;"><span style="font-size:11px;color:#8AA0BE;">'+esc(dt)+'</span><span onclick="delClientIns(\''+r.id+'\')" style="color:#A83030;cursor:pointer;font-size:11px;">共有を取り消す（削除）</span></div>'
+        +'<div style="font-size:12px;color:#131E2E;white-space:pre-wrap;line-height:1.6;">'+esc(r.summary||'')+'</div></div>'; });
     box.innerHTML=h;
+  }
+  async function delClientIns(id){
+    if(!confirm('この試算共有を取り消します（顧客の画面からも消えます）。よろしいですか？')) return;
+    var res=await sb.from('insurance_results').delete().eq('id',id);
+    if(res.error){ alert('取り消しエラー：'+res.error.message+'（Phase29のSQL未実施の可能性があります）'); return; }
+    if(CURRENT_CLIENT) loadClientInsurance(CURRENT_CLIENT.id);
   }
 
   function num(id){ var v=parseFloat(($(id)&&$(id).value)||''); return isNaN(v)?0:v; }
