@@ -31,7 +31,7 @@
 <style>
   :root{--navy:#1C3557;--blue:#2C6EBD;--sky:#4AADD6;--gold:#C89620;--ink:#131E2E;--muted:#4A6080;--line:#D0DCF0;--bg:#F2F5FA;}
   *{box-sizing:border-box;}
-  html,body{overflow-x:hidden;}
+  html,body{overflow-x:clip;}
   body{margin:0;font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:var(--bg);max-width:100vw;}
   .gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:auto;padding:24px;
     background:radial-gradient(900px 520px at 82% -8%,rgba(74,173,214,.20),transparent 60%),radial-gradient(820px 480px at -5% 110%,rgba(200,150,32,.16),transparent 55%),#0F2035;}
@@ -131,7 +131,7 @@
   .datechip{margin-left:auto;font-size:12px;color:var(--muted);background:#F2F5FA;padding:5px 12px;border-radius:99px;}
   /* ===== ハンバーガーメニュー＆ドロワー（スマホ用） ===== */
   .hbg{display:none;position:relative;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#F7FAFD;cursor:pointer;padding:0;flex-shrink:0;}
-  .hbg span{display:block;width:18px;height:2px;border-radius:99px;background:var(--navy);}
+  .hbg .b{display:block;width:18px;height:2px;border-radius:99px;background:var(--navy);}
   .hbg-dot{position:absolute;top:6px;right:6px;width:9px;height:9px;border-radius:99px;background:#E5484D;}
   .drawer-back{position:fixed;inset:0;background:rgba(15,32,53,.5);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);z-index:60;}
   .drawer{position:fixed;top:0;right:0;bottom:0;width:82%;max-width:300px;background:#0F2035;color:#fff;z-index:61;transform:translateX(105%);visibility:hidden;transition:transform .25s ease, visibility 0s linear .25s;display:flex;flex-direction:column;box-shadow:-12px 0 40px rgba(0,0,0,.35);}
@@ -261,7 +261,7 @@
     <div class="sb-foot"><span id="app-email" class="sb-email"></span><button class="sb-out" onclick="signOut()">ログアウト</button></div>
   </aside>
   <main class="main2">
-    <div class="topbar2"><div id="app-greet" class="greet">ダッシュボード</div><div id="app-date" class="datechip"></div><button id="bell" class="bellbtn hidden" onclick="bellGo()" title="未読メッセージ" aria-label="未読メッセージ">🔔<span id="bell-n" class="nbadge hidden">0</span></button><button id="hbg" class="hbg" onclick="openDrawer()" aria-label="メニューを開く"><span></span><span></span><span></span><span id="hbg-dot" class="hbg-dot hidden"></span></button></div>
+    <div class="topbar2"><div id="app-greet" class="greet">ダッシュボード</div><div id="app-date" class="datechip"></div><button id="bell" class="bellbtn hidden" onclick="bellGo()" title="未読メッセージ" aria-label="未読メッセージ">🔔<span id="bell-n" class="nbadge hidden">0</span></button><button id="hbg" class="hbg" onclick="openDrawer()" aria-label="メニューを開く"><span class="b"></span><span class="b"></span><span class="b"></span><span id="hbg-dot" class="hbg-dot hidden"></span></button></div>
     <div class="wrap" id="app-body"></div>
   </main>
 </div>
