@@ -265,8 +265,34 @@
         <button id="tsuguCopyBtn" type="button" class="ghost">共有用サマリーをコピー</button>
       </div>
       <div class="small" id="tsuguShareStatus" style="margin-top:10px">—</div>
-      <div class="small" style="margin-top:6px;color:var(--soft)">※ 共有されるのはサマリー数値のみです。詳細は「印刷／PDF出力」を面談時にご提示ください。Tsuguに未ログインの場合はコピーをご利用ください。</div>
+      <div class="note danger-box" style="margin-top:10px">⚠ 相続情報は最高度の機微情報です。送信前に必ず確認画面で共有先をご確認ください。誤送信時は直後に表示される「取り消す」または Tsuguアプリの顧客詳細から削除できます。</div>
+      <div class="small" style="margin-top:6px;color:var(--soft)">※ 共有されるのはサマリー数値のみです。詳細は「印刷／PDF出力」を面談時にご提示ください。共用PCでは作業後に「初期化」で入力データを消去してください。</div>
     </section>
+
+    <!-- 共有確認モーダル -->
+    <div class="modal-backdrop" id="tsuguConfirmModal">
+      <div class="modal" style="max-width:640px">
+        <h2>送信前の最終確認</h2>
+        <div class="note danger-box" style="margin-bottom:12px">共有先を必ずご確認ください。<b>送信後は顧客の画面に即時表示されます。</b></div>
+        <div style="margin-bottom:10px">
+          <div class="small">共有先の顧客</div>
+          <div id="tsuguConfirmTo" style="font-size:18px;font-weight:700;color:var(--navy);padding:8px 12px;background:#F5F9FF;border:1.5px solid var(--accent);border-radius:9px;margin-top:4px">—</div>
+        </div>
+        <div style="margin-bottom:10px">
+          <div class="small">シミュレーターの案件名（共有先と一致しているかご確認ください）</div>
+          <div id="tsuguConfirmCase" style="font-size:13px;font-weight:600;color:var(--ink);margin-top:2px">—</div>
+        </div>
+        <div class="small">送信される内容（全文）</div>
+        <textarea id="tsuguConfirmBody" readonly style="min-height:160px;font-size:12px;margin-top:4px;background:#FBFCFE"></textarea>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:var(--ink);font-weight:600;cursor:pointer">
+          <input type="checkbox" id="tsuguConfirmChk"> 上記の共有先に間違いないことを確認しました
+        </label>
+        <div class="stack" style="margin-top:14px;justify-content:flex-end">
+          <button type="button" class="ghost" id="tsuguConfirmCancel">キャンセル</button>
+          <button type="button" id="tsuguConfirmSend" disabled>送信する</button>
+        </div>
+      </div>
+    </div>
 
     <section class="card" style="margin-top:16px">
       <div class="stack" style="justify-content:space-between">
@@ -1625,7 +1651,15 @@
   var btn=document.getElementById('tsuguShareBtn');
   var copyBtn=document.getElementById('tsuguCopyBtn');
   var st=document.getElementById('tsuguShareStatus');
-  function setSt(msg, ok){ if(st){ st.textContent=msg; st.style.color= ok===true?'var(--good)':(ok===false?'var(--danger)':'var(--soft)'); } }
+  var cm=document.getElementById('tsuguConfirmModal');
+  var cmTo=document.getElementById('tsuguConfirmTo');
+  var cmCase=document.getElementById('tsuguConfirmCase');
+  var cmBody=document.getElementById('tsuguConfirmBody');
+  var cmChk=document.getElementById('tsuguConfirmChk');
+  var cmSend=document.getElementById('tsuguConfirmSend');
+  var cmCancel=document.getElementById('tsuguConfirmCancel');
+  var lastSharedId=null, sb2=null, CLIENTS={};
+  function setSt(msg, ok){ if(st){ st.innerHTML=msg; st.style.color= ok===true?'var(--good)':(ok===false?'var(--danger)':'var(--soft)'); } }
   function buildSummary(){
     var lines=['【相続・贈与シミュレーション試算】','作成日：'+new Date().toISOString().slice(0,10)];
     var dd=document.getElementById('deathDate'); if(dd&&dd.value) lines.push('死亡日（想定）：'+dd.value);
@@ -1644,12 +1678,16 @@
     lines.push('※ 概算です。適用要件・評価は税理士の確認が必要です。詳細資料は担当パートナーが面談時にご提示します。');
     return lines.join('\n');
   }
+  function closeConfirm(){ if(cm) cm.classList.remove('show'); if(cmChk) cmChk.checked=false; if(cmSend) cmSend.disabled=true; }
+  if(cmChk) cmChk.addEventListener('change', function(){ if(cmSend) cmSend.disabled=!cmChk.checked; });
+  if(cmCancel) cmCancel.addEventListener('click', closeConfirm);
+  if(cm) cm.addEventListener('click', function(e){ if(e.target===cm) closeConfirm(); });
   if(copyBtn) copyBtn.addEventListener('click', function(){
     var t=buildSummary();
     (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject()).then(function(){ setSt('サマリーをコピーしました。Tsuguのメッセージ等に貼り付けできます。', true); }).catch(function(){ window.prompt('以下をコピーしてください', t); });
   });
-  if(!window.supabase){ setSt('Tsugu連携の読み込みに失敗しました。「コピー」をご利用ください。', false); if(sel) sel.innerHTML='<option value="">—</option>'; return; }
-  var sb2=window.supabase.createClient(SB_URL, SB_KEY, { auth:{ flowType:'implicit', detectSessionInUrl:false, persistSession:true, autoRefreshToken:true } });
+  if(!window.supabase){ setSt('Tsugu連携の読み込みに失敗しました。「コピー」をご利用ください。', false); if(sel) sel.innerHTML='<option value="">—</option>'; if(btn) btn.disabled=true; return; }
+  sb2=window.supabase.createClient(SB_URL, SB_KEY, { auth:{ flowType:'implicit', detectSessionInUrl:false, persistSession:true, autoRefreshToken:true } });
   async function init(){
     try{
       var sres=await sb2.auth.getSession();
@@ -1660,22 +1698,46 @@
       if(cl.error){ setSt('顧客一覧の取得に失敗：'+cl.error.message, false); sel.innerHTML='<option value="">—</option>'; btn.disabled=true; return; }
       var rows=cl.data||[];
       if(!rows.length){ setSt('担当顧客がいません。Tsuguアプリで顧客を担当に追加してください。'); sel.innerHTML='<option value="">（担当顧客なし）</option>'; btn.disabled=true; return; }
-      sel.innerHTML=rows.map(function(c){ var nm=(c.company_name&&c.company_name.length)?c.company_name+'（'+c.email+'）':c.email; return '<option value="'+c.id+'">'+nm.replace(/</g,'&lt;')+'</option>'; }).join('');
+      CLIENTS={};
+      var opts='<option value="">— 共有先を選択してください —</option>';
+      rows.forEach(function(c){ var nm=(c.company_name&&c.company_name.length)?c.company_name+'（'+c.email+'）':c.email; CLIENTS[c.id]=nm; opts+='<option value="'+c.id+'">'+nm.replace(/</g,'&lt;')+'</option>'; });
+      sel.innerHTML=opts;
       btn.disabled=false;
-      setSt('ログイン中（パートナー）。共有先を選んで送信できます。', true);
+      setSt('ログイン中（パートナー）。共有先を選ぶと、送信前に確認画面が表示されます。', true);
     }catch(e){ setSt('連携エラー：'+(e&&e.message?e.message:e), false); }
   }
-  if(btn) btn.addEventListener('click', async function(){
-    var cid=sel&&sel.value; if(!cid){ setSt('共有先の顧客を選んでください。', false); return; }
-    btn.disabled=true; setSt('送信中...');
+  if(btn) btn.addEventListener('click', function(){
+    var cid=sel&&sel.value;
+    if(!cid){ setSt('共有先の顧客を選んでください（初期状態では選択されていません）。', false); return; }
+    if(cmTo) cmTo.textContent=CLIENTS[cid]||cid;
+    var cn=document.getElementById('caseNameInput');
+    if(cmCase) cmCase.textContent=(cn&&cn.value&&cn.value.trim())?cn.value.trim():'（案件名 未入力）';
+    if(cmBody) cmBody.value=buildSummary();
+    if(cmChk) cmChk.checked=false; if(cmSend) cmSend.disabled=true;
+    if(cm) cm.classList.add('show');
+  });
+  if(cmSend) cmSend.addEventListener('click', async function(){
+    var cid=sel&&sel.value; if(!cid){ closeConfirm(); return; }
+    cmSend.disabled=true; cmSend.textContent='送信中...';
     try{
       var sres=await sb2.auth.getSession();
-      if(!(sres.data&&sres.data.session)){ setSt('セッションが切れています。Tsuguで再ログインしてください。', false); btn.disabled=false; return; }
-      var res=await sb2.from('insurance_results').insert({ customer_id:cid, summary:buildSummary() });
-      if(res.error){ setSt('共有エラー：'+res.error.message, false); btn.disabled=false; return; }
-      setSt('共有しました。顧客の「試算結果（パートナーからの共有）」に表示されます。', true);
+      if(!(sres.data&&sres.data.session)){ setSt('セッションが切れています。Tsuguで再ログインしてください。', false); closeConfirm(); cmSend.textContent='送信する'; return; }
+      var res=await sb2.from('insurance_results').insert({ customer_id:cid, summary:cmBody.value }).select('id').single();
+      if(res.error){ setSt('共有エラー：'+res.error.message, false); closeConfirm(); cmSend.textContent='送信する'; return; }
+      lastSharedId=res.data&&res.data.id;
+      var to=CLIENTS[cid]||'';
+      sel.value='';
+      setSt('「'+to.replace(/</g,'&lt;')+'」に共有しました。誤送信の場合は <button type="button" class="mini-btn warn" id="tsuguUndoBtn">今すぐ取り消す</button>（Tsuguアプリの顧客詳細からも削除できます）', true);
+      var ub=document.getElementById('tsuguUndoBtn');
+      if(ub) ub.addEventListener('click', async function(){
+        if(!lastSharedId){ setSt('取り消し対象がありません。'); return; }
+        var dr=await sb2.from('insurance_results').delete().eq('id',lastSharedId);
+        if(dr.error){ setSt('取り消しエラー：'+dr.error.message+'（Phase29のSQL未実施の可能性があります）', false); return; }
+        lastSharedId=null;
+        setSt('共有を取り消しました（顧客の画面からも消えています）。', true);
+      });
     }catch(e){ setSt('共有エラー：'+(e&&e.message?e.message:e), false); }
-    btn.disabled=false;
+    closeConfirm(); cmSend.textContent='送信する';
   });
   init();
 })();
