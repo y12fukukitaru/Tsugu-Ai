@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>相続・贈与シミュレーター | Tsugu</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=DM+Sans:wght@500;600&display=swap');
+    :root{
+      --bg:#F7FAFD;--card:#ffffff;--ink:#131E2E;--muted:#4A6080;--soft:#8AA0BE;--line:#D0DCF0;
+      --navy:#1C3557;--accent:#2C6EBD;--accent2:#1E6B45;--warn:#C89620;--danger:#A83030;--good:#1E6B45;
+      --shadow:0 6px 24px rgba(28,53,87,.07);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Noto Sans JP","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;}
+    /* ===== Tsuguヘッダー ===== */
+    header{padding:0;background:#fff;border-bottom:1px solid var(--line);color:var(--ink);}
+    .tsugu-bar{max-width:1400px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+    .tsugu-logo{font-family:"DM Sans",sans-serif;font-size:22px;font-weight:600;color:var(--navy);letter-spacing:.2px;}
+    .tsugu-logo b{color:var(--warn);font-weight:600;}
+    .tool-title{font-size:15px;font-weight:700;color:var(--ink);}
+    .tool-badge{font-size:10px;font-weight:600;color:var(--accent);background:#E7F0FB;border-radius:999px;padding:3px 10px;}
+    .back-link{margin-left:auto;font-size:12px;color:var(--accent);text-decoration:none;border:1px solid var(--line);border-radius:9px;padding:7px 14px;background:#F7FAFD;}
+    .back-link:hover{background:#EAF0F7;}
+    header h1{display:none;}
+    header .lead-wrap{max-width:1400px;margin:0 auto;padding:0 20px 14px;}
+    header p{margin:4px 0 0;color:var(--muted);line-height:1.7;font-size:12.5px;}
+    header p.small{color:var(--soft);font-size:11.5px;}
+    main{max-width:1400px;margin:0 auto;padding:18px 20px 40px;}
+    .grid{display:grid;gap:14px}
+    .grid-2{grid-template-columns:1.1fr .9fr}
+    .grid-3{grid-template-columns:repeat(3,1fr)}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px;}
+    .card h2{margin:0 0 4px;font-size:15px;font-weight:700;color:var(--navy);}
+    .card h2::after{content:"";display:block;width:34px;height:3px;border-radius:2px;background:var(--warn);margin-top:6px;}
+    .card h3{margin:0 0 10px;font-size:13.5px;font-weight:700;color:var(--navy);}
+    .sub{color:var(--soft);font-size:12px;line-height:1.7;margin-top:8px;}
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0;align-items:center}
+    button{border:0;border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer;background:var(--accent);color:#fff;font:inherit;font-size:13px;transition:filter .15s;}
+    button:hover{filter:brightness(1.06);}
+    button.secondary{background:var(--navy);}
+    button.ghost{background:#fff;color:var(--accent);border:1.5px solid var(--accent);}
+    button.warn{background:#fff;color:var(--danger);border:1.5px solid var(--danger);}
+    button.print{background:var(--accent2);}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    .mini-btn{padding:5px 10px;border-radius:8px;font-size:11.5px}
+    label{display:block;font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:5px;}
+    input,select,textarea{width:100%;padding:9px 12px;border-radius:9px;border:1.5px solid var(--line);background:#fff;font:inherit;font-size:13px;color:var(--ink);}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(44,110,189,.12);}
+    textarea{min-height:84px;resize:vertical}
+    input[type="checkbox"]{width:auto;transform:scale(1.15);margin-right:6px;accent-color:var(--accent);}
+    input[type="file"]{padding:6px}
+    .fields{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .fields-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .fields-2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .stack{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .metric{padding:13px 15px;border-radius:11px;background:#F7FAFD;border:1px solid #EAF0F7;}
+    .metric .k{font-size:11px;color:var(--muted);margin-bottom:4px;}
+    .metric .v{font-size:20px;font-weight:700;color:var(--navy);word-break:break-word;}
+    .metric .s{font-size:11px;color:var(--soft);margin-top:5px;line-height:1.5;}
+    table{width:100%;border-collapse:collapse;font-size:12.5px}
+    th,td{border-bottom:1px solid #EAF0F7;padding:8px;vertical-align:top;white-space:nowrap}
+    th{position:sticky;top:0;background:var(--navy);color:#fff;z-index:1;text-align:left;font-weight:600;font-size:11.5px;}
+    tbody tr:nth-child(even){background:#FBFCFE;}
+    .table-wrap{overflow:auto;max-height:440px;border:1px solid var(--line);border-radius:11px;}
+    .note{padding:11px 14px;border-radius:10px;background:#FFFBF3;border-left:3px solid var(--warn);border-top:1px solid #F2E5C4;border-right:1px solid #F2E5C4;border-bottom:1px solid #F2E5C4;color:#8A6D20;font-size:12.5px;line-height:1.7;}
+    .ok{background:#F0F8F3;border-color:#CDE6D6;border-left-color:var(--good);color:var(--good);}
+    .info{background:#F5F9FF;border-color:#D7E6F8;border-left-color:var(--accent);color:#235A9C;}
+    .danger-box{background:#FDECEC;border-color:#F2C9C9;border-left-color:var(--danger);color:var(--danger);}
+    .small{font-size:11.5px;color:var(--soft);}
+    .pill{display:inline-block;border-radius:999px;padding:3px 11px;background:#E7F0FB;color:var(--accent);font-size:11px;font-weight:600;}
+    .footer-links a{word-break:break-all;color:var(--accent);}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+    .danger{color:var(--danger);font-weight:700}
+    .good{color:var(--good);font-weight:700}
+    .warntext{color:var(--warn);font-weight:700}
+    .deadline-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:11px 20px;margin:0;background:#fff;border-bottom:1px solid var(--line);font-size:13px;}
+    .deadline-bar .countdown{font-size:17px;font-weight:700}
+    .deadline-bar .countdown.good{color:var(--good)}
+    .deadline-bar .countdown.warn{color:var(--warn)}
+    .deadline-bar .countdown.danger{color:var(--danger)}
+    .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .compare-box{padding:13px 15px;border-radius:11px;border:1px solid var(--line);background:#FBFCFE;}
+    .compare-box h3{margin:0 0 5px;font-size:12.5px;color:var(--muted);}
+    .compare-box .v{font-size:19px;font-weight:700;color:var(--navy);}
+    .compare-box.first{background:#F5F9FF;border-color:#D7E6F8;}
+    .compare-box.second{background:#FFFBF3;border-color:#F2E5C4;}
+    .compare-box.total{background:#F0F8F3;border-color:#CDE6D6;}
+    @media (max-width:1100px){.grid-2,.grid-3,.summary-grid,.fields,.fields-3,.fields-2{grid-template-columns:1fr 1fr}}
+    @media (max-width:720px){
+      .tsugu-bar{padding:12px 14px;}
+      .grid-2,.grid-3,.summary-grid,.fields,.fields-3,.fields-2,.compare-grid{grid-template-columns:1fr}
+      main{padding:10px 12px 30px}
+      .card{padding:13px 14px;}
+      .metric .v{font-size:17px}
+      th,td{padding:6px;font-size:11.5px}
+      .toolbar{gap:6px}
+      button{padding:8px 12px;font-size:12px}
+      .mini-btn{padding:5px 8px}
+      .deadline-bar{padding:9px 12px;font-size:12px}
+      .deadline-bar .countdown{font-size:15px}
+    }
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,32,53,.55);backdrop-filter:blur(2px);z-index:100;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;}
+    .modal-backdrop.show{display:flex}
+    .modal{background:#fff;border-radius:16px;max-width:720px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.4);padding:22px 24px;}
+    .modal h2{margin:0 0 14px;display:flex;align-items:center;gap:10px;color:var(--navy);font-size:16px;}
+    .modal-close{background:#F7FAFD;color:#4A6080;border:1px solid var(--line);float:right;padding:6px 12px;font-size:12px;border-radius:8px;}
+    .case-list{border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-top:8px}
+    .case-list table{font-size:12.5px}
+    .case-list th{background:var(--navy);color:#fff;font-weight:600;}
+    .case-list .empty{padding:20px;text-align:center;color:var(--soft);font-size:12.5px}
+    .case-actions{display:flex;gap:6px;justify-content:flex-end}
+    .autosave-banner{display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 20px;background:#FFFBF3;border-bottom:1px solid #F2E5C4;color:#8A6D20;font-size:12.5px;}
+    .autosave-banner.show{display:flex}
+    .autosave-banner button{padding:6px 12px;font-size:12px}
+    .save-status{font-size:11.5px;color:var(--soft);margin-left:auto;display:flex;align-items:center;gap:4px}
+    .save-status.saved{color:var(--good)}
+    @media (max-width:720px){.modal{padding:16px;border-radius:13px}.case-list th,.case-list td{padding:6px;font-size:11.5px}}
+    @media print{.modal-backdrop,.autosave-banner{display:none !important}}
+    @media print {
+      @page { size:A4; margin:12mm; }
+      html, body{ background:#fff !important; }
+      header{ background:#fff !important; border-bottom:2px solid var(--navy); color:var(--ink) !important; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+      .back-link{ display:none !important; }
+      .toolbar, .delete-row, button, #importJsonInput, .no-print{ display:none !important; }
+      main{ padding:8px; max-width:none }
+      .card{ box-shadow:none !important; border:1px solid var(--line); page-break-inside:avoid; padding:12px; margin-bottom:10px }
+      .grid-2,.grid-3,.compare-grid{ display:block }
+      .grid-2 > .card,.grid-3 > .card{ margin-bottom:10px }
+      .table-wrap{ max-height:none !important; overflow:visible !important; border:none }
+      table{ font-size:11px }
+      th{ position:static; background:#EAF0F7 !important; color:var(--navy) !important; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+      input,select,textarea{ border:none !important; background:transparent !important; padding:2px !important; box-shadow:none !important }
+      textarea{ min-height:auto }
+      .metric{ background:#F7FAFD !important; border:1px solid var(--line); -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+      .summary-grid{ grid-template-columns:repeat(4,1fr) !important }
+      .deadline-bar,.compare-box,.note{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+      a{ color:var(--accent); text-decoration:none }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="tsugu-bar">
+      <span class="tsugu-logo">Tsugu <b>-継-</b></span>
+      <span class="tool-title">相続・贈与シミュレーター</span>
+      <span class="tool-badge">パートナー専用ツール</span>
+      <a class="back-link" href="./index.html">← Tsuguアプリへ戻る</a>
+    </div>
+    <div class="lead-wrap">
+      <p>相続人の順位・法定相続分・生命保険の非課税枠・暦年贈与加算（2024年改正対応）・相続時精算課税・配偶者軽減・各種控除・小規模宅地等の特例・遺留分・二次相続までを1画面で横断確認できます。結果は「印刷／PDF出力」で顧客への提示資料になります。</p>
+      <p class="small">注意：事前整理・概算用です。申告実務では戸籍、遺言、養子数制限、代襲、各種特例要件、評価明細などの個別確認（税理士関与）が必要です。</p>
+    </div>
+  </header>
+
+  <div class="deadline-bar" id="deadlineBar" style="display:none">
+    <div>
+      <span class="pill">申告・納付期限</span>
+      <span class="small">相続税の申告期限は被相続人の死亡を知った日の翌日から10ヶ月以内</span>
+    </div>
+    <div>
+      期限日：<strong id="deadlineDate">—</strong>　
+      <span class="countdown" id="deadlineCount">—</span>
+    </div>
+  </div>
+
+  <div class="autosave-banner" id="autosaveBanner">
+    <div>
+      <strong>前回の作業データが見つかりました</strong>
+      <span class="small" id="autosaveInfo">—</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button id="restoreAutosave" class="secondary">復元する</button>
+      <button id="dismissAutosave" class="ghost">破棄して新規作成</button>
+    </div>
+  </div>
+
+  <main>
+    <div class="toolbar">
+      <button id="caseManager" class="secondary">📁 案件管理</button>
+      <button id="loadSample">サンプル読込</button>
+      <button id="recalc" class="secondary">再計算</button>
+      <button id="exportJson" class="ghost">JSON保存</button>
+      <label for="importJsonInput" style="margin:0">
+        <button type="button" class="ghost" onclick="document.getElementById('importJsonInput').click()">JSON読込</button>
+        <input type="file" id="importJsonInput" accept="application/json,.json" style="display:none" />
+      </label>
+      <button id="printBtn" class="print">印刷／PDF出力</button>
+      <button id="resetAll" class="warn">初期化</button>
+      <span class="save-status" id="saveStatus">—</span>
+    </div>
+
+    <section class="card">
+      <h2>1. 基本情報</h2>
+      <div class="fields">
+        <div>
+          <label>被相続人の死亡日</label>
+          <input type="date" id="deathDate" />
+        </div>
+        <div>
+          <label>相続財産（課税評価前の総額）</label>
+          <input type="number" id="grossEstate" value="0" step="10000" />
+        </div>
+        <div>
+          <label>債務・葬式費用</label>
+          <input type="number" id="debts" value="0" step="10000" />
+        </div>
+        <div>
+          <label>その他の非課税財産等（任意）</label>
+          <input type="number" id="otherNontax" value="0" step="10000" />
+        </div>
+      </div>
+      <div class="fields-3" style="margin-top:12px">
+        <div>
+          <label>計算メモ</label>
+          <textarea id="memo" placeholder="案件名、家系の事情、争点など"></textarea>
+        </div>
+        <div>
+          <label>相次相続控除：前回相続で今回の被相続人に課された相続税額 A</label>
+          <input type="number" id="priorTaxA" value="0" step="10000" />
+        </div>
+        <div>
+          <label>相次相続控除：前回相続で今回の被相続人が取得した純資産価額 B</label>
+          <input type="number" id="priorNetB" value="0" step="10000" />
+          <div class="small">経過年数 E は各人共通で後述欄から指定</div>
+        </div>
+      </div>
+      <div class="fields-3" style="margin-top:12px;padding-top:12px;border-top:1px dashed #cbd5e1">
+        <div>
+          <label>二次相続：配偶者の固有財産</label>
+          <input type="number" id="spouseOwnAssets" value="0" step="10000" />
+          <div class="small">配偶者が元々持っている財産（不動産・預貯金など）</div>
+        </div>
+        <div>
+          <label>二次相続：想定経過年数（年）</label>
+          <input type="number" id="secondYears" value="5" step="1" min="0" />
+          <div class="small">一次相続から二次相続までの想定年数。相次相続控除に反映</div>
+        </div>
+        <div>
+          <label>二次相続：配偶者固有財産の増減見込み</label>
+          <input type="number" id="spouseAssetDelta" value="0" step="10000" />
+          <div class="small">生活費・運用益などの調整額（マイナス可）</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <h2>2. 計算サマリー</h2>
+      <div class="summary-grid" id="summaryGrid"></div>
+      <div class="note info" id="periodNote" style="margin-top:12px">死亡日を入れると、暦年贈与の加算期間と100万円控除の扱いを表示します。</div>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <div class="stack" style="justify-content:space-between">
+        <div>
+          <h2>3. 相続人・受遺者</h2>
+          <div class="sub">「続柄グループ」で法定相続人の順位を判定し、「税区分」で2割加算の有無を判定します。<br>代襲や半血、養子数制限など特殊ケースは「法定按分係数」で微調整してください。</div>
+        </div>
+        <button class="mini-btn" id="addHeir">行を追加</button>
+      </div>
+      <div class="table-wrap"><table id="heirTable">
+        <thead>
+          <tr>
+            <th>氏名</th><th>続柄グループ</th><th>税区分</th><th>法定按分係数</th><th>実際の取得割合 %</th><th>年齢</th><th>障害区分</th><th>相次相続 経過年数E</th><th>備考</th><th></th>
+          </tr>
+        </thead><tbody></tbody>
+      </table></div>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <div class="stack" style="justify-content:space-between">
+        <div>
+          <h2>4. 生命保険</h2>
+          <div class="sub">国税庁の非課税限度額「500万円 × 法定相続人の数」を、相続人が受け取る保険金に按分して適用します。</div>
+        </div>
+        <button class="mini-btn" id="addInsurance">行を追加</button>
+      </div>
+      <div class="table-wrap"><table id="insuranceTable">
+        <thead><tr><th>保険名</th><th>受取人</th><th>死亡保険金</th><th>被相続人負担保険料</th><th>メモ</th><th></th></tr></thead><tbody></tbody>
+      </table></div>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <div class="stack" style="justify-content:space-between">
+        <div>
+          <h2>5. 小規模宅地等の特例</h2>
+          <div class="sub">400㎡80%、330㎡80%、200㎡50% の主要区分を実装。按分の複雑な組合せは概算化しています。</div>
+        </div>
+        <button class="mini-btn" id="addLand">行を追加</button>
+      </div>
+      <div class="table-wrap"><table id="landTable">
+        <thead><tr><th>区分</th><th>面積㎡</th><th>1㎡あたり評価額</th><th>減額額（自動）</th><th>メモ</th><th></th></tr></thead><tbody></tbody>
+      </table></div>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <div class="stack" style="justify-content:space-between">
+        <div>
+          <h2>6. 生前贈与・特別受益</h2>
+          <div class="sub">暦年課税・相続時精算課税・民法上の特別受益を一元入力します。特別受益は民法上の取り分目安に反映し、税務上加算とは分けて表示します。</div>
+        </div>
+        <button class="mini-btn" id="addGift">行を追加</button>
+      </div>
+      <div class="table-wrap"><table id="giftTable">
+        <thead>
+          <tr>
+            <th>受贈者</th><th>日付</th><th>金額</th><th>区分</th><th>既納贈与税</th><th>特別受益として扱う</th><th>持戻し免除</th><th>メモ</th><th></th>
+          </tr>
+        </thead><tbody></tbody>
+      </table></div>
+      <div class="small" style="margin-top:10px">「持戻し免除」は民法903条3項・4項の整理用です。婚姻20年以上の配偶者への居住用不動産贈与等は、持戻し免除意思の推定が問題になるため、個別事情の確認を前提に手動でONにできます。</div>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <h2>7. 取り分・税額の一覧</h2>
+      <div class="table-wrap"><table id="resultTable">
+        <thead>
+          <tr>
+            <th>氏名</th><th>法定相続分</th><th>実際取得割合</th><th>民法上の取分目安</th><th>保険受取額</th><th>保険課税額</th><th>暦年加算</th><th>精算課税加算</th><th>課税価格</th><th>按分前税額</th><th>2割加算</th><th>各種控除</th><th>最終税額</th><th>税引後の概算受取額</th>
+          </tr>
+        </thead><tbody></tbody>
+      </table></div>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <h2>8. 計算ロジック説明</h2>
+      <div id="explain" class="sub"></div>
+      <div class="note" style="margin-top:12px">
+        このアプリは、<strong>法定相続人の人数・順位</strong>、<strong>死亡保険金の非課税枠</strong>、<strong>基礎控除</strong>、<strong>速算表</strong>、<strong>配偶者軽減</strong>、<strong>未成年者控除</strong>、<strong>障害者控除</strong>、<strong>相次相続控除</strong>、<strong>相続時精算課税</strong>、<strong>暦年課税の加算</strong>、<strong>小規模宅地等の特例</strong>、<strong>遺留分</strong>、<strong>二次相続概算</strong>を反映します。適用要件の厳密判定や申告書別表の完全再現ではありません。
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <h2>9. 遺留分チェック</h2>
+      <div class="sub" id="iryuubunNote" style="margin-bottom:10px">配偶者・第1順位（子）・第2順位（直系尊属）には遺留分が認められます。第3順位（兄弟姉妹）には遺留分はありません。</div>
+      <div class="table-wrap"><table id="iryuubunTable">
+        <thead>
+          <tr>
+            <th>氏名</th><th>続柄</th><th>個別的遺留分割合</th><th>遺留分額</th><th>実際取得額（民法ベース）</th><th>差額</th><th>判定</th>
+          </tr>
+        </thead><tbody></tbody>
+      </table></div>
+      <div id="iryuubunAlert"></div>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <h2>10. 二次相続シミュレーション</h2>
+      <div class="sub" style="margin-bottom:10px">
+        一次相続で配偶者が取得した財産（課税価格ベース）に、配偶者の固有財産と増減見込みを加算し、第1順位の子で均等取得する前提で二次相続を試算します。
+        配偶者軽減は使えません。経過年数が10年未満なら一次相続で配偶者が負担した税額を基礎に相次相続控除を概算反映します。
+      </div>
+      <div class="compare-grid">
+        <div class="compare-box first">
+          <h3>一次相続（今回）</h3>
+          <div class="v" id="firstTaxTotal">—</div>
+          <div class="small" id="firstTaxDetail">—</div>
+        </div>
+        <div class="compare-box second">
+          <h3>二次相続（試算）</h3>
+          <div class="v" id="secondTaxTotal">—</div>
+          <div class="small" id="secondTaxDetail">—</div>
+        </div>
+      </div>
+      <div class="compare-box total" style="margin-top:10px">
+        <h3>一次＋二次の合計税額（試算）</h3>
+        <div class="v" id="combinedTaxTotal">—</div>
+        <div class="small" id="combinedNote">配偶者の取得割合を変えるとこの数値も変動します。配偶者軽減を最大活用するか、子に多めに渡すかの目安にしてください。</div>
+      </div>
+      <div class="note info" style="margin-top:10px" id="secondInheritanceNote">二次相続の前提を変えると合計税額が下がる場合があります。配偶者の取得割合と固有財産の両方を確認してください。</div>
+    </section>
+
+    <section class="card footer-links" style="margin-top:16px">
+      <h2>11. 参考法令・国税庁リンク</h2>
+      <div class="sub">
+        <div>相続人の範囲と法定相続分：<a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4132.htm" target="_blank" rel="noreferrer">https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4132.htm</a></div>
+        <div>死亡保険金の非課税：<a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4114.htm" target="_blank" rel="noreferrer">https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4114.htm</a></div>
+        <div>相続税の計算：<a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4152.htm" target="_blank" rel="noreferrer">https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4152.htm</a></div>
+        <div>相続税率（速算表）：<a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4155.htm" target="_blank" rel="noreferrer">https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4155.htm</a></div>
+        <div>2割加算：<a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4157.htm" target="_blank" rel="noreferrer">https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4157.htm</a></div>
+        <div>配偶者の税額軽減：<a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4158.htm" target="_blank" rel="noreferrer">https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4158.htm</a></div>
+        <div>暦年課税の加算と税額控除：<a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4161.htm" target="_blank" rel="noreferrer">https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4161.htm</a></div>
+        <div>未成年者控除：<a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4164.htm" target="_blank" rel="noreferrer">https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4164.htm</a></div>
+        <div>障害者控除：<a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4167.htm" target="_blank" rel="noreferrer">https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4167.htm</a></div>
+        <div>相次相続控除：<a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4168.htm" target="_blank" rel="noreferrer">https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4168.htm</a></div>
+        <div>小規模宅地等の特例：<a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4124.htm" target="_blank" rel="noreferrer">https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4124.htm</a></div>
+        <div>申告・納付期限：<a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4205.htm" target="_blank" rel="noreferrer">https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4205.htm</a></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 案件管理モーダル -->
+  <div class="modal-backdrop" id="caseModal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeCaseModal()">閉じる</button>
+      <h2>📁 案件管理</h2>
+      <div class="sub" style="margin-bottom:16px">ブラウザ内に案件データを保存します。同じPC・同じブラウザでのみ参照できます。PCを越えて使う場合は「JSON保存」も併用してください。</div>
+
+      <h3 style="margin:0 0 8px;font-size:15px">現在の入力を保存</h3>
+      <div class="stack" style="gap:8px">
+        <input type="text" id="caseNameInput" placeholder="案件名（例：山田太郎様 一次相続）" style="flex:1" />
+        <button id="saveCaseBtn">保存</button>
+      </div>
+      <div class="small" style="margin-top:6px">同名の案件があれば上書き保存されます。</div>
+
+      <h3 style="margin:20px 0 8px;font-size:15px">保存済み案件</h3>
+      <div class="case-list">
+        <table style="width:100%">
+          <thead>
+            <tr><th style="text-align:left">案件名</th><th style="text-align:left">保存日時</th><th></th></tr>
+          </thead>
+          <tbody id="caseListBody">
+            <tr><td colspan="3" class="empty">保存済み案件はありません</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="driveSection">
+        <h3 style="margin:20px 0 8px;font-size:15px">📂 Googleドライブ</h3>
+        <div id="driveStatus" class="note info" style="margin-bottom:8px">初期化中...</div>
+        <div id="driveControls" style="display:none">
+          <div class="stack" style="gap:8px;margin-bottom:8px">
+            <button id="driveSaveBtn">現在の入力をDriveに保存</button>
+            <button id="driveRefreshBtn" class="ghost">一覧を更新</button>
+            <button id="driveSignoutBtn" class="ghost">ログアウト</button>
+          </div>
+          <div class="case-list">
+            <table style="width:100%">
+              <thead>
+                <tr><th style="text-align:left">ファイル名</th><th style="text-align:left">更新日時</th><th></th></tr>
+              </thead>
+              <tbody id="driveListBody">
+                <tr><td colspan="3" class="empty">読み込み中...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div id="driveSignin" style="display:none">
+          <button id="driveSigninBtn">Googleアカウントに接続</button>
+          <div class="small" style="margin-top:6px">接続後、「相続シミュレーター案件」というフォルダがGoogleドライブに自動作成され、そこに案件JSONが保存されます。</div>
+        </div>
+      </div>
+
+      <h3 style="margin:20px 0 8px;font-size:15px">自動保存</h3>
+      <div class="stack" style="gap:10px">
+        <label style="display:flex;align-items:center;font-weight:400;margin:0">
+          <input type="checkbox" id="autosaveToggle" checked />
+          入力するたびに自動保存する（ブラウザを閉じても次回復元可能）
+        </label>
+      </div>
+
+      <h3 style="margin:20px 0 8px;font-size:15px;color:var(--danger)">⚠ 全データ削除</h3>
+      <button id="clearAllStorage" class="warn">このブラウザに保存されている案件と自動保存をすべて削除</button>
+      <div class="small" style="margin-top:6px">この操作は取り消せません。</div>
+    </div>
+  </div>
+
+  <script>
+    const RATE_TABLE = [
+      {limit:10000000, rate:0.10, deduction:0},
+      {limit:30000000, rate:0.15, deduction:500000},
+      {limit:50000000, rate:0.20, deduction:2000000},
+      {limit:100000000, rate:0.30, deduction:7000000},
+      {limit:200000000, rate:0.40, deduction:17000000},
+      {limit:300000000, rate:0.45, deduction:27000000},
+      {limit:600000000, rate:0.50, deduction:42000000},
+      {limit:Infinity, rate:0.55, deduction:72000000},
+    ];
+
+    const LAND_TYPES = {
+      business80: {label:'特定事業用宅地等 400㎡/80%', limit:400, reduction:0.8},
+      familyCompany80: {label:'特定同族会社事業用宅地等 400㎡/80%', limit:400, reduction:0.8},
+      rental50: {label:'貸付事業用宅地等 200㎡/50%', limit:200, reduction:0.5},
+      residence80: {label:'特定居住用宅地等 330㎡/80%', limit:330, reduction:0.8},
+    };
+
+    const GROUP_LABEL = {
+      spouse:'配偶者', first:'第1順位（子）', second:'第2順位（直系尊属）',
+      third:'第3順位（兄弟姉妹）', outside:'法定相続人外'
+    };
+
+    const el = (id) => document.getElementById(id);
+    const tbody = (id) => document.querySelector(`#${id} tbody`);
+    const yen = (n) => new Intl.NumberFormat('ja-JP',{style:'currency',currency:'JPY',maximumFractionDigits:0}).format(Number(n||0));
+    const pct = (n) => `${(Number(n||0)*100).toFixed(2)}%`;
+    const num = (v) => Number(v || 0);
+    const today = () => new Date().toISOString().slice(0,10);
+
+    function rateTax(amount){
+      const a = Math.max(0, Number(amount||0));
+      const row = RATE_TABLE.find(r => a <= r.limit);
+      return Math.max(0, a * row.rate - row.deduction);
+    }
+
+    function ceilYearsUntil(targetAge, currentAge){
+      const ageInt = Math.floor(Number(currentAge||0));
+      return Math.max(0, targetAge - ageInt);
+    }
+
+    function normalizeShares(items, field){
+      const sum = items.reduce((s,x)=>s + Math.max(0,num(x[field])), 0);
+      if(sum <= 0) return items.map(_=>0);
+      return items.map(x => Math.max(0,num(x[field])) / sum);
+    }
+
+    function addHeirRow(data={}){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input data-k="name" value="${data.name||''}" placeholder="例：配偶者A" /></td>
+        <td>
+          <select data-k="group">
+            <option value="spouse" ${data.group==='spouse'?'selected':''}>配偶者</option>
+            <option value="first" ${data.group==='first'?'selected':''}>第1順位（子・代襲相続人）</option>
+            <option value="second" ${data.group==='second'?'selected':''}>第2順位（直系尊属）</option>
+            <option value="third" ${data.group==='third'?'selected':''}>第3順位（兄弟姉妹）</option>
+            <option value="outside" ${data.group==='outside'?'selected':''}>法定相続人外（受遺者等）</option>
+          </select>
+        </td>
+        <td>
+          <select data-k="taxcat">
+            <option value="spouse" ${data.taxcat==='spouse'?'selected':''}>配偶者</option>
+            <option value="firstdegree" ${data.taxcat==='firstdegree'?'selected':''}>子・父母など一親等</option>
+            <option value="substituteGrandchild" ${data.taxcat==='substituteGrandchild'?'selected':''}>代襲孫（2割加算なし）</option>
+            <option value="sibling" ${data.taxcat==='sibling'?'selected':''}>兄弟姉妹・甥姪等</option>
+            <option value="grandchild20" ${data.taxcat==='grandchild20'?'selected':''}>孫養子等（2割加算）</option>
+            <option value="other20" ${data.taxcat==='other20'?'selected':''}>その他2割加算</option>
+          </select>
+        </td>
+        <td><input data-k="weight" type="number" step="0.1" min="0" value="${data.weight ?? 1}" /></td>
+        <td><input data-k="actualShare" type="number" step="0.1" min="0" value="${data.actualShare ?? ''}" placeholder="空欄なら法定相続分" /></td>
+        <td><input data-k="age" type="number" step="1" min="0" value="${data.age ?? ''}" /></td>
+        <td>
+          <select data-k="disability">
+            <option value="none" ${!data.disability || data.disability==='none'?'selected':''}>なし</option>
+            <option value="general" ${data.disability==='general'?'selected':''}>一般障害者</option>
+            <option value="special" ${data.disability==='special'?'selected':''}>特別障害者</option>
+          </select>
+        </td>
+        <td><input data-k="yearsE" type="number" step="1" min="0" value="${data.yearsE ?? ''}" /></td>
+        <td><input data-k="note" value="${data.note||''}" /></td>
+        <td><button class="mini-btn ghost delete-row" type="button">削除</button></td>
+      `;
+      tbody('heirTable').appendChild(tr);
+    }
+
+    function addInsuranceRow(data={}){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input data-k="name" value="${data.name||''}" placeholder="終身保険など" /></td>
+        <td><input data-k="recipient" value="${data.recipient||''}" placeholder="相続人氏名と一致" /></td>
+        <td><input data-k="amount" type="number" step="10000" value="${data.amount ?? 0}" /></td>
+        <td>
+          <select data-k="payer">
+            <option value="decedent" ${!data.payer || data.payer==='decedent'?'selected':''}>被相続人負担</option>
+            <option value="other" ${data.payer==='other'?'selected':''}>被相続人負担でない</option>
+          </select>
+        </td>
+        <td><input data-k="note" value="${data.note||''}" /></td>
+        <td><button class="mini-btn ghost delete-row" type="button">削除</button></td>
+      `;
+      tbody('insuranceTable').appendChild(tr);
+    }
+
+    function addLandRow(data={}){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <select data-k="type">
+            <option value="business80" ${data.type==='business80'?'selected':''}>特定事業用宅地等 400㎡/80%</option>
+            <option value="familyCompany80" ${data.type==='familyCompany80'?'selected':''}>特定同族会社事業用宅地等 400㎡/80%</option>
+            <option value="rental50" ${data.type==='rental50'?'selected':''}>貸付事業用宅地等 200㎡/50%</option>
+            <option value="residence80" ${!data.type || data.type==='residence80'?'selected':''}>特定居住用宅地等 330㎡/80%</option>
+          </select>
+        </td>
+        <td><input data-k="area" type="number" step="0.1" value="${data.area ?? 0}" /></td>
+        <td><input data-k="unitValue" type="number" step="1000" value="${data.unitValue ?? 0}" /></td>
+        <td class="small land-deduction">${yen(0)}</td>
+        <td><input data-k="note" value="${data.note||''}" /></td>
+        <td><button class="mini-btn ghost delete-row" type="button">削除</button></td>
+      `;
+      tbody('landTable').appendChild(tr);
+    }
+
+    function addGiftRow(data={}){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input data-k="recipient" value="${data.recipient||''}" placeholder="相続人氏名と一致" /></td>
+        <td><input data-k="date" type="date" value="${data.date||''}" /></td>
+        <td><input data-k="amount" type="number" step="10000" value="${data.amount ?? 0}" /></td>
+        <td>
+          <select data-k="regime">
+            <option value="calendar" ${!data.regime || data.regime==='calendar'?'selected':''}>暦年課税</option>
+            <option value="settlement" ${data.regime==='settlement'?'selected':''}>相続時精算課税</option>
+            <option value="reference" ${data.regime==='reference'?'selected':''}>参考のみ（税務加算しない）</option>
+          </select>
+        </td>
+        <td><input data-k="paidTax" type="number" step="1000" value="${data.paidTax ?? 0}" /></td>
+        <td style="text-align:center"><input data-k="specialBenefit" type="checkbox" ${data.specialBenefit?'checked':''} /></td>
+        <td style="text-align:center"><input data-k="carrybackExempt" type="checkbox" ${data.carrybackExempt?'checked':''} /></td>
+        <td><input data-k="note" value="${data.note||''}" /></td>
+        <td><button class="mini-btn ghost delete-row" type="button">削除</button></td>
+      `;
+      tbody('giftTable').appendChild(tr);
+    }
+
+    function collect(tableId){
+      return [...tbody(tableId).querySelectorAll('tr')].map(tr => {
+        const o = {};
+        tr.querySelectorAll('[data-k]').forEach(inp => {
+          o[inp.dataset.k] = inp.type === 'checkbox' ? inp.checked : inp.value;
+        });
+        return o;
+      });
+    }
+
+    function deleteRowHandler(e){
+      if(e.target.classList.contains('delete-row')){
+        e.target.closest('tr').remove();
+        compute();
+      }
+    }
+
+    ['heirTable','insuranceTable','landTable','giftTable'].forEach(id => {
+      tbody(id).addEventListener('click', deleteRowHandler);
+      tbody(id).addEventListener('input', compute);
+      tbody(id).addEventListener('change', compute);
+    });
+
+    function legalRank(heirs){
+      const first = heirs.some(h => h.group === 'first');
+      const second = heirs.some(h => h.group === 'second');
+      const third = heirs.some(h => h.group === 'third');
+      return first ? 'first' : second ? 'second' : third ? 'third' : 'none';
+    }
+
+    function computeStatutoryShares(heirs){
+      const rank = legalRank(heirs.filter(h => h.group !== 'outside'));
+      const spouseIdx = heirs.map((h,i)=>({h,i})).filter(x => x.h.group === 'spouse');
+      const active = heirs.map((h,idx)=>({ ...h, idx, statutoryShare:0 }));
+      const hasSpouse = spouseIdx.length > 0;
+      let spouseShare = 0;
+      if(hasSpouse){
+        if(rank === 'first') spouseShare = 0.5;
+        else if(rank === 'second') spouseShare = 2/3;
+        else if(rank === 'third') spouseShare = 3/4;
+        else spouseShare = 1;
+      }
+      if(hasSpouse){
+        const shareEach = spouseShare / spouseIdx.length;
+        spouseIdx.forEach(({i}) => active[i].statutoryShare = shareEach);
+      }
+      const classRows = active.filter(h => h.group === rank);
+      const remain = Math.max(0, 1 - spouseShare);
+      const totalWeight = classRows.reduce((s,h)=>s + Math.max(0.0001, num(h.weight)||1), 0);
+      classRows.forEach(h => h.statutoryShare = totalWeight>0 ? remain * (Math.max(0.0001, num(h.weight)||1) / totalWeight) : 0);
+      return {rank, active};
+    }
+
+    function insuranceTaxables(insurances, heirs, legalHeirCount){
+      const legalNames = new Set(heirs.filter(h => h.group !== 'outside').map(h => h.name));
+      const heirInsuranceTotal = insurances.filter(i => i.payer==='decedent' && legalNames.has(i.recipient)).reduce((s,i)=>s + num(i.amount), 0);
+      const limit = 5000000 * legalHeirCount;
+      const result = {};
+      const taxableByPolicy = [];
+      insurances.forEach(i => {
+        const amount = num(i.amount);
+        const isTaxableType = i.payer === 'decedent';
+        const isHeirRecipient = legalNames.has(i.recipient);
+        let nonTax = 0;
+        if(isTaxableType && isHeirRecipient && heirInsuranceTotal > 0){
+          nonTax = Math.min(amount, limit * (amount / heirInsuranceTotal));
+        }
+        const taxable = isTaxableType ? Math.max(0, amount - nonTax) : 0;
+        result[i.recipient] = (result[i.recipient] || 0) + taxable;
+        taxableByPolicy.push({...i, nonTax, taxable});
+      });
+      return {limit, heirInsuranceTotal, taxableByRecipient:result, policies:taxableByPolicy};
+    }
+
+    function parseDate(d){ return d ? new Date(d + 'T00:00:00') : null; }
+
+    function giftAddbacks(gifts, deathDate){
+      const d = parseDate(deathDate);
+      if(!d) return {calendarByRecipient:{}, settlementByRecipient:{}, settlementCreditByRecipient:{}, calendarCreditByRecipient:{}, civilByRecipient:{}, addbackInfo:'死亡日未入力のため未計算'};
+      const calendarByRecipient = {};
+      const settlementByRecipient = {};
+      const settlementCreditByRecipient = {};
+      const calendarCreditByRecipient = {};
+      const civilByRecipient = {};
+      const detail = [];
+
+      let calendarStart = new Date(d);
+      let extendedStart = null;
+      let ruleText = '';
+      if(d <= new Date('2028-12-31T00:00:00')){
+        calendarStart.setFullYear(calendarStart.getFullYear()-3);
+        ruleText = '死亡日が2028-12-31以前のため、暦年贈与加算は原則3年以内。';
+      }else if(d <= new Date('2032-12-31T00:00:00')){
+        calendarStart = new Date('2024-01-01T00:00:00');
+        extendedStart = new Date('2024-01-01T00:00:00');
+        ruleText = '死亡日が2029-01-01〜2032-12-31のため、2024-01-01以後の暦年贈与が対象。3年超部分には総額100万円控除の考え方あり。';
+      }else{
+        calendarStart.setFullYear(calendarStart.getFullYear()-7);
+        extendedStart = new Date(d); extendedStart.setFullYear(extendedStart.getFullYear()-7);
+        ruleText = '死亡日が2033-01-01以後のため、暦年贈与加算は7年以内。3年超7年以内部分には総額100万円控除の考え方あり。';
+      }
+      const threeYearStart = new Date(d); threeYearStart.setFullYear(threeYearStart.getFullYear()-3);
+      const extendedCandidates = [];
+
+      gifts.forEach(g => {
+        const amt = num(g.amount);
+        const gd = parseDate(g.date);
+        if(g.specialBenefit && !g.carrybackExempt){
+          civilByRecipient[g.recipient] = (civilByRecipient[g.recipient] || 0) + amt;
+        }
+        if(!gd || !amt || g.regime === 'reference') return;
+        if(g.regime === 'calendar'){
+          if(gd >= calendarStart && gd < d){
+            const row = {recipient:g.recipient, amount:amt, date:gd, paidTax:num(g.paidTax)};
+            if(extendedStart && gd < threeYearStart){
+              extendedCandidates.push(row);
+            }else{
+              calendarByRecipient[g.recipient] = (calendarByRecipient[g.recipient] || 0) + amt;
+              calendarCreditByRecipient[g.recipient] = (calendarCreditByRecipient[g.recipient] || 0) + num(g.paidTax);
+            }
+          }
+        }
+      });
+
+      if(extendedCandidates.length){
+        const total = extendedCandidates.reduce((s,x)=>s+x.amount,0);
+        const deductible = Math.min(1000000, total);
+        extendedCandidates.forEach(row => {
+          const allocatedDeduction = total>0 ? deductible * (row.amount/total) : 0;
+          const add = Math.max(0, row.amount - allocatedDeduction);
+          calendarByRecipient[row.recipient] = (calendarByRecipient[row.recipient] || 0) + add;
+          calendarCreditByRecipient[row.recipient] = (calendarCreditByRecipient[row.recipient] || 0) + row.paidTax;
+        });
+        detail.push(`3年超部分の総額 ${yen(total)} に対し、総額100万円控除を按分適用。`);
+      }
+
+      const settlementBuckets = {};
+      gifts.filter(g => g.regime === 'settlement').forEach(g => {
+        const gd = parseDate(g.date);
+        const amt = num(g.amount);
+        if(!gd || !amt) return;
+        const y = gd.getFullYear();
+        const key = `${g.recipient}__${y}`;
+        settlementBuckets[key] = settlementBuckets[key] || {recipient:g.recipient, year:y, amount:0, paidTax:0};
+        settlementBuckets[key].amount += amt;
+        settlementBuckets[key].paidTax += num(g.paidTax);
+      });
+      Object.values(settlementBuckets).forEach(b => {
+        const add = b.year >= 2024 ? Math.max(0, b.amount - 1100000) : b.amount;
+        settlementByRecipient[b.recipient] = (settlementByRecipient[b.recipient] || 0) + add;
+        settlementCreditByRecipient[b.recipient] = (settlementCreditByRecipient[b.recipient] || 0) + b.paidTax;
+      });
+
+      return {calendarByRecipient, settlementByRecipient, settlementCreditByRecipient, calendarCreditByRecipient, civilByRecipient, addbackInfo:[ruleText,...detail].join(' ')};
+    }
+
+    function landDeductions(lands){
+      let total = 0;
+      const detailed = lands.map(l => {
+        const def = LAND_TYPES[l.type] || LAND_TYPES.residence80;
+        const area = num(l.area), unitValue = num(l.unitValue);
+        const deduction = Math.max(0, Math.min(area, def.limit) * unitValue * def.reduction);
+        total += deduction;
+        return {...l, deduction, limit:def.limit, reduction:def.reduction};
+      });
+      return {total, detailed};
+    }
+
+    // ─── 遺留分計算 ────────────────────────────────
+    function computeLegalReserve(active, civilEstateBase){
+      const insideHeirs = active.filter(h => h.group !== 'outside');
+      const hasFirst = insideHeirs.some(h => h.group === 'first');
+      const hasSecond = insideHeirs.some(h => h.group === 'second');
+      const hasSpouse = insideHeirs.some(h => h.group === 'spouse');
+      // 総体的遺留分:配偶者・第1順位がいれば1/2、直系尊属のみは1/3、それ以外(兄弟姉妹のみ等)は0
+      let totalReserveRatio = 0;
+      if(hasSpouse || hasFirst){ totalReserveRatio = 0.5; }
+      else if(hasSecond){ totalReserveRatio = 1/3; }
+      else { totalReserveRatio = 0; }
+      return active.map(h => {
+        const hasReserve = (h.group === 'spouse' || h.group === 'first' || h.group === 'second');
+        const ratio = hasReserve ? totalReserveRatio * (h.statutoryShare || 0) : 0;
+        const reserveAmount = Math.max(0, civilEstateBase * ratio);
+        return {
+          name: h.name,
+          group: h.group,
+          ratio,
+          reserveAmount,
+        };
+      });
+    }
+
+    // ─── 申告期限カウントダウン ────────────────────────
+    function updateDeadline(){
+      const dd = el('deathDate').value;
+      const bar = el('deadlineBar');
+      if(!dd){ bar.style.display='none'; return; }
+      bar.style.display='';
+      const d = new Date(dd + 'T00:00:00');
+      const deadline = new Date(d);
+      deadline.setMonth(deadline.getMonth() + 10);
+      const now = new Date(); now.setHours(0,0,0,0);
+      const diffDays = Math.floor((deadline - now) / (24*3600*1000));
+      el('deadlineDate').textContent = deadline.toISOString().slice(0,10);
+      const cd = el('deadlineCount');
+      let cls = 'good';
+      let text = `あと ${diffDays}日`;
+      if(diffDays < 0){ cls='danger'; text = `期限超過 ${-diffDays}日`; }
+      else if(diffDays < 60){ cls='warn'; text = `あと ${diffDays}日（要注意）`; }
+      else if(diffDays < 180){ cls='warn'; text = `あと ${diffDays}日`; }
+      cd.className = 'countdown ' + cls;
+      cd.textContent = text;
+    }
+
+    function compute(){
+      const heirs = collect('heirTable');
+      const ins = collect('insuranceTable');
+      const lands = collect('landTable');
+      const gifts = collect('giftTable');
+      const deathDate = el('deathDate').value;
+      const grossEstate = num(el('grossEstate').value);
+      const debts = num(el('debts').value);
+      const otherNontax = num(el('otherNontax').value);
+      const priorTaxA = num(el('priorTaxA').value);
+      const priorNetB = num(el('priorNetB').value);
+      const spouseOwnAssets = num(el('spouseOwnAssets').value);
+      const secondYears = num(el('secondYears').value);
+      const spouseAssetDelta = num(el('spouseAssetDelta').value);
+
+      updateDeadline();
+
+      const {rank, active} = computeStatutoryShares(heirs);
+      const legalHeirCount = active.filter(h => h.group !== 'outside' && (h.group === 'spouse' || h.group === rank || (rank==='none' && h.group==='spouse'))).length;
+      const actualSharesEntered = normalizeShares(active, 'actualShare');
+      const actualShares = actualSharesEntered.some(x => x > 0) ? actualSharesEntered : active.map(h => h.statutoryShare);
+      active.forEach((h,i)=>h.actualShareNorm = actualShares[i] || 0);
+
+      const land = landDeductions(lands);
+      [...tbody('landTable').querySelectorAll('tr')].forEach((tr,idx) => {
+        const target = tr.querySelector('.land-deduction');
+        if(target) target.textContent = yen(land.detailed[idx]?.deduction || 0);
+      });
+
+      const insurance = insuranceTaxables(ins, active, legalHeirCount);
+      const giftsCalc = giftAddbacks(gifts, deathDate);
+      el('periodNote').textContent = giftsCalc.addbackInfo;
+
+      const civilNetEstate = Math.max(0, grossEstate - debts);
+      const taxOrdinaryEstate = Math.max(0, grossEstate - debts - otherNontax - land.total);
+      const totalCivilBenefits = Object.values(giftsCalc.civilByRecipient).reduce((s,v)=>s+v,0);
+      const civilEstateWithBenefits = civilNetEstate + totalCivilBenefits;
+      const totalTaxableInsurance = Object.values(insurance.taxableByRecipient).reduce((s,v)=>s+v,0);
+      const totalCalendarAdd = Object.values(giftsCalc.calendarByRecipient).reduce((s,v)=>s+v,0);
+      const totalSettlementAdd = Object.values(giftsCalc.settlementByRecipient).reduce((s,v)=>s+v,0);
+
+      active.forEach(h => {
+        h.civilSpecialBenefit = giftsCalc.civilByRecipient[h.name] || 0;
+        h.insuranceReceived = ins.filter(i => i.recipient === h.name).reduce((s,i)=>s + num(i.amount),0);
+        h.taxableInsurance = insurance.taxableByRecipient[h.name] || 0;
+        h.calendarAdd = giftsCalc.calendarByRecipient[h.name] || 0;
+        h.settlementAdd = giftsCalc.settlementByRecipient[h.name] || 0;
+        h.calendarCredit = giftsCalc.calendarCreditByRecipient[h.name] || 0;
+        h.settlementCredit = giftsCalc.settlementCreditByRecipient[h.name] || 0;
+        h.ordinaryReceived = taxOrdinaryEstate * h.actualShareNorm;
+        h.taxBase = Math.max(0, h.ordinaryReceived + h.taxableInsurance + h.calendarAdd + h.settlementAdd);
+        h.civilTheoretical = h.group === 'outside' ? 0 : Math.max(0, civilEstateWithBenefits * h.statutoryShare - h.civilSpecialBenefit);
+        // 民法上の「実際取得額」(目安) = 取得財産+保険+特別受益
+        h.civilActual = h.group === 'outside' ? (h.ordinaryReceived + h.insuranceReceived)
+                                              : (h.ordinaryReceived + h.insuranceReceived + h.civilSpecialBenefit);
+      });
+
+      const totalTaxBase = active.reduce((s,h)=>s+h.taxBase,0);
+      const basicExemption = 30000000 + 6000000 * legalHeirCount;
+      const taxableNetEstate = Math.max(0, totalTaxBase - basicExemption);
+      const hypotheticalTaxTotal = active.reduce((sum,h)=> sum + (h.statutoryShare>0 ? rateTax(taxableNetEstate * h.statutoryShare) : 0), 0);
+
+      active.forEach(h => {
+        h.baseAllocatedTax = totalTaxBase > 0 ? hypotheticalTaxTotal * (h.taxBase / totalTaxBase) : 0;
+        h.surcharge = ['sibling','grandchild20','other20'].includes(h.taxcat) ? h.baseAllocatedTax * 0.2 : 0;
+        let spouseReduction = 0;
+        if(h.taxcat === 'spouse' && h.taxBase > 0){
+          const spouseLimitValue = Math.max(160000000, totalTaxBase * h.statutoryShare);
+          const ratio = Math.min(1, spouseLimitValue / h.taxBase);
+          spouseReduction = (h.baseAllocatedTax + h.surcharge) * ratio;
+        }
+        const minorDed = (h.group !== 'outside' && num(h.age) < 18) ? ceilYearsUntil(18, h.age) * 100000 : 0;
+        const disabilityDed = (h.group !== 'outside' && num(h.age) < 85 && h.disability !== 'none') ? ceilYearsUntil(85, h.age) * (h.disability === 'special' ? 200000 : 100000) : 0;
+        const yearsE = num(h.yearsE);
+        const successiveDed = (h.group !== 'outside' && priorTaxA > 0 && priorNetB > 0 && yearsE < 10) ? Math.max(0, priorTaxA * (h.taxBase / priorNetB) * ((10 - yearsE) / 10)) : 0;
+        const giftCredits = h.calendarCredit + h.settlementCredit;
+        h.totalCredits = spouseReduction + minorDed + disabilityDed + successiveDed + giftCredits;
+        h.spouseReduction = spouseReduction;
+        h.finalTax = Math.max(0, h.baseAllocatedTax + h.surcharge - h.totalCredits);
+        h.netAfterTax = Math.max(0, h.ordinaryReceived + h.insuranceReceived - h.finalTax);
+      });
+
+      const totalFinalTax = active.reduce((s,h)=>s+h.finalTax,0);
+      const totalCredits = active.reduce((s,h)=>s+h.totalCredits,0);
+      const noteShares = Math.abs(active.reduce((s,h)=>s+h.actualShareNorm,0)-1) < 0.0001 ? 'OK' : '要確認';
+
+      // ─── サマリー ─────────────────────────────────
+      const summary = [
+        {k:'法定相続人の数', v:`${legalHeirCount}人`, s:`順位判定：${rank === 'first' ? '第1順位' : rank === 'second' ? '第2順位' : rank === 'third' ? '第3順位' : '配偶者のみ / なし'}`},
+        {k:'基礎控除額', v:yen(basicExemption), s:'3,000万円 + 600万円 × 法定相続人の数'},
+        {k:'保険の非課税限度額', v:yen(insurance.limit), s:`相続人受取保険金合計 ${yen(insurance.heirInsuranceTotal)}`},
+        {k:'小規模宅地等の減額', v:yen(land.total), s:'税務上の課税評価を減額'},
+        {k:'暦年贈与の加算', v:yen(totalCalendarAdd), s:'加算対象期間のみ。必要に応じ100万円控除按分'},
+        {k:'精算課税の加算', v:yen(totalSettlementAdd), s:'2024年以後は年110万円控除を反映'},
+        {k:'課税価格合計', v:yen(totalTaxBase), s:`基礎控除前 / 取得割合整合 ${noteShares}`},
+        {k:'相続税総額（概算）', v:yen(totalFinalTax), s:`税額控除総額 ${yen(totalCredits)}`},
+      ];
+      el('summaryGrid').innerHTML = summary.map(x => `<div class="metric"><div class="k">${x.k}</div><div class="v">${x.v}</div><div class="s">${x.s}</div></div>`).join('');
+
+      // ─── 取り分・税額一覧 ─────────────────────────
+      const resultRows = active.map(h => `
+        <tr>
+          <td>${h.name || '—'}</td>
+          <td>${pct(h.statutoryShare)}</td>
+          <td>${pct(h.actualShareNorm)}</td>
+          <td>${yen(h.civilTheoretical)}</td>
+          <td>${yen(h.insuranceReceived)}</td>
+          <td>${yen(h.taxableInsurance)}</td>
+          <td>${yen(h.calendarAdd)}</td>
+          <td>${yen(h.settlementAdd)}</td>
+          <td>${yen(h.taxBase)}</td>
+          <td>${yen(h.baseAllocatedTax)}</td>
+          <td>${yen(h.surcharge)}</td>
+          <td>${yen(h.totalCredits)}</td>
+          <td class="${h.finalTax>0?'danger':'good'}">${yen(h.finalTax)}</td>
+          <td>${yen(h.netAfterTax)}</td>
+        </tr>
+      `).join('');
+      tbody('resultTable').innerHTML = resultRows || '<tr><td colspan="14" class="small">相続人・受遺者を入力してください。</td></tr>';
+
+      // ─── 遺留分チェック ───────────────────────────
+      const reserves = computeLegalReserve(active, civilEstateWithBenefits);
+      const violations = [];
+      const iryuubunRows = active.map((h,i) => {
+        const r = reserves[i];
+        const diff = h.civilActual - r.reserveAmount;
+        const hasReserve = r.ratio > 0;
+        let judgement = '—';
+        if(hasReserve){
+          if(diff >= 0){ judgement = '<span class="good">充足</span>'; }
+          else { judgement = '<span class="danger">侵害の可能性</span>'; violations.push({name:h.name||'(無記名)', diff: -diff}); }
+        }else if(h.group === 'third'){
+          judgement = '<span class="small">遺留分なし（兄弟姉妹）</span>';
+        }else if(h.group === 'outside'){
+          judgement = '<span class="small">対象外</span>';
+        }
+        return `
+          <tr>
+            <td>${h.name || '—'}</td>
+            <td>${GROUP_LABEL[h.group] || '—'}</td>
+            <td>${hasReserve ? pct(r.ratio) : '—'}</td>
+            <td>${hasReserve ? yen(r.reserveAmount) : '—'}</td>
+            <td>${yen(h.civilActual)}</td>
+            <td class="${diff<0 && hasReserve ? 'danger':''}">${hasReserve ? yen(diff) : '—'}</td>
+            <td>${judgement}</td>
+          </tr>
+        `;
+      }).join('');
+      tbody('iryuubunTable').innerHTML = iryuubunRows || '<tr><td colspan="7" class="small">相続人を入力してください。</td></tr>';
+      const alertBox = el('iryuubunAlert');
+      if(violations.length){
+        alertBox.innerHTML = `<div class="note danger-box" style="margin-top:10px"><strong>⚠ 遺留分侵害の可能性があります</strong><br>${violations.map(v=>`${v.name}：不足 ${yen(v.diff)}`).join(' / ')}<br><span class="small">遺留分算定基礎財産は「相続財産 − 債務 + 特別受益（持戻し免除のないもの）」で簡易計算しています。実務では生前贈与の期間制限（原則10年）等の精査が必要です。</span></div>`;
+      }else{
+        alertBox.innerHTML = `<div class="note ok" style="margin-top:10px">現時点の取得割合では、遺留分侵害は検出されていません。</div>`;
+      }
+
+      // ─── 二次相続シミュレーション ────────────────────
+      const spouse = active.find(h => h.taxcat === 'spouse' || h.group === 'spouse');
+      const children = active.filter(h => h.group === 'first');
+      let secondTax = 0;
+      let secondNote = '';
+      let secondDetailText = '';
+      if(!spouse){
+        secondDetailText = '配偶者がいないため二次相続の試算は不要です。';
+        el('secondTaxTotal').textContent = '—';
+        el('secondTaxDetail').textContent = secondDetailText;
+      }else if(children.length === 0){
+        secondDetailText = '第1順位（子）の相続人が登録されていないため、二次相続の試算ができません。';
+        el('secondTaxTotal').textContent = '—';
+        el('secondTaxDetail').textContent = secondDetailText;
+      }else{
+        // 二次相続の遺産 = 配偶者が一次で取得した課税価格 + 配偶者固有財産 + 増減 − 一次相続で配偶者が支払った相続税
+        const spouseAcquiredTaxBase = spouse.taxBase;
+        const spousePaidTax = spouse.finalTax;
+        const secondEstate = Math.max(0, spouseAcquiredTaxBase + spouseOwnAssets + spouseAssetDelta - spousePaidTax);
+        const childCount = children.length;
+        const basicExemption2 = 30000000 + 6000000 * childCount;
+        const netTaxable2 = Math.max(0, secondEstate - basicExemption2);
+        const perShare = 1 / childCount;
+        const hypo2 = children.reduce((s)=> s + rateTax(netTaxable2 * perShare), 0);
+        // 相次相続控除(概算): 子全員合計に対して、配偶者が一次で支払った税額 × (10-E)/10 を上限に減算
+        const successive = (secondYears > 0 && secondYears < 10 && spousePaidTax > 0)
+          ? spousePaidTax * ((10 - secondYears)/10) : 0;
+        secondTax = Math.max(0, hypo2 - successive);
+        el('secondTaxTotal').textContent = yen(secondTax);
+        secondDetailText = `配偶者取得財産（課税価格）${yen(spouseAcquiredTaxBase)} + 固有財産 ${yen(spouseOwnAssets)} + 増減 ${yen(spouseAssetDelta)} − 一次納税 ${yen(spousePaidTax)} = 課税対象 ${yen(secondEstate)}　基礎控除 ${yen(basicExemption2)}　子${childCount}人で均等取得前提　相次相続控除 ${yen(successive)}（経過${secondYears}年）`;
+        el('secondTaxDetail').textContent = secondDetailText;
+      }
+      el('firstTaxTotal').textContent = yen(totalFinalTax);
+      el('firstTaxDetail').textContent = `課税価格合計 ${yen(totalTaxBase)} − 基礎控除 ${yen(basicExemption)} − 各種控除 ${yen(totalCredits)}`;
+      el('combinedTaxTotal').textContent = yen(totalFinalTax + secondTax);
+      const spouseReduction = active.reduce((s,h)=>s+(h.spouseReduction||0),0);
+      el('combinedNote').textContent = `配偶者軽減で一次の税負担が ${yen(spouseReduction)} 圧縮されています。配偶者の取得割合を増やすと一次税額は下がりますが、二次相続で課税対象が増える可能性があります。`;
+
+      // ─── 計算ロジック説明 ────────────────────────
+      el('explain').innerHTML = `
+        <p><span class="pill">ステップ1</span> 法定相続人の順位は、配偶者を常に含めつつ、<strong>第1順位（子・代襲相続人）→第2順位（直系尊属）→第3順位（兄弟姉妹）</strong> の順に判定しています。配偶者との法定相続分はそれぞれ 1/2・2/3・3/4 を採用し、同順位者間は「法定按分係数」で均等または調整配分します。</p>
+        <p><span class="pill">ステップ2</span> 死亡保険金は、<strong>500万円 × 法定相続人の数</strong> を非課税限度額とし、相続人が受け取った保険金へ按分して適用しています。</p>
+        <p><span class="pill">ステップ3</span> 課税価格は、税務上の通常遺産 ${yen(taxOrdinaryEstate)} に、保険課税額 ${yen(totalTaxableInsurance)}、暦年加算 ${yen(totalCalendarAdd)}、精算課税加算 ${yen(totalSettlementAdd)} を足して計算しています。基礎控除 ${yen(basicExemption)} を引いた課税遺産総額は ${yen(taxableNetEstate)} です。</p>
+        <p><span class="pill">ステップ4</span> 相続税総額は法定相続分で仮分割した金額に速算表を適用して算出し、各人の課税価格比で按分します。2割加算は、配偶者・一親等血族・代襲孫以外に適用します。</p>
+        <p><span class="pill">ステップ5</span> 配偶者軽減、未成年者控除、障害者控除、相次相続控除、既納贈与税控除を差し引いた後の最終税額を表示しています。</p>
+        <p><span class="pill">ステップ6</span> 遺留分は「遺留分算定基礎財産 × 総体的遺留分（直系尊属のみ1/3、それ以外1/2）× 各人の法定相続分」で個別額を算出し、民法上の実際取得額（取得財産＋保険＋特別受益）と比較しています。</p>
+        <p><span class="pill">ステップ7</span> 二次相続は、配偶者が一次相続で取得した課税価格に、配偶者固有財産と増減見込みを加え、一次納税額を控除したものを課税対象として、子の人数で均等取得する前提で試算しています。</p>
+        <p class="small">実務上は、養子数制限、代襲の枝別按分、相続放棄、遺留分の生前贈与10年制限、居住用不動産の持戻し免除推定、申告期限後3年以内の分割見込書、小規模宅地の厳密要件、国外居住者要件などの追加確認が必要です。</p>
+      `;
+
+      scheduleAutosave();
+    }
+
+    // ─── データのシリアライズ／復元 ───────────────────
+    function getPayload(){
+      return {
+        version: 2,
+        deathDate: el('deathDate').value,
+        grossEstate: num(el('grossEstate').value),
+        debts: num(el('debts').value),
+        otherNontax: num(el('otherNontax').value),
+        priorTaxA: num(el('priorTaxA').value),
+        priorNetB: num(el('priorNetB').value),
+        spouseOwnAssets: num(el('spouseOwnAssets').value),
+        secondYears: num(el('secondYears').value),
+        spouseAssetDelta: num(el('spouseAssetDelta').value),
+        memo: el('memo').value,
+        heirs: collect('heirTable'),
+        insurance: collect('insuranceTable'),
+        lands: collect('landTable'),
+        gifts: collect('giftTable')
+      };
+    }
+
+    function applyPayload(data){
+      if(!data || typeof data !== 'object') return;
+      el('deathDate').value = data.deathDate || '';
+      el('grossEstate').value = data.grossEstate ?? 0;
+      el('debts').value = data.debts ?? 0;
+      el('otherNontax').value = data.otherNontax ?? 0;
+      el('priorTaxA').value = data.priorTaxA ?? 0;
+      el('priorNetB').value = data.priorNetB ?? 0;
+      el('spouseOwnAssets').value = data.spouseOwnAssets ?? 0;
+      el('secondYears').value = data.secondYears ?? 5;
+      el('spouseAssetDelta').value = data.spouseAssetDelta ?? 0;
+      el('memo').value = data.memo || '';
+      tbody('heirTable').innerHTML = '';
+      tbody('insuranceTable').innerHTML = '';
+      tbody('landTable').innerHTML = '';
+      tbody('giftTable').innerHTML = '';
+      (data.heirs||[]).forEach(addHeirRow);
+      (data.insurance||[]).forEach(addInsuranceRow);
+      (data.lands||[]).forEach(addLandRow);
+      (data.gifts||[]).forEach(addGiftRow);
+      if((data.heirs||[]).length === 0) addHeirRow({group:'spouse',taxcat:'spouse',weight:1});
+    }
+
+    // ─── ローカルストレージ ──────────────────────
+    const STORAGE = {
+      autosave: 'sozoku_v2_autosave',
+      cases: 'sozoku_v2_cases',
+      settings: 'sozoku_v2_settings'
+    };
+
+    function storageAvailable(){
+      try{
+        const k = '__test__';
+        localStorage.setItem(k, '1');
+        localStorage.removeItem(k);
+        return true;
+      }catch(e){ return false; }
+    }
+
+    function getSettings(){
+      try{
+        return JSON.parse(localStorage.getItem(STORAGE.settings)) || {autosaveEnabled:true};
+      }catch(e){ return {autosaveEnabled:true}; }
+    }
+    function setSettings(s){
+      try{ localStorage.setItem(STORAGE.settings, JSON.stringify(s)); }catch(e){}
+    }
+
+    function getCases(){
+      try{ return JSON.parse(localStorage.getItem(STORAGE.cases)) || {}; }
+      catch(e){ return {}; }
+    }
+    function setCases(obj){
+      try{ localStorage.setItem(STORAGE.cases, JSON.stringify(obj)); }
+      catch(e){ alert('保存に失敗しました：' + e.message); }
+    }
+
+    let autosaveTimer = null;
+    function scheduleAutosave(){
+      if(!storageAvailable()) return;
+      const settings = getSettings();
+      if(!settings.autosaveEnabled) return;
+      if(autosaveTimer) clearTimeout(autosaveTimer);
+      autosaveTimer = setTimeout(() => {
+        try{
+          const payload = {...getPayload(), savedAt: new Date().toISOString()};
+          localStorage.setItem(STORAGE.autosave, JSON.stringify(payload));
+          const ss = el('saveStatus');
+          if(ss){
+            const t = new Date();
+            ss.textContent = `✓ 自動保存 ${t.getHours()}:${String(t.getMinutes()).padStart(2,'0')}`;
+            ss.className = 'save-status saved';
+          }
+        }catch(e){
+          const ss = el('saveStatus');
+          if(ss){ ss.textContent = '自動保存失敗'; ss.className = 'save-status'; }
+        }
+      }, 600);
+    }
+
+    function checkAutosaveOnLoad(){
+      if(!storageAvailable()) return;
+      const raw = localStorage.getItem(STORAGE.autosave);
+      if(!raw) return;
+      try{
+        const data = JSON.parse(raw);
+        const savedAt = data.savedAt ? new Date(data.savedAt) : null;
+        const banner = el('autosaveBanner');
+        const info = el('autosaveInfo');
+        if(savedAt){
+          info.textContent = ` 最終保存：${savedAt.toLocaleString('ja-JP')}　${data.memo ? '／メモ：' + data.memo.slice(0,40) : ''}`;
+        }
+        banner.classList.add('show');
+      }catch(e){}
+    }
+
+    function renderCaseList(){
+      const cases = getCases();
+      const names = Object.keys(cases).sort((a,b) => (cases[b].savedAt||'').localeCompare(cases[a].savedAt||''));
+      const body = el('caseListBody');
+      if(names.length === 0){
+        body.innerHTML = '<tr><td colspan="3" class="empty">保存済み案件はありません</td></tr>';
+        return;
+      }
+      body.innerHTML = names.map(name => {
+        const c = cases[name];
+        const dt = c.savedAt ? new Date(c.savedAt).toLocaleString('ja-JP') : '—';
+        const escaped = name.replace(/"/g,'&quot;');
+        return `<tr>
+          <td><strong>${name}</strong>${c.payload?.memo ? '<br><span class="small">'+c.payload.memo.slice(0,50)+'</span>' : ''}</td>
+          <td class="small">${dt}</td>
+          <td><div class="case-actions">
+            <button class="mini-btn" onclick="loadCase('${escaped}')">読込</button>
+            <button class="mini-btn warn" onclick="deleteCase('${escaped}')">削除</button>
+          </div></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function openCaseModal(){
+      renderCaseList();
+      el('autosaveToggle').checked = getSettings().autosaveEnabled !== false;
+      el('caseNameInput').value = el('memo').value.slice(0,30) || '';
+      el('caseModal').classList.add('show');
+    }
+    function closeCaseModal(){ el('caseModal').classList.remove('show'); }
+    window.closeCaseModal = closeCaseModal;
+
+    function saveCurrentCase(){
+      const name = el('caseNameInput').value.trim();
+      if(!name){ alert('案件名を入力してください'); return; }
+      const cases = getCases();
+      if(cases[name] && !confirm(`「${name}」は既に存在します。上書き保存しますか？`)) return;
+      cases[name] = { savedAt: new Date().toISOString(), payload: getPayload() };
+      setCases(cases);
+      renderCaseList();
+      alert(`「${name}」を保存しました。`);
+    }
+
+    function loadCase(name){
+      const cases = getCases();
+      const c = cases[name];
+      if(!c){ alert('案件が見つかりません'); return; }
+      if(!confirm(`「${name}」を読み込みます。現在の入力は上書きされます。よろしいですか？`)) return;
+      applyPayload(c.payload);
+      compute();
+      closeCaseModal();
+    }
+    window.loadCase = loadCase;
+
+    function deleteCase(name){
+      if(!confirm(`「${name}」を削除します。よろしいですか？`)) return;
+      const cases = getCases();
+      delete cases[name];
+      setCases(cases);
+      renderCaseList();
+    }
+    window.deleteCase = deleteCase;
+
+    function clearAllStorage(){
+      if(!confirm('このブラウザに保存されている全案件と自動保存を削除します。取り消せません。続行しますか？')) return;
+      try{
+        localStorage.removeItem(STORAGE.autosave);
+        localStorage.removeItem(STORAGE.cases);
+        localStorage.removeItem(STORAGE.settings);
+        renderCaseList();
+        alert('削除しました。');
+      }catch(e){ alert('削除に失敗しました：' + e.message); }
+    }
+
+    // ─── Googleドライブ連携 ─────────────────────────
+    // ⚠ ここに自分のGoogle OAuth クライアントID を貼り付けてください。
+    // 取得方法: https://console.cloud.google.com/ → APIs & Services → Credentials
+    // ※ファイル://では動作しません。HTTPSでホストしたURLで開いてください。
+    const GOOGLE_CLIENT_ID = ''; // 例: '1234567890-abcdefg.apps.googleusercontent.com'
+    const DRIVE_FOLDER_NAME = '相続シミュレーター案件';
+    const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email';
+
+    let driveTokenClient = null;
+    let driveAccessToken = null;
+    let driveTokenExpiresAt = 0;
+    let driveFolderId = null;
+    let driveUserEmail = null;
+
+    function setDriveStatus(msg, cls){
+      const s = el('driveStatus');
+      if(!s) return;
+      s.className = 'note ' + (cls || 'info');
+      s.textContent = msg;
+    }
+
+    function showDriveConnected(){
+      el('driveStatus').style.display = '';
+      setDriveStatus(`接続中：${driveUserEmail || '(unknown)'}　保存先フォルダ：${DRIVE_FOLDER_NAME}`, 'ok');
+      el('driveControls').style.display = '';
+      el('driveSignin').style.display = 'none';
+    }
+    function showDriveDisconnected(){
+      el('driveStatus').style.display = '';
+      setDriveStatus(`Googleドライブに接続していません。接続するとブラウザを越えて案件を共有できます。`, 'info');
+      el('driveControls').style.display = 'none';
+      el('driveSignin').style.display = '';
+    }
+    function showDriveDisabled(reason){
+      el('driveStatus').style.display = '';
+      setDriveStatus(`Drive連携は利用できません：${reason}`, '');
+      el('driveControls').style.display = 'none';
+      el('driveSignin').style.display = 'none';
+    }
+
+    function initDriveAuth(){
+      // クライアントID未設定の場合はDriveセクション全体を非表示
+      if(!GOOGLE_CLIENT_ID){
+        const sec = el('driveSection');
+        if(sec) sec.style.display = 'none';
+        return;
+      }
+      // file:// の場合は機能無効化
+      if(location.protocol === 'file:'){
+        showDriveDisabled('file:// では Google ログインができません。HTTPSのURLで開いてください（例：自社WordPressに埋め込む、Netlifyにデプロイする等）。');
+        return;
+      }
+      if(!window.google || !window.google.accounts || !window.google.accounts.oauth2){
+        // GISスクリプトがまだロードされていない場合はリトライ
+        setTimeout(initDriveAuth, 300);
+        return;
+      }
+      try{
+        driveTokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: DRIVE_SCOPE,
+          callback: handleDriveToken,
+          error_callback: (err) => {
+            console.error('Drive auth error', err);
+            alert('Google認証エラー：' + (err.type || 'unknown'));
+          }
+        });
+        showDriveDisconnected();
+      }catch(e){
+        showDriveDisabled('初期化に失敗：' + e.message);
+      }
+    }
+
+    async function handleDriveToken(response){
+      if(response.error){
+        alert('Google認証エラー：' + response.error);
+        return;
+      }
+      driveAccessToken = response.access_token;
+      driveTokenExpiresAt = Date.now() + ((response.expires_in || 3600) * 1000) - 60000;
+      try{
+        const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${driveAccessToken}` }
+        });
+        const u = await r.json();
+        driveUserEmail = u.email || null;
+      }catch(e){}
+      try{
+        driveFolderId = await ensureDriveFolder();
+        showDriveConnected();
+        await refreshDriveList();
+      }catch(e){
+        alert('Driveフォルダ確認に失敗：' + e.message);
+      }
+    }
+
+    function ensureDriveToken(){
+      if(driveAccessToken && Date.now() < driveTokenExpiresAt) return Promise.resolve(driveAccessToken);
+      return new Promise((resolve, reject) => {
+        const origCb = driveTokenClient.callback;
+        driveTokenClient.callback = async (r) => {
+          driveTokenClient.callback = origCb;
+          if(r.error) return reject(new Error(r.error));
+          await handleDriveToken(r);
+          resolve(r.access_token);
+        };
+        driveTokenClient.requestAccessToken({ prompt: '' });
+      });
+    }
+
+    async function driveFetch(url, opts = {}){
+      const token = await ensureDriveToken();
+      const headers = { ...(opts.headers || {}), Authorization: `Bearer ${token}` };
+      const r = await fetch(url, { ...opts, headers });
+      if(!r.ok){
+        const text = await r.text();
+        throw new Error(`Drive API ${r.status}: ${text.slice(0,200)}`);
+      }
+      return r;
+    }
+
+    async function ensureDriveFolder(){
+      const q = encodeURIComponent(`name='${DRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+      const r = await driveFetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&spaces=drive`);
+      const d = await r.json();
+      if(d.files && d.files.length > 0) return d.files[0].id;
+      const cr = await driveFetch('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: DRIVE_FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' })
+      });
+      const cd = await cr.json();
+      return cd.id;
+    }
+
+    async function refreshDriveList(){
+      if(!driveFolderId) return;
+      const body = el('driveListBody');
+      body.innerHTML = '<tr><td colspan="3" class="empty">読み込み中...</td></tr>';
+      try{
+        const q = encodeURIComponent(`'${driveFolderId}' in parents and trashed=false`);
+        const r = await driveFetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,modifiedTime)&orderBy=modifiedTime desc&pageSize=50`);
+        const d = await r.json();
+        renderDriveList(d.files || []);
+      }catch(e){
+        body.innerHTML = `<tr><td colspan="3" class="empty">読込失敗：${e.message}</td></tr>`;
+      }
+    }
+
+    function renderDriveList(files){
+      const body = el('driveListBody');
+      if(files.length === 0){
+        body.innerHTML = '<tr><td colspan="3" class="empty">Driveに保存された案件はありません</td></tr>';
+        return;
+      }
+      body.innerHTML = files.map(f => {
+        const dt = f.modifiedTime ? new Date(f.modifiedTime).toLocaleString('ja-JP') : '—';
+        const name = f.name.replace(/'/g,"\\'");
+        return `<tr>
+          <td><strong>${f.name}</strong></td>
+          <td class="small">${dt}</td>
+          <td><div class="case-actions">
+            <button class="mini-btn" onclick="loadFromDrive('${f.id}','${name}')">読込</button>
+            <button class="mini-btn warn" onclick="deleteFromDrive('${f.id}','${name}')">削除</button>
+          </div></td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function saveToDrive(){
+      if(!driveFolderId){ alert('Driveに接続してください'); return; }
+      const nameRaw = (el('caseNameInput').value.trim() || el('memo').value.slice(0,30) || 'sozoku_case').replace(/[\\/:*?"<>|]/g,'_');
+      const filename = nameRaw.endsWith('.json') ? nameRaw : nameRaw + '.json';
+      const payload = { ...getPayload(), savedAt: new Date().toISOString() };
+      const content = JSON.stringify(payload, null, 2);
+      try{
+        // 既存ファイルチェック
+        const q = encodeURIComponent(`'${driveFolderId}' in parents and name='${filename.replace(/'/g,"\\'")}' and trashed=false`);
+        const existing = await (await driveFetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`)).json();
+        const exists = existing.files && existing.files.length > 0;
+        if(exists && !confirm(`「${filename}」は既にDriveに存在します。上書きしますか？`)) return;
+
+        const metadata = { name: filename, mimeType: 'application/json' };
+        if(!exists) metadata.parents = [driveFolderId];
+
+        const boundary = '-------sozoku314159';
+        const delim = `\r\n--${boundary}\r\n`;
+        const close = `\r\n--${boundary}--`;
+        const body =
+          delim + 'Content-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify(metadata) +
+          delim + 'Content-Type: application/json; charset=UTF-8\r\n\r\n' + content +
+          close;
+
+        const url = exists
+          ? `https://www.googleapis.com/upload/drive/v3/files/${existing.files[0].id}?uploadType=multipart`
+          : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
+        await driveFetch(url, {
+          method: exists ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
+          body
+        });
+        alert(`Driveに保存しました：${filename}`);
+        await refreshDriveList();
+      }catch(e){
+        alert('Drive保存に失敗：' + e.message);
+      }
+    }
+
+    async function loadFromDrive(fileId, fileName){
+      if(!confirm(`「${fileName}」を読み込みます。現在の入力は上書きされます。よろしいですか？`)) return;
+      try{
+        const r = await driveFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+        const data = await r.json();
+        applyPayload(data);
+        compute();
+        closeCaseModal();
+      }catch(e){
+        alert('Drive読込に失敗：' + e.message);
+      }
+    }
+    window.loadFromDrive = loadFromDrive;
+
+    async function deleteFromDrive(fileId, fileName){
+      if(!confirm(`「${fileName}」をDriveから削除します。取り消せません。よろしいですか？`)) return;
+      try{
+        await driveFetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, { method: 'DELETE' });
+        await refreshDriveList();
+      }catch(e){
+        alert('Drive削除に失敗：' + e.message);
+      }
+    }
+    window.deleteFromDrive = deleteFromDrive;
+
+    function signInDrive(){
+      if(!driveTokenClient) return;
+      driveTokenClient.requestAccessToken({ prompt: 'consent' });
+    }
+    function signOutDrive(){
+      if(driveAccessToken && window.google?.accounts?.oauth2){
+        try{ google.accounts.oauth2.revoke(driveAccessToken, () => {}); }catch(e){}
+      }
+      driveAccessToken = null;
+      driveTokenExpiresAt = 0;
+      driveUserEmail = null;
+      driveFolderId = null;
+      showDriveDisconnected();
+    }
+
+    // ─── サンプル・初期化・JSON入出力 ──────────────────
+    function loadSample(){
+      el('deathDate').value = '2033-05-01';
+      el('grossEstate').value = 180000000;
+      el('debts').value = 12000000;
+      el('otherNontax').value = 0;
+      el('priorTaxA').value = 0;
+      el('priorNetB').value = 0;
+      el('spouseOwnAssets').value = 30000000;
+      el('secondYears').value = 5;
+      el('spouseAssetDelta').value = 0;
+      el('memo').value = 'サンプル：配偶者1名、子2名、生命保険あり、教育資金贈与あり';
+      tbody('heirTable').innerHTML = '';
+      tbody('insuranceTable').innerHTML = '';
+      tbody('landTable').innerHTML = '';
+      tbody('giftTable').innerHTML = '';
+      addHeirRow({name:'配偶者A', group:'spouse', taxcat:'spouse', weight:1, actualShare:50, age:68, disability:'none', yearsE:''});
+      addHeirRow({name:'長男B', group:'first', taxcat:'firstdegree', weight:1, actualShare:25, age:40, disability:'none', yearsE:''});
+      addHeirRow({name:'長女C', group:'first', taxcat:'firstdegree', weight:1, actualShare:25, age:35, disability:'none', yearsE:''});
+      addInsuranceRow({name:'終身保険', recipient:'配偶者A', amount:30000000, payer:'decedent'});
+      addInsuranceRow({name:'定期保険', recipient:'長男B', amount:10000000, payer:'decedent'});
+      addLandRow({type:'residence80', area:300, unitValue:150000, note:'自宅宅地'});
+      addGiftRow({recipient:'長男B', date:'2031-06-10', amount:5000000, regime:'calendar', paidTax:0, specialBenefit:true, carrybackExempt:false, note:'住宅取得資金'});
+      addGiftRow({recipient:'長女C', date:'2024-07-01', amount:12000000, regime:'settlement', paidTax:0, specialBenefit:true, carrybackExempt:false, note:'精算課税選択済み'});
+      compute();
+    }
+
+    function resetAll(){
+      el('deathDate').value = today();
+      el('grossEstate').value = 0;
+      el('debts').value = 0;
+      el('otherNontax').value = 0;
+      el('priorTaxA').value = 0;
+      el('priorNetB').value = 0;
+      el('spouseOwnAssets').value = 0;
+      el('secondYears').value = 5;
+      el('spouseAssetDelta').value = 0;
+      el('memo').value = '';
+      tbody('heirTable').innerHTML = '';
+      tbody('insuranceTable').innerHTML = '';
+      tbody('landTable').innerHTML = '';
+      tbody('giftTable').innerHTML = '';
+      addHeirRow({group:'spouse',taxcat:'spouse',weight:1});
+      compute();
+    }
+
+    function exportJson(){
+      const payload = getPayload();
+      const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const fn = (el('memo').value || 'sozoku_case').slice(0,30).replace(/[\\/:*?"<>|\s]/g,'_');
+      a.href = url; a.download = `${fn}.json`; a.click();
+      setTimeout(()=>URL.revokeObjectURL(url), 1000);
+    }
+
+    function importJson(file){
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const data = JSON.parse(reader.result);
+          applyPayload(data);
+          compute();
+        }catch(e){
+          alert('JSONの読み込みに失敗しました：' + e.message);
+        }
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    el('addHeir').onclick = () => { addHeirRow({weight:1}); compute(); };
+    el('addInsurance').onclick = () => { addInsuranceRow({payer:'decedent'}); compute(); };
+    el('addLand').onclick = () => { addLandRow({type:'residence80'}); compute(); };
+    el('addGift').onclick = () => { addGiftRow({regime:'calendar'}); compute(); };
+    el('loadSample').onclick = loadSample;
+    el('resetAll').onclick = resetAll;
+    el('exportJson').onclick = exportJson;
+    el('recalc').onclick = compute;
+    el('printBtn').onclick = () => window.print();
+    el('importJsonInput').addEventListener('change', (e) => {
+      const f = e.target.files[0];
+      if(f) importJson(f);
+      e.target.value = '';
+    });
+    ['deathDate','grossEstate','debts','otherNontax','priorTaxA','priorNetB','memo',
+     'spouseOwnAssets','secondYears','spouseAssetDelta'].forEach(id => {
+      el(id).addEventListener('input', compute);
+      el(id).addEventListener('change', compute);
+    });
+
+    // ─── 案件管理モーダルとオートセーブ ──────────────
+    el('caseManager').onclick = openCaseModal;
+    el('caseModal').addEventListener('click', (e) => {
+      if(e.target === el('caseModal')) closeCaseModal();
+    });
+    el('saveCaseBtn').onclick = saveCurrentCase;
+    el('caseNameInput').addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){ e.preventDefault(); saveCurrentCase(); }
+    });
+    el('autosaveToggle').addEventListener('change', (e) => {
+      const s = getSettings();
+      s.autosaveEnabled = e.target.checked;
+      setSettings(s);
+      if(s.autosaveEnabled){ scheduleAutosave(); }
+    });
+    el('clearAllStorage').onclick = clearAllStorage;
+    el('restoreAutosave').onclick = () => {
+      try{
+        const data = JSON.parse(localStorage.getItem(STORAGE.autosave));
+        applyPayload(data);
+        el('autosaveBanner').classList.remove('show');
+        compute();
+      }catch(e){ alert('復元に失敗しました：' + e.message); }
+    };
+    el('dismissAutosave').onclick = () => {
+      el('autosaveBanner').classList.remove('show');
+    };
+
+    // Drive 関連
+    el('driveSigninBtn').onclick = signInDrive;
+    el('driveSignoutBtn').onclick = signOutDrive;
+    el('driveSaveBtn').onclick = saveToDrive;
+    el('driveRefreshBtn').onclick = refreshDriveList;
+
+    // 起動：自動保存があれば復元バナー表示、なければデフォルト初期化
+    resetAll();
+    checkAutosaveOnLoad();
+    if(!storageAvailable()){
+      const ss = el('saveStatus');
+      if(ss) ss.textContent = '⚠ ブラウザ保存が無効';
+    }
+    // Driveを初期化(GISスクリプトが遅延ロードなのでリトライ機構あり)
+    initDriveAuth();
+  </script>
+</body>
+</html>
