@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tsugu | Phase 27（多角的資金調達：全役割対応）</title>
+<title>Tsugu | Phase 28（相続・贈与シミュレーター統合）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -334,7 +334,7 @@
     var items;
     if(r==='customer') items=[['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','保険試算'],['sec-ma','M&A活用'],['sec-sec','パートナーAI']];
     else if(r==='admin') items=[['sec-flow','ダッシュボード'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達']];
-    else items=[['sec-flow','ダッシュボード'],['sec-followups','対応リスト'],['sec-clients','担当顧客'],['sec-myfund','自社の調達'],['sec-sec','AI秘書']];
+    else items=[['sec-flow','ダッシュボード'],['sec-followups','対応リスト'],['sec-clients','担当顧客'],['sec-myfund','自社の調達'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
     var h='<div class="sb-sec">メニュー</div>';
     items.forEach(function(it,i){ h+='<div class="ni'+(i===0?' active':'')+'" onclick="goSec(\''+it[0]+'\',this)">'+it[1]+'</div>'; });
     nav.innerHTML=h;
@@ -547,6 +547,10 @@
           +'<div id="cl-list" style="margin-top:6px;">読み込み中...</div>'
         +'</div>'
         +ownFundPanelHtml('自社の資金調達ロードマップ','パートナー自身の事業の調達計画（融資・補助金・クラファン等）を管理できます。')
+        +'<div class="panel" id="sec-sozoku"><div class="ph">相続・贈与シミュレーター</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;line-height:1.7;">法定相続分・保険非課税枠・暦年贈与加算（2024年改正対応）・相続時精算課税・配偶者軽減・小規模宅地・遺留分・二次相続までを1画面で試算できる専門ツールです。結果は印刷／PDFで顧客への提示資料になります（案件保存・JSON入出力対応）。</div>'
+          +'<button class="btn2" onclick="window.open(\'./sozoku.html\',\'_blank\')">シミュレーターを開く ↗</button>'
+        +'</div>'
         +'<div class="panel" id="sec-sec"><div class="ph">AI秘書（業務の相談相手）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">提案資料の文面づくり、面談準備、調べ物、考えの壁打ちなどを相談できます。</div>'
           + secModesHtml()
@@ -1660,6 +1664,9 @@
         +'<button class="btn2" id="bp-run" onclick="runBizplan(\''+custId+'\')">計画書を作成</button>'
       +'</div>'
       +'<div id="bp-msg" style="font-size:12px;margin-top:6px;"></div>'
+      +'<div class="ph" style="font-size:13px;margin-top:18px;">相続・贈与シミュレーター</div>'
+      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">この顧客の相続・贈与対策（暦年贈与・精算課税・二次相続まで）は専用ツールで試算できます。結果のPDFはメッセージで案内するか面談時にご提示ください。</div>'
+      +'<button class="btn2" style="background:#fff;color:#2C6EBD;border:1.5px solid #2C6EBD;" onclick="window.open(\'./sozoku.html\',\'_blank\')">シミュレーターを開く ↗</button>'
       + insPanelHtmlClient(custId)
     +'</div>';
     // ---- タブ4：顧客からの共有 ----
