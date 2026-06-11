@@ -332,7 +332,7 @@
   function buildNav(r){
     var nav=$('app-nav'); if(!nav)return;
     var items;
-    if(r==='customer') items=[['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','保険試算'],['sec-ma','M&A活用'],['sec-sec','パートナーAI']];
+    if(r==='customer') items=[['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-sec','パートナーAI']];
     else if(r==='admin') items=[['sec-flow','ダッシュボード'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達']];
     else items=[['sec-flow','ダッシュボード'],['sec-followups','対応リスト'],['sec-clients','担当顧客'],['sec-myfund','自社の調達'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
     var h='<div class="sb-sec">メニュー</div>';
@@ -495,8 +495,8 @@
           +'<button class="btn2" id="ai-run" onclick="runAi()">AIに自動化提案をもらう</button>'
           +'<div id="ai-result" style="margin-top:14px;"></div>'
         +'</div>'
-        +'<div class="panel" id="sec-ins"><div class="ph">保険試算（パートナーからの共有）</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">事業保障・損害保険・養老保険などの試算は担当パートナーが行い、ここに共有されます。試算のご希望や前提条件の変更は「メッセージ」でお伝えください。</div>'
+        +'<div class="panel" id="sec-ins"><div class="ph">試算結果（パートナーからの共有）</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">保険（事業保障・損害保険・養老保険）や相続・贈与などの試算は担当パートナーが行い、ここに共有されます。試算のご希望や前提条件の変更は「メッセージ」でお伝えください。</div>'
           +'<div id="my-ins" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-ma"><div class="ph">利益のM&A活用 提案（AI）</div>'
@@ -819,7 +819,7 @@
     var box=$('my-ins'); if(!box)return;
     var res=await sb.from('insurance_results').select('*').eq('customer_id',ME).order('created_at',{ascending:false});
     if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
-    if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">共有された保険試算はまだありません。ご希望があれば「メッセージ」で担当パートナーにお伝えください。</div>'; return; }
+    if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">共有された試算結果はまだありません。保険や相続・贈与の試算をご希望の場合は「メッセージ」で担当パートナーにお伝えください。</div>'; return; }
     var h=''; res.data.forEach(function(r){ var dt=(r.created_at||'').slice(0,10); h+='<div style="border-left:3px solid #2C6EBD;background:#F5F9FF;border-radius:8px;padding:10px 12px;margin-bottom:6px;"><div style="font-size:11px;color:#8AA0BE;margin-bottom:4px;">'+esc(dt)+'</div><div style="font-size:12.5px;color:#131E2E;white-space:pre-wrap;line-height:1.7;">'+esc(r.summary||'')+'</div></div>'; });
     box.innerHTML=h;
   }
