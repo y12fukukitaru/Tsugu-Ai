@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>相続・贈与シミュレーター | Tsugu</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=DM+Sans:wght@500;600&display=swap');
     :root{
@@ -250,6 +251,21 @@
       <h2>2. 計算サマリー</h2>
       <div class="summary-grid" id="summaryGrid"></div>
       <div class="note info" id="periodNote" style="margin-top:12px">死亡日を入れると、暦年贈与の加算期間と100万円控除の扱いを表示します。</div>
+    </section>
+
+    <section class="card" style="margin-top:16px" id="tsuguShareCard">
+      <h2>Tsuguで顧客に共有</h2>
+      <div class="sub">上の試算サマリーを、Tsuguアプリの顧客画面「試算結果（パートナーからの共有）」へ送信します。送信前に「再計算」で最新の結果にしてください。</div>
+      <div class="stack" style="margin-top:12px">
+        <div style="min-width:260px;flex:1">
+          <label>共有先の顧客</label>
+          <select id="tsuguClientSel"><option value="">読み込み中...</option></select>
+        </div>
+        <button id="tsuguShareBtn" type="button">この試算を顧客に共有</button>
+        <button id="tsuguCopyBtn" type="button" class="ghost">共有用サマリーをコピー</button>
+      </div>
+      <div class="small" id="tsuguShareStatus" style="margin-top:10px">—</div>
+      <div class="small" style="margin-top:6px;color:var(--soft)">※ 共有されるのはサマリー数値のみです。詳細は「印刷／PDF出力」を面談時にご提示ください。Tsuguに未ログインの場合はコピーをご利用ください。</div>
     </section>
 
     <section class="card" style="margin-top:16px">
@@ -1600,5 +1616,69 @@
     // Driveを初期化(GISスクリプトが遅延ロードなのでリトライ機構あり)
     initDriveAuth();
   </script>
+
+<script>
+(function(){
+  var SB_URL='https://yaururnkxjhtiowkpvyu.supabase.co';
+  var SB_KEY='sb_publishable_-k-OPNThdG0uElX0h36eug_oGaCNlL4';
+  var sel=document.getElementById('tsuguClientSel');
+  var btn=document.getElementById('tsuguShareBtn');
+  var copyBtn=document.getElementById('tsuguCopyBtn');
+  var st=document.getElementById('tsuguShareStatus');
+  function setSt(msg, ok){ if(st){ st.textContent=msg; st.style.color= ok===true?'var(--good)':(ok===false?'var(--danger)':'var(--soft)'); } }
+  function buildSummary(){
+    var lines=['【相続・贈与シミュレーション試算】','作成日：'+new Date().toISOString().slice(0,10)];
+    var dd=document.getElementById('deathDate'); if(dd&&dd.value) lines.push('死亡日（想定）：'+dd.value);
+    var grid=document.getElementById('summaryGrid');
+    if(grid){ grid.querySelectorAll('.metric').forEach(function(mx){
+      var k=mx.querySelector('.k'), v=mx.querySelector('.v');
+      if(k&&v&&v.textContent.trim()!=='') lines.push(k.textContent.trim()+'：'+v.textContent.trim());
+    }); }
+    ['firstTaxTotal','secondTaxTotal','combinedTaxTotal'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el&&el.textContent.trim()&&el.textContent.trim()!=='—'){
+        var lbl=(id==='firstTaxTotal'?'一次相続 税額':(id==='secondTaxTotal'?'二次相続 税額':'一次＋二次 合計税額'));
+        lines.push(lbl+'：'+el.textContent.trim());
+      }
+    });
+    lines.push('※ 概算です。適用要件・評価は税理士の確認が必要です。詳細資料は担当パートナーが面談時にご提示します。');
+    return lines.join('\n');
+  }
+  if(copyBtn) copyBtn.addEventListener('click', function(){
+    var t=buildSummary();
+    (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject()).then(function(){ setSt('サマリーをコピーしました。Tsuguのメッセージ等に貼り付けできます。', true); }).catch(function(){ window.prompt('以下をコピーしてください', t); });
+  });
+  if(!window.supabase){ setSt('Tsugu連携の読み込みに失敗しました。「コピー」をご利用ください。', false); if(sel) sel.innerHTML='<option value="">—</option>'; return; }
+  var sb2=window.supabase.createClient(SB_URL, SB_KEY, { auth:{ flowType:'implicit', detectSessionInUrl:false, persistSession:true, autoRefreshToken:true } });
+  async function init(){
+    try{
+      var sres=await sb2.auth.getSession();
+      var sess=sres.data&&sres.data.session;
+      if(!sess){ setSt('Tsuguに未ログインです。Tsuguアプリでパートナーとしてログイン後、このページを再読み込みすると共有できます。'); sel.innerHTML='<option value="">（未ログイン）</option>'; btn.disabled=true; return; }
+      var uid=sess.user.id;
+      var cl=await sb2.from('profiles').select('id,email,company_name').eq('consultant_id',uid).eq('role','customer').order('company_name',{ascending:true});
+      if(cl.error){ setSt('顧客一覧の取得に失敗：'+cl.error.message, false); sel.innerHTML='<option value="">—</option>'; btn.disabled=true; return; }
+      var rows=cl.data||[];
+      if(!rows.length){ setSt('担当顧客がいません。Tsuguアプリで顧客を担当に追加してください。'); sel.innerHTML='<option value="">（担当顧客なし）</option>'; btn.disabled=true; return; }
+      sel.innerHTML=rows.map(function(c){ var nm=(c.company_name&&c.company_name.length)?c.company_name+'（'+c.email+'）':c.email; return '<option value="'+c.id+'">'+nm.replace(/</g,'&lt;')+'</option>'; }).join('');
+      btn.disabled=false;
+      setSt('ログイン中（パートナー）。共有先を選んで送信できます。', true);
+    }catch(e){ setSt('連携エラー：'+(e&&e.message?e.message:e), false); }
+  }
+  if(btn) btn.addEventListener('click', async function(){
+    var cid=sel&&sel.value; if(!cid){ setSt('共有先の顧客を選んでください。', false); return; }
+    btn.disabled=true; setSt('送信中...');
+    try{
+      var sres=await sb2.auth.getSession();
+      if(!(sres.data&&sres.data.session)){ setSt('セッションが切れています。Tsuguで再ログインしてください。', false); btn.disabled=false; return; }
+      var res=await sb2.from('insurance_results').insert({ customer_id:cid, summary:buildSummary() });
+      if(res.error){ setSt('共有エラー：'+res.error.message, false); btn.disabled=false; return; }
+      setSt('共有しました。顧客の「試算結果（パートナーからの共有）」に表示されます。', true);
+    }catch(e){ setSt('共有エラー：'+(e&&e.message?e.message:e), false); }
+    btn.disabled=false;
+  });
+  init();
+})();
+</script>
 </body>
 </html>
