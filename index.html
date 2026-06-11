@@ -549,7 +549,7 @@
         +ownFundPanelHtml('自社の資金調達ロードマップ','パートナー自身の事業の調達計画（融資・補助金・クラファン等）を管理できます。')
         +'<div class="panel" id="sec-sozoku"><div class="ph">相続・贈与シミュレーター</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;line-height:1.7;">法定相続分・保険非課税枠・暦年贈与加算（2024年改正対応）・相続時精算課税・配偶者軽減・小規模宅地・遺留分・二次相続までを1画面で試算できる専門ツールです。結果は印刷／PDFで顧客への提示資料になります（案件保存・JSON入出力対応）。</div>'
-          +'<button class="btn2" onclick="window.open(\'./sozoku.html\',\'_blank\')">シミュレーターを開く ↗</button>'
+          +'<button class="btn2" onclick="openSozoku()">シミュレーターを開く ↗</button>'
         +'</div>'
         +'<div class="panel" id="sec-sec"><div class="ph">AI秘書（業務の相談相手）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">提案資料の文面づくり、面談準備、調べ物、考えの壁打ちなどを相談できます。</div>'
@@ -848,6 +848,10 @@
   }
 
   // ---- 事業計画書（AI・パートナー用）----
+  function openSozoku(){
+    if(location.protocol==='file:'){ window.open('https://y12fukukitaru.github.io/Tsugu-Ai/sozoku.html','_blank'); }
+    else { window.open('./sozoku.html','_blank'); }
+  }
   function closeBizplan(){ var m=$('bp-modal'); if(m){ m.classList.add('hidden'); document.body.style.overflow=''; } }
   async function runBizplan(custId){
     var btn=$('bp-run'), msg=$('bp-msg');
@@ -1666,7 +1670,7 @@
       +'<div id="bp-msg" style="font-size:12px;margin-top:6px;"></div>'
       +'<div class="ph" style="font-size:13px;margin-top:18px;">相続・贈与シミュレーター</div>'
       +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">この顧客の相続・贈与対策（暦年贈与・精算課税・二次相続まで）は専用ツールで試算できます。結果のPDFはメッセージで案内するか面談時にご提示ください。</div>'
-      +'<button class="btn2" style="background:#fff;color:#2C6EBD;border:1.5px solid #2C6EBD;" onclick="window.open(\'./sozoku.html\',\'_blank\')">シミュレーターを開く ↗</button>'
+      +'<button class="btn2" style="background:#fff;color:#2C6EBD;border:1.5px solid #2C6EBD;" onclick="openSozoku()">シミュレーターを開く ↗</button>'
       + insPanelHtmlClient(custId)
     +'</div>';
     // ---- タブ4：顧客からの共有 ----
