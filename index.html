@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- Phase 33（パートナー間ナレッジベース） -->
+<!-- Phase 35（PMI年間対応・経営課題PDCA） -->
 <title>Tsugu -継- | AIと人で、会社の未来を継ぐ</title>
 <meta name="description" content="Tsugu（ツグ）は、AIと人の伴走で資金繰り改善・業務の自動化・資金調達から事業承継/M&Aまでを支援する経営プラットフォームです。">
 
@@ -431,9 +431,9 @@
   }
   function buildNav(r){
     var items;
-    if(r==='customer') items=[['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-sec','パートナーAI']];
+    if(r==='customer') items=[['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-sec','パートナーAI']];
     else if(r==='admin') items=[['sec-flow','ダッシュボード'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達']];
-    else items=[['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-myfund','自社の調達'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
+    else items=[['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-myfund','自社の調達'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
     var nav=$('app-nav'); if(nav) nav.innerHTML='<div class="sb-sec">メニュー</div>'+navItemsHtml(items,false);
     var dn=$('drawer-nav'); if(dn) dn.innerHTML=navItemsHtml(items,true);
   }
@@ -642,6 +642,10 @@
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;">担当パートナーが毎月の数字とコメントをまとめたレポートです。</div>'
           +'<div id="my-reports">読み込み中...</div>'
         +'</div>'
+        +'<div class="panel" id="sec-mypdca"><div class="ph">🔁 経営課題の取り組み</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;">担当パートナーと一緒に進めている課題の進捗です。詳しくはメッセージでご相談ください。</div>'
+          +'<div id="my-pdca">読み込み中...</div>'
+        +'</div>'
         +'<div class="panel" id="sec-company"><div class="ph">会社情報</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
             +'<div style="flex:1;min-width:180px;"><label class="fl">会社名</label><input id="pi-company" class="inp2" style="width:100%;" value="'+escA(prof.company_name||'')+'" placeholder="例：株式会社○○"></div>'
@@ -690,6 +694,7 @@
           +'<div id="my-ins" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-ma"><div class="ph">利益のM&A活用 提案（AI）</div>'
+          +'<div id="my-ma"></div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">利益や余剰資金を、M&A（会社・事業の買収）で活かす方向性をAIが提案します。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
             +'<div><label class="fl">年間利益・余剰資金(万円)</label><input id="ma-profit" type="number" class="inp2" placeholder="例 3000"></div>'
@@ -742,6 +747,53 @@
             +'<button class="sbtn" data-f="share" onclick="setClFilter(\'share\',this)">共有あり</button>'
           +'</div>'
           +'<div id="cl-list" style="margin-top:6px;">読み込み中...</div>'
+        +'</div>'
+        +'<div class="panel" id="sec-pdca">'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">🔁 経営課題PDCA'
+            +'<span style="display:flex;gap:8px;align-items:center;">'
+            +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadPdca()">↺ 更新</span>'
+            +'<button class="btn2" style="padding:7px 14px;font-size:12px;" onclick="togglePdcaForm()">＋ 課題を追加</button>'
+            +'</span></div>'
+          +'<div style="font-size:11.5px;color:#8AA0BE;margin-bottom:8px;">顧客の経営課題ごとに「計画→実行→振り返り→改善」を回します。改善まで終えると履歴に残り、2周目に進みます。</div>'
+          +'<div id="pdca-form" class="hidden" style="border:1px dashed #C9D6EA;border-radius:11px;padding:12px 14px;margin:8px 0;background:#FBFCFE;">'
+            +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+              +'<div style="flex:1;min-width:170px;"><label class="fl">顧客</label><select id="pdca-cust" class="inp2" style="width:100%;"></select></div>'
+              +'<div><label class="fl">カテゴリ</label><select id="pdca-cat" class="inp2" style="width:160px;"><option>資金繰り</option><option>売上拡大</option><option>コスト削減</option><option>人材・組織</option><option>業務効率化</option><option>承継・M&A</option><option>その他</option></select></div>'
+              +'<div><label class="fl">今サイクルの期日（任意）</label><input id="pdca-due" type="date" class="inp2" style="width:170px;"></div>'
+            +'</div>'
+            +'<div style="margin-top:8px;"><label class="fl">課題名</label><input id="pdca-title" class="inp2" style="width:100%;" placeholder="例：粗利率を28%→32%に改善する"></div>'
+            +'<div style="margin-top:8px;"><label class="fl">目標・あるべき姿（できれば数字で）</label><input id="pdca-goal" class="inp2" style="width:100%;" placeholder="例：仕入見直しとメニュー改定で粗利率32%を3ヶ月で達成"></div>'
+            +'<div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">'
+              +'<button class="btn2" onclick="addPdca()">課題を作成</button>'
+              +'<span id="pdca-form-msg" style="font-size:12px;"></span>'
+            +'</div>'
+          +'</div>'
+          +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px;" id="pdca-filterbar">'
+            +'<button class="sbtn on" onclick="setPdcaFilter(\'active\',this)">進行中</button>'
+            +'<button class="sbtn" onclick="setPdcaFilter(\'done\',this)">完了</button>'
+          +'</div>'
+          +'<div id="pdca-list" style="margin-top:6px;">読み込み中...</div>'
+        +'</div>'
+        +'<div class="panel" id="sec-madeals">'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">🤝 M&A案件管理'
+            +'<span style="display:flex;gap:8px;align-items:center;">'
+            +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMaDeals()">↺ 更新</span>'
+            +'<button class="btn2" style="padding:7px 14px;font-size:12px;" onclick="toggleMaForm()">＋ 案件を追加</button>'
+            +'</span></div>'
+          +'<div style="font-size:11.5px;color:#8AA0BE;margin-bottom:8px;">検討からPMI（統合）までの進捗・チェックリスト・PMI月次チェックをここで一元管理します。</div>'
+          +'<div id="ma-form" class="hidden" style="border:1px dashed #C9D6EA;border-radius:11px;padding:12px 14px;margin:8px 0;background:#FBFCFE;">'
+            +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+              +'<div style="flex:1;min-width:180px;"><label class="fl">顧客</label><select id="ma-cust" class="inp2" style="width:100%;"></select></div>'
+              +'<div><label class="fl">種類</label><select id="ma-type" class="inp2" style="width:120px;"><option>譲渡</option><option>譲受</option></select></div>'
+              +'<div><label class="fl">想定価格（万円・任意）</label><input id="ma-price" type="number" class="inp2" style="width:160px;"></div>'
+              +'<div><label class="fl">目標時期（任意）</label><input id="ma-date" type="date" class="inp2" style="width:170px;"></div>'
+            +'</div>'
+            +'<div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">'
+              +'<button class="btn2" onclick="addMaDeal()">案件を作成</button>'
+              +'<span id="ma-form-msg" style="font-size:12px;"></span>'
+            +'</div>'
+          +'</div>'
+          +'<div id="ma-list" style="margin-top:6px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-reports">'
           +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;">📊 月次レポート承認<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadReportDrafts()">↺ 更新</span></div>'
@@ -812,8 +864,8 @@
 
     window.__eff=eff;
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); }
-    else if(eff==='consultant'){ loadClients(); loadOwnFunding(); loadReportDrafts(); loadKnowledge(); }
+    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); }
+    else if(eff==='consultant'){ loadClients(); loadOwnFunding(); loadReportDrafts(); loadKnowledge(); loadMaDeals(); loadPdca(); }
     else { loadAdmin(); }
     startNotifPolling(eff);
   }
@@ -1042,7 +1094,19 @@
       var rd=await sb.from('monthly_reports').select('customer_id,report_month').eq('status','draft').in('customer_id',ids);
       if(!rd.error) repDrafts=rd.data||[];
     }
-    CL_CACHE={clients:clients,cnt:cnt,lastMsg:lastMsg,unread:unread,funding:funding,pays:pays,repDrafts:repDrafts};
+    var pdcaItems=[];
+    if(ids.length){
+      var pd=await sb.from('pdca_items').select('customer_id,title,due_date,updated_at,status').eq('status','active').in('customer_id',ids);
+      if(!pd.error) pdcaItems=pd.data||[];
+    }
+    var maDeals=[], maPulses=[];
+    if(ids.length){
+      var md=await sb.from('ma_deals').select('customer_id,stage,target_date,updated_at,deal_type').in('customer_id',ids);
+      if(!md.error) maDeals=md.data||[];
+      var mp=await sb.from('pmi_pulses').select('customer_id,ym,score').eq('ym',thisYM()).in('customer_id',ids);
+      if(!mp.error) maPulses=mp.data||[];
+    }
+    CL_CACHE={clients:clients,cnt:cnt,lastMsg:lastMsg,unread:unread,funding:funding,pays:pays,repDrafts:repDrafts,maDeals:maDeals,maPulses:maPulses,pdca:pdcaItems};
     var totalUnread=0; clients.forEach(function(c){ totalUnread+=(unread[c.id]||0); });
     UNREAD.total=totalUnread; UNREAD.perClient=unread; applyNotifBadges();
     var sharesN=clients.filter(function(c){ return cnt[c.id]; }).length;
@@ -1111,6 +1175,35 @@
     // ③' レポート承認待ち
     (CL_CACHE.repDrafts||[]).forEach(function(r){
       add(r.customer_id, 70, '<span class="tag blue">レポート承認待ち（'+esc(ymJp(r.report_month))+'分）</span>');
+    });
+    // ③''' 経営課題PDCAのシグナル
+    (CL_CACHE.pdca||[]).forEach(function(d){
+      if(d.due_date){
+        var dd=daysBetween(d.due_date, now);
+        if(dd!==null && dd>=0 && dd<=7) add(d.customer_id, 56, '<span class="tag gold">課題期日 あと'+dd+'日：'+esc(d.title)+'</span>');
+        else if(dd!==null && dd<0) add(d.customer_id, 75, '<span class="tag red">課題期日超過：'+esc(d.title)+'</span>');
+      }
+      if(d.updated_at){
+        var silent=Math.floor((now - new Date(d.updated_at))/(24*3600*1000));
+        if(silent>=30) add(d.customer_id, 42, '<span class="tag gray">課題 '+silent+'日更新なし：'+esc(d.title)+'</span>');
+      }
+    });
+    // ③'' M&A・PMIのシグナル
+    var pulseBy={}; (CL_CACHE.maPulses||[]).forEach(function(p){ pulseBy[p.customer_id]=p; });
+    (CL_CACHE.maDeals||[]).forEach(function(d){
+      if(d.stage===7){
+        var pu=pulseBy[d.customer_id];
+        if(!pu && now.getDate()>=7) add(d.customer_id, 65, '<span class="tag gold">PMIチェック未回収（今月）</span>');
+        if(pu && pu.score>=3) add(d.customer_id, 92, '<span class="tag red">PMI要注意（スコア'+pu.score+'/6）</span>');
+      }
+      if(d.stage<8 && d.target_date){
+        var dd=daysBetween(d.target_date, now);
+        if(dd!==null && dd>=0 && dd<=30) add(d.customer_id, 58, '<span class="tag gold">M&A目標日まであと'+dd+'日</span>');
+      }
+      if(d.stage>=1 && d.stage<8 && d.updated_at){
+        var silent=Math.floor((now - new Date(d.updated_at))/(24*3600*1000));
+        if(silent>=30) add(d.customer_id, 45, '<span class="tag gray">M&A案件 '+silent+'日更新なし</span>');
+      }
     });
     // ③ 支払予定（7日以内）
     (CL_CACHE.pays||[]).forEach(function(pmt){
@@ -1181,7 +1274,442 @@
       +'<div style="flex:1 1 130px;background:#F7FAFD;border:1px solid #EAF0F7;border-radius:10px;padding:9px 12px;"><div style="font-size:10.5px;color:#4A6080;">利益</div><div style="font-size:15px;font-weight:700;color:'+((sm.profit!==null&&sm.profit!==undefined&&Number(sm.profit)<0)?'#A83030':'#1C3557')+';">'+manFmt(sm.profit)+'</div><div style="font-size:10px;color:#4A6080;">'+pctDiff(sm.profit,sm.prev_profit)+'</div></div>'
       +'</div>';
     if(sm.has_current===false) h+='<div style="font-size:11px;color:#9A7314;background:#FAEEDA;border-radius:8px;padding:7px 10px;margin-bottom:6px;">対象月の試算表が未入力のため、直近データをもとに作成されています。</div>';
-    return h+repChart(sm.history);
+    h+=repChart(sm.history);
+    h+=repValuationHtml(sm.valuation);
+    return h;
+  }
+  function repValuationHtml(v){
+    if(!v) return '';
+    var posColor=v.position==='上位水準'?'#1E6B45':(v.position==='要改善'?'#A83030':'#1C3557');
+    var h='<div style="border:1px solid #EAF0F7;border-radius:11px;padding:11px 13px;margin-top:10px;background:#FBFCFE;">'
+      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:12px;font-weight:700;color:#1C3557;">🏷️ 市場から見た企業価値の目安</span>'
+      +'<span class="tag '+(v.position==='上位水準'?'green':(v.position==='要改善'?'red':'blue'))+'">利益率 '+(v.margin_pct===null?'—':v.margin_pct+'%')+'・'+esc(v.position)+'</span></div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">'
+        +'<div style="flex:1 1 130px;background:#fff;border:1px solid #EAF0F7;border-radius:9px;padding:8px 11px;"><div style="font-size:10px;color:#4A6080;">年間売上'+(v.annualized?'（年換算）':'')+'</div><div style="font-size:14px;font-weight:700;color:#1C3557;">'+Number(v.annual_revenue).toLocaleString()+'万円</div></div>'
+        +'<div style="flex:1 1 130px;background:#fff;border:1px solid #EAF0F7;border-radius:9px;padding:8px 11px;"><div style="font-size:10px;color:#4A6080;">年間利益'+(v.annualized?'（年換算）':'')+'</div><div style="font-size:14px;font-weight:700;color:'+posColor+';">'+Number(v.annual_profit).toLocaleString()+'万円</div></div>'
+      +'</div>';
+    if(v.nb_low!==null){
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">'
+        +'<div style="flex:1 1 150px;background:#F6FAFE;border:1px solid #D9E7F6;border-radius:9px;padding:8px 11px;"><div style="font-size:10px;color:#2C6EBD;">年買法（利益2〜5年分）</div><div style="font-size:13.5px;font-weight:700;color:#1C3557;">'+Number(v.nb_low).toLocaleString()+'〜'+Number(v.nb_high).toLocaleString()+'万円</div></div>'
+        +'<div style="flex:1 1 150px;background:#F6FAFE;border:1px solid #D9E7F6;border-radius:9px;padding:8px 11px;"><div style="font-size:10px;color:#2C6EBD;">EBITDA倍率（4〜6倍）</div><div style="font-size:13.5px;font-weight:700;color:#1C3557;">'+Number(v.eb_low).toLocaleString()+'〜'+Number(v.eb_high).toLocaleString()+'万円</div></div>'
+      +'</div>';
+    } else {
+      h+='<div style="font-size:11px;color:#9A7314;background:#FAEEDA;border-radius:8px;padding:7px 10px;margin-top:8px;">営業利益が赤字のため価値レンジは算出していません。まずは収益改善（磨き上げ）が価値向上の近道です。</div>';
+    }
+    h+='<div style="font-size:10px;color:#8AA0BE;margin-top:7px;">※利益のみを用いた簡易試算です（時価純資産・のれん・減価償却費は未反映）。実際の譲渡価格は調査（DD）や交渉で変動します。中小企業の営業利益率は3〜5%が平均の目安です。</div>'
+    +'</div>';
+    return h;
+  }
+  function repAnalysisHtml(a){
+    if(!a) return '';
+    var h='';
+    if(a.position_note) h+='<div style="font-size:12px;color:#1C3557;background:#F6FAFE;border-radius:9px;padding:9px 12px;margin-top:9px;">📍 '+esc(a.position_note)+'</div>';
+    var sw=a.swot;
+    if(sw && (sw.s||sw.w||sw.o||sw.t)){
+      function q(title,items,bg,col){
+        return '<div style="flex:1 1 46%;min-width:150px;background:'+bg+';border-radius:9px;padding:9px 11px;">'
+          +'<div style="font-size:10.5px;font-weight:700;color:'+col+';margin-bottom:4px;">'+title+'</div>'
+          +(items||[]).map(function(x){ return '<div style="font-size:11.5px;color:#1C3557;line-height:1.6;">・'+esc(x)+'</div>'; }).join('')+'</div>';
+      }
+      h+='<div style="margin-top:9px;"><div style="font-size:11px;color:#4A6080;font-weight:600;margin-bottom:5px;">SWOT分析（AI下書き・パートナー確認済）</div>'
+        +'<div style="display:flex;gap:7px;flex-wrap:wrap;">'
+        +q('強み（S）',sw.s,'#E6F4EC','#1E6B45')
+        +q('弱み（W）',sw.w,'#FDECEC','#A83030')
+        +q('機会（O）',sw.o,'#E7F0FB','#2C6EBD')
+        +q('脅威（T）',sw.t,'#FAEEDA','#9A7314')
+        +'</div></div>';
+    }
+    return h;
+  }
+  // ===== 経営課題PDCA（Phase 35） =====
+  var PDCA_PHASES=[
+    {k:'plan',  n:'計画',     tag:'blue',  field:'plan_text',  label:'P：計画（何を・いつまでに・どうやって）'},
+    {k:'do',    n:'実行',     tag:'gold',  field:'do_text',    label:'D：実行したこと'},
+    {k:'check', n:'振り返り', tag:'green', field:'check_text', label:'C：振り返り（数字で効果を確認）'},
+    {k:'act',   n:'改善',     tag:'red',   field:'act_text',   label:'A：改善・次サイクルへの学び'}
+  ];
+  var PDCA_CACHE={items:[],names:{},filter:'active'};
+  function pdcaPhaseIdx(ph){ for(var i=0;i<PDCA_PHASES.length;i++){ if(PDCA_PHASES[i].k===ph) return i; } return 0; }
+  function togglePdcaForm(){
+    var f=$('pdca-form'); if(!f)return;
+    f.classList.toggle('hidden');
+    var sel=$('pdca-cust');
+    if(sel && !f.classList.contains('hidden')){
+      sel.innerHTML=(CL_CACHE.clients||[]).map(function(c){ return '<option value="'+c.id+'">'+esc(c.company_name||c.email)+'</option>'; }).join('')||'<option value="">担当顧客がいません</option>';
+    }
+  }
+  function setPdcaFilter(f,el){
+    PDCA_CACHE.filter=f;
+    var bar=$('pdca-filterbar'); if(bar){ Array.prototype.forEach.call(bar.querySelectorAll('.sbtn'),function(b){ b.classList.remove('on'); }); }
+    if(el) el.classList.add('on');
+    renderPdca();
+  }
+  async function addPdca(){
+    var m=$('pdca-form-msg');
+    var cid=($('pdca-cust')||{}).value, title=(($('pdca-title')||{}).value||'').trim();
+    if(!cid){ if(m){ m.style.color='#A83030'; m.textContent='顧客を選択してください'; } return; }
+    if(!title){ if(m){ m.style.color='#A83030'; m.textContent='課題名を入力してください'; } return; }
+    var row={ customer_id:cid, title:title,
+      category:($('pdca-cat')||{}).value||null,
+      goal_text:((($('pdca-goal')||{}).value||'').trim()||null),
+      due_date:(($('pdca-due')||{}).value||null),
+      status:'active', phase:'plan', cycle_no:1 };
+    var res=await sb.from('pdca_items').insert(row);
+    if(res.error){ if(m){ m.style.color='#A83030'; m.textContent='作成エラー：'+res.error.message; } return; }
+    if(m){ m.style.color='#1E6B45'; m.textContent='課題を作成しました'; }
+    if($('pdca-title'))$('pdca-title').value=''; if($('pdca-goal'))$('pdca-goal').value='';
+    loadPdca();
+  }
+  async function loadPdca(){
+    var box=$('pdca-list'); if(!box)return;
+    var res=await sb.from('pdca_items').select('*').order('updated_at',{ascending:false}).limit(100);
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'<br><span style="color:#8AA0BE;">（Phase 35のSQL未実施の可能性があります）</span></div>'; return; }
+    PDCA_CACHE.items=res.data||[];
+    var ids=[]; PDCA_CACHE.items.forEach(function(d){ if(ids.indexOf(d.customer_id)<0) ids.push(d.customer_id); });
+    PDCA_CACHE.names={};
+    if(ids.length){
+      var pr=await sb.from('profiles').select('id,company_name,email').in('id',ids);
+      (pr.data||[]).forEach(function(x){ PDCA_CACHE.names[x.id]=x.company_name||x.email; });
+    }
+    renderPdca();
+  }
+  function pdcaStepper(cur){
+    var i=pdcaPhaseIdx(cur);
+    return '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;">'+PDCA_PHASES.map(function(p,n){
+      var on=n===i, done=n<i;
+      var bg=on?'#1C3557':(done?'#E7F0FB':'#F3F6FA');
+      var col=on?'#fff':(done?'#2C6EBD':'#8AA0BE');
+      return '<div style="flex:1;min-width:64px;text-align:center;background:'+bg+';color:'+col+';border-radius:8px;padding:6px 4px;font-size:11px;font-weight:'+(on?'700':'500')+';">'+(done?'✓ ':'')+p.n+'</div>'+(n<3?'<div style="align-self:center;color:#C9D6EA;font-size:10px;">→</div>':'');
+    }).join('')+'</div>';
+  }
+  function renderPdca(){
+    var box=$('pdca-list'); if(!box)return;
+    var rows=(PDCA_CACHE.items||[]).filter(function(d){ return d.status===PDCA_CACHE.filter; });
+    if(!rows.length){
+      box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">'+(PDCA_CACHE.filter==='active'?'進行中の課題はありません。「＋ 課題を追加」から始めましょう。':'完了した課題はまだありません。')+'</div>';
+      return;
+    }
+    var h='';
+    rows.forEach(function(d){
+      var hist=d.history||[];
+      var fields=PDCA_PHASES.map(function(p){
+        var cur=p.k===d.phase;
+        return '<div style="margin-top:8px;'+(cur?'':'opacity:.75;')+'"><label class="fl" style="'+(cur?'color:#2C6EBD;font-weight:700;':'')+'">'+p.label+(cur?'（いまここ）':'')+'</label>'
+          +'<textarea id="pdca-'+p.k+'-'+d.id+'" class="inp2" rows="2" style="width:100%;">'+esc(d[p.field]||'')+'</textarea></div>';
+      }).join('');
+      var histHtml='';
+      if(hist.length){
+        histHtml='<div style="margin-top:9px;border-top:1px dashed #EAF0F7;padding-top:8px;"><div style="font-size:10.5px;color:#4A6080;font-weight:600;">過去のサイクル</div>'
+          +hist.map(function(c){
+            return '<div style="font-size:11px;color:#4A6080;background:#F7FAFD;border-radius:8px;padding:7px 10px;margin-top:5px;line-height:1.7;">'
+              +'<b>サイクル'+c.cycle+'</b>'
+              +(c.plan?('　計画：'+esc(c.plan)):'')
+              +(c.check?('　→ 振り返り：'+esc(c.check)):'')
+              +(c.act?('　→ 学び：'+esc(c.act)):'')+'</div>';
+          }).join('')+'</div>';
+      }
+      var lastPhase=d.phase==='act';
+      h+='<div class="clcard" style="cursor:default;">'
+        +'<div class="cl-top"><span class="cl-nm">'+esc(PDCA_CACHE.names[d.customer_id]||'顧客')+'</span>'
+        +'<span class="tag blue">'+esc(d.category||'課題')+'</span>'
+        +'<span class="tag gray">サイクル'+(d.cycle_no||1)+'</span>'
+        +(d.due_date?'<span class="tag gold">期日 '+esc(d.due_date)+'</span>':'')
+        +(d.status==='done'?'<span class="tag green">完了</span>':'')
+        +'</div>'
+        +'<div style="font-size:13.5px;font-weight:700;color:#131E2E;margin-top:7px;">'+esc(d.title)+'</div>'
+        +(d.goal_text?'<div style="font-size:11.5px;color:#4A6080;margin-top:3px;">🎯 '+esc(d.goal_text)+'</div>':'')
+        +pdcaStepper(d.phase)
+        +fields
+        +histHtml
+        +(d.status==='active'?('<div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">'
+          +'<button class="btn2" style="padding:8px 16px;font-size:12px;" onclick="advancePdca(\''+d.id+'\')">'+(lastPhase?'このサイクルを締めて次へ':'保存して次のフェーズへ')+'</button>'
+          +'<button class="ghost" style="font-size:12px;" onclick="savePdca(\''+d.id+'\')">保存のみ</button>'
+          +'<button class="ghost" style="font-size:12px;color:#1E6B45;" onclick="finishPdca(\''+d.id+'\')">課題を完了にする</button>'
+          +'<span id="pdcamsg-'+d.id+'" style="font-size:12px;"></span>'
+        +'</div>'):'')
+      +'</div>';
+    });
+    box.innerHTML=h;
+  }
+  function pdcaCollect(d){
+    var upd={};
+    PDCA_PHASES.forEach(function(p){
+      var t=$('pdca-'+p.k+'-'+d.id);
+      if(t) upd[p.field]=t.value.trim()||null;
+    });
+    return upd;
+  }
+  async function savePdca(id){
+    var d=(PDCA_CACHE.items||[]).find(function(x){return x.id===id;}); if(!d)return;
+    var upd=pdcaCollect(d); upd.updated_at=new Date().toISOString();
+    var res=await sb.from('pdca_items').update(upd).eq('id',id);
+    var m=$('pdcamsg-'+id);
+    if(m){ if(res.error){ m.style.color='#A83030'; m.textContent='エラー：'+res.error.message; } else { m.style.color='#1E6B45'; m.textContent='保存しました'; Object.assign(d,upd); } }
+  }
+  async function advancePdca(id){
+    var d=(PDCA_CACHE.items||[]).find(function(x){return x.id===id;}); if(!d)return;
+    var upd=pdcaCollect(d);
+    var i=pdcaPhaseIdx(d.phase);
+    if(i<3){
+      upd.phase=PDCA_PHASES[i+1].k;
+    } else {
+      // 改善まで完了 → 履歴に積んで次サイクルへ
+      var hist=(d.history||[]).slice();
+      hist.push({ cycle:d.cycle_no||1, plan:upd.plan_text||d.plan_text, doText:upd.do_text||d.do_text, check:upd.check_text||d.check_text, act:upd.act_text||d.act_text, closed_at:new Date().toISOString() });
+      upd.history=hist;
+      upd.cycle_no=(d.cycle_no||1)+1;
+      upd.phase='plan';
+      upd.plan_text=null; upd.do_text=null; upd.check_text=null; upd.act_text=null;
+      upd.due_date=null;
+    }
+    upd.updated_at=new Date().toISOString();
+    var res=await sb.from('pdca_items').update(upd).eq('id',id);
+    var m=$('pdcamsg-'+id);
+    if(res.error){ if(m){ m.style.color='#A83030'; m.textContent='エラー：'+res.error.message; } return; }
+    Object.assign(d,upd);
+    renderPdca();
+  }
+  async function finishPdca(id){
+    var d=(PDCA_CACHE.items||[]).find(function(x){return x.id===id;}); if(!d)return;
+    var upd=pdcaCollect(d); upd.status='done'; upd.updated_at=new Date().toISOString();
+    var res=await sb.from('pdca_items').update(upd).eq('id',id);
+    if(!res.error){ Object.assign(d,upd); renderPdca(); }
+  }
+  // --- 顧客側：閲覧専用 ---
+  async function loadMyPdca(){
+    var box=$('my-pdca'); if(!box)return;
+    var res=await sb.from('pdca_items').select('*').eq('customer_id',ME).order('updated_at',{ascending:false}).limit(20);
+    if(res.error){ box.innerHTML=''; return; }
+    var rows=(res.data||[]).filter(function(d){ return d.status==='active'; });
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">進行中の課題はありません。気になることがあれば、メッセージからご相談ください。</div>'; return; }
+    var h='';
+    rows.forEach(function(d){
+      var i=pdcaPhaseIdx(d.phase);
+      h+='<div style="border:1px solid #EAF0F7;border-radius:11px;padding:12px 14px;margin-bottom:9px;background:#fff;">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:13px;font-weight:700;color:#131E2E;">'+esc(d.title)+'</span>'
+        +'<span class="tag blue">'+esc(d.category||'課題')+'</span><span class="tag gray">サイクル'+(d.cycle_no||1)+'</span></div>'
+        +(d.goal_text?'<div style="font-size:11.5px;color:#4A6080;margin-top:4px;">🎯 '+esc(d.goal_text)+'</div>':'')
+        +pdcaStepper(d.phase)
+        +(d.plan_text?'<div style="font-size:12px;color:#1C3557;margin-top:8px;line-height:1.7;"><b>計画：</b>'+esc(d.plan_text)+'</div>':'')
+        +((i>=2&&d.check_text)?'<div style="font-size:12px;color:#1C3557;margin-top:4px;line-height:1.7;"><b>振り返り：</b>'+esc(d.check_text)+'</div>':'')
+      +'</div>';
+    });
+    box.innerHTML=h;
+  }
+  // ===== M&A案件管理・PMIフォロー（Phase 34） =====
+  var MA_STAGES=[
+    {n:'検討・準備', t:['M&Aの目的・希望条件の整理','株主・ご家族の意向確認','直近3期の決算書・試算表の準備']},
+    {n:'企業価値評価', t:['簡易評価（年買法・EBITDA倍率）の確認','磨き上げポイントの洗い出し','希望価格レンジの設定']},
+    {n:'相手探し・打診', t:['ノンネームシートの作成','候補先のリストアップ','秘密保持契約（NDA）の締結']},
+    {n:'面談・交渉', t:['トップ面談の実施','主要条件のすり合わせ','意向表明書の受領']},
+    {n:'基本合意', t:['基本合意書（LOI）の締結','独占交渉期間の確認','以降のスケジュール確定']},
+    {n:'DD（買収調査）', t:['資料リストへの対応','財務・法務・労務DDの対応','検出事項への回答・条件調整']},
+    {n:'最終契約', t:['最終条件の確定','株式譲渡契約（SPA）の締結','クロージング条件の確認']},
+    {n:'クロージング・PMI', t:['決済・株式の引渡し','従業員・取引先・金融機関への開示','PMI 100日プランの開始']},
+    {n:'完了', t:['PMI完了の確認','継続フォロー内容の合意']}
+  ];
+  var PMI_STAGE=7;
+  var PMI_PLAN=[
+    {p:'〜30日', t:['経営方針の説明会を実施','キーマン面談と引き留め策','主要取引先・金融機関への挨拶','給与・労務条件の現状維持を周知']},
+    {p:'31〜60日', t:['業務フローの統合計画づくり','会計・システムの統合方針を決定','重複コストの洗い出し']},
+    {p:'61〜100日', t:['シナジー施策に着手','統合後KPIの設定とモニタリング開始','新しい組織体制の確定']},
+    {p:'101日〜1年（定着・シナジー実現）', t:['シナジー効果を月次の数字で確認','従業員・取引先の定着状況を四半期ごとに点検','想定外の統合課題への対処','2年目以降の成長計画を策定']}
+  ];
+  var PULSE_QS=[
+    {k:'q1', label:'従業員の様子', opts:['良好','不安の声あり','離職が発生']},
+    {k:'q2', label:'業績', opts:['計画どおり','やや未達','大幅未達']},
+    {k:'q3', label:'統合作業', opts:['順調','遅れあり','停滞']}
+  ];
+  var MA_CACHE={deals:[],pulses:{},names:{}};
+  function thisYM(){ var d=new Date(Date.now()+9*3600*1000); return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0'); }
+  function pulseLight(p){
+    if(!p) return '<span class="tag gray">今月 未回答</span>';
+    if(p.score<=1) return '<span class="tag green">今月 良好（'+p.score+'/6）</span>';
+    if(p.score<=3) return '<span class="tag gold">今月 注意（'+p.score+'/6）</span>';
+    return '<span class="tag red">今月 要対応（'+p.score+'/6）</span>';
+  }
+  function toggleMaForm(){
+    var f=$('ma-form'); if(!f)return;
+    f.classList.toggle('hidden');
+    var sel=$('ma-cust');
+    if(sel && !f.classList.contains('hidden')){
+      sel.innerHTML=(CL_CACHE.clients||[]).map(function(c){ return '<option value="'+c.id+'">'+esc(c.company_name||c.email)+'</option>'; }).join('')||'<option value="">担当顧客がいません</option>';
+    }
+  }
+  async function addMaDeal(){
+    var m=$('ma-form-msg');
+    var cid=($('ma-cust')||{}).value;
+    if(!cid){ if(m){ m.style.color='#A83030'; m.textContent='顧客を選択してください'; } return; }
+    var row={ customer_id:cid, deal_type:($('ma-type')||{}).value||'譲渡', stage:0,
+      expected_price:(($('ma-price')||{}).value===''?null:Number($('ma-price').value)),
+      target_date:(($('ma-date')||{}).value||null) };
+    var res=await sb.from('ma_deals').insert(row);
+    if(res.error){ if(m){ m.style.color='#A83030'; m.textContent='作成エラー：'+res.error.message; } return; }
+    if(m){ m.style.color='#1E6B45'; m.textContent='案件を作成しました'; }
+    loadMaDeals();
+  }
+  async function loadMaDeals(){
+    var box=$('ma-list'); if(!box)return;
+    var res=await sb.from('ma_deals').select('*').order('updated_at',{ascending:false}).limit(100);
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'<br><span style="color:#8AA0BE;">（Phase 34のSQL未実施の可能性があります）</span></div>'; return; }
+    MA_CACHE.deals=res.data||[];
+    var ids=[]; MA_CACHE.deals.forEach(function(d){ if(ids.indexOf(d.customer_id)<0) ids.push(d.customer_id); });
+    MA_CACHE.names={}; MA_CACHE.pulses={};
+    if(ids.length){
+      var pr=await sb.from('profiles').select('id,company_name,email').in('id',ids);
+      (pr.data||[]).forEach(function(x){ MA_CACHE.names[x.id]=x.company_name||x.email; });
+      var pl=await sb.from('pmi_pulses').select('*').in('customer_id',ids).order('ym',{ascending:true});
+      MA_CACHE.pulseHist={};
+      if(!pl.error)(pl.data||[]).forEach(function(x){
+        if(x.ym===thisYM()) MA_CACHE.pulses[x.customer_id]=x;
+        (MA_CACHE.pulseHist[x.customer_id]=MA_CACHE.pulseHist[x.customer_id]||[]).push(x);
+      });
+    }
+    renderMaDeals();
+  }
+  function renderMaDeals(){
+    var box=$('ma-list'); if(!box)return;
+    var deals=MA_CACHE.deals||[];
+    if(!deals.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">進行中の案件はありません。「＋ 案件を追加」から登録すると、ステージ別チェックリストとPMIフォローが使えます。</div>'; return; }
+    var h='';
+    deals.forEach(function(d){
+      var st=MA_STAGES[d.stage]||MA_STAGES[0];
+      var done=d.done_tasks||[];
+      var prog=Math.round((d.stage)/(MA_STAGES.length-1)*100);
+      var stageOpts=MA_STAGES.map(function(x,i){ return '<option value="'+i+'"'+(i===d.stage?' selected':'')+'>'+(i+1)+'. '+x.n+'</option>'; }).join('');
+      var checks=st.t.map(function(t,i){
+        var key=d.stage+':'+i, ok=done.indexOf(key)>=0;
+        return '<label style="display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:#1C3557;margin:5px 0;cursor:pointer;">'
+          +'<input type="checkbox" '+(ok?'checked':'')+' onchange="toggleDealTask(\''+d.id+'\',\''+key+'\')" style="margin-top:2px;">'
+          +'<span'+(ok?' style="color:#8AA0BE;text-decoration:line-through;"':'')+'>'+esc(t)+'</span></label>';
+      }).join('');
+      var pmiBlock='';
+      if(d.stage===PMI_STAGE){
+        var pdone=d.pmi_done||[];
+        pmiBlock='<div style="border:1px solid #EAF0F7;border-radius:10px;padding:10px 12px;margin-top:10px;background:#FBFCFE;">'
+          +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:12px;font-weight:700;color:#1C3557;">PMI 100日プラン</span>'+pulseLight(MA_CACHE.pulses[d.customer_id])+'</div>';
+        PMI_PLAN.forEach(function(ph,pi){
+          pmiBlock+='<div style="font-size:10.5px;color:#2C6EBD;font-weight:600;margin-top:8px;">'+esc(ph.p)+'</div>';
+          ph.t.forEach(function(t,ti){
+            var key=pi+':'+ti, ok=pdone.indexOf(key)>=0;
+            pmiBlock+='<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:#1C3557;margin:4px 0;cursor:pointer;">'
+              +'<input type="checkbox" '+(ok?'checked':'')+' onchange="toggleDealPmi(\''+d.id+'\',\''+key+'\')" style="margin-top:2px;">'
+              +'<span'+(ok?' style="color:#8AA0BE;text-decoration:line-through;"':'')+'>'+esc(t)+'</span></label>';
+          });
+        });
+        var hist=(MA_CACHE.pulseHist&&MA_CACHE.pulseHist[d.customer_id])||[];
+        if(hist.length){
+          var dots=hist.slice(-12).map(function(x){
+            var col=x.score<=1?'#2E9E5B':(x.score<=3?'#D9A21B':'#C44545');
+            return '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><div title="'+esc(x.ym)+'：'+x.score+'/6" style="width:14px;height:14px;border-radius:50%;background:'+col+';"></div><div style="font-size:8.5px;color:#8AA0BE;">'+Number(x.ym.split('-')[1])+'月</div></div>';
+          }).join('');
+          pmiBlock+='<div style="margin-top:9px;"><div style="font-size:10.5px;color:#4A6080;font-weight:600;">月次チェックの推移（年間フォロー）</div><div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:5px;">'+dots+'</div></div>';
+        }
+        var pu=MA_CACHE.pulses[d.customer_id];
+        if(pu){
+          pmiBlock+='<div style="font-size:11px;color:#4A6080;margin-top:8px;">今月の回答：'
+            +PULSE_QS.map(function(q,qi){ return q.label+'＝'+q.opts[pu[q.k]]; }).join(' ／ ')
+            +(pu.comment?('<br>メモ：'+esc(pu.comment)):'')+'</div>';
+        } else {
+          pmiBlock+='<div style="font-size:11px;color:#9A7314;margin-top:8px;">今月のPMIチェック（顧客回答）が未回収です。顧客画面のM&Aタブから30秒で回答できます。</div>';
+        }
+        pmiBlock+='</div>';
+      }
+      h+='<div class="clcard" style="cursor:default;">'
+        +'<div class="cl-top"><span class="cl-nm">'+esc(MA_CACHE.names[d.customer_id]||'顧客')+'</span>'
+        +'<span class="tag '+(d.deal_type==='譲渡'?'gold':'blue')+'">'+esc(d.deal_type)+'</span>'
+        +(d.expected_price?'<span class="tag gray">想定 '+Number(d.expected_price).toLocaleString()+'万円</span>':'')
+        +(d.target_date?'<span class="tag gray">目標 '+esc(d.target_date)+'</span>':'')
+        +'</div>'
+        +'<div style="display:flex;align-items:center;gap:10px;margin-top:9px;flex-wrap:wrap;">'
+          +'<select class="inp2" style="width:230px;" onchange="setDealStage(\''+d.id+'\',this.value)">'+stageOpts+'</select>'
+          +'<div style="flex:1;min-width:120px;height:8px;background:#EAF0F7;border-radius:99px;overflow:hidden;"><div style="width:'+prog+'%;height:100%;background:linear-gradient(90deg,#4AADD6,#2C6EBD);"></div></div>'
+          +'<span style="font-size:11px;color:#4A6080;white-space:nowrap;">'+prog+'%</span>'
+        +'</div>'
+        +'<div style="margin-top:8px;"><div style="font-size:10.5px;color:#2C6EBD;font-weight:600;">このステージのチェックリスト</div>'+checks+'</div>'
+        +pmiBlock
+        +'<div style="display:flex;gap:8px;align-items:flex-end;margin-top:9px;flex-wrap:wrap;">'
+          +'<div style="flex:1;min-width:200px;"><label class="fl">メモ</label><input id="ma-note-'+d.id+'" class="inp2" style="width:100%;" value="'+escA(d.note||'')+'"></div>'
+          +'<button class="ghost" style="font-size:12px;" onclick="saveDealNote(\''+d.id+'\')">保存</button>'
+          +'<span id="ma-msg-'+d.id+'" style="font-size:12px;"></span>'
+        +'</div>'
+      +'</div>';
+    });
+    box.innerHTML=h;
+  }
+  async function setDealStage(id, v){
+    var res=await sb.from('ma_deals').update({ stage:Number(v), updated_at:new Date().toISOString() }).eq('id',id);
+    if(!res.error){ var d=(MA_CACHE.deals||[]).find(function(x){return x.id===id;}); if(d) d.stage=Number(v); renderMaDeals(); }
+  }
+  async function toggleDealTask(id, key){
+    var d=(MA_CACHE.deals||[]).find(function(x){return x.id===id;}); if(!d)return;
+    var arr=(d.done_tasks||[]).slice();
+    var i=arr.indexOf(key); if(i>=0) arr.splice(i,1); else arr.push(key);
+    d.done_tasks=arr;
+    await sb.from('ma_deals').update({ done_tasks:arr, updated_at:new Date().toISOString() }).eq('id',id);
+    renderMaDeals();
+  }
+  async function toggleDealPmi(id, key){
+    var d=(MA_CACHE.deals||[]).find(function(x){return x.id===id;}); if(!d)return;
+    var arr=(d.pmi_done||[]).slice();
+    var i=arr.indexOf(key); if(i>=0) arr.splice(i,1); else arr.push(key);
+    d.pmi_done=arr;
+    await sb.from('ma_deals').update({ pmi_done:arr, updated_at:new Date().toISOString() }).eq('id',id);
+    renderMaDeals();
+  }
+  async function saveDealNote(id){
+    var t=$('ma-note-'+id), m=$('ma-msg-'+id); if(!t)return;
+    var res=await sb.from('ma_deals').update({ note:t.value, updated_at:new Date().toISOString() }).eq('id',id);
+    if(m){ if(res.error){ m.style.color='#A83030'; m.textContent='エラー'; } else { m.style.color='#1E6B45'; m.textContent='保存しました'; } }
+  }
+  // --- 顧客側：進捗表示とPMI月次チェック ---
+  async function loadMyMa(){
+    var box=$('my-ma'); if(!box)return;
+    var res=await sb.from('ma_deals').select('*').eq('customer_id',ME).order('created_at',{ascending:false});
+    if(res.error || !(res.data||[]).length){ box.innerHTML=''; return; }
+    var ym=thisYM();
+    var pl=await sb.from('pmi_pulses').select('*').eq('customer_id',ME).eq('ym',ym);
+    var answered=!pl.error && (pl.data||[]).length>0;
+    var h='';
+    (res.data||[]).forEach(function(d){
+      var st=MA_STAGES[d.stage]||MA_STAGES[0];
+      var prog=Math.round((d.stage)/(MA_STAGES.length-1)*100);
+      h+='<div style="border:1px solid #EAF0F7;border-radius:11px;padding:12px 14px;margin-bottom:10px;background:#F7FAFD;">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:13px;font-weight:700;color:#1C3557;">M&Aの進捗（'+esc(d.deal_type)+'）</span><span class="tag blue">'+esc(st.n)+'</span></div>'
+        +'<div style="display:flex;align-items:center;gap:10px;margin-top:8px;">'
+          +'<div style="flex:1;height:8px;background:#EAF0F7;border-radius:99px;overflow:hidden;"><div style="width:'+prog+'%;height:100%;background:linear-gradient(90deg,#4AADD6,#2C6EBD);"></div></div>'
+          +'<span style="font-size:11px;color:#4A6080;">'+prog+'%</span>'
+        +'</div>'
+        +'<div style="font-size:11px;color:#8AA0BE;margin-top:6px;">詳しい状況は担当パートナーがメッセージでご説明します。</div>'
+      +'</div>';
+      if(d.stage===PMI_STAGE && !answered){
+        h+='<div id="pulse-box" style="border:1.5px solid #C9D6EA;border-radius:11px;padding:12px 14px;margin-bottom:10px;background:#fff;">'
+          +'<div style="font-size:13px;font-weight:700;color:#1C3557;">📋 今月のPMIチェック（30秒・3問）</div>'
+          +'<div style="font-size:11px;color:#8AA0BE;margin:4px 0 8px;">統合後の状況を教えてください。担当パートナーのフォローに使います。</div>'
+          +PULSE_QS.map(function(q){
+            return '<div style="margin-top:8px;"><label class="fl">'+q.label+'</label><select id="pulse-'+q.k+'" class="inp2" style="width:100%;">'
+              +q.opts.map(function(o,i){ return '<option value="'+i+'">'+o+'</option>'; }).join('')+'</select></div>';
+          }).join('')
+          +'<div style="margin-top:8px;"><label class="fl">ひとことメモ（任意）</label><input id="pulse-comment" class="inp2" style="width:100%;" placeholder="気になっていることがあれば"></div>'
+          +'<div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">'
+            +'<button class="btn2" onclick="submitPulse()">送信する</button>'
+            +'<span id="pulse-msg" style="font-size:12px;"></span>'
+          +'</div>'
+        +'</div>';
+      } else if(d.stage===PMI_STAGE && answered){
+        h+='<div style="font-size:12px;color:#1E6B45;background:#E6F4EC;border-radius:10px;padding:10px 13px;margin-bottom:10px;">✅ 今月のPMIチェックは回答済みです。ありがとうございます。</div>';
+      }
+    });
+    box.innerHTML=h;
+  }
+  async function submitPulse(){
+    var m=$('pulse-msg');
+    var q1=Number((($('pulse-q1')||{}).value)||0), q2=Number((($('pulse-q2')||{}).value)||0), q3=Number((($('pulse-q3')||{}).value)||0);
+    var row={ customer_id:ME, ym:thisYM(), q1:q1, q2:q2, q3:q3, score:q1+q2+q3, comment:((($('pulse-comment')||{}).value||'').trim()||null) };
+    var res=await sb.from('pmi_pulses').insert(row);
+    if(res.error){ if(m){ m.style.color='#A83030'; m.textContent='送信エラー：'+res.error.message; } return; }
+    if(m){ m.style.color='#1E6B45'; m.textContent='送信しました。'; }
+    setTimeout(loadMyMa, 600);
   }
   // ===== ナレッジベース（Phase 33） =====
   var KN_CACHE={items:[],me:{role:null,rank:null},names:{}};
@@ -1314,6 +1842,7 @@
       h+='<div class="clcard" style="cursor:default;">'
         +'<div class="cl-top"><span class="cl-nm">'+esc(nm[d.customer_id]||'顧客')+'</span><span class="tag gold">'+esc(ymJp(d.report_month))+'分・承認待ち</span></div>'
         +repSummaryHtml(d.summary)
+        +repAnalysisHtml(d.analysis)
         +'<div style="font-size:11px;color:#4A6080;margin:8px 0 4px;">パートナーコメント（編集できます）</div>'
         +'<textarea id="repc-'+d.id+'" class="inp2" rows="5" style="width:100%;">'+esc(d.ai_comment||'')+'</textarea>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;">'
@@ -1351,6 +1880,7 @@
         +(i===0?'<span class="tag blue">最新</span>':'')
         +'<span style="margin-left:auto;font-size:10.5px;color:#8AA0BE;">'+esc((d.published_at||'').slice(0,10))+' 公開</span></div>'
         +repSummaryHtml(d.summary)
+        +repAnalysisHtml(d.analysis)
         +'<div style="background:#F6FAFE;border-left:3px solid #2C6EBD;border-radius:0 9px 9px 0;padding:10px 12px;margin-top:8px;">'
           +'<div style="font-size:10.5px;color:#2C6EBD;font-weight:600;margin-bottom:4px;">担当パートナーからのコメント</div>'
           +'<div style="font-size:12.5px;color:#1C3557;line-height:1.8;white-space:pre-wrap;">'+fmtComment(d.ai_comment||'')+'</div>'
