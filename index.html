@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- Phase 29（顧客管理の整理・通知・スマホ対応・OGP） -->
+<!-- Phase 30（トリアージ：今日やることリスト） -->
 <title>Tsugu -継- | AIと人で、会社の未来を継ぐ</title>
 <meta name="description" content="Tsugu（ツグ）は、AIと人の伴走で資金繰り改善・業務の自動化・資金調達から事業承継/M&Aまでを支援する経営プラットフォームです。">
 
@@ -703,6 +703,12 @@
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">パートナーポータル</h2>'
         +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b>'+(prof.fde_rank?'　ランク：<b>'+esc(prof.fde_rank)+'</b>':'')+'</div>'
         +'<div id="fde-hero" style="display:flex;gap:8px;flex-wrap:wrap;">読み込み中...</div></div>'
+        +'<div class="panel" id="sec-todo">'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">📋 今日やること'
+            +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClients()">↺ 更新</span></div>'
+          +'<div style="font-size:11.5px;color:#8AA0BE;margin-bottom:8px;">返信漏れ・期日・接点切れを自動チェックして、優先順に並べています。</div>'
+          +'<div id="todo-list">読み込み中...</div>'
+        +'</div>'
         +'<div class="panel" id="sec-clients">'
           +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">顧客管理'
             +'<span style="display:flex;gap:8px;align-items:center;">'
@@ -972,14 +978,24 @@
       if(!lastMsg[m.customer_id]) lastMsg[m.customer_id]=m;
       if(m.sender_role==='customer' && m.created_at>getLastRead(m.customer_id)) unread[m.customer_id]=(unread[m.customer_id]||0)+1;
     }); }
-    CL_CACHE={clients:clients,cnt:cnt,lastMsg:lastMsg,unread:unread};
+    var ids=clients.map(function(c){ return c.id; });
+    var funding=[], pays=[];
+    if(ids.length){
+      var fr=await sb.from('funding_roadmap_items').select('customer_id,title,target_date,status').in('customer_id',ids);
+      if(!fr.error) funding=fr.data||[];
+      var pr=await sb.from('upcoming_payments').select('customer_id,title,due_date,amount').in('customer_id',ids);
+      if(!pr.error) pays=pr.data||[];
+    }
+    CL_CACHE={clients:clients,cnt:cnt,lastMsg:lastMsg,unread:unread,funding:funding,pays:pays};
     var totalUnread=0; clients.forEach(function(c){ totalUnread+=(unread[c.id]||0); });
     UNREAD.total=totalUnread; UNREAD.perClient=unread; applyNotifBadges();
     var sharesN=clients.filter(function(c){ return cnt[c.id]; }).length;
     var unreadN=clients.filter(function(c){ return unread[c.id]; }).length;
+    var todoN=0; try{ todoN=Object.keys(buildTodos()).length; }catch(e){}
     var hero=$('fde-hero');
     if(hero){
-      hero.innerHTML=heroChip('担当顧客', clients.length+'社', '#1C3557')
+      hero.innerHTML=heroChipTo('sec-todo','今日やること', todoN+'件', todoN?'#A83030':'#1E6B45')
+        +heroChip('担当顧客', clients.length+'社', '#1C3557')
         +heroChip('未読メッセージ', unreadN+'社', unreadN?'#A83030':'#1E6B45')
         +heroChip('共有あり', sharesN+'社', sharesN?'#C89620':'#8AA0BE');
     }
@@ -990,8 +1006,84 @@
         +'<div class="sumchip" onclick="setClFilter(\'share\',clFilterBtn(\'share\'))"><div class="l">共有あり</div><div class="v" style="color:'+(sharesN?'#C89620':'#8AA0BE')+';">'+sharesN+'社</div></div>';
     }
     renderClientList();
+    renderTodos();
+  }
+  // ===== トリアージ：今日やることリスト =====
+  function daysBetween(dateStr, now){
+    var d=new Date(dateStr); if(isNaN(d)) return null;
+    return Math.floor((d - now)/(24*3600*1000));
+  }
+  function buildTodos(){
+    var now=new Date();
+    var todos={};
+    function add(cid, score, tagHtml){
+      if(!todos[cid]) todos[cid]={score:0, tags:[]};
+      todos[cid].tags.push(tagHtml);
+      if(score>todos[cid].score) todos[cid].score=score;
+    }
+    (CL_CACHE.clients||[]).forEach(function(c){
+      var lm=CL_CACHE.lastMsg[c.id];
+      var un=CL_CACHE.unread[c.id]||0;
+      // ① 返信滞留（最後のメッセージが顧客発で48時間以上経過）
+      if(lm && lm.sender_role==='customer'){
+        var ageH=(now - new Date(lm.created_at))/3600000;
+        if(ageH>=48){
+          var d=Math.floor(ageH/24);
+          add(c.id, 100+d, '<span class="tag red">返信待ち '+d+'日</span>');
+        } else if(un){
+          add(c.id, 80, '<span class="tag red">未読 '+un+'件</span>');
+        }
+      } else if(un){
+        add(c.id, 80, '<span class="tag red">未読 '+un+'件</span>');
+      }
+      // ④ 接点切れ（30日以上 or やり取り無し）
+      if(!lm){
+        add(c.id, 40, '<span class="tag gray">やり取りなし</span>');
+      } else {
+        var silent=Math.floor((now - new Date(lm.created_at))/(24*3600*1000));
+        if(silent>=30) add(c.id, 40, '<span class="tag gray">'+silent+'日間やり取りなし</span>');
+      }
+    });
+    // ② 調達期日（14日以内・進行中のみ）
+    (CL_CACHE.funding||[]).forEach(function(f){
+      if(!f.target_date) return;
+      if(f.status==='実行済'||f.status==='見送り') return;
+      var d=daysBetween(f.target_date, now); if(d===null) return;
+      if(d<0) add(f.customer_id, 95, '<span class="tag red">期日超過：'+esc(f.title)+'（'+(-d)+'日）</span>');
+      else if(d<=14) add(f.customer_id, 60+(14-d), '<span class="tag gold">調達期日 あと'+d+'日：'+esc(f.title)+'</span>');
+    });
+    // ③ 支払予定（7日以内）
+    (CL_CACHE.pays||[]).forEach(function(pmt){
+      if(!pmt.due_date) return;
+      var d=daysBetween(pmt.due_date, now); if(d===null) return;
+      if(d>=0 && d<=7) add(pmt.customer_id, 55+(7-d), '<span class="tag gold">支払予定 あと'+d+'日：'+esc(pmt.title)+'</span>');
+    });
+    return todos;
+  }
+  function renderTodos(){
+    var box=$('todo-list'); if(!box)return;
+    var todos=buildTodos();
+    var byId={}; (CL_CACHE.clients||[]).forEach(function(c){ byId[c.id]=c; });
+    var rows=Object.keys(todos).filter(function(id){ return byId[id]; })
+      .map(function(id){ return {c:byId[id], score:todos[id].score, tags:todos[id].tags}; })
+      .sort(function(a,b){ return b.score-a.score; }).slice(0,20);
+    if(!rows.length){
+      box.innerHTML='<div style="font-size:13px;color:#1E6B45;background:#E6F4EC;border-radius:10px;padding:12px 14px;">✅ 今日対応が必要な顧客はありません。すべて順調です。</div>';
+      return;
+    }
+    var h='';
+    rows.forEach(function(r){
+      var urgent=r.score>=80;
+      h+='<div class="clcard'+(urgent?' unread':'')+'" onclick="viewClient(\''+r.c.id+'\',\''+escA(r.c.email)+'\',\''+escA(r.c.company_name||'')+'\')">'
+        +'<div class="cl-top"><span class="cl-nm">'+esc(r.c.company_name||r.c.email)+'</span>'
+        +'<span style="margin-left:auto;color:#2C6EBD;font-size:11px;white-space:nowrap;">開く →</span></div>'
+        +'<div class="cl-tags">'+r.tags.join('')+'</div>'
+      +'</div>';
+    });
+    box.innerHTML=h;
   }
   function clFilterBtn(f){ var bar=$('cl-filterbar'); return bar?bar.querySelector('[data-f="'+f+'"]'):null; }
+  function heroChipTo(sec,l,v,c){ return '<div onclick="goSec(\''+sec+'\')" style="cursor:pointer;flex:1 1 120px;min-width:120px;background:#F7FAFD;border:1px solid #EAF0F7;border-radius:11px;padding:10px 14px;"><div style="font-size:11px;color:#4A6080;">'+l+'</div><div style="font-size:17px;font-weight:700;color:'+c+';margin-top:2px;">'+v+'</div></div>'; }
   function heroChip(l,v,c){ return '<div onclick="goSec(\'sec-clients\')" style="cursor:pointer;flex:1 1 120px;min-width:120px;background:#F7FAFD;border:1px solid #EAF0F7;border-radius:11px;padding:10px 14px;"><div style="font-size:11px;color:#4A6080;">'+l+'</div><div style="font-size:17px;font-weight:700;color:'+c+';margin-top:2px;">'+v+'</div></div>'; }
   var STAGE_NAMES={1:'現状把握',2:'AI・自動化',3:'コスト削減',4:'余力',5:'次の投資'};
   function renderClientList(){
@@ -1578,6 +1670,7 @@
     markRead(custId);
     if(UNREAD.perClient && UNREAD.perClient[custId]){ UNREAD.total=Math.max(0,(UNREAD.total||0)-UNREAD.perClient[custId]); UNREAD.perClient[custId]=0; if(CL_CACHE.unread) CL_CACHE.unread[custId]=0; }
     applyNotifBadges();
+    renderTodos();
   }
   async function sendClientChat(custId){
     var inp=$('cchat-input'); if(!inp)return; var b=inp.value.trim(); if(!b)return;
