@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- Phase 32（月次レポート：自動生成・承認・公開） -->
+<!-- Phase 33（パートナー間ナレッジベース） -->
 <title>Tsugu -継- | AIと人で、会社の未来を継ぐ</title>
 <meta name="description" content="Tsugu（ツグ）は、AIと人の伴走で資金繰り改善・業務の自動化・資金調達から事業承継/M&Aまでを支援する経営プラットフォームです。">
 
@@ -433,7 +433,7 @@
     var items;
     if(r==='customer') items=[['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-sec','パートナーAI']];
     else if(r==='admin') items=[['sec-flow','ダッシュボード'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達']];
-    else items=[['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-reports','レポート承認'],['sec-myfund','自社の調達'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
+    else items=[['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-myfund','自社の調達'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
     var nav=$('app-nav'); if(nav) nav.innerHTML='<div class="sb-sec">メニュー</div>'+navItemsHtml(items,false);
     var dn=$('drawer-nav'); if(dn) dn.innerHTML=navItemsHtml(items,true);
   }
@@ -511,7 +511,14 @@
     var custs=rows.filter(function(r){ return r.role==='customer'; });
     var nameOf={}; rows.forEach(function(r){ nameOf[r.id]=r.company_name||r.contact_name||r.email; });
     var clientCount={}; custs.forEach(function(c){ if(c.consultant_id) clientCount[c.consultant_id]=(clientCount[c.consultant_id]||0)+1; });
-    ADM_CACHE={fdes:fdes,custs:custs,nameOf:nameOf,clientCount:clientCount};
+    var kn={};
+    var knRes=await sb.from('knowledge_items').select('author_id,status,view_count');
+    if(!knRes.error){ (knRes.data||[]).forEach(function(k){
+      if(k.status!=='approved') return;
+      if(!kn[k.author_id]) kn[k.author_id]={posts:0,views:0};
+      kn[k.author_id].posts++; kn[k.author_id].views+=(k.view_count||0);
+    }); }
+    ADM_CACHE={fdes:fdes,custs:custs,nameOf:nameOf,clientCount:clientCount,kn:kn};
     var unassigned=custs.filter(function(c){ return !c.consultant_id; }).length;
     var sum=$('adm-sum');
     if(sum){
@@ -540,7 +547,8 @@
       h+='<div class="clcard" style="cursor:default;">'
         +'<div class="cl-top"><span class="cl-nm">'+esc(u.contact_name||u.company_name||u.email)+'</span>'
         +(u.fde_rank?'<span class="tag blue">'+esc(u.fde_rank)+'</span>':'<span class="tag gray">ランク未設定</span>')
-        +'<span class="tag '+(nc?'green':'gray')+'">担当 '+nc+'社</span></div>'
+        +'<span class="tag '+(nc?'green':'gray')+'">担当 '+nc+'社</span>'
+        +(function(){ var k=(ADM_CACHE.kn||{})[u.id]; return k?('<span class="tag gold">ナレッジ '+k.posts+'件・参照 '+k.views+'</span>'):''; })()+'</div>'
         +'<div class="cl-em">'+esc(u.email)+'</div>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;">'
           +'<span style="font-size:11px;color:#4A6080;">ランク</span><select class="inp2" style="width:160px;" onchange="setRank(\''+u.id+'\',this.value)"><option value="">未設定</option>'+rankOpts+'</select>'
@@ -740,6 +748,40 @@
           +'<div style="font-size:11.5px;color:#8AA0BE;margin-bottom:8px;">毎月1日に自動生成される下書きです。コメントを確認・編集して「承認して公開」すると、顧客の画面に表示されます。</div>'
           +'<div id="rep-drafts">読み込み中...</div>'
         +'</div>'
+        +'<div class="panel" id="sec-knowledge">'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">💡 ナレッジベース'
+            +'<span style="display:flex;gap:8px;align-items:center;">'
+            +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadKnowledge()">↺ 更新</span>'
+            +'<button class="btn2" style="padding:7px 14px;font-size:12px;" onclick="toggleKnForm()">＋ 投稿する</button>'
+            +'</span></div>'
+          +'<div style="font-size:11.5px;color:#8AA0BE;margin-bottom:8px;">パートナー全員の成功事例・Q&A・テンプレート集です。投稿はSenior以上または運営の承認後に公開され、投稿数・参照数はランク評価に反映されます。</div>'
+          +'<div id="kn-form" class="hidden" style="border:1px dashed #C9D6EA;border-radius:11px;padding:12px 14px;margin:8px 0;background:#FBFCFE;">'
+            +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+              +'<div><label class="fl">種類</label><select id="kn-kind" class="inp2" style="width:160px;" onchange="knFormLabels()"><option value="case">事例</option><option value="qa">Q&A</option><option value="template">テンプレート</option></select></div>'
+              +'<div style="flex:1;min-width:200px;"><label class="fl">タイトル</label><input id="kn-title" class="inp2" style="width:100%;" placeholder="例：飲食業の保険見直しで年間48万円削減"></div>'
+            +'</div>'
+            +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">'
+              +'<div><label class="fl">業種</label><input id="kn-industry" class="inp2" style="width:160px;" placeholder="例：飲食業"></div>'
+              +'<div><label class="fl">ステージ（任意）</label><select id="kn-stage" class="inp2" style="width:140px;"><option value="">指定なし</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>'
+              +'<div><label class="fl">テーマ</label><select id="kn-theme" class="inp2" style="width:170px;"><option>資金繰り</option><option>補助金・調達</option><option>保険</option><option>M&A・承継</option><option>AI・自動化</option><option>その他</option></select></div>'
+            +'</div>'
+            +'<div style="margin-top:8px;"><label class="fl" id="kn-l1">状況（業種・課題）</label><textarea id="kn-c1" class="inp2" rows="2" style="width:100%;"></textarea></div>'
+            +'<div style="margin-top:8px;"><label class="fl" id="kn-l2">提案・実行したこと</label><textarea id="kn-c2" class="inp2" rows="3" style="width:100%;"></textarea></div>'
+            +'<div style="margin-top:8px;"><label class="fl" id="kn-l3">結果（できるだけ数字で）</label><textarea id="kn-c3" class="inp2" rows="2" style="width:100%;"></textarea></div>'
+            +'<div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">'
+              +'<button class="btn2" onclick="submitKnowledge()">投稿する（承認後に公開）</button>'
+              +'<span id="kn-form-msg" style="font-size:12px;"></span>'
+            +'</div>'
+          +'</div>'
+          +'<input id="kn-search" class="searchbox" placeholder="🔍 タイトル・業種・内容で検索" oninput="renderKnowledge()">'
+          +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px;" id="kn-filterbar">'
+            +'<button class="sbtn on" data-f="all" onclick="setKnFilter(\'all\',this)">すべて</button>'
+            +'<button class="sbtn" data-f="case" onclick="setKnFilter(\'case\',this)">事例</button>'
+            +'<button class="sbtn" data-f="qa" onclick="setKnFilter(\'qa\',this)">Q&A</button>'
+            +'<button class="sbtn" data-f="template" onclick="setKnFilter(\'template\',this)">テンプレ</button>'
+          +'</div>'
+          +'<div id="kn-list" style="margin-top:6px;">読み込み中...</div>'
+        +'</div>'
         +'<div class="panel" id="sec-roadmap2"><div class="ph">パートナー向け：今後追加される機能</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">提案の幅が広がる機能を順次リリースします。先行利用のご希望は運営までお知らせください。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
@@ -771,7 +813,7 @@
     window.__eff=eff;
     $('app-body').innerHTML=view;
     if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); }
-    else if(eff==='consultant'){ loadClients(); loadOwnFunding(); loadReportDrafts(); }
+    else if(eff==='consultant'){ loadClients(); loadOwnFunding(); loadReportDrafts(); loadKnowledge(); }
     else { loadAdmin(); }
     startNotifPolling(eff);
   }
@@ -1102,6 +1144,15 @@
   }
   // ===== 月次レポート（Phase 32） =====
   function ymJp(ym){ if(!ym) return ''; var a=ym.split('-'); return a[0]+'年'+Number(a[1])+'月'; }
+  function fmtComment(t){
+    if(!t) return '';
+    // 見出し行（#で始まる行）は削除し、**強調**は太字に変換して読みやすく整形
+    var lines=String(t).split('\n').filter(function(ln){ return !/^\s*#{1,6}\s/.test(ln); });
+    var s=esc(lines.join('\n')).replace(/^\n+/,'').replace(/\n{3,}/g,'\n\n');
+    s=s.replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>');
+    s=s.replace(/(^|\n)\s*[-*]\s+/g,'$1・');
+    return s;
+  }
   function manFmt(v){ return (v===null||v===undefined||v==='')?'—':(Number(v).toLocaleString()+'万円'); }
   function pctDiff(cur, prev){
     if(cur===null||cur===undefined||prev===null||prev===undefined||Number(prev)===0) return '';
@@ -1131,6 +1182,122 @@
       +'</div>';
     if(sm.has_current===false) h+='<div style="font-size:11px;color:#9A7314;background:#FAEEDA;border-radius:8px;padding:7px 10px;margin-bottom:6px;">対象月の試算表が未入力のため、直近データをもとに作成されています。</div>';
     return h+repChart(sm.history);
+  }
+  // ===== ナレッジベース（Phase 33） =====
+  var KN_CACHE={items:[],me:{role:null,rank:null},names:{}};
+  var KN_FILTER='all';
+  var KN_VIEWED={};
+  var KN_KIND_LABELS={
+    'case':{tag:'事例',c:'gold',l1:'状況（業種・課題）',l2:'提案・実行したこと',l3:'結果（できるだけ数字で）'},
+    'qa':{tag:'Q&A',c:'blue',l1:'顧客からの質問',l2:'ベストな答え方',l3:'補足・注意点（任意）'},
+    'template':{tag:'テンプレ',c:'green',l1:'使う場面',l2:'テンプレート本文',l3:'使い方のコツ（任意）'}
+  };
+  function knIsApprover(){ var m=KN_CACHE.me; return m.role==='admin' || (m.role==='consultant' && ['Senior','Executive','Premium Partner'].indexOf(m.rank||'')>=0); }
+  function toggleKnForm(){ var f=$('kn-form'); if(f) f.classList.toggle('hidden'); }
+  function knFormLabels(){
+    var k=($('kn-kind')||{}).value||'case', L=KN_KIND_LABELS[k];
+    if($('kn-l1'))$('kn-l1').textContent=L.l1; if($('kn-l2'))$('kn-l2').textContent=L.l2; if($('kn-l3'))$('kn-l3').textContent=L.l3;
+  }
+  function setKnFilter(f,el){ KN_FILTER=f; var bar=$('kn-filterbar'); if(bar){ Array.prototype.forEach.call(bar.querySelectorAll('.sbtn'),function(b){ b.classList.remove('on'); }); } if(el) el.classList.add('on'); renderKnowledge(); }
+  async function loadKnowledge(){
+    var box=$('kn-list'); if(!box)return;
+    var me=await sb.from('profiles').select('role,fde_rank').eq('id',ME).maybeSingle();
+    if(!me.error && me.data) KN_CACHE.me={role:me.data.role,rank:me.data.fde_rank};
+    var res=await sb.from('knowledge_items').select('*').order('created_at',{ascending:false}).limit(200);
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'<br><span style="color:#8AA0BE;">（Phase 33のSQL未実施の可能性があります）</span></div>'; return; }
+    KN_CACHE.items=res.data||[];
+    var aids=[]; KN_CACHE.items.forEach(function(it){ if(aids.indexOf(it.author_id)<0) aids.push(it.author_id); });
+    if(aids.length){
+      var pr=await sb.from('profiles').select('id,contact_name,company_name,email').in('id',aids);
+      KN_CACHE.names={}; (pr.data||[]).forEach(function(x){ KN_CACHE.names[x.id]=x.contact_name||x.company_name||x.email; });
+    }
+    renderKnowledge();
+  }
+  function renderKnowledge(){
+    var box=$('kn-list'); if(!box)return;
+    var items=KN_CACHE.items||[];
+    var q=(($('kn-search')||{}).value||'').trim().toLowerCase();
+    var rows=items.filter(function(it){
+      if(KN_FILTER!=='all' && it.kind!==KN_FILTER) return false;
+      if(!q) return true;
+      var hay=((it.title||'')+' '+(it.industry||'')+' '+(it.theme||'')+' '+(it.c1||'')+' '+(it.c2||'')+' '+(it.c3||'')).toLowerCase();
+      return hay.indexOf(q)>=0;
+    });
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">'+(items.length?'該当するナレッジがありません。検索条件を変えてみてください。':'まだ投稿がありません。最初の事例を「＋ 投稿する」から共有しましょう。')+'</div>'; return; }
+    // 並び：承認待ち（承認者のみ上位表示）→ 公開（参照数の多い順）→ 自分の差し戻し
+    rows.sort(function(a,b){
+      var oa=a.status==='pending'?0:(a.status==='approved'?1:2);
+      var ob=b.status==='pending'?0:(b.status==='approved'?1:2);
+      if(oa!==ob) return oa-ob;
+      if(a.status==='approved') return (b.view_count||0)-(a.view_count||0);
+      return (a.created_at<b.created_at)?1:-1;
+    });
+    var h='';
+    rows.forEach(function(it){
+      var L=KN_KIND_LABELS[it.kind]||KN_KIND_LABELS['case'];
+      var mine=it.author_id===ME;
+      var st='';
+      if(it.status==='pending') st='<span class="tag red">承認待ち</span>';
+      else if(it.status==='rejected') st='<span class="tag gray">差し戻し</span>';
+      var tags='<span class="tag '+L.c+'">'+L.tag+'</span>'
+        +(it.industry?'<span class="tag gray">'+esc(it.industry)+'</span>':'')
+        +(it.stage?'<span class="tag gray">ステージ'+esc(String(it.stage))+'</span>':'')
+        +(it.theme?'<span class="tag blue">'+esc(it.theme)+'</span>':'')
+        +(it.status==='approved'?'<span class="tag gray">参照 '+(it.view_count||0)+'</span>':'')
+        +st;
+      var detail='<div id="knd-'+it.id+'" class="hidden" style="margin-top:9px;">'
+        +(it.c1?'<div style="font-size:10.5px;color:#2C6EBD;font-weight:600;margin-top:6px;">'+esc(L.l1)+'</div><div style="font-size:12.5px;color:#1C3557;line-height:1.7;white-space:pre-wrap;">'+esc(it.c1)+'</div>':'')
+        +(it.c2?'<div style="font-size:10.5px;color:#2C6EBD;font-weight:600;margin-top:8px;">'+esc(L.l2)+'</div><div style="font-size:12.5px;color:#1C3557;line-height:1.7;white-space:pre-wrap;background:#F6FAFE;border-radius:8px;padding:8px 10px;">'+esc(it.c2)+'</div>':'')
+        +(it.c3?'<div style="font-size:10.5px;color:#2C6EBD;font-weight:600;margin-top:8px;">'+esc(L.l3)+'</div><div style="font-size:12.5px;color:#1C3557;line-height:1.7;white-space:pre-wrap;">'+esc(it.c3)+'</div>':'')
+        +'<div style="font-size:10.5px;color:#8AA0BE;margin-top:8px;">投稿：'+esc(KN_CACHE.names[it.author_id]||'パートナー')+'・'+esc((it.created_at||'').slice(0,10))+'</div>'
+        +((it.status==='pending'&&knIsApprover())?'<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;"><button class="btn2" style="padding:7px 14px;font-size:12px;" onclick="approveKnowledge(\''+it.id+'\',true)">承認して公開</button><button class="ghost" style="font-size:12px;" onclick="approveKnowledge(\''+it.id+'\',false)">差し戻す</button><span id="knmsg-'+it.id+'" style="font-size:12px;"></span></div>':'')
+        +'</div>';
+      h+='<div class="clcard" style="cursor:pointer;" onclick="toggleKnDetail(\''+it.id+'\',\''+it.status+'\','+(mine?'true':'false')+')">'
+        +'<div class="cl-top"><span class="cl-nm">'+esc(it.title||'（無題）')+'</span><span style="margin-left:auto;color:#2C6EBD;font-size:11px;white-space:nowrap;">開く ▾</span></div>'
+        +'<div class="cl-tags">'+tags+'</div>'
+        +detail
+      +'</div>';
+    });
+    box.innerHTML=h;
+  }
+  function toggleKnDetail(id, status, mine){
+    var d=$('knd-'+id); if(!d)return;
+    var opening=d.classList.contains('hidden');
+    d.classList.toggle('hidden');
+    if(opening && status==='approved' && !mine && !KN_VIEWED[id]){
+      KN_VIEWED[id]=true;
+      try{ sb.rpc('increment_knowledge_view',{ item:id }); }catch(e){}
+    }
+  }
+  async function submitKnowledge(){
+    var m=$('kn-form-msg');
+    var title=(($('kn-title')||{}).value||'').trim();
+    if(!title){ if(m){ m.style.color='#A83030'; m.textContent='タイトルを入力してください'; } return; }
+    var row={
+      author_id:ME,
+      kind:(($('kn-kind')||{}).value||'case'),
+      title:title,
+      industry:((($('kn-industry')||{}).value||'').trim()||null),
+      stage:((($('kn-stage')||{}).value||'')===''?null:Number($('kn-stage').value)),
+      theme:(($('kn-theme')||{}).value||null),
+      c1:((($('kn-c1')||{}).value||'').trim()||null),
+      c2:((($('kn-c2')||{}).value||'').trim()||null),
+      c3:((($('kn-c3')||{}).value||'').trim()||null),
+      status:'pending'
+    };
+    var res=await sb.from('knowledge_items').insert(row);
+    if(res.error){ if(m){ m.style.color='#A83030'; m.textContent='投稿エラー：'+res.error.message; } return; }
+    if(m){ m.style.color='#1E6B45'; m.textContent='投稿しました。承認後に全パートナーへ公開されます。'; }
+    ['kn-title','kn-industry','kn-c1','kn-c2','kn-c3'].forEach(function(id){ if($(id)) $(id).value=''; });
+    loadKnowledge();
+  }
+  async function approveKnowledge(id, ok){
+    var m=$('knmsg-'+id);
+    var upd= ok? { status:'approved', approved_by:ME, approved_at:new Date().toISOString() } : { status:'rejected' };
+    var res=await sb.from('knowledge_items').update(upd).eq('id',id);
+    if(res.error){ if(m){ m.style.color='#A83030'; m.textContent='エラー：'+res.error.message; } return; }
+    if(m){ m.style.color='#1E6B45'; m.textContent= ok?'公開しました':'差し戻しました'; }
+    setTimeout(loadKnowledge, 700);
   }
   // --- パートナー：承認待ち一覧 ---
   async function loadReportDrafts(){
@@ -1186,7 +1353,7 @@
         +repSummaryHtml(d.summary)
         +'<div style="background:#F6FAFE;border-left:3px solid #2C6EBD;border-radius:0 9px 9px 0;padding:10px 12px;margin-top:8px;">'
           +'<div style="font-size:10.5px;color:#2C6EBD;font-weight:600;margin-bottom:4px;">担当パートナーからのコメント</div>'
-          +'<div style="font-size:12.5px;color:#1C3557;line-height:1.8;white-space:pre-wrap;">'+esc(d.ai_comment||'')+'</div>'
+          +'<div style="font-size:12.5px;color:#1C3557;line-height:1.8;white-space:pre-wrap;">'+fmtComment(d.ai_comment||'')+'</div>'
         +'</div>'
       +'</div>';
     });
