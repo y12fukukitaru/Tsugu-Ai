@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- Phase 30（トリアージ：今日やることリスト） -->
+<!-- Phase 32（月次レポート：自動生成・承認・公開） -->
 <title>Tsugu -継- | AIと人で、会社の未来を継ぐ</title>
 <meta name="description" content="Tsugu（ツグ）は、AIと人の伴走で資金繰り改善・業務の自動化・資金調達から事業承継/M&Aまでを支援する経営プラットフォームです。">
 
@@ -431,9 +431,9 @@
   }
   function buildNav(r){
     var items;
-    if(r==='customer') items=[['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-sec','パートナーAI']];
+    if(r==='customer') items=[['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-sec','パートナーAI']];
     else if(r==='admin') items=[['sec-flow','ダッシュボード'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達']];
-    else items=[['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-myfund','自社の調達'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
+    else items=[['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-reports','レポート承認'],['sec-myfund','自社の調達'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
     var nav=$('app-nav'); if(nav) nav.innerHTML='<div class="sb-sec">メニュー</div>'+navItemsHtml(items,false);
     var dn=$('drawer-nav'); if(dn) dn.innerHTML=navItemsHtml(items,true);
   }
@@ -630,6 +630,10 @@
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">AIと自動化でコストを下げ、生まれた余力を次の投資（M&A）へ。あなたの現在地はパートナーが面談ごとに更新します。</div>'
           + stepperHtml(prof.stage||1)
         +'</div>'
+        +'<div class="panel" id="sec-reports"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">📊 月次レポート<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMyReports()">↺ 更新</span></div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;">担当パートナーが毎月の数字とコメントをまとめたレポートです。</div>'
+          +'<div id="my-reports">読み込み中...</div>'
+        +'</div>'
         +'<div class="panel" id="sec-company"><div class="ph">会社情報</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
             +'<div style="flex:1;min-width:180px;"><label class="fl">会社名</label><input id="pi-company" class="inp2" style="width:100%;" value="'+escA(prof.company_name||'')+'" placeholder="例：株式会社○○"></div>'
@@ -731,6 +735,11 @@
           +'</div>'
           +'<div id="cl-list" style="margin-top:6px;">読み込み中...</div>'
         +'</div>'
+        +'<div class="panel" id="sec-reports">'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;">📊 月次レポート承認<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadReportDrafts()">↺ 更新</span></div>'
+          +'<div style="font-size:11.5px;color:#8AA0BE;margin-bottom:8px;">毎月1日に自動生成される下書きです。コメントを確認・編集して「承認して公開」すると、顧客の画面に表示されます。</div>'
+          +'<div id="rep-drafts">読み込み中...</div>'
+        +'</div>'
         +'<div class="panel" id="sec-roadmap2"><div class="ph">パートナー向け：今後追加される機能</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">提案の幅が広がる機能を順次リリースします。先行利用のご希望は運営までお知らせください。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
@@ -761,8 +770,8 @@
 
     window.__eff=eff;
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); }
-    else if(eff==='consultant'){ loadClients(); loadOwnFunding(); }
+    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); }
+    else if(eff==='consultant'){ loadClients(); loadOwnFunding(); loadReportDrafts(); }
     else { loadAdmin(); }
     startNotifPolling(eff);
   }
@@ -986,7 +995,12 @@
       var pr=await sb.from('upcoming_payments').select('customer_id,title,due_date,amount').in('customer_id',ids);
       if(!pr.error) pays=pr.data||[];
     }
-    CL_CACHE={clients:clients,cnt:cnt,lastMsg:lastMsg,unread:unread,funding:funding,pays:pays};
+    var repDrafts=[];
+    if(ids.length){
+      var rd=await sb.from('monthly_reports').select('customer_id,report_month').eq('status','draft').in('customer_id',ids);
+      if(!rd.error) repDrafts=rd.data||[];
+    }
+    CL_CACHE={clients:clients,cnt:cnt,lastMsg:lastMsg,unread:unread,funding:funding,pays:pays,repDrafts:repDrafts};
     var totalUnread=0; clients.forEach(function(c){ totalUnread+=(unread[c.id]||0); });
     UNREAD.total=totalUnread; UNREAD.perClient=unread; applyNotifBadges();
     var sharesN=clients.filter(function(c){ return cnt[c.id]; }).length;
@@ -1052,6 +1066,10 @@
       if(d<0) add(f.customer_id, 95, '<span class="tag red">期日超過：'+esc(f.title)+'（'+(-d)+'日）</span>');
       else if(d<=14) add(f.customer_id, 60+(14-d), '<span class="tag gold">調達期日 あと'+d+'日：'+esc(f.title)+'</span>');
     });
+    // ③' レポート承認待ち
+    (CL_CACHE.repDrafts||[]).forEach(function(r){
+      add(r.customer_id, 70, '<span class="tag blue">レポート承認待ち（'+esc(ymJp(r.report_month))+'分）</span>');
+    });
     // ③ 支払予定（7日以内）
     (CL_CACHE.pays||[]).forEach(function(pmt){
       if(!pmt.due_date) return;
@@ -1078,6 +1096,98 @@
         +'<div class="cl-top"><span class="cl-nm">'+esc(r.c.company_name||r.c.email)+'</span>'
         +'<span style="margin-left:auto;color:#2C6EBD;font-size:11px;white-space:nowrap;">開く →</span></div>'
         +'<div class="cl-tags">'+r.tags.join('')+'</div>'
+      +'</div>';
+    });
+    box.innerHTML=h;
+  }
+  // ===== 月次レポート（Phase 32） =====
+  function ymJp(ym){ if(!ym) return ''; var a=ym.split('-'); return a[0]+'年'+Number(a[1])+'月'; }
+  function manFmt(v){ return (v===null||v===undefined||v==='')?'—':(Number(v).toLocaleString()+'万円'); }
+  function pctDiff(cur, prev){
+    if(cur===null||cur===undefined||prev===null||prev===undefined||Number(prev)===0) return '';
+    var d=(Number(cur)-Number(prev))/Math.abs(Number(prev))*100;
+    var sign=d>=0?'+':'';
+    return '（前月比 '+sign+d.toFixed(1)+'%）';
+  }
+  function repChart(history){
+    var rows=(history||[]).filter(function(h){ return h && h.revenue!==null && h.revenue!==undefined; });
+    if(rows.length<2) return '';
+    var max=Math.max.apply(null, rows.map(function(h){ return Number(h.revenue)||0; })); if(max<=0) return '';
+    var bars=rows.map(function(h){
+      var hpx=Math.max(4, Math.round(Number(h.revenue)/max*64));
+      var lbl=Number(h.ym.split('-')[1])+'月';
+      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;">'
+        +'<div style="width:70%;max-width:22px;height:'+hpx+'px;background:linear-gradient(180deg,#4AADD6,#2C6EBD);border-radius:4px 4px 0 0;" title="'+esc(h.ym)+'：'+esc(String(h.revenue))+'万円"></div>'
+        +'<div style="font-size:9px;color:#8AA0BE;white-space:nowrap;">'+lbl+'</div></div>';
+    }).join('');
+    return '<div style="margin:10px 0 4px;"><div style="font-size:10.5px;color:#4A6080;margin-bottom:4px;">売上の推移（万円）</div>'
+      +'<div style="display:flex;align-items:flex-end;gap:3px;height:80px;border-bottom:1px solid #EAF0F7;padding:0 2px;">'+bars+'</div></div>';
+  }
+  function repSummaryHtml(sm){
+    if(!sm) return '';
+    var h='<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;">'
+      +'<div style="flex:1 1 130px;background:#F7FAFD;border:1px solid #EAF0F7;border-radius:10px;padding:9px 12px;"><div style="font-size:10.5px;color:#4A6080;">売上</div><div style="font-size:15px;font-weight:700;color:#1C3557;">'+manFmt(sm.revenue)+'</div><div style="font-size:10px;color:#4A6080;">'+pctDiff(sm.revenue,sm.prev_revenue)+'</div></div>'
+      +'<div style="flex:1 1 130px;background:#F7FAFD;border:1px solid #EAF0F7;border-radius:10px;padding:9px 12px;"><div style="font-size:10.5px;color:#4A6080;">利益</div><div style="font-size:15px;font-weight:700;color:'+((sm.profit!==null&&sm.profit!==undefined&&Number(sm.profit)<0)?'#A83030':'#1C3557')+';">'+manFmt(sm.profit)+'</div><div style="font-size:10px;color:#4A6080;">'+pctDiff(sm.profit,sm.prev_profit)+'</div></div>'
+      +'</div>';
+    if(sm.has_current===false) h+='<div style="font-size:11px;color:#9A7314;background:#FAEEDA;border-radius:8px;padding:7px 10px;margin-bottom:6px;">対象月の試算表が未入力のため、直近データをもとに作成されています。</div>';
+    return h+repChart(sm.history);
+  }
+  // --- パートナー：承認待ち一覧 ---
+  async function loadReportDrafts(){
+    var box=$('rep-drafts'); if(!box)return;
+    var res=await sb.from('monthly_reports').select('*').eq('status','draft').order('created_at',{ascending:false}).limit(50);
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'<br><span style="color:#8AA0BE;">（Phase 32のSQL未実施の可能性があります）</span></div>'; return; }
+    var drafts=res.data||[];
+    if(!drafts.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">承認待ちのレポートはありません。毎月1日に自動生成されます。</div>'; return; }
+    var ids=drafts.map(function(d){ return d.customer_id; });
+    var pr=await sb.from('profiles').select('id,company_name,email').in('id',ids);
+    var nm={}; (pr.data||[]).forEach(function(x){ nm[x.id]=x.company_name||x.email; });
+    var h='';
+    drafts.forEach(function(d){
+      h+='<div class="clcard" style="cursor:default;">'
+        +'<div class="cl-top"><span class="cl-nm">'+esc(nm[d.customer_id]||'顧客')+'</span><span class="tag gold">'+esc(ymJp(d.report_month))+'分・承認待ち</span></div>'
+        +repSummaryHtml(d.summary)
+        +'<div style="font-size:11px;color:#4A6080;margin:8px 0 4px;">パートナーコメント（編集できます）</div>'
+        +'<textarea id="repc-'+d.id+'" class="inp2" rows="5" style="width:100%;">'+esc(d.ai_comment||'')+'</textarea>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;">'
+          +'<button class="btn2" onclick="approveReport(\''+d.id+'\')">承認して公開</button>'
+          +'<button class="ghost" style="font-size:12px;" onclick="saveReportComment(\''+d.id+'\')">下書き保存</button>'
+          +'<span id="repmsg-'+d.id+'" style="font-size:12px;"></span>'
+        +'</div>'
+      +'</div>';
+    });
+    box.innerHTML=h;
+  }
+  async function saveReportComment(id){
+    var t=$('repc-'+id), m=$('repmsg-'+id); if(!t)return;
+    var res=await sb.from('monthly_reports').update({ ai_comment:t.value }).eq('id',id);
+    if(m){ if(res.error){ m.style.color='#A83030'; m.textContent='保存エラー：'+res.error.message; } else { m.style.color='#1E6B45'; m.textContent='下書きを保存しました'; } }
+  }
+  async function approveReport(id){
+    var t=$('repc-'+id), m=$('repmsg-'+id); if(!t)return;
+    var res=await sb.from('monthly_reports').update({ ai_comment:t.value, status:'published', published_at:new Date().toISOString() }).eq('id',id);
+    if(res.error){ if(m){ m.style.color='#A83030'; m.textContent='エラー：'+res.error.message; } return; }
+    if(m){ m.style.color='#1E6B45'; m.textContent='公開しました。顧客の画面に表示されます。'; }
+    setTimeout(loadReportDrafts, 900);
+  }
+  // --- 顧客：公開済みレポート一覧 ---
+  async function loadMyReports(){
+    var box=$('my-reports'); if(!box)return;
+    var res=await sb.from('monthly_reports').select('*').eq('customer_id',ME).eq('status','published').order('report_month',{ascending:false}).limit(12);
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
+    var reps=res.data||[];
+    if(!reps.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">公開されたレポートはまだありません。毎月、担当パートナーの確認後にここへ届きます。</div>'; return; }
+    var h='';
+    reps.forEach(function(d,i){
+      h+='<div style="border:1px solid #EAF0F7;border-radius:11px;padding:13px 14px;margin-bottom:9px;background:#fff;">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;font-weight:700;color:#131E2E;">'+esc(ymJp(d.report_month))+'のレポート</span>'
+        +(i===0?'<span class="tag blue">最新</span>':'')
+        +'<span style="margin-left:auto;font-size:10.5px;color:#8AA0BE;">'+esc((d.published_at||'').slice(0,10))+' 公開</span></div>'
+        +repSummaryHtml(d.summary)
+        +'<div style="background:#F6FAFE;border-left:3px solid #2C6EBD;border-radius:0 9px 9px 0;padding:10px 12px;margin-top:8px;">'
+          +'<div style="font-size:10.5px;color:#2C6EBD;font-weight:600;margin-bottom:4px;">担当パートナーからのコメント</div>'
+          +'<div style="font-size:12.5px;color:#1C3557;line-height:1.8;white-space:pre-wrap;">'+esc(d.ai_comment||'')+'</div>'
+        +'</div>'
       +'</div>';
     });
     box.innerHTML=h;
