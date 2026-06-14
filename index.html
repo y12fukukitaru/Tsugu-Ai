@@ -2022,6 +2022,114 @@
     else { window.open('./sozoku.html','_blank'); }
   }
   function closeBizplan(){ var m=$('bp-modal'); if(m){ m.classList.add('hidden'); document.body.style.overflow=''; } }
+  // ===== 融資ナビ（Phase 36）：確定ルールによる優先順位づけ =====
+  var LOAN_TYPES=[
+    { id:'jfc_startup', name:'日本政策金融公庫 新規開業資金', tags:['startup','rd'],
+      speed:'fast', rate:'低い（年1〜2%台が目安）', collateral:'原則不要・保証人柔軟',
+      pros:'創業期に最も使いやすい。無担保・無保証の制度あり。自己資金要件が緩和される場合も', cons:'面談・創業計画書が必要。事業実績がないため計画の説得力が鍵',
+      best:['pre','early'] },
+    { id:'jfc_general', name:'日本政策金融公庫 一般貸付／中小企業経営力強化資金', tags:['working','equip','rd','ma'],
+      speed:'fast', rate:'低い（固定・長期が組みやすい）', collateral:'相談可（無担保枠あり）',
+      pros:'民間より低利・長期。据置期間を設定しやすく資金繰りに優しい。創業後の成長投資に好適', cons:'審査に2〜4週間。提出書類が比較的多い',
+      best:['early','growth','stable'] },
+    { id:'hosho', name:'信用保証協会付き融資（制度融資）', tags:['working','equip','startup','bridge'],
+      speed:'normal', rate:'やや低い（保証料が別途）', collateral:'保証協会が保証（担保緩和）',
+      pros:'実績の浅い企業でも通りやすい。自治体の制度融資なら利子・保証料の補助があることも', cons:'保証料がかかる。審査に金融機関＋保証協会の二段階で時間',
+      best:['early','growth','stable'] },
+    { id:'proper', name:'銀行プロパー融資', tags:['working','equip','ma','rd'],
+      speed:'normal', rate:'低い（信用力次第）', collateral:'信用・実績重視（担保を求められる場合も）',
+      pros:'保証料が不要でコストを抑えられる。大型・好条件が狙える。取引実績づくりになる', cons:'創業期・赤字では通りにくい。一定の業歴と黒字基調が前提',
+      best:['growth','stable'] },
+    { id:'bridge', name:'補助金つなぎ融資', tags:['bridge'],
+      speed:'urgent', rate:'中程度', collateral:'交付決定通知が実質的な裏付け',
+      pros:'補助金は後払いのため、その立替に特化。交付決定があれば実行されやすい', cons:'補助金入金で一括返済が基本。対象は交付決定済みの案件に限られる',
+      best:['early','growth','stable'] },
+    { id:'urgent', name:'セーフティネット保証／緊急経営安定資金', tags:['emergency','working'],
+      speed:'fast', rate:'低い（公的支援）', collateral:'保証協会保証（要件該当時）',
+      pros:'売上減・コスト急増など有事に特化した公的支援。低利・好条件', cons:'指定業種・売上減少率などの認定要件あり。自治体の認定書取得が必要',
+      best:['distress','stable'] },
+    { id:'bizloan', name:'ビジネスローン／ノンバンク', tags:['working','bridge','emergency'],
+      speed:'urgent', rate:'高い（年5〜15%程度）', collateral:'不要が多い',
+      pros:'最短即日〜数日と圧倒的に速い。書類が少なく審査が柔軟', cons:'金利が高く常用は資金繰りを圧迫。あくまで一時的なつなぎと割り切る',
+      best:['early','growth','stable','distress'] },
+    { id:'subsidy', name:'補助金・助成金（返済不要）', tags:['equip','rd','startup'],
+      speed:'normal', rate:'返済不要（自己負担あり）', collateral:'不要',
+      pros:'返済不要が最大の利点。設備・IT・研究開発と相性が良い', cons:'後払い・採択審査あり・つなぎ資金が別途必要。即時の資金需要には不向き',
+      best:['early','growth','stable'] },
+  ];
+  function runLoanNav(custId){
+    var use=$('ln-use').value, amount=Number($('ln-amount').value||0),
+        speed=$('ln-speed').value, phase=$('ln-phase').value, col=$('ln-collateral').value;
+    var speedRank={normal:0,fast:1,urgent:2};
+    var typeSpeed={normal:0,fast:1,urgent:2};
+    var scored=LOAN_TYPES.map(function(t){
+      var s=0, why=[];
+      // 使途の一致（最重要）
+      if(t.tags.indexOf(use)>=0){ s+=50; why.push('資金使途に合致'); }
+      // 事業フェーズの一致
+      if(t.best.indexOf(phase)>=0){ s+=25; why.push('事業フェーズに適合'); }
+      // 緊急度：制度の実行スピードが要求を満たすか
+      if(typeSpeed[t.speed]>=speedRank[speed]){ s+=15; if(speed!=='normal') why.push('必要なスピードに対応'); }
+      else { s-=20; why.push('実行までの時間が要求に届きにくい'); }
+      // 担保・保証の条件
+      if(col==='none'){
+        if(/不要|柔軟|緩和|保証協会|交付決定/.test(t.collateral)){ s+=10; }
+        else if(t.id==='proper'){ s-=8; }
+      }
+      if(col==='estate' && t.id==='proper'){ s+=8; why.push('不動産担保で好条件を狙える'); }
+      // 金額による補正
+      if(amount>0){
+        if(amount<=300 && t.id==='bizloan'){ s+=5; }
+        if(amount>=3000 && (t.id==='proper'||t.id==='jfc_general')){ s+=8; why.push('大型調達に向く'); }
+        if(amount>=3000 && t.id==='bizloan'){ s-=10; }
+      }
+      // コスト面の注意（高金利は減点しすぎない＝速さとのトレード）
+      if(t.id==='bizloan' && speed==='normal'){ s-=12; why.push('急ぎでなければ高金利を避けたい'); }
+      return { t:t, score:s, why:why };
+    }).filter(function(x){ return x.score>0; })
+      .sort(function(a,b){ return b.score-a.score; });
+
+    var box=$('ln-result'); if(!box)return;
+    if(!scored.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">条件に合う候補が見つかりませんでした。条件を変えてお試しください。</div>'; return; }
+    var top=scored.slice(0,4);
+    var maxS=top[0].score;
+    var h='<div style="font-size:11.5px;color:#4A6080;margin-bottom:8px;">おすすめ順に表示しています（上位'+top.length+'件）。</div>';
+    top.forEach(function(x,i){
+      var pct=Math.round(x.score/maxS*100);
+      var rankColor=i===0?'#1E6B45':(i===1?'#2C6EBD':'#4A6080');
+      h+='<div style="border:1px solid '+(i===0?'#Bfe3CC':'#EAF0F7')+';border-radius:12px;padding:12px 14px;margin-bottom:10px;background:'+(i===0?'#F2FBF5':'#fff')+';">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+          +'<span style="background:'+rankColor+';color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:2px 10px;">第'+(i+1)+'候補</span>'
+          +'<span style="font-size:14px;font-weight:700;color:#131E2E;">'+esc(x.t.name)+'</span>'
+          +'<span style="margin-left:auto;font-size:11px;color:'+rankColor+';font-weight:700;">適合度 '+pct+'%</span>'
+        +'</div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">'
+          +'<span class="tag blue">金利：'+esc(x.t.rate)+'</span>'
+          +'<span class="tag gray">スピード：'+({normal:'通常',fast:'比較的速い',urgent:'最速級'})[x.t.speed]+'</span>'
+          +'<span class="tag gray">担保：'+esc(x.t.collateral)+'</span>'
+        +'</div>'
+        +'<div style="font-size:12px;color:#1C3557;margin-top:8px;line-height:1.7;"><b style="color:#1E6B45;">メリット：</b>'+esc(x.t.pros)+'</div>'
+        +'<div style="font-size:12px;color:#1C3557;margin-top:3px;line-height:1.7;"><b style="color:#A83030;">注意点：</b>'+esc(x.t.cons)+'</div>'
+        +(x.why.length?'<div style="font-size:10.5px;color:#8AA0BE;margin-top:6px;">判定理由：'+x.why.map(esc).join('・')+'</div>':'')
+        +'<button class="ghost" style="font-size:12px;margin-top:8px;" onclick="loanToFunding(\''+custId+'\',\''+escA(x.t.name)+'\','+amount+')">この融資を調達ロードマップに登録</button>'
+      +'</div>';
+    });
+    h+='<div style="font-size:10.5px;color:#8AA0BE;margin-top:4px;line-height:1.7;">※金利・要件は時期や金融機関により異なります。複数を併用する設計（例：公庫＋保証協会、補助金＋つなぎ）も有効です。具体的な申込条件は各金融機関・認定支援機関にご確認ください。</div>';
+    box.innerHTML=h;
+  }
+  async function loanToFunding(custId, name, amount){
+    var row={ customer_id:custId, source_type:'融資', title:name,
+      amount:(amount>0?amount:0), status:'検討中', note:'融資ナビから登録', created_by:ME };
+    var res=await sb.from('funding_roadmap_items').insert(row);
+    var box=$('ln-result');
+    if(res.error){ alert('登録エラー：'+res.error.message); return; }
+    if(CURRENT_CLIENT && CURRENT_CLIENT.id===custId) loadClientFunding(custId);
+    // 簡易トースト
+    var t=document.createElement('div');
+    t.textContent='「'+name+'」を調達ロードマップに登録しました';
+    t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1E6B45;color:#fff;font-size:13px;padding:10px 18px;border-radius:99px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2);';
+    document.body.appendChild(t); setTimeout(function(){ t.remove(); },2600);
+  }
   async function runBizplan(custId){
     var btn=$('bp-run'), msg=$('bp-msg');
     if(btn){ btn.disabled=true; btn.textContent='作成中...（30秒ほどかかります）'; }
@@ -2838,7 +2946,18 @@
     +'</div>';
     // ---- タブ3：AIツール・試算 ----
     var tabTools='<div id="ctab-tools" class="hidden">'
-      +'<div class="ph" style="font-size:13px;">M&A活用提案（AI）</div>'
+      +'<div class="ph" style="font-size:13px;">💴 融資ナビ（最適な融資の優先順位）</div>'
+      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">資金の性質を選ぶと、適した融資制度を優先順位つきで提示します。判定は制度の特徴に基づく確定ルール（AIではありません）。最終判断は金融機関・専門家にご確認ください。</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+        +'<div><label class="fl">資金使途</label><select id="ln-use" class="inp2"><option value="startup">創業・開業資金</option><option value="working">運転資金（仕入・人件費等）</option><option value="equip">設備投資</option><option value="bridge">補助金・入金までのつなぎ</option><option value="emergency">業績悪化・資金繰り改善</option><option value="ma">M&A・事業承継資金</option><option value="rd">研究開発・新規事業</option></select></div>'
+        +'<div><label class="fl">希望額（万円）</label><input id="ln-amount" type="number" class="inp2" placeholder="例 1000"></div>'
+        +'<div><label class="fl">緊急度</label><select id="ln-speed" class="inp2"><option value="normal">通常（1〜2か月可）</option><option value="fast">急ぎ（2〜3週間）</option><option value="urgent">至急（1週間以内）</option></select></div>'
+        +'<div><label class="fl">事業フェーズ</label><select id="ln-phase" class="inp2"><option value="pre">創業前・創業直後</option><option value="early">創業2年未満</option><option value="growth">黒字・成長期</option><option value="stable">安定・実績あり</option><option value="distress">赤字・返済負担大</option></select></div>'
+        +'<div><label class="fl">担保・保証</label><select id="ln-collateral" class="inp2"><option value="none">なし（無担保希望）</option><option value="guarantor">保証人を立てられる</option><option value="estate">不動産担保あり</option></select></div>'
+        +'<button class="btn2" onclick="runLoanNav(\''+custId+'\')">診断する</button>'
+      +'</div>'
+      +'<div id="ln-result" style="margin-top:12px;"></div>'
+      +'<div class="ph" style="font-size:13px;margin-top:18px;">M&A活用提案（AI）</div>'
       +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">AIでこの顧客向けのM&A方向性を作成し、提案メモとして送れます。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
         +'<div><label class="fl">年間利益・余剰資金(万円)</label><input id="ma2-profit" type="number" class="inp2" placeholder="例 3000"></div>'
