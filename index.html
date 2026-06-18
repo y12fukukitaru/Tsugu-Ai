@@ -31,7 +31,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root{--navy:#1C3557;--blue:#2C6EBD;--sky:#4AADD6;--gold:#C89620;--ink:#131E2E;--muted:#4A6080;--line:#D0DCF0;--bg:#F2F5FA;}
+  :root{--navy:#1C3557;--blue:#2C6EBD;--sky:#4AADD6;--gold:#C89620;--ink:#131E2E;--muted:#4A6080;--line:#D0DCF0;--bg:#F2F5FA;--card:#fff;--panel:#fff;--soft:#F7FAFD;--softline:#EAF0F7;}
+  body.dark{--navy:#9DC0E8;--blue:#5FA0E0;--sky:#4AADD6;--gold:#E0B23E;--ink:#E8EEF6;--muted:#9FB2CC;--line:#2B3A4F;--bg:#0E1726;--card:#16223A;--panel:#16223A;--soft:#1B2942;--softline:#26344C;}
+  body.dark .panel,body.dark .clcard,body.dark .card{background:var(--panel);}
+  body.dark .inp,body.dark .inp2,body.dark .searchbox,body.dark textarea,body.dark select,body.dark input{background:#1B2942;color:var(--ink);border-color:var(--line);}
+  body.dark .topbar2,body.dark .sb,body.dark .drawer{background:var(--card);}
+  body.dark .modal{background:var(--card);}
+  body.dark .modal-head{background:var(--card);border-bottom-color:var(--line);}
+  body.dark .modal-close{color:var(--ink);}
+  body.dark .ghost{color:var(--blue);}
+  body.dark .sbtn{background:#1B2942;color:var(--muted);}
+  html{font-size:calc(16px * var(--fs,1));}
   *{box-sizing:border-box;}
   html,body{overflow-x:clip;}
   body{margin:0;font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:var(--bg);max-width:100vw;}
@@ -260,7 +270,7 @@
     </div>
     <div class="sb-co"><div id="sb-co-nm" class="co-nm">—</div><span id="app-role" class="plan-pill"></span></div>
     <nav id="app-nav" class="sb-nav"></nav>
-    <div class="sb-foot"><span id="app-email" class="sb-email"></span><button class="sb-out" onclick="signOut()">ログアウト</button></div>
+    <div class="sb-foot"><span id="app-email" class="sb-email"></span><button class="sb-out" onclick="openSettings()" style="margin-bottom:6px;">⚙️ 設定</button><button class="sb-out" onclick="signOut()">ログアウト</button></div>
   </aside>
   <main class="main2">
     <div class="topbar2"><div id="app-greet" class="greet">ダッシュボード</div><div id="app-date" class="datechip"></div><button id="bell" class="bellbtn hidden" onclick="bellGo()" title="未読メッセージ" aria-label="未読メッセージ">🔔<span id="bell-n" class="nbadge hidden">0</span></button><button id="hbg" class="hbg" onclick="openDrawer()" aria-label="メニューを開く"><span class="b"></span><span class="b"></span><span class="b"></span><span id="hbg-dot" class="hbg-dot hidden"></span></button></div>
@@ -277,7 +287,7 @@
   </div>
   <div class="drawer-co"><div id="dw-co-nm" class="co-nm">—</div><span id="dw-role" class="plan-pill"></span></div>
   <nav id="drawer-nav" class="drawer-nav"></nav>
-  <div class="drawer-foot"><span id="dw-email" class="sb-email"></span><button class="sb-out" onclick="signOut()">ログアウト</button></div>
+  <div class="drawer-foot"><span id="dw-email" class="sb-email"></span><button class="sb-out" onclick="openSettings()" style="margin-bottom:6px;">⚙️ 設定</button><button class="sb-out" onclick="signOut()">ログアウト</button></div>
 </aside>
 
 <!-- ===== CLIENT DETAIL MODAL ===== -->
@@ -312,6 +322,17 @@
       <button class="modal-close" onclick="closeBizplan()" aria-label="閉じる">×</button>
     </div>
     <div id="bp-body" class="modal-body">読み込み中...</div>
+  </div>
+</div>
+
+<div id="settings-modal" class="modal-back hidden" onclick="if(event.target===this)closeSettings()">
+  <div class="modal rep-sheet" style="max-width:560px;">
+    <div class="rep-bar modal-head">
+      <span class="mt">⚙️ 設定</span>
+      <span style="flex:1;"></span>
+      <button class="modal-close" onclick="closeSettings()" aria-label="閉じる">×</button>
+    </div>
+    <div id="settings-body" class="modal-body"></div>
   </div>
 </div>
 
@@ -431,13 +452,137 @@
     });
     return h;
   }
+  // ===== ユーザー設定（Phase 37）：端末＋ユーザー単位で保存 =====
+  function prefKey(){ return 'tsugu_prefs_'+(ME||'guest'); }
+  function loadPrefs(){
+    try{ return JSON.parse(localStorage.getItem(prefKey())||'{}')||{}; }catch(e){ return {}; }
+  }
+  function savePrefs(p){ try{ localStorage.setItem(prefKey(), JSON.stringify(p)); }catch(e){} }
+  function applyDisplayPrefs(){
+    var p=loadPrefs();
+    document.body.classList.toggle('dark', p.dark===true);
+    document.documentElement.style.setProperty('--fs', String(p.fontScale||1));
+  }
+  // 役割ごとの全メニュー定義（ラベル付き）。設定で並び順・表示を変えられる
+  function navDefs(r){
+    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-sec','パートナーAI']];
+    if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達']];
+    return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-myfund','自社の調達'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
+  }
+  // 設定（順序・非表示）を反映した実際の表示メニューを返す
+  function effectiveNav(r){
+    var all=navDefs(r);
+    var p=loadPrefs();
+    var conf=(p.nav&&p.nav[r])||null;
+    if(!conf) return all;
+    var byId={}; all.forEach(function(it){ byId[it[0]]=it; });
+    var out=[];
+    // 設定の順序で、非表示でなく、かつ今も存在する項目を並べる
+    (conf.order||[]).forEach(function(id){
+      if(byId[id] && (conf.hidden||[]).indexOf(id)<0){ out.push(byId[id]); delete byId[id]; }
+    });
+    // 設定後に追加された新メニューは末尾に出す（hidden指定がなければ）
+    all.forEach(function(it){ if(byId[it[0]] && (conf.hidden||[]).indexOf(it[0])<0) out.push(it); });
+    // ダッシュボードは最低1つ残す保険
+    if(!out.length) out=[all[0]];
+    return out;
+  }
   function buildNav(r){
-    var items;
-    if(r==='customer') items=[['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-sec','パートナーAI']];
-    else if(r==='admin') items=[['sec-flow','ダッシュボード'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達']];
-    else items=[['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-myfund','自社の調達'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
+    var items=effectiveNav(r);
     var nav=$('app-nav'); if(nav) nav.innerHTML='<div class="sb-sec">メニュー</div>'+navItemsHtml(items,false);
     var dn=$('drawer-nav'); if(dn) dn.innerHTML=navItemsHtml(items,true);
+  }
+  // ===== 設定モーダル =====
+  var SETTINGS_ROLE='customer';
+  function openSettings(){
+    var r=(window.__role==='admin' && typeof VIEWAS!=='undefined' && VIEWAS) ? (VIEWAS==='fde'?'consultant':VIEWAS) : (window.__role||'customer');
+    SETTINGS_ROLE=r;
+    renderSettings();
+    var m=$('settings-modal'); if(m){ m.classList.remove('hidden'); document.body.style.overflow='hidden'; }
+    closeDrawer&&closeDrawer();
+  }
+  function closeSettings(){ var m=$('settings-modal'); if(m){ m.classList.add('hidden'); document.body.style.overflow=''; } }
+  function renderSettings(){
+    var box=$('settings-body'); if(!box)return;
+    var p=loadPrefs();
+    var fs=p.fontScale||1;
+    var dark=p.dark===true;
+    var r=SETTINGS_ROLE;
+    var all=navDefs(r);
+    var conf=(p.nav&&p.nav[r])||{order:all.map(function(x){return x[0];}),hidden:[]};
+    var order=conf.order.filter(function(id){ return all.some(function(x){return x[0]===id;}); });
+    all.forEach(function(x){ if(order.indexOf(x[0])<0) order.push(x[0]); });
+    var labelOf={}; all.forEach(function(x){ labelOf[x[0]]=x[1]; });
+    var roleName={customer:'顧客',consultant:'パートナー',admin:'運営'}[r]||r;
+
+    var h='<div style="font-size:11.5px;color:#8AA0BE;margin-bottom:12px;">この端末での表示設定です。ログインしている方ごとに保存されます。</div>';
+    // 表示テーマ
+    h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:4px 0 8px;">表示</div>';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--softline);">'
+      +'<span style="font-size:13px;">ダークモード</span>'
+      +'<button class="sbtn'+(dark?' on':'')+'" onclick="toggleDark()">'+(dark?'オン':'オフ')+'</button></div>';
+    h+='<div style="padding:12px 0;border-bottom:1px solid var(--softline);">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;"><span style="font-size:13px;">文字サイズ</span>'
+      +'<span style="font-size:12px;color:var(--muted);">'+Math.round(fs*100)+'%</span></div>'
+      +'<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">'
+      +[['小',0.9],['標準',1],['大',1.15],['特大',1.3]].map(function(o){
+          return '<button class="sbtn'+(Math.abs(fs-o[1])<0.001?' on':'')+'" onclick="setFontScale('+o[1]+')">'+o[0]+'</button>';
+        }).join('')
+      +'</div></div>';
+    // メニュー並び替え・表示
+    h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:16px 0 4px;">メニュー（'+roleName+'）</div>';
+    h+='<div style="font-size:11px;color:#8AA0BE;margin-bottom:8px;">▲▼で並び替え、目のボタンで表示／非表示を切り替えます。</div>';
+    order.forEach(function(id,idx){
+      var hidden=(conf.hidden||[]).indexOf(id)>=0;
+      var isTop=(id===all[0][0]); // ダッシュボードは非表示不可
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:6px;border:1px solid var(--softline);border-radius:9px;background:var(--soft);">'
+        +'<span style="flex:1;font-size:13px;'+(hidden?'color:#A8B6C8;text-decoration:line-through;':'')+'">'+esc(labelOf[id])+'</span>'
+        +'<button class="ghost" style="font-size:14px;padding:3px 7px;'+(idx===0?'opacity:.3;pointer-events:none;':'')+'" onclick="moveNav(\''+id+'\',-1)" aria-label="上へ">▲</button>'
+        +'<button class="ghost" style="font-size:14px;padding:3px 7px;'+(idx===order.length-1?'opacity:.3;pointer-events:none;':'')+'" onclick="moveNav(\''+id+'\',1)" aria-label="下へ">▼</button>'
+        +'<button class="ghost" style="font-size:14px;padding:3px 7px;'+(isTop?'opacity:.3;pointer-events:none;':'')+'" onclick="toggleNavHidden(\''+id+'\')" aria-label="表示切替">'+(hidden?'🚫':'👁')+'</button>'
+      +'</div>';
+    });
+    h+='<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">'
+      +'<button class="ghost" style="font-size:12px;" onclick="resetSettings()">初期設定に戻す</button>'
+      +'<span style="flex:1;"></span>'
+      +'<button class="btn2" onclick="closeSettings()">閉じる</button></div>';
+    box.innerHTML=h;
+  }
+  function ensureNavConf(p,r){
+    p.nav=p.nav||{};
+    if(!p.nav[r]){ p.nav[r]={order:navDefs(r).map(function(x){return x[0];}),hidden:[]}; }
+    // 新メニューを順序に補完
+    var all=navDefs(r).map(function(x){return x[0];});
+    all.forEach(function(id){ if(p.nav[r].order.indexOf(id)<0) p.nav[r].order.push(id); });
+    p.nav[r].order=p.nav[r].order.filter(function(id){ return all.indexOf(id)>=0; });
+    return p;
+  }
+  function moveNav(id,dir){
+    var p=ensureNavConf(loadPrefs(),SETTINGS_ROLE);
+    var o=p.nav[SETTINGS_ROLE].order;
+    var i=o.indexOf(id); if(i<0)return;
+    var j=i+dir; if(j<0||j>=o.length)return;
+    var tmp=o[i]; o[i]=o[j]; o[j]=tmp;
+    savePrefs(p); renderSettings(); rebuildNavNow();
+  }
+  function toggleNavHidden(id){
+    if(id===navDefs(SETTINGS_ROLE)[0][0]) return; // ダッシュボードは常時表示
+    var p=ensureNavConf(loadPrefs(),SETTINGS_ROLE);
+    var hid=p.nav[SETTINGS_ROLE].hidden||[];
+    var i=hid.indexOf(id); if(i>=0) hid.splice(i,1); else hid.push(id);
+    p.nav[SETTINGS_ROLE].hidden=hid;
+    savePrefs(p); renderSettings(); rebuildNavNow();
+  }
+  function toggleDark(){ var p=loadPrefs(); p.dark=!(p.dark===true); savePrefs(p); applyDisplayPrefs(); renderSettings(); }
+  function setFontScale(v){ var p=loadPrefs(); p.fontScale=v; savePrefs(p); applyDisplayPrefs(); renderSettings(); }
+  function resetSettings(){
+    var p=loadPrefs(); delete p.dark; delete p.fontScale;
+    if(p.nav) delete p.nav[SETTINGS_ROLE];
+    savePrefs(p); applyDisplayPrefs(); renderSettings(); rebuildNavNow();
+  }
+  function rebuildNavNow(){
+    var r=(window.__role==='admin' && typeof VIEWAS!=='undefined' && VIEWAS) ? (VIEWAS==='fde'?'consultant':VIEWAS) : (window.__role||'customer');
+    buildNav(r);
   }
   function navTo(id){
     goSec(id);
@@ -597,7 +742,8 @@
     $('app').classList.remove('hidden');
     var r=prof.role||'customer';
     var eff = (r==='admin') ? (VIEWAS==='fde'?'consultant':(VIEWAS==='customer'?'customer':'admin')) : r;
-    window.__prof=prof; window.__email=email||'';
+    window.__prof=prof; window.__email=email||''; window.__role=r;
+    applyDisplayPrefs();
     SEC_MSGS=[]; SEC_MODE='経営';
     var rb=$('app-role'); rb.textContent=roleLabel(r); rb.style.background=roleColor(r); rb.style.color='#fff';
     $('app-email').textContent=email||'';
