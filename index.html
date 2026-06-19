@@ -37,6 +37,8 @@
   body.dark .inp,body.dark .inp2,body.dark .searchbox,body.dark textarea,body.dark select,body.dark input{background:#1B2942;color:var(--ink);border-color:var(--line);}
   body.dark .topbar2,body.dark .sb,body.dark .drawer{background:var(--card);}
   body.dark .modal{background:var(--card);}
+  body.dark .clcard{background:var(--panel);border-color:var(--line);}
+  body.dark .clcard .cl-nm{color:var(--ink);}
   body.dark .modal-head{background:var(--card);border-bottom-color:var(--line);}
   body.dark .modal-close{color:var(--ink);}
   body.dark .ghost{color:var(--blue);}
@@ -322,6 +324,17 @@
       <button class="modal-close" onclick="closeBizplan()" aria-label="閉じる">×</button>
     </div>
     <div id="bp-body" class="modal-body">読み込み中...</div>
+  </div>
+</div>
+
+<div id="notif-modal" class="modal-back hidden" onclick="if(event.target===this)closeNotif()">
+  <div class="modal rep-sheet" style="max-width:520px;">
+    <div class="rep-bar modal-head">
+      <span class="mt">🔔 通知センター</span>
+      <span style="flex:1;"></span>
+      <button class="modal-close" onclick="closeNotif()" aria-label="閉じる">×</button>
+    </div>
+    <div id="notif-body" class="modal-body"></div>
   </div>
 </div>
 
@@ -2667,7 +2680,83 @@
   }
   function bellGo(){
     var eff=window.__eff||'customer';
-    if(eff==='customer') goSec('sec-chat'); else if(eff==='consultant') goSec('sec-clients');
+    if(eff==='consultant'){ openNotif(); return; }
+    // 顧客はメッセージへ直行（やり取り相手は1人なので内訳は不要）
+    if(eff==='customer') goSec('sec-chat');
+  }
+  function closeNotif(){ var m=$('notif-modal'); if(m){ m.classList.add('hidden'); document.body.style.overflow=''; } }
+  async function openNotif(){
+    try{ await refreshNotifs(); }catch(e){}
+    renderNotifCenter();
+    var m=$('notif-modal'); if(m){ m.classList.remove('hidden'); document.body.style.overflow='hidden'; }
+    closeDrawer&&closeDrawer();
+  }
+  function renderNotifCenter(){
+    var box=$('notif-body'); if(!box)return;
+    var byId={}; (CL_CACHE.clients||[]).forEach(function(c){ byId[c.id]=c; });
+    var per=UNREAD.perClient||{};
+    var unreadIds=Object.keys(per).filter(function(id){ return per[id]>0 && byId[id]; })
+      .sort(function(a,b){ return per[b]-per[a]; });
+    var totalUnread=unreadIds.reduce(function(s,id){ return s+per[id]; },0);
+    // 今日やることの件数（既存ロジックを再利用）
+    var todoCount=0, todoTop=[];
+    try{
+      var todos=buildTodos();
+      var ids=Object.keys(todos).filter(function(id){ return byId[id]; });
+      todoCount=ids.length;
+      todoTop=ids.map(function(id){ return {c:byId[id], score:todos[id].score, tags:todos[id].tags}; })
+        .sort(function(a,b){ return b.score-a.score; }).slice(0,5);
+    }catch(e){}
+
+    var h='';
+    // 確認すべきことの説明（指示文）
+    h+='<div style="font-size:12.5px;color:var(--muted);line-height:1.8;background:var(--soft);border-radius:10px;padding:11px 13px;margin-bottom:14px;">'
+      +'このベルは<b>対応が必要なことのお知らせ</b>です。次の2つをご確認ください。<br>'
+      +'① <b>未読メッセージ</b>：顧客から届いた返信待ちのメッセージ<br>'
+      +'② <b>今日やること</b>：返信漏れ・期日・PMI・課題など、本日対応すべき事項'
+      +'</div>';
+
+    // ① 未読メッセージ
+    h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:4px 0 8px;">① 未読メッセージ '
+      +(totalUnread?'<span class="tag red">'+totalUnread+'件</span>':'<span class="tag gray">なし</span>')+'</div>';
+    if(unreadIds.length){
+      unreadIds.forEach(function(id){
+        var c=byId[id];
+        h+='<div class="clcard" style="cursor:pointer;" onclick="notifOpenClient(\''+id+'\')">'
+          +'<div class="cl-top"><span class="cl-nm">'+esc(c.company_name||c.email)+'</span>'
+          +'<span class="tag red" style="margin-left:auto;">未読 '+per[id]+'</span>'
+          +'<span style="color:var(--blue);font-size:11px;white-space:nowrap;margin-left:6px;">開く →</span></div>'
+        +'</div>';
+      });
+    } else {
+      h+='<div style="font-size:12px;color:#1E6B45;background:#E6F4EC;border-radius:9px;padding:9px 12px;margin-bottom:10px;">未読メッセージはありません。</div>';
+    }
+
+    // ② 今日やること
+    h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:16px 0 8px;">② 今日やること '
+      +(todoCount?'<span class="tag gold">'+todoCount+'件</span>':'<span class="tag gray">なし</span>')+'</div>';
+    if(todoTop.length){
+      todoTop.forEach(function(r){
+        h+='<div class="clcard" style="cursor:pointer;" onclick="notifOpenClient(\''+r.c.id+'\')">'
+          +'<div class="cl-top"><span class="cl-nm">'+esc(r.c.company_name||r.c.email)+'</span>'
+          +'<span style="color:var(--blue);font-size:11px;white-space:nowrap;margin-left:auto;">開く →</span></div>'
+          +'<div class="cl-tags">'+r.tags.join('')+'</div>'
+        +'</div>';
+      });
+      if(todoCount>todoTop.length){
+        h+='<div style="font-size:11.5px;color:var(--muted);margin:6px 2px;">ほか'+(todoCount-todoTop.length)+'件。すべては「今日やること」一覧でご確認いただけます。</div>';
+      }
+      h+='<button class="ghost" style="font-size:12px;margin-top:4px;" onclick="closeNotif();goSec(\'sec-todo\');">「今日やること」一覧をすべて見る →</button>';
+    } else {
+      h+='<div style="font-size:12px;color:#1E6B45;background:#E6F4EC;border-radius:9px;padding:9px 12px;">本日対応が必要な事項はありません。すべて順調です。</div>';
+    }
+    box.innerHTML=h;
+  }
+  function notifOpenClient(id){
+    closeNotif();
+    var c=(CL_CACHE.clients||[]).find(function(x){ return x.id===id; });
+    if(c && typeof viewClient==='function') viewClient(c.id, c.email, c.company_name||'');
+    else goSec('sec-clients');
   }
   async function refreshNotifs(){
     if(!ME) return;
