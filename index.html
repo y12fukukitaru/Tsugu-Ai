@@ -776,6 +776,7 @@
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">'+esc(prof.company_name||'経営者ダッシュボード')+'</h2>'
         +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b></div>'
         +'<div id="dash-hero">読み込み中...</div></div>'
+        +'<div id="my-nextmeet"></div>'
         +'<div class="panel" id="sec-status"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">資金繰りステータス<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadCashStatus()">↺ 更新</span></div><div id="cash-status" style="margin-top:4px;">読み込み中...</div></div>'
         +'<div class="panel"><div class="ph">経営サマリー</div><div id="kpi-cards">読み込み中...</div></div>'
         +'<div class="panel" id="sec-chat"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">担当パートナーとのメッセージ <span id="chat-unread" class="nbadge hidden">0</span><span class="ghost" style="font-size:11px;font-weight:400;margin-left:auto;" onclick="loadMyChat()">↺ 更新</span></div>'
@@ -1026,7 +1027,7 @@
 
     window.__eff=eff;
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); }
+    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); }
     else if(eff==='consultant'){ loadClients(); loadOwnFunding(); loadReportDrafts(); loadKnowledge(); loadMaDeals(); loadPdca(); }
     else { loadAdmin(); }
     startNotifPolling(eff);
@@ -1402,7 +1403,14 @@
       var mp=await sb.from('pmi_pulses').select('customer_id,ym,score').eq('ym',thisYM()).in('customer_id',ids);
       if(!mp.error) maPulses=mp.data||[];
     }
-    CL_CACHE={clients:clients,cnt:cnt,lastMsg:lastMsg,unread:unread,funding:funding,pays:pays,repDrafts:repDrafts,maDeals:maDeals,maPulses:maPulses,pdca:pdcaItems};
+    var meets=[];
+    if(ids.length){
+      var msres=await sb.from('meetings_scheduled').select('customer_id,meet_at,place').eq('status','scheduled').in('customer_id',ids).order('meet_at',{ascending:true});
+      if(!msres.error) meets=msres.data||[];
+    }
+    var nextMeet={};
+    meets.forEach(function(m){ if(!nextMeet[m.customer_id]) nextMeet[m.customer_id]=m; }); // 最も近い1件
+    CL_CACHE={clients:clients,cnt:cnt,lastMsg:lastMsg,unread:unread,funding:funding,pays:pays,repDrafts:repDrafts,maDeals:maDeals,maPulses:maPulses,pdca:pdcaItems,nextMeet:nextMeet};
     var totalUnread=0; clients.forEach(function(c){ totalUnread+=(unread[c.id]||0); });
     UNREAD.total=totalUnread; UNREAD.perClient=unread; applyNotifBadges();
     var sharesN=clients.filter(function(c){ return cnt[c.id]; }).length;
@@ -1506,6 +1514,19 @@
       if(!pmt.due_date) return;
       var d=daysBetween(pmt.due_date, now); if(d===null) return;
       if(d>=0 && d<=7) add(pmt.customer_id, 55+(7-d), '<span class="tag gold">支払予定 あと'+d+'日：'+esc(pmt.title)+'</span>');
+    });
+    // ④ 次回面談が近い（3日以内）／過ぎている
+    var nm=CL_CACHE.nextMeet||{};
+    Object.keys(nm).forEach(function(cid){
+      var m=nm[cid]; if(!m||!m.meet_at) return;
+      var md=new Date(m.meet_at);
+      var d0=new Date(md.getFullYear(),md.getMonth(),md.getDate());
+      var n0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+      var days=Math.round((d0-n0)/(24*3600*1000));
+      if(days<0){ add(cid, 50, '<span class="tag gray">面談予定日を過ぎています（要更新）</span>'); }
+      else if(days===0){ add(cid, 88, '<span class="tag red">本日面談</span>'); }
+      else if(days===1){ add(cid, 80, '<span class="tag red">明日面談</span>'); }
+      else if(days<=3){ add(cid, 66, '<span class="tag gold">面談まであと'+days+'日</span>'); }
     });
     return todos;
   }
@@ -2560,6 +2581,110 @@
     });
     box.innerHTML=h;
   }
+  // ===== 次回面談予定（Phase 41）：パートナー設定・共有・アラート =====
+  function fmtMeetWhen(iso){
+    if(!iso) return '';
+    var d=new Date(iso); if(isNaN(d)) return '';
+    var w=['日','月','火','水','木','金','土'][d.getDay()];
+    var hh=String(d.getHours()).padStart(2,'0'), mm=String(d.getMinutes()).padStart(2,'0');
+    return (d.getMonth()+1)+'月'+d.getDate()+'日（'+w+'）'+hh+':'+mm;
+  }
+  function meetCountdown(iso){
+    var d=new Date(iso), now=new Date();
+    // カレンダー上の日付差で判定（時刻ではなく日付の境界で数える）
+    var d0=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+    var n0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    var days=Math.round((d0-n0)/(24*3600*1000));
+    if(days<0) return {txt:'終了予定日を過ぎています', cls:'gray', past:true};
+    if(days===0) return {txt:'本日', cls:'red'};
+    if(days===1) return {txt:'明日', cls:'red'};
+    if(days<=3) return {txt:'あと'+days+'日', cls:'gold'};
+    if(days<=7) return {txt:'あと'+days+'日', cls:'blue'};
+    return {txt:'あと'+days+'日', cls:'gray'};
+  }
+  async function loadNextMeeting(custId){
+    var box=$('cl-nextmeet'); if(!box)return;
+    var res=await sb.from('meetings_scheduled').select('*').eq('customer_id',custId).eq('status','scheduled').order('meet_at',{ascending:true}).limit(1);
+    if(res.error){ box.innerHTML='<div style="font-size:11.5px;color:#A83030;">面談予定の読み込みエラー（Phase 41のSQL未実施の可能性）</div>'; return; }
+    var m=(res.data||[])[0];
+    var h='<div style="border:1px solid var(--softline);border-radius:11px;padding:11px 13px;background:var(--soft);">'
+      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+      +'<span style="font-size:12.5px;font-weight:700;color:var(--navy);">📅 次回面談</span>';
+    if(m){
+      var cd=meetCountdown(m.meet_at);
+      h+='<span class="tag '+cd.cls+'">'+cd.txt+'</span>'
+        +'<span style="font-size:13px;color:var(--ink);">'+esc(fmtMeetWhen(m.meet_at))+'</span>'
+        +(m.place?'<span class="tag gray">'+esc(m.place)+'</span>':'')
+        +'<span style="flex:1;"></span>'
+        +'<button class="ghost" style="font-size:11.5px;" onclick="editNextMeeting(\''+custId+'\',\''+m.id+'\')">変更</button>'
+        +'<button class="ghost" style="font-size:11.5px;" onclick="doneNextMeeting(\''+m.id+'\',\''+custId+'\')">完了</button>';
+      if(m.note) h+='<div style="flex-basis:100%;font-size:11.5px;color:var(--muted);margin-top:4px;">議題：'+esc(m.note)+'</div>';
+    } else {
+      h+='<span style="font-size:12px;color:var(--muted);">未設定</span><span style="flex:1;"></span>'
+        +'<button class="btn2" style="padding:6px 12px;font-size:12px;" onclick="editNextMeeting(\''+custId+'\',\'\')">＋ 設定</button>';
+    }
+    h+='</div><div id="meet-form-'+custId+'"></div></div>';
+    box.innerHTML=h;
+  }
+  function editNextMeeting(custId, id){
+    var wrap=$('meet-form-'+custId); if(!wrap)return;
+    var cur=null;
+    if(id){ /* 既存を取得済みのものから引く */ }
+    wrap.innerHTML='<div style="border-top:1px dashed var(--softline);margin-top:9px;padding-top:9px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
+      +'<div><label class="fl">日時</label><input id="meet-at-'+custId+'" type="datetime-local" class="inp2"></div>'
+      +'<div><label class="fl">場所・方法</label><input id="meet-place-'+custId+'" class="inp2" placeholder="例：来社／オンライン" style="width:150px;"></div>'
+      +'<div style="flex:1;min-width:160px;"><label class="fl">議題（任意）</label><input id="meet-note-'+custId+'" class="inp2" style="width:100%;" placeholder="例：四半期レビュー"></div>'
+      +'<button class="btn2" onclick="saveNextMeeting(\''+custId+'\',\''+(id||'')+'\')">保存</button>'
+      +'<button class="ghost" style="font-size:12px;" onclick="loadNextMeeting(\''+custId+'\')">取消</button>'
+      +'<span id="meet-msg-'+custId+'" style="font-size:12px;"></span>'
+    +'</div>';
+    // 既存値のプリフィル
+    if(id){
+      sb.from('meetings_scheduled').select('*').eq('id',id).maybeSingle().then(function(r){
+        var m=r.data; if(!m)return;
+        var dt=new Date(m.meet_at); var pad=function(n){return String(n).padStart(2,'0');};
+        var local=dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate())+'T'+pad(dt.getHours())+':'+pad(dt.getMinutes());
+        if($('meet-at-'+custId)) $('meet-at-'+custId).value=local;
+        if($('meet-place-'+custId)) $('meet-place-'+custId).value=m.place||'';
+        if($('meet-note-'+custId)) $('meet-note-'+custId).value=m.note||'';
+      });
+    }
+  }
+  async function saveNextMeeting(custId, id){
+    var atv=($('meet-at-'+custId)||{}).value, msg=$('meet-msg-'+custId);
+    if(!atv){ if(msg){ msg.style.color='#A83030'; msg.textContent='日時を入力してください'; } return; }
+    var row={ meet_at:new Date(atv).toISOString(), place:((($('meet-place-'+custId)||{}).value||'').trim()||null),
+      note:((($('meet-note-'+custId)||{}).value||'').trim()||null) };
+    var res;
+    if(id){ res=await sb.from('meetings_scheduled').update(row).eq('id',id); }
+    else { row.customer_id=custId; row.created_by=ME; row.status='scheduled'; res=await sb.from('meetings_scheduled').insert(row); }
+    if(res.error){ if(msg){ msg.style.color='#A83030'; msg.textContent='保存エラー：'+res.error.message; } return; }
+    loadNextMeeting(custId);
+    if(typeof loadClients==='function' && CL_CACHE.clients && CL_CACHE.clients.length) loadClients();
+  }
+  async function doneNextMeeting(id, custId){
+    await sb.from('meetings_scheduled').update({ status:'done' }).eq('id',id);
+    loadNextMeeting(custId);
+  }
+  // 顧客側：次回面談の表示（アラート付き）
+  async function loadMyNextMeeting(){
+    var box=$('my-nextmeet'); if(!box)return;
+    var res=await sb.from('meetings_scheduled').select('*').eq('customer_id',ME).eq('status','scheduled').order('meet_at',{ascending:true}).limit(1);
+    if(res.error || !(res.data||[]).length){ box.innerHTML=''; return; }
+    var m=res.data[0];
+    var cd=meetCountdown(m.meet_at);
+    var soon=(cd.cls==='red'||cd.cls==='gold');
+    box.innerHTML='<div class="panel" style="'+(soon?'border:2px solid var(--blue);':'')+'">'
+      +'<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">'
+      +'<span style="font-size:22px;">📅</span>'
+      +'<div style="flex:1;min-width:160px;"><div style="font-size:13px;font-weight:700;color:var(--navy);">次回の面談予定</div>'
+      +'<div style="font-size:15px;font-weight:700;color:var(--ink);margin-top:2px;">'+esc(fmtMeetWhen(m.meet_at))+'</div></div>'
+      +'<span class="tag '+cd.cls+'" style="font-size:12px;">'+cd.txt+'</span></div>'
+      +(m.place?'<div style="font-size:12.5px;color:var(--muted);margin-top:6px;">場所・方法：'+esc(m.place)+'</div>':'')
+      +(m.note?'<div style="font-size:12.5px;color:var(--muted);margin-top:3px;">議題：'+esc(m.note)+'</div>':'')
+      +(soon?'<div style="font-size:12px;color:var(--blue);background:var(--soft);border-radius:9px;padding:8px 11px;margin-top:8px;">まもなく面談です。ご準備やご相談事項があれば、メッセージからお知らせください。</div>':'')
+    +'</div>';
+  }
   function toggleMeeting(id){ var d=$('mnd-'+id); if(d) d.classList.toggle('hidden'); }
   // 顧客側：共有された議事録を閲覧
   async function loadMyMeetings(){
@@ -3383,7 +3508,8 @@
       +'<span style="font-size:12px;color:#4A6080;">進捗ステージ</span><select id="cl-stage" class="inp2" onchange="setStage(\''+custId+'\',this.value)"><option value="1">1. 現状把握</option><option value="2">2. AI活用・自動化</option><option value="3">3. コスト削減</option><option value="4">4. 生まれた余力</option><option value="5">5. 次の投資</option></select><span id="stage-msg" style="font-size:11px;"></span>'
       +'<span style="flex:1;"></span>'
       +'<button class="btn2" onclick="openMonthlyReport()" style="background:#fff;color:#2C6EBD;border:1.5px solid #2C6EBD;">📄 月次レポート</button>'
-    +'</div>';
+    +'</div>'
+    +'<div id="cl-nextmeet" style="margin-bottom:12px;">読み込み中...</div>';
     // ---- タブバー ----
     var tabs='<div id="cl-tabbar" style="display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid #D0DCF0;padding-bottom:10px;margin-bottom:14px;">'
       +'<button class="sbtn on" onclick="clTab(\'msg\',this)">💬 メッセージ・提案</button>'
@@ -3561,6 +3687,7 @@
     loadClientStage(custId);
     loadMeetingNotes(custId);
     loadDiagInterests(custId);
+    loadNextMeeting(custId);
   }
 
   async function loadClientDiag(custId){
