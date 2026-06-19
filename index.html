@@ -838,18 +838,18 @@
           +'</div>'
           +'<div id="act-list" style="margin-top:12px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-ai"><div class="ph">AI自動化診断（全業務対応）</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">事務だけでなく、現場・営業・物流など会社のあらゆる業務を対象に、AIで自動化・効率化できるものを診断します。気になる業務をタップして実行するだけです。</div>'
+        +'<div class="panel" id="sec-ai"><div class="ph">AI活用・自動化のご相談</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">「こんな業務を楽にできたら」という気になることを選んで送るだけ。担当パートナーがAIで具体的な自動化プランを診断し、ご提案します。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
-            +'<div style="flex:1;min-width:200px;"><label class="fl">業種・事業内容</label><input id="ai-gyo" class="inp2" style="width:100%;" placeholder="例：金属加工業、調剤薬局 など"></div>'
-            +'<div><label class="fl">従業員規模</label><select id="ai-size" class="inp2"><option>〜5名</option><option selected>6〜20名</option><option>21〜50名</option><option>51名以上</option></select></div>'
+            +'<div style="flex:1;min-width:200px;"><label class="fl">業種・事業内容（任意）</label><input id="ai-gyo" class="inp2" style="width:100%;" placeholder="例：金属加工業、調剤薬局 など"></div>'
           +'</div>'
-          +'<label class="fl" style="margin-top:10px;">自動化を検討したい業務（複数選択可）</label>'
+          +'<label class="fl" style="margin-top:10px;">楽にしたい・気になる業務（複数選択可）</label>'
           +'<div id="ai-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px;"></div>'
           +'<label class="fl">具体的な困りごと（任意）</label>'
           +'<input id="ai-note" class="inp2" style="width:100%;margin-bottom:10px;" placeholder="例：請求書の作成と入金確認に毎月20時間かかっている">'
-          +'<button class="btn2" id="ai-run" onclick="runAi()">AIに自動化提案をもらう</button>'
+          +'<button class="btn2" id="ai-send" onclick="sendInterests()">担当パートナーに相談する</button>'
           +'<div id="ai-result" style="margin-top:14px;"></div>'
+          +'<div id="my-ai-props" style="margin-top:14px;"></div>'
         +'</div>'
         +'<div class="panel" id="sec-ins"><div class="ph">試算結果（パートナーからの共有）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">保険（事業保障・損害保険・養老保険）や相続・贈与などの試算は担当パートナーが行い、ここに共有されます。試算のご希望や前提条件の変更は「メッセージ」でお伝えください。</div>'
@@ -1026,7 +1026,7 @@
 
     window.__eff=eff;
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); }
+    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); }
     else if(eff==='consultant'){ loadClients(); loadOwnFunding(); loadReportDrafts(); loadKnowledge(); loadMaDeals(); loadPdca(); }
     else { loadAdmin(); }
     startNotifPolling(eff);
@@ -2351,6 +2351,60 @@
       pros:'返済不要が最大の利点。設備・IT・研究開発と相性が良い', cons:'後払い・採択審査あり・つなぎ資金が別途必要。即時の資金需要には不向き',
       best:['early','growth','stable'] },
   ];
+  // ===== パートナー：AI自動化診断（Phase 40） =====
+  async function loadDiagInterests(custId){
+    var box=$('diag-interests'); if(!box)return;
+    var res=await sb.from('automation_interests').select('*').eq('customer_id',custId).eq('category','automation').order('created_at',{ascending:false}).limit(30);
+    if(res.error){ box.innerHTML=''; return; }
+    var rows=res.data||[];
+    if(!rows.length){ box.innerHTML='<div style="font-size:11.5px;color:#8AA0BE;background:var(--soft);border-radius:9px;padding:9px 12px;">この顧客からの相談はまだありません。業種を入れて直接診断することもできます。</div>'; return; }
+    var h='<div style="border:1px solid var(--softline);border-radius:10px;padding:10px 12px;background:var(--soft);">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:5px;">顧客から届いた「気になる業務」'+rows.length+'件</div>';
+    rows.forEach(function(r){
+      var isNew=(r.status==='new');
+      h+='<div style="font-size:12px;color:var(--ink);margin:3px 0;">'+(isNew?'<span class="tag red">新着</span> ':'')+esc(r.title||'')+(r.detail?'<span style="color:#8AA0BE;"> — '+esc(r.detail)+'</span>':'')+'</div>';
+    });
+    h+='<div style="font-size:11px;color:#8AA0BE;margin-top:6px;">これらを踏まえて下のボタンで診断できます。</div></div>';
+    box.innerHTML=h;
+  }
+  async function runDiag(custId){
+    var btn=$('diag-run'), result=$('diag-result');
+    var gyo=($('diag-gyo')||{}).value.trim(), size=($('diag-size')||{}).value, note=($('diag-note')||{}).value.trim();
+    // 顧客が送った興味を文脈に取り込む
+    var ir=await sb.from('automation_interests').select('title,detail').eq('customer_id',custId).eq('category','automation').order('created_at',{ascending:false}).limit(30);
+    var interests=(ir.data||[]).map(function(x){ return x.title+(x.detail?('（'+x.detail+'）'):''); }).join('、');
+    btn.disabled=true; var ot=btn.textContent; btn.textContent='AIが分析中...';
+    result.innerHTML='<div style="padding:20px;text-align:center;color:#4A6080;font-size:13px;">AIが自動化案を作成しています...</div>';
+    var sys='あなたは中小企業の業務改善とAI活用に精通したコンサルタントです。バックオフィスに限らず、現場・営業・物流・製造・マーケティングなど全部門が対象です。後継者不在も視野に入る黒字中小企業の生産性向上と財務貢献を目的に、現実的で着手しやすい自動化案を提案します。出力は指定されたJSON配列のみとし、前置き・後置き・コードフェンスを一切付けないこと。';
+    var usr='対象企業の情報：\n業種・事業内容: '+(gyo||'（未記入）')+'\n従業員規模: '+size+'\n顧客が相談してきた気になる業務: '+(interests||'（指定なし）')+'\nパートナーからの補足: '+(note||'（特になし）')+'\n\nこの企業で、AIや軽量なデジタルツールで自動化・効率化できる業務（部門を問わず）を5件程度、効果の大きい順に提案してください。顧客が挙げた業務を優先的にカバーし、中小企業が無理なく始められる現実的な手段を優先。推奨アプローチには「Claudeプロジェクト」「Custom GPT」「専用AIアシスタント」「RPA」「既存SaaS連携」など具体的な手段名を含めてください。\n\n必ず次の形式のJSON配列のみを出力（説明・コードフェンス禁止）：\n[{"業務":"...","現状課題":"...","自動化案":"...","推奨アプローチ":"...","期待効果":"...","難易度":"低|中|高","優先度":"高|中|低","月間削減目安":"例: 約20時間/月"}]';
+    try{
+      var res=await sb.functions.invoke('ai-proxy', { body: { system:sys, messages:[{role:'user',content:usr}], model:'claude-sonnet-4-6', max_tokens:2500 } });
+      if(res.error){ result.innerHTML='<div style="font-size:12px;color:#A83030;line-height:1.6;">呼び出しエラー：'+esc(res.error.message||String(res.error))+'</div>'; }
+      else if(res.data && res.data.ok===false){ result.innerHTML='<div style="font-size:12px;color:#A83030;">'+esc(res.data.error||'エラー')+'</div>'; }
+      else {
+        var txt=(res.data && res.data.text)|| (res.data&&res.data.content&&res.data.content.map?res.data.content.map(function(c){return c.text||'';}).join(''):'') ||'';
+        window.__diagText=txt;
+        result.innerHTML=aiCards(txt, false)
+          +'<div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">'
+            +'<button class="btn2" onclick="shareDiag(\''+custId+'\',true)">この診断を顧客に共有</button>'
+            +'<button class="ghost" style="font-size:12px;" onclick="shareDiag(\''+custId+'\',false)">共有せず保存</button>'
+            +'<span id="diag-share-msg" style="font-size:12px;"></span>'
+          +'</div>';
+      }
+    }catch(e){ result.innerHTML='<div style="font-size:12px;color:#A83030;">エラー：'+esc(String((e&&e.message)||e))+'</div>'; }
+    btn.disabled=false; btn.textContent=ot;
+  }
+  async function shareDiag(custId, share){
+    var msg=$('diag-share-msg');
+    var txt=window.__diagText||'';
+    if(!txt){ if(msg){ msg.style.color='#A83030'; msg.textContent='診断結果がありません'; } return; }
+    var res=await sb.from('ai_proposals').insert({ customer_id:custId, author_id:ME, source:'automation', result_text:txt, shared:!!share });
+    if(res.error){ if(msg){ msg.style.color='#A83030'; msg.textContent='保存エラー：'+res.error.message; } return; }
+    // 顧客の興味を対応済みにする
+    if(share){ try{ await sb.from('automation_interests').update({ status:'addressed' }).eq('customer_id',custId).eq('category','automation').eq('status','new'); }catch(e){} }
+    if(msg){ msg.style.color='#1E6B45'; msg.textContent=share?'顧客に共有しました':'保存しました'; }
+    loadDiagInterests(custId);
+  }
   function runLoanNav(custId){
     var use=$('ln-use').value, amount=Number($('ln-amount').value||0),
         speed=$('ln-speed').value, phase=$('ln-phase').value, col=$('ln-collateral').value;
@@ -3421,7 +3475,18 @@
     +'</div>';
     // ---- タブ3：AIツール・試算 ----
     var tabTools='<div id="ctab-tools" class="hidden">'
-      +'<div class="ph" style="font-size:13px;">💴 融資ナビ（最適な融資の優先順位）</div>'
+      +'<div class="ph" style="font-size:13px;">🤖 AI自動化診断</div>'
+      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">顧客が送った「気になる業務」を踏まえてAIが自動化プランを診断します。結果を確認して顧客に共有できます。</div>'
+      +'<div id="diag-interests" style="margin-bottom:8px;"></div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+        +'<div style="flex:1;min-width:160px;"><label class="fl">業種・事業内容</label><input id="diag-gyo" class="inp2" style="width:100%;" placeholder="例：金属加工業"></div>'
+        +'<div><label class="fl">従業員規模</label><select id="diag-size" class="inp2"><option>〜5名</option><option selected>6〜20名</option><option>21〜50名</option><option>51名以上</option></select></div>'
+      +'</div>'
+      +'<label class="fl" style="margin-top:8px;">補足・重点を置きたい点（任意）</label>'
+      +'<input id="diag-note" class="inp2" style="width:100%;margin-bottom:8px;" placeholder="顧客の困りごとや、特に診断したい業務など">'
+      +'<button class="btn2" id="diag-run" onclick="runDiag(\''+custId+'\')">AIで診断する</button>'
+      +'<div id="diag-result" style="margin-top:12px;"></div>'
+      +'<div class="ph" style="font-size:13px;margin-top:18px;">💴 融資ナビ（最適な融資の優先順位）</div>'
       +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">資金の性質を選ぶと、適した融資制度を優先順位つきで提示します。判定は制度の特徴に基づく確定ルール（AIではありません）。最終判断は金融機関・専門家にご確認ください。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
         +'<div><label class="fl">資金使途</label><select id="ln-use" class="inp2"><option value="startup">創業・開業資金</option><option value="working">運転資金（仕入・人件費等）</option><option value="equip">設備投資</option><option value="bridge">補助金・入金までのつなぎ</option><option value="emergency">業績悪化・資金繰り改善</option><option value="ma">M&A・事業承継資金</option><option value="rd">研究開発・新規事業</option></select></div>'
@@ -3495,6 +3560,7 @@
     loadClientNotes(custId);
     loadClientStage(custId);
     loadMeetingNotes(custId);
+    loadDiagInterests(custId);
   }
 
   async function loadClientDiag(custId){
@@ -3564,39 +3630,33 @@
     return h;
   }
   function aiToggle(id){ var d=$(id), a=$(id+'_a'); if(!d)return; var open=d.style.display!=='none'; d.style.display=open?'none':'block'; if(a)a.textContent=open?'▸':'▾'; }
-  async function runAi(){
-    var btn=$('ai-run'), result=$('ai-result');
-    var gyo=$('ai-gyo').value.trim(), size=$('ai-size').value, note=$('ai-note').value.trim();
+  // 顧客：興味を送るだけ（診断はパートナーが実施）
+  async function sendInterests(){
+    var result=$('ai-result');
+    var gyo=($('ai-gyo')||{}).value.trim(), note=($('ai-note')||{}).value.trim();
     var areas=Object.keys(aiSelected);
-    if(areas.length===0 && !note){ result.innerHTML='<div style="font-size:12px;color:#A83030;">業務を1つ以上選ぶか、困りごとを入力してください。</div>'; return; }
-    btn.disabled=true; var ot=btn.textContent; btn.textContent='AIが分析中...';
-    result.innerHTML='<div style="padding:24px;text-align:center;color:#4A6080;font-size:13px;">AIが分析し、自動化案を作成しています...</div>';
-    var sys='あなたは中小企業の業務改善とAI活用に精通したコンサルタントです。バックオフィスに限らず、現場・営業・物流・製造・マーケティングなど全部門が対象です。後継者不在も視野に入る黒字中小企業の生産性向上と財務貢献を目的に、現実的で着手しやすい自動化案を提案します。出力は指定されたJSON配列のみとし、前置き・後置き・コードフェンスを一切付けないこと。';
-    var usr='対象企業の情報：\n業種・事業内容: '+(gyo||'（未記入）')+'\n従業員規模: '+size+'\n自動化を検討したい業務: '+(areas.length?areas.join('、'):'（指定なし）')+'\n具体的な困りごと: '+(note||'（特になし）')+'\n\nこの企業で、AIや軽量なデジタルツールで自動化・効率化できる業務（部門を問わず：事務・営業・現場・物流・製造・マーケ等すべて対象）を5件程度、効果の大きい順に提案してください。中小企業が無理なく始められる現実的な手段を優先し、推奨アプローチには「Claudeプロジェクト」「Custom GPT」「専用AIアシスタント」「RPA」「既存SaaS連携」など具体的な手段名を含めてください。\n\n必ず次の形式のJSON配列のみを出力（説明・コードフェンス禁止）：\n[{"業務":"...","現状課題":"...","自動化案":"...","推奨アプローチ":"...","期待効果":"...","難易度":"低|中|高","優先度":"高|中|低","月間削減目安":"例: 約20時間/月"}]';
-    try{
-      var res=await sb.functions.invoke('ai-proxy', { body: { system:sys, messages:[{role:'user',content:usr}], model:'claude-sonnet-4-6', max_tokens:2500 } });
-      if(res.error){ result.innerHTML='<div style="font-size:12px;color:#A83030;line-height:1.6;">呼び出しエラー：'+esc(res.error.message||String(res.error))+'<br>Edge Function「ai-proxy」が未デプロイか、ANTHROPIC_API_KEY が未設定の可能性があります。</div>'; }
-      else if(res.data && res.data.ok===false){ result.innerHTML='<div style="font-size:12px;color:#A83030;line-height:1.6;">'+esc(res.data.error||'エラーが発生しました')+'</div>'; }
-      else { var txt=(res.data && res.data.text)||''; result.innerHTML=aiCards(txt, true); saveDiagnosis(txt); }
-    }catch(e){ result.innerHTML='<div style="font-size:12px;color:#A83030;">エラー：'+esc(String((e&&e.message)||e))+'</div>'; }
-    btn.disabled=false; btn.textContent=ot;
-  }
-
-  async function saveDiagnosis(txt){
-    try{ await sb.from('ai_diagnoses').insert({ customer_id:ME, result_text:txt }); }catch(e){}
-  }
-
-  async function shareInterests(){
-    var msg=$('ai-share-msg');
-    var picks=document.querySelectorAll('.ai-pick:checked');
-    if(!picks.length){ if(msg){ msg.style.color='#A83030'; msg.textContent='興味のある項目を1つ以上選んでください。'; } return; }
-    var arr=window.__lastProps||[];
+    if(areas.length===0 && !note){ result.innerHTML='<div style="font-size:12px;color:#A83030;">気になる業務を1つ以上選ぶか、困りごとを入力してください。</div>'; return; }
     var rows=[];
-    picks.forEach(function(c){ var it=arr[parseInt(c.getAttribute('data-i'),10)]; if(it){ rows.push({ customer_id:ME, title:(it['業務']||''), detail:((it['自動化案']||'')+' ／ 推奨: '+(it['推奨アプローチ']||'')) }); } });
-    if(!rows.length) return;
+    areas.forEach(function(a){ rows.push({ customer_id:ME, category:'automation', title:a, detail:(gyo?('業種: '+gyo):''), status:'new' }); });
+    if(note){ rows.push({ customer_id:ME, category:'automation', title:'（困りごと）', detail:note+(gyo?(' ／ 業種: '+gyo):''), status:'new' }); }
     var res=await sb.from('automation_interests').insert(rows);
-    if(res.error){ if(msg){ msg.style.color='#A83030'; msg.textContent='共有エラー：'+res.error.message; } return; }
-    if(msg){ msg.style.color='#1E6B45'; msg.textContent=rows.length+'件をパートナーに共有しました。'; }
+    if(res.error){ result.innerHTML='<div style="font-size:12px;color:#A83030;">送信エラー：'+esc(res.error.message)+'</div>'; return; }
+    result.innerHTML='<div style="font-size:13px;color:#1E6B45;background:#E6F4EC;border-radius:10px;padding:12px 14px;">✅ '+rows.length+'件のご相談を担当パートナーに送りました。AIで自動化プランを診断のうえ、ご提案します。</div>';
+    aiSelected={}; buildAiChips(); if($('ai-note')) $('ai-note').value='';
+  }
+  // 顧客：パートナーから共有された診断提案を閲覧
+  async function loadMyAiProps(){
+    var box=$('my-ai-props'); if(!box)return;
+    var res=await sb.from('ai_proposals').select('*').eq('customer_id',ME).eq('shared',true).order('created_at',{ascending:false}).limit(10);
+    if(res.error || !(res.data||[]).length){ box.innerHTML=''; return; }
+    var h='<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">💡 担当パートナーからの自動化プラン</div>';
+    (res.data||[]).forEach(function(p){
+      h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:4px 4px;margin-bottom:10px;background:var(--card);">'
+        +aiCards(p.result_text||'', false)
+        +'<div style="font-size:10.5px;color:#8AA0BE;padding:0 12px 8px;">'+esc((p.created_at||'').slice(0,10))+' にご提案</div>'
+      +'</div>';
+    });
+    box.innerHTML=h;
   }
 
   async function loadClientInterests(custId){
