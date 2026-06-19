@@ -802,6 +802,7 @@
         +'<div class="panel" id="sec-reports"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">📊 月次レポート<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMyReports()">↺ 更新</span></div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;">担当パートナーが毎月の数字とコメントをまとめたレポートです。</div>'
           +'<div id="my-reports">読み込み中...</div>'
+          +'<div id="my-meetings" style="margin-top:14px;"></div>'
         +'</div>'
         +'<div class="panel" id="sec-mypdca"><div class="ph">🔁 経営課題の取り組み</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;">担当パートナーと一緒に進めている課題の進捗です。詳しくはメッセージでご相談ください。</div>'
@@ -1025,7 +1026,7 @@
 
     window.__eff=eff;
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); }
+    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); }
     else if(eff==='consultant'){ loadClients(); loadOwnFunding(); loadReportDrafts(); loadKnowledge(); loadMaDeals(); loadPdca(); }
     else { loadAdmin(); }
     startNotifPolling(eff);
@@ -1145,7 +1146,141 @@
     if(msg){msg.style.color='#1E6B45'; msg.textContent='保存しました（顧客の画面にも反映されます）';}
     reloadClientFin(custId);
   }
-
+  // ===== ファイル取り込み＋試算表AI読み取り（Phase 39） =====
+  var FIN_IMPORT_ROWS=null;
+  function loadSheetJS(){
+    return new Promise(function(resolve,reject){
+      if(window.XLSX) return resolve(window.XLSX);
+      var s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+      s.onload=function(){ resolve(window.XLSX); };
+      s.onerror=function(){ reject(new Error('解析ライブラリの読み込みに失敗しました')); };
+      document.head.appendChild(s);
+    });
+  }
+  function normYM(v){
+    if(v===null||v===undefined) return null;
+    var s=String(v).trim();
+    var m=s.match(/(\d{4})\D{0,2}(\d{1,2})/); // 2026-05, 2026/5, 2026年5月
+    if(m){ var y=m[1], mo=String(Number(m[2])).padStart(2,'0'); if(Number(m[2])>=1&&Number(m[2])<=12) return y+'-'+mo; }
+    return null;
+  }
+  function toMan(v){ // 「万円」前提。数値化のみ（円→万円の自動換算はしない＝事故防止）
+    if(v===null||v===undefined||v==='') return null;
+    var n=Number(String(v).replace(/[,，\s円万]/g,''));
+    return isNaN(n)?null:n;
+  }
+  async function onFinFile(custId){
+    var inp=$('fin-file'); var msg=$('fin-import-msg');
+    if(!inp||!inp.files||!inp.files[0]) return;
+    var file=inp.files[0];
+    var ext=(file.name.split('.').pop()||'').toLowerCase();
+    msg.style.color='#4A6080'; msg.textContent='読み取り中…';
+    try{
+      if(ext==='csv'||ext==='xlsx'||ext==='xls'){
+        await parseSheet(file);
+      } else if(ext==='pdf'||ext==='png'||ext==='jpg'||ext==='jpeg'){
+        await parseByAI(file, ext);
+      } else { throw new Error('対応していない形式です'); }
+      msg.textContent='';
+      renderFinPreview(custId);
+    }catch(e){ msg.style.color='#A83030'; msg.textContent='読み取りに失敗：'+e.message; }
+  }
+  async function parseSheet(file){
+    var XLSX=await loadSheetJS();
+    var buf=await file.arrayBuffer();
+    var wb=XLSX.read(buf,{type:'array'});
+    var ws=wb.Sheets[wb.SheetNames[0]];
+    var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    // 列見出しを探す（年月/売上/利益っぽい列）
+    var headerRow=-1, col={ym:-1,rev:-1,prof:-1};
+    for(var i=0;i<Math.min(rows.length,10);i++){
+      var r=rows[i].map(function(x){ return String(x); });
+      r.forEach(function(cell,ci){
+        if(/年月|月度|期間|date|month/i.test(cell) && col.ym<0) col.ym=ci;
+        if(/売上|収入|revenue|sales/i.test(cell) && col.rev<0) col.rev=ci;
+        if(/利益|営業利益|profit|income/i.test(cell) && col.prof<0) col.prof=ci;
+      });
+      if(col.ym>=0 && col.rev>=0){ headerRow=i; break; }
+    }
+    var out=[];
+    if(headerRow>=0){
+      for(var j=headerRow+1;j<rows.length;j++){
+        var rr=rows[j];
+        var ym=normYM(rr[col.ym]);
+        if(!ym) continue;
+        out.push({ ym:ym, revenue:toMan(col.rev>=0?rr[col.rev]:''), profit:toMan(col.prof>=0?rr[col.prof]:''), memo:'' });
+      }
+    }
+    if(!out.length){
+      // 見出しが見つからない→AIにフォールバックさせるためエラー
+      throw new Error('年月・売上の列を自動認識できませんでした。列見出しに「年月」「売上」「利益」を含めるか、PDF/画像でAI読み取りをお試しください');
+    }
+    FIN_IMPORT_ROWS=out;
+  }
+  async function parseByAI(file, ext){
+    var b64=await new Promise(function(resolve,reject){
+      var r=new FileReader(); r.onload=function(){ resolve(String(r.result).split(',')[1]); }; r.onerror=reject; r.readAsDataURL(file);
+    });
+    var media = ext==='pdf' ? 'application/pdf' : (ext==='png'?'image/png':'image/jpeg');
+    var sys='あなたは試算表・決算書を読み取る経理アシスタントです。画像/PDFから月次の財務数値を抽出します。'
+      +'必ず次のJSON配列のみで出力してください（前置き・コードブロックなし）：'
+      +'[{"ym":"YYYY-MM","revenue":数値,"profit":数値}] '
+      +'revenue=売上高、profit=営業利益。単位は必ず「万円」に統一する（千円・円表記なら万円へ換算）。読み取れない値はnull。年月が判別できる行のみ含める。憶測で数値を作らない。';
+    var content=[{ type:(ext==='pdf'?'document':'image'), source:{ type:'base64', media_type:media, data:b64 } },
+                 { type:'text', text:'この資料から月次の売上高・営業利益を抽出してください。' }];
+    var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:[{role:'user',content:content}], model:'claude-sonnet-4-6', max_tokens:1500 } });
+    if(res.error) throw new Error(res.error.message||'AI読み取りに失敗');
+    var txt=''; try{ var d=res.data; txt=(d&&d.content&&d.content.map?d.content.map(function(c){return c.text||'';}).join(''):(d&&d.text)||String(d||'')); }catch(_){ txt=String(res.data||''); }
+    var arr=null; try{ var i1=txt.indexOf('['), i2=txt.lastIndexOf(']'); arr=JSON.parse(txt.slice(i1,i2+1)); }catch(_){ arr=null; }
+    if(!arr||!arr.length) throw new Error('数値を読み取れませんでした。手入力をお願いします');
+    FIN_IMPORT_ROWS=arr.map(function(x){ return { ym:normYM(x.ym), revenue:toMan(x.revenue), profit:toMan(x.profit), memo:'AI読み取り' }; })
+      .filter(function(x){ return x.ym; });
+    if(!FIN_IMPORT_ROWS.length) throw new Error('有効な年月を読み取れませんでした');
+  }
+  function renderFinPreview(custId){
+    var box=$('fin-preview'); if(!box||!FIN_IMPORT_ROWS)return;
+    var rows=FIN_IMPORT_ROWS.slice().sort(function(a,b){ return a.ym<b.ym?-1:1; });
+    var h='<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">読み取り結果（'+rows.length+'件）— 確認・修正してください</div>'
+      +'<div style="overflow-x:auto;"><table class="ft" style="width:100%;border-collapse:collapse;font-size:12px;min-width:340px;">'
+      +'<tr style="background:var(--soft);"><th style="padding:5px 8px;text-align:left;">年月</th><th style="padding:5px 8px;text-align:right;">売上(万円)</th><th style="padding:5px 8px;text-align:right;">営業利益(万円)</th><th></th></tr>';
+    rows.forEach(function(r,i){
+      h+='<tr style="border-bottom:1px solid var(--softline);">'
+        +'<td style="padding:3px 6px;"><input class="inp2" style="width:100px;font-size:12px;" value="'+esc(r.ym||'')+'" onchange="editImport('+i+',\'ym\',this.value)"></td>'
+        +'<td style="padding:3px 6px;text-align:right;"><input class="inp2" type="number" style="width:90px;font-size:12px;text-align:right;" value="'+(r.revenue==null?'':r.revenue)+'" onchange="editImport('+i+',\'revenue\',this.value)"></td>'
+        +'<td style="padding:3px 6px;text-align:right;"><input class="inp2" type="number" style="width:90px;font-size:12px;text-align:right;" value="'+(r.profit==null?'':r.profit)+'" onchange="editImport('+i+',\'profit\',this.value)"></td>'
+        +'<td style="padding:3px 6px;"><button class="ghost" style="font-size:12px;" onclick="removeImport('+i+',\''+custId+'\')">削除</button></td>'
+      +'</tr>';
+    });
+    h+='</table></div>'
+      +'<div style="font-size:11px;color:#9A7314;background:#FAEEDA;border-radius:8px;padding:7px 10px;margin-top:8px;">数値は「万円」単位です。単位が違う場合は修正してください。既存の同じ年月のデータがある場合は、別エントリとして追加されます。</div>'
+      +'<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">'
+        +'<button class="btn2" onclick="commitImport(\''+custId+'\')">この内容で'+rows.length+'件を確定する</button>'
+        +'<button class="ghost" style="font-size:12px;" onclick="cancelImport()">キャンセル</button>'
+        +'<span id="fin-commit-msg" style="font-size:12px;"></span>'
+      +'</div>';
+    box.innerHTML=h;
+  }
+  function editImport(i,key,val){
+    if(!FIN_IMPORT_ROWS||!FIN_IMPORT_ROWS[i])return;
+    if(key==='ym') FIN_IMPORT_ROWS[i].ym=normYM(val)||val;
+    else FIN_IMPORT_ROWS[i][key]=(val===''?null:Number(val));
+  }
+  function removeImport(i,custId){ if(FIN_IMPORT_ROWS){ FIN_IMPORT_ROWS.splice(i,1); renderFinPreview(custId); } }
+  function cancelImport(){ FIN_IMPORT_ROWS=null; var b=$('fin-preview'); if(b) b.innerHTML=''; var f=$('fin-file'); if(f) f.value=''; }
+  async function commitImport(custId){
+    if(!FIN_IMPORT_ROWS||!FIN_IMPORT_ROWS.length)return;
+    var msg=$('fin-commit-msg');
+    var valid=FIN_IMPORT_ROWS.filter(function(r){ return /^\d{4}-\d{2}$/.test(r.ym||''); });
+    if(!valid.length){ if(msg){ msg.style.color='#A83030'; msg.textContent='有効な年月の行がありません'; } return; }
+    var payload=valid.map(function(r){ return { customer_id:custId, year_month:r.ym, revenue:r.revenue, profit:r.profit, memo:(r.memo||'ファイル取込') }; });
+    var res=await sb.from('financial_entries').insert(payload);
+    if(res.error){ if(msg){ msg.style.color='#A83030'; msg.textContent='保存エラー：'+res.error.message; } return; }
+    if(msg){ msg.style.color='#1E6B45'; msg.textContent=valid.length+'件を保存しました'; }
+    FIN_IMPORT_ROWS=null; var f=$('fin-file'); if(f) f.value='';
+    setTimeout(function(){ var b=$('fin-preview'); if(b) b.innerHTML=''; }, 1500);
+    reloadClientFin(custId);
+  }
   async function saveProfileInfo(){
     var c=$('pi-company').value.trim(), n=$('pi-contact').value.trim();
     var res=await sb.from('profiles').update({ company_name:(c||null), contact_name:(n||null) }).eq('id',ME);
@@ -2289,6 +2424,104 @@
     t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1E6B45;color:#fff;font-size:13px;padding:10px 18px;border-radius:99px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2);';
     document.body.appendChild(t); setTimeout(function(){ t.remove(); },2600);
   }
+  // ===== 議事録（Phase 38）：面談メモのAI整形・保存 =====
+  var MN_LAST=null;
+  async function runMeetingAi(custId){
+    var raw=($('mn-raw')||{}).value||''; var msg=$('mn-msg');
+    if(!raw.trim()){ if(msg){ msg.style.color='#A83030'; msg.textContent='面談メモを入力してください'; } return; }
+    if(msg){ msg.style.color='#4A6080'; msg.textContent='AIが整形しています…'; }
+    var sys='あなたは中小企業支援の経営コンサルタントの議事録担当です。面談の走り書きメモを、関係者が読みやすい議事録に整形します。'
+      +'必ず次のJSON形式のみで出力してください（前置き・コードブロック記号なし）：'
+      +'{"summary":"...","todos":[{"text":"...","owner":"パートナー/顧客/未定"}]}'
+      +' summaryは見出しなしのプレーンテキストで、(1)要点 (2)決定事項 (3)次回までの宿題 (4)次回アジェンダ案 の順に、各項目を「●」で始まる箇条書きにする。Markdown記号(#や**)は使わない。'
+      +' todosは具体的な行動を3〜8個。ownerは文脈から推定し不明なら未定。日本語・です/ます調。事実にない内容は創作しない。';
+    var usr='次の面談メモを議事録に整形してください。\n\n'+raw;
+    try{
+      var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:[{role:'user',content:usr}], model:'claude-sonnet-4-6', max_tokens:1500 } });
+      if(res.error) throw new Error(res.error.message||'AI呼び出しエラー');
+      var txt=''; try{ var d=res.data; txt=(d&&d.content&&d.content.map?d.content.map(function(c){return c.text||'';}).join(''):(d&&d.text)||String(d||'')); }catch(_){ txt=String(res.data||''); }
+      var obj=null; try{ var i1=txt.indexOf('{'), i2=txt.lastIndexOf('}'); obj=JSON.parse(txt.slice(i1,i2+1)); }catch(_){ obj=null; }
+      if(!obj || !obj.summary){ obj={ summary:txt.trim(), todos:[] }; }
+      MN_LAST={ summary:obj.summary, todos:obj.todos||[] };
+      if(msg) msg.textContent='';
+      renderMeetingResult(custId);
+    }catch(e){ if(msg){ msg.style.color='#A83030'; msg.textContent='整形に失敗しました：'+e.message; } }
+  }
+  function mnFmt(t){ return esc(String(t||'')).replace(/^\n+/,'').replace(/\n{3,}/g,'\n\n'); }
+  function renderMeetingResult(custId){
+    var box=$('mn-result'); if(!box||!MN_LAST)return;
+    var todos=MN_LAST.todos||[];
+    var h='<div style="border:1px solid var(--softline);border-radius:11px;padding:13px 14px;background:var(--soft);">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">整形された議事録（編集できます）</div>'
+      +'<textarea id="mn-summary" class="inp2" rows="9" style="width:100%;">'+esc(MN_LAST.summary||'')+'</textarea>';
+    if(todos.length){
+      h+='<div style="font-size:12px;font-weight:700;color:var(--navy);margin:10px 0 4px;">抽出されたToDo</div>';
+      todos.forEach(function(t,i){
+        h+='<div style="display:flex;align-items:center;gap:6px;margin:3px 0;font-size:12.5px;color:var(--ink);">'
+          +'<span class="tag '+(t.owner==='顧客'?'gold':(t.owner==='パートナー'?'blue':'gray'))+'">'+esc(t.owner||'未定')+'</span>'
+          +'<span>'+esc(t.text||'')+'</span></div>';
+      });
+    }
+    h+='<div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">'
+      +'<label style="font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer;"><input type="checkbox" id="mn-share"> 顧客にも共有する</label>'
+      +'<span style="flex:1;"></span>'
+      +'<button class="btn2" onclick="saveMeeting(\''+custId+'\')">議事録を保存</button>'
+      +'<span id="mn-save-msg" style="font-size:12px;"></span>'
+    +'</div></div>';
+    box.innerHTML=h;
+  }
+  async function saveMeeting(custId){
+    if(!MN_LAST)return;
+    var msg=$('mn-save-msg');
+    var row={ customer_id:custId, author_id:ME,
+      meeting_date:(($('mn-date')||{}).value||null),
+      title:((($('mn-title')||{}).value||'').trim()||null),
+      raw_text:(($('mn-raw')||{}).value||''),
+      summary:(($('mn-summary')||{}).value||MN_LAST.summary),
+      todos:MN_LAST.todos||[],
+      shared:!!(($('mn-share')||{}).checked) };
+    var res=await sb.from('meeting_notes').insert(row);
+    if(res.error){ if(msg){ msg.style.color='#A83030'; msg.textContent='保存エラー：'+res.error.message; } return; }
+    if(msg){ msg.style.color='#1E6B45'; msg.textContent='保存しました'; }
+    ['mn-raw','mn-title'].forEach(function(id){ if($(id)) $(id).value=''; });
+    $('mn-result').innerHTML=''; MN_LAST=null;
+    loadMeetingNotes(custId);
+  }
+  async function loadMeetingNotes(custId){
+    var box=$('mn-history'); if(!box)return;
+    var res=await sb.from('meeting_notes').select('*').eq('customer_id',custId).order('meeting_date',{ascending:false}).limit(20);
+    if(res.error){ box.innerHTML=''; return; }
+    var rows=res.data||[];
+    if(!rows.length){ box.innerHTML='<div style="font-size:11.5px;color:#8AA0BE;">保存された議事録はまだありません。</div>'; return; }
+    var h='<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">過去の議事録（'+rows.length+'件）</div>';
+    rows.forEach(function(r){
+      var tc=(r.todos||[]).length;
+      h+='<div class="clcard" style="cursor:pointer;" onclick="toggleMeeting(\''+r.id+'\')">'
+        +'<div class="cl-top"><span class="cl-nm">'+esc(r.title||'議事録')+'</span>'
+        +'<span class="tag gray" style="margin-left:auto;">'+esc(r.meeting_date||(r.created_at||'').slice(0,10))+'</span>'
+        +(r.shared?'<span class="tag green">共有済</span>':'')
+        +(tc?'<span class="tag blue">ToDo '+tc+'</span>':'')+'</div>'
+        +'<div id="mnd-'+r.id+'" class="hidden" style="margin-top:8px;font-size:12.5px;color:var(--ink);line-height:1.8;white-space:pre-wrap;">'+mnFmt(r.summary)+'</div>'
+      +'</div>';
+    });
+    box.innerHTML=h;
+  }
+  function toggleMeeting(id){ var d=$('mnd-'+id); if(d) d.classList.toggle('hidden'); }
+  // 顧客側：共有された議事録を閲覧
+  async function loadMyMeetings(){
+    var box=$('my-meetings'); if(!box)return;
+    var res=await sb.from('meeting_notes').select('*').eq('customer_id',ME).eq('shared',true).order('meeting_date',{ascending:false}).limit(20);
+    if(res.error || !(res.data||[]).length){ box.innerHTML=''; return; }
+    var h='<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">📝 面談記録</div>';
+    (res.data||[]).forEach(function(r){
+      h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:12px 14px;margin-bottom:9px;background:var(--card);">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:13px;font-weight:700;color:var(--ink);">'+esc(r.title||'面談記録')+'</span>'
+        +'<span style="margin-left:auto;font-size:11px;color:#8AA0BE;">'+esc(r.meeting_date||(r.created_at||'').slice(0,10))+'</span></div>'
+        +'<div style="font-size:12.5px;color:var(--ink);line-height:1.8;white-space:pre-wrap;margin-top:8px;">'+mnFmt(r.summary)+'</div>'
+      +'</div>';
+    });
+    box.innerHTML=h;
+  }
   async function runBizplan(custId){
     var btn=$('bp-run'), msg=$('bp-msg');
     if(btn){ btn.disabled=true; btn.textContent='作成中...（30秒ほどかかります）'; }
@@ -3131,6 +3364,13 @@
         +'<button class="btn2" onclick="saveFinanceFor(\''+custId+'\')">保存</button>'
       +'</div>'
       +'<div id="cfin-msg" style="font-size:12px;margin-top:6px;"></div>'
+      +'<div style="border:1px dashed #C9D6EA;border-radius:11px;padding:12px 14px;margin:10px 0;background:#FBFCFE;">'
+        +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">📄 試算表ファイルから一括入力</div>'
+        +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:8px;">CSV・Excelは自動で読み取ります。PDF・画像はAIが読み取ります。<b>読み取り後に必ず内容を確認・修正してから確定</b>してください（自動では保存されません）。</div>'
+        +'<input type="file" id="fin-file" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg" style="font-size:12px;" onchange="onFinFile(\''+custId+'\')">'
+        +'<div id="fin-import-msg" style="font-size:12px;margin-top:6px;"></div>'
+        +'<div id="fin-preview" style="margin-top:8px;"></div>'
+      +'</div>'
       +'<div id="cl-fin" style="margin:8px 0 6px;">読み込み中...</div>'
       +'<div class="ph" style="font-size:13px;margin-top:18px;">今後の支払予定（代行入力）</div>'
       +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">借入返済・納税・賞与・大口仕入など。顧客の「資金繰りステータス」の残高見通しに反映されます。</div>'
@@ -3192,6 +3432,20 @@
         +'<button class="btn2" onclick="runLoanNav(\''+custId+'\')">診断する</button>'
       +'</div>'
       +'<div id="ln-result" style="margin-top:12px;"></div>'
+      +'<div class="ph" style="font-size:13px;margin-top:18px;">📝 議事録（面談メモのAI整形）</div>'
+      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">面談中のメモを貼り付けて「AIで整形」を押すと、要点・決定事項・ToDo・次回アジェンダに整理します。内容を確認・編集して保存できます。</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">'
+        +'<div><label class="fl">面談日</label><input id="mn-date" type="date" class="inp2" value="'+new Date().toISOString().slice(0,10)+'"></div>'
+        +'<div style="flex:1;min-width:160px;"><label class="fl">タイトル（任意）</label><input id="mn-title" class="inp2" style="width:100%;" placeholder="例：第3四半期 経営会議"></div>'
+      +'</div>'
+      +'<label class="fl">面談メモ（箇条書き・走り書きでOK）</label>'
+      +'<textarea id="mn-raw" class="inp2" rows="5" style="width:100%;" placeholder="例：売上は前年比+8%。粗利が課題。新メニュー導入を検討。次回までに原価表を準備。社長は採用を急ぎたい意向…"></textarea>'
+      +'<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">'
+        +'<button class="btn2" onclick="runMeetingAi(\''+custId+'\')">AIで整形する</button>'
+        +'<span id="mn-msg" style="font-size:12px;"></span>'
+      +'</div>'
+      +'<div id="mn-result" style="margin-top:10px;"></div>'
+      +'<div id="mn-history" style="margin-top:14px;"></div>'
       +'<div class="ph" style="font-size:13px;margin-top:18px;">M&A活用提案（AI）</div>'
       +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">AIでこの顧客向けのM&A方向性を作成し、提案メモとして送れます。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
@@ -3240,6 +3494,7 @@
     loadClientDiag(custId);
     loadClientNotes(custId);
     loadClientStage(custId);
+    loadMeetingNotes(custId);
   }
 
   async function loadClientDiag(custId){
