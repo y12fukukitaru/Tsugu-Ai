@@ -499,7 +499,7 @@
   // 役割ごとの全メニュー定義（ラベル付き）。設定で並び順・表示を変えられる
   function navDefs(r){
     if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','投資・融資マーケット'],['sec-sec','パートナーAI']];
-    if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達'],['sec-market','投資・融資マーケット']];
+    if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達'],['sec-market','投資・融資マーケット'],['sec-broadcast','お知らせ配信']];
     return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','投資・融資マーケット'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
@@ -656,7 +656,13 @@
       +'<div class="panel" id="sec-flow"><div class="ph">成長ロードマップ</div>'
         +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">顧客支援の共通の流れです。</div>'+ stepperHtml() +'</div>'
       +'<div class="panel"><div class="ph">登録状況サマリー</div><div id="adm-sum" class="sumchips" style="margin-top:4px;">読み込み中...</div></div>'
-      +'<div class="panel" id="sec-fde"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">パートナー 一覧・管理<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
+      +'<div class="panel" id="sec-kpi"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">📊 KPI（ステージ・ファネル／稼働）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
+        +'<div style="font-size:12px;color:#8AA0BE;margin:0 0 10px;">①現状把握→②自動化→③M&Aへの到達状況と、直近の稼働を可視化します。</div>'
+        +'<div id="adm-kpi">読み込み中...</div></div>'
+      +'<div class="panel" id="sec-risk"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">🚨 要対応アラート（顧客リスク検知）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
+        +'<div style="font-size:12px;color:#8AA0BE;margin:0 0 10px;">資金繰りスコア低下・接触切れ・ステージ停滞・担当未割当を自動で抽出します。担当パートナーへの指示にお使いください。</div>'
+        +'<div id="adm-risk">読み込み中...</div></div>'
+      +'<div class="panel" id="sec-fde"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">パートナー 一覧・稼働モニタ<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
         +'<input id="adm-fde-search" class="searchbox" style="margin-top:8px;" placeholder="🔍 名前・メールアドレスで検索" oninput="renderAdmFde()">'
         +'<div id="adm-fde" style="margin-top:10px;">読み込み中...</div></div>'
       +'<div class="panel" id="sec-cust"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">顧客 一覧・管理<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
@@ -676,6 +682,15 @@
           +'<button class="sbtn" data-f="all" onclick="setMkbFilter(\'all\',this)">すべて</button>'
         +'</div>'
         +'<div id="market-broker" style="margin-top:4px;">読み込み中...</div></div>'
+      +'<div class="panel" id="sec-broadcast"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">📢 一斉お知らせ配信<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAnnouncements()">↺ 更新</span></div>'
+        +'<div style="font-size:12px;color:#8AA0BE;margin:0 0 8px;">パートナー・顧客のダッシュボードに表示されるお知らせを配信します（新機能・運用ルール周知など）。</div>'
+        +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+          +'<div><label class="fl">配信先</label><select id="bc-aud" class="inp2"><option value="all">全員</option><option value="consultant">パートナーのみ</option><option value="customer">顧客のみ</option></select></div>'
+          +'<div style="flex:1;min-width:200px;"><label class="fl">タイトル</label><input id="bc-title" class="inp2" style="width:100%;" placeholder="例：新機能「AI財務力診断」を公開しました"></div>'
+        +'</div>'
+        +'<div style="margin-top:8px;"><label class="fl">本文</label><textarea id="bc-body" class="inp2" rows="3" style="width:100%;" placeholder="お知らせの内容を入力"></textarea></div>'
+        +'<div style="margin-top:10px;"><button class="btn2" onclick="postAnnouncement()">配信する</button><span id="bc-msg" style="font-size:12px;margin-left:8px;"></span></div>'
+        +'<div id="bc-list" style="margin-top:12px;">読み込み中...</div></div>'
       +ownFundPanelHtml('運営（自社）の資金調達ロードマップ','Tsugu自身の調達計画（シード調達・補助金・クラファン等）をここで管理します。下の全社パイプラインには「運営」区分で表示されます。');
   }
   var FDE_RANKS=['Associate','Senior','Executive','Premium Partner'];
@@ -705,7 +720,17 @@
       if(!kn[k.author_id]) kn[k.author_id]={posts:0,views:0};
       kn[k.author_id].posts++; kn[k.author_id].views+=(k.view_count||0);
     }); }
-    ADM_CACHE={fdes:fdes,custs:custs,nameOf:nameOf,clientCount:clientCount,kn:kn};
+    // 追加データ：最新の資金繰りスコア・最終接触・診断数（KPI/要対応/稼働モニタ用）
+    var scoreOf={};
+    try{ var sr=await sb.from('cashflow_snapshots').select('customer_id,score,created_at').order('created_at',{ascending:false}).limit(3000);
+      if(!sr.error){ (sr.data||[]).forEach(function(s){ if(!scoreOf[s.customer_id]) scoreOf[s.customer_id]={score:s.score,at:s.created_at}; }); } }catch(e){}
+    var lastMsg={}, lastActBy={};
+    try{ var cr=await sb.from('chat_messages').select('customer_id,sender_id,sender_role,created_at').order('created_at',{ascending:false}).limit(4000);
+      if(!cr.error){ (cr.data||[]).forEach(function(m){ if(!lastMsg[m.customer_id]) lastMsg[m.customer_id]=m.created_at; if(m.sender_id && !lastActBy[m.sender_id]) lastActBy[m.sender_id]=m.created_at; }); } }catch(e){}
+    var diagCount={};
+    try{ var pr=await sb.from('ai_proposals').select('author_id').limit(5000);
+      if(!pr.error){ (pr.data||[]).forEach(function(p){ diagCount[p.author_id]=(diagCount[p.author_id]||0)+1; }); } }catch(e){}
+    ADM_CACHE={fdes:fdes,custs:custs,nameOf:nameOf,clientCount:clientCount,kn:kn,scoreOf:scoreOf,lastMsg:lastMsg,lastActBy:lastActBy,diagCount:diagCount};
     var unassigned=custs.filter(function(c){ return !c.consultant_id; }).length;
     var sum=$('adm-sum');
     if(sum){
@@ -713,8 +738,78 @@
         +'<div class="sumchip" onclick="goSec(\'sec-fde\')"><div class="l">パートナー</div><div class="v">'+fdes.length+'名</div></div>'
         +'<div class="sumchip" onclick="goSec(\'sec-cust\')"><div class="l">担当未割当の顧客</div><div class="v" style="color:'+(unassigned?'#A83030':'#1E6B45')+';">'+unassigned+'社</div></div>';
     }
+    renderAdmKpi();
+    renderAdmRisk();
     renderAdmFde();
     renderAdmCust();
+    loadAnnouncements();
+  }
+  function daysSince(iso){ if(!iso) return 9999; var d=(Date.now()-new Date(iso).getTime())/86400000; return isFinite(d)?d:9999; }
+  // ---- A. KPI（ステージ・ファネル／稼働） ----
+  function renderAdmKpi(){
+    var box=$('adm-kpi'); if(!box)return;
+    var custs=ADM_CACHE.custs||[], fdes=ADM_CACHE.fdes||[];
+    if(!custs.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">顧客がまだいません。</div>'; return; }
+    var STG=['1. 現状把握','2. AI活用・自動化','3. コスト削減','4. 生まれた余力','5. 次の投資(M&A)'];
+    var cnt=[0,0,0,0,0];
+    custs.forEach(function(c){ var s=Math.min(5,Math.max(1,c.stage||1)); cnt[s-1]++; });
+    var total=custs.length;
+    var reach2=cnt[1]+cnt[2]+cnt[3]+cnt[4]; // ②以降
+    var reach5=cnt[4];
+    var colors=['#8AA0BE','#2C6EBD','#2C6EBD','#1E6B45','#C89620'];
+    var h='<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">ステージ・ファネル（全'+total+'社）</div>';
+    cnt.forEach(function(n,i){
+      var pct=total?Math.round(n/total*100):0;
+      h+='<div style="margin-bottom:6px;"><div style="display:flex;justify-content:space-between;font-size:12px;color:#4A6080;margin-bottom:2px;"><span>'+STG[i]+'</span><span><b style="color:#131E2E;">'+n+'社</b>（'+pct+'%）</span></div>'
+        +'<div style="height:10px;background:#EEF2F8;border-radius:99px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:'+colors[i]+';"></div></div></div>';
+    });
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">';
+    function card(l,v,c){ return '<div style="flex:1 1 130px;min-width:130px;background:#fff;border:1px solid #EAF0F7;border-radius:9px;padding:9px 11px;"><div style="font-size:10.5px;color:#8AA0BE;">'+l+'</div><div style="font-size:18px;font-weight:700;color:'+(c||'#1C3557')+';">'+v+'</div></div>'; }
+    var actC=custs.filter(function(c){ return daysSince(ADM_CACHE.lastMsg[c.id])<=30 || (ADM_CACHE.scoreOf[c.id]&&daysSince(ADM_CACHE.scoreOf[c.id].at)<=30); }).length;
+    var actP=fdes.filter(function(f){ return daysSince(ADM_CACHE.lastActBy[f.id])<=30; }).length;
+    h+=card('②自動化〜到達', reach2+'社（'+(total?Math.round(reach2/total*100):0)+'%）','#2C6EBD');
+    h+=card('⑤M&A到達', reach5+'社','#C89620');
+    h+=card('稼働顧客(30日)', actC+'/'+total,'#1E6B45');
+    h+=card('稼働パートナー(30日)', actP+'/'+fdes.length,'#1E6B45');
+    h+='</div>';
+    // 新規登録の推移（直近6ヶ月）
+    var months=[], mlabel=[]; var now=new Date();
+    for(var i=5;i>=0;i--){ var d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)); mlabel.push((d.getMonth()+1)+'月'); }
+    var mc={}; custs.forEach(function(c){ var ym=(c.created_at||'').slice(0,7); if(ym) mc[ym]=(mc[ym]||0)+1; });
+    var maxm=Math.max(1,Math.max.apply(null,months.map(function(m){return mc[m]||0;})));
+    h+='<div style="font-size:12px;font-weight:700;color:var(--navy);margin:14px 0 6px;">新規顧客の推移（直近6ヶ月）</div>';
+    h+='<div style="display:flex;align-items:flex-end;gap:8px;height:90px;padding:0 4px;">';
+    months.forEach(function(m,i){ var n=mc[m]||0; var hp=Math.round(n/maxm*72)+2; h+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;"><div style="font-size:10px;color:#4A6080;">'+n+'</div><div style="width:60%;background:#2C6EBD;border-radius:4px 4px 0 0;height:'+hp+'px;"></div><div style="font-size:10px;color:#8AA0BE;margin-top:3px;">'+mlabel[i]+'</div></div>'; });
+    h+='</div>';
+    box.innerHTML=h;
+  }
+  // ---- B. 要対応アラート（顧客リスク検知） ----
+  function renderAdmRisk(){
+    var box=$('adm-risk'); if(!box)return;
+    var custs=ADM_CACHE.custs||[];
+    var items=[];
+    custs.forEach(function(c){
+      var flags=[], sev=0;
+      var sc=ADM_CACHE.scoreOf[c.id];
+      if(sc && sc.score!=null && sc.score<60){ flags.push('<span class="tag '+(sc.score<40?'red':'gold')+'">資金繰り'+sc.score+'点</span>'); sev+=(sc.score<40?3:2); }
+      var dm=daysSince(ADM_CACHE.lastMsg[c.id]);
+      if(dm>=30){ flags.push('<span class="tag gold">接触'+(dm>=9999?'なし':Math.round(dm)+'日')+'</span>'); sev+=2; }
+      if((c.stage||1)<=2 && daysSince(c.created_at)>=60){ flags.push('<span class="tag gray">ステージ停滞</span>'); sev+=1; }
+      if(!c.consultant_id){ flags.push('<span class="tag red">担当未割当</span>'); sev+=2; }
+      if(flags.length) items.push({c:c,flags:flags,sev:sev});
+    });
+    items.sort(function(a,b){ return b.sev-a.sev; });
+    if(!items.length){ box.innerHTML='<div style="font-size:12px;color:#1E6B45;">現在、要対応の顧客はありません。</div>'; return; }
+    var h='<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;">要対応 '+items.length+'社（優先度順）</div>';
+    items.slice(0,40).forEach(function(it){
+      var c=it.c;
+      var fde=c.consultant_id?('担当：'+esc(ADM_CACHE.nameOf[c.consultant_id]||'パートナー')):'担当未割当';
+      h+='<div class="clcard" style="cursor:default;">'
+        +'<div class="cl-top"><span class="cl-nm">'+esc(c.company_name||c.email)+'</span>'+it.flags.join('')+'</div>'
+        +'<div class="cl-em">'+esc(c.email)+' ／ '+fde+'</div>'
+      +'</div>';
+    });
+    box.innerHTML=h;
   }
   function renderAdmFde(){
     var fb=$('adm-fde'); if(!fb)return;
@@ -731,10 +826,18 @@
     rows.forEach(function(u){
       var rankOpts=FDE_RANKS.map(function(rk){ return '<option'+(u.fde_rank===rk?' selected':'')+'>'+rk+'</option>'; }).join('');
       var nc=ADM_CACHE.clientCount[u.id]||0;
+      var dc=(ADM_CACHE.diagCount||{})[u.id]||0;
+      var lastAct=daysSince((ADM_CACHE.lastActBy||{})[u.id]);
+      var lastTag=lastAct>=9999?'<span class="tag gray">接触記録なし</span>':'<span class="tag '+(lastAct>14?'gold':'green')+'">最終接触 '+Math.round(lastAct)+'日前</span>';
+      var stalled=(ADM_CACHE.custs||[]).filter(function(c){ return c.consultant_id===u.id && daysSince((ADM_CACHE.lastMsg||{})[c.id])>=30; }).length;
+      var stalledTag=stalled?'<span class="tag red">放置疑い '+stalled+'社</span>':'';
       h+='<div class="clcard" style="cursor:default;">'
         +'<div class="cl-top"><span class="cl-nm">'+esc(u.contact_name||u.company_name||u.email)+'</span>'
         +(u.fde_rank?'<span class="tag blue">'+esc(u.fde_rank)+'</span>':'<span class="tag gray">ランク未設定</span>')
         +'<span class="tag '+(nc?'green':'gray')+'">担当 '+nc+'社</span>'
+        +lastTag
+        +'<span class="tag blue">診断 '+dc+'件</span>'
+        +stalledTag
         +(function(){ var k=(ADM_CACHE.kn||{})[u.id]; return k?('<span class="tag gold">ナレッジ '+k.posts+'件・参照 '+k.views+'</span>'):''; })()+'</div>'
         +'<div class="cl-em">'+esc(u.email)+'</div>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;">'
@@ -760,21 +863,80 @@
       return (a.company_name||a.email||'').localeCompare(b.company_name||b.email||'','ja');
     });
     var h='';
+    var fdeOpts=(ADM_CACHE.fdes||[]).map(function(f){ return {id:f.id, name:(f.contact_name||f.company_name||f.email)}; });
     rows.forEach(function(u){
       var fdeTag=u.consultant_id
         ?'<span class="tag green">担当：'+esc(ADM_CACHE.nameOf[u.consultant_id]||'パートナー')+'</span>'
         :'<span class="tag red">担当未割当</span>';
+      var assignSel='<select class="inp2" style="width:180px;" onchange="assignConsultant(\''+u.id+'\',this.value)"><option value="">（未割当）</option>'
+        +fdeOpts.map(function(f){ return '<option value="'+f.id+'"'+(u.consultant_id===f.id?' selected':'')+'>'+esc(f.name)+'</option>'; }).join('')+'</select>';
       h+='<div class="clcard" style="cursor:default;">'
         +'<div class="cl-top"><span class="cl-nm">'+esc(u.company_name||u.contact_name||u.email)+'</span>'
         +'<span class="tag gray">ステージ'+(u.stage||1)+'</span>'+fdeTag+'</div>'
         +'<div class="cl-em">'+esc(u.email)+'</div>'
-        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;"><span style="font-size:11px;color:#4A6080;">役割</span>'+roleSelect(u)+'</div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;">'
+          +'<span style="font-size:11px;color:#4A6080;">担当</span>'+assignSel
+          +'<span style="font-size:11px;color:#4A6080;">役割</span>'+roleSelect(u)
+        +'</div>'
       +'</div>';
     });
     cb.innerHTML=h;
   }
+  async function assignConsultant(custId, fdeId){
+    var res=await sb.from('profiles').update({ consultant_id:(fdeId||null) }).eq('id',custId);
+    if(res.error){ alert('担当割当エラー：'+res.error.message); return; }
+    loadAdmin();
+  }
   async function setRank(id,rank){ var res=await sb.from('profiles').update({ fde_rank:(rank||null) }).eq('id',id); if(res.error) alert('ランク変更エラー：'+res.error.message); }
   async function setUserRole(id,role){ var res=await sb.from('profiles').update({ role:role }).eq('id',id); if(res.error){ alert('役割変更エラー：'+res.error.message); } loadAdmin(); }
+  // ---- E. 一斉お知らせ配信 ----
+  async function postAnnouncement(){
+    var msg=$('bc-msg');
+    var aud=$('bc-aud').value, title=($('bc-title')||{}).value.trim(), body=($('bc-body')||{}).value.trim();
+    if(!title||!body){ if(msg){msg.style.color='#A83030';msg.textContent='タイトルと本文を入力してください';} return; }
+    var res=await sb.from('announcements').insert({ audience:aud, title:title, body:body, created_by:ME });
+    if(res.error){ if(msg){msg.style.color='#A83030';msg.textContent='配信エラー：'+res.error.message+'（Phase45のSQL未実施の可能性があります）';} return; }
+    if(msg){msg.style.color='#1E6B45';msg.textContent='配信しました。';}
+    $('bc-title').value=''; $('bc-body').value='';
+    loadAnnouncements();
+  }
+  async function loadAnnouncements(){
+    var box=$('bc-list'); if(!box)return;
+    var res=await sb.from('announcements').select('*').order('created_at',{ascending:false}).limit(30);
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(res.error.message)+'<br><span style="color:#8AA0BE;">（Phase45のSQL未実施の可能性があります）</span></div>'; return; }
+    var rows=res.data||[];
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">配信済みのお知らせはありません。</div>'; return; }
+    var audL={all:'全員',consultant:'パートナー',customer:'顧客'};
+    var h='';
+    rows.forEach(function(a){
+      var dt=(a.created_at||'').slice(0,10);
+      h+='<div style="border:1px solid #EAF0F7;border-radius:10px;padding:10px 12px;margin-bottom:8px;">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span class="tag blue">'+esc(audL[a.audience]||a.audience)+'</span><span style="font-size:11px;color:#8AA0BE;">'+esc(dt)+'</span><span style="flex:1;"></span><span onclick="delAnnouncement(\''+a.id+'\')" style="color:#A83030;cursor:pointer;font-size:11px;">削除</span></div>'
+        +'<div style="font-size:13px;font-weight:700;color:#131E2E;margin-top:5px;">'+esc(a.title)+'</div>'
+        +'<div style="font-size:12px;color:#4A6080;line-height:1.6;margin-top:3px;white-space:pre-wrap;">'+esc(a.body)+'</div>'
+      +'</div>';
+    });
+    box.innerHTML=h;
+  }
+  async function delAnnouncement(id){
+    if(!confirm('このお知らせを削除します。よろしいですか？')) return;
+    var res=await sb.from('announcements').delete().eq('id',id);
+    if(res.error){ alert('削除エラー：'+res.error.message); return; }
+    loadAnnouncements();
+  }
+  // 顧客・パートナーのダッシュボードでお知らせを表示
+  async function loadMyAnnouncements(role){
+    var box=$('my-annc'); if(!box)return;
+    var aud = (role==='consultant') ? ['all','consultant'] : ['all','customer'];
+    var res=await sb.from('announcements').select('*').in('audience',aud).order('created_at',{ascending:false}).limit(8);
+    if(res.error || !(res.data||[]).length){ box.innerHTML=''; return; }
+    var h='<div class="panel"><div class="ph">📢 運営からのお知らせ</div>';
+    (res.data||[]).forEach(function(a){
+      var dt=(a.created_at||'').slice(0,10);
+      h+='<div style="border-left:3px solid #C89620;background:#FFFBF2;border-radius:8px;padding:9px 12px;margin-bottom:6px;"><div style="font-size:11px;color:#8AA0BE;">'+esc(dt)+'</div><div style="font-size:13px;font-weight:700;color:#131E2E;">'+esc(a.title)+'</div><div style="font-size:12px;color:#4A6080;line-height:1.6;margin-top:2px;white-space:pre-wrap;">'+esc(a.body)+'</div></div>';
+    });
+    box.innerHTML=h+'</div>';
+  }
 
 
   function renderApp(prof, email){
@@ -804,6 +966,7 @@
         +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b></div>'
         +'<div id="dash-hero">読み込み中...</div></div>'
         +'<div id="my-nextmeet"></div>'
+        +'<div id="my-annc"></div>'
         +'<div class="panel" id="sec-status"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">資金繰りステータス<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadCashStatus()">↺ 更新</span></div><div id="cash-status" style="margin-top:4px;">読み込み中...</div></div>'
         +'<div class="panel"><div class="ph">経営サマリー</div><div id="kpi-cards">読み込み中...</div></div>'
         +'<div class="panel" id="sec-chat"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">担当パートナーとのメッセージ <span id="chat-unread" class="nbadge hidden">0</span><span class="ghost" style="font-size:11px;font-weight:400;margin-left:auto;" onclick="loadMyChat()">↺ 更新</span></div>'
@@ -905,6 +1068,7 @@
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">パートナーポータル</h2>'
         +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b>'+(prof.fde_rank?'　ランク：<b>'+esc(prof.fde_rank)+'</b>':'')+'</div>'
         +'<div id="fde-hero" style="display:flex;gap:8px;flex-wrap:wrap;">読み込み中...</div></div>'
+        +'<div id="my-annc"></div>'
         +'<div class="panel" id="sec-todo">'
           +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">📋 今日やること'
             +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClients()">↺ 更新</span></div>'
@@ -1056,8 +1220,8 @@
 
     window.__eff=eff;
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); }
-    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); }
+    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); }
+    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); }
     else { loadAdmin(); loadMarketBroker(); }
     startNotifPolling(eff);
   }
