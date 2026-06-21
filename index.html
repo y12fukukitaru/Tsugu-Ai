@@ -837,13 +837,8 @@
           +'<div id="my-pdca">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-company"><div class="ph">会社情報</div>'
-          +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
-            +'<div style="flex:1;min-width:180px;"><label class="fl">会社名</label><input id="pi-company" class="inp2" style="width:100%;" value="'+escA(prof.company_name||'')+'" placeholder="例：株式会社○○"></div>'
-            +'<div style="flex:1;min-width:160px;"><label class="fl">担当者名</label><input id="pi-contact" class="inp2" style="width:100%;" value="'+escA(prof.contact_name||'')+'" placeholder="例：山田 太郎"></div>'
-            +'<button class="btn2" onclick="saveProfileInfo()">保存</button>'
-          +'</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-top:6px;">設定した会社名は、担当パートナーの顧客一覧に表示されます。</div>'
-          +'<div id="pi-msg" style="font-size:12px;margin-top:6px;"></div>'
+          +'<div class="kv" style="line-height:2;"><b>会社名：</b>'+esc(prof.company_name||'（未設定）')+'<br><b>ご担当者：</b>'+esc(prof.contact_name||'（未設定）')+'</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-top:8px;">会社情報の登録・修正は担当パートナーが行います。変更のご希望は「メッセージ」でお知らせください。</div>'
         +'</div>'
         +'<div class="panel" id="sec-cash"><div class="ph">財務・資金繰り（担当パートナーが入力します）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">月次の数値や支払予定は担当パートナーが入力・更新します。数値や資料は「メッセージ」でお送りいただくだけでOKです。修正のご希望もメッセージでどうぞ。</div>'
@@ -858,13 +853,8 @@
           +'<div style="font-size:12px;color:#8AA0BE;">担当パートナーが実施します。結果はダッシュボードの「資金繰りステータス」に表示されます。<button class="ghost" style="border:1px solid #D0DCF0;border-radius:8px;padding:5px 10px;margin-left:6px;" onclick="goSec(\'sec-status\')">ステータスを見る →</button></div>'
         +'</div>'
         +'<div class="panel" id="sec-act"><div class="ph">アクション・課題</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">担当パートナーと共有されます。パートナーが追加した課題もここに表示されます。</div>'
-          +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
-            +'<div style="flex:1;min-width:200px;"><label class="fl">課題・タスク</label><input id="act-title" class="inp2" style="width:100%;" placeholder="例：直近3期の試算表を用意"></div>'
-            +'<div><label class="fl">期限（任意）</label><input id="act-due" type="date" class="inp2"></div>'
-            +'<button class="btn2" onclick="addMyAction()">追加</button>'
-          +'</div>'
-          +'<div id="act-list" style="margin-top:12px;">読み込み中...</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">担当パートナーが設定した、取り組み中の課題・タスクの一覧です。追加・変更のご希望は「メッセージ」でお知らせください。</div>'
+          +'<div id="act-list" style="margin-top:6px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-ai"><div class="ph">🤖 AI活用・自動化のご相談</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">「こんな業務を楽にできたら」という気になることを選んで送るだけ。担当パートナーがAIで具体的な自動化プランを診断し、結果をこちらにご提案・フィードバックします。</div>'
@@ -883,38 +873,14 @@
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">保険（事業保障・損害保険・養老保険）や相続・贈与などの試算は担当パートナーが行い、ここに共有されます。試算のご希望や前提条件の変更は「メッセージ」でお伝えください。</div>'
           +'<div id="my-ins" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-ma"><div class="ph">利益のM&A活用 提案（AI）</div>'
-          +'<div id="my-ma"></div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">利益や余剰資金を、M&A（会社・事業の買収）で活かす方向性をAIが提案します。</div>'
-          +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
-            +'<div><label class="fl">年間利益・余剰資金(万円)</label><input id="ma-profit" type="number" class="inp2" placeholder="例 3000"></div>'
-            +'<div style="flex:1;min-width:200px;"><label class="fl">事業内容・強み</label><input id="ma-biz" class="inp2" style="width:100%;" placeholder="例：地域密着の電気工事、職人20名"></div>'
-          +'</div>'
-          +'<label class="fl" style="margin-top:10px;">M&Aで実現したいこと</label>'
-          +'<select id="ma-goal" class="inp2" style="width:auto;min-width:200px;"><option>売上・シェア拡大</option><option>人材・技術の獲得</option><option>エリア拡大</option><option>川上・川下への統合</option><option>新規事業への参入</option><option>後継者・事業承継の受け皿</option></select>'
-          +'<div style="margin-top:12px;"><button class="btn2" id="ma-run" onclick="runMa()">AIに提案をもらう</button></div>'
-          +'<div id="ma-result" style="margin-top:14px;"></div>'
+        +'<div class="panel" id="sec-ma"><div class="ph">利益のM&A活用 提案</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">利益や余剰資金をM&A（会社・事業の買収）で活かす方向性を、担当パートナーがAIで検討し、ここにご提案します。ご関心・ご希望は「メッセージ」でお知らせください。</div>'
+          +'<div id="my-ma">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-market"><div class="ph">💹 投資・融資マーケット（プラットフォーム内マッチング）</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;line-height:1.7;">資金を「集めたい」企業と「出したい（融資・出資）」企業を、Tsugu内でマッチングします。案件を掲載し、関心を伝えると担当パートナーが間に入って橋渡しします。</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;line-height:1.7;">資金を「集めたい」企業と「出したい（融資・出資）」企業を、Tsugu内でマッチングします。案件の掲載やお手続きは担当パートナーが代行します。気になる案件があれば「メッセージ」でお知らせください。担当が橋渡しします。</div>'
           +'<div style="font-size:11px;color:#9A7314;background:#FAF3E2;border:1px solid #F0E2C0;border-radius:9px;padding:9px 12px;margin-bottom:12px;line-height:1.7;">⚠ 本機能は当事者の引き合わせ（マッチング）を支援するもので、実際の融資・出資の実行ではありません。実行には貸金業法・金融商品取引法など関連法令の順守と、弁護士・税理士・有資格者等の関与が必要です。</div>'
-          +'<div style="border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;margin-bottom:14px;">'
-            +'<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">案件を掲載する</div>'
-            +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
-              +'<div><label class="fl">立場</label><select id="mk-side" class="inp2"><option value="raise">資金を集めたい</option><option value="provide">資金を出したい</option></select></div>'
-              +'<div><label class="fl">種別</label><select id="mk-kind" class="inp2"><option value="loan">融資</option><option value="equity">出資</option></select></div>'
-              +'<div><label class="fl">金額（万円）</label><input id="mk-amount" type="number" class="inp2" placeholder="例 1000"></div>'
-              +'<div style="flex:1;min-width:160px;"><label class="fl">業種（任意）</label><input id="mk-industry" class="inp2" style="width:100%;" placeholder="例：金属加工業"></div>'
-            +'</div>'
-            +'<div style="margin-top:8px;"><label class="fl">タイトル</label><input id="mk-title" class="inp2" style="width:100%;" placeholder="例：新工場の設備資金を募集／黒字企業へ出資したい"></div>'
-            +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">'
-              +'<div style="flex:1;min-width:160px;"><label class="fl">希望条件（任意）</label><input id="mk-terms" class="inp2" style="width:100%;" placeholder="例：期間5年・金利2%以内／議決権なしの少数出資"></div>'
-            +'</div>'
-            +'<div style="margin-top:8px;"><label class="fl">詳細・補足（任意）</label><textarea id="mk-detail" class="inp2" rows="2" style="width:100%;" placeholder="事業概要・資金使途・返済原資・期待リターンなど"></textarea></div>'
-            +'<label style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;color:#4A6080;cursor:pointer;"><input type="checkbox" id="mk-anon" checked>会社名を伏せて掲載する（匿名・担当パートナーには開示されます）</label>'
-            +'<div style="margin-top:10px;"><button class="btn2" onclick="postListing()">この内容で掲載する</button><span id="mk-post-msg" style="font-size:12px;margin-left:8px;"></span></div>'
-          +'</div>'
-          +'<div class="ph" style="font-size:13px;">自分の掲載案件</div>'
+          +'<div class="ph" style="font-size:13px;">あなたの掲載案件（担当パートナーが掲載）</div>'
           +'<div id="market-mine" style="margin:4px 0 10px;">読み込み中...</div>'
           +'<div class="ph" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;">公開中の案件<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarket()">↺ 更新</span></div>'
           +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;" id="mk-filterbar">'
@@ -1362,7 +1328,7 @@
         +'<input type="checkbox" '+(done?'checked':'')+' onchange="toggleAction(\''+r.id+'\',this.checked,\''+scope+'\')">'
         +'<span style="flex:1;font-size:13px;'+(done?'text-decoration:line-through;color:#8AA0BE;':'color:#131E2E;')+'">'+esc(r.title)+'</span>'
         +(r.due_date?'<span style="font-size:11px;color:#8AA0BE;">期限 '+esc(r.due_date)+'</span>':'')
-        +'<span onclick="delAction(\''+r.id+'\',\''+scope+'\')" style="color:#A83030;cursor:pointer;font-size:11px;">削除</span>'
+        +(scope==='me'?'':'<span onclick="delAction(\''+r.id+'\',\''+scope+'\')" style="color:#A83030;cursor:pointer;font-size:11px;">削除</span>')
         +'</div>';
     });
     return h;
@@ -3686,9 +3652,9 @@
     var side=$('cl-side'); if(!side)return;
     Array.prototype.forEach.call(side.querySelectorAll('.cl-ni'),function(n){ n.classList.toggle('on', n.id==='ni-'+id); });
   }
-  var CL_SPY_IDS=['cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-bp','cs-shared'];
+  var CL_SPY_IDS=['cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-bp','cs-shared'];
   function clSpyInit(){
-    clSpySet('cs-msg');
+    clSpySet('cs-company');
     var scroller=document.querySelector('#cl-modal .modal') ? $('cl-modal') : null;
     if(!scroller)return;
     var ticking=false;
@@ -3722,12 +3688,14 @@
     // ---- 左サイド・ダッシュボードナビ（カルテ内の全機能を左から確認） ----
     var side='<div class="cl-side" id="cl-side">'
       +'<div class="sb-sec">やり取り</div>'
+      +clNi('cs-company','🏢','会社情報')
       +clNi('cs-msg','💬','メッセージ・提案')
       +'<div class="sb-sec">財務・資金</div>'
       +clNi('cs-fin','📊','月次財務メモ')
       +clNi('cs-pay','📅','支払予定')
       +clNi('cs-cash','💰','資金繰り診断')
       +clNi('cs-fund','🏦','資金調達ロードマップ')
+      +clNi('cs-market','💹','投資・融資マーケット')
       +clNi('cs-act','✅','課題・アクション')
       +'<div class="sb-sec">AI・ツール</div>'
       +clNi('cs-ai','🤖','AI自動化診断')
@@ -3740,7 +3708,15 @@
     +'</div>';
     // ---- タブ1：メッセージ・提案 ----
     var tabMsg='<div id="ctab-msg">'
-      +'<div class="ph" id="cs-msg" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;">メッセージ（顧客とのやり取り）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientChat(\''+custId+'\')">↺ 更新</span></div>'
+      +'<div class="ph" id="cs-company" style="font-size:13px;">会社情報（代行入力）</div>'
+      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">経営者ポータルには確認用に表示されます（顧客側は閲覧のみ）。</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+        +'<div style="flex:1;min-width:180px;"><label class="fl">会社名</label><input id="cpi-company" class="inp2" style="width:100%;" value="'+escA(company||'')+'" placeholder="例：株式会社○○"></div>'
+        +'<div style="flex:1;min-width:160px;"><label class="fl">ご担当者名</label><input id="cpi-contact" class="inp2" style="width:100%;" placeholder="例：山田 太郎"></div>'
+        +'<button class="btn2" onclick="saveClientProfile(\''+custId+'\')">保存</button>'
+      +'</div>'
+      +'<div id="cpi-msg" style="font-size:12px;margin-top:6px;"></div>'
+      +'<div class="ph" id="cs-msg" style="font-size:13px;margin-top:18px;display:flex;align-items:center;justify-content:space-between;">メッセージ（顧客とのやり取り）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientChat(\''+custId+'\')">↺ 更新</span></div>'
       +'<div id="cchat-log" style="max-height:280px;overflow:auto;border:1px solid #EAF0F7;border-radius:10px;padding:12px;margin:4px 0 8px;background:#FBFCFE;">読み込み中...</div>'
       +'<div style="display:flex;gap:8px;align-items:flex-end;">'
         +'<textarea id="cchat-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="返信を入力（Enterで送信／Shift+Enterで改行）"></textarea>'
@@ -3812,6 +3788,20 @@
       +'</div>'
       +'<div id="fr-msg" style="font-size:12px;margin-top:6px;"></div>'
       +'<div id="cl-fund" style="margin-top:8px;">読み込み中...</div>'
+      +'<div class="ph" id="cs-market" style="font-size:13px;margin-top:18px;">💹 投資・融資マーケットへの掲載（代行）</div>'
+      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;line-height:1.7;">この顧客の「資金を集めたい／出したい」案件を代行で掲載します。掲載するとプラットフォーム内の他の顧客に公開され、関心が集まると「投資・融資マーケット（仲介）」に表示されます。</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+        +'<div><label class="fl">立場</label><select id="cmk-side" class="inp2"><option value="raise">資金を集めたい</option><option value="provide">資金を出したい</option></select></div>'
+        +'<div><label class="fl">種別</label><select id="cmk-kind" class="inp2"><option value="loan">融資</option><option value="equity">出資</option></select></div>'
+        +'<div><label class="fl">金額（万円）</label><input id="cmk-amount" type="number" class="inp2" placeholder="例 1000"></div>'
+        +'<div style="flex:1;min-width:150px;"><label class="fl">業種（任意）</label><input id="cmk-industry" class="inp2" style="width:100%;" placeholder="例：金属加工業"></div>'
+      +'</div>'
+      +'<div style="margin-top:8px;"><label class="fl">タイトル</label><input id="cmk-title" class="inp2" style="width:100%;" placeholder="例：新工場の設備資金を募集／黒字企業へ出資したい"></div>'
+      +'<div style="margin-top:8px;"><label class="fl">希望条件（任意）</label><input id="cmk-terms" class="inp2" style="width:100%;" placeholder="例：期間5年・金利2%以内／議決権なしの少数出資"></div>'
+      +'<div style="margin-top:8px;"><label class="fl">詳細・補足（任意）</label><textarea id="cmk-detail" class="inp2" rows="2" style="width:100%;" placeholder="事業概要・資金使途・返済原資・期待リターンなど"></textarea></div>'
+      +'<label style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;color:#4A6080;cursor:pointer;"><input type="checkbox" id="cmk-anon" checked>会社名を伏せて掲載する（他の顧客には匿名表示）</label>'
+      +'<div style="margin-top:10px;"><button class="btn2" onclick="postListingFor(\''+custId+'\')">この内容で掲載する</button><span id="cmk-msg" style="font-size:12px;margin-left:8px;"></span></div>'
+      +'<div id="cl-listings" style="margin-top:10px;">読み込み中...</div>'
       +'<div class="ph" id="cs-act" style="font-size:13px;margin-top:18px;">アクション・課題（顧客と共有・両者が編集可）</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">'
         +'<div style="flex:1;min-width:200px;"><label class="fl">課題を追加</label><input id="cact-title" class="inp2" style="width:100%;" placeholder="例：退職金規程の確認"></div>'
@@ -3912,6 +3902,71 @@
     loadMeetingNotes(custId);
     loadDiagInterests(custId);
     loadNextMeeting(custId);
+    loadClientProfileFields(custId);
+    loadClientListings(custId);
+  }
+  async function loadClientProfileFields(custId){
+    var c=$('cpi-contact'); if(!c)return;
+    try{ var r=await sb.from('profiles').select('company_name,contact_name').eq('id',custId).single();
+      if(!r.error&&r.data){ var co=$('cpi-company'); if(co&&!co.value) co.value=r.data.company_name||''; c.value=r.data.contact_name||''; }
+    }catch(e){}
+  }
+  async function saveClientProfile(custId){
+    var msg=$('cpi-msg');
+    var company=($('cpi-company')||{}).value.trim(), contact=($('cpi-contact')||{}).value.trim();
+    var res=await sb.from('profiles').update({ company_name:(company||null), contact_name:(contact||null) }).eq('id',custId);
+    if(res.error){ if(msg){msg.style.color='#A83030';msg.textContent='保存エラー：'+res.error.message;} return; }
+    if(msg){msg.style.color='#1E6B45';msg.textContent='保存しました（顧客の会社情報に反映されます）。';}
+    if(CURRENT_CLIENT && CURRENT_CLIENT.id===custId) CURRENT_CLIENT.company=company;
+    var mt=$('cl-modal-title'); if(mt) mt.textContent=(company?company+'（'+(CURRENT_CLIENT?CURRENT_CLIENT.email:'')+'）':(CURRENT_CLIENT?CURRENT_CLIENT.email:''));
+    if(typeof loadClients==='function') loadClients();
+  }
+  // パートナーが顧客の代わりにマーケット案件を掲載
+  async function postListingFor(custId){
+    var msg=$('cmk-msg');
+    var side=$('cmk-side').value, kind=$('cmk-kind').value, title=($('cmk-title')||{}).value.trim();
+    var amount=$('cmk-amount').value, industry=($('cmk-industry')||{}).value.trim(), terms=($('cmk-terms')||{}).value.trim(), detail=($('cmk-detail')||{}).value.trim();
+    var anon=$('cmk-anon').checked;
+    if(!title){ if(msg){msg.style.color='#A83030';msg.textContent='タイトルを入力してください';} return; }
+    var row={ owner_id:custId, side:side, kind:kind, title:title, industry:(industry||null), amount:(amount===''?null:Number(amount)), rate:(terms||null), detail:(detail||null), anonymous:anon, status:'open' };
+    var res=await sb.from('market_listings').insert(row);
+    if(res.error){ if(msg){msg.style.color='#A83030';msg.textContent='掲載エラー：'+res.error.message+'（Phase41/42のSQL未実施の可能性があります）';} return; }
+    if(msg){msg.style.color='#1E6B45';msg.textContent='掲載しました。';}
+    $('cmk-title').value=''; $('cmk-amount').value=''; $('cmk-industry').value=''; $('cmk-terms').value=''; $('cmk-detail').value='';
+    loadClientListings(custId);
+    if(typeof loadMarketBroker==='function') loadMarketBroker();
+  }
+  async function loadClientListings(custId){
+    var box=$('cl-listings'); if(!box)return;
+    var res=await sb.from('market_listings').select('*').eq('owner_id',custId).order('created_at',{ascending:false});
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(res.error.message)+'<br><span style="color:#8AA0BE;">（Phase41/42のSQL未実施の可能性があります）</span></div>'; return; }
+    var rows=res.data||[];
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">この顧客の掲載案件はまだありません。</div>'; return; }
+    var ids=rows.map(function(r){return r.id;}), cnt={};
+    var ir=await sb.from('market_interests').select('listing_id').in('listing_id',ids);
+    if(!ir.error){ (ir.data||[]).forEach(function(x){ cnt[x.listing_id]=(cnt[x.listing_id]||0)+1; }); }
+    var h='';
+    rows.forEach(function(r){
+      var n=cnt[r.id]||0;
+      h+='<div class="clcard" style="cursor:default;">'
+        +'<div class="cl-top"><span class="cl-nm">'+esc(r.title)+'</span>'
+        +'<span class="tag '+(r.side==='raise'?'blue':'green')+'">'+esc(mkSideLabel(r.side))+'</span>'
+        +'<span class="tag gray">'+esc(mkKindLabel(r.kind))+'・'+esc(mkAmount(r.amount))+'</span>'
+        +'<span class="tag '+(r.status==='open'?'green':'gray')+'">'+esc(mkStatusLabel(r.status))+'</span></div>'
+        +'<div style="font-size:11.5px;color:#2C6EBD;margin-top:6px;">関心：'+n+'件</div>'
+        +'<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">'
+          +(r.status!=='matched'?'<button class="ghost" style="border:1px solid #D0DCF0;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="clientListingStatus(\''+r.id+'\',\'matched\',\''+custId+'\')">成立</button>':'')
+          +(r.status!=='closed'?'<button class="ghost" style="border:1px solid #D0DCF0;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="clientListingStatus(\''+r.id+'\',\'closed\',\''+custId+'\')">終了</button>':'')
+          +(r.status!=='open'?'<button class="ghost" style="border:1px solid #D0DCF0;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="clientListingStatus(\''+r.id+'\',\'open\',\''+custId+'\')">公開に戻す</button>':'')
+        +'</div></div>';
+    });
+    box.innerHTML=h;
+  }
+  async function clientListingStatus(id,status,custId){
+    var res=await sb.from('market_listings').update({status:status}).eq('id',id);
+    if(res.error){ alert('更新エラー：'+res.error.message); return; }
+    loadClientListings(custId);
+    if(typeof loadMarketBroker==='function') loadMarketBroker();
   }
 
   async function loadClientDiag(custId){
@@ -4516,11 +4571,7 @@
         +'<span class="tag '+(r.status==='open'?'green':'gray')+'">'+esc(mkStatusLabel(r.status))+'</span></div>'
         +(r.detail?'<div style="font-size:12px;color:#4A6080;margin-top:6px;line-height:1.6;">'+esc(r.detail)+'</div>':'')
         +'<div style="font-size:11.5px;color:#2C6EBD;margin-top:6px;">関心：'+n+'件</div>'
-        +'<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">'
-          +(r.status==='open'
-            ?'<button class="ghost" style="border:1px solid #D0DCF0;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="setListingStatus(\''+r.id+'\',\'closed\')">掲載を終了</button>'
-            :'<button class="ghost" style="border:1px solid #D0DCF0;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="setListingStatus(\''+r.id+'\',\'open\')">再公開</button>')
-        +'</div></div>';
+      +'</div>';
     });
     box.innerHTML=h;
   }
@@ -4549,11 +4600,7 @@
         +'<span class="tag gray">'+esc(mkKindLabel(r.kind))+'・'+esc(mkAmount(r.amount))+'</span></div>'
         +'<div style="font-size:11.5px;color:#8AA0BE;margin-top:4px;">'+who+(r.rate?(' ／ 条件：'+esc(r.rate)):'')+'</div>'
         +(r.detail?'<div style="font-size:12px;color:#4A6080;margin-top:6px;line-height:1.6;">'+esc(r.detail)+'</div>':'')
-        +'<div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px;flex-wrap:wrap;">'
-          +'<input id="mki-'+r.id+'" class="inp2" style="flex:1;min-width:180px;" placeholder="ひとことメッセージ（任意）">'
-          +'<button class="btn2" onclick="sendMarketInterest(\''+r.id+'\')">関心を伝える</button>'
-        +'</div>'
-        +'<div id="mkim-'+r.id+'" style="font-size:12px;margin-top:6px;"></div>'
+        +'<div style="font-size:11px;color:#8AA0BE;margin-top:8px;">👉 この案件が気になる場合は「メッセージ」で担当パートナーにご連絡ください。担当が橋渡しします。</div>'
       +'</div>';
     });
     box.innerHTML=h;
