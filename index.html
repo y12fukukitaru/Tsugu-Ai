@@ -500,7 +500,7 @@
   function navDefs(r){
     if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-sec','パートナーAI']];
     if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達']];
-    return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-myfund','自社の調達'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
+    return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
   function effectiveNav(r){
@@ -813,7 +813,7 @@
         +'<div class="panel" id="sec-roadmap"><div class="ph">Tsuguでこれから出来ること</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">プラットフォーム内で資金調達から投資・M&Aまで完結する仕組みを準備中です。ご興味があれば「メッセージ」で担当パートナーにお知らせください（優先案内します）。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
-          +'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">🏦</span><span style="font-size:13px;font-weight:700;color:#1C3557;">Tsugu融資</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">資金繰りステータスのスコアと財務データをもとに、提携金融機関への融資申込・取次がワンクリックで完結。事業計画書も自動添付。</div>'+'</div>'+'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">📈</span><span style="font-size:13px;font-weight:700;color:#1C3557;">Tsugu投資・M&Aマーケット</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">生まれた余力の運用や、買収・売却の相手探しをプラットフォーム内で。匿名での打診から成約まで伴走します。</div>'+'</div>'+'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">📂</span><span style="font-size:13px;font-weight:700;color:#1C3557;">ファイル読み込み</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">試算表・決算書・通帳データをアップロードするだけで、財務メモや資金繰りに自動反映。入力ゼロへ。</div>'+'</div>'
+          +'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">🏦</span><span style="font-size:13px;font-weight:700;color:#1C3557;">Tsugu融資</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">資金繰りステータスのスコアと財務データをもとに、提携金融機関への融資申込・取次がワンクリックで完結。事業計画書も自動添付。</div>'+'</div>'+'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">📈</span><span style="font-size:13px;font-weight:700;color:#1C3557;">Tsugu投資・M&Aマーケット</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">生まれた余力の運用や、買収・売却の相手探しをプラットフォーム内で。匿名での打診から成約まで伴走します。</div>'+'</div>'
           +'</div>'
         +'</div>'
         +'<div class="panel" id="sec-journey"><div class="ph">価値の流れ（Tsuguの支援ステップ）</div>'
@@ -1024,14 +1024,13 @@
         +'<div class="panel" id="sec-roadmap2"><div class="ph">パートナー向け：今後追加される機能</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">提案の幅が広がる機能を順次リリースします。先行利用のご希望は運営までお知らせください。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
-          +'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">🎙️</span><span style="font-size:13px;font-weight:700;color:#1C3557;">議事録作成</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">面談を録音すると自動で文字起こし・議事録化。要点とToDoを抽出し、顧客の課題・提案メモへワンクリック反映。</div>'+'</div>'+'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">📂</span><span style="font-size:13px;font-weight:700;color:#1C3557;">ファイル読み込み</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">顧客の試算表・決算書を取り込み、月次財務・資金繰り診断へ自動反映。代行入力の手間を大幅削減。</div>'+'</div>'+'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">🏦</span><span style="font-size:13px;font-weight:700;color:#1C3557;">Tsugu融資 取次</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">資金繰りスコア・事業計画書とセットで提携金融機関へ送客。進捗管理と成約フィーの仕組みを提供予定。</div>'+'</div>'+'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">📈</span><span style="font-size:13px;font-weight:700;color:#1C3557;">Tsugu投資・M&Aマーケット</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">担当顧客の譲渡・買収ニーズを匿名登録し、プラットフォーム内でマッチング。M&A案件の組成を支援。</div>'+'</div>'
+          +'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">🏦</span><span style="font-size:13px;font-weight:700;color:#1C3557;">Tsugu融資 取次</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">資金繰りスコア・事業計画書とセットで提携金融機関へ送客。進捗管理と成約フィーの仕組みを提供予定。</div>'+'</div>'+'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">📈</span><span style="font-size:13px;font-weight:700;color:#1C3557;">Tsugu投資・M&Aマーケット</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">担当顧客の譲渡・買収ニーズを匿名登録し、プラットフォーム内でマッチング。M&A案件の組成を支援。</div>'+'</div>'
           +'</div>'
         +'</div>'
         +'<div class="panel" id="sec-journey2"><div class="ph">価値の流れ（顧客への提案軸）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">①現状把握 → ②AI・自動化 → ③コスト削減 → ④余力 → ⑤次の投資（M&A）の流れで支援します。</div>'
           + stepperHtml()
         +'</div>'
-        +ownFundPanelHtml('自社の資金調達ロードマップ','パートナー自身の事業の調達計画（融資・補助金・クラファン等）を管理できます。')
         +'<div class="panel" id="sec-sozoku"><div class="ph">相続・贈与シミュレーター</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;line-height:1.7;">法定相続分・保険非課税枠・暦年贈与加算（2024年改正対応）・相続時精算課税・配偶者軽減・小規模宅地・遺留分・二次相続までを1画面で試算できる専門ツールです。結果は印刷／PDFで顧客への提示資料になります（案件保存・JSON入出力対応）。</div>'
           +'<button class="btn2" onclick="openSozoku()">シミュレーターを開く ↗</button>'
@@ -1052,7 +1051,7 @@
     window.__eff=eff;
     $('app-body').innerHTML=view;
     if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); }
-    else if(eff==='consultant'){ loadClients(); loadOwnFunding(); loadReportDrafts(); loadKnowledge(); loadMaDeals(); loadPdca(); }
+    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); loadMaDeals(); loadPdca(); }
     else { loadAdmin(); }
     startNotifPolling(eff);
   }
@@ -1588,6 +1587,36 @@
     return s;
   }
   function manFmt(v){ return (v===null||v===undefined||v==='')?'—':(Number(v).toLocaleString()+'万円'); }
+  // AIの自由文回答を読みやすく整形（見出し・太字・箇条書き・段落）
+  function mdLite(t){
+    if(t==null) return '';
+    var lines=String(t).replace(/\r/g,'').split('\n');
+    var out=[], para=[], i=0;
+    function inline(s){
+      s=esc(s);
+      s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+      s=s.replace(/`([^`]+)`/g,'<code style="background:#EEF2F8;border-radius:4px;padding:1px 5px;font-size:.92em;">$1</code>');
+      return s;
+    }
+    function flushPara(){ if(para.length){ out.push('<div style="margin:0 0 8px;line-height:1.75;">'+para.join('<br>')+'</div>'); para=[]; } }
+    function list(ordered){
+      var buf=[], rx=ordered?/^\s*\d+[.)]\s+/:/^\s*[-*・]\s+/;
+      while(i<lines.length && rx.test(lines[i])){ buf.push('<li style="margin:2px 0;">'+inline(lines[i].replace(rx,''))+'</li>'); i++; }
+      var tag=ordered?'ol':'ul';
+      out.push('<'+tag+' style="margin:4px 0 8px;padding-left:20px;line-height:1.7;">'+buf.join('')+'</'+tag+'>');
+    }
+    while(i<lines.length){
+      var ln=lines[i].replace(/\s+$/,'');
+      var hm=/^\s*(#{1,6})\s+(.*)$/.exec(ln);
+      if(hm){ flushPara(); out.push('<div style="font-weight:700;color:var(--navy);margin:10px 0 4px;font-size:1.04em;">'+inline(hm[2])+'</div>'); i++; continue; }
+      if(/^\s*[-*・]\s+/.test(ln)){ flushPara(); list(false); continue; }
+      if(/^\s*\d+[.)]\s+/.test(ln)){ flushPara(); list(true); continue; }
+      if(/^\s*$/.test(ln)){ flushPara(); i++; continue; }
+      para.push(inline(ln)); i++;
+    }
+    flushPara();
+    return out.join('')||esc(String(t));
+  }
   function pctDiff(cur, prev){
     if(cur===null||cur===undefined||prev===null||prev===undefined||Number(prev)===0) return '';
     var d=(Number(cur)-Number(prev))/Math.abs(Number(prev))*100;
@@ -3787,7 +3816,7 @@
   function aiCards(txt, selectable){
     var arr=null;
     try{ var s=txt.indexOf('['), e=txt.lastIndexOf(']'); if(s>=0&&e>s) arr=JSON.parse(txt.slice(s,e+1)); }catch(err){ arr=null; }
-    if(!arr||!arr.length) return '<div style="white-space:pre-wrap;font-size:13px;color:#131E2E;line-height:1.7;">'+esc(txt)+'</div>';
+    if(!arr||!arr.length) return '<div style="font-size:13px;color:#131E2E;">'+mdLite(txt)+'</div>';
     var rank={'高':0,'中':1,'低':2};
     arr.sort(function(a,b){ var ra=rank[a['優先度']], rb=rank[b['優先度']]; return (ra==null?9:ra)-(rb==null?9:rb); });
     if(selectable) window.__lastProps=arr;
@@ -4148,7 +4177,10 @@
     SEC_MSGS.forEach(function(m){
       var me=m.role==='user';
       var tag=(!me && m.model)?'<div style="font-size:10px;color:#8AA0BE;margin-bottom:2px;">'+esc(m.model)+'</div>':'';
-      h+='<div style="display:flex;flex-direction:column;align-items:'+(me?'flex-end':'flex-start')+';margin-bottom:8px;">'+tag+'<div style="max-width:82%;padding:9px 12px;border-radius:12px;font-size:13px;line-height:1.6;white-space:pre-wrap;'+(me?'background:#2C6EBD;color:#fff;':'background:#fff;border:1px solid #D0DCF0;color:#131E2E;')+'">'+esc(m.content)+'</div></div>';
+      var thinking=(m.content==='（考え中…）');
+      var bubbleStyle='max-width:86%;padding:10px 13px;border-radius:12px;font-size:13px;line-height:1.6;'+(me?'background:#2C6EBD;color:#fff;white-space:pre-wrap;':'background:#fff;border:1px solid #D0DCF0;color:#131E2E;');
+      var inner=(me||thinking)?esc(m.content):mdLite(m.content);
+      h+='<div style="display:flex;flex-direction:column;align-items:'+(me?'flex-end':'flex-start')+';margin-bottom:8px;">'+tag+'<div style="'+bubbleStyle+'">'+inner+'</div></div>';
     });
     box.innerHTML=h; box.scrollTop=box.scrollHeight;
   }
@@ -4181,7 +4213,7 @@
   function maCards(txt, selectable){
     var arr=null;
     try{ var s=txt.indexOf('['), e=txt.lastIndexOf(']'); if(s>=0&&e>s) arr=JSON.parse(txt.slice(s,e+1)); }catch(err){ arr=null; }
-    if(!arr||!arr.length) return '<div style="white-space:pre-wrap;font-size:13px;color:#131E2E;line-height:1.7;">'+esc(txt)+'</div>';
+    if(!arr||!arr.length) return '<div style="font-size:13px;color:#131E2E;">'+mdLite(txt)+'</div>';
     if(selectable) window.__lastMa=arr;
     function rw(l,v){ if(!v)return''; return '<div style="font-size:12px;line-height:1.65;margin-bottom:4px;"><span style="color:#8AA0BE;font-weight:600;">'+l+'：</span><span style="color:#1C3557;">'+esc(v)+'</span></div>'; }
     var h='';
