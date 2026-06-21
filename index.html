@@ -866,20 +866,16 @@
           +'</div>'
           +'<div id="act-list" style="margin-top:12px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-ai"><div class="ph">🤖 AI自動化診断</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">気になる業務を選んで「AIで診断する」を押すと、その場で自動化プランが表示されます。気になる項目は担当パートナーにそのまま共有・相談できます。</div>'
+        +'<div class="panel" id="sec-ai"><div class="ph">🤖 AI活用・自動化のご相談</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">「こんな業務を楽にできたら」という気になることを選んで送るだけ。担当パートナーがAIで具体的な自動化プランを診断し、結果をこちらにご提案・フィードバックします。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
             +'<div style="flex:1;min-width:200px;"><label class="fl">業種・事業内容（任意）</label><input id="ai-gyo" class="inp2" style="width:100%;" placeholder="例：金属加工業、調剤薬局 など"></div>'
-            +'<div><label class="fl">従業員規模</label><select id="ai-size" class="inp2"><option>〜5名</option><option selected>6〜20名</option><option>21〜50名</option><option>51名以上</option></select></div>'
           +'</div>'
           +'<label class="fl" style="margin-top:10px;">楽にしたい・気になる業務（複数選択可）</label>'
           +'<div id="ai-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px;"></div>'
           +'<label class="fl">具体的な困りごと（任意）</label>'
           +'<input id="ai-note" class="inp2" style="width:100%;margin-bottom:10px;" placeholder="例：請求書の作成と入金確認に毎月20時間かかっている">'
-          +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
-            +'<button class="btn2" id="ai-run" onclick="runDiagSelf()">AIで診断する</button>'
-            +'<button class="ghost" id="ai-send" style="border:1px solid #D0DCF0;border-radius:9px;padding:9px 16px;font-size:13px;" onclick="sendInterests()">選んだ業務をそのまま相談する</button>'
-          +'</div>'
+          +'<button class="btn2" id="ai-send" onclick="sendInterests()">担当パートナーに相談する</button>'
           +'<div id="ai-result" style="margin-top:14px;"></div>'
           +'<div id="my-ai-props" style="margin-top:14px;"></div>'
         +'</div>'
@@ -2488,28 +2484,117 @@
   async function runDiag(custId){
     var btn=$('diag-run'), result=$('diag-result');
     var gyo=($('diag-gyo')||{}).value.trim(), size=($('diag-size')||{}).value, note=($('diag-note')||{}).value.trim();
+    var wage=Number(($('diag-wage')||{}).value)||3000, tools=($('diag-tools')||{}).value.trim();
     // 顧客が送った興味を文脈に取り込む
     var ir=await sb.from('automation_interests').select('title,detail').eq('customer_id',custId).eq('category','automation').order('created_at',{ascending:false}).limit(30);
     var interests=(ir.data||[]).map(function(x){ return x.title+(x.detail?('（'+x.detail+'）'):''); }).join('、');
-    btn.disabled=true; var ot=btn.textContent; btn.textContent='AIが分析中...';
-    result.innerHTML='<div style="padding:20px;text-align:center;color:#4A6080;font-size:13px;">AIが自動化案を作成しています...</div>';
-    var sys='あなたは中小企業の業務改善とAI活用に精通したコンサルタントです。バックオフィスに限らず、現場・営業・物流・製造・マーケティングなど全部門が対象です。後継者不在も視野に入る黒字中小企業の生産性向上と財務貢献を目的に、現実的で着手しやすい自動化案を提案します。出力は指定されたJSON配列のみとし、前置き・後置き・コードフェンスを一切付けないこと。';
-    var usr='対象企業の情報：\n業種・事業内容: '+(gyo||'（未記入）')+'\n従業員規模: '+size+'\n顧客が相談してきた気になる業務: '+(interests||'（指定なし）')+'\nパートナーからの補足: '+(note||'（特になし）')+'\n\nこの企業で、AIや軽量なデジタルツールで自動化・効率化できる業務（部門を問わず）を5件程度、効果の大きい順に提案してください。顧客が挙げた業務を優先的にカバーし、中小企業が無理なく始められる現実的な手段を優先。推奨アプローチには「Claudeプロジェクト」「Custom GPT」「専用AIアシスタント」「RPA」「既存SaaS連携」など具体的な手段名を含めてください。\n\n必ず次の形式のJSON配列のみを出力（説明・コードフェンス禁止）：\n[{"業務":"...","現状課題":"...","自動化案":"...","推奨アプローチ":"...","期待効果":"...","難易度":"低|中|高","優先度":"高|中|低","月間削減目安":"例: 約20時間/月"}]';
+    // 財務スナップショットも文脈へ（精度向上）
+    var snap=null; try{ var sr=await sb.from('cashflow_snapshots').select('*').eq('customer_id',custId).order('created_at',{ascending:false}).limit(1); if(!sr.error&&sr.data&&sr.data.length) snap=sr.data[0]; }catch(e){}
+    var finCtx=snap?('月商'+(snap.monthly_in||'-')+'万円、月間支出'+(snap.monthly_out||'-')+'万円、資金繰りスコア'+(snap.score||'-')+'点'):'（財務データなし）';
+    btn.disabled=true; var ot=btn.textContent; btn.textContent='AIが詳細分析中...';
+    result.innerHTML='<div style="padding:20px;text-align:center;color:#4A6080;font-size:13px;">AIが業務フロー・ツール構成・投資回収まで踏み込んで分析しています…（30秒前後）</div>';
+    var sys='あなたは中小企業のDX・業務自動化を専門とする上級コンサルタントです。バックオフィスに限らず、現場・営業・物流・製造・マーケ・人事まで全部門が対象です。後継者不在も視野に入る黒字中小企業の生産性向上と財務改善（固定費・人件費の最適化）を目的に、業務フローの分解→ボトルネック特定→具体的ツール構成→実装手順→定量効果（時間・金額）→投資回収まで、実装できるレベルまで掘り下げて提案します。数値は与えられた平均人件費を用いて時間を金額換算し、現実的な根拠で概算します。出力は指定したJSONオブジェクトのみとし、前置き・後置き・コードフェンス・説明文を一切付けないこと。';
+    var usr='【対象企業】\n業種・事業内容: '+(gyo||'（未記入）')+'\n従業員規模: '+size+'\n平均人件費: '+wage+'円/時\n現状の業務・使用ツール: '+(tools||'（情報なし）')+'\n財務状況: '+finCtx+'\n顧客が相談してきた気になる業務: '+(interests||'（指定なし）')+'\nパートナーからの補足: '+(note||'（特になし）')+'\n\n【依頼】\nこの企業で効果の大きい自動化・効率化の施策を6〜8件、効果順に提案（うち1〜2件はすぐ着手できる「クイックウィン」を必ず含める）。同業中小企業の一般的な水準と比べた所感を「現状サマリー」に一言含める。顧客が挙げた業務を優先的にカバーし、中小企業が無理なく始められる現実的な手段を優先。推奨ツールは「Claudeプロジェクト」「Custom GPT」「専用AIアシスタント」「RPA(Power Automate等)」「既存SaaS連携」など具体名を含める。削減時間は平均人件費('+wage+'円/時)で年間金額に換算する。\n\n【出力JSON（このオブジェクトのみ）】\n{"総括":{"現状サマリー":"2〜3文","年間削減時間目安":"約◯◯時間/年","年間削減コスト目安":"約◯◯万円/年","想定投資額目安":"約◯◯万円","回収期間目安":"約◯◯ヶ月","着手順序":"フェーズ1→2→3の要点","財務インパクト":"固定費・粗利・資金繰りへの効果","次フェーズ(M&A)への布石":"自動化で生まれた余力をどう次の投資/承継につなげるか"},"施策":[{"業務":"...","対象部署":"...","現状フロー":"...","ボトルネック":"...","自動化案":"...","推奨ツール構成":"...","実装ステップ":["手順1","手順2","手順3"],"KPI":"...","月間削減時間":"約◯時間/月","年間削減コスト":"約◯万円/年","投資コスト目安":"初期◯万円/月額◯円","回収期間":"約◯ヶ月","難易度":"低|中|高","優先度":"高|中|低","定着のコツ・リスク":"..."}]}';
     try{
-      var res=await sb.functions.invoke('ai-proxy', { body: { system:sys, messages:[{role:'user',content:usr}], model:'claude-sonnet-4-6', max_tokens:2500 } });
+      var res=await sb.functions.invoke('ai-proxy', { body: { system:sys, messages:[{role:'user',content:usr}], model:'claude-opus-4-8', max_tokens:4500 } });
       if(res.error){ result.innerHTML='<div style="font-size:12px;color:#A83030;line-height:1.6;">呼び出しエラー：'+esc(res.error.message||String(res.error))+'</div>'; }
       else if(res.data && res.data.ok===false){ result.innerHTML='<div style="font-size:12px;color:#A83030;">'+esc(res.data.error||'エラー')+'</div>'; }
       else {
         var txt=(res.data && res.data.text)|| (res.data&&res.data.content&&res.data.content.map?res.data.content.map(function(c){return c.text||'';}).join(''):'') ||'';
         window.__diagText=txt;
-        result.innerHTML=aiCards(txt, false)
-          +'<div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">'
+        result.innerHTML=diagReport(txt, custId, true)
+          +'<div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap;">'
             +'<button class="btn2" onclick="shareDiag(\''+custId+'\',true)">この診断を顧客に共有</button>'
-            +'<button class="ghost" style="font-size:12px;" onclick="shareDiag(\''+custId+'\',false)">共有せず保存</button>'
+            +'<button class="ghost" style="font-size:12px;border:1px solid #D0DCF0;border-radius:8px;padding:7px 12px;" onclick="shareDiag(\''+custId+'\',false)">共有せず保存</button>'
             +'<span id="diag-share-msg" style="font-size:12px;"></span>'
           +'</div>';
       }
     }catch(e){ result.innerHTML='<div style="font-size:12px;color:#A83030;">エラー：'+esc(String((e&&e.message)||e))+'</div>'; }
+    btn.disabled=false; btn.textContent=ot;
+  }
+  // 自動化診断レポートのレンダリング（新形式オブジェクト／旧形式配列の両対応）
+  function diagParse(txt){
+    if(!txt) return null;
+    try{ var s=txt.indexOf('{'), e=txt.lastIndexOf('}'); if(s>=0&&e>s){ var o=JSON.parse(txt.slice(s,e+1)); if(o&&o['施策']) return o; } }catch(err){}
+    return null;
+  }
+  function diagReport(txt, custId, controls){
+    var obj=diagParse(txt);
+    if(!obj){ return aiCards(txt, false); } // 旧形式（配列）や自由文はそれぞれの描画へ
+    var items=obj['施策']||[]; window.__diagItems=items;
+    var sm=obj['総括']||{};
+    var pfx='dg'+(++__aiSeq)+'_';
+    function chip(l,v,c){ if(!v)return ''; return '<div style="flex:1 1 130px;min-width:130px;background:#fff;border:1px solid '+(c||'#EAF0F7')+';border-radius:9px;padding:9px 11px;"><div style="font-size:10.5px;color:#8AA0BE;">'+l+'</div><div style="font-size:14px;font-weight:700;color:'+(c||'#1C3557')+';margin-top:2px;line-height:1.4;">'+esc(v)+'</div></div>'; }
+    function line(l,v){ if(!v)return ''; return '<div style="font-size:12px;line-height:1.7;margin:4px 0;"><span style="color:#8AA0BE;font-weight:600;">'+l+'：</span><span style="color:#1C3557;">'+esc(v)+'</span></div>'; }
+    var h='';
+    // 総括
+    if(Object.keys(sm).length){
+      h+='<div style="border:1px solid #C7DBF2;background:#F5F9FF;border-radius:12px;padding:14px 16px;margin-bottom:12px;">'
+        +'<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">📋 総括（経営インパクト）</div>'
+        +(sm['現状サマリー']?'<div style="font-size:12.5px;color:#131E2E;line-height:1.75;margin-bottom:10px;">'+esc(sm['現状サマリー'])+'</div>':'')
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+          +chip('年間削減時間',sm['年間削減時間目安'],'#2C6EBD')
+          +chip('年間削減コスト',sm['年間削減コスト目安'],'#1E6B45')
+          +chip('想定投資額',sm['想定投資額目安'],'#C89620')
+          +chip('回収期間',sm['回収期間目安'],'#2C6EBD')
+        +'</div>'
+        +(sm['着手順序']?'<div style="margin-top:10px;">'+line('着手順序',sm['着手順序'])+'</div>':'')
+        +line('財務インパクト',sm['財務インパクト'])
+        +line('次フェーズ(M&A)への布石',sm['次フェーズ(M&A)への布石'])
+      +'</div>';
+    }
+    h+='<div style="font-size:12px;color:#4A6080;margin:2px 0 10px;">施策 '+items.length+'件（優先度順／タップで詳細・「深掘り」で実装手順書を生成）</div>';
+    var rank={'高':0,'中':1,'低':2};
+    items.sort(function(a,b){ var ra=rank[a['優先度']], rb=rank[b['優先度']]; return (ra==null?9:ra)-(rb==null?9:rb); });
+    function pc(p){ return p==='高'?'#C89620':(p==='中'?'#2C6EBD':'#8AA0BE'); }
+    function dc(d){ return d==='低'?'#1E6B45':(d==='高'?'#A83030':'#C89620'); }
+    function bdg(t,c){ return '<span style="font-size:10px;font-weight:600;padding:3px 9px;border-radius:99px;background:'+c+'22;color:'+c+';white-space:nowrap;">'+esc(t)+'</span>'; }
+    items.forEach(function(it,i){
+      var pr=it['優先度']||'-', df=it['難易度']||'-';
+      var steps=it['実装ステップ'];
+      var stepHtml='';
+      if(steps&&steps.length){ stepHtml='<div style="font-size:12px;color:#8AA0BE;font-weight:600;margin:6px 0 2px;">実装ステップ</div><ol style="margin:2px 0 6px;padding-left:20px;font-size:12px;color:#1C3557;line-height:1.7;">'+steps.map(function(s){return '<li style="margin:2px 0;">'+esc(s)+'</li>';}).join('')+'</ol>'; }
+      h+='<div style="border:1px solid #D0DCF0;border-radius:11px;margin-bottom:8px;overflow:hidden;">'
+        +'<div onclick="aiToggle(\''+pfx+i+'\')" style="display:flex;align-items:center;gap:8px;padding:11px 14px;cursor:pointer;">'
+          +'<span style="flex:1;font-size:13px;font-weight:600;color:#131E2E;">'+esc(it['業務']||'')+(it['対象部署']?'<span style="font-size:11px;color:#8AA0BE;font-weight:400;">（'+esc(it['対象部署'])+'）</span>':'')+'</span>'
+          +bdg('優先 '+pr,pc(pr))+bdg('難易度 '+df,dc(df))
+          +'<span id="'+pfx+i+'_a" style="color:#8AA0BE;font-size:12px;">▸</span>'
+        +'</div>'
+        +'<div id="'+pfx+i+'" style="display:none;padding:0 14px 12px;">'
+          +line('現状フロー',it['現状フロー'])
+          +line('ボトルネック',it['ボトルネック'])
+          +line('自動化案',it['自動化案'])
+          +line('推奨ツール構成',it['推奨ツール構成'])
+          +stepHtml
+          +line('KPI',it['KPI'])
+          +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0;">'
+            +chip('月間削減時間',it['月間削減時間'],'#2C6EBD')+chip('年間削減コスト',it['年間削減コスト'],'#1E6B45')+chip('投資コスト',it['投資コスト目安'],'#C89620')+chip('回収期間',it['回収期間'],'#2C6EBD')
+          +'</div>'
+          +line('定着のコツ・リスク',it['定着のコツ・リスク'])
+          +(controls?'<button class="ghost" style="font-size:12px;border:1px solid #2C6EBD;color:#2C6EBD;border-radius:8px;padding:6px 12px;margin-top:6px;" onclick="diagDrill(\''+custId+'\','+i+',this)">🔬 この施策をさらに深掘り（実装手順書）</button><div id="'+pfx+i+'_drill" style="margin-top:8px;"></div>':'')
+        +'</div>'
+      +'</div>';
+    });
+    h+='<div style="font-size:11px;color:#8AA0BE;margin-top:6px;">※ AIが生成した提案です。実際の導入可否・効果・投資額は個別精査が必要です。</div>';
+    return h;
+  }
+  // 1施策をさらに深掘り：実装手順書をAI生成
+  async function diagDrill(custId, i, btn){
+    var items=window.__diagItems||[]; var it=items[i]; if(!it)return;
+    var box=btn&&btn.parentNode&&btn.parentNode.querySelector('[id$="_drill"]');
+    if(!box) return;
+    var ot=btn.textContent; btn.disabled=true; btn.textContent='生成中…';
+    box.innerHTML='<div style="font-size:12px;color:#4A6080;padding:8px;">実装手順書を作成しています…</div>';
+    var gyo=($('diag-gyo')||{}).value.trim(), wage=Number(($('diag-wage')||{}).value)||3000;
+    var sys='あなたは中小企業のDX導入を伴走する実装コンサルタントです。指定された1つの業務について、現場担当者がそのまま着手できる具体的な実装手順書を日本語で作成します。ツールの具体名・設定の流れ・必要データ・プロンプト例・体制・スケジュール・運用・注意点まで踏み込みます。Markdown（見出し##、箇条書き-、番号付き）で簡潔かつ実務的に。';
+    var usr='企業の業種: '+(gyo||'（未記入）')+'／平均人件費: '+wage+'円/時\n\n対象業務: '+(it['業務']||'')+'\n自動化案: '+(it['自動化案']||'')+'\n推奨ツール構成: '+(it['推奨ツール構成']||'')+'\n\nこの業務の自動化を実現する実装手順書を、次の構成で作成してください：\n## 全体像（Before/After）\n## 必要なツール・アカウント・初期費用\n## 導入ステップ（番号付き・各ステップに具体操作）\n## 設定・プロンプト例（あれば具体例）\n## 必要データ・連携\n## 体制と所要期間（誰が・いつまでに）\n## 月次の運用フロー\n## 効果測定（KPIと測り方）\n## つまずきやすい点・注意';
+    try{
+      var res=await sb.functions.invoke('ai-proxy', { body:{ system:sys, messages:[{role:'user',content:usr}], model:'claude-opus-4-8', max_tokens:3000 } });
+      var txt=(res.data&&res.data.text)||'';
+      if(res.error){ box.innerHTML='<div style="font-size:12px;color:#A83030;">エラー：'+esc(res.error.message||'')+'</div>'; }
+      else if(res.data&&res.data.ok===false){ box.innerHTML='<div style="font-size:12px;color:#A83030;">'+esc(res.data.error||'エラー')+'</div>'; }
+      else { box.innerHTML='<div style="border-left:3px solid #2C6EBD;background:#F7FAFD;border-radius:8px;padding:10px 12px;font-size:12.5px;color:#131E2E;">'+mdLite(txt)+'</div>'; }
+    }catch(e){ box.innerHTML='<div style="font-size:12px;color:#A83030;">エラー：'+esc(String((e&&e.message)||e))+'</div>'; }
     btn.disabled=false; btn.textContent=ot;
   }
   async function shareDiag(custId, share){
@@ -3738,15 +3823,17 @@
     // ---- タブ3：AIツール・試算 ----
     var tabTools='<div id="ctab-tools">'
       +'<div class="ph" id="cs-ai" style="font-size:13px;">🤖 AI自動化診断</div>'
-      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">顧客が送った「気になる業務」を踏まえてAIが自動化プランを診断します。結果を確認して顧客に共有できます。</div>'
+      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">顧客が送った「気になる業務」を踏まえ、AIが業務フロー・ボトルネック・ツール構成・実装手順・削減時間と金額・投資回収まで踏み込んで診断します。結果を確認し、必要なら各施策を「深掘り」して、顧客にフィードバック・提案できます。</div>'
       +'<div id="diag-interests" style="margin-bottom:8px;"></div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
-        +'<div style="flex:1;min-width:160px;"><label class="fl">業種・事業内容</label><input id="diag-gyo" class="inp2" style="width:100%;" placeholder="例：金属加工業"></div>'
+        +'<div style="flex:1;min-width:160px;"><label class="fl">業種・事業内容</label><input id="diag-gyo" class="inp2" style="width:100%;" placeholder="例：金属加工業／調剤薬局"></div>'
         +'<div><label class="fl">従業員規模</label><select id="diag-size" class="inp2"><option>〜5名</option><option selected>6〜20名</option><option>21〜50名</option><option>51名以上</option></select></div>'
+        +'<div><label class="fl">平均人件費（円/時）</label><input id="diag-wage" type="number" class="inp2" style="width:130px;" value="3000" placeholder="例 3000"></div>'
       +'</div>'
+      +'<div style="margin-top:8px;"><label class="fl">現状の業務・使用中のツール（任意）</label><input id="diag-tools" class="inp2" style="width:100%;" placeholder="例：受発注はFAXと手入力、会計は弥生、勤怠は紙タイムカード"></div>'
       +'<label class="fl" style="margin-top:8px;">補足・重点を置きたい点（任意）</label>'
       +'<input id="diag-note" class="inp2" style="width:100%;margin-bottom:8px;" placeholder="顧客の困りごとや、特に診断したい業務など">'
-      +'<button class="btn2" id="diag-run" onclick="runDiag(\''+custId+'\')">AIで診断する</button>'
+      +'<button class="btn2" id="diag-run" onclick="runDiag(\''+custId+'\')">AIで詳細診断する</button>'
       +'<div id="diag-result" style="margin-top:12px;"></div>'
       +'<div class="ph" id="cs-loan" style="font-size:13px;margin-top:18px;">💴 融資ナビ（最適な融資の優先順位）</div>'
       +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">資金の性質を選ぶと、適した融資制度を優先順位つきで提示します。判定は制度の特徴に基づく確定ルール（AIではありません）。最終判断は金融機関・専門家にご確認ください。</div>'
@@ -3837,7 +3924,7 @@
       var dt=(d.created_at||'').slice(0,10);
       h+='<div style="border:1px solid #EAF0F7;border-radius:10px;padding:12px 14px;margin-bottom:10px;">'
         +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:8px;">実施日：'+esc(dt)+'</div>'
-        +aiCards(d.result_text||'')
+        +diagReport(d.result_text||'', null, false)
         +'</div>';
     });
     box.innerHTML=h;
@@ -3908,46 +3995,6 @@
     result.innerHTML='<div style="font-size:13px;color:#1E6B45;background:#E6F4EC;border-radius:10px;padding:12px 14px;">✅ '+rows.length+'件のご相談を担当パートナーに送りました。AIで自動化プランを診断のうえ、ご提案します。</div>';
     aiSelected={}; buildAiChips(); if($('ai-note')) $('ai-note').value='';
   }
-  // 顧客：その場でAI診断（パートナーの診断と同じ操作・同じ結果カード）
-  async function runDiagSelf(){
-    var btn=$('ai-run'), result=$('ai-result');
-    var gyo=($('ai-gyo')||{}).value.trim(), size=($('ai-size')||{}).value||'', note=($('ai-note')||{}).value.trim();
-    var areas=Object.keys(aiSelected);
-    var interests=areas.join('、');
-    if(areas.length===0 && !note && !gyo){ result.innerHTML='<div style="font-size:12px;color:#A83030;">業種を入力するか、気になる業務を1つ以上選んでください。</div>'; return; }
-    if(btn){ btn.disabled=true; var ot=btn.textContent; btn.textContent='AIが分析中...'; }
-    result.innerHTML='<div style="padding:20px;text-align:center;color:#4A6080;font-size:13px;">AIが自動化案を作成しています...</div>';
-    var sys='あなたは中小企業の業務改善とAI活用に精通したコンサルタントです。バックオフィスに限らず、現場・営業・物流・製造・マーケティングなど全部門が対象です。後継者不在も視野に入る黒字中小企業の生産性向上と財務貢献を目的に、現実的で着手しやすい自動化案を提案します。出力は指定されたJSON配列のみとし、前置き・後置き・コードフェンスを一切付けないこと。';
-    var usr='対象企業の情報：\n業種・事業内容: '+(gyo||'（未記入）')+'\n従業員規模: '+(size||'（未記入）')+'\n気になっている業務: '+(interests||'（指定なし）')+'\n具体的な困りごと: '+(note||'（特になし）')+'\n\nこの企業で、AIや軽量なデジタルツールで自動化・効率化できる業務（部門を問わず）を5件程度、効果の大きい順に提案してください。挙げられた業務を優先的にカバーし、中小企業が無理なく始められる現実的な手段を優先。推奨アプローチには「Claudeプロジェクト」「Custom GPT」「専用AIアシスタント」「RPA」「既存SaaS連携」など具体的な手段名を含めてください。\n\n必ず次の形式のJSON配列のみを出力（説明・コードフェンス禁止）：\n[{"業務":"...","現状課題":"...","自動化案":"...","推奨アプローチ":"...","期待効果":"...","難易度":"低|中|高","優先度":"高|中|低","月間削減目安":"例: 約20時間/月"}]';
-    try{
-      var res=await sb.functions.invoke('ai-proxy', { body: { system:sys, messages:[{role:'user',content:usr}], model:'claude-sonnet-4-6', max_tokens:2500 } });
-      if(res.error){ result.innerHTML='<div style="font-size:12px;color:#A83030;line-height:1.6;">呼び出しエラー：'+esc(res.error.message||String(res.error))+'</div>'; }
-      else if(res.data && res.data.ok===false){ result.innerHTML='<div style="font-size:12px;color:#A83030;">'+esc(res.data.error||'エラー')+'</div>'; }
-      else {
-        var txt=(res.data && res.data.text)|| (res.data&&res.data.content&&res.data.content.map?res.data.content.map(function(c){return c.text||'';}).join(''):'') ||'';
-        result.innerHTML=aiCards(txt, true);
-      }
-    }catch(e){ result.innerHTML='<div style="font-size:12px;color:#A83030;">エラー：'+esc(String((e&&e.message)||e))+'</div>'; }
-    if(btn){ btn.disabled=false; btn.textContent=ot; }
-  }
-  // 顧客：診断カードで選んだ項目を担当パートナーに共有
-  async function shareInterests(){
-    var msg=$('ai-share-msg');
-    var picks=document.querySelectorAll('.ai-pick:checked');
-    if(!picks.length){ if(msg){ msg.style.color='#A83030'; msg.textContent='共有したい項目を1つ以上選んでください。'; } return; }
-    var gyo=($('ai-gyo')||{}).value.trim();
-    var arr=window.__lastProps||[];
-    var rows=[];
-    picks.forEach(function(c){
-      var it=arr[parseInt(c.getAttribute('data-i'),10)]; if(!it)return;
-      var detail=('自動化案: '+(it['自動化案']||'')+' ／ 期待効果: '+(it['期待効果']||''))+(gyo?(' ／ 業種: '+gyo):'');
-      rows.push({ customer_id:ME, category:'automation', title:(it['業務']||''), detail:detail, status:'new' });
-    });
-    if(!rows.length) return;
-    var res=await sb.from('automation_interests').insert(rows);
-    if(res.error){ if(msg){ msg.style.color='#A83030'; msg.textContent='共有エラー：'+res.error.message; } return; }
-    if(msg){ msg.style.color='#1E6B45'; msg.textContent=rows.length+'件を担当パートナーに共有しました。'; }
-  }
   // 顧客：パートナーから共有された診断提案を閲覧
   async function loadMyAiProps(){
     var box=$('my-ai-props'); if(!box)return;
@@ -3956,7 +4003,7 @@
     var h='<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">💡 担当パートナーからの自動化プラン</div>';
     (res.data||[]).forEach(function(p){
       h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:4px 4px;margin-bottom:10px;background:var(--card);">'
-        +aiCards(p.result_text||'', false)
+        +diagReport(p.result_text||'', null, false)
         +'<div style="font-size:10.5px;color:#8AA0BE;padding:0 12px 8px;">'+esc((p.created_at||'').slice(0,10))+' にご提案</div>'
       +'</div>';
     });
@@ -4195,10 +4242,132 @@
       '余剰資金の運用・M&Aで成長（「M&A活用」パネル）'
     ]);
     h+='<div style="font-size:11px;color:#8AA0BE;margin-top:8px;line-height:1.7;">※ 金融機関へは資金繰り表・経営計画を示して対話を。認定経営革新等支援機関の関与も有効です。本診断は概算の目安であり、実際の調達可否・条件・税務上の取扱いは金融機関や専門家の確認が必要です。</div>';
+    h+='<div style="border-top:1px dashed #D0DCF0;margin-top:14px;padding-top:12px;">'
+      +'<div style="font-weight:600;font-size:13px;color:#1C3557;margin-bottom:4px;">🧠 AI財務所見・改善提案</div>'
+      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:8px;">上の指標をもとに、AIが現状評価・強み弱み・重点アクション・資金調達/M&Aへの示唆を文章化します。提案メモとして顧客に共有できます。</div>'
+      +'<button class="btn2" id="cf-ai-btn" onclick="cfAiComment(\''+custId+'\')">AIで財務所見を作成</button>'
+      +'<div id="cf-ai-result" style="margin-top:10px;"></div>'
+    +'</div>';
     h+='</div>';
+    window.__cfLast={ custId:custId, score:score, rank:rank, label:label, liqMonths:liqMonths, runway:runway, ccc:ccc, arDays:arDays, invDays:invDays, apDays:apDays, debtRatio:debtRatio, repayYears:repayYears, coverage:coverage, simpleCF:simpleCF, sales:sales, cash:cash, outflow:outflow, debt:debt, repay:repay, op:op, dep:dep, phase:phase };
     box.innerHTML=h;
     // スナップショット保存 → 顧客のダッシュボード「資金繰りステータス」に反映
     sb.from('cashflow_snapshots').insert({ customer_id:custId, cash:cash, monthly_in:sales, monthly_out:outflow, monthly_repay:repay, score:score }).then(function(res){ var sm=$('cf-saved'); if(!sm)return; if(res.error){ sm.style.color='#A83030'; sm.textContent='結果の保存に失敗：'+res.error.message+'（Phase23のSQL未実施の可能性があります）'; } else { sm.style.color='#1E6B45'; sm.textContent='診断結果を保存しました。顧客のダッシュボード「資金繰りステータス」に反映されます。'; } });
+  }
+
+  // ===== AI財務力診断（収益性・安全性・効率性・成長性＋改善＋M&Aレディネス） =====
+  async function cfAiComment(custId){
+    var btn=$('cf-ai-btn'), box=$('cf-ai-result');
+    if(!box) return;
+    var m=window.__cfLast||{};
+    if(!m.custId){ box.innerHTML='<div style="font-size:12px;color:#A83030;">先に「資金繰りを診断する」を実行してください。</div>'; return; }
+    // 財務推移（直近12ヶ月）を文脈に
+    var trend='（履歴なし）';
+    try{
+      var f=await sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false}).limit(12);
+      if(!f.error && f.data && f.data.length){
+        trend=f.data.slice().reverse().map(function(r){ return (r.year_month||'')+': 売上'+(r.revenue!=null?r.revenue+'万':'-')+'・営業利益'+(r.profit!=null?r.profit+'万':'-'); }).join(' / ');
+      }
+    }catch(e){}
+    var gyo=($('diag-gyo')||{}).value.trim() || (CURRENT_CLIENT&&CURRENT_CLIENT.company)||'';
+    if(btn){ btn.disabled=true; var ot=btn.textContent; btn.textContent='AIが財務分析中…'; }
+    box.innerHTML='<div style="padding:18px;text-align:center;color:#4A6080;font-size:13px;">AIが収益性・安全性・効率性・成長性の4観点で財務を診断しています…（30秒前後）</div>';
+    var metrics='資金繰りスコア '+m.score+'点（ランク'+m.rank+'：'+m.label+'）\n'
+      +'月商 '+m.sales+'万円／現預金 '+m.cash+'万円／月間支出 '+m.outflow+'万円／月間返済 '+m.repay+'万円\n'
+      +'手元流動性 '+(m.liqMonths||0).toFixed(1)+'か月／資金繰り余力 '+(m.runway>=99?'十分':(m.runway||0).toFixed(1)+'か月')+'\n'
+      +'CCC '+Math.round(m.ccc||0)+'日（売上債権'+Math.round(m.arDays||0)+'＋在庫'+Math.round(m.invDays||0)+'−仕入債務'+Math.round(m.apDays||0)+'）\n'
+      +'有利子負債 '+m.debt+'万円／借入月商倍率 '+(m.debtRatio||0).toFixed(1)+'倍／簡易CF '+Math.round(m.simpleCF||0)+'万円／債務償還年数 '+((m.simpleCF>0&&m.repayYears<99)?(m.repayYears||0).toFixed(1)+'年':'算定不可')+'／返済カバー率 '+(m.coverage||0).toFixed(1)+'倍\n'
+      +'営業利益(年) '+m.op+'万円／減価償却(年) '+m.dep+'万円';
+    var sys='あなたは中小企業の財務・事業再生に精通した上級コンサルタント（CFO代行）です。与えられた財務指標と月次推移をもとに、収益性・安全性・効率性・成長性の4観点で財務力を診断し、経営者と担当コンサルが次の一手を打てるレベルまで具体化します。コスト削減（業務自動化による固定費・人件費の最適化）に必ず接続し、最終的に次フェーズ（M&A・事業承継）へ進めるかの判断材料まで示します。指標から言える範囲で具体的に、推測は推測と明示。出力は指定したJSONオブジェクトのみ。前置き・後置き・コードフェンス禁止。';
+    var usr='【対象企業】業種: '+(gyo||'（未記入）')+'\n【財務指標】\n'+metrics+'\n【月次推移（古い→新しい）】\n'+trend+'\n\n【依頼】上記から財務力を診断し、次のJSONオブジェクトのみを返す：\n{"総合評価":{"判定":"A|B|C|D","一言":"15字程度","現状サマリー":"2〜3文"},"観点別":[{"観点":"収益性","評価":"高|中|低","コメント":"指標を根拠に1〜2文","着眼":"見るべき指標名"},{"観点":"安全性","評価":"高|中|低","コメント":"...","着眼":"..."},{"観点":"効率性","評価":"高|中|低","コメント":"...","着眼":"..."},{"観点":"成長性","評価":"高|中|低","コメント":"...","着眼":"..."}],"強み":["...","..."],"弱み・リスク":["...","..."],"重点改善アクション":[{"テーマ":"...","打ち手":"具体的に","期待効果":"できれば数値","自動化・コスト削減との接続":"どの業務自動化が効くか","期限目安":"例:3ヶ月"}],"資金繰り・調達への示唆":"2〜3文","コスト構造の見直し候補":["固定費の例","変動費の例"],"M&Aレディネス":{"判定":"未着手|準備中|可","理由":"1〜2文","必要な準備":"..."} ,"顧客への説明文":"経営者にそのまま伝えられる平易な4文程度"}';
+    try{
+      var res=await sb.functions.invoke('ai-proxy', { body:{ system:sys, messages:[{role:'user',content:usr}], model:'claude-opus-4-8', max_tokens:3500 } });
+      if(res.error){ box.innerHTML='<div style="font-size:12px;color:#A83030;">呼び出しエラー：'+esc(res.error.message||'')+'</div>'; }
+      else if(res.data&&res.data.ok===false){ box.innerHTML='<div style="font-size:12px;color:#A83030;">'+esc(res.data.error||'エラー')+'</div>'; }
+      else {
+        var txt=(res.data&&res.data.text)||'';
+        window.__finText=txt;
+        box.innerHTML=finReport(txt)
+          +'<div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap;">'
+            +'<button class="btn2" onclick="shareFinComment(\''+custId+'\')">この財務所見を顧客に共有（提案メモへ）</button>'
+            +'<span id="cf-ai-share" style="font-size:12px;"></span>'
+          +'</div>';
+      }
+    }catch(e){ box.innerHTML='<div style="font-size:12px;color:#A83030;">エラー：'+esc(String((e&&e.message)||e))+'</div>'; }
+    if(btn){ btn.disabled=false; btn.textContent=ot; }
+  }
+  function finReport(txt){
+    var o=null; try{ var s=txt.indexOf('{'), e=txt.lastIndexOf('}'); if(s>=0&&e>s) o=JSON.parse(txt.slice(s,e+1)); }catch(err){ o=null; }
+    if(!o){ return '<div style="font-size:12.5px;color:#131E2E;">'+mdLite(txt)+'</div>'; }
+    function ec(v){ return v==='高'?'#1E6B45':(v==='中'?'#C89620':'#A83030'); }
+    function jc(j){ return j==='A'?'#1E6B45':(j==='B'?'#2C6EBD':(j==='C'?'#C89620':'#A83030')); }
+    var tot=o['総合評価']||{};
+    var h='<div style="border:1px solid #C7DBF2;background:#F5F9FF;border-radius:12px;padding:14px 16px;">';
+    if(Object.keys(tot).length){
+      h+='<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px;">'
+        +'<div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;background:'+jc(tot['判定'])+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;">'+esc(tot['判定']||'-')+'</div>'
+        +'<div><div style="font-size:13px;font-weight:700;color:var(--navy);">財務力 総合評価</div><div style="font-size:13px;color:'+jc(tot['判定'])+';font-weight:700;">'+esc(tot['一言']||'')+'</div></div></div>'
+        +(tot['現状サマリー']?'<div style="font-size:12.5px;color:#131E2E;line-height:1.75;margin-bottom:10px;">'+esc(tot['現状サマリー'])+'</div>':'');
+    }
+    var asp=o['観点別']||[];
+    if(asp.length){
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">';
+      asp.forEach(function(a){
+        h+='<div style="flex:1 1 150px;min-width:150px;background:#fff;border:1px solid #EAF0F7;border-radius:10px;padding:10px 12px;">'
+          +'<div style="display:flex;align-items:center;justify-content:space-between;"><span style="font-size:12px;font-weight:700;color:#1C3557;">'+esc(a['観点']||'')+'</span><span style="font-size:11px;font-weight:700;color:'+ec(a['評価'])+';background:'+ec(a['評価'])+'22;border-radius:99px;padding:2px 9px;">'+esc(a['評価']||'')+'</span></div>'
+          +'<div style="font-size:11.5px;color:#4A6080;line-height:1.6;margin-top:5px;">'+esc(a['コメント']||'')+'</div>'
+          +(a['着眼']?'<div style="font-size:10.5px;color:#8AA0BE;margin-top:4px;">着眼：'+esc(a['着眼'])+'</div>':'')
+        +'</div>';
+      });
+      h+='</div>';
+    }
+    function listBlock(title,arr,color){ if(!arr||!arr.length)return''; var x='<div style="margin-top:8px;"><div style="font-size:12px;font-weight:700;color:'+color+';margin-bottom:3px;">'+title+'</div>'; arr.forEach(function(t){ x+='<div style="font-size:12px;color:#131E2E;line-height:1.6;padding:2px 0;">・'+esc(t)+'</div>'; }); return x+'</div>'; }
+    h+=listBlock('強み',o['強み'],'#1E6B45');
+    h+=listBlock('弱み・リスク',o['弱み・リスク'],'#A83030');
+    var acts=o['重点改善アクション']||[];
+    if(acts.length){
+      h+='<div style="margin-top:10px;"><div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:5px;">重点改善アクション</div>';
+      acts.forEach(function(a){
+        h+='<div style="border:1px solid #D0DCF0;border-radius:10px;padding:10px 12px;margin-bottom:6px;">'
+          +'<div style="font-size:12.5px;font-weight:700;color:#131E2E;">'+esc(a['テーマ']||'')+(a['期限目安']?'<span style="font-size:10.5px;font-weight:600;color:#2C6EBD;background:#E7F0FB;border-radius:99px;padding:2px 8px;margin-left:6px;">'+esc(a['期限目安'])+'</span>':'')+'</div>'
+          +(a['打ち手']?'<div style="font-size:12px;color:#1C3557;line-height:1.6;margin-top:3px;">'+esc(a['打ち手'])+'</div>':'')
+          +(a['期待効果']?'<div style="font-size:11.5px;color:#1E6B45;margin-top:3px;">期待効果：'+esc(a['期待効果'])+'</div>':'')
+          +(a['自動化・コスト削減との接続']?'<div style="font-size:11.5px;color:#8A5A00;background:#FAF3E2;border-radius:7px;padding:5px 8px;margin-top:5px;">🔧 自動化との接続：'+esc(a['自動化・コスト削減との接続'])+'</div>':'')
+        +'</div>';
+      });
+      h+='</div>';
+    }
+    if(o['資金繰り・調達への示唆']) h+='<div style="font-size:12px;color:#131E2E;line-height:1.7;margin-top:8px;"><b style="color:var(--navy);">資金繰り・調達への示唆：</b>'+esc(o['資金繰り・調達への示唆'])+'</div>';
+    h+=listBlock('コスト構造の見直し候補',o['コスト構造の見直し候補'],'#C89620');
+    var mr=o['M&Aレディネス']||{};
+    if(Object.keys(mr).length){
+      var mc=mr['判定']==='可'?'#1E6B45':(mr['判定']==='準備中'?'#C89620':'#8AA0BE');
+      h+='<div style="border-top:1px dashed #D0DCF0;margin-top:12px;padding-top:10px;">'
+        +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">次フェーズ（M&A）レディネス：<span style="color:'+mc+';">'+esc(mr['判定']||'-')+'</span></div>'
+        +(mr['理由']?'<div style="font-size:12px;color:#1C3557;line-height:1.6;margin-top:3px;">'+esc(mr['理由'])+'</div>':'')
+        +(mr['必要な準備']?'<div style="font-size:11.5px;color:#4A6080;margin-top:3px;">必要な準備：'+esc(mr['必要な準備'])+'</div>':'')
+      +'</div>';
+    }
+    if(o['顧客への説明文']) h+='<div style="border:1px solid #C9E2D2;background:#F2FBF6;border-radius:10px;padding:10px 12px;margin-top:10px;"><div style="font-size:11px;font-weight:700;color:#1E6B45;margin-bottom:3px;">📣 顧客への説明（このまま共有できます）</div><div style="font-size:12.5px;color:#131E2E;line-height:1.75;">'+esc(o['顧客への説明文'])+'</div></div>';
+    h+='<div style="font-size:11px;color:#8AA0BE;margin-top:8px;">※ AIによる診断です。最終判断は試算表・決算書の精査と専門家確認が必要です。</div>';
+    return h+'</div>';
+  }
+  async function shareFinComment(custId){
+    var msg=$('cf-ai-share'), txt=window.__finText||'';
+    if(!txt){ if(msg){msg.style.color='#A83030';msg.textContent='共有する所見がありません';} return; }
+    var o=null; try{ var s=txt.indexOf('{'), e=txt.lastIndexOf('}'); if(s>=0&&e>s) o=JSON.parse(txt.slice(s,e+1)); }catch(err){}
+    var body='【財務力診断のご報告】\n';
+    if(o){
+      var tot=o['総合評価']||{};
+      body+='総合評価：'+(tot['判定']||'-')+'（'+(tot['一言']||'')+'）\n'+(tot['現状サマリー']||'')+'\n';
+      if(o['顧客への説明文']) body+='\n'+o['顧客への説明文']+'\n';
+      var acts=o['重点改善アクション']||[];
+      if(acts.length){ body+='\n■ 重点的に取り組むこと\n'+acts.map(function(a){ return '・'+(a['テーマ']||'')+'：'+(a['打ち手']||''); }).join('\n'); }
+    } else { body+=txt.slice(0,800); }
+    var res=await sb.from('fde_notes').insert({ customer_id:custId, body:body, created_by:ME });
+    if(res.error){ if(msg){msg.style.color='#A83030';msg.textContent='共有エラー：'+res.error.message;} return; }
+    if(msg){msg.style.color='#1E6B45';msg.textContent='顧客の「担当パートナーからの提案」に共有しました。';}
+    if(typeof loadClientNotes==='function' && custId) loadClientNotes(custId);
   }
 
   // ---- AI秘書チャット ----
