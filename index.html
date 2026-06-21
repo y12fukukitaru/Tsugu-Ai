@@ -499,7 +499,7 @@
   // 役割ごとの全メニュー定義（ラベル付き）。設定で並び順・表示を変えられる
   function navDefs(r){
     if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
-    if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達'],['sec-market','Tsugu投資・融資・M&A'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信']];
+    if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信']];
     return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
@@ -682,6 +682,23 @@
           +'<button class="sbtn" data-f="all" onclick="setMkbFilter(\'all\',this)">すべて</button>'
         +'</div>'
         +'<div id="market-broker" style="margin-top:4px;">読み込み中...</div></div>'
+      +'<div class="panel" id="sec-billing"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">💳 課金・契約管理<span class="ghost" style="font-size:11px;font-weight:400;" onclick="renderAdmBilling()">↺ 再計算</span></div>'
+        +'<div style="font-size:12px;color:#8AA0BE;margin:0 0 10px;">登録済みのパートナー・顧客から月次の売上（MRR）を自動試算します。料率は下で調整できます（試算用・保存はされません）。</div>'
+        +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;background:var(--soft);border-radius:10px;padding:10px 12px;">'
+          +'<div><label class="fl">パートナー基本（円/月）</label><input id="bl-pbase" type="number" class="inp2" style="width:120px;" value="3000" oninput="renderAdmBilling()"></div>'
+          +'<div><label class="fl">顧問先1社あたり加算（円/月）</label><input id="bl-pclient" type="number" class="inp2" style="width:140px;" value="2000" oninput="renderAdmBilling()"></div>'
+          +'<div><label class="fl">顧問料（円/月）</label><input id="bl-adv" type="number" class="inp2" style="width:120px;" value="50000" oninput="renderAdmBilling()"></div>'
+          +'<div><label class="fl">初期登録料（円・初回）</label><input id="bl-init" type="number" class="inp2" style="width:130px;" value="100000" oninput="renderAdmBilling()"></div>'
+        +'</div>'
+        +'<div id="bl-summary" style="margin-top:12px;">読み込み中...</div>'
+        +'<div class="ph" style="font-size:13px;margin-top:16px;">パートナー別 月額内訳</div>'
+        +'<div id="bl-detail" style="margin-top:4px;">読み込み中...</div>'
+        +'<div class="ph" style="font-size:13px;margin-top:18px;">🤝 M&A仲介フィー計算（レーマン方式）</div>'
+        +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;line-height:1.7;">取引金額を入れると、標準レーマン方式（5億以下5%／5〜10億4%／10〜50億3%／50〜100億2%／100億超1%）で仲介フィーを段階計算します。実際の料率・最低報酬額は契約内容に従ってください。</div>'
+        +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+          +'<div><label class="fl">取引金額（万円）</label><input id="lh-amt" type="number" class="inp2" style="width:160px;" placeholder="例 30000（＝3億円）" oninput="lehmanCalc()"></div>'
+        +'</div>'
+        +'<div id="lh-out" style="margin-top:10px;"></div></div>'
       +'<div class="panel" id="sec-audit"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">🛡 監査・コンプライアンスログ<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmAudit()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#8AA0BE;margin:0 0 8px;">誰がいつ何を提案・共有・掲載したかの記録です（AI診断・保険/相続試算・マーケット掲載・提案メモ・月次レポート公開）。金融商品を扱う上での確認・監査にお使いください。</div>'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;" id="audit-filterbar">'
@@ -755,6 +772,7 @@
     renderAdmCust();
     loadAnnouncements();
     loadAdmAudit();
+    renderAdmBilling();
   }
   function daysSince(iso){ if(!iso) return 9999; var d=(Date.now()-new Date(iso).getTime())/86400000; return isFinite(d)?d:9999; }
   // ---- A. KPI（ステージ・ファネル／稼働） ----
@@ -901,6 +919,63 @@
   }
   async function setRank(id,rank){ var res=await sb.from('profiles').update({ fde_rank:(rank||null) }).eq('id',id); if(res.error) alert('ランク変更エラー：'+res.error.message); }
   async function setUserRole(id,role){ var res=await sb.from('profiles').update({ role:role }).eq('id',id); if(res.error){ alert('役割変更エラー：'+res.error.message); } loadAdmin(); }
+  // ---- G. 課金・契約管理 ----
+  function yen(n){ return '¥'+Math.round(n||0).toLocaleString('ja-JP'); }
+  function blRate(id,def){ var el=$(id); var v=el?Number(el.value):NaN; return isFinite(v)?v:def; }
+  function renderAdmBilling(){
+    var box=$('bl-summary'); if(!box)return;
+    var fdes=ADM_CACHE.fdes||[], custs=ADM_CACHE.custs||[], cc=ADM_CACHE.clientCount||{};
+    var pbase=blRate('bl-pbase',3000), pcl=blRate('bl-pclient',2000), adv=blRate('bl-adv',50000), init=blRate('bl-init',100000);
+    var partnerMRR=0; fdes.forEach(function(f){ partnerMRR += pbase + pcl*(cc[f.id]||0); });
+    var assignedClients=Object.keys(cc).reduce(function(s,k){ return s+(cc[k]||0); },0);
+    var advMRR=custs.length*adv;
+    var mrr=partnerMRR+advMRR;
+    var ym=new Date().toISOString().slice(0,7);
+    var newC=custs.filter(function(c){ return (c.created_at||'').slice(0,7)===ym; }).length;
+    var initThisMonth=newC*init;
+    function card(l,v,sub,c){ return '<div style="flex:1 1 150px;min-width:150px;background:#fff;border:1px solid #EAF0F7;border-radius:10px;padding:11px 13px;"><div style="font-size:10.5px;color:#8AA0BE;">'+l+'</div><div style="font-size:19px;font-weight:700;color:'+(c||'#1C3557')+';">'+v+'</div>'+(sub?'<div style="font-size:10.5px;color:#8AA0BE;margin-top:2px;">'+sub+'</div>':'')+'</div>'; }
+    box.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      +card('月次売上 MRR合計', yen(mrr), '年換算 '+yen(mrr*12), '#1E6B45')
+      +card('　うち 顧問料', yen(advMRR), custs.length+'社 × '+yen(adv))
+      +card('　うち パートナー', yen(partnerMRR), fdes.length+'名・基本＋'+assignedClients+'社加算')
+      +card('今月の初期登録料（一時）', yen(initThisMonth), '新規 '+newC+'社 × '+yen(init), '#C89620')
+      +'</div>';
+    var db=$('bl-detail'); if(db){
+      if(!fdes.length){ db.innerHTML='<div style="font-size:12px;color:#8AA0BE;">パートナーがまだいません。</div>'; }
+      else {
+        var rows=fdes.map(function(f){ var n=cc[f.id]||0; return {name:(f.contact_name||f.company_name||f.email), n:n, fee:pbase+pcl*n}; });
+        rows.sort(function(a,b){ return b.fee-a.fee; });
+        var h='';
+        rows.forEach(function(r){
+          h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #EAF0F7;">'
+            +'<span style="flex:1;font-size:13px;color:#131E2E;">'+esc(r.name)+'</span>'
+            +'<span class="tag '+(r.n?'green':'gray')+'">担当 '+r.n+'社</span>'
+            +'<span style="font-size:13px;font-weight:700;color:#1C3557;width:110px;text-align:right;">'+yen(r.fee)+'<span style="font-size:10px;color:#8AA0BE;font-weight:400;">/月</span></span>'
+          +'</div>';
+        });
+        db.innerHTML=h;
+      }
+    }
+  }
+  function lehmanFee(manYen){
+    var amt=(Number(manYen)||0)*10000; // 円
+    var br=[[5e8,0.05,'5億円以下'],[5e8,0.04,'5〜10億円'],[40e8,0.03,'10〜50億円'],[50e8,0.02,'50〜100億円'],[Infinity,0.01,'100億円超']];
+    var rem=amt,total=0,rows=[];
+    for(var i=0;i<br.length;i++){ if(rem<=0)break; var slice=Math.min(rem,br[i][0]); var fee=slice*br[i][1]; rows.push({label:br[i][2],rate:br[i][1],base:slice,fee:fee}); total+=fee; rem-=slice; }
+    return {total:total,rows:rows};
+  }
+  function lehmanCalc(){
+    var out=$('lh-out'); if(!out)return;
+    var v=Number(($('lh-amt')||{}).value);
+    if(!v||v<=0){ out.innerHTML='<div style="font-size:12px;color:#8AA0BE;">取引金額を入力してください。</div>'; return; }
+    var r=lehmanFee(v);
+    var h='<div style="border:1px solid #EAF0F7;border-radius:10px;padding:10px 12px;">';
+    r.rows.forEach(function(x){ if(x.base<=0)return; h+='<div style="display:flex;justify-content:space-between;font-size:12px;color:#4A6080;padding:3px 0;"><span>'+x.label+'（'+(x.rate*100)+'%）：対象 '+yen(x.base)+'</span><span style="font-weight:600;color:#1C3557;">'+yen(x.fee)+'</span></div>'; });
+    h+='<div style="display:flex;justify-content:space-between;border-top:1px solid #EAF0F7;margin-top:6px;padding-top:6px;font-size:14px;"><span style="font-weight:700;color:var(--navy);">仲介フィー合計</span><span style="font-weight:700;color:#1E6B45;">'+yen(r.total)+'</span></div>';
+    h+='<div style="font-size:10.5px;color:#8AA0BE;margin-top:4px;">実効料率 約'+(r.total/((v||1)*10000)*100).toFixed(2)+'%（税抜・最低報酬額は別途）</div>';
+    h+='</div>';
+    out.innerHTML=h;
+  }
   // ---- F. 監査・コンプライアンスログ ----
   var AUDIT_CACHE=[]; var AUDIT_FILTER='all';
   function setAuditFilter(f,el){ AUDIT_FILTER=f; var bar=$('audit-filterbar'); if(bar){ Array.prototype.forEach.call(bar.querySelectorAll('.sbtn'),function(b){ b.classList.remove('on'); }); } if(el) el.classList.add('on'); renderAdmAudit(); }
