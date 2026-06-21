@@ -705,6 +705,8 @@
             +'<div><label class="fl">プレミアム付与</label><input id="bl-prem" type="number" class="inp2" style="width:74px;" value="10" oninput="renderAdmBilling()"></div>'
             +'<div><label class="fl">条件:顧問先</label><input id="bl-premC" type="number" class="inp2" style="width:64px;" value="10" oninput="renderAdmBilling()"></div>'
             +'<div><label class="fl">条件:HD化</label><input id="bl-premH" type="number" class="inp2" style="width:64px;" value="2" oninput="renderAdmBilling()"></div>'
+            +'<div style="width:1px;height:34px;background:var(--softline);margin:0 2px;"></div>'
+            +'<div><label class="fl">割引上限（合算）</label><input id="bl-cap" type="number" class="inp2" style="width:84px;" value="10" oninput="renderAdmBilling()"></div>'
           +'</div>'
         +'</div>'
         +'<div id="bl-summary" style="margin-top:12px;">読み込み中...</div>'
@@ -976,11 +978,12 @@
     var assignedClients=Object.keys(cc).reduce(function(s,k){ return s+(cc[k]||0); },0);
     // 顧問料（割引適用）
     var advGross=custs.length*adv, advNet=0, discTotal=0;
+    var cap=blRate('bl-cap',10);
     var custRows=custs.map(function(c){
       var d=custDiscount(c, cfg, partnerInfo);
-      var capped=Math.min(d.pct, 100);
+      var capped=Math.min(d.pct, cap);
       var fee=adv*(1-capped/100); advNet+=fee; discTotal+=(adv-fee);
-      return {c:c, pct:capped, parts:d.parts, fee:fee};
+      return {c:c, raw:d.pct, pct:capped, isCap:(d.pct>cap), parts:d.parts, fee:fee};
     });
     var mrr=partnerMRR+advNet;
     var ym=new Date().toISOString().slice(0,7);
@@ -1021,7 +1024,7 @@
           var tags=r.parts.map(function(p){ return '<span class="tag gray" style="font-size:10px;">'+esc(p.t)+' '+p.p+'%</span>'; }).join('');
           ch+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #EAF0F7;flex-wrap:wrap;">'
             +'<span style="flex:1;min-width:140px;font-size:13px;color:#131E2E;">'+esc(r.c.company_name||r.c.email)+'</span>'
-            +(r.pct>0?'<span class="tag green">割引 '+r.pct+'%</span>'+tags:'<span class="tag gray">割引なし</span>')
+            +(r.pct>0?'<span class="tag green">割引 '+r.pct+'%'+(r.isCap?'（上限）':'')+'</span>'+tags:'<span class="tag gray">割引なし</span>')
             +'<span style="font-size:13px;font-weight:700;color:#1C3557;width:110px;text-align:right;">'+yen(r.fee)+'<span style="font-size:10px;color:#8AA0BE;font-weight:400;">/月</span></span>'
           +'</div>';
         });
