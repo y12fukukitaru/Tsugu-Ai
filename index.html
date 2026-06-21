@@ -498,9 +498,9 @@
   }
   // 役割ごとの全メニュー定義（ラベル付き）。設定で並び順・表示を変えられる
   function navDefs(r){
-    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-sec','パートナーAI']];
-    if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達']];
-    return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
+    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','投資・融資マーケット'],['sec-sec','パートナーAI']];
+    if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達'],['sec-market','投資・融資マーケット']];
+    return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','投資・融資マーケット'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
   function effectiveNav(r){
@@ -669,6 +669,13 @@
       +'<div class="panel" id="sec-fund"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">資金調達パイプライン（全顧客）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadFundingPipeline()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#8AA0BE;margin:0 0 8px;">パートナーが登録した全顧客の調達案件を一元管理できます。状態はここから直接変更できます（Tsugu融資の取次台帳としてそのまま発展させます）。</div>'
         +'<div id="adm-fund" style="margin-top:4px;">読み込み中...</div></div>'
+      +'<div class="panel" id="sec-market"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">💹 投資・融資マーケット（全社）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketBroker()">↺ 更新</span></div>'
+        +'<div style="font-size:12px;color:#8AA0BE;margin:0 0 8px;">全顧客が掲載した資金調達・投資の案件とマッチング状況を一覧管理できます。</div>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;" id="mkb-filterbar">'
+          +'<button class="sbtn on" data-f="open" onclick="setMkbFilter(\'open\',this)">公開中</button>'
+          +'<button class="sbtn" data-f="all" onclick="setMkbFilter(\'all\',this)">すべて</button>'
+        +'</div>'
+        +'<div id="market-broker" style="margin-top:4px;">読み込み中...</div></div>'
       +ownFundPanelHtml('運営（自社）の資金調達ロードマップ','Tsugu自身の調達計画（シード調達・補助金・クラファン等）をここで管理します。下の全社パイプラインには「運営」区分で表示されます。');
   }
   var FDE_RANKS=['Associate','Senior','Executive','Premium Partner'];
@@ -892,6 +899,35 @@
           +'<div style="margin-top:12px;"><button class="btn2" id="ma-run" onclick="runMa()">AIに提案をもらう</button></div>'
           +'<div id="ma-result" style="margin-top:14px;"></div>'
         +'</div>'
+        +'<div class="panel" id="sec-market"><div class="ph">💹 投資・融資マーケット（プラットフォーム内マッチング）</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;line-height:1.7;">資金を「集めたい」企業と「出したい（融資・出資）」企業を、Tsugu内でマッチングします。案件を掲載し、関心を伝えると担当パートナーが間に入って橋渡しします。</div>'
+          +'<div style="font-size:11px;color:#9A7314;background:#FAF3E2;border:1px solid #F0E2C0;border-radius:9px;padding:9px 12px;margin-bottom:12px;line-height:1.7;">⚠ 本機能は当事者の引き合わせ（マッチング）を支援するもので、実際の融資・出資の実行ではありません。実行には貸金業法・金融商品取引法など関連法令の順守と、弁護士・税理士・有資格者等の関与が必要です。</div>'
+          +'<div style="border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;margin-bottom:14px;">'
+            +'<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">案件を掲載する</div>'
+            +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+              +'<div><label class="fl">立場</label><select id="mk-side" class="inp2"><option value="raise">資金を集めたい</option><option value="provide">資金を出したい</option></select></div>'
+              +'<div><label class="fl">種別</label><select id="mk-kind" class="inp2"><option value="loan">融資</option><option value="equity">出資</option></select></div>'
+              +'<div><label class="fl">金額（万円）</label><input id="mk-amount" type="number" class="inp2" placeholder="例 1000"></div>'
+              +'<div style="flex:1;min-width:160px;"><label class="fl">業種（任意）</label><input id="mk-industry" class="inp2" style="width:100%;" placeholder="例：金属加工業"></div>'
+            +'</div>'
+            +'<div style="margin-top:8px;"><label class="fl">タイトル</label><input id="mk-title" class="inp2" style="width:100%;" placeholder="例：新工場の設備資金を募集／黒字企業へ出資したい"></div>'
+            +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">'
+              +'<div style="flex:1;min-width:160px;"><label class="fl">希望条件（任意）</label><input id="mk-terms" class="inp2" style="width:100%;" placeholder="例：期間5年・金利2%以内／議決権なしの少数出資"></div>'
+            +'</div>'
+            +'<div style="margin-top:8px;"><label class="fl">詳細・補足（任意）</label><textarea id="mk-detail" class="inp2" rows="2" style="width:100%;" placeholder="事業概要・資金使途・返済原資・期待リターンなど"></textarea></div>'
+            +'<label style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;color:#4A6080;cursor:pointer;"><input type="checkbox" id="mk-anon" checked>会社名を伏せて掲載する（匿名・担当パートナーには開示されます）</label>'
+            +'<div style="margin-top:10px;"><button class="btn2" onclick="postListing()">この内容で掲載する</button><span id="mk-post-msg" style="font-size:12px;margin-left:8px;"></span></div>'
+          +'</div>'
+          +'<div class="ph" style="font-size:13px;">自分の掲載案件</div>'
+          +'<div id="market-mine" style="margin:4px 0 10px;">読み込み中...</div>'
+          +'<div class="ph" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;">公開中の案件<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarket()">↺ 更新</span></div>'
+          +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;" id="mk-filterbar">'
+            +'<button class="sbtn on" data-f="all" onclick="setMkFilter(\'all\',this)">すべて</button>'
+            +'<button class="sbtn" data-f="raise" onclick="setMkFilter(\'raise\',this)">集めたい</button>'
+            +'<button class="sbtn" data-f="provide" onclick="setMkFilter(\'provide\',this)">出したい</button>'
+          +'</div>'
+          +'<div id="market-open" style="margin-top:4px;">読み込み中...</div>'
+        +'</div>'
         +'<div class="panel" id="sec-sec"><div class="ph">パートナーAI（24時間いつでも相談できるAI）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">担当パートナーへのメッセージとは別に、AIに24時間いつでも相談できます。日程・タスク整理、文章作成、調べ物、経営の壁打ちなどにどうぞ。</div>'
           + secModesHtml()
@@ -982,8 +1018,16 @@
           +'</div>'
           +'<div id="ma-list" style="margin-top:6px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-reports">'
-          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;">📊 月次レポート承認<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadReportDrafts()">↺ 更新</span></div>'
+        +'<div class="panel" id="sec-market">'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">💹 投資・融資マーケット（仲介）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketBroker()">↺ 更新</span></div>'
+          +'<div style="font-size:11.5px;color:#8AA0BE;margin-bottom:8px;line-height:1.7;">顧客が掲載した「集めたい／出したい」案件と、寄せられた関心の一覧です。掲載企業名・関心を出した企業名が確認でき、当事者の引き合わせ（仲介）を行えます。成立・終了の状態を更新できます。</div>'
+          +'<div style="font-size:11px;color:#9A7314;background:#FAF3E2;border:1px solid #F0E2C0;border-radius:9px;padding:9px 12px;margin-bottom:10px;line-height:1.7;">⚠ 実際の融資・出資の実行には関連法令（貸金業法・金融商品取引法等）の順守と有資格者の関与が必要です。Tsuguはマッチングの場のみを提供します。</div>'
+          +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;" id="mkb-filterbar">'
+            +'<button class="sbtn on" data-f="open" onclick="setMkbFilter(\'open\',this)">公開中</button>'
+            +'<button class="sbtn" data-f="all" onclick="setMkbFilter(\'all\',this)">すべて</button>'
+          +'</div>'
+          +'<div id="market-broker" style="margin-top:4px;">読み込み中...</div>'
+        +'</div>'
           +'<div style="font-size:11.5px;color:#8AA0BE;margin-bottom:8px;">毎月1日に自動生成される下書きです。コメントを確認・編集して「承認して公開」すると、顧客の画面に表示されます。</div>'
           +'<div id="rep-drafts">読み込み中...</div>'
         +'</div>'
@@ -1050,9 +1094,9 @@
 
     window.__eff=eff;
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); }
-    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); loadMaDeals(); loadPdca(); }
-    else { loadAdmin(); }
+    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); }
+    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); }
+    else { loadAdmin(); loadMarketBroker(); }
     startNotifPolling(eff);
   }
 
@@ -4260,6 +4304,144 @@
       else { result.innerHTML=maCards((res.data&&res.data.text)||'', true); }
     }catch(e){ result.innerHTML='<div style="font-size:12px;color:#A83030;">エラー：'+esc(String((e&&e.message)||e))+'</div>'; }
     btn.disabled=false; btn.textContent=ot;
+  }
+
+  // ===== 投資・融資マーケット（顧客間マッチング・Phase41） =====
+  var MK_FILTER='all', MKB_FILTER='open', MK_CACHE=[], MKB_CACHE=[];
+  function mkSideLabel(s){ return s==='raise'?'資金を集めたい':'資金を出したい'; }
+  function mkKindLabel(k){ return k==='equity'?'出資':'融資'; }
+  function mkStatusLabel(s){ return s==='matched'?'マッチング成立':(s==='closed'?'終了':'公開中'); }
+  function mkAmount(a){ return (a===null||a===undefined||a==='')?'金額応相談':(Number(a).toLocaleString('ja-JP')+'万円'); }
+  function setMkFilter(f,el){ MK_FILTER=f; var b=$('mk-filterbar'); if(b){Array.prototype.forEach.call(b.querySelectorAll('.sbtn'),function(x){x.classList.remove('on');});} if(el)el.classList.add('on'); renderMarket(); }
+  function setMkbFilter(f,el){ MKB_FILTER=f; var b=$('mkb-filterbar'); if(b){Array.prototype.forEach.call(b.querySelectorAll('.sbtn'),function(x){x.classList.remove('on');});} if(el)el.classList.add('on'); renderMarketBroker(); }
+  async function postListing(){
+    var msg=$('mk-post-msg');
+    var side=$('mk-side').value, kind=$('mk-kind').value, title=($('mk-title')||{}).value.trim();
+    var amount=$('mk-amount').value, industry=($('mk-industry')||{}).value.trim(), terms=($('mk-terms')||{}).value.trim(), detail=($('mk-detail')||{}).value.trim();
+    var anon=$('mk-anon').checked;
+    if(!title){ if(msg){msg.style.color='#A83030';msg.textContent='タイトルを入力してください';} return; }
+    var row={ owner_id:ME, side:side, kind:kind, title:title, industry:industry||null, amount:(amount===''?null:Number(amount)), rate:terms||null, detail:detail||null, anonymous:anon, status:'open' };
+    var res=await sb.from('market_listings').insert(row);
+    if(res.error){ if(msg){msg.style.color='#A83030';msg.textContent='掲載エラー：'+res.error.message+'（Phase41のSQL未実施の可能性があります）';} return; }
+    if(msg){msg.style.color='#1E6B45';msg.textContent='掲載しました。';}
+    $('mk-title').value=''; $('mk-amount').value=''; $('mk-industry').value=''; $('mk-terms').value=''; $('mk-detail').value='';
+    loadMyListings(); loadMarket();
+  }
+  async function loadMyListings(){
+    var box=$('market-mine'); if(!box)return;
+    var res=await sb.from('market_listings').select('*').eq('owner_id',ME).order('created_at',{ascending:false});
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(res.error.message)+'<br><span style="color:#8AA0BE;">（Phase41のSQL未実施の可能性があります）</span></div>'; return; }
+    var rows=res.data||[];
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">まだ掲載した案件はありません。</div>'; return; }
+    var ids=rows.map(function(r){return r.id;});
+    var cnt={};
+    var ir=await sb.from('market_interests').select('listing_id').in('listing_id',ids);
+    if(!ir.error){ (ir.data||[]).forEach(function(x){ cnt[x.listing_id]=(cnt[x.listing_id]||0)+1; }); }
+    var h='';
+    rows.forEach(function(r){
+      var n=cnt[r.id]||0;
+      h+='<div class="clcard" style="cursor:default;">'
+        +'<div class="cl-top"><span class="cl-nm">'+esc(r.title)+'</span>'
+        +'<span class="tag '+(r.side==='raise'?'blue':'green')+'">'+esc(mkSideLabel(r.side))+'</span>'
+        +'<span class="tag gray">'+esc(mkKindLabel(r.kind))+'・'+esc(mkAmount(r.amount))+'</span>'
+        +'<span class="tag '+(r.status==='open'?'green':'gray')+'">'+esc(mkStatusLabel(r.status))+'</span></div>'
+        +(r.detail?'<div style="font-size:12px;color:#4A6080;margin-top:6px;line-height:1.6;">'+esc(r.detail)+'</div>':'')
+        +'<div style="font-size:11.5px;color:#2C6EBD;margin-top:6px;">関心：'+n+'件</div>'
+        +'<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">'
+          +(r.status==='open'
+            ?'<button class="ghost" style="border:1px solid #D0DCF0;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="setListingStatus(\''+r.id+'\',\'closed\')">掲載を終了</button>'
+            :'<button class="ghost" style="border:1px solid #D0DCF0;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="setListingStatus(\''+r.id+'\',\'open\')">再公開</button>')
+        +'</div></div>';
+    });
+    box.innerHTML=h;
+  }
+  async function setListingStatus(id,status){
+    var res=await sb.from('market_listings').update({status:status}).eq('id',id);
+    if(res.error){ alert('更新エラー：'+res.error.message); return; }
+    loadMyListings(); loadMarket();
+  }
+  async function loadMarket(){
+    var box=$('market-open'); if(!box)return;
+    var res=await sb.from('market_listings').select('*').eq('status','open').order('created_at',{ascending:false}).limit(100);
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(res.error.message)+'<br><span style="color:#8AA0BE;">（Phase41のSQL未実施の可能性があります）</span></div>'; return; }
+    MK_CACHE=(res.data||[]).filter(function(r){ return r.owner_id!==ME; });
+    renderMarket();
+  }
+  function renderMarket(){
+    var box=$('market-open'); if(!box)return;
+    var rows=MK_CACHE.filter(function(r){ return MK_FILTER==='all'||r.side===MK_FILTER; });
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">公開中の案件はありません。</div>'; return; }
+    var h='';
+    rows.forEach(function(r){
+      var who=r.anonymous?('匿名企業'+(r.industry?'（'+esc(r.industry)+'）':'')):(r.industry?esc(r.industry):'企業');
+      h+='<div class="clcard" style="cursor:default;">'
+        +'<div class="cl-top"><span class="cl-nm">'+esc(r.title)+'</span>'
+        +'<span class="tag '+(r.side==='raise'?'blue':'green')+'">'+esc(mkSideLabel(r.side))+'</span>'
+        +'<span class="tag gray">'+esc(mkKindLabel(r.kind))+'・'+esc(mkAmount(r.amount))+'</span></div>'
+        +'<div style="font-size:11.5px;color:#8AA0BE;margin-top:4px;">'+who+(r.rate?(' ／ 条件：'+esc(r.rate)):'')+'</div>'
+        +(r.detail?'<div style="font-size:12px;color:#4A6080;margin-top:6px;line-height:1.6;">'+esc(r.detail)+'</div>':'')
+        +'<div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px;flex-wrap:wrap;">'
+          +'<input id="mki-'+r.id+'" class="inp2" style="flex:1;min-width:180px;" placeholder="ひとことメッセージ（任意）">'
+          +'<button class="btn2" onclick="sendMarketInterest(\''+r.id+'\')">関心を伝える</button>'
+        +'</div>'
+        +'<div id="mkim-'+r.id+'" style="font-size:12px;margin-top:6px;"></div>'
+      +'</div>';
+    });
+    box.innerHTML=h;
+  }
+  async function sendMarketInterest(id){
+    var inp=$('mki-'+id), msg=$('mkim-'+id);
+    var message=(inp&&inp.value.trim())||'';
+    var res=await sb.from('market_interests').insert({ listing_id:id, from_id:ME, message:(message||null) });
+    if(res.error){ if(msg){msg.style.color='#A83030';msg.textContent='送信エラー：'+res.error.message;} return; }
+    if(msg){msg.style.color='#1E6B45';msg.textContent='関心を伝えました。担当パートナーが橋渡しします。';}
+    if(inp)inp.value='';
+  }
+  async function loadMarketBroker(){
+    var box=$('market-broker'); if(!box)return;
+    var res=await sb.from('market_listings').select('*').order('created_at',{ascending:false}).limit(200);
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(res.error.message)+'<br><span style="color:#8AA0BE;">（Phase41のSQL未実施の可能性があります）</span></div>'; return; }
+    var rows=res.data||[];
+    var nameOf={};
+    var pr=await sb.from('profiles').select('id,company_name,contact_name,email');
+    if(!pr.error){ (pr.data||[]).forEach(function(p){ nameOf[p.id]=p.company_name||p.contact_name||p.email; }); }
+    var byListing={};
+    var ir=await sb.from('market_interests').select('*').order('created_at',{ascending:false});
+    if(!ir.error){ (ir.data||[]).forEach(function(x){ (byListing[x.listing_id]=byListing[x.listing_id]||[]).push(x); }); }
+    MKB_CACHE=rows.map(function(r){ return { r:r, name:(nameOf[r.owner_id]||'—'), ints:(byListing[r.id]||[]).map(function(x){ return { name:(nameOf[x.from_id]||'—'), message:x.message }; }) }; });
+    renderMarketBroker();
+  }
+  function renderMarketBroker(){
+    var box=$('market-broker'); if(!box)return;
+    var rows=MKB_CACHE.filter(function(o){ return MKB_FILTER==='all'||o.r.status==='open'; });
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">該当する案件はありません。</div>'; return; }
+    var h='';
+    rows.forEach(function(o){
+      var r=o.r;
+      h+='<div class="clcard" style="cursor:default;">'
+        +'<div class="cl-top"><span class="cl-nm">'+esc(r.title)+'</span>'
+        +'<span class="tag '+(r.side==='raise'?'blue':'green')+'">'+esc(mkSideLabel(r.side))+'</span>'
+        +'<span class="tag gray">'+esc(mkKindLabel(r.kind))+'・'+esc(mkAmount(r.amount))+'</span>'
+        +'<span class="tag '+(r.status==='open'?'green':'gray')+'">'+esc(mkStatusLabel(r.status))+'</span></div>'
+        +'<div style="font-size:11.5px;color:#4A6080;margin-top:4px;">掲載：'+esc(o.name)+(r.anonymous?'（顧客には匿名表示）':'')+(r.industry?(' ／ '+esc(r.industry)):'')+(r.rate?(' ／ 条件：'+esc(r.rate)):'')+'</div>'
+        +(r.detail?'<div style="font-size:12px;color:#4A6080;margin-top:6px;line-height:1.6;">'+esc(r.detail)+'</div>':'');
+      if(o.ints.length){
+        h+='<div style="margin-top:8px;border-top:1px solid #EAF0F7;padding-top:8px;"><div style="font-size:11.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">関心 '+o.ints.length+'件</div>';
+        o.ints.forEach(function(it){ h+='<div style="font-size:12px;color:#131E2E;margin:2px 0;">・'+esc(it.name)+(it.message?('：'+esc(it.message)):'')+'</div>'; });
+        h+='</div>';
+      } else { h+='<div style="font-size:11.5px;color:#8AA0BE;margin-top:6px;">関心はまだありません。</div>'; }
+      h+='<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">';
+      if(r.status!=='matched') h+='<button class="ghost" style="border:1px solid #D0DCF0;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="brokerSetStatus(\''+r.id+'\',\'matched\')">成立にする</button>';
+      if(r.status!=='closed') h+='<button class="ghost" style="border:1px solid #D0DCF0;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="brokerSetStatus(\''+r.id+'\',\'closed\')">終了にする</button>';
+      if(r.status!=='open') h+='<button class="ghost" style="border:1px solid #D0DCF0;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="brokerSetStatus(\''+r.id+'\',\'open\')">公開に戻す</button>';
+      h+='</div></div>';
+    });
+    box.innerHTML=h;
+  }
+  async function brokerSetStatus(id,status){
+    var res=await sb.from('market_listings').update({status:status}).eq('id',id);
+    if(res.error){ alert('更新エラー：'+res.error.message+'（パートナー/運営の更新ポリシー未設定の可能性があります）'); return; }
+    loadMarketBroker();
   }
 
   var RECOVERING = /type=recovery/.test(location.hash) || /type=recovery/.test(location.search);
