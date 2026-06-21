@@ -2442,10 +2442,65 @@
       +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:5px;">顧客から届いた「気になる業務」'+rows.length+'件</div>';
     rows.forEach(function(r){
       var isNew=(r.status==='new');
-      h+='<div style="font-size:12px;color:var(--ink);margin:3px 0;">'+(isNew?'<span class="tag red">新着</span> ':'')+esc(r.title||'')+(r.detail?'<span style="color:#8AA0BE;"> — '+esc(r.detail)+'</span>':'')+'</div>';
+      h+='<div style="display:flex;align-items:baseline;gap:6px;font-size:12px;color:var(--ink);margin:3px 0;"><span style="flex:1;">'+(isNew?'<span class="tag red">新着</span> ':'')+esc(r.title||'')+(r.detail?'<span style="color:#8AA0BE;"> — '+esc(r.detail)+'</span>':'')+'</span><span onclick="delDiagInterest(\''+r.id+'\',\''+custId+'\')" style="color:#A83030;cursor:pointer;font-size:11px;flex-shrink:0;">削除</span></div>';
     });
-    h+='<div style="font-size:11px;color:#8AA0BE;margin-top:6px;">これらを踏まえて下のボタンで診断できます。</div></div>';
+    h+='<div style="font-size:11px;color:#8AA0BE;margin-top:6px;">これらを踏まえて下のボタンで診断できます。対応済みの相談は削除して整理できます。</div></div>';
     box.innerHTML=h;
+  }
+  async function delDiagInterest(id, custId){
+    if(!confirm('この相談（気になる業務）を削除します。よろしいですか？')) return;
+    var res=await sb.from('automation_interests').delete().eq('id',id);
+    if(res.error){ alert('削除エラー：'+res.error.message+'（Phase43のSQL未実施の可能性があります）'); return; }
+    loadDiagInterests(custId);
+  }
+  // この顧客への診断・提案履歴（ai_proposals）。非表示（記録は残す）と削除（完全消去）を選べる
+  var DIAG_SHOW_HIDDEN=false;
+  function diagHistItem(p, custId, isHidden){
+    var dt=(p.created_at||'').slice(0,10);
+    var hid='dh_'+String(p.id).replace(/[^a-zA-Z0-9]/g,'');
+    return '<div style="border:1px solid '+(isHidden?'#E2E8F2':'#EAF0F7')+';border-radius:10px;padding:10px 12px;margin-bottom:8px;'+(isHidden?'background:#F7F9FC;opacity:.85;':'')+'">'
+      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+        +'<span style="font-size:11px;color:#8AA0BE;">'+esc(dt)+'</span>'
+        +(p.shared?'<span class="tag green">顧客に共有済み</span>':'<span class="tag gray">保存のみ（未共有）</span>')
+        +(isHidden?'<span class="tag gray">非表示中</span>':'')
+        +'<span style="flex:1;"></span>'
+        +'<span class="ghost" style="font-size:11px;cursor:pointer;" onclick="aiToggle(\''+hid+'\')">内容</span>'
+        +(isHidden
+          ?'<span onclick="hideDiag(\''+p.id+'\',\''+custId+'\',false)" style="color:#2C6EBD;cursor:pointer;font-size:11px;">再表示</span>'
+          :'<span onclick="hideDiag(\''+p.id+'\',\''+custId+'\',true)" style="color:#4A6080;cursor:pointer;font-size:11px;">非表示</span>')
+        +'<span onclick="delDiag(\''+p.id+'\',\''+custId+'\')" style="color:#A83030;cursor:pointer;font-size:11px;">削除</span>'
+      +'</div>'
+      +'<div id="'+hid+'" style="display:none;margin-top:8px;">'+diagReport(p.result_text||'', custId, false)+'</div>'
+    +'</div>';
+  }
+  async function loadDiagHistory(custId){
+    var box=$('diag-history'); if(!box)return;
+    var res=await sb.from('ai_proposals').select('*').eq('customer_id',custId).eq('source','automation').order('created_at',{ascending:false}).limit(50);
+    if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
+    var rows=res.data||[];
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">まだ提案・保存した診断はありません。</div>'; return; }
+    var visible=rows.filter(function(p){ return !p.hidden; });
+    var hidden=rows.filter(function(p){ return !!p.hidden; });
+    var h='';
+    if(!visible.length){ h+='<div style="font-size:12px;color:#8AA0BE;margin-bottom:6px;">表示中の診断はありません。</div>'; }
+    visible.forEach(function(p){ h+=diagHistItem(p, custId, false); });
+    if(hidden.length){
+      h+='<div style="margin-top:6px;"><span class="ghost" style="font-size:11.5px;cursor:pointer;" onclick="toggleDiagHidden(\''+custId+'\')">'+(DIAG_SHOW_HIDDEN?'▾ 非表示の項目を隠す（'+hidden.length+'）':'▸ 非表示の項目を表示（'+hidden.length+'）')+'</span></div>';
+      if(DIAG_SHOW_HIDDEN){ h+='<div style="margin-top:8px;border-top:1px dashed #D0DCF0;padding-top:8px;">'; hidden.forEach(function(p){ h+=diagHistItem(p, custId, true); }); h+='</div>'; }
+    }
+    box.innerHTML=h;
+  }
+  function toggleDiagHidden(custId){ DIAG_SHOW_HIDDEN=!DIAG_SHOW_HIDDEN; loadDiagHistory(custId); }
+  async function hideDiag(id, custId, hide){
+    var res=await sb.from('ai_proposals').update({ hidden:!!hide }).eq('id',id);
+    if(res.error){ alert((hide?'非表示':'再表示')+'エラー：'+res.error.message+'（Phase43のSQL未実施の可能性があります）'); return; }
+    loadDiagHistory(custId);
+  }
+  async function delDiag(id, custId){
+    if(!confirm('この診断結果を完全に削除します（元に戻せません）。顧客に共有済みの場合、顧客の画面からも表示されなくなります。よろしいですか？\n※ 記録を残したまま自分の画面から消すだけなら「非表示」をご利用ください。')) return;
+    var res=await sb.from('ai_proposals').delete().eq('id',id);
+    if(res.error){ alert('削除エラー：'+res.error.message+'（Phase43のSQL未実施の可能性があります）'); return; }
+    loadDiagHistory(custId);
   }
   async function runDiag(custId){
     var btn=$('diag-run'), result=$('diag-result');
@@ -2573,6 +2628,7 @@
     if(share){ try{ await sb.from('automation_interests').update({ status:'addressed' }).eq('customer_id',custId).eq('category','automation').eq('status','new'); }catch(e){} }
     if(msg){ msg.style.color='#1E6B45'; msg.textContent=share?'顧客に共有しました':'保存しました'; }
     loadDiagInterests(custId);
+    loadDiagHistory(custId);
   }
   function runLoanNav(custId){
     var use=$('ln-use').value, amount=Number($('ln-amount').value||0),
@@ -3825,6 +3881,9 @@
       +'<input id="diag-note" class="inp2" style="width:100%;margin-bottom:8px;" placeholder="顧客の困りごとや、特に診断したい業務など">'
       +'<button class="btn2" id="diag-run" onclick="runDiag(\''+custId+'\')">AIで詳細診断する</button>'
       +'<div id="diag-result" style="margin-top:12px;"></div>'
+      +'<div class="ph" style="font-size:12.5px;margin-top:16px;display:flex;align-items:center;justify-content:space-between;">この顧客への診断・提案の履歴<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadDiagHistory(\''+custId+'\')">↺ 更新</span></div>'
+      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">提案・保存した診断結果の一覧です。対応が済んだものは削除して整理できます。</div>'
+      +'<div id="diag-history" style="margin-top:4px;">読み込み中...</div>'
       +'<div class="ph" id="cs-loan" style="font-size:13px;margin-top:18px;">💴 融資ナビ（最適な融資の優先順位）</div>'
       +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">資金の性質を選ぶと、適した融資制度を優先順位つきで提示します。判定は制度の特徴に基づく確定ルール（AIではありません）。最終判断は金融機関・専門家にご確認ください。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
@@ -3902,6 +3961,7 @@
     loadMeetingNotes(custId);
     loadDiagInterests(custId);
     loadNextMeeting(custId);
+    loadDiagHistory(custId);
     loadClientProfileFields(custId);
     loadClientListings(custId);
   }
