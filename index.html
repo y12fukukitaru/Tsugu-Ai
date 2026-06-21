@@ -690,9 +690,28 @@
           +'<div><label class="fl">顧問料（円/月）</label><input id="bl-adv" type="number" class="inp2" style="width:120px;" value="50000" oninput="renderAdmBilling()"></div>'
           +'<div><label class="fl">初期登録料（円・初回）</label><input id="bl-init" type="number" class="inp2" style="width:130px;" value="100000" oninput="renderAdmBilling()"></div>'
         +'</div>'
+        +'<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
+          +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">顧問料の割引設定（％・運用しながら調整可）</div>'
+          +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:8px;">契約社数による割引＋HD化ボーナス＋担当パートナーの階層付与を合算して、各顧客の顧問料に適用します。上位ランクは条件未達の場合、条件を満たす下位の率を付与します。</div>'
+          +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
+            +'<div><label class="fl">契約2〜4社</label><input id="bl-vol1" type="number" class="inp2" style="width:74px;" value="3" oninput="renderAdmBilling()"></div>'
+            +'<div><label class="fl">契約5社〜</label><input id="bl-vol2" type="number" class="inp2" style="width:74px;" value="5" oninput="renderAdmBilling()"></div>'
+            +'<div><label class="fl">HD化ボーナス</label><input id="bl-hd" type="number" class="inp2" style="width:74px;" value="5" oninput="renderAdmBilling()"></div>'
+            +'<div style="width:1px;height:34px;background:var(--softline);margin:0 2px;"></div>'
+            +'<div><label class="fl">シニア付与</label><input id="bl-snr" type="number" class="inp2" style="width:74px;" value="2" oninput="renderAdmBilling()"></div>'
+            +'<div><label class="fl">エグゼ付与</label><input id="bl-exe" type="number" class="inp2" style="width:74px;" value="5" oninput="renderAdmBilling()"></div>'
+            +'<div><label class="fl">条件:顧問先</label><input id="bl-exeC" type="number" class="inp2" style="width:64px;" value="5" oninput="renderAdmBilling()"></div>'
+            +'<div><label class="fl">条件:HD化</label><input id="bl-exeH" type="number" class="inp2" style="width:64px;" value="1" oninput="renderAdmBilling()"></div>'
+            +'<div><label class="fl">プレミアム付与</label><input id="bl-prem" type="number" class="inp2" style="width:74px;" value="10" oninput="renderAdmBilling()"></div>'
+            +'<div><label class="fl">条件:顧問先</label><input id="bl-premC" type="number" class="inp2" style="width:64px;" value="10" oninput="renderAdmBilling()"></div>'
+            +'<div><label class="fl">条件:HD化</label><input id="bl-premH" type="number" class="inp2" style="width:64px;" value="2" oninput="renderAdmBilling()"></div>'
+          +'</div>'
+        +'</div>'
         +'<div id="bl-summary" style="margin-top:12px;">読み込み中...</div>'
         +'<div class="ph" style="font-size:13px;margin-top:16px;">パートナー別 月額内訳</div>'
         +'<div id="bl-detail" style="margin-top:4px;">読み込み中...</div>'
+        +'<div class="ph" style="font-size:13px;margin-top:16px;">顧客別 顧問料（割引適用後）</div>'
+        +'<div id="bl-cust" style="margin-top:4px;">読み込み中...</div>'
         +'<div class="ph" style="font-size:13px;margin-top:18px;">🤝 M&A仲介フィー計算（レーマン方式）</div>'
         +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;line-height:1.7;">取引金額を入れると、標準レーマン方式（5億以下5%／5〜10億4%／10〜50億3%／50〜100億2%／100億超1%）で仲介フィーを段階計算します。実際の料率・最低報酬額は契約内容に従ってください。</div>'
         +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
@@ -922,38 +941,91 @@
   // ---- G. 課金・契約管理 ----
   function yen(n){ return '¥'+Math.round(n||0).toLocaleString('ja-JP'); }
   function blRate(id,def){ var el=$(id); var v=el?Number(el.value):NaN; return isFinite(v)?v:def; }
+  function partnerTierPct(rank, clients, hd, cfg){
+    if(rank==='Premium Partner' && clients>=cfg.premC && hd>=cfg.premH) return cfg.prem;
+    if((rank==='Executive'||rank==='Premium Partner') && clients>=cfg.exeC && hd>=cfg.exeH) return cfg.exe;
+    if(rank==='Senior'||rank==='Executive'||rank==='Premium Partner') return cfg.snr;
+    return 0;
+  }
+  function custDiscount(cust, cfg, partnerInfo){
+    var parts=[], pct=0;
+    var n=cust.contract_companies||1;
+    if(n>=5){ pct+=cfg.vol2; parts.push({t:'契約'+n+'社',p:cfg.vol2}); }
+    else if(n>=2){ pct+=cfg.vol1; parts.push({t:'契約'+n+'社',p:cfg.vol1}); }
+    if(cust.hd_done){ pct+=cfg.hd; parts.push({t:'HD化',p:cfg.hd}); }
+    if(cust.consultant_id && partnerInfo[cust.consultant_id]){
+      var pi=partnerInfo[cust.consultant_id];
+      var tp=partnerTierPct(pi.rank, pi.clients, pi.hd, cfg);
+      if(tp>0){ pct+=tp; parts.push({t:(pi.rank||'P')+'付与',p:tp}); }
+    }
+    return {pct:pct, parts:parts};
+  }
   function renderAdmBilling(){
     var box=$('bl-summary'); if(!box)return;
     var fdes=ADM_CACHE.fdes||[], custs=ADM_CACHE.custs||[], cc=ADM_CACHE.clientCount||{};
     var pbase=blRate('bl-pbase',3000), pcl=blRate('bl-pclient',2000), adv=blRate('bl-adv',50000), init=blRate('bl-init',100000);
+    var cfg={ vol1:blRate('bl-vol1',3), vol2:blRate('bl-vol2',5), hd:blRate('bl-hd',5),
+              snr:blRate('bl-snr',2), exe:blRate('bl-exe',5), exeC:blRate('bl-exeC',5), exeH:blRate('bl-exeH',1),
+              prem:blRate('bl-prem',10), premC:blRate('bl-premC',10), premH:blRate('bl-premH',2) };
+    // パートナーごとの「顧問先数」「担当顧客のHD化件数」「ランク」
+    var rankOf={}; fdes.forEach(function(f){ rankOf[f.id]=f.fde_rank||''; });
+    var hdCnt={}; custs.forEach(function(c){ if(c.consultant_id && c.hd_done) hdCnt[c.consultant_id]=(hdCnt[c.consultant_id]||0)+1; });
+    var partnerInfo={}; fdes.forEach(function(f){ partnerInfo[f.id]={rank:rankOf[f.id], clients:(cc[f.id]||0), hd:(hdCnt[f.id]||0)}; });
+    // パートナー料
     var partnerMRR=0; fdes.forEach(function(f){ partnerMRR += pbase + pcl*(cc[f.id]||0); });
     var assignedClients=Object.keys(cc).reduce(function(s,k){ return s+(cc[k]||0); },0);
-    var advMRR=custs.length*adv;
-    var mrr=partnerMRR+advMRR;
+    // 顧問料（割引適用）
+    var advGross=custs.length*adv, advNet=0, discTotal=0;
+    var custRows=custs.map(function(c){
+      var d=custDiscount(c, cfg, partnerInfo);
+      var capped=Math.min(d.pct, 100);
+      var fee=adv*(1-capped/100); advNet+=fee; discTotal+=(adv-fee);
+      return {c:c, pct:capped, parts:d.parts, fee:fee};
+    });
+    var mrr=partnerMRR+advNet;
     var ym=new Date().toISOString().slice(0,7);
     var newC=custs.filter(function(c){ return (c.created_at||'').slice(0,7)===ym; }).length;
     var initThisMonth=newC*init;
     function card(l,v,sub,c){ return '<div style="flex:1 1 150px;min-width:150px;background:#fff;border:1px solid #EAF0F7;border-radius:10px;padding:11px 13px;"><div style="font-size:10.5px;color:#8AA0BE;">'+l+'</div><div style="font-size:19px;font-weight:700;color:'+(c||'#1C3557')+';">'+v+'</div>'+(sub?'<div style="font-size:10.5px;color:#8AA0BE;margin-top:2px;">'+sub+'</div>':'')+'</div>'; }
     box.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;">'
       +card('月次売上 MRR合計', yen(mrr), '年換算 '+yen(mrr*12), '#1E6B45')
-      +card('　うち 顧問料', yen(advMRR), custs.length+'社 × '+yen(adv))
-      +card('　うち パートナー', yen(partnerMRR), fdes.length+'名・基本＋'+assignedClients+'社加算')
+      +card('顧問料（割引後）', yen(advNet), '定価 '+yen(advGross)+' − 割引 '+yen(discTotal))
+      +card('パートナー料', yen(partnerMRR), fdes.length+'名・基本＋'+assignedClients+'社加算')
       +card('今月の初期登録料（一時）', yen(initThisMonth), '新規 '+newC+'社 × '+yen(init), '#C89620')
       +'</div>';
     var db=$('bl-detail'); if(db){
       if(!fdes.length){ db.innerHTML='<div style="font-size:12px;color:#8AA0BE;">パートナーがまだいません。</div>'; }
       else {
-        var rows=fdes.map(function(f){ var n=cc[f.id]||0; return {name:(f.contact_name||f.company_name||f.email), n:n, fee:pbase+pcl*n}; });
+        var rows=fdes.map(function(f){ var n=cc[f.id]||0; var pi=partnerInfo[f.id]; var tp=partnerTierPct(pi.rank,pi.clients,pi.hd,cfg);
+          return {name:(f.contact_name||f.company_name||f.email), rank:pi.rank, n:n, hd:pi.hd, tp:tp, fee:pbase+pcl*n}; });
         rows.sort(function(a,b){ return b.fee-a.fee; });
         var h='';
         rows.forEach(function(r){
-          h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #EAF0F7;">'
-            +'<span style="flex:1;font-size:13px;color:#131E2E;">'+esc(r.name)+'</span>'
+          h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #EAF0F7;flex-wrap:wrap;">'
+            +'<span style="flex:1;min-width:120px;font-size:13px;color:#131E2E;">'+esc(r.name)+(r.rank?' <span class="tag blue" style="font-size:10px;">'+esc(r.rank)+'</span>':'')+'</span>'
             +'<span class="tag '+(r.n?'green':'gray')+'">担当 '+r.n+'社</span>'
+            +'<span class="tag gray">HD化 '+r.hd+'件</span>'
+            +(r.tp>0?'<span class="tag gold">顧問先へ '+r.tp+'%付与</span>':'')
             +'<span style="font-size:13px;font-weight:700;color:#1C3557;width:110px;text-align:right;">'+yen(r.fee)+'<span style="font-size:10px;color:#8AA0BE;font-weight:400;">/月</span></span>'
           +'</div>';
         });
         db.innerHTML=h;
+      }
+    }
+    var cb=$('bl-cust'); if(cb){
+      if(!custRows.length){ cb.innerHTML='<div style="font-size:12px;color:#8AA0BE;">顧客がまだいません。</div>'; }
+      else {
+        custRows.sort(function(a,b){ return b.pct-a.pct; });
+        var ch='';
+        custRows.forEach(function(r){
+          var tags=r.parts.map(function(p){ return '<span class="tag gray" style="font-size:10px;">'+esc(p.t)+' '+p.p+'%</span>'; }).join('');
+          ch+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #EAF0F7;flex-wrap:wrap;">'
+            +'<span style="flex:1;min-width:140px;font-size:13px;color:#131E2E;">'+esc(r.c.company_name||r.c.email)+'</span>'
+            +(r.pct>0?'<span class="tag green">割引 '+r.pct+'%</span>'+tags:'<span class="tag gray">割引なし</span>')
+            +'<span style="font-size:13px;font-weight:700;color:#1C3557;width:110px;text-align:right;">'+yen(r.fee)+'<span style="font-size:10px;color:#8AA0BE;font-weight:400;">/月</span></span>'
+          +'</div>';
+        });
+        cb.innerHTML=ch;
       }
     }
   }
@@ -4047,8 +4119,13 @@
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
         +'<div style="flex:1;min-width:180px;"><label class="fl">会社名</label><input id="cpi-company" class="inp2" style="width:100%;" value="'+escA(company||'')+'" placeholder="例：株式会社○○"></div>'
         +'<div style="flex:1;min-width:160px;"><label class="fl">ご担当者名</label><input id="cpi-contact" class="inp2" style="width:100%;" placeholder="例：山田 太郎"></div>'
+      +'</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">'
+        +'<div><label class="fl">契約社数</label><input id="cpi-companies" type="number" min="1" class="inp2" style="width:110px;" value="1"></div>'
+        +'<label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#4A6080;cursor:pointer;padding-bottom:8px;"><input type="checkbox" id="cpi-hd">HD化（ホールディングス化）を経験済み</label>'
         +'<button class="btn2" onclick="saveClientProfile(\''+custId+'\')">保存</button>'
       +'</div>'
+      +'<div style="font-size:11px;color:#8AA0BE;margin-top:4px;">※ 契約社数・HD化は顧問料の割引（運営の課金管理）に反映されます。</div>'
       +'<div id="cpi-msg" style="font-size:12px;margin-top:6px;"></div>'
       +'<div class="ph" id="cs-msg" style="font-size:13px;margin-top:18px;display:flex;align-items:center;justify-content:space-between;">メッセージ（顧客とのやり取り）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientChat(\''+custId+'\')">↺ 更新</span></div>'
       +'<div id="cchat-log" style="max-height:280px;overflow:auto;border:1px solid #EAF0F7;border-radius:10px;padding:12px;margin:4px 0 8px;background:#FBFCFE;">読み込み中...</div>'
@@ -4246,15 +4323,20 @@
   }
   async function loadClientProfileFields(custId){
     var c=$('cpi-contact'); if(!c)return;
-    try{ var r=await sb.from('profiles').select('company_name,contact_name').eq('id',custId).single();
-      if(!r.error&&r.data){ var co=$('cpi-company'); if(co&&!co.value) co.value=r.data.company_name||''; c.value=r.data.contact_name||''; }
+    try{ var r=await sb.from('profiles').select('company_name,contact_name,contract_companies,hd_done').eq('id',custId).single();
+      if(!r.error&&r.data){ var co=$('cpi-company'); if(co&&!co.value) co.value=r.data.company_name||''; c.value=r.data.contact_name||'';
+        var cn=$('cpi-companies'); if(cn) cn.value=(r.data.contract_companies!=null?r.data.contract_companies:1);
+        var hd=$('cpi-hd'); if(hd) hd.checked=!!r.data.hd_done;
+      }
     }catch(e){}
   }
   async function saveClientProfile(custId){
     var msg=$('cpi-msg');
     var company=($('cpi-company')||{}).value.trim(), contact=($('cpi-contact')||{}).value.trim();
-    var res=await sb.from('profiles').update({ company_name:(company||null), contact_name:(contact||null) }).eq('id',custId);
-    if(res.error){ if(msg){msg.style.color='#A83030';msg.textContent='保存エラー：'+res.error.message;} return; }
+    var companies=Math.max(1, Number(($('cpi-companies')||{}).value)||1);
+    var hd=!!(($('cpi-hd')||{}).checked);
+    var res=await sb.from('profiles').update({ company_name:(company||null), contact_name:(contact||null), contract_companies:companies, hd_done:hd }).eq('id',custId);
+    if(res.error){ if(msg){msg.style.color='#A83030';msg.textContent='保存エラー：'+res.error.message+'（Phase47のSQL未実施の可能性があります）';} return; }
     if(msg){msg.style.color='#1E6B45';msg.textContent='保存しました（顧客の会社情報に反映されます）。';}
     if(CURRENT_CLIENT && CURRENT_CLIENT.id===custId) CURRENT_CLIENT.company=company;
     var mt=$('cl-modal-title'); if(mt) mt.textContent=(company?company+'（'+(CURRENT_CLIENT?CURRENT_CLIENT.email:'')+'）':(CURRENT_CLIENT?CURRENT_CLIENT.email:''));
