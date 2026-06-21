@@ -498,9 +498,9 @@
   }
   // 役割ごとの全メニュー定義（ラベル付き）。設定で並び順・表示を変えられる
   function navDefs(r){
-    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','投資・融資マーケット'],['sec-sec','パートナーAI']];
-    if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達'],['sec-market','投資・融資マーケット'],['sec-broadcast','お知らせ配信']];
-    return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','投資・融資マーケット'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
+    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
+    if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達'],['sec-market','Tsugu投資・融資・M&A'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信']];
+    return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
   function effectiveNav(r){
@@ -675,13 +675,24 @@
       +'<div class="panel" id="sec-fund"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">資金調達パイプライン（全顧客）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadFundingPipeline()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#8AA0BE;margin:0 0 8px;">パートナーが登録した全顧客の調達案件を一元管理できます。状態はここから直接変更できます（Tsugu融資の取次台帳としてそのまま発展させます）。</div>'
         +'<div id="adm-fund" style="margin-top:4px;">読み込み中...</div></div>'
-      +'<div class="panel" id="sec-market"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">💹 投資・融資マーケット（全社）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketBroker()">↺ 更新</span></div>'
+      +'<div class="panel" id="sec-market"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">💹 Tsugu投資・融資・M&A（全社）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketBroker()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#8AA0BE;margin:0 0 8px;">全顧客が掲載した資金調達・投資の案件とマッチング状況を一覧管理できます。</div>'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;" id="mkb-filterbar">'
           +'<button class="sbtn on" data-f="open" onclick="setMkbFilter(\'open\',this)">公開中</button>'
           +'<button class="sbtn" data-f="all" onclick="setMkbFilter(\'all\',this)">すべて</button>'
         +'</div>'
         +'<div id="market-broker" style="margin-top:4px;">読み込み中...</div></div>'
+      +'<div class="panel" id="sec-audit"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">🛡 監査・コンプライアンスログ<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmAudit()">↺ 更新</span></div>'
+        +'<div style="font-size:12px;color:#8AA0BE;margin:0 0 8px;">誰がいつ何を提案・共有・掲載したかの記録です（AI診断・保険/相続試算・マーケット掲載・提案メモ・月次レポート公開）。金融商品を扱う上での確認・監査にお使いください。</div>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;" id="audit-filterbar">'
+          +'<button class="sbtn on" data-f="all" onclick="setAuditFilter(\'all\',this)">すべて</button>'
+          +'<button class="sbtn" data-f="ai" onclick="setAuditFilter(\'ai\',this)">AI診断</button>'
+          +'<button class="sbtn" data-f="market" onclick="setAuditFilter(\'market\',this)">マーケット</button>'
+          +'<button class="sbtn" data-f="insurance" onclick="setAuditFilter(\'insurance\',this)">試算</button>'
+          +'<button class="sbtn" data-f="note" onclick="setAuditFilter(\'note\',this)">提案メモ</button>'
+          +'<button class="sbtn" data-f="report" onclick="setAuditFilter(\'report\',this)">レポート</button>'
+        +'</div>'
+        +'<div id="adm-audit" style="margin-top:4px;">読み込み中...</div></div>'
       +'<div class="panel" id="sec-broadcast"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">📢 一斉お知らせ配信<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAnnouncements()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#8AA0BE;margin:0 0 8px;">パートナー・顧客のダッシュボードに表示されるお知らせを配信します（新機能・運用ルール周知など）。</div>'
         +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
@@ -743,6 +754,7 @@
     renderAdmFde();
     renderAdmCust();
     loadAnnouncements();
+    loadAdmAudit();
   }
   function daysSince(iso){ if(!iso) return 9999; var d=(Date.now()-new Date(iso).getTime())/86400000; return isFinite(d)?d:9999; }
   // ---- A. KPI（ステージ・ファネル／稼働） ----
@@ -889,6 +901,46 @@
   }
   async function setRank(id,rank){ var res=await sb.from('profiles').update({ fde_rank:(rank||null) }).eq('id',id); if(res.error) alert('ランク変更エラー：'+res.error.message); }
   async function setUserRole(id,role){ var res=await sb.from('profiles').update({ role:role }).eq('id',id); if(res.error){ alert('役割変更エラー：'+res.error.message); } loadAdmin(); }
+  // ---- F. 監査・コンプライアンスログ ----
+  var AUDIT_CACHE=[]; var AUDIT_FILTER='all';
+  function setAuditFilter(f,el){ AUDIT_FILTER=f; var bar=$('audit-filterbar'); if(bar){ Array.prototype.forEach.call(bar.querySelectorAll('.sbtn'),function(b){ b.classList.remove('on'); }); } if(el) el.classList.add('on'); renderAdmAudit(); }
+  async function loadAdmAudit(){
+    var box=$('adm-audit'); if(!box)return;
+    var nameOf=ADM_CACHE.nameOf||{};
+    function nm(id){ return id?(nameOf[id]||'（不明）'):''; }
+    var ev=[];
+    try{ var a=await sb.from('ai_proposals').select('author_id,customer_id,source,shared,created_at').order('created_at',{ascending:false}).limit(60);
+      if(!a.error){ (a.data||[]).forEach(function(r){ ev.push({ at:r.created_at, cat:'ai', who:nm(r.author_id), target:nm(r.customer_id), detail:(r.source==='automation'?'AI自動化診断':(r.source||'AI診断'))+(r.shared?'（顧客に共有）':'（保存のみ）') }); }); } }catch(e){}
+    try{ var ins=await sb.from('insurance_results').select('customer_id,summary,created_at').order('created_at',{ascending:false}).limit(60);
+      if(!ins.error){ (ins.data||[]).forEach(function(r){ ev.push({ at:r.created_at, cat:'insurance', who:'', target:nm(r.customer_id), detail:'保険・相続試算の共有'+(r.summary?'：'+String(r.summary).slice(0,40):'') }); }); } }catch(e){}
+    try{ var mk=await sb.from('market_listings').select('owner_id,side,kind,title,created_at').order('created_at',{ascending:false}).limit(60);
+      if(!mk.error){ (mk.data||[]).forEach(function(r){ ev.push({ at:r.created_at, cat:'market', who:'', target:nm(r.owner_id), detail:'マーケット掲載：'+mkKindLabel(r.kind)+'・'+mkSideLabel(r.side,r.kind)+'「'+String(r.title||'').slice(0,30)+'」' }); }); } }catch(e){}
+    try{ var fn=await sb.from('fde_notes').select('created_by,customer_id,body,created_at').order('created_at',{ascending:false}).limit(60);
+      if(!fn.error){ (fn.data||[]).forEach(function(r){ ev.push({ at:r.created_at, cat:'note', who:nm(r.created_by), target:nm(r.customer_id), detail:'提案メモ：'+String(r.body||'').slice(0,40) }); }); } }catch(e){}
+    try{ var rp=await sb.from('monthly_reports').select('customer_id,report_month,published_at,status').eq('status','published').order('published_at',{ascending:false}).limit(60);
+      if(!rp.error){ (rp.data||[]).forEach(function(r){ ev.push({ at:r.published_at||r.created_at, cat:'report', who:'', target:nm(r.customer_id), detail:'月次レポート公開：'+(r.report_month||'') }); }); } }catch(e){}
+    ev.sort(function(x,y){ return new Date(y.at)-new Date(x.at); });
+    AUDIT_CACHE=ev;
+    renderAdmAudit();
+  }
+  function renderAdmAudit(){
+    var box=$('adm-audit'); if(!box)return;
+    var rows=AUDIT_CACHE.filter(function(e){ return AUDIT_FILTER==='all'||e.cat===AUDIT_FILTER; });
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">該当する記録はありません。</div>'; return; }
+    var badge={ai:['AI診断','blue'],insurance:['試算','green'],market:['マーケット','gold'],note:['提案メモ','gray'],report:['レポート','blue']};
+    var h='<div style="font-size:12px;color:#8AA0BE;margin-bottom:6px;">直近の記録 '+rows.length+'件（新しい順）</div>';
+    rows.slice(0,120).forEach(function(e){
+      var b=badge[e.cat]||['その他','gray'];
+      var dt=(e.at||'').slice(0,16).replace('T',' ');
+      var actor=e.who?('<b>'+esc(e.who)+'</b> → '):'';
+      h+='<div style="display:flex;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid #EAF0F7;">'
+        +'<span style="font-size:11px;color:#8AA0BE;white-space:nowrap;min-width:96px;">'+esc(dt)+'</span>'
+        +'<span class="tag '+b[1]+'" style="flex-shrink:0;">'+b[0]+'</span>'
+        +'<span style="font-size:12px;color:#243B5A;line-height:1.6;">'+actor+esc(e.target)+'　'+esc(e.detail)+'</span>'
+      +'</div>';
+    });
+    box.innerHTML=h;
+  }
   // ---- E. 一斉お知らせ配信 ----
   async function postAnnouncement(){
     var msg=$('bc-msg');
@@ -980,12 +1032,6 @@
         +'</div>'
         +'<div class="panel"><div class="ph">担当パートナーからの提案</div><div id="my-notes" style="margin-top:4px;">読み込み中...</div></div>'
         +'<div class="panel"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">要対応アクション<span class="ghost" style="font-size:11px;font-weight:400;" onclick="goSec(\'sec-act\')">課題の追加・一覧 →</span></div><div id="todo-list" style="margin-top:4px;">読み込み中...</div></div>'
-        +'<div class="panel" id="sec-roadmap"><div class="ph">Tsuguでこれから出来ること</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">プラットフォーム内で資金調達から投資・M&Aまで完結する仕組みを準備中です。ご興味があれば「メッセージ」で担当パートナーにお知らせください（優先案内します）。</div>'
-          +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
-          +'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">🏦</span><span style="font-size:13px;font-weight:700;color:#1C3557;">Tsugu融資</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">資金繰りステータスのスコアと財務データをもとに、提携金融機関への融資申込・取次がワンクリックで完結。事業計画書も自動添付。</div>'+'</div>'+'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">📈</span><span style="font-size:13px;font-weight:700;color:#1C3557;">Tsugu投資・M&Aマーケット</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">生まれた余力の運用や、買収・売却の相手探しをプラットフォーム内で。匿名での打診から成約まで伴走します。</div>'+'</div>'
-          +'</div>'
-        +'</div>'
         +'<div class="panel" id="sec-journey"><div class="ph">価値の流れ（Tsuguの支援ステップ）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">AIと自動化でコストを下げ、生まれた余力を次の投資（M&A）へ。あなたの現在地はパートナーが面談ごとに更新します。</div>'
           + stepperHtml(prof.stage||1)
@@ -1040,7 +1086,7 @@
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">利益や余剰資金をM&A（会社・事業の買収）で活かす方向性を、担当パートナーがAIで検討し、ここにご提案します。ご関心・ご希望は「メッセージ」でお知らせください。</div>'
           +'<div id="my-ma">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-market"><div class="ph">💹 投資・融資マーケット（プラットフォーム内マッチング）</div>'
+        +'<div class="panel" id="sec-market"><div class="ph">💹 Tsugu投資・融資・M&A（プラットフォーム内マッチング）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;line-height:1.7;">資金を「集めたい」企業と「出したい（融資・出資）」企業を、Tsugu内でマッチングします。案件の掲載やお手続きは担当パートナーが代行します。気になる案件があれば「メッセージ」でお知らせください。担当が橋渡しします。</div>'
           +'<div style="font-size:11px;color:#9A7314;background:#FAF3E2;border:1px solid #F0E2C0;border-radius:9px;padding:9px 12px;margin-bottom:12px;line-height:1.7;">⚠ 本機能は当事者の引き合わせ（マッチング）を支援するもので、実際の融資・出資の実行ではありません。実行には貸金業法・金融商品取引法など関連法令の順守と、弁護士・税理士・有資格者等の関与が必要です。</div>'
           +'<div class="ph" style="font-size:13px;">あなたの掲載案件（担当パートナーが掲載）</div>'
@@ -1145,7 +1191,7 @@
           +'<div id="ma-list" style="margin-top:6px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-market">'
-          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">💹 投資・融資マーケット（仲介）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketBroker()">↺ 更新</span></div>'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">💹 Tsugu投資・融資・M&A（仲介）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketBroker()">↺ 更新</span></div>'
           +'<div style="font-size:11.5px;color:#8AA0BE;margin-bottom:8px;line-height:1.7;">顧客が掲載した「集めたい／出したい」案件と、寄せられた関心の一覧です。掲載企業名・関心を出した企業名が確認でき、当事者の引き合わせ（仲介）を行えます。成立・終了の状態を更新できます。</div>'
           +'<div style="font-size:11px;color:#9A7314;background:#FAF3E2;border:1px solid #F0E2C0;border-radius:9px;padding:9px 12px;margin-bottom:10px;line-height:1.7;">⚠ 実際の融資・出資の実行には関連法令（貸金業法・金融商品取引法等）の順守と有資格者の関与が必要です。Tsuguはマッチングの場のみを提供します。</div>'
           +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;" id="mkb-filterbar">'
@@ -1190,12 +1236,6 @@
             +'<button class="sbtn" data-f="template" onclick="setKnFilter(\'template\',this)">テンプレ</button>'
           +'</div>'
           +'<div id="kn-list" style="margin-top:6px;">読み込み中...</div>'
-        +'</div>'
-        +'<div class="panel" id="sec-roadmap2"><div class="ph">パートナー向け：今後追加される機能</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">提案の幅が広がる機能を順次リリースします。先行利用のご希望は運営までお知らせください。</div>'
-          +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
-          +'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">🏦</span><span style="font-size:13px;font-weight:700;color:#1C3557;">Tsugu融資 取次</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">資金繰りスコア・事業計画書とセットで提携金融機関へ送客。進捗管理と成約フィーの仕組みを提供予定。</div>'+'</div>'+'<div style="flex:1 1 240px;min-width:240px;border:1px dashed #C9D6EA;border-radius:11px;padding:13px 15px;background:#FBFCFE;">'+'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">📈</span><span style="font-size:13px;font-weight:700;color:#1C3557;">Tsugu投資・M&Aマーケット</span><span style="font-size:10px;font-weight:600;color:#9A7314;background:#FAEEDA;border-radius:99px;padding:2px 8px;">今後実装予定</span></div>'+'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;margin-top:6px;">担当顧客の譲渡・買収ニーズを匿名登録し、プラットフォーム内でマッチング。M&A案件の組成を支援。</div>'+'</div>'
-          +'</div>'
         +'</div>'
         +'<div class="panel" id="sec-journey2"><div class="ph">価値の流れ（顧客への提案軸）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">①現状把握 → ②AI・自動化 → ③コスト削減 → ④余力 → ⑤次の投資（M&A）の流れで支援します。</div>'
@@ -3425,7 +3465,6 @@
       });
       h+='<div style="font-size:10px;color:#8AA0BE;margin-top:4px;">※ 最終診断時の月間収支（売上−支出−返済）が続く前提＋支払予定を差し引いた概算です。診断を実行し直すと更新されます。</div>';
       h+=fundProgressHtml(funds);
-      h+='<div style="font-size:11px;color:#9A7314;background:#FAEEDA;border-radius:8px;padding:8px 12px;margin-top:10px;">🏦 <b>Tsugu融資（今後実装予定）</b>：このスコアと見通しをもとに、提携金融機関への申込がここから直接できるようになります。お急ぎの資金ニーズは「メッセージ」でご相談ください。</div>';
     } else if(snapErr){
       h+='<div style="font-size:12px;color:#8AA0BE;line-height:1.7;">資金繰りステータスを使うには、Phase 22 のSQL設定が必要です。</div>';
     } else {
@@ -3915,7 +3954,7 @@
       +clNi('cs-pay','📅','支払予定')
       +clNi('cs-cash','💰','資金繰り診断')
       +clNi('cs-fund','🏦','資金調達ロードマップ')
-      +clNi('cs-market','💹','投資・融資マーケット')
+      +clNi('cs-market','💹','Tsugu投資・融資・M&A')
       +clNi('cs-act','✅','課題・アクション')
       +'<div class="sb-sec">AI・ツール</div>'
       +clNi('cs-ai','🤖','AI自動化診断')
@@ -4008,16 +4047,17 @@
       +'</div>'
       +'<div id="fr-msg" style="font-size:12px;margin-top:6px;"></div>'
       +'<div id="cl-fund" style="margin-top:8px;">読み込み中...</div>'
-      +'<div class="ph" id="cs-market" style="font-size:13px;margin-top:18px;">💹 投資・融資マーケットへの掲載（代行）</div>'
-      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;line-height:1.7;">この顧客の「資金を集めたい／出したい」案件を代行で掲載します。掲載するとプラットフォーム内の他の顧客に公開され、関心が集まると「投資・融資マーケット（仲介）」に表示されます。</div>'
+      +'<div class="ph" id="cs-market" style="font-size:13px;margin-top:18px;">💹 Tsugu投資・融資・M&A への掲載（代行）</div>'
+      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;line-height:1.7;">この顧客の「資金調達／出資・融資の出し手／M&A（譲渡・譲受）」案件を代行で掲載します。掲載するとプラットフォーム内の他の顧客に公開され、関心が集まると「Tsugu投資・融資・M&A（仲介）」に表示されます。</div>'
+      +'<div style="font-size:11px;color:#4A6080;background:var(--soft);border-radius:8px;padding:7px 10px;margin-bottom:8px;">立場の目安：<b>集めたい</b>＝資金調達／会社・事業の<b>譲渡（売り手）</b>、<b>出したい</b>＝出資・融資／会社・事業の<b>譲受（買い手）</b>。種別で「M&A」を選ぶと譲渡・譲受の案件になります。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
-        +'<div><label class="fl">立場</label><select id="cmk-side" class="inp2"><option value="raise">資金を集めたい</option><option value="provide">資金を出したい</option></select></div>'
-        +'<div><label class="fl">種別</label><select id="cmk-kind" class="inp2"><option value="loan">融資</option><option value="equity">出資</option></select></div>'
+        +'<div><label class="fl">立場</label><select id="cmk-side" class="inp2"><option value="raise">集めたい／譲渡（売り手）</option><option value="provide">出したい／譲受（買い手）</option></select></div>'
+        +'<div><label class="fl">種別</label><select id="cmk-kind" class="inp2"><option value="loan">融資</option><option value="equity">出資</option><option value="mna">M&A</option></select></div>'
         +'<div><label class="fl">金額（万円）</label><input id="cmk-amount" type="number" class="inp2" placeholder="例 1000"></div>'
         +'<div style="flex:1;min-width:150px;"><label class="fl">業種（任意）</label><input id="cmk-industry" class="inp2" style="width:100%;" placeholder="例：金属加工業"></div>'
       +'</div>'
-      +'<div style="margin-top:8px;"><label class="fl">タイトル</label><input id="cmk-title" class="inp2" style="width:100%;" placeholder="例：新工場の設備資金を募集／黒字企業へ出資したい"></div>'
-      +'<div style="margin-top:8px;"><label class="fl">希望条件（任意）</label><input id="cmk-terms" class="inp2" style="width:100%;" placeholder="例：期間5年・金利2%以内／議決権なしの少数出資"></div>'
+      +'<div style="margin-top:8px;"><label class="fl">タイトル</label><input id="cmk-title" class="inp2" style="width:100%;" placeholder="例：設備資金を募集／黒字企業へ出資したい／後継者不在の事業を譲渡したい"></div>'
+      +'<div style="margin-top:8px;"><label class="fl">希望条件（任意）</label><input id="cmk-terms" class="inp2" style="width:100%;" placeholder="例：期間5年・金利2%以内／少数出資／譲渡価格○千万円・従業員雇用継続"></div>'
       +'<div style="margin-top:8px;"><label class="fl">詳細・補足（任意）</label><textarea id="cmk-detail" class="inp2" rows="2" style="width:100%;" placeholder="事業概要・資金使途・返済原資・期待リターンなど"></textarea></div>'
       +'<label style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;color:#4A6080;cursor:pointer;"><input type="checkbox" id="cmk-anon" checked>会社名を伏せて掲載する（他の顧客には匿名表示）</label>'
       +'<div style="margin-top:10px;"><button class="btn2" onclick="postListingFor(\''+custId+'\')">この内容で掲載する</button><span id="cmk-msg" style="font-size:12px;margin-left:8px;"></span></div>'
@@ -4174,7 +4214,7 @@
       var n=cnt[r.id]||0;
       h+='<div class="clcard" style="cursor:default;">'
         +'<div class="cl-top"><span class="cl-nm">'+esc(r.title)+'</span>'
-        +'<span class="tag '+(r.side==='raise'?'blue':'green')+'">'+esc(mkSideLabel(r.side))+'</span>'
+        +'<span class="tag '+(r.side==='raise'?'blue':'green')+'">'+esc(mkSideLabel(r.side, r.kind))+'</span>'
         +'<span class="tag gray">'+esc(mkKindLabel(r.kind))+'・'+esc(mkAmount(r.amount))+'</span>'
         +'<span class="tag '+(r.status==='open'?'green':'gray')+'">'+esc(mkStatusLabel(r.status))+'</span></div>'
         +'<div style="font-size:11.5px;color:#2C6EBD;margin-top:6px;">関心：'+n+'件</div>'
@@ -4754,10 +4794,10 @@
     btn.disabled=false; btn.textContent=ot;
   }
 
-  // ===== 投資・融資マーケット（顧客間マッチング・Phase41） =====
+  // ===== Tsugu投資・融資・M&A（顧客間マッチング・Phase41） =====
   var MK_FILTER='all', MKB_FILTER='open', MK_CACHE=[], MKB_CACHE=[];
-  function mkSideLabel(s){ return s==='raise'?'資金を集めたい':'資金を出したい'; }
-  function mkKindLabel(k){ return k==='equity'?'出資':'融資'; }
+  function mkSideLabel(s, kind){ if(kind==='mna') return s==='raise'?'譲渡（売り手）':'譲受（買い手）'; return s==='raise'?'資金を集めたい':'資金を出したい'; }
+  function mkKindLabel(k){ return k==='mna'?'M&A':(k==='equity'?'出資':'融資'); }
   function mkStatusLabel(s){ return s==='matched'?'マッチング成立':(s==='closed'?'終了':'公開中'); }
   function mkAmount(a){ return (a===null||a===undefined||a==='')?'金額応相談':(Number(a).toLocaleString('ja-JP')+'万円'); }
   function setMkFilter(f,el){ MK_FILTER=f; var b=$('mk-filterbar'); if(b){Array.prototype.forEach.call(b.querySelectorAll('.sbtn'),function(x){x.classList.remove('on');});} if(el)el.classList.add('on'); renderMarket(); }
@@ -4790,7 +4830,7 @@
       var n=cnt[r.id]||0;
       h+='<div class="clcard" style="cursor:default;">'
         +'<div class="cl-top"><span class="cl-nm">'+esc(r.title)+'</span>'
-        +'<span class="tag '+(r.side==='raise'?'blue':'green')+'">'+esc(mkSideLabel(r.side))+'</span>'
+        +'<span class="tag '+(r.side==='raise'?'blue':'green')+'">'+esc(mkSideLabel(r.side, r.kind))+'</span>'
         +'<span class="tag gray">'+esc(mkKindLabel(r.kind))+'・'+esc(mkAmount(r.amount))+'</span>'
         +'<span class="tag '+(r.status==='open'?'green':'gray')+'">'+esc(mkStatusLabel(r.status))+'</span></div>'
         +(r.detail?'<div style="font-size:12px;color:#4A6080;margin-top:6px;line-height:1.6;">'+esc(r.detail)+'</div>':'')
@@ -4820,7 +4860,7 @@
       var who=r.anonymous?('匿名企業'+(r.industry?'（'+esc(r.industry)+'）':'')):(r.industry?esc(r.industry):'企業');
       h+='<div class="clcard" style="cursor:default;">'
         +'<div class="cl-top"><span class="cl-nm">'+esc(r.title)+'</span>'
-        +'<span class="tag '+(r.side==='raise'?'blue':'green')+'">'+esc(mkSideLabel(r.side))+'</span>'
+        +'<span class="tag '+(r.side==='raise'?'blue':'green')+'">'+esc(mkSideLabel(r.side, r.kind))+'</span>'
         +'<span class="tag gray">'+esc(mkKindLabel(r.kind))+'・'+esc(mkAmount(r.amount))+'</span></div>'
         +'<div style="font-size:11.5px;color:#8AA0BE;margin-top:4px;">'+who+(r.rate?(' ／ 条件：'+esc(r.rate)):'')+'</div>'
         +(r.detail?'<div style="font-size:12px;color:#4A6080;margin-top:6px;line-height:1.6;">'+esc(r.detail)+'</div>':'')
@@ -4860,7 +4900,7 @@
       var r=o.r;
       h+='<div class="clcard" style="cursor:default;">'
         +'<div class="cl-top"><span class="cl-nm">'+esc(r.title)+'</span>'
-        +'<span class="tag '+(r.side==='raise'?'blue':'green')+'">'+esc(mkSideLabel(r.side))+'</span>'
+        +'<span class="tag '+(r.side==='raise'?'blue':'green')+'">'+esc(mkSideLabel(r.side, r.kind))+'</span>'
         +'<span class="tag gray">'+esc(mkKindLabel(r.kind))+'・'+esc(mkAmount(r.amount))+'</span>'
         +'<span class="tag '+(r.status==='open'?'green':'gray')+'">'+esc(mkStatusLabel(r.status))+'</span></div>'
         +'<div style="font-size:11.5px;color:#4A6080;margin-top:4px;">掲載：'+esc(o.name)+(r.anonymous?'（顧客には匿名表示）':'')+(r.industry?(' ／ '+esc(r.industry)):'')+(r.rate?(' ／ 条件：'+esc(r.rate)):'')+'</div>'
