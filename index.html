@@ -1806,6 +1806,21 @@
     msg.style.color='#1E6B45'; msg.textContent='担当顧客に追加しました'; $('cl-email').value='';
     loadClients();
   }
+  // 顧客を担当から外す（自分の顧客リストから削除）。顧客のアカウント・データ自体は消えない
+  async function releaseClient(custId, name){
+    if(!confirm((name?('「'+name+'」'):'この顧客')+' を担当顧客リストから外します。\n\n・あなたの顧客一覧／通知から表示されなくなります。\n・顧客のアカウントや入力データは削除されません（運営が再割当できます）。\n\nよろしいですか？')) return;
+    var res=await sb.rpc('release_client', { p_customer_id: custId });
+    if(res.error){
+      alert('担当解除エラー：'+res.error.message+'\n\nSupabaseで「Phase50」のSQL（release_client 関数）を実行してください。');
+      return;
+    }
+    if(typeof res.data==='string' && res.data.indexOf('error:')===0){ alert(res.data.replace('error:','').trim()); return; }
+    // カルテを閉じて一覧を更新
+    if(typeof closeClientModal==='function') try{ closeClientModal(); }catch(e){}
+    var m=$('cl-modal'); if(m){ m.classList.add('hidden'); document.body.style.overflow=''; }
+    loadClients();
+    alert('担当から外しました。');
+  }
 
   // ===== パートナー：顧客管理（一覧・対応状況・未読を統合） =====
   var CL_CACHE={clients:[],cnt:{},lastMsg:{},unread:{}};
@@ -2941,10 +2956,19 @@
     h+='<div style="font-size:11px;color:#8AA0BE;margin-top:6px;">これらを踏まえて下のボタンで診断できます。対応済みの相談は削除して整理できます。</div></div>';
     box.innerHTML=h;
   }
+  // 共通：削除を実行し「本当に消えたか」を判定する（RLSで0件削除＝無言の失敗を検知）
+  async function sbDelete(table, id){
+    var res=await sb.from(table).delete().eq('id',id).select('id');
+    if(res.error){ return { ok:false, msg:'削除エラー：'+res.error.message }; }
+    if(!res.data || !res.data.length){
+      return { ok:false, blocked:true, msg:'削除できませんでした。削除の権限（RLS）が不足している可能性があります。\nSupabaseで「Phase50（削除ポリシー）」のSQLを実行してください。' };
+    }
+    return { ok:true };
+  }
   async function delDiagInterest(id, custId){
     if(!confirm('この相談（気になる業務）を削除します。よろしいですか？')) return;
-    var res=await sb.from('automation_interests').delete().eq('id',id);
-    if(res.error){ alert('削除エラー：'+res.error.message+'（Phase43のSQL未実施の可能性があります）'); return; }
+    var r=await sbDelete('automation_interests', id);
+    if(!r.ok){ alert(r.msg); return; }
     loadDiagInterests(custId);
   }
   // この顧客への診断・提案履歴（ai_proposals）。非表示（記録は残す）と削除（完全消去）を選べる
@@ -2992,8 +3016,8 @@
   }
   async function delDiag(id, custId){
     if(!confirm('この診断結果を完全に削除します（元に戻せません）。顧客に共有済みの場合、顧客の画面からも表示されなくなります。よろしいですか？\n※ 記録を残したまま自分の画面から消すだけなら「非表示」をご利用ください。')) return;
-    var res=await sb.from('ai_proposals').delete().eq('id',id);
-    if(res.error){ alert('削除エラー：'+res.error.message+'（Phase43のSQL未実施の可能性があります）'); return; }
+    var r=await sbDelete('ai_proposals', id);
+    if(!r.ok){ alert(r.msg); return; }
     loadDiagHistory(custId);
   }
   async function runDiag(custId){
@@ -4319,6 +4343,7 @@
       +'<span style="font-size:12px;color:#4A6080;">進捗ステージ</span><select id="cl-stage" class="inp2" onchange="setStage(\''+custId+'\',this.value)"><option value="1">1. 現状把握</option><option value="2">2. AI活用・自動化</option><option value="3">3. コスト削減</option><option value="4">4. 生まれた余力</option><option value="5">5. 次の投資</option></select><span id="stage-msg" style="font-size:11px;"></span>'
       +'<span style="flex:1;"></span>'
       +'<button class="btn2" onclick="openMonthlyReport()" style="background:#fff;color:#2C6EBD;border:1.5px solid #2C6EBD;">📄 月次レポート</button>'
+      +'<button class="btn2" onclick="releaseClient(\''+custId+'\',\''+escA(company||email)+'\')" style="background:#fff;color:#A83030;border:1.5px solid #E3B6B6;">🗑 担当から外す</button>'
     +'</div>'
     +'<div id="cl-nextmeet" style="margin-bottom:12px;">読み込み中...</div>';
     // ---- 左サイド・ダッシュボードナビ（カルテ内の全機能を左から確認） ----
@@ -4640,14 +4665,14 @@
   }
   async function delSharedInterest(id, custId){
     if(!confirm('この共有項目を削除します。よろしいですか？')) return;
-    var res=await sb.from('automation_interests').delete().eq('id',id);
-    if(res.error){ alert('削除エラー：'+res.error.message+'（Phase43のSQL未実施の可能性があります）'); return; }
+    var r=await sbDelete('automation_interests', id);
+    if(!r.ok){ alert(r.msg); return; }
     loadClientInterests(custId); loadClientMna(custId); if(typeof loadDiagInterests==='function') loadDiagInterests(custId);
   }
   async function delClientDiag(id, custId){
     if(!confirm('このAI自動化診断結果を削除します。よろしいですか？')) return;
-    var res=await sb.from('ai_diagnoses').delete().eq('id',id);
-    if(res.error){ alert('削除エラー：'+res.error.message+'（Phase48のSQL未実施の可能性があります）'); return; }
+    var r=await sbDelete('ai_diagnoses', id);
+    if(!r.ok){ alert(r.msg); return; }
     loadClientDiag(custId);
   }
   async function loadClientDiag(custId){
@@ -4782,8 +4807,8 @@
   }
   async function delClientIns(id){
     if(!confirm('この試算共有を取り消します（顧客の画面からも消えます）。よろしいですか？')) return;
-    var res=await sb.from('insurance_results').delete().eq('id',id);
-    if(res.error){ alert('取り消しエラー：'+res.error.message+'（Phase29のSQL未実施の可能性があります）'); return; }
+    var r=await sbDelete('insurance_results', id);
+    if(!r.ok){ alert(r.msg); return; }
     if(CURRENT_CLIENT) loadClientInsurance(CURRENT_CLIENT.id);
   }
 
