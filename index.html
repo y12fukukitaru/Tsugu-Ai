@@ -152,9 +152,11 @@
   .plan-pill{display:inline-block;margin-top:6px;font-size:10px;font-weight:600;padding:2px 9px;border-radius:99px;background:rgba(74,173,214,.2);color:#9FD2EA;}
   .sb-nav{flex:1;padding:12px 10px;}
   .sb-sec{font-size:10px;color:rgba(255,255,255,.4);font-weight:600;letter-spacing:.04em;margin:6px 8px 6px;}
-  .ni{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;font-size:13px;color:rgba(255,255,255,.8);cursor:pointer;margin-bottom:2px;}
+  .ni{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;font-size:13px;color:rgba(255,255,255,.8);cursor:pointer;margin-bottom:2px;position:relative;}
   .ni:hover{background:rgba(255,255,255,.06);color:#fff;}
-  .ni.active{background:var(--blue);color:#fff;font-weight:600;}
+  .ni.active{background:var(--blue);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 rgba(255,255,255,.85);}
+  .ni-ic{width:20px;text-align:center;font-size:14px;flex-shrink:0;}
+  .ni-tx{flex:1;min-width:0;}
   .sb-foot{padding:12px 16px;border-top:1px solid rgba(255,255,255,.08);}
   .sb-email{display:block;font-size:11px;color:rgba(255,255,255,.6);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .sb-out{width:100%;padding:8px;background:rgba(255,255,255,.08);color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;}
@@ -520,10 +522,72 @@
     if(!out.length) out=[all[0]];
     return out;
   }
+  var NAV_ICON={
+    'sec-flow':'🏠','sec-chat':'💬','sec-reports':'📄','sec-mypdca':'🎯','sec-company':'🏢',
+    'sec-cash':'💰','sec-ai':'🤖','sec-ins':'🧮','sec-ma':'🤝','sec-market':'💹','sec-sec':'🪄',
+    'sec-clients':'👥','sec-pdca':'🔄','sec-madeals':'📁','sec-knowledge':'📚','sec-sozoku':'🎁',
+    'sec-kpi':'📊','sec-risk':'🚨','sec-fde':'🧑‍💼','sec-cust':'🏢','sec-fund':'🏦',
+    'sec-billing':'💳','sec-audit':'🛡️','sec-broadcast':'📢'
+  };
+  function navGroups(r){
+    if(r==='customer') return [
+      ['ホーム',['sec-flow']],
+      ['やり取り',['sec-chat','sec-sec']],
+      ['経営の見える化',['sec-reports','sec-cash','sec-ins','sec-mypdca']],
+      ['攻めの一手',['sec-ai','sec-ma','sec-market']],
+      ['基本情報',['sec-company']]
+    ];
+    if(r==='admin') return [
+      ['概況',['sec-flow','sec-kpi','sec-risk']],
+      ['管理',['sec-fde','sec-cust','sec-fund','sec-market']],
+      ['収益・統制',['sec-billing','sec-audit','sec-broadcast']]
+    ];
+    return [
+      ['ホーム',['sec-flow']],
+      ['顧客対応',['sec-clients','sec-pdca','sec-reports']],
+      ['案件・収益',['sec-madeals','sec-market','sec-sozoku']],
+      ['学び・支援',['sec-knowledge','sec-sec']]
+    ];
+  }
+  function niHtml(id,label,drawer){
+    var ic=NAV_ICON[id]||'•';
+    var badge=(id==='sec-chat'||id==='sec-clients')?'<span id="nav-unread'+(drawer?'-d':'')+'" class="nbadge hidden">0</span>':'';
+    return '<div class="ni" data-sec="'+id+'" onclick="navTo(\''+id+'\')"><span class="ni-ic">'+ic+'</span><span class="ni-tx">'+esc(label)+'</span>'+badge+'</div>';
+  }
   function buildNav(r){
     var items=effectiveNav(r);
-    var nav=$('app-nav'); if(nav) nav.innerHTML='<div class="sb-sec">メニュー</div>'+navItemsHtml(items,false);
-    var dn=$('drawer-nav'); if(dn) dn.innerHTML=navItemsHtml(items,true);
+    var byId={}; items.forEach(function(it){ byId[it[0]]=it; });
+    var ord={}; items.forEach(function(it,i){ ord[it[0]]=i; });
+    var groups=navGroups(r), used={}, blocks=[];
+    groups.forEach(function(g){
+      var inG=g[1].filter(function(id){ return byId[id]; });
+      inG.sort(function(a,b){ return ord[a]-ord[b]; });
+      if(!inG.length) return;
+      blocks.push({sec:g[0]});
+      inG.forEach(function(id){ used[id]=1; blocks.push({id:id,label:byId[id][1]}); });
+    });
+    var rest=items.filter(function(it){ return !used[it[0]]; });
+    if(rest.length){ blocks.push({sec:'その他'}); rest.forEach(function(it){ blocks.push({id:it[0],label:it[1]}); }); }
+    function render(drawer){ return blocks.map(function(b){ return b.sec?('<div class="sb-sec">'+esc(b.sec)+'</div>'):niHtml(b.id,b.label,drawer); }).join(''); }
+    var nav=$('app-nav'); if(nav) nav.innerHTML=render(false);
+    var dn=$('drawer-nav'); if(dn) dn.innerHTML=render(true);
+    [nav,dn].forEach(function(n){ if(n){ var f=n.querySelector('.ni'); if(f) f.classList.add('active'); } });
+  }
+  function currentRole(){ return (window.__role==='admin' && typeof VIEWAS!=='undefined' && VIEWAS) ? (VIEWAS==='fde'?'consultant':VIEWAS) : (window.__role||'customer'); }
+  // 現在地ハイライト（スクロール連動）
+  var NAV_SPY_BOUND=false, NAV_SPY_RAF=null;
+  function setActiveNav(id){
+    ['app-nav','drawer-nav'].forEach(function(nid){ var n=$(nid); if(!n)return; Array.prototype.forEach.call(n.querySelectorAll('.ni'),function(x){ x.classList.toggle('active', x.getAttribute('data-sec')===id); }); });
+  }
+  function navSpyScan(){
+    var ids=effectiveNav(currentRole()).map(function(x){ return x[0]; });
+    var cur=ids[0], best=-1e9;
+    for(var i=0;i<ids.length;i++){ var el=$(ids[i]); if(!el)continue; var top=el.getBoundingClientRect().top-130; if(top<=0 && top>best){ best=top; cur=ids[i]; } }
+    if(cur) setActiveNav(cur);
+  }
+  function navSpyInit(){
+    if(!NAV_SPY_BOUND){ window.addEventListener('scroll',function(){ if(NAV_SPY_RAF)return; NAV_SPY_RAF=requestAnimationFrame(function(){ NAV_SPY_RAF=null; navSpyScan(); }); }, {passive:true}); NAV_SPY_BOUND=true; }
+    navSpyScan();
   }
   // ===== 設定モーダル =====
   var SETTINGS_ROLE='customer';
@@ -1414,6 +1478,7 @@
     else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); }
     else { loadAdmin(); loadMarketBroker(); }
     startNotifPolling(eff);
+    navSpyInit();
   }
 
   // ---- finance (customer writes / consultant reads) ----
