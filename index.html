@@ -1402,6 +1402,8 @@
               +'<span id="ma-form-msg" style="font-size:12px;"></span>'
             +'</div>'
           +'</div>'
+          +'<div id="ma-pmi" style="margin:8px 0 14px;"></div>'
+          +'<div class="ph" style="font-size:13px;margin-top:6px;">すべての案件</div>'
           +'<div id="ma-list" style="margin-top:6px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-market">'
@@ -2323,6 +2325,65 @@
     if(p.score<=3) return '<span class="tag gold">今月 注意（'+p.score+'/6）</span>';
     return '<span class="tag red">今月 要対応（'+p.score+'/6）</span>';
   }
+  function pmiNextTasks(d){
+    var done=d.pmi_done||[], out=[];
+    for(var pi=0;pi<PMI_PLAN.length && out.length<2;pi++){ var ph=PMI_PLAN[pi];
+      for(var ti=0;ti<ph.t.length && out.length<2;ti++){ var key=pi+':'+ti; if(done.indexOf(key)<0) out.push({phase:ph.p,task:ph.t[ti]}); } }
+    return out;
+  }
+  function pmiAlertHtml(custId){
+    var pu=MA_CACHE.pulses&&MA_CACHE.pulses[custId];
+    if(pu && pu.score>=4) return '<div style="font-size:11.5px;color:#A83030;background:#FCEBEB;border:1px solid #F3C9C9;border-radius:8px;padding:7px 10px;margin-top:6px;">⚠ 今月のPMIスコアが低下（'+pu.score+'/6）。早めのフォローを推奨します。</div>';
+    return '';
+  }
+  function pmiFocusHtml(d){
+    var nx=pmiNextTasks(d);
+    if(!nx.length) return '<div style="font-size:11.5px;color:#1E6B45;margin-top:6px;">PMIタスクは完了済み。月次チェックの推移を継続確認してください。</div>';
+    var items=nx.map(function(x){ return '<li style="font-size:12px;color:#1C3557;margin:2px 0;">'+esc(x.task)+'<span style="color:#8AA0BE;font-size:10.5px;">（'+esc(x.phase)+'）</span></li>'; }).join('');
+    return '<div style="background:#F2F7FC;border:1px solid #D6E5F5;border-radius:8px;padding:8px 11px;margin-top:6px;"><div style="font-size:11px;font-weight:700;color:#1E5494;margin-bottom:3px;">⭐ 今月の重点（まずこの'+nx.length+'件）</div><ul style="margin:0;padding-left:16px;">'+items+'</ul></div>';
+  }
+  function dealFeeHtml(d){
+    var price=(d.closed_price!=null?d.closed_price:d.expected_price);
+    var parts=[];
+    if(price){ var f=lehmanFee(price); parts.push('<span style="color:#1E6B45;font-weight:700;">M&A仲介フィー（レーマン方式）：'+yen(f.total)+'</span><span style="color:#8AA0BE;">（'+(d.closed_price!=null?'成約額':'想定額')+' '+Number(price).toLocaleString()+'万円）</span>'); }
+    if(d.closed_at) parts.push('<span class="tag green">成約 '+(d.closed_at||'').slice(0,10)+'</span>');
+    if(d.savings_annual) parts.push('<span style="color:#9A7314;">💡 コスト削減 創出額：年 '+Number(d.savings_annual).toLocaleString()+'万円 → M&A原資・再投資へ</span>');
+    if(d.batonz_ref){ var br=String(d.batonz_ref); var link=/^https?:\/\//.test(br)?('<a href="'+escA(br)+'" target="_blank" rel="noopener">バトンズ案件を開く ↗</a>'):('バトンズ参照：'+esc(br)); parts.push('<span style="color:#2C6EBD;">'+link+'</span>'); }
+    if(!parts.length) return '';
+    return '<div style="font-size:12px;line-height:2;margin-top:8px;">'+parts.join('<br>')+'</div>';
+  }
+  function renderMaPmi(){
+    var box=$('ma-pmi'); if(!box)return;
+    var inpro=(MA_CACHE.deals||[]).filter(function(d){ return d.stage===PMI_STAGE; });
+    if(!inpro.length){ box.innerHTML=''; return; }
+    var h='<div style="border:1px solid #D6E5F5;border-radius:12px;padding:14px 16px;background:#FAFCFF;">'
+      +'<div style="font-size:13px;font-weight:700;color:#1E5494;margin-bottom:4px;">🚩 PMI進行中（クロージング後フォロー）　'+inpro.length+'件</div>'
+      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">時間をかけず効果を出すために、各社「今月の重点」だけ押さえてください。詳細は下の該当案件で。</div>';
+    inpro.forEach(function(d){
+      var pdone=d.pmi_done||[]; var total=0; PMI_PLAN.forEach(function(ph){total+=ph.t.length;});
+      var prog=total?Math.round(pdone.length/total*100):0;
+      h+='<div style="border-top:1px solid #E6EEF8;padding:9px 0;">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-weight:600;font-size:13px;color:#131E2E;">'+esc(MA_CACHE.names[d.customer_id]||'顧客')+'</span>'+pulseLight(MA_CACHE.pulses&&MA_CACHE.pulses[d.customer_id])+'<span class="tag gray">PMI '+prog+'%</span></div>'
+        +pmiAlertHtml(d.customer_id)
+        +pmiFocusHtml(d)
+      +'</div>';
+    });
+    h+='</div>';
+    box.innerHTML=h;
+  }
+  async function saveDealMeta(id){
+    var d=(MA_CACHE.deals||[]).find(function(x){return x.id===id;}); if(!d)return;
+    var cp=($('ma-close-'+id)||{}).value, sv=($('ma-sav-'+id)||{}).value, br=($('ma-bref-'+id)||{}).value;
+    var upd={ closed_price:(cp===''?null:Number(cp)), savings_annual:(sv===''?null:Number(sv)), batonz_ref:((br||'').trim()||null), updated_at:new Date().toISOString() };
+    if(upd.closed_price!=null && !d.closed_at) upd.closed_at=new Date().toISOString();
+    if(upd.closed_price==null) upd.closed_at=null;
+    var res=await sb.from('ma_deals').update(upd).eq('id',id);
+    var m=$('ma-meta-msg-'+id);
+    if(res.error){ if(m){m.style.color='#A83030';m.textContent='保存エラー（Phase49のSQL未実施の可能性）';} return; }
+    Object.assign(d, upd);
+    if(m){ m.style.color='#1E6B45'; m.textContent='保存しました'; }
+    renderMaDeals(); renderMaPmi();
+  }
   function toggleMaForm(){
     var f=$('ma-form'); if(!f)return;
     f.classList.toggle('hidden');
@@ -2361,6 +2422,7 @@
       });
     }
     renderMaDeals();
+    renderMaPmi();
   }
   function renderMaDeals(){
     var box=$('ma-list'); if(!box)return;
@@ -2382,7 +2444,9 @@
       if(d.stage===PMI_STAGE){
         var pdone=d.pmi_done||[];
         pmiBlock='<div style="border:1px solid #EAF0F7;border-radius:10px;padding:10px 12px;margin-top:10px;background:#FBFCFE;">'
-          +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:12px;font-weight:700;color:#1C3557;">PMI 100日プラン</span>'+pulseLight(MA_CACHE.pulses[d.customer_id])+'</div>';
+          +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:12px;font-weight:700;color:#1C3557;">PMI 100日プラン</span>'+pulseLight(MA_CACHE.pulses[d.customer_id])+'</div>'
+          +pmiAlertHtml(d.customer_id)
+          +pmiFocusHtml(d);
         PMI_PLAN.forEach(function(ph,pi){
           pmiBlock+='<div style="font-size:10.5px;color:#2C6EBD;font-weight:600;margin-top:8px;">'+esc(ph.p)+'</div>';
           ph.t.forEach(function(t,ti){
@@ -2427,6 +2491,17 @@
           +'<div style="flex:1;min-width:200px;"><label class="fl">メモ</label><input id="ma-note-'+d.id+'" class="inp2" style="width:100%;" value="'+escA(d.note||'')+'"></div>'
           +'<button class="ghost" style="font-size:12px;" onclick="saveDealNote(\''+d.id+'\')">保存</button>'
           +'<span id="ma-msg-'+d.id+'" style="font-size:12px;"></span>'
+        +'</div>'
+        +'<div style="border-top:1px solid #F0F2F6;margin-top:10px;padding-top:9px;">'
+          +'<div style="font-size:11px;font-weight:700;color:#1C3557;margin-bottom:6px;">成約・効果の記録</div>'
+          +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+            +'<div><label class="fl">成約額（万円）</label><input id="ma-close-'+d.id+'" type="number" class="inp2" style="width:130px;" value="'+(d.closed_price!=null?d.closed_price:'')+'" placeholder="例 8000"></div>'
+            +'<div><label class="fl">コスト削減 創出額（年・万円）</label><input id="ma-sav-'+d.id+'" type="number" class="inp2" style="width:160px;" value="'+(d.savings_annual!=null?d.savings_annual:'')+'" placeholder="例 300"></div>'
+            +'<div style="flex:1;min-width:180px;"><label class="fl">バトンズ案件URL/番号（任意）</label><input id="ma-bref-'+d.id+'" class="inp2" style="width:100%;" value="'+escA(d.batonz_ref||'')+'" placeholder="https://batonz.jp/... または案件番号"></div>'
+            +'<button class="btn2" style="font-size:12px;" onclick="saveDealMeta(\''+d.id+'\')">記録</button>'
+            +'<span id="ma-meta-msg-'+d.id+'" style="font-size:12px;"></span>'
+          +'</div>'
+          +dealFeeHtml(d)
         +'</div>'
       +'</div>';
     });
@@ -4458,6 +4533,36 @@
     if(typeof loadMarketBroker==='function') loadMarketBroker();
   }
 
+  // ---- 顧客からの共有：確認後に「反応」または「削除」 ----
+  var SHARED_TITLES={};
+  function sharedActions(custId, label, id, delCall){
+    return '<div style="display:flex;gap:12px;justify-content:flex-end;margin-top:8px;border-top:1px solid #F0F2F6;padding-top:7px;">'
+      +'<span onclick="reactToShared(\''+custId+'\',\''+label+'\',\''+id+'\')" style="color:#2C6EBD;cursor:pointer;font-size:11px;">💬 顧客に反応する</span>'
+      +'<span onclick="'+delCall+'" style="color:#A83030;cursor:pointer;font-size:11px;">確認済み・削除</span>'
+    +'</div>';
+  }
+  async function reactToShared(custId, label, id){
+    var title=SHARED_TITLES[id]||'';
+    var def=(title?('「'+title+'」'):'ご共有いただいた件')+'を確認しました。担当より追ってご提案・ご連絡します。';
+    var msg=prompt('顧客へ送る返信（'+label+'）。内容は自由に編集できます。', def);
+    if(msg===null) return; msg=(msg||'').trim(); if(!msg) return;
+    var res=await sb.from('chat_messages').insert({ customer_id:custId, sender_id:ME, sender_role:'consultant', body:msg });
+    if(res.error){ alert('送信エラー：'+res.error.message); return; }
+    if(typeof loadClientChat==='function') loadClientChat(custId);
+    alert('顧客に返信を送りました（「メッセージ」に表示されます）。');
+  }
+  async function delSharedInterest(id, custId){
+    if(!confirm('この共有項目を削除します。よろしいですか？')) return;
+    var res=await sb.from('automation_interests').delete().eq('id',id);
+    if(res.error){ alert('削除エラー：'+res.error.message+'（Phase43のSQL未実施の可能性があります）'); return; }
+    loadClientInterests(custId); loadClientMna(custId); if(typeof loadDiagInterests==='function') loadDiagInterests(custId);
+  }
+  async function delClientDiag(id, custId){
+    if(!confirm('このAI自動化診断結果を削除します。よろしいですか？')) return;
+    var res=await sb.from('ai_diagnoses').delete().eq('id',id);
+    if(res.error){ alert('削除エラー：'+res.error.message+'（Phase48のSQL未実施の可能性があります）'); return; }
+    loadClientDiag(custId);
+  }
   async function loadClientDiag(custId){
     var box=$('cl-diag'); if(!box)return;
     var res=await sb.from('ai_diagnoses').select('*').eq('customer_id',custId).order('created_at',{ascending:false});
@@ -4466,9 +4571,11 @@
     var h='';
     res.data.forEach(function(d){
       var dt=(d.created_at||'').slice(0,10);
+      SHARED_TITLES[d.id]='AI自動化診断（'+dt+'）';
       h+='<div style="border:1px solid #EAF0F7;border-radius:10px;padding:12px 14px;margin-bottom:10px;">'
         +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:8px;">実施日：'+esc(dt)+'</div>'
         +diagReport(d.result_text||'', null, false)
+        +sharedActions(custId,'AI自動化診断',d.id,"delClientDiag('"+d.id+"','"+custId+"')")
         +'</div>';
     });
     box.innerHTML=h;
@@ -4560,7 +4667,8 @@
     if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
     if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">顧客が興味を示した項目はまだありません。</div>'; return; }
     var h='';
-    res.data.forEach(function(r){ h+='<div style="border:1px solid #EAF0F7;border-radius:9px;padding:10px 12px;margin-bottom:6px;"><div style="font-size:13px;font-weight:600;color:#131E2E;">'+esc(r.title)+'</div>'+(r.detail?'<div style="font-size:12px;color:#4A6080;margin-top:3px;">'+esc(r.detail)+'</div>':'')+'</div>'; });
+    res.data.forEach(function(r){ SHARED_TITLES[r.id]=r.title;
+      h+='<div style="border:1px solid #EAF0F7;border-radius:9px;padding:10px 12px;margin-bottom:6px;"><div style="font-size:13px;font-weight:600;color:#131E2E;">'+esc(r.title)+'</div>'+(r.detail?'<div style="font-size:12px;color:#4A6080;margin-top:3px;">'+esc(r.detail)+'</div>':'')+sharedActions(custId,'自動化のご相談',r.id,"delSharedInterest('"+r.id+"','"+custId+"')")+'</div>'; });
     box.innerHTML=h;
   }
   async function loadClientMna(custId){
@@ -4569,7 +4677,8 @@
     if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
     if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">M&Aで興味を示した方向性はまだありません。</div>'; return; }
     var h='';
-    res.data.forEach(function(r){ h+='<div style="border:1px solid #EAF0F7;border-radius:9px;padding:10px 12px;margin-bottom:6px;"><div style="font-size:13px;font-weight:600;color:#131E2E;">'+esc(r.title)+'</div>'+(r.detail?'<div style="font-size:12px;color:#4A6080;margin-top:3px;">'+esc(r.detail)+'</div>':'')+'</div>'; });
+    res.data.forEach(function(r){ SHARED_TITLES[r.id]=r.title;
+      h+='<div style="border:1px solid #EAF0F7;border-radius:9px;padding:10px 12px;margin-bottom:6px;"><div style="font-size:13px;font-weight:600;color:#131E2E;">'+esc(r.title)+'</div>'+(r.detail?'<div style="font-size:12px;color:#4A6080;margin-top:3px;">'+esc(r.detail)+'</div>':'')+sharedActions(custId,'M&Aのご相談',r.id,"delSharedInterest('"+r.id+"','"+custId+"')")+'</div>'; });
     box.innerHTML=h;
   }
   async function loadClientInsurance(custId){
@@ -4578,9 +4687,9 @@
     if(res.error){ box.innerHTML='<div style="color:#A83030;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
     if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">共有された試算結果はまだありません。</div>'; return; }
     var h='';
-    res.data.forEach(function(r){ var dt=(r.created_at||'').slice(0,10);
+    res.data.forEach(function(r){ var dt=(r.created_at||'').slice(0,10); SHARED_TITLES[r.id]=(r.summary||'保険試算').slice(0,24);
       h+='<div style="border:1px solid #EAF0F7;border-radius:9px;padding:10px 12px;margin-bottom:6px;">'
-        +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;"><span style="font-size:11px;color:#8AA0BE;">'+esc(dt)+'</span><span onclick="delClientIns(\''+r.id+'\')" style="color:#A83030;cursor:pointer;font-size:11px;">共有を取り消す（削除）</span></div>'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;"><span style="font-size:11px;color:#8AA0BE;">'+esc(dt)+'</span><span style="display:flex;gap:12px;"><span onclick="reactToShared(\''+custId+'\',\'保険・相続の試算\',\''+r.id+'\')" style="color:#2C6EBD;cursor:pointer;font-size:11px;">💬 顧客に反応する</span><span onclick="delClientIns(\''+r.id+'\')" style="color:#A83030;cursor:pointer;font-size:11px;">共有を取り消す（削除）</span></span></div>'
         +'<div style="font-size:12px;color:#131E2E;white-space:pre-wrap;line-height:1.6;">'+esc(r.summary||'')+'</div></div>'; });
     box.innerHTML=h;
   }
