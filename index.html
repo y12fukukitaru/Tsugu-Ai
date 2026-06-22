@@ -1261,7 +1261,7 @@
         +'</div>'
         +'<div class="panel" id="sec-company"><div class="ph">会社情報</div>'
           +'<div class="kv" style="line-height:2;"><b>会社名：</b>'+esc(prof.company_name||'（未設定）')+'<br><b>ご担当者：</b>'+esc(prof.contact_name||'（未設定）')+'</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-top:8px;">会社情報の登録・修正は担当パートナーが行います。変更のご希望は「メッセージ」でお知らせください。</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-top:8px;">会社情報は担当パートナーが登録・管理します。内容に相違があれば「メッセージ」でお知らせください。担当が確認・修正します。</div>'
         +'</div>'
         +'<div class="panel" id="sec-cash"><div class="ph">財務・資金繰り（担当パートナーが入力します）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">月次の数値や支払予定は担当パートナーが入力・更新します。数値や資料は「メッセージ」でお送りいただくだけでOKです。修正のご希望もメッセージでどうぞ。</div>'
@@ -3675,9 +3675,9 @@
       h+='<div style="border:1px solid #D0DCF0;border-radius:12px;padding:14px 16px;background:#F5F9FF;">'
         +'<div style="font-size:14px;font-weight:700;color:#1C3557;margin-bottom:8px;">ようこそ。まずはこの3つだけ</div>'
         +'<div style="font-size:13px;color:#131E2E;line-height:2;">'
-        +'① <a onclick="goSec(\'sec-company\')" style="color:#2C6EBD;cursor:pointer;font-weight:600;">会社情報</a> に会社名を登録（30秒）<br>'
-        +'② <a onclick="goSec(\'sec-chat\')" style="color:#2C6EBD;cursor:pointer;font-weight:600;">メッセージ</a> で担当パートナーにあいさつ・直近の売上を送る<br>'
-        +'③ <a onclick="goSec(\'sec-ai\')" style="color:#2C6EBD;cursor:pointer;font-weight:600;">AI自動化診断</a> を試す（タップするだけ）'
+        +'① <a onclick="goSec(\'sec-chat\')" style="color:#2C6EBD;cursor:pointer;font-weight:600;">メッセージ</a> で担当パートナーにあいさつ・直近の売上を送る<br>'
+        +'② <a onclick="goSec(\'sec-ai\')" style="color:#2C6EBD;cursor:pointer;font-weight:600;">AI自動化診断</a> を試す（タップするだけ）<br>'
+        +'③ <a onclick="goSec(\'sec-company\')" style="color:#2C6EBD;cursor:pointer;font-weight:600;">会社情報</a> を確認（担当が登録します。相違があればメッセージで）'
         +'</div></div>';
       box.innerHTML=h; return;
     }
