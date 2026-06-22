@@ -1806,21 +1806,6 @@
     msg.style.color='#1E6B45'; msg.textContent='担当顧客に追加しました'; $('cl-email').value='';
     loadClients();
   }
-  // 顧客を担当から外す（自分の顧客リストから削除）。顧客のアカウント・データ自体は消えない
-  async function releaseClient(custId, name){
-    if(!confirm((name?('「'+name+'」'):'この顧客')+' を担当顧客リストから外します。\n\n・あなたの顧客一覧／通知から表示されなくなります。\n・顧客のアカウントや入力データは削除されません（運営が再割当できます）。\n\nよろしいですか？')) return;
-    var res=await sb.rpc('release_client', { p_customer_id: custId });
-    if(res.error){
-      alert('担当解除エラー：'+res.error.message+'\n\nSupabaseで「Phase50」のSQL（release_client 関数）を実行してください。');
-      return;
-    }
-    if(typeof res.data==='string' && res.data.indexOf('error:')===0){ alert(res.data.replace('error:','').trim()); return; }
-    // カルテを閉じて一覧を更新
-    if(typeof closeClientModal==='function') try{ closeClientModal(); }catch(e){}
-    var m=$('cl-modal'); if(m){ m.classList.add('hidden'); document.body.style.overflow=''; }
-    loadClients();
-    alert('担当から外しました。');
-  }
 
   // ===== パートナー：顧客管理（一覧・対応状況・未読を統合） =====
   var CL_CACHE={clients:[],cnt:{},lastMsg:{},unread:{}};
@@ -4343,7 +4328,6 @@
       +'<span style="font-size:12px;color:#4A6080;">進捗ステージ</span><select id="cl-stage" class="inp2" onchange="setStage(\''+custId+'\',this.value)"><option value="1">1. 現状把握</option><option value="2">2. AI活用・自動化</option><option value="3">3. コスト削減</option><option value="4">4. 生まれた余力</option><option value="5">5. 次の投資</option></select><span id="stage-msg" style="font-size:11px;"></span>'
       +'<span style="flex:1;"></span>'
       +'<button class="btn2" onclick="openMonthlyReport()" style="background:#fff;color:#2C6EBD;border:1.5px solid #2C6EBD;">📄 月次レポート</button>'
-      +'<button class="btn2" onclick="releaseClient(\''+custId+'\',\''+escA(company||email)+'\')" style="background:#fff;color:#A83030;border:1.5px solid #E3B6B6;">🗑 担当から外す</button>'
     +'</div>'
     +'<div id="cl-nextmeet" style="margin-bottom:12px;">読み込み中...</div>';
     // ---- 左サイド・ダッシュボードナビ（カルテ内の全機能を左から確認） ----
