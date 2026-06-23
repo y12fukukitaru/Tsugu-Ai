@@ -103,6 +103,18 @@
     .hero h1{font-size:21px;} .md,.grid2{grid-template-columns:1fr;} .grid3{grid-template-columns:1fr;}
     .card{padding:16px;} .nav-in{padding:8px 14px;}
   }
+  /* スマホ用：セクション切り替えハンバーガー */
+  .mnav-btn{display:none;position:fixed;top:10px;right:12px;z-index:1000;background:#fff;border:1px solid var(--line);border-radius:10px;font-size:18px;line-height:1;color:var(--navy);padding:9px 13px;box-shadow:0 4px 14px rgba(28,53,87,.22);cursor:pointer;font-family:inherit;}
+  .mnav-menu{display:none;position:fixed;top:54px;right:12px;z-index:1000;background:#0F2035;border-radius:12px;padding:8px;width:min(80vw,270px);max-height:74vh;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,.34);}
+  .mnav-menu.open{display:block;}
+  .mnav-menu a{display:block;padding:11px 13px;border-radius:9px;font-size:13px;color:rgba(255,255,255,.9);text-decoration:none;line-height:1.4;}
+  .mnav-menu a:hover,.mnav-menu a:active{background:var(--blue);color:#fff;}
+  .mnav-back{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.18);}
+  .mnav-back.open{display:block;}
+  @media(max-width:640px){
+    .nav{display:none;}
+    .mnav-btn{display:inline-flex;align-items:center;}
+  }
 </style>
 </head>
 <body>
@@ -590,6 +602,23 @@
   addCapRow('経営者','本人（経営者）',100,false);
   addCapRow('後継者','子',0,true);
   addMoveRow();
+</script>
+
+<button class="mnav-btn" id="mnavBtn" aria-label="セクションメニュー" title="セクションメニュー" onclick="mnavToggle(event)">☰</button>
+<div class="mnav-back" id="mnavBack" onclick="mnavClose()"></div>
+<div class="mnav-menu" id="mnavMenu"></div>
+<script>
+(function(){
+  function build(){
+    var src=document.querySelectorAll('.nav-in a'); var menu=document.getElementById('mnavMenu'); if(!menu)return;
+    var h=''; src.forEach(function(a){ h+='<a href="'+a.getAttribute('href')+'" onclick="mnavGo(event,this)">'+a.textContent+'</a>'; });
+    menu.innerHTML=h;
+  }
+  window.mnavToggle=function(e){ if(e)e.stopPropagation(); var m=document.getElementById('mnavMenu'),b=document.getElementById('mnavBack'); if(m.classList.contains('open')){mnavClose();}else{m.classList.add('open');b.classList.add('open');} };
+  window.mnavClose=function(){ var m=document.getElementById('mnavMenu'),b=document.getElementById('mnavBack'); if(m)m.classList.remove('open'); if(b)b.classList.remove('open'); };
+  window.mnavGo=function(e,a){ if(e)e.preventDefault(); mnavClose(); var id=(a.getAttribute('href')||'').slice(1); var el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); };
+  if(document.readyState!=='loading') build(); else document.addEventListener('DOMContentLoaded', build);
+})();
 </script>
 </body>
 </html>
