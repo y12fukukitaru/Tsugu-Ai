@@ -108,11 +108,22 @@
   .csec{display:none;}
   .csec.on{display:block;animation:mpop .14s ease;}
   body.dark .cl-side{background:#101A2C;}
+  /* カルテ：ヘッダーのハンバーガー＆ダッシュボードメニュー */
+  .cl-burger{display:inline-flex;align-items:center;background:#fff;border:1px solid var(--line);border-radius:9px;font-size:16px;line-height:1;color:var(--navy);cursor:pointer;padding:7px 11px;flex-shrink:0;font-family:inherit;}
+  .cl-burger:hover{background:var(--soft);}
+  .cl-menu{position:absolute;top:calc(100% + 6px);left:16px;z-index:40;background:#0F2035;border-radius:12px;padding:8px;width:248px;max-height:72vh;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,.32);}
+  .cl-menu .clmenu-sec{font-size:10px;color:rgba(255,255,255,.45);font-weight:700;letter-spacing:.04em;margin:8px 8px 5px;}
+  .cl-menu .clmenu-i{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:9px;font-size:12.5px;color:rgba(255,255,255,.85);cursor:pointer;line-height:1.3;}
+  .cl-menu .clmenu-i:hover{background:var(--blue);color:#fff;}
+  .cl-menu .clmenu-i .ci{width:18px;text-align:center;font-size:14px;flex-shrink:0;}
+  body.dark .cl-menu{background:#0B1322;}
   @media(max-width:760px){
     .cl-shell{flex-direction:column;gap:12px;}
     .cl-side{position:static;flex:1 1 auto;width:100%;max-height:none;display:flex;flex-wrap:wrap;gap:5px;padding:8px;}
     .cl-side .sb-sec{width:100%;}
     .cl-ni{margin-bottom:0;}
+    /* モバイルでは左ナビを隠し、ヘッダーのハンバーガーに集約 */
+    #cl-modal .cl-side{display:none;}
   }
   .rep-sec{margin:0 0 18px;}
   .rep-h{font-size:13px;font-weight:700;color:var(--navy);border-bottom:2px solid var(--line);padding-bottom:5px;margin:0 0 9px;}
@@ -317,7 +328,7 @@
 <!-- ===== CLIENT DETAIL MODAL ===== -->
 <div id="cl-modal" class="modal-back hidden" onclick="if(event.target===this)closeClientModal()">
   <div class="modal cl-wide">
-    <div class="modal-head"><span id="cl-modal-title" class="mt">顧客の詳細</span><button class="modal-close" onclick="closeClientModal()" aria-label="閉じる">×</button></div>
+    <div class="modal-head"><button id="cl-menu-btn" class="cl-burger" onclick="clMenuToggle(event)" aria-label="ダッシュボードメニュー" title="ダッシュボードメニュー">☰</button><span id="cl-modal-title" class="mt">顧客の詳細</span><button class="modal-close" onclick="closeClientModal()" aria-label="閉じる">×</button><div id="cl-menu" class="cl-menu hidden"></div></div>
     <div class="modal-body"><div id="cl-detail"></div></div>
   </div>
 </div>
@@ -4196,8 +4207,8 @@
   async function loadClientStage(custId){ var sel=$('cl-stage'); if(!sel)return; var res=await sb.from('profiles').select('stage').eq('id',custId).single(); if(!res.error && res.data && res.data.stage) sel.value=String(res.data.stage); }
   async function setStage(custId,n){ var res=await sb.from('profiles').update({ stage: parseInt(n,10) }).eq('id',custId); var m=$('stage-msg'); if(res.error){ alert('ステージ更新エラー：'+res.error.message); return; } if(m){ m.textContent='保存しました'; m.style.color='#1E6B45'; setTimeout(function(){ if(m) m.textContent=''; },2000); } }
 
-  function openClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.remove('hidden'); document.body.style.overflow='hidden'; }
-  function closeClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.add('hidden'); document.body.style.overflow=''; }
+  function openClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.remove('hidden'); document.body.style.overflow='hidden'; if(typeof clMenuClose==='function') clMenuClose(); }
+  function closeClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.add('hidden'); document.body.style.overflow=''; if(typeof clMenuClose==='function') clMenuClose(); }
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var m=$('cl-modal'); if(m && !m.classList.contains('hidden')) closeClientModal(); var r=$('rep-modal'); if(r && !r.classList.contains('hidden')) closeReport(); var b=$('bp-modal'); if(b && !b.classList.contains('hidden')) closeBizplan(); } });
   // Enterキーで送信（ログイン系フォーム／AI秘書）
   document.addEventListener('keydown',function(e){
@@ -4367,6 +4378,40 @@
       });
     };
   }
+  // ===== カルテ内ダッシュボードナビ（左サイド＆ヘッダーのハンバーガーで共用） =====
+  var CL_NAV=[
+    ['やり取り',   [['cs-company','🏢','会社情報'],['cs-msg','💬','メッセージ・提案']]],
+    ['財務・資金', [['cs-fin','📊','月次財務メモ'],['cs-pay','📅','支払予定'],['cs-cash','💰','資金繰り診断'],['cs-fund','🏦','資金調達ロードマップ'],['cs-market','💹','Tsugu投資・融資・M&A'],['cs-act','✅','課題・アクション']]],
+    ['AI・ツール', [['cs-ai','🤖','AI自動化診断'],['cs-loan','💴','融資ナビ'],['cs-meet','📝','議事録'],['cs-mna','🤝','M&A提案'],['cs-bp','📄','事業計画書']]],
+    ['共有',       [['cs-shared','📥','顧客からの共有']]]
+  ];
+  function clSideHtml(){
+    var h='<div class="cl-side" id="cl-side">';
+    CL_NAV.forEach(function(g){ h+='<div class="sb-sec">'+g[0]+'</div>'; g[1].forEach(function(it){ h+=clNi(it[0],it[1],it[2]); }); });
+    return h+'</div>';
+  }
+  function clMenuHtml(){
+    var h='';
+    CL_NAV.forEach(function(g){
+      h+='<div class="clmenu-sec">'+g[0]+'</div>';
+      g[1].forEach(function(it){ h+='<div class="clmenu-i" onclick="clMenuGo(\''+it[0]+'\')"><span class="ci">'+it[1]+'</span><span>'+it[2]+'</span></div>'; });
+    });
+    return h;
+  }
+  function clMenuToggle(e){
+    if(e){ e.stopPropagation(); }
+    var d=$('cl-menu'); if(!d)return;
+    if(d.classList.contains('hidden')){
+      d.innerHTML=clMenuHtml(); d.classList.remove('hidden');
+      setTimeout(function(){ document.addEventListener('click', clMenuOutside); }, 0);
+    } else { clMenuClose(); }
+  }
+  function clMenuClose(){ var d=$('cl-menu'); if(d) d.classList.add('hidden'); document.removeEventListener('click', clMenuOutside); }
+  function clMenuOutside(ev){
+    var d=$('cl-menu'), b=$('cl-menu-btn');
+    if(d && !d.contains(ev.target) && (!b || !b.contains(ev.target))) clMenuClose();
+  }
+  function clMenuGo(id){ clMenuClose(); clNav(id); }
   async function viewClient(custId, email, company){
     CURRENT_CLIENT={ id:custId, email:email, company:company||'' };
     var box=$('cl-detail'); if(!box)return;
@@ -4381,26 +4426,7 @@
     +'</div>'
     +'<div id="cl-nextmeet" style="margin-bottom:12px;">読み込み中...</div>';
     // ---- 左サイド・ダッシュボードナビ（カルテ内の全機能を左から確認） ----
-    var side='<div class="cl-side" id="cl-side">'
-      +'<div class="sb-sec">やり取り</div>'
-      +clNi('cs-company','🏢','会社情報')
-      +clNi('cs-msg','💬','メッセージ・提案')
-      +'<div class="sb-sec">財務・資金</div>'
-      +clNi('cs-fin','📊','月次財務メモ')
-      +clNi('cs-pay','📅','支払予定')
-      +clNi('cs-cash','💰','資金繰り診断')
-      +clNi('cs-fund','🏦','資金調達ロードマップ')
-      +clNi('cs-market','💹','Tsugu投資・融資・M&A')
-      +clNi('cs-act','✅','課題・アクション')
-      +'<div class="sb-sec">AI・ツール</div>'
-      +clNi('cs-ai','🤖','AI自動化診断')
-      +clNi('cs-loan','💴','融資ナビ')
-      +clNi('cs-meet','📝','議事録')
-      +clNi('cs-mna','🤝','M&A提案')
-      +clNi('cs-bp','📄','事業計画書')
-      +'<div class="sb-sec">共有</div>'
-      +clNi('cs-shared','📥','顧客からの共有')
-    +'</div>';
+    var side=clSideHtml();
     // ---- タブ1：メッセージ・提案 ----
     var tabMsg='<div id="ctab-msg">'
       +'<div class="ph" id="cs-company" style="font-size:13px;">会社情報（代行入力）</div>'
