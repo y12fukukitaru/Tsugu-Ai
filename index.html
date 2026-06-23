@@ -109,7 +109,7 @@
   .csec.on{display:block;animation:mpop .14s ease;}
   body.dark .cl-side{background:#101A2C;}
   /* カルテ：ヘッダーのハンバーガー＆ダッシュボードメニュー */
-  .cl-burger{display:inline-flex;align-items:center;background:#fff;border:1px solid var(--line);border-radius:9px;font-size:16px;line-height:1;color:var(--navy);cursor:pointer;padding:7px 11px;flex-shrink:0;font-family:inherit;}
+  .cl-burger{display:none;align-items:center;background:#fff;border:1px solid var(--line);border-radius:9px;font-size:16px;line-height:1;color:var(--navy);cursor:pointer;padding:7px 11px;flex-shrink:0;font-family:inherit;}
   .cl-burger:hover{background:var(--soft);}
   .cl-menu{position:absolute;top:calc(100% + 6px);left:16px;z-index:40;background:#0F2035;border-radius:12px;padding:8px;width:248px;max-height:72vh;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,.32);}
   .cl-menu .clmenu-sec{font-size:10px;color:rgba(255,255,255,.45);font-weight:700;letter-spacing:.04em;margin:8px 8px 5px;}
@@ -122,8 +122,11 @@
     .cl-side{position:static;flex:1 1 auto;width:100%;max-height:none;display:flex;flex-wrap:wrap;gap:5px;padding:8px;}
     .cl-side .sb-sec{width:100%;}
     .cl-ni{margin-bottom:0;}
-    /* モバイルでは左ナビを隠し、ヘッダーのハンバーガーに集約 */
+  }
+  @media(max-width:640px){
+    /* スマホのみ：左ナビを隠し、ヘッダーのハンバーガーに集約 */
     #cl-modal .cl-side{display:none;}
+    #cl-modal .cl-burger{display:inline-flex;align-items:center;}
   }
   .rep-sec{margin:0 0 18px;}
   .rep-h{font-size:13px;font-weight:700;color:var(--navy);border-bottom:2px solid var(--line);padding-bottom:5px;margin:0 0 9px;}
