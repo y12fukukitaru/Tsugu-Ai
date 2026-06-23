@@ -25,6 +25,8 @@
   .hero{background:linear-gradient(150deg,var(--navy),#16466f 58%,var(--sky));color:#fff;padding:48px 0 40px;}
   .hero-in{max-width:900px;margin:0 auto;padding:0 18px;}
   .brand{display:flex;align-items:center;gap:11px;margin-bottom:26px;}
+  .hero-back{margin-left:auto;font-size:12px;font-weight:600;color:#fff;text-decoration:none;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.32);border-radius:9px;padding:8px 13px;white-space:nowrap;}
+  .hero-back:hover{background:rgba(255,255,255,.24);}
   .logo{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:18px;}
   .brand .nm{font-family:'DM Sans',sans-serif;font-size:21px;font-weight:500;}
   .eyebrow{font-size:12px;font-weight:700;letter-spacing:1.4px;color:var(--sky);text-transform:uppercase;margin-bottom:12px;}
@@ -121,7 +123,7 @@
 
 <div class="hero">
   <div class="hero-in">
-    <div class="brand"><span class="logo">継</span><span class="nm">TsuguAI</span></div>
+    <div class="brand"><span class="logo">継</span><span class="nm">TsuguAI</span><a class="hero-back" href="./index.html" onclick="backToPortal();return false;">← ポータルへ戻る</a></div>
     <div class="eyebrow">認定パートナー向け・事業承継ナレッジ</div>
     <h1>事業承継 戦略診断フォーム<br><span style="font-size:17px;font-weight:500;color:#CFE0F0;">M&Aは選択肢の一つ。株・民法・会社法・税金を横断で設計する。</span></h1>
     <p>「後継者がいないからM&A」だけでは、事業承継は設計できません。誰が株を持ち、どこへ動かし、相続人それぞれにどう作用し、どんなリスクに備えるか。このフォームは、認定パートナーが経営者と一緒に全体像を描き、専門家へ的確に橋渡し（ティーアップ）するための診断ツールです。</p>
@@ -609,9 +611,15 @@
 <div class="mnav-menu" id="mnavMenu"></div>
 <script>
 (function(){
+  window.backToPortal=function(){
+    // 別タブで開いている場合は閉じて元のポータルへ戻る。閉じられない場合はポータルへ遷移
+    try{ window.close(); }catch(e){}
+    setTimeout(function(){ location.href='./index.html'; }, 150);
+  };
   function build(){
     var src=document.querySelectorAll('.nav-in a'); var menu=document.getElementById('mnavMenu'); if(!menu)return;
-    var h=''; src.forEach(function(a){ h+='<a href="'+a.getAttribute('href')+'" onclick="mnavGo(event,this)">'+a.textContent+'</a>'; });
+    var h='<a href="./index.html" onclick="mnavClose();backToPortal();return false;" style="background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22);margin-bottom:6px;font-weight:600;">← パートナーポータルへ戻る</a>';
+    src.forEach(function(a){ h+='<a href="'+a.getAttribute('href')+'" onclick="mnavGo(event,this)">'+a.textContent+'</a>'; });
     menu.innerHTML=h;
   }
   window.mnavToggle=function(e){ if(e)e.stopPropagation(); var m=document.getElementById('mnavMenu'),b=document.getElementById('mnavBack'); if(m.classList.contains('open')){mnavClose();}else{m.classList.add('open');b.classList.add('open');} };
