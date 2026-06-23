@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M&A紹介ナレッジ｜認定パートナー向け｜TsuguAI</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1C3557;--blue:#2C6EBD;--sky:#4AADD6;--gold:#C89620;
+    --ink:#131E2E;--muted:#4A6080;--line:#D0DCF0;--bg:#F2F5FA;
+    --card:#fff;--soft:#F7FAFD;--softline:#EAF0F7;
+    --red:#A83030;--redsoft:#FBEEEE;--redline:#E9C9C9;
+    --green:#1E6B45;--greensoft:#E9F5EE;--greenline:#BFE2CD;
+    --goldsoft:#FBF3E0;--goldline:#ECD9A6;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:var(--bg);line-height:1.85;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:880px;margin:0 auto;padding:0 20px 90px;}
+
+  /* hero */
+  .hero{background:linear-gradient(150deg,var(--navy),#16466f 60%,var(--sky));color:#fff;padding:54px 0 46px;}
+  .hero-in{max-width:880px;margin:0 auto;padding:0 20px;}
+  .brand{display:flex;align-items:center;gap:11px;margin-bottom:30px;}
+  .logo{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:18px;}
+  .brand .nm{font-family:'DM Sans',sans-serif;font-size:21px;font-weight:500;letter-spacing:.3px;}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--sky);text-transform:uppercase;margin-bottom:14px;}
+  .hero h1{font-size:30px;font-weight:700;line-height:1.45;margin:0 0 16px;letter-spacing:.2px;}
+  .hero p{font-size:14.5px;color:#D6E4F2;margin:0;max-width:640px;}
+  .hero .for{display:inline-block;margin-top:22px;font-size:12px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);border-radius:99px;padding:6px 15px;}
+
+  /* stat strip */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:-28px 0 40px;box-shadow:0 12px 30px rgba(28,53,87,.10);}
+  .stat{background:#fff;padding:18px 14px;text-align:center;}
+  .stat .n{font-family:'DM Sans',sans-serif;font-size:25px;font-weight:700;color:var(--navy);line-height:1.1;}
+  .stat .n small{font-size:14px;font-weight:700;}
+  .stat .l{font-size:10.5px;color:var(--muted);margin-top:5px;line-height:1.4;}
+
+  section{margin:0 0 14px;}
+  .kicker{display:flex;align-items:center;gap:10px;margin:42px 0 14px;}
+  .kicker .no{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;color:#fff;background:var(--navy);width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .kicker h2{font-size:20px;font-weight:700;color:var(--navy);margin:0;letter-spacing:.2px;}
+  .lead{font-size:14.5px;color:var(--ink);margin:0 0 16px;}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:14px 0;}
+  .card h3{font-size:15px;font-weight:700;color:var(--navy);margin:0 0 9px;}
+  .card p{font-size:13.5px;margin:0 0 10px;}
+  .card p:last-child{margin-bottom:0;}
+  .muted{color:var(--muted);}
+
+  .note{border-radius:12px;padding:15px 18px;font-size:13px;line-height:1.8;margin:14px 0;}
+  .note b{font-weight:700;}
+  .note.red{background:var(--redsoft);border:1px solid var(--redline);}
+  .note.red .h{color:var(--red);font-weight:700;display:block;margin-bottom:4px;}
+  .note.green{background:var(--greensoft);border:1px solid var(--greenline);}
+  .note.green .h{color:var(--green);font-weight:700;display:block;margin-bottom:4px;}
+  .note.gold{background:var(--goldsoft);border:1px solid var(--goldline);}
+  .note.gold .h{color:#8A6A12;font-weight:700;display:block;margin-bottom:4px;}
+  .note.blue{background:#EAF2FB;border:1px solid #C4DBF3;}
+  .note.blue .h{color:var(--blue);font-weight:700;display:block;margin-bottom:4px;}
+
+  /* do / dont */
+  .dd{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0;}
+  .dd .col{border-radius:12px;padding:16px 18px;}
+  .dd .ok{background:var(--greensoft);border:1px solid var(--greenline);}
+  .dd .ng{background:var(--redsoft);border:1px solid var(--redline);}
+  .dd .col .t{font-weight:700;font-size:13.5px;margin-bottom:8px;}
+  .dd .ok .t{color:var(--green);}
+  .dd .ng .t{color:var(--red);}
+  .dd ul{margin:0;padding-left:18px;font-size:13px;line-height:1.8;}
+
+  /* flow steps */
+  .flow{counter-reset:fl;margin:16px 0;}
+  .step{position:relative;background:#fff;border:1px solid var(--line);border-radius:13px;padding:16px 18px 16px 56px;margin-bottom:10px;}
+  .step::before{counter-increment:fl;content:counter(fl);position:absolute;left:14px;top:16px;width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,var(--blue),var(--navy));color:#fff;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step h4{margin:0 0 5px;font-size:14px;color:var(--navy);font-weight:700;}
+  .step p{margin:0;font-size:13px;color:var(--muted);line-height:1.75;}
+  .step .say{margin-top:8px;background:var(--soft);border-left:3px solid var(--sky);border-radius:0 8px 8px 0;padding:8px 12px;font-size:12.5px;color:var(--ink);}
+  .step .say b{color:var(--blue);}
+
+  /* talk examples */
+  .talk{background:var(--soft);border:1px solid var(--softline);border-radius:12px;padding:6px 18px;margin:14px 0;}
+  .talk .row{padding:12px 0;border-bottom:1px dashed var(--line);}
+  .talk .row:last-child{border-bottom:none;}
+  .talk .scene{font-size:12px;font-weight:700;color:var(--gold);margin-bottom:5px;}
+  .talk .line{font-size:13.5px;color:var(--ink);}
+  .talk .line::before{content:'「';color:var(--muted);}
+  .talk .line::after{content:'」';color:var(--muted);}
+
+  /* checklist */
+  .check{background:#fff;border:2px solid var(--navy);border-radius:14px;padding:8px 22px 18px;margin:16px 0;}
+  .check .ttl{font-weight:700;color:var(--navy);font-size:15px;padding:14px 0 6px;border-bottom:1px solid var(--line);margin-bottom:6px;}
+  .check label{display:flex;gap:11px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--softline);font-size:13.5px;cursor:pointer;}
+  .check label:last-child{border-bottom:none;}
+  .check input{margin-top:3px;width:17px;height:17px;accent-color:var(--blue);flex-shrink:0;}
+  .check label span b{color:var(--navy);}
+
+  table.fee{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  table.fee th,table.fee td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--softline);}
+  table.fee th{background:var(--soft);color:var(--navy);font-weight:700;font-size:12px;}
+  table.fee td:last-child{text-align:right;font-family:'DM Sans',sans-serif;}
+
+  .src{font-size:11px;color:var(--muted);margin-top:6px;}
+  .divider{height:1px;background:var(--line);margin:34px 0;}
+  footer{text-align:center;font-size:11.5px;color:var(--muted);line-height:1.9;border-top:1px solid var(--line);padding-top:22px;margin-top:40px;}
+
+  @media(max-width:640px){
+    .hero h1{font-size:23px;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .dd{grid-template-columns:1fr;}
+    .card{padding:18px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-in">
+    <div class="brand"><span class="logo">継</span><span class="nm">TsuguAI</span></div>
+    <div class="eyebrow">認定パートナー向けナレッジ</div>
+    <h1>M&Aは「紹介」で関わる。<br>だからこそ、業界の難しさとティーアップを知る。</h1>
+    <p>認定パートナーはM&A仲介を行いません。経営者の想いを受け止め、適切なタイミングで専門家（運営・Batonz）へ橋渡しするのが役割です。本資料は、未経験からでも自信を持って「紹介」できるよう、いまのM&A業界の実情と、紹介の質を決める「ティーアップ」の型をまとめたものです。</p>
+    <span class="for">対象：認定パートナー（経営者ポータルには表示しません）</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="stats">
+    <div class="stat"><div class="n">50.1<small>%</small></div><div class="l">全国の後継者不在率<br>（2025年・約13.8万社）</div></div>
+    <div class="stat"><div class="n">60.7<small>歳</small></div><div class="l">経営者の平均年齢<br>（34年連続で上昇）</div></div>
+    <div class="stat"><div class="n">507<small>件</small></div><div class="l">後継者難倒産<br>（2024年度）</div></div>
+    <div class="stat"><div class="n">2,841</div><div class="l">M&A支援機関登録数<br>（2025年2月）</div></div>
+  </div>
+  <div class="src">出典：帝国データバンク「全国後継者不在率動向調査(2025)」「後継者難倒産動向調査(2024年度)」、中小企業庁資料。数値は調査時点のもの。</div>
+
+  <!-- 1 -->
+  <div class="kicker"><span class="no">1</span><h2>なぜ今、事業承継・M&Aなのか</h2></div>
+  <p class="lead">市場は確かに拡大しています。ただし「数字が良くなっている」ことと「現場が簡単になっている」ことは別です。ここを正しく理解しておくと、経営者に誇張なく、誠実に話せます。</p>
+
+  <div class="card">
+    <h3>承継問題は改善傾向、しかし「間に合わない」リスクは残る</h3>
+    <p>後継者不在率は2025年に50.1%まで下がり、7年連続で改善しました。一方で改善ペースは鈍化し、経営者の平均年齢は60.7歳と上がり続けています。準備に3年以上かかるケースが半数を超えるとされる中、着手が遅れると「黒字でも廃業・倒産」に至ります。後継者難倒産は2024年度に507件、倒産時の社長平均年齢は約70歳でした。</p>
+    <p class="muted">＝ 早く動くほど選択肢が多い。これが経営者に伝えるべき一番のメッセージです。<span class="src">出典：帝国データバンク、中小企業庁「2025年版中小企業白書」</span></p>
+  </div>
+
+  <div class="card">
+    <h3>承継の「形」が変わった ― 脱ファミリー化とM&A</h3>
+    <p>かつて主流だった親族内承継は縮小し、血縁によらない内部昇格が同族承継を上回りました。買収・出向などの「M&Aほか」も2割を占めるようになり、第三者への承継は珍しい選択肢ではなくなっています。医療法人をはじめ、黒字で後継者がいないだけの優良企業ほど、M&Aが現実的な出口になります。</p>
+  </div>
+
+  <!-- 2 -->
+  <div class="kicker"><span class="no">2</span><h2>いまのM&A業界の「難しさ」</h2></div>
+  <p class="lead">市場拡大の裏で、トラブルと規制強化が同時に進んでいます。パートナーが仲介をしないとしても、この全体像を知っているかどうかで、経営者からの信頼がまるで変わります。</p>
+
+  <div class="card">
+    <h3>① 「不適切な買い手」問題</h3>
+    <p>経営が苦しい売り手とM&Aした後、会社から資金を吸い上げ、経営者保証を外さず、負債を残したまま連絡を絶つ ― そうした悪質な買い手の手口が2024年に相次いで表面化しました。中小企業庁は、これを支援した登録M&A支援機関1社の登録を取り消し、複数社へ注意喚起を行っています。M&Aそのものへの警戒感が経営者側に広がった点は、現場で必ず意識すべき空気感です。</p>
+    <p class="muted">＝ パートナーは「誰でもいいから売る」発想を絶対に持たない。買い手の質を見極める運営・専門家へつなぐことが安全です。</p>
+  </div>
+
+  <div class="card">
+    <h3>② 仲介の「利益相反」と手数料の分かりにくさ</h3>
+    <p>M&A仲介は売り手と買い手の双方を支援するため、構造的に利益相反が起きやすい形です。第3版ガイドラインでは、双方からの不当な優遇や、価格差を利用した追加報酬の搾取などが明確に禁止されました。手数料はレーマン方式が一般的ですが「基準となる価額」の取り方で金額が大きく変わり、最低手数料も併存するため、経営者には非常に分かりにくいのが実情です。</p>
+    <table class="fee">
+      <tr><th>譲渡価額（基準額）</th><th>レーマン方式の料率（一般例）</th></tr>
+      <tr><td>5億円以下の部分</td><td>5%</td></tr>
+      <tr><td>5億円超〜10億円</td><td>4%</td></tr>
+      <tr><td>10億円超〜50億円</td><td>3%</td></tr>
+      <tr><td>50億円超〜100億円</td><td>2%</td></tr>
+      <tr><td>100億円超</td><td>1%</td></tr>
+    </table>
+    <p class="src">※ 一般的な料率の例。実際の料率・基準額・最低手数料は機関により異なります。TsuguAIではBatonz経由で運用し、手数料体系は運営・Batonzの定めに従います。</p>
+  </div>
+
+  <div class="card">
+    <h3>③ 規制とルールが急速に強化されている</h3>
+    <p>中小企業庁の「中小M&Aガイドライン第3版」が2024年8月に公表され、2025年1月から適用されています。手数料・業務内容の事前書面説明、望まない相手への広告・営業の停止、利益相反の禁止、テール条項やネームクリアの規律、最終契約後のトラブル対応、経営者保証の扱い、不適切な事業者の排除 ― これらが整理されました。さらに2025年8月の「市場改革プラン」では、支援者個人に資格試験・登録を求める方向も示されています。</p>
+    <div class="note blue"><span class="h">パートナーの安全装置になる豆知識</span>経営者から「この仲介会社、大丈夫？」と聞かれたら、<b>登録M&A支援機関かどうか</b>（中小企業庁データベースで確認可）、<b>手数料を契約前に書面で説明するか</b>、<b>ガイドライン遵守を宣言しているか</b>を見るよう案内できます。トラブル時の相談先として、M&A支援機関登録事務局の情報提供窓口（03-4570-8692）も覚えておくと安心です。</div>
+  </div>
+
+  <!-- 3 -->
+  <div class="kicker"><span class="no">3</span><h2>認定パートナーの立ち位置 ― 仲介はしない、紹介に徹する</h2></div>
+  <p class="lead">ここが最重要です。パートナーは「M&Aの専門家」になる必要はありません。経営者に一番近い相談相手として、想いを受け止め、最適な専門家へ橋渡しする ― それが価値です。</p>
+
+  <div class="dd">
+    <div class="col ok">
+      <div class="t">✅ パートナーがやること</div>
+      <ul>
+        <li>承継・譲渡の「気づき」と話のきっかけづくり</li>
+        <li>経営者の本音・希望（残したいもの、譲れない条件）の傾聴と整理</li>
+        <li>一般的な情報提供（業界動向・進め方の流れ）</li>
+        <li>運営・Batonz・有資格専門家への橋渡し（ティーアップ）</li>
+        <li>面談への同席・伴走（経営者の安心役）</li>
+      </ul>
+    </div>
+    <div class="col ng">
+      <div class="t">⛔ パートナーがやらないこと</div>
+      <ul>
+        <li>相手探し・条件交渉・マッチングの実務（＝仲介）</li>
+        <li>株価・譲渡価額の評価・算定の確定</li>
+        <li>契約書の作成・法律的判断・交渉代理</li>
+        <li>税務・相続の個別具体的な判断</li>
+        <li>「絶対に売れる」等の断定・成約の保証</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note red"><span class="h">コンプライアンス上の注意（必ず守る）</span>
+  価額交渉の代理や契約書作成といった「法律事務」を報酬を得て行うことは、弁護士法72条（非弁行為）に触れるおそれがあります。税務の個別判断は税理士法、価額評価は専門領域です。パートナーは<b>一般情報の提供と橋渡し</b>にとどめ、具体的な交渉・評価・契約・税務はすべて<b>有資格の専門家／運営／Batonz</b>へ渡してください。AIによる試算はあくまで概算・参考情報であり、最終判断は専門家の確認を前提とします。</div>
+
+  <!-- 4 -->
+  <div class="kicker"><span class="no">4</span><h2>ティーアップとは何か ― 紹介の成否はここで8割決まる</h2></div>
+  <p class="lead">ティーアップとは、ゴルフのティーにボールを乗せて打ちやすくするように、<b>専門家にバトンを渡す前に、経営者の関心を高め、専門家の価値を正しく伝え、受け入れ態勢を整えておく</b>こと。雑な紹介は「とりあえず会ってみて」で終わり、専門家は信頼構築をゼロからやり直します。良いティーアップは、専門家が最初から信頼された状態で話を始められます。</p>
+
+  <div class="note gold"><span class="h">なぜパートナーがやると効くのか</span>経営者にとって最も信頼できるのは「いつも見てくれている身近な人」です。その人が「この件はこの専門家に任せると安心ですよ」と言うからこそ、専門家の言葉が届きます。これは保険や資産の世界で使われてきたティーアップと全く同じ構造です。<b>パートナーの信頼を、専門家に"貸す"イメージ</b>を持ってください。</div>
+
+  <h3 style="font-size:15px;color:var(--navy);margin:24px 0 4px;">ティーアップの基本ステップ</h3>
+  <div class="flow">
+    <div class="step">
+      <h4>信頼の土台をつくる</h4>
+      <p>日々の経営支援で「この人は自社のことを分かってくれている」という関係をつくっておく。承継・M&Aの話は、信頼がない状態で切り出すと売り込みに聞こえます。</p>
+    </div>
+    <div class="step">
+      <h4>課題を経営者自身の言葉にする</h4>
+      <p>「将来この会社をどうしたいですか」「もしご自身に何かあったら、従業員さんはどうなりますか」と問いかけ、本人の口から不安・希望を語ってもらう。こちらが結論を急がない。</p>
+      <div class="say"><b>例：</b>「○○社長、いまは絶好調ですが、5年後・10年後の"バトンの渡し方"って、考えたことはありますか？」</div>
+    </div>
+    <div class="step">
+      <h4>専門家の必要性に「気づいてもらう」</h4>
+      <p>承継・M&Aは専門性と最新の制度知識が要ること、最近は悪質な買い手のトラブルもあり"誰に任せるか"が極めて重要なことを、一般情報として共有する。煽らず、事実で。</p>
+      <div class="say"><b>例：</b>「最近は買い手の質が問われていて、国もルールを厳しくしています。だからこそ、信頼できる専門家と進めるのが安全なんです。」</div>
+    </div>
+    <div class="step">
+      <h4>専門家を「立てて」紹介する</h4>
+      <p>渡す相手（運営・Batonz・提携専門家）の強みと、自分との関係性を具体的に伝える。「すごい人です」ではなく「なぜこの件にこの人が適任か」を語るのがコツ。</p>
+      <div class="say"><b>例：</b>「この分野は、私が信頼している専門チームがいます。守秘は徹底していますし、無理に進めることは絶対にしません。まずは状況を整理するだけでも価値がありますよ。」</div>
+    </div>
+    <div class="step">
+      <h4>つなぐ（情報を渡す）</h4>
+      <p>経営者の許可を得たうえで、これまで整理した状況・希望・懸念を専門家に共有。経営者が同じ話を一からせずに済むようにする。Batonz等への登録・連携は運営の運用に沿って行う。</p>
+    </div>
+    <div class="step">
+      <h4>同席して伴走する</h4>
+      <p>紹介して終わりにしない。初回面談に同席し、経営者の"安心役"であり続ける。専門家と経営者の橋渡しを続けることで、パートナーへの信頼も深まります。</p>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="kicker"><span class="no">5</span><h2>ティーアップ実践 ― トークの型とNG</h2></div>
+
+  <div class="talk">
+    <div class="row"><div class="scene">きっかけを作る（雑談から）</div><div class="line">最近、同じ業界で"後継者がいなくて会社を譲った"という話、増えてますよね。社長のところは、その辺りはどうお考えですか？</div></div>
+    <div class="row"><div class="scene">不安を言葉にしてもらう</div><div class="line">もし社長が半年お休みすることになったら、この会社、回りますか？ ……その"もしも"に備えておくのも、いまの経営の一つだと思うんです。</div></div>
+    <div class="row"><div class="scene">専門家を立てる</div><div class="line">私は日々の数字や資金繰りはお手伝いできますが、譲渡や承継の交渉は専門家の領域です。私が信頼している専門チームにつなぎますので、まずは"選択肢を知る"ところから一緒にやりましょう。</div></div>
+    <div class="row"><div class="scene">安心を渡す</div><div class="line">紹介したからといって、売らなきゃいけないわけではありません。情報を整理して、社長が納得できる道を選ぶための場です。私も同席します。</div></div>
+  </div>
+
+  <div class="dd">
+    <div class="col ok">
+      <div class="t">✅ 良いティーアップ</div>
+      <ul>
+        <li>経営者本人に課題を語ってもらってから紹介する</li>
+        <li>専門家の"なぜ適任か"を具体的に伝える</li>
+        <li>守秘・無理強いしないことを先に約束する</li>
+        <li>「整理するだけでも価値がある」と入口を軽くする</li>
+        <li>紹介後も同席・伴走する</li>
+      </ul>
+    </div>
+    <div class="col ng">
+      <div class="t">⛔ やりがちなNG</div>
+      <ul>
+        <li>「とりあえず会ってみて」と丸投げする</li>
+        <li>不安を過度に煽って急かす</li>
+        <li>自分が価額や条件を断定してしまう</li>
+        <li>「絶対に高く売れる」と成果を保証する</li>
+        <li>経営者の許可なく情報を専門家へ渡す</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="kicker"><span class="no">6</span><h2>ケース別・ティーアップの入り方</h2></div>
+
+  <div class="card">
+    <h3>黒字・後継者不在の医療法人</h3>
+    <p>「先生が診療を続けられる今のうちに、地域医療を止めない引き継ぎの形を一緒に考えませんか」。出口を急がせず、"地域・患者・スタッフを守る"という先生の動機に寄り添う。専門家へは「継続性を重視」という希望を添えて渡す。</p>
+  </div>
+  <div class="card">
+    <h3>高齢経営者・親族承継を断念</h3>
+    <p>時間が最大のリスク。「準備に数年かかることもあるので、"まだ早い"が実は"ちょうどいい"タイミングです」と、早期着手の価値を事実で伝える。健康・相続の不安には触れすぎず、専門家（税理士等）と連携する前提で橋渡し。</p>
+  </div>
+  <div class="card">
+    <h3>M&Aに警戒感のある経営者</h3>
+    <p>2024年のトラブルを知っている経営者には、まず「警戒は正しい」と共感する。そのうえで「だからこそ、登録支援機関でガイドラインを守る相手と、守秘前提で進めることが大事」と、安全に進める道があることを示す。</p>
+  </div>
+
+  <!-- checklist -->
+  <div class="kicker"><span class="no">7</span><h2>紹介前チェックリスト</h2></div>
+  <p class="lead">専門家へつなぐ前に、これだけは確認しておく項目です。経営者ごとに使ってください。</p>
+  <div class="check">
+    <div class="ttl">☑ ティーアップ前チェック</div>
+    <label><input type="checkbox"><span>日々の支援で<b>信頼関係</b>ができているか</span></label>
+    <label><input type="checkbox"><span>経営者本人が<b>課題・希望を自分の言葉</b>で語ったか</span></label>
+    <label><input type="checkbox"><span>「売る／売らない」を<b>決めつけていない</b>か（入口は"整理"）</span></label>
+    <label><input type="checkbox"><span>渡す専門家の<b>強みと適任理由</b>を説明できるか</span></label>
+    <label><input type="checkbox"><span><b>守秘・無理強いしない</b>ことを経営者に伝えたか</span></label>
+    <label><input type="checkbox"><span>情報を専門家に渡す<b>許可</b>を得たか</span></label>
+    <label><input type="checkbox"><span>価額・条件・契約・税務を<b>自分で断定していない</b>か</span></label>
+    <label><input type="checkbox"><span>初回面談に<b>同席</b>する段取りができているか</span></label>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="note green"><span class="h">この資料の使い方</span>パートナーコンソールから開ける「学習・ナレッジ」として常時参照できるようにする想定です。経営者ポータルには表示しません。内容は制度改正で変わるため、ガイドライン改訂や統計更新のタイミングで運営が見直します。</div>
+
+  <footer>
+    本資料は認定パートナーの学習・実務補助を目的とした一般的な情報提供であり、法務・税務・M&Aに関する個別の助言ではありません。<br>
+    具体的な交渉・価額評価・契約・税務・相続の判断は、必ず有資格の専門家および運営・Batonzにおつなぎください。<br>
+    数値・制度は作成時点（2026年）のものです。最新情報は中小企業庁・帝国データバンク等の一次情報をご確認ください。<br>
+    <br>株式会社福來 ｜ TsuguAI -継-
+  </footer>
+
+</div>
+</body>
+</html>
