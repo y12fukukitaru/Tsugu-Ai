@@ -4208,7 +4208,7 @@
   }
 
   async function loadClientStage(custId){ var sel=$('cl-stage'); if(!sel)return; var res=await sb.from('profiles').select('stage').eq('id',custId).single(); if(!res.error && res.data && res.data.stage) sel.value=String(res.data.stage); }
-  async function setStage(custId,n){ var res=await sb.from('profiles').update({ stage: parseInt(n,10) }).eq('id',custId); var m=$('stage-msg'); if(res.error){ alert('ステージ更新エラー：'+res.error.message); return; } if(m){ m.textContent='保存しました'; m.style.color='#1E6B45'; setTimeout(function(){ if(m) m.textContent=''; },2000); } }
+  async function setStage(custId,n){ var res=await sb.rpc('set_client_stage', { p_customer_id:custId, p_stage:parseInt(n,10) }); var m=$('stage-msg'); if(res.error){ alert('ステージ更新エラー：'+res.error.message+'\n（Supabaseで「Phase51」のSQLを実行してください）'); return; } if(typeof res.data==='string' && res.data.indexOf('error:')===0){ alert(res.data.replace('error:','').trim()); return; } if(m){ m.textContent='保存しました'; m.style.color='#1E6B45'; setTimeout(function(){ if(m) m.textContent=''; },2000); } }
 
   function openClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.remove('hidden'); document.body.style.overflow='hidden'; if(typeof clMenuClose==='function') clMenuClose(); }
   function closeClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.add('hidden'); document.body.style.overflow=''; if(typeof clMenuClose==='function') clMenuClose(); }
@@ -4653,9 +4653,10 @@
     var company=($('cpi-company')||{}).value.trim(), contact=($('cpi-contact')||{}).value.trim();
     var companies=Math.max(1, Number(($('cpi-companies')||{}).value)||1);
     var hd=!!(($('cpi-hd')||{}).checked);
-    var res=await sb.from('profiles').update({ company_name:(company||null), contact_name:(contact||null), contract_companies:companies, hd_done:hd }).eq('id',custId);
-    if(res.error){ if(msg){msg.style.color='#A83030';msg.textContent='保存エラー：'+res.error.message+'（Phase47のSQL未実施の可能性があります）';} return; }
-    if(msg){msg.style.color='#1E6B45';msg.textContent='保存しました（顧客の会社情報に反映されます）。';}
+    var res=await sb.rpc('save_client_profile', { p_customer_id:custId, p_company:(company||null), p_contact:(contact||null), p_companies:companies, p_hd:hd });
+    if(res.error){ if(msg){msg.style.color='#A83030';msg.textContent='保存エラー：'+res.error.message+'\n（Supabaseで「Phase51」のSQLを実行してください）';} return; }
+    if(typeof res.data==='string' && res.data.indexOf('error:')===0){ if(msg){msg.style.color='#A83030';msg.textContent=res.data.replace('error:','').trim();} return; }
+    if(msg){msg.style.color='#1E6B45';msg.textContent='保存しました（経営者ポータルの会社情報に反映されます）。';}
     if(CURRENT_CLIENT && CURRENT_CLIENT.id===custId) CURRENT_CLIENT.company=company;
     var mt=$('cl-modal-title'); if(mt) mt.textContent=(company?company+'（'+(CURRENT_CLIENT?CURRENT_CLIENT.email:'')+'）':(CURRENT_CLIENT?CURRENT_CLIENT.email:''));
     if(typeof loadClients==='function') loadClients();
