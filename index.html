@@ -1426,14 +1426,7 @@
             +'<button class="btn2" style="padding:7px 14px;font-size:12px;" onclick="toggleKnForm()">＋ 投稿する</button>'
             +'</span></div>'
           +'<div style="font-size:11.5px;color:#8AA0BE;margin-bottom:8px;">パートナー全員の成功事例・Q&A・テンプレート集です。投稿はSenior以上または運営の承認後に公開され、投稿数・参照数はランク評価に反映されます。</div>'
-          +'<div style="border:1px solid #C4DBF3;background:#F6FAFF;border-radius:11px;padding:13px 15px;margin:6px 0 14px;">'
-            +'<div style="font-size:12.5px;font-weight:700;color:#1C3557;margin-bottom:8px;">📘 公式ナレッジ（運営提供）</div>'
-            +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-              +'<button class="btn2" style="padding:8px 14px;font-size:12px;" onclick="openKnowledgePage(\'tsugu-ma-knowledge.html\')">M&A紹介ナレッジ ↗</button>'
-              +'<button class="btn2" style="padding:8px 14px;font-size:12px;background:#fff;color:#2C6EBD;border:1.5px solid #2C6EBD;" onclick="openKnowledgePage(\'tsugu-succession-form.html\')">事業承継 戦略診断フォーム ↗</button>'
-            +'</div>'
-            +'<div style="font-size:11px;color:#8AA0BE;margin-top:8px;line-height:1.6;">仲介はせず「紹介」に徹するための実務ナレッジと、株・民法・会社法・税金を横断する事業承継の診断フォームです。経営者ポータルには表示されません。</div>'
-          +'</div>'
+          +'<div id="official-kn" style="border:1px solid #C4DBF3;background:#F6FAFF;border-radius:11px;padding:13px 15px;margin:6px 0 14px;"></div>'
           +'<div id="kn-form" class="hidden" style="border:1px dashed #C9D6EA;border-radius:11px;padding:12px 14px;margin:8px 0;background:#FBFCFE;">'
             +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
               +'<div><label class="fl">種類</label><select id="kn-kind" class="inp2" style="width:160px;" onchange="knFormLabels()"><option value="case">事例</option><option value="qa">Q&A</option><option value="template">テンプレート</option></select></div>'
@@ -1465,13 +1458,19 @@
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">①現状把握 → ②AI・自動化 → ③コスト削減 → ④余力 → ⑤次の投資（M&A）の流れで支援します。</div>'
           + stepperHtml()
         +'</div>'
-        +'<div class="panel" id="sec-sozoku"><div class="ph">相続・贈与シミュレーター</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;line-height:1.7;">法定相続分・保険非課税枠・暦年贈与加算（2024年改正対応）・相続時精算課税・配偶者軽減・小規模宅地・遺留分・二次相続までを1画面で試算できる専門ツールです。結果は印刷／PDFで顧客への提示資料になります（案件保存・JSON入出力対応）。</div>'
-          +'<button class="btn2" onclick="openSozoku()">シミュレーターを開く ↗</button>'
-          +'<div style="border-top:1px solid #EAF0F7;margin-top:14px;padding-top:12px;">'
-            +'<div style="font-size:12.5px;font-weight:700;color:#1C3557;margin-bottom:4px;">🧭 事業承継 戦略診断フォーム</div>'
-            +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;line-height:1.7;">M&Aを含む4つの承継の道、株対策（種類株式・金庫株・事業承継税制）、遺留分の概算、少数株主・"変な主張"への対応までを横断で整理し、専門家への引き継ぎサマリーまで作成できます。</div>'
-            +'<button class="btn2" style="background:#fff;color:#2C6EBD;border:1.5px solid #2C6EBD;" onclick="openKnowledgePage(\'tsugu-succession-form.html\')">事業承継フォームを開く ↗</button>'
+        +'<div class="panel" id="sec-sozoku"><div class="ph">相続・贈与・事業承継シミュレーター</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:14px;line-height:1.7;">目的に合わせて2つのフォームをご利用ください。「相続・贈与フォーム」は税額の試算、「事業承継・株対策フォーム」は承継の選択肢・株対策・遺留分・少数株主対策の整理に使えます。結果は印刷／PDFで顧客への提示・専門家への引き継ぎ資料になります。</div>'
+          +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
+            +'<div style="border:1px solid #E5EEF8;border-radius:11px;padding:13px 15px;background:#fff;">'
+              +'<div style="font-size:13px;font-weight:700;color:#1C3557;margin-bottom:5px;">🧮 相続・贈与フォーム</div>'
+              +'<div style="font-size:11.5px;color:#8AA0BE;margin-bottom:10px;line-height:1.65;">法定相続分・保険非課税枠・暦年贈与加算（2024年改正対応）・相続時精算課税・配偶者軽減・小規模宅地・遺留分・二次相続までを1画面で試算。案件保存・JSON入出力対応。</div>'
+              +'<button class="btn2" style="width:100%;" onclick="openSozoku()">相続・贈与フォームを開く ↗</button>'
+            +'</div>'
+            +'<div style="border:1px solid #E5EEF8;border-radius:11px;padding:13px 15px;background:#fff;">'
+              +'<div style="font-size:13px;font-weight:700;color:#1C3557;margin-bottom:5px;">🧭 事業承継・株対策フォーム</div>'
+              +'<div style="font-size:11.5px;color:#8AA0BE;margin-bottom:10px;line-height:1.65;">M&Aを含む4つの承継の道、株対策（種類株式・金庫株・事業承継税制）、遺留分の概算、少数株主・"変な主張"への対応までを横断で整理し、専門家への引き継ぎサマリーを作成。</div>'
+              +'<button class="btn2" style="width:100%;background:#fff;color:#2C6EBD;border:1.5px solid #2C6EBD;" onclick="openKnowledgePage(\'tsugu-succession-form.html\')">事業承継・株対策フォームを開く ↗</button>'
+            +'</div>'
           +'</div>'
         +'</div>'
         +'<div class="panel" id="sec-sec"><div class="ph">AI秘書（業務の相談相手）</div>'
@@ -1490,7 +1489,7 @@
     window.__eff=eff;
     $('app-body').innerHTML=view;
     if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); }
-    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); }
+    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); }
     else { loadAdmin(); loadMarketBroker(); }
     startNotifPolling(eff);
     navSpyInit();
@@ -2906,6 +2905,39 @@
   function openKnowledgePage(page){
     if(location.protocol==='file:'){ window.open('https://y12fukukitaru.github.io/Tsugu-Ai/'+page,'_blank'); }
     else { window.open('./'+page,'_blank'); }
+  }
+  // ===== 公式ナレッジ（運営提供）一覧 =====
+  // ★今後の追加はこの配列に1項目足すだけ。file は同梱HTMLのファイル名。
+  //   tag（任意）：カテゴリ表示、badge（任意）：'NEW'などの強調、desc：説明。
+  var OFFICIAL_KNOWLEDGE = [
+    { title:'M&A紹介ナレッジ', file:'tsugu-ma-knowledge.html', tag:'M&A・承継',
+      desc:'仲介はせず「紹介」に徹するための実務ナレッジ。いまのM&A業界の難しさと、ティーアップの型・チェックリスト。' }
+    // 例）今後ここに追記して項目を増やせます：
+    // ,{ title:'保険見直しナレッジ', file:'tsugu-insurance.html', tag:'保険', badge:'NEW',
+    //    desc:'キャッシュベース思考での保険最適化の進め方。' }
+    // ,{ title:'補助金・資金調達ナレッジ', file:'tsugu-funding.html', tag:'資金調達',
+    //    desc:'調達ルートの選び方と申請のコツ。' }
+  ];
+  function renderOfficialKnowledge(){
+    var box=$('official-kn'); if(!box) return;
+    if(!OFFICIAL_KNOWLEDGE.length){ box.style.display='none'; return; }
+    box.style.display='';
+    var h='<div style="font-size:12.5px;font-weight:700;color:#1C3557;margin-bottom:8px;">📘 公式ナレッジ（運営提供）</div>';
+    h+='<div style="display:flex;flex-direction:column;gap:8px;">';
+    OFFICIAL_KNOWLEDGE.forEach(function(k){
+      h+='<div style="display:flex;align-items:center;gap:10px;border:1px solid #E5EEF8;border-radius:9px;padding:9px 11px;background:#fff;">'
+        +'<div style="flex:1;min-width:0;">'
+          +'<div style="font-size:12.5px;font-weight:700;color:#1C3557;">'+esc(k.title)
+            +(k.tag?' <span class="tag gold" style="font-size:10px;vertical-align:middle;">'+esc(k.tag)+'</span>':'')
+            +(k.badge?' <span class="tag red" style="font-size:10px;vertical-align:middle;">'+esc(k.badge)+'</span>':'')+'</div>'
+          +(k.desc?'<div style="font-size:11px;color:#8AA0BE;line-height:1.55;margin-top:2px;">'+esc(k.desc)+'</div>':'')
+        +'</div>'
+        +'<button class="btn2" style="padding:7px 13px;font-size:12px;white-space:nowrap;" onclick="openKnowledgePage(\''+k.file+'\')">開く ↗</button>'
+      +'</div>';
+    });
+    h+='</div>';
+    h+='<div style="font-size:11px;color:#8AA0BE;margin-top:8px;line-height:1.6;">運営が用意した実務資料です。経営者ポータルには表示されません。</div>';
+    box.innerHTML=h;
   }
   function closeBizplan(){ var m=$('bp-modal'); if(m){ m.classList.add('hidden'); document.body.style.overflow=''; } }
   // ===== 融資ナビ（Phase 36）：確定ルールによる優先順位づけ =====
