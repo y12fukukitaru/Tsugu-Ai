@@ -1283,6 +1283,14 @@
         +'<div class="panel" id="sec-company"><div class="ph">会社情報</div>'
           +'<div class="kv" style="line-height:2;"><b>会社名：</b>'+esc(prof.company_name||'（未設定）')+'<br><b>ご担当者：</b>'+esc(prof.contact_name||'（未設定）')+'</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-top:8px;">会社情報は担当パートナーが登録・管理します。内容に相違があれば「メッセージ」でお知らせください。担当が確認・修正します。</div>'
+          +((r==='admin')?(
+            '<div id="adm-cust-verify" style="border-top:1px dashed var(--line);margin-top:14px;padding-top:12px;">'
+            +'<div style="font-size:12px;font-weight:700;color:#1C3557;margin-bottom:5px;">🔎 運営：顧客の登録内容を確認</div>'
+            +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:8px;line-height:1.6;">この「（プレビュー）」画面は運営アカウント自身の情報を表示しています（そのため上は「未設定」です）。パートナーが各顧客に登録した会社情報は、下で顧客を選ぶと確認できます。</div>'
+            +'<select id="adm-prev-cust" class="inp2" style="width:100%;" onchange="admCheckCustomerProfile(this.value)"><option value="">顧客を選択して確認…</option></select>'
+            +'<div id="adm-prev-cust-out" style="margin-top:8px;font-size:13px;"></div>'
+            +'</div>'
+          ):'')
         +'</div>'
         +'<div class="panel" id="sec-cash"><div class="ph">財務・資金繰り（担当パートナーが入力します）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">月次の数値や支払予定は担当パートナーが入力・更新します。数値や資料は「メッセージ」でお送りいただくだけでOKです。修正のご希望もメッセージでどうぞ。</div>'
@@ -1509,7 +1517,7 @@
 
     window.__eff=eff;
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); }
+    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); if(window.__role==='admin') loadAdmPreviewCustomers(); }
     else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); }
     else { loadAdmin(); loadMarketBroker(); }
     startNotifPolling(eff);
@@ -2926,6 +2934,30 @@
   function openKnowledgePage(page){
     if(location.protocol==='file:'){ window.open('https://y12fukukitaru.github.io/Tsugu-Ai/'+page,'_blank'); }
     else { window.open('./'+page,'_blank'); }
+  }
+  // ===== 運営プレビュー：顧客の登録済み会社情報を確認 =====
+  async function loadAdmPreviewCustomers(){
+    var sel=$('adm-prev-cust'); if(!sel) return;
+    try{
+      var res=await sb.from('profiles').select('id,company_name,contact_name,email').eq('role','customer').order('company_name',{ascending:true});
+      if(res.error||!res.data) return;
+      sel.innerHTML='<option value="">顧客を選択して確認…</option>'+res.data.map(function(c){ return '<option value="'+c.id+'">'+esc(c.company_name||c.email)+'</option>'; }).join('');
+    }catch(e){}
+  }
+  async function admCheckCustomerProfile(id){
+    var out=$('adm-prev-cust-out'); if(!out) return;
+    if(!id){ out.innerHTML=''; return; }
+    out.innerHTML='<span style="color:#8AA0BE;">確認中…</span>';
+    try{
+      var res=await sb.from('profiles').select('company_name,contact_name,email').eq('id',id).single();
+      if(res.error||!res.data){ out.innerHTML='<span style="color:#A83030;">取得できませんでした：'+esc((res.error&&res.error.message)||'')+'</span>'; return; }
+      var d=res.data; var ok=!!(d.company_name||d.contact_name);
+      out.innerHTML='<div style="background:'+(ok?'#E9F5EE':'#FBF3E0')+';border:1px solid '+(ok?'#BFE2CD':'#ECD9A6')+';border-radius:9px;padding:10px 12px;line-height:1.9;">'
+        +'<b>会社名：</b>'+esc(d.company_name||'（未設定）')+'<br><b>ご担当者：</b>'+esc(d.contact_name||'（未設定）')
+        +(ok?'<br><span style="font-size:11px;color:#1E6B45;">✓ 登録済みです（経営者本人がログインすると、この内容が会社情報に表示されます）。</span>'
+            :'<br><span style="font-size:11px;color:#8A6A12;">※ まだ未登録です。パートナーポータルの顧客カルテで保存してください。保存時にエラーが出る場合は、Supabaseで「Phase51」のSQLを実行してください。</span>')
+        +'</div>';
+    }catch(e){ out.innerHTML='<span style="color:#A83030;">エラー：'+esc(String((e&&e.message)||e))+'</span>'; }
   }
   // ===== 公式ナレッジ（運営提供）一覧 =====
   // ★今後の追加はこの配列に1項目足すだけ。file は同梱HTMLのファイル名。
