@@ -1762,7 +1762,8 @@
   function esc(s){return (s||'').replace(/[&<>]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
   function build(){
     var menu=document.getElementById('szMenu'); if(!menu)return;
-    var secs=document.querySelectorAll('main section.card'); var h='';
+    var secs=document.querySelectorAll('main section.card');
+    var h='<div class="it" onclick="szClose();szReturn()" style="background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22);margin-bottom:6px;font-weight:600;">← パートナーポータルへ戻る</div>';
     secs.forEach(function(s,i){
       var hh=s.querySelector('h2'); if(!hh)return;
       if(!s.id) s.id='szsec'+i;
@@ -1770,6 +1771,11 @@
     });
     menu.innerHTML=h;
   }
+  window.szReturn=function(){
+    // 別タブで開いている場合は閉じて元のポータルへ戻る。閉じられない場合はポータルへ遷移
+    try{ window.close(); }catch(e){}
+    setTimeout(function(){ location.href='./index.html'; }, 150);
+  };
   window.szToggle=function(e){ if(e)e.stopPropagation(); var m=document.getElementById('szMenu'),b=document.getElementById('szBack'); if(m.classList.contains('open')){szClose();}else{m.classList.add('open');b.classList.add('open');} };
   window.szClose=function(){ var m=document.getElementById('szMenu'),b=document.getElementById('szBack'); if(m)m.classList.remove('open'); if(b)b.classList.remove('open'); };
   window.szGo=function(id){ szClose(); var el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); };
