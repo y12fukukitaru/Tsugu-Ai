@@ -653,12 +653,19 @@
         +'<button class="ghost" style="font-size:14px;padding:3px 7px;'+(isTop?'opacity:.3;pointer-events:none;':'')+'" onclick="toggleNavHidden(\''+id+'\')" aria-label="表示切替">'+(hidden?'🚫':'👁')+'</button>'
       +'</div>';
     });
+    h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 4px;">AI秘書の会話履歴</div>';
+    h+='<div style="font-size:11px;color:#8AA0BE;margin-bottom:8px;">タブを切り替えても会話は残ります。下の期間を過ぎた会話は自動で消去されます（この端末・ログイン中の方のみ）。</div>';
+    var rd=aisecRetentionDays();
+    h+='<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+      +[['30日（最長）',30],['15日',15],['7日',7]].map(function(o){ return '<button class="sbtn'+(rd===o[1]?' on':'')+'" onclick="setAisecRetention('+o[1]+')">'+o[0]+'</button>'; }).join('')
+      +'</div>';
     h+='<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">'
       +'<button class="ghost" style="font-size:12px;" onclick="resetSettings()">初期設定に戻す</button>'
       +'<span style="flex:1;"></span>'
       +'<button class="btn2" onclick="closeSettings()">閉じる</button></div>';
     box.innerHTML=h;
   }
+  function setAisecRetention(days){ var p=loadPrefs(); p.aisecRetention=days; savePrefs(p); if(typeof aisecPruneAll==='function') aisecPruneAll(); if(typeof restoreSecLog==='function') restoreSecLog(); renderSettings(); }
   function ensureNavConf(p,r){
     p.nav=p.nav||{};
     if(!p.nav[r]){ p.nav[r]={order:navDefs(r).map(function(x){return x[0];}),hidden:[]}; }
@@ -1502,8 +1509,8 @@
 
     window.__eff=eff;
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); }
-    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); }
+    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); }
+    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); }
     else { loadAdmin(); loadMarketBroker(); }
     startNotifPolling(eff);
     navSpyInit();
@@ -5210,8 +5217,29 @@
     '資金調達':'あなたは中小企業の資金調達に明るいアドバイザーです。融資・補助金・助成金・資金繰りの考え方と準備を簡潔に日本語で説明します。個別の可否は金融機関等の確認を促します。',
     'M&A':'あなたは中小企業のM&A・事業承継に明るいアドバイザーです。買収・売却・承継の進め方や留意点を簡潔に日本語で説明します。実行は専門家の関与を前提とします。'
   };
-  function secModesHtml(){ function b(m){ return '<button class="sbtn'+(m==='経営'?' on':'')+'" onclick="setSecMode(\''+m+'\',this)">'+m+'</button>'; } return '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">'+b('経営')+b('税務')+b('労務')+b('マーケ')+b('資金調達')+b('M&A')+'</div>'; }
-  function setSecMode(m,el){ SEC_MODE=m; var box=el&&el.parentNode; if(box){ Array.prototype.forEach.call(box.querySelectorAll('.sbtn'),function(b){ b.classList.remove('on'); }); } if(el) el.classList.add('on'); SEC_MSGS=[]; renderSecLog(); }
+  // ===== AI秘書：会話の永続化（localStorage・モード別）＋保存期間 =====
+  function aisecKey(mode){ return 'tsugu_aisec_'+((typeof ME!=='undefined'&&ME)?ME:'guest')+'_'+(mode||SEC_MODE); }
+  function aisecRetentionDays(){ try{ var d=parseInt((loadPrefs().aisecRetention)||30,10); return (d===7||d===15||d===30)?d:30; }catch(e){ return 30; } }
+  function aisecLoad(mode){
+    try{
+      var raw=localStorage.getItem(aisecKey(mode)); if(!raw) return [];
+      var arr=JSON.parse(raw); if(!Array.isArray(arr)) return [];
+      var cutoff=Date.now()-aisecRetentionDays()*86400000;
+      var keep=arr.filter(function(m){ return !m.ts || m.ts>=cutoff; });
+      if(keep.length!==arr.length){ try{ localStorage.setItem(aisecKey(mode), JSON.stringify(keep)); }catch(e){} }
+      return keep;
+    }catch(e){ return []; }
+  }
+  function aisecSave(){
+    try{ var arr=SEC_MSGS.filter(function(m){ return m.content!=='（考え中…）'; }); localStorage.setItem(aisecKey(SEC_MODE), JSON.stringify(arr)); }catch(e){}
+  }
+  function aisecPruneAll(){
+    try{ var pre='tsugu_aisec_'+((typeof ME!=='undefined'&&ME)?ME:'guest')+'_'; for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i); if(k&&k.indexOf(pre)===0) aisecLoad(k.slice(pre.length)); } }catch(e){}
+  }
+  function restoreSecLog(){ try{ SEC_MSGS=aisecLoad(SEC_MODE); }catch(e){ SEC_MSGS=[]; } renderSecLog(); }
+  function clearSecLog(){ if(!confirm('このAIモードの会話履歴を消去します。よろしいですか？')) return; SEC_MSGS=[]; try{ localStorage.removeItem(aisecKey(SEC_MODE)); }catch(e){} renderSecLog(); }
+  function secModesHtml(){ function b(m){ return '<button class="sbtn'+(m===SEC_MODE?' on':'')+'" onclick="setSecMode(\''+m+'\',this)">'+m+'</button>'; } return '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;align-items:center;">'+b('経営')+b('税務')+b('労務')+b('マーケ')+b('資金調達')+b('M&A')+'<span style="flex:1;"></span><button class="ghost" style="font-size:11px;padding:4px 9px;border:1px solid var(--line);border-radius:7px;" onclick="clearSecLog()" title="このモードの会話履歴を消去">🗑 履歴消去</button></div>'; }
+  function setSecMode(m,el){ aisecSave(); SEC_MODE=m; var box=el&&el.parentNode; if(box){ Array.prototype.forEach.call(box.querySelectorAll('.sbtn'),function(b){ b.classList.remove('on'); }); } if(el) el.classList.add('on'); SEC_MSGS=aisecLoad(m); renderSecLog(); }
   function renderSecLog(){
     var box=$('sec-log'); if(!box)return;
     if(!SEC_MSGS.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">例：「来期の経営計画づくりの進め方を相談したい」「取引先へのお礼メールを作って」</div>'; return; }
@@ -5236,7 +5264,7 @@
     var t=inp.value.trim(); if(!t)return;
     var model=pickModel(t);
     var label=(model.indexOf('opus')>=0)?'Opus（じっくり回答）':'Sonnet（軽快に回答）';
-    SEC_MSGS.push({role:'user',content:t}); inp.value='';
+    SEC_MSGS.push({role:'user',content:t,ts:Date.now()}); inp.value='';
     SEC_MSGS.push({role:'assistant',content:'（考え中…）'}); renderSecLog();
     var btn=$('sec-send'); if(btn)btn.disabled=true;
     var sys=SEC_PROMPTS[SEC_MODE]||SEC_PROMPTS['経営'];
@@ -5244,11 +5272,11 @@
     try{
       var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:msgs, model:model, max_tokens:1400 } });
       if(SEC_MSGS.length && SEC_MSGS[SEC_MSGS.length-1].content==='（考え中…）') SEC_MSGS.pop();
-      if(res.error){ SEC_MSGS.push({role:'assistant',content:'エラー：'+(res.error.message||'呼び出しに失敗しました')}); }
-      else if(res.data && res.data.ok===false){ SEC_MSGS.push({role:'assistant',content:res.data.error||'エラーが発生しました'}); }
-      else { SEC_MSGS.push({role:'assistant',content:(res.data&&res.data.text)||'(応答なし)', model:label}); }
-    }catch(e){ if(SEC_MSGS.length && SEC_MSGS[SEC_MSGS.length-1].content==='（考え中…）') SEC_MSGS.pop(); SEC_MSGS.push({role:'assistant',content:'エラー：'+String((e&&e.message)||e)}); }
-    renderSecLog(); if(btn)btn.disabled=false;
+      if(res.error){ SEC_MSGS.push({role:'assistant',content:'エラー：'+(res.error.message||'呼び出しに失敗しました'),ts:Date.now()}); }
+      else if(res.data && res.data.ok===false){ SEC_MSGS.push({role:'assistant',content:res.data.error||'エラーが発生しました',ts:Date.now()}); }
+      else { SEC_MSGS.push({role:'assistant',content:(res.data&&res.data.text)||'(応答なし)', model:label, ts:Date.now()}); }
+    }catch(e){ if(SEC_MSGS.length && SEC_MSGS[SEC_MSGS.length-1].content==='（考え中…）') SEC_MSGS.pop(); SEC_MSGS.push({role:'assistant',content:'エラー：'+String((e&&e.message)||e),ts:Date.now()}); }
+    renderSecLog(); aisecSave(); if(btn)btn.disabled=false;
   }
 
   // ---- 利益のM&A活用 AI ----
