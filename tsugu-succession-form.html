@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>事業承継 戦略診断フォーム｜認定パートナー向け｜TsuguAI</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1C3557;--blue:#2C6EBD;--sky:#4AADD6;--gold:#C89620;
+    --ink:#131E2E;--muted:#4A6080;--line:#D0DCF0;--bg:#F2F5FA;
+    --card:#fff;--soft:#F7FAFD;--softline:#EAF0F7;
+    --red:#A83030;--redsoft:#FBEEEE;--redline:#E9C9C9;
+    --green:#1E6B45;--greensoft:#E9F5EE;--greenline:#BFE2CD;
+    --goldsoft:#FBF3E0;--goldline:#ECD9A6;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:var(--bg);line-height:1.8;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px;margin:0 auto;padding:0 18px 100px;}
+  a{color:var(--blue);}
+
+  .hero{background:linear-gradient(150deg,var(--navy),#16466f 58%,var(--sky));color:#fff;padding:48px 0 40px;}
+  .hero-in{max-width:900px;margin:0 auto;padding:0 18px;}
+  .brand{display:flex;align-items:center;gap:11px;margin-bottom:26px;}
+  .logo{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:18px;}
+  .brand .nm{font-family:'DM Sans',sans-serif;font-size:21px;font-weight:500;}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:1.4px;color:var(--sky);text-transform:uppercase;margin-bottom:12px;}
+  .hero h1{font-size:27px;font-weight:700;line-height:1.45;margin:0 0 14px;}
+  .hero p{font-size:14px;color:#D6E4F2;margin:0;max-width:680px;}
+  .hero .for{display:inline-block;margin-top:18px;font-size:12px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);border-radius:99px;padding:6px 15px;}
+
+  /* sticky step nav */
+  .nav{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);margin-bottom:26px;}
+  .nav-in{max-width:900px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;padding:8px 18px;}
+  .nav a{flex:0 0 auto;font-size:12px;color:var(--muted);text-decoration:none;padding:7px 12px;border-radius:9px;white-space:nowrap;font-weight:600;}
+  .nav a:hover{background:var(--soft);color:var(--navy);}
+
+  .kicker{display:flex;align-items:center;gap:11px;margin:40px 0 6px;scroll-margin-top:60px;}
+  .kicker .no{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#fff;background:var(--navy);min-width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 6px;}
+  .kicker h2{font-size:20px;font-weight:700;color:var(--navy);margin:0;}
+  .lead{font-size:14px;color:var(--ink);margin:6px 0 14px;}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:13px 0;}
+  .card h3{font-size:15px;font-weight:700;color:var(--navy);margin:0 0 8px;}
+  .card h3 .tag{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:8px;vertical-align:middle;}
+  .tag.blue{background:#E6F1FB;color:var(--blue);} .tag.gold{background:var(--goldsoft);color:#8A6A12;}
+  .tag.green{background:var(--greensoft);color:var(--green);} .tag.red{background:var(--redsoft);color:var(--red);}
+  .card p{font-size:13.5px;margin:0 0 8px;} .card p:last-child{margin-bottom:0;}
+  .muted{color:var(--muted);} .small{font-size:12px;}
+
+  .md{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+  .md .b{border-radius:10px;padding:11px 13px;font-size:12.5px;line-height:1.7;}
+  .md .pro{background:var(--greensoft);border:1px solid var(--greenline);}
+  .md .con{background:var(--redsoft);border:1px solid var(--redline);}
+  .md .b .t{font-weight:700;margin-bottom:4px;} .md .pro .t{color:var(--green);} .md .con .t{color:var(--red);}
+  .md ul{margin:0;padding-left:16px;} .md li{margin:2px 0;}
+
+  .note{border-radius:12px;padding:14px 16px;font-size:12.8px;line-height:1.75;margin:13px 0;}
+  .note .h{font-weight:700;display:block;margin-bottom:3px;}
+  .note.red{background:var(--redsoft);border:1px solid var(--redline);} .note.red .h{color:var(--red);}
+  .note.gold{background:var(--goldsoft);border:1px solid var(--goldline);} .note.gold .h{color:#8A6A12;}
+  .note.blue{background:#EAF2FB;border:1px solid #C4DBF3;} .note.blue .h{color:var(--blue);}
+  .note.green{background:var(--greensoft);border:1px solid var(--greenline);} .note.green .h{color:var(--green);}
+
+  label.fld{display:block;font-size:12px;font-weight:700;color:var(--navy);margin:0 0 5px;}
+  input[type=text],input[type=number],select,textarea{width:100%;padding:9px 11px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;font-family:inherit;background:#F8FAFD;color:var(--ink);outline:none;}
+  input:focus,select:focus,textarea:focus{border-color:var(--blue);background:#fff;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+  .chip{font-size:12.5px;border:1.5px solid var(--line);border-radius:9px;padding:7px 12px;cursor:pointer;user-select:none;background:#fff;}
+  .chip input{display:none;}
+  .chip.on{border-color:var(--blue);background:#EAF2FB;color:var(--navy);font-weight:600;}
+
+  table.t{width:100%;border-collapse:collapse;font-size:12.8px;margin-top:6px;}
+  table.t th,table.t td{padding:7px 8px;border-bottom:1px solid var(--softline);text-align:left;vertical-align:middle;}
+  table.t th{background:var(--soft);color:var(--navy);font-weight:700;font-size:11.5px;}
+  table.t input,table.t select{padding:6px 8px;font-size:12.5px;}
+  .xbtn{background:var(--redsoft);color:var(--red);border:1px solid var(--redline);border-radius:7px;font-size:12px;padding:4px 9px;cursor:pointer;}
+  .addbtn{background:#fff;color:var(--blue);border:1.5px solid var(--blue);border-radius:9px;font-size:12.5px;font-weight:600;padding:8px 14px;cursor:pointer;margin-top:10px;}
+  .calc{background:var(--navy);color:#fff;border:none;border-radius:10px;font-size:13.5px;font-weight:700;padding:11px 20px;cursor:pointer;font-family:inherit;}
+  .ghost{background:#fff;color:var(--blue);border:1.5px solid var(--line);border-radius:9px;font-size:12.5px;font-weight:600;padding:8px 14px;cursor:pointer;}
+
+  .out{background:var(--soft);border:1px solid var(--softline);border-radius:11px;padding:14px 16px;font-size:13px;margin-top:12px;}
+  .out .row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed var(--line);}
+  .out .row:last-child{border-bottom:none;} .out .row b{color:var(--navy);}
+  .out .big{font-family:'DM Sans',sans-serif;font-weight:700;}
+
+  .flag{display:flex;gap:9px;align-items:flex-start;border-radius:10px;padding:10px 13px;font-size:12.8px;margin:7px 0;line-height:1.65;}
+  .flag.ok{background:var(--greensoft);border:1px solid var(--greenline);}
+  .flag.warn{background:var(--goldsoft);border:1px solid var(--goldline);}
+  .flag.bad{background:var(--redsoft);border:1px solid var(--redline);}
+  .flag .ic{font-size:15px;line-height:1.3;}
+
+  .divider{height:1px;background:var(--line);margin:30px 0;}
+  textarea.sum{min-height:230px;font-size:12.5px;line-height:1.7;font-family:'Noto Sans JP',monospace;}
+  footer{font-size:11.5px;color:var(--muted);line-height:1.85;border-top:1px solid var(--line);padding-top:20px;margin-top:36px;}
+
+  @media(max-width:680px){
+    .hero h1{font-size:21px;} .md,.grid2{grid-template-columns:1fr;} .grid3{grid-template-columns:1fr;}
+    .card{padding:16px;} .nav-in{padding:8px 14px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-in">
+    <div class="brand"><span class="logo">継</span><span class="nm">TsuguAI</span></div>
+    <div class="eyebrow">認定パートナー向け・事業承継ナレッジ</div>
+    <h1>事業承継 戦略診断フォーム<br><span style="font-size:17px;font-weight:500;color:#CFE0F0;">M&Aは選択肢の一つ。株・民法・会社法・税金を横断で設計する。</span></h1>
+    <p>「後継者がいないからM&A」だけでは、事業承継は設計できません。誰が株を持ち、どこへ動かし、相続人それぞれにどう作用し、どんなリスクに備えるか。このフォームは、認定パートナーが経営者と一緒に全体像を描き、専門家へ的確に橋渡し（ティーアップ）するための診断ツールです。</p>
+    <span class="for">出力はすべて概算・一般情報です。最終判断は税理士・弁護士等の有資格者へ。</span>
+  </div>
+</div>
+
+<div class="nav"><div class="nav-in">
+  <a href="#s0">なぜ体系で考えるか</a>
+  <a href="#s1">①現状把握</a>
+  <a href="#s2">②4つの道の比較</a>
+  <a href="#s3">③株対策カタログ</a>
+  <a href="#s4">④株の移動設計＋遺留分</a>
+  <a href="#s5">⑤相続人別の視点</a>
+  <a href="#s6">⑥少数株主・変な主張対策</a>
+  <a href="#s7">⑦ティーアップ出力</a>
+</div></div>
+
+<div class="wrap">
+
+  <!-- 0 -->
+  <div class="kicker" id="s0"><span class="no">なぜ</span><h2>なぜ「体系」で考えるのか</h2></div>
+  <p class="lead">事業承継には大きく4つの道があります。M&A（第三者承継）はそのうちの一つで、後継者不在のときに有力ですが、唯一解ではありません。先に株と相続の設計を描くことで、「残す／譲る／たたむ」のどれが最適かを、経営者自身が納得して選べます。</p>
+  <div class="card">
+    <h3>4つの承継の道</h3>
+    <p><b>① 親族内承継</b>：子・親族へ。会社を残せるが、株の集中・遺留分・納税が論点。<br>
+    <b>② 役員・従業員承継（MBO/EBO）</b>：社内の人へ。文化を残せるが、後継者の買取資金が論点。<br>
+    <b>③ 第三者承継（M&A）</b>：社外へ譲渡。後継者不在の有力解。創業者利益を得られるが、相手選びとタイミングが論点。<br>
+    <b>④ 廃業・清算</b>：最後の選択。雇用と取引先を失うため、その前に①〜③を検討する。</p>
+    <div class="note blue"><span class="h">なぜ今、M&Aが現実的になったのか</span>親族内承継は減り、社内の内部昇格やM&Aによる承継が増えています（脱ファミリー化）。黒字で後継者がいないだけの優良企業ほど、M&Aが「廃業を避ける出口」になります。ただし2024年以降は悪質な買い手のトラブルもあり、<b>相手の質を見極められる専門家に橋渡しすること</b>が安全です。</div>
+  </div>
+
+  <!-- 1 -->
+  <div class="kicker" id="s1"><span class="no">1</span><h2>現状把握 ― 株の現在地と相続人</h2></div>
+  <p class="lead">まずは「誰が株を持っているか」「後継者は誰か」「相続人は誰か」を入力します。ここが全ての設計の土台です。</p>
+
+  <div class="card">
+    <h3>会社・自社株</h3>
+    <div class="grid2">
+      <div><label class="fld">自社株式の評価総額（概算・万円）</label><input type="number" id="shareVal" placeholder="例：12000" oninput="recalc()"></div>
+      <div><label class="fld">自社株以外の個人財産（概算・万円）</label><input type="number" id="otherVal" placeholder="例：5000" oninput="recalc()"></div>
+    </div>
+    <p class="small muted" style="margin-top:8px;">※ 自社株評価は類似業種比準・純資産などで専門家が算定します。ここでは概算でかまいません。</p>
+  </div>
+
+  <div class="card">
+    <h3>株主構成（現在地）</h3>
+    <p class="small muted">株主を行で追加してください。議決権%の合計と、後継者の議決権%を自動計算します。</p>
+    <table class="t" id="capTable">
+      <thead><tr><th style="width:30%;">株主名</th><th style="width:22%;">続柄・属性</th><th style="width:18%;">議決権%</th><th style="width:18%;">後継者？</th><th></th></tr></thead>
+      <tbody id="capBody"></tbody>
+    </table>
+    <button class="addbtn" onclick="addCapRow()">＋ 株主を追加</button>
+    <div class="out" style="margin-top:14px;">
+      <div class="row"><span>議決権の合計</span><b class="big" id="capTotal">0%</b></div>
+      <div class="row"><span>後継者の議決権</span><b class="big" id="capHeir">0%</b></div>
+      <div class="row"><span>同族外・少数株主に分散している議決権</span><b class="big" id="capMinor">0%</b></div>
+    </div>
+    <div id="capFlags"></div>
+  </div>
+
+  <div class="card">
+    <h3>後継者と経営者の希望</h3>
+    <div class="grid2">
+      <div>
+        <label class="fld">後継者の状況</label>
+        <select id="successor" onchange="recalc()">
+          <option value="">選択してください</option>
+          <option value="family">親族内に後継者がいる／候補がいる</option>
+          <option value="employee">役員・従業員に候補がいる</option>
+          <option value="none">後継者がいない・未定</option>
+        </select>
+      </div>
+      <div>
+        <label class="fld">会社の業績イメージ</label>
+        <select id="profit" onchange="recalc()">
+          <option value="">選択してください</option>
+          <option value="good">黒字・安定している</option>
+          <option value="mid">とんとん・波がある</option>
+          <option value="bad">赤字・債務が重い</option>
+        </select>
+      </div>
+    </div>
+    <label class="fld" style="margin-top:12px;">経営者が大切にしたいこと（複数選択可）</label>
+    <div class="chips" id="wishChips">
+      <label class="chip"><input type="checkbox" value="残す" onchange="toggleChip(this);recalc()">会社・事業を残したい</label>
+      <label class="chip"><input type="checkbox" value="雇用" onchange="toggleChip(this);recalc()">従業員の雇用を守りたい</label>
+      <label class="chip"><input type="checkbox" value="利益" onchange="toggleChip(this);recalc()">創業者利益を得たい</label>
+      <label class="chip"><input type="checkbox" value="争族回避" onchange="toggleChip(this);recalc()">争族を避けたい</label>
+      <label class="chip"><input type="checkbox" value="納税不安" onchange="toggleChip(this);recalc()">納税資金が不安</label>
+      <label class="chip"><input type="checkbox" value="指名" onchange="toggleChip(this);recalc()">特定の人に継がせたい</label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>相続人の構成（遺留分の計算に使用）</h3>
+    <div class="grid3">
+      <div>
+        <label class="fld">配偶者</label>
+        <select id="spouse" onchange="recalc()"><option value="1">いる</option><option value="0">いない</option></select>
+      </div>
+      <div>
+        <label class="fld">子の人数</label>
+        <input type="number" id="children" value="0" min="0" oninput="recalc()">
+      </div>
+      <div>
+        <label class="fld">うち後継者（子の中で株を継ぐ人数）</label>
+        <input type="number" id="heirChildren" value="0" min="0" oninput="recalc()">
+      </div>
+    </div>
+    <p class="small muted" style="margin-top:8px;">※ 子がいない場合の直系尊属・兄弟姉妹のケースは遺留分の割合が変わるため、専門家計算が必要です。本フォームは「配偶者・子」の一般的な構成を概算します。</p>
+  </div>
+
+  <!-- 2 -->
+  <div class="kicker" id="s2"><span class="no">2</span><h2>4つの道の比較 ― なぜM&Aか</h2></div>
+  <p class="lead">それぞれのメリット・デメリットを常に確認できます。入力内容から「起点になりやすい選択肢」を下に表示します。</p>
+  <div id="recoBox"></div>
+
+  <div class="card"><h3>① 親族内承継<span class="tag green">会社を残す</span></h3>
+    <p class="muted small">子・親族に経営と株を引き継ぐ。最も伝統的だが、近年は減少傾向。</p>
+    <div class="md">
+      <div class="b pro"><div class="t">メリット</div><ul><li>理念・文化・関係性を継承しやすい</li><li>早期から計画的に育成できる</li><li>事業承継税制・民法特例が使える</li></ul></div>
+      <div class="b con"><div class="t">デメリット・論点</div><ul><li>後継者の意思・適性が必須</li><li>株の集中で遺留分・争族リスク</li><li>相続税・贈与税の納税資金</li></ul></div>
+    </div>
+  </div>
+  <div class="card"><h3>② 役員・従業員承継（MBO/EBO）<span class="tag green">社内に残す</span></h3>
+    <p class="muted small">信頼できる役員・従業員が株を買い取って承継。脱ファミリー化の受け皿。</p>
+    <div class="md">
+      <div class="b pro"><div class="t">メリット</div><ul><li>事業に精通した人が継ぐ</li><li>従業員・取引先の安心感</li><li>外部に情報を出さずに進められる</li></ul></div>
+      <div class="b con"><div class="t">デメリット・論点</div><ul><li>後継者の株式買取資金の調達</li><li>個人保証の引き継ぎ</li><li>株価が高いと買い取りきれない</li></ul></div>
+    </div>
+  </div>
+  <div class="card"><h3>③ 第三者承継（M&A）<span class="tag blue">社外へ譲る</span></h3>
+    <p class="muted small">社外の企業・個人へ譲渡。後継者不在時の有力な出口。TsuguAIではBatonz経由で運用。</p>
+    <div class="md">
+      <div class="b pro"><div class="t">メリット</div><ul><li>後継者がいなくても廃業を回避</li><li>創業者利益（売却対価）を得られる</li><li>従業員の雇用・取引を引き継げる可能性</li></ul></div>
+      <div class="b con"><div class="t">デメリット・論点</div><ul><li>相手探し・条件交渉に時間と専門性</li><li>悪質な買い手・利益相反のリスク</li><li>希望条件で必ず売れる保証はない</li></ul></div>
+    </div>
+    <div class="note gold"><span class="h">パートナーの役割はここでも「紹介」</span>相手探し・価額算定・条件交渉は仲介の領域です。パートナーは経営者の想いを整理し、信頼できる専門家（運営・Batonz）へ橋渡しします。</div>
+  </div>
+  <div class="card"><h3>④ 廃業・清算<span class="tag red">最後の選択</span></h3>
+    <p class="muted small">①〜③が難しい場合の選択。雇用・取引・資産を失うため、その前に他の道を尽くす。</p>
+    <div class="md">
+      <div class="b pro"><div class="t">メリット</div><ul><li>経営者の意思で完結できる</li><li>負債が少なければ清算で資産を回収</li></ul></div>
+      <div class="b con"><div class="t">デメリット・論点</div><ul><li>雇用・取引先・技術が失われる</li><li>黒字でも廃業は社会的損失</li><li>清算コスト・税負担</li></ul></div>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="kicker" id="s3"><span class="no">3</span><h2>株対策の手法カタログ</h2></div>
+  <p class="lead">株を「いつ・どうやって・誰に」動かすか。民法・会社法・税金の主要な手法を、目的とメリット・デメリットで確認できます。</p>
+
+  <div class="card"><h3>移転の手段<span class="tag blue">いつ動かすか</span></h3>
+    <p><b>生前贈与（暦年課税）</b>：毎年コツコツ。年110万円の基礎控除。長期で計画的に。<br>
+    <b>生前贈与（相続時精算課税）</b>：累計2,500万円まで贈与時非課税（相続時に精算）。2024年以降は年110万円の基礎控除も併用可。株価が今後上がる会社で有効。<br>
+    <b>譲渡（売買）</b>：後継者や持株会社が買い取る。資金が必要だが遺留分の対象になりにくい。<br>
+    <b>相続・遺贈</b>：相続発生時に移す。遺言が重要。納税資金と遺留分に注意。</p>
+    <div class="note gold"><span class="h">注意</span>後継者への生前贈与した自社株は、相続開始前10年以内の特別受益として遺留分算定に算入され、評価は相続開始時（＝後継者が伸ばした分も上乗せ）。贈与すれば安心、ではありません。</div>
+  </div>
+
+  <div class="card"><h3>事業承継税制（特例措置）<span class="tag gold">納税猶予</span></h3>
+    <p>後継者が承継する自社株の贈与税・相続税を、要件を満たす限り全額納税猶予・免除できる強力な制度。対象株式100%・後継者3人まで・雇用要件は実質緩和。</p>
+    <div class="note red"><span class="h">期限が迫っています（最重要）</span>特例承継計画の提出期限は、令和8年度税制改正で<b>2027年（令和9年）9月30日</b>へ再延長されました（個人版は2028年9月30日）。ただし、<b>実際の承継（贈与・相続）の適用期限は2027年12月31日で、延長されない見込み</b>です。検討の可能性が少しでもあれば、まず計画を出して「権利を確保」するのが定石。<span class="small">（出典：令和8年度税制改正大綱／中小企業庁）</span></div>
+    <div class="md">
+      <div class="b pro"><div class="t">メリット</div><ul><li>承継時の税負担を大きく圧縮できる</li><li>納税資金の不安を軽減</li></ul></div>
+      <div class="b con"><div class="t">デメリット・注意</div><ul><li>取消事由があり長期の継続管理が必要</li><li>将来の出口（M&A・廃業）で猶予税額が問題になり得る</li><li>必ず税理士の関与が必要</li></ul></div>
+    </div>
+  </div>
+
+  <div class="card"><h3>会社法のツール（議決権・支配の設計）<span class="tag blue">誰に効くか</span></h3>
+    <p><b>議決権制限株式（無議決権株式）</b>：非後継の相続人には配当はあるが議決権のない株を渡し、経営権は後継者に集中。<br>
+    <b>拒否権付株式（黄金株）</b>：特定の重要決議に拒否権。先代が1株だけ持ち、承継後も重要事項を見守る"安全装置"。譲渡・相続で第三者に渡ると危険なので取得条項とセットで。<br>
+    <b>属人的株式</b>：非公開会社で「株主ごと」に議決権・配当を変えられる（例：先代の1株に多数議決権）。定款変更で柔軟だが濫用・無効リスクに注意。<br>
+    <b>取得条項付株式／全部取得条項付株式</b>：一定事由で会社が買い取れる。分散株の集約やスクイーズアウトに使う。</p>
+    <div class="md">
+      <div class="b pro"><div class="t">メリット</div><ul><li>株は分けても「経営権」は集中できる</li><li>非後継相続人の不公平感を配当で緩和</li></ul></div>
+      <div class="b con"><div class="t">デメリット・注意</div><ul><li>設計を誤ると後で動かせない</li><li>黄金株が第三者に渡るリスク</li><li>登記・定款変更・株主総会特別決議が必要</li></ul></div>
+    </div>
+  </div>
+
+  <div class="card"><h3>金庫株（自己株式の取得）<span class="tag blue">集約・納税資金</span></h3>
+    <p>会社が自社株を買い取る方法。分散した少数株主の株を集約したり、相続人が納税資金を作る手段になります。</p>
+    <div class="md">
+      <div class="b pro"><div class="t">メリット</div><ul><li>分散株を会社が回収し集約できる</li><li>相続人が会社に売って納税資金を確保</li></ul></div>
+      <div class="b con"><div class="t">デメリット・注意</div><ul><li>財源規制（分配可能額の範囲内）</li><li>通常は「みなし配当」で高い総合課税</li><li>※相続取得株を相続税申告期限後3年以内に会社へ譲渡すると、みなし配当課税の特例＋取得費加算が使える</li></ul></div>
+    </div>
+  </div>
+
+  <div class="card"><h3>持株会社（HD）化・従業員持株会<span class="tag blue">構造で承継</span></h3>
+    <p><b>持株会社化</b>：後継者が設立した持株会社が事業会社株を保有。株価上昇の抑制、グループ経営、資金調達の柔軟性。<br>
+    <b>従業員持株会</b>：従業員に配当還元価額で少数株を保有させ、安定株主化・福利厚生に。経営権は侵さない設計が前提。</p>
+    <div class="md">
+      <div class="b pro"><div class="t">メリット</div><ul><li>承継後の株価対策・資本政策に有効</li><li>安定株主づくり</li></ul></div>
+      <div class="b con"><div class="t">デメリット・注意</div><ul><li>設計・税務が複雑（専門家必須）</li><li>従業員株の買い戻しルール整備が必要</li></ul></div>
+    </div>
+  </div>
+
+  <div class="card"><h3>遺留分対策（民法・経営承継円滑化法）<span class="tag gold">争族を防ぐ</span></h3>
+    <p><b>遺留分の民法特例（除外合意／固定合意）</b>：推定相続人全員＋後継者の合意 → 経産大臣の確認（合意から1か月以内）→ 家庭裁判所の許可。後継者に贈与した自社株を遺留分の計算から「除外」または評価額を合意時に「固定」できます。固定合意は自社株のみ。<br>
+    <b>遺言＋代償金</b>：後継者に株を集中させ、非後継相続人には現預金・代償金を。<br>
+    <b>生命保険の活用</b>：後継者を受取人にして、遺留分の代償金原資を確保（高額すぎると特別受益認定に注意）。</p>
+    <div class="note blue"><span class="h">ポイント</span>合意対象株を除いても後継者が議決権の過半数を確保できる場合は、民法特例の対象外（濫用防止）。＝先に株を集中させる設計と組み合わせて考えます。</div>
+  </div>
+
+  <!-- 4 -->
+  <div class="kicker" id="s4"><span class="no">4</span><h2>株の「現在地 → 移動先」設計 ＋ 遺留分シミュレーター</h2></div>
+  <p class="lead">誰の株を、どこへ、どの手段で動かすかを設計し、税金・留意点を並べて見ます。あわせて遺留分の概算を確認します。</p>
+
+  <div class="card">
+    <h3>株の移動設計シート</h3>
+    <table class="t" id="moveTable">
+      <thead><tr><th style="width:20%;">誰の株を</th><th style="width:22%;">どこへ</th><th style="width:22%;">手段</th><th style="width:26%;">主な税金・留意点（自動）</th><th></th></tr></thead>
+      <tbody id="moveBody"></tbody>
+    </table>
+    <button class="addbtn" onclick="addMoveRow()">＋ 移動を追加</button>
+  </div>
+
+  <div class="card">
+    <h3>遺留分 概算シミュレーター</h3>
+    <p class="small muted">「①現状把握」で入力した自社株評価額・その他財産・相続人構成を使います。自社株を後継者に集中させたとき、非後継の相続人に最低限渡すべき額（遺留分）と、現預金で足りない不足額の目安を出します。</p>
+    <button class="calc" onclick="calcIryubun()">遺留分を概算する</button>
+    <div id="iryubunOut"></div>
+    <div class="note red" style="margin-top:12px;"><span class="h">必ずお読みください</span>これは「配偶者・子」を前提とした概算です。生前贈与（相続開始前10年以内の特別受益）、評価額の確定、債務、二次相続などは反映していません。実際の遺留分・税額は必ず税理士・弁護士が個別に計算します。</div>
+  </div>
+
+  <!-- 5 -->
+  <div class="kicker" id="s5"><span class="no">5</span><h2>相続人別の視点 ― 誰に、どう作用するか</h2></div>
+  <p class="lead">同じ対策でも、立場によって意味が変わります。被相続人（経営者）だけでなく、相続人それぞれの視点で見ます。</p>
+  <div class="card"><h3>後継者（株を集める人）</h3>
+    <p>欲しいのは<b>経営権の安定</b>と<b>納税資金</b>。株の集中（贈与・譲渡・種類株式）と、事業承継税制・金庫株でのキャッシュ確保が効く。一方で、非後継相続人からの遺留分侵害額請求を一身に受ける立場でもある。</p>
+  </div>
+  <div class="card"><h3>非後継の相続人（株を継がない子など）</h3>
+    <p>気になるのは<b>公平性</b>。株という"換金しにくい資産"が後継者に集中する分、自分の取り分が薄くなる不安。<b>代償金・現預金・生命保険・無議決権株（配当）</b>で手当てし、納得感を作る。除外合意は本人の同意が前提なので、丁寧な説明が要。</p>
+  </div>
+  <div class="card"><h3>配偶者</h3>
+    <p>重視するのは<b>生活の安定</b>。配偶者の税額軽減（法定相続分か1.6億円まで相続税ゼロ）や配偶者居住権を絡めつつ、会社の議決権が配偶者経由で分散しない設計（無議決権化など）も検討する。</p>
+  </div>
+
+  <!-- 6 -->
+  <div class="kicker" id="s6"><span class="no">6</span><h2>少数株主・"変な主張"への対応策</h2></div>
+  <p class="lead">分散した株主や反対株主が、高値買取の要求・総会での妨害・帳簿閲覧の濫用などをしてくることがあります。どこまで備えるべきかを整理します。</p>
+
+  <div class="note gold"><span class="h">よくある"変な主張"</span>① 相場を大きく超える高値での株式買取要求　② 株主総会での議事妨害・反対　③ 会計帳簿閲覧請求権の濫用的行使　④「これは名義株で実は自分のものだ」という主張　⑤ 相続で株が分散し、面識のない相続人が現れる</div>
+
+  <div class="card"><h3>対応ツール（会社法）</h3>
+    <p><b>相続人等に対する売渡請求</b>（定款で定める）：相続等で株を取得した者に、会社が売渡しを請求できる。分散防止に有効。<span class="small muted">※ただし当の相続人は総会で議決権を行使できず、逆に経営者側の相続時に少数派が多数決を握る"クーデター"リスクや、財源規制に注意。導入は慎重に設計。</span><br>
+    <b>特別支配株主の株式等売渡請求</b>：議決権の90%以上を持つ株主は、少数株主から株を強制取得（スクイーズアウト）できる。<br>
+    <b>株式併合によるスクイーズアウト</b>：併合で少数株主を端数化し、対価を払って整理。<br>
+    <b>所在不明株主の株式売却・買取</b>：通知が5年継続して届かない株主の株を、競売・売却して整理できる。</p>
+    <div class="md">
+      <div class="b pro"><div class="t">使いどころ</div><ul><li>分散・所在不明株の集約</li><li>反対株主からの経営権防衛</li></ul></div>
+      <div class="b con"><div class="t">注意</div><ul><li>多くは株主総会の特別決議が必要</li><li>価格は最終的に裁判所が決めることも</li><li>手続きを誤ると無効・損害賠償</li></ul></div>
+    </div>
+  </div>
+
+  <div class="card"><h3>事前に効く設計</h3>
+    <p><b>名義株の整理</b>：設立時の名義借りなどを、早めに真の所有者へ整理（実態確認・確認書）。<br>
+    <b>属人的株式・種類株式での議決権設計</b>：分けても経営権は集中させる。<br>
+    <b>株主間契約</b>：譲渡制限・先買権・買取価格の算定方法を事前に合意。<br>
+    <b>定款の譲渡制限</b>：株が外部に流出しないようにする基本。</p>
+    <div class="note blue"><span class="h">どこまで備えるか（パートナーの目安）</span>株主が経営者一族でほぼ100%なら、過剰な防衛策は不要。分散・所在不明・関係悪化の相続人がいる、または将来M&Aを見据えるなら、<b>集約と議決権設計を早めに</b>。具体的な手続き・価格・契約は<b>弁護士・税理士</b>に委ねます。</div>
+  </div>
+
+  <div class="note red"><span class="h">コンプライアンス（必ず守る）</span>価額交渉の代理、契約書・合意書の作成、税額・株価の確定、定款・登記の手続きは「法律事務・税務」であり、パートナーが報酬を得て行うと弁護士法72条・税理士法に触れるおそれがあります。パートナーは<b>論点の整理と橋渡し</b>にとどめ、実行は有資格の専門家・運営につなぎます。本フォームの出力は概算・一般情報です。</div>
+
+  <!-- 7 -->
+  <div class="kicker" id="s7"><span class="no">7</span><h2>ティーアップ出力 ― 専門家への引き継ぎサマリー</h2></div>
+  <p class="lead">入力内容を、税理士・弁護士へ渡せる要約にまとめます。経営者が同じ説明を一からせずに済むようにするのが、良いティーアップです。</p>
+  <div class="card">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+      <button class="calc" onclick="genSummary()">サマリーを作成</button>
+      <button class="ghost" onclick="copySummary()">コピー</button>
+      <button class="ghost" onclick="window.print()">印刷／PDF保存</button>
+    </div>
+    <textarea id="summary" class="sum" placeholder="「サマリーを作成」を押すと、ここに引き継ぎ用の要約が表示されます。"></textarea>
+  </div>
+
+  <div class="divider"></div>
+  <div class="note green"><span class="h">この資料の位置づけ</span>パートナーコンソールから開ける事業承継ナレッジ／診断フォームとして使う想定です。経営者ポータルには表示しません。制度・税制は改正で変わるため、年次・改正のタイミングで運営が見直します。</div>
+
+  <footer>
+    本フォームは認定パートナーの学習・実務補助を目的とした<b>一般的な情報提供</b>であり、特定の事案に対する法務・税務・M&Aの助言ではありません。<br>
+    遺留分・税額・株価の計算、種類株式・スクイーズアウト等の会社法手続き、契約・合意書の作成、登記は、<b>必ず税理士・弁護士・司法書士等の有資格専門家</b>および運営・Batonzにおつなぎください。<br>
+    数値・制度は作成時点（2026年）のものです。事業承継税制の適用期限（2027年12月31日）など、最新情報は中小企業庁・国税庁等の一次情報をご確認ください。<br>
+    <br>株式会社福來 ｜ TsuguAI -継-
+  </footer>
+</div>
+
+<script>
+  var $=function(id){return document.getElementById(id);};
+  function esc(s){return (s||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function toggleChip(el){ el.parentElement.classList.toggle('on', el.checked); }
+
+  /* ===== 株主構成 ===== */
+  var REL=['本人（経営者）','配偶者','子','親族','役員','従業員','取引先','その他'];
+  function relOpts(v){return REL.map(function(r){return '<option'+(r===v?' selected':'')+'>'+r+'</option>';}).join('');}
+  function addCapRow(name,rel,pct,heir){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td><input type="text" class="cn" value="'+esc(name||'')+'" placeholder="株主名" oninput="recalc()"></td>'
+      +'<td><select class="cr" onchange="recalc()">'+relOpts(rel||'子')+'</select></td>'
+      +'<td><input type="number" class="cp" value="'+(pct!=null?pct:'')+'" placeholder="%" oninput="recalc()"></td>'
+      +'<td style="text-align:center;"><input type="checkbox" class="ch" '+(heir?'checked':'')+' onchange="recalc()" style="width:18px;height:18px;accent-color:var(--blue);"></td>'
+      +'<td><button class="xbtn" onclick="this.closest(\'tr\').remove();recalc()">削除</button></td>';
+    $('capBody').appendChild(tr);
+    recalc();
+  }
+  function recalc(){
+    var rows=$('capBody').querySelectorAll('tr');
+    var total=0,heir=0,minor=0;
+    rows.forEach(function(tr){
+      var p=parseFloat(tr.querySelector('.cp').value)||0;
+      var isHeir=tr.querySelector('.ch').checked;
+      var rel=tr.querySelector('.cr').value;
+      total+=p;
+      if(isHeir) heir+=p;
+      if(!isHeir && (rel==='取引先'||rel==='その他'||rel==='従業員'||rel==='役員')) minor+=p;
+    });
+    $('capTotal').textContent=total.toFixed(1)+'%';
+    $('capHeir').textContent=heir.toFixed(1)+'%';
+    $('capMinor').textContent=minor.toFixed(1)+'%';
+    // フラグ
+    var f='';
+    if(total>0 && Math.abs(total-100)>0.5) f+=flag('warn','⚠️','議決権の合計が'+total.toFixed(1)+'%です。100%になるよう確認してください（名義株・端株の見落としに注意）。');
+    if(heir>0 && heir<50) f+=flag('bad','🚩','後継者の議決権が'+heir.toFixed(1)+'%。<b>過半数（50%超）に届いていません</b>。普通決議も通せず経営が不安定。株の集中設計が必要です。');
+    else if(heir>=50 && heir<66.7) f+=flag('warn','⚠️','後継者の議決権が'+heir.toFixed(1)+'%。過半数はあるが<b>特別決議（2/3）に届きません</b>。定款変更・組織再編に他株主の協力が要ります。');
+    else if(heir>=66.7) f+=flag('ok','✅','後継者の議決権が'+heir.toFixed(1)+'%。特別決議も単独で可能な安定水準です。');
+    if(minor>=10) f+=flag('warn','⚠️','同族外・少数株主に'+minor.toFixed(1)+'%が分散。将来の買取要求・総会対応に備え、集約や議決権設計を検討。');
+    $('capFlags').innerHTML=f;
+    renderReco();
+  }
+  function flag(cls,ic,txt){return '<div class="flag '+cls+'"><span class="ic">'+ic+'</span><span>'+txt+'</span></div>';}
+
+  /* ===== 4つの道のレコメンド ===== */
+  function getWishes(){return Array.prototype.map.call($('wishChips').querySelectorAll('input:checked'),function(i){return i.value;});}
+  function renderReco(){
+    var s=$('successor').value, pr=$('profit').value, w=getWishes();
+    if(!s){ $('recoBox').innerHTML=''; return; }
+    var picks=[];
+    if(s==='family') picks.push(['① 親族内承継','後継者候補がいます。株の集中設計（贈与・種類株式）と、事業承継税制・遺留分対策を組み合わせるのが起点です。']);
+    if(s==='employee') picks.push(['② 役員・従業員承継（MBO/EBO）','社内に候補がいます。後継者の株式買取資金（金融機関・持株会社）と個人保証の扱いが鍵です。']);
+    if(s==='none'){
+      if(pr==='bad') picks.push(['③ M&A／再生型の相談','後継者不在かつ業績が厳しい場合は、早期に専門家へ。条件が悪化する前の相談が重要です。']);
+      else picks.push(['③ 第三者承継（M&A）','後継者不在で事業価値があるなら、廃業を避ける有力な出口。運営・Batonzへの橋渡しを。']);
+      if(w.indexOf('雇用')>=0||w.indexOf('残す')>=0) picks.push(['② 従業員承継も検討','「残したい・雇用を守りたい」なら、社内の人材へのMBO/EBOも並行検討の価値があります。']);
+    }
+    if(w.indexOf('利益')>=0 && s!=='family') picks.push(['創業者利益の観点','対価を得たい意向があります。M&Aは創業者利益を実現しやすい一方、税（株式譲渡）も併せて設計を。']);
+    var h='<div class="card" style="border-color:var(--blue);background:#F6FAFF;"><h3>この会社で「起点」になりやすい選択肢</h3>';
+    picks.forEach(function(p){ h+='<p style="margin:6px 0;"><b style="color:var(--navy);">'+p[0]+'</b><br><span class="small muted">'+p[1]+'</span></p>'; });
+    h+='<p class="small muted" style="margin-top:8px;">※ あくまで起点の目安です。最終的な選択は経営者の意思と専門家の精査で決めます。</p></div>';
+    $('recoBox').innerHTML=h;
+  }
+
+  /* ===== 株の移動設計 ===== */
+  var DEST=['後継者（親族）','後継者（役員・従業員）','会社（金庫株）','持株会社（HD）','従業員持株会','第三者（M&A）'];
+  var MEANS=['生前贈与（暦年）','生前贈与（精算課税）','譲渡（売買）','相続・遺贈','種類株式へ転換','自己株式取得'];
+  function destOpts(){return DEST.map(function(d){return '<option>'+d+'</option>';}).join('');}
+  function meansOpts(){return MEANS.map(function(m){return '<option>'+m+'</option>';}).join('');}
+  function taxHint(dest,means){
+    if(means==='生前贈与（暦年）') return '贈与税（暦年・基礎控除110万円）。相続前10年以内は遺留分算入。';
+    if(means==='生前贈与（精算課税）') return '相続時精算課税（累計2,500万円＋年110万円）。株価上昇前に有効。';
+    if(means==='譲渡（売買）') return '譲渡所得課税（株式20.315%目安）。買い手の資金が必要。遺留分の対象になりにくい。';
+    if(means==='相続・遺贈') return '相続税。納税資金と遺留分・遺言の整備が必須。';
+    if(means==='種類株式へ転換') return '議決権設計（無議決権・黄金株等）。定款変更・特別決議・登記が必要。';
+    if(means==='自己株式取得') return '金庫株。財源規制＋みなし配当課税（相続取得株3年以内は特例あり）。';
+    if(dest==='第三者（M&A）') return 'M&Aは株式譲渡課税。相手選び・条件は専門家／Batonzへ。';
+    return '専門家の確認が必要です。';
+  }
+  function addMoveRow(){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td><input type="text" class="mf" placeholder="例：経営者" oninput="moveHint(this)"></td>'
+      +'<td><select class="mdst" onchange="moveHint(this)">'+destOpts()+'</select></td>'
+      +'<td><select class="mm" onchange="moveHint(this)">'+meansOpts()+'</select></td>'
+      +'<td class="mh small muted"></td>'
+      +'<td><button class="xbtn" onclick="this.closest(\'tr\').remove()">削除</button></td>';
+    $('moveBody').appendChild(tr);
+    moveHint(tr.querySelector('.mm'));
+  }
+  function moveHint(el){
+    var tr=el.closest('tr');
+    var dest=tr.querySelector('select').value;
+    var means=tr.querySelectorAll('select')[1].value;
+    tr.querySelector('.mh').textContent=taxHint(dest,means);
+  }
+
+  /* ===== 遺留分シミュレーター ===== */
+  function calcIryubun(){
+    var S=parseFloat($('shareVal').value)||0;       // 自社株
+    var O=parseFloat($('otherVal').value)||0;        // その他財産
+    var base=S+O;                                    // 概算 基礎財産
+    var sp=$('spouse').value==='1';
+    var kids=parseInt($('children').value)||0;
+    var heirKids=Math.min(parseInt($('heirChildren').value)||0, kids);
+    var nonHeirKids=kids-heirKids;
+    if(base<=0){ $('iryubunOut').innerHTML=flag('warn','⚠️','自社株評価額・その他財産を「①現状把握」で入力してください。'); return; }
+    if(kids<=0 && !sp){ $('iryubunOut').innerHTML=flag('warn','⚠️','配偶者・子の構成では概算できません。子がいないケースは専門家計算が必要です。'); return; }
+
+    // 遺留分総枠＝1/2（配偶者・子のいる一般ケース）
+    var totalIryubun=base*0.5;
+    var spIryubun=0, perKid=0;
+    if(sp && kids>0){ spIryubun=totalIryubun*0.5; perKid=(totalIryubun*0.5)/kids; }
+    else if(sp && kids===0){ spIryubun=totalIryubun; }
+    else if(!sp && kids>0){ perKid=totalIryubun/kids; }
+
+    // 非後継相続人の遺留分合計（配偶者＋非後継の子）。後継者が自社株を集中して取得する前提
+    var nonHeirIryubun=spIryubun + perKid*nonHeirKids;
+    // 後継者が自社株Sを取得、その他財産Oを非後継者で分けると仮定 → 不足額
+    var shortfall=Math.max(0, nonHeirIryubun - O);
+
+    var fmt=function(n){return Math.round(n).toLocaleString()+'万円';};
+    var h='<div class="out">';
+    h+='<div class="row"><span>概算の基礎財産（自社株＋その他）</span><b class="big">'+fmt(base)+'</b></div>';
+    h+='<div class="row"><span>遺留分の総枠（原則1/2）</span><b class="big">'+fmt(totalIryubun)+'</b></div>';
+    if(sp) h+='<div class="row"><span>配偶者の遺留分</span><b class="big">'+fmt(spIryubun)+'</b></div>';
+    if(kids>0) h+='<div class="row"><span>子1人あたりの遺留分</span><b class="big">'+fmt(perKid)+'</b></div>';
+    h+='<div class="row"><span>非後継の相続人の遺留分 合計</span><b class="big">'+fmt(nonHeirIryubun)+'</b></div>';
+    h+='</div>';
+    if(shortfall>0){
+      h+=flag('bad','🚩','<b>不足額の目安 '+fmt(shortfall)+'</b>：自社株を後継者に集中させると、現預金等（'+fmt(O)+'）だけでは非後継相続人の遺留分を満たせません。<b>代償金・生命保険・除外合意</b>での手当てを専門家と設計しましょう。');
+    } else {
+      h+=flag('ok','✅','その他財産（'+fmt(O)+'）で非後継相続人の遺留分（'+fmt(nonHeirIryubun)+'）を概ねカバーできる見込みです。ただし評価確定・生前贈与の有無で変わります。');
+    }
+    $('iryubunOut').innerHTML=h;
+  }
+
+  /* ===== ティーアップ サマリー ===== */
+  function genSummary(){
+    var S=$('shareVal').value||'未入力', O=$('otherVal').value||'未入力';
+    var succ={'family':'親族内に後継者あり','employee':'役員・従業員に候補あり','none':'後継者不在・未定','':'未選択'}[$('successor').value];
+    var prof={'good':'黒字・安定','mid':'とんとん','bad':'赤字・債務重い','':'未選択'}[$('profit').value];
+    var wishes=getWishes().join('、')||'未選択';
+    var rows=$('capBody').querySelectorAll('tr');
+    var cap=[];
+    rows.forEach(function(tr){
+      var n=tr.querySelector('.cn').value; var r=tr.querySelector('.cr').value;
+      var p=tr.querySelector('.cp').value; var h=tr.querySelector('.ch').checked?'★後継者':'';
+      if(n||p) cap.push('  ・'+(n||'(無名)')+'（'+r+'）'+(p?p+'%':'')+' '+h);
+    });
+    var moves=[];
+    $('moveBody').querySelectorAll('tr').forEach(function(tr){
+      var f=tr.querySelector('.mf').value; var sels=tr.querySelectorAll('select');
+      if(f) moves.push('  ・'+f+' → '+sels[0].value+'（'+sels[1].value+'）');
+    });
+    var iry=$('iryubunOut').innerText.replace(/\n+/g,' / ').trim();
+
+    var t='【事業承継 引き継ぎサマリー（概算・一般情報）】\n';
+    t+='作成：TsuguAI 認定パートナー\n';
+    t+='───────────────\n';
+    t+='■ 会社・財産\n';
+    t+='  自社株評価額（概算）：'+S+'万円 ／ その他個人財産：'+O+'万円\n';
+    t+='  業績：'+prof+'\n';
+    t+='■ 後継者・希望\n';
+    t+='  後継者の状況：'+succ+'\n';
+    t+='  経営者が大切にしたいこと：'+wishes+'\n';
+    t+='■ 株主構成（現在地）\n'+(cap.length?cap.join('\n'):'  （未入力）')+'\n';
+    t+='  後継者の議決権：'+$('capHeir').textContent+' ／ 同族外分散：'+$('capMinor').textContent+'\n';
+    t+='■ 株の移動設計（案）\n'+(moves.length?moves.join('\n'):'  （未入力）')+'\n';
+    t+='■ 遺留分の概算\n  '+(iry||'（未計算）')+'\n';
+    t+='───────────────\n';
+    t+='■ 専門家への依頼ポイント（例）\n';
+    t+='  ・自社株評価の確定（類似業種比準／純資産）\n';
+    t+='  ・事業承継税制（特例措置）の可否と特例承継計画の提出（提出期限2027/9/30・適用2027/12/31）\n';
+    t+='  ・遺留分対策（除外合意／固定合意・代償金・生命保険）\n';
+    t+='  ・株の集中／議決権設計（種類株式・属人的株式）\n';
+    t+='  ・少数株主・分散株の集約方針\n';
+    t+='───────────────\n';
+    t+='※ 本サマリーは概算・一般情報です。遺留分・税額・株価の計算、会社法手続き、契約・登記は\n';
+    t+='  税理士・弁護士・司法書士等の有資格専門家にご確認ください。M&Aは運営・Batonzへ。\n';
+    $('summary').value=t;
+  }
+  function copySummary(){
+    var ta=$('summary'); if(!ta.value){ genSummary(); }
+    ta.select();
+    try{ document.execCommand('copy'); alert('サマリーをコピーしました。'); }
+    catch(e){ navigator.clipboard&&navigator.clipboard.writeText(ta.value).then(function(){alert('サマリーをコピーしました。');}); }
+  }
+
+  /* 初期表示 */
+  addCapRow('経営者','本人（経営者）',100,false);
+  addCapRow('後継者','子',0,true);
+  addMoveRow();
+</script>
+</body>
+</html>
