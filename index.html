@@ -45,7 +45,8 @@
   body.dark .sbtn{background:#1B2942;color:var(--muted);}
   html{font-size:calc(16px * var(--fs,1));}
   *{box-sizing:border-box;}
-  html,body{overflow-x:clip;}
+  /* 横スクロールの抑止は body 側のみ（html に overflow を付けると iOS で上部タップのスクロール復帰が無効化されるため） */
+  body{overflow-x:clip;}
   body{margin:0;font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:var(--bg);max-width:100vw;}
   .gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:auto;padding:24px;
     background:radial-gradient(900px 520px at 82% -8%,rgba(74,173,214,.20),transparent 60%),radial-gradient(820px 480px at -5% 110%,rgba(200,150,32,.16),transparent 55%),#0F2035;}
@@ -136,14 +137,27 @@
   .rep-card .v{font-size:20px;font-weight:700;color:#1C3557;margin-top:2px;}
   .rep-li{font-size:12.5px;color:#131E2E;padding:6px 0;border-top:1px solid #EAF0F7;line-height:1.6;}
   @media print{
+    @page{ size:A4; margin:10mm; }
     body *{visibility:hidden;}
     #rep-modal:not(.hidden), #rep-modal:not(.hidden) *, #bp-modal:not(.hidden), #bp-modal:not(.hidden) *{visibility:visible;}
     #rep-modal:not(.hidden), #bp-modal:not(.hidden){position:absolute;inset:0;background:#fff;padding:0;display:block;overflow:visible;}
     #rep-modal .modal, #bp-modal .modal{box-shadow:none;border-radius:0;max-width:none;width:100%;margin:0;animation:none;}
     .rep-bar{display:none!important;}
-    #rep-body, #bp-body{padding:0;}
+    #rep-body, #bp-body{padding:0!important;}
+    /* --- 印刷の最適化：枚数を減らすためコンパクトに --- */
+    #rep-body, #bp-body{font-size:10.5px!important;line-height:1.45!important;}
+    #rep-body .rep-sec, #bp-body .rep-sec{margin-bottom:7px!important;break-inside:avoid;}
+    #rep-body .rep-h, #bp-body .rep-h{font-size:12px!important;margin:6px 0 4px!important;}
+    #rep-body .rep-li, #bp-body .rep-li{margin:2px 0!important;padding:2px 0!important;line-height:1.4!important;}
+    #rep-body .rep-card{padding:6px 10px!important;}
+    #rep-body .rep-card .v{font-size:16px!important;}
+    #rep-body .rep-meta{font-size:10px!important;line-height:1.4!important;}
+    #rep-body table.ft{font-size:9.5px!important;}
+    #rep-body table.ft th, #rep-body table.ft td{padding:3px 4px!important;}
     .rep-card{break-inside:avoid;}
     .rep-sec{break-inside:avoid;}
+    /* 背景色を薄くしてインク節約・にじみ防止 */
+    #rep-body *, #bp-body *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   }
   .switch{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
   .sbtn{padding:8px 16px;border:1.5px solid var(--line);background:#fff;border-radius:9px;font-size:13px;font-family:inherit;cursor:pointer;color:var(--muted);}
@@ -343,7 +357,8 @@
       <span class="mt">月次レポート</span>
       <input type="month" id="rep-month" class="inp2" onchange="renderReport()" style="width:auto;">
       <span style="flex:1;"></span>
-      <button class="btn2" onclick="window.print()">印刷 / PDFで保存</button>
+      <button class="btn2" onclick="repPrint(false)" title="プリンタで印刷します">🖨 印刷</button>
+      <button class="btn2" onclick="repPrint(true)" title="印刷ダイアログで送信先を「PDFで保存」に選ぶとPDFになります" style="background:#fff;color:#2C6EBD;border:1.5px solid #2C6EBD;">📄 PDFで保存</button>
       <button class="modal-close" onclick="closeReport()" aria-label="閉じる">×</button>
     </div>
     <div id="rep-body" class="modal-body">読み込み中...</div>
@@ -356,7 +371,8 @@
     <div class="rep-bar modal-head">
       <span class="mt">事業計画書（ドラフト）</span>
       <span style="flex:1;"></span>
-      <button class="btn2" onclick="window.print()">印刷 / PDFで保存</button>
+      <button class="btn2" onclick="repPrint(false)" title="プリンタで印刷します">🖨 印刷</button>
+      <button class="btn2" onclick="repPrint(true)" title="印刷ダイアログで送信先を「PDFで保存」に選ぶとPDFになります" style="background:#fff;color:#2C6EBD;border:1.5px solid #2C6EBD;">📄 PDFで保存</button>
       <button class="modal-close" onclick="closeBizplan()" aria-label="閉じる">×</button>
     </div>
     <div id="bp-body" class="modal-body">読み込み中...</div>
@@ -4271,6 +4287,18 @@
     var mi=$('rep-month'); if(mi && !mi.value) mi.value=new Date().toISOString().slice(0,7);
     var m=$('rep-modal'); if(m){ m.classList.remove('hidden'); document.body.style.overflow='hidden'; }
     renderReport();
+  }
+  // 印刷／PDF保存の共通処理（PDFのときは操作を案内）
+  function repPrint(pdf){
+    if(pdf){
+      var t=document.createElement('div');
+      t.textContent='印刷ダイアログで送信先（プリンタ）を「PDFで保存」に選んでください';
+      t.style.cssText='position:fixed;left:50%;top:16px;transform:translateX(-50%);background:#1C3557;color:#fff;font-size:12.5px;padding:10px 16px;border-radius:10px;z-index:99999;box-shadow:0 6px 20px rgba(0,0,0,.28);max-width:90vw;text-align:center;';
+      document.body.appendChild(t); setTimeout(function(){ t.remove(); },3500);
+      setTimeout(function(){ window.print(); }, 350);
+    } else {
+      window.print();
+    }
   }
   function closeReport(){ var m=$('rep-modal'); if(m){ m.classList.add('hidden'); document.body.style.overflow=''; } }
   function repDiagTop(txt){
