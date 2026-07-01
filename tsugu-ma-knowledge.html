@@ -25,6 +25,10 @@
   .hero{background:linear-gradient(150deg,var(--navy),#16466f 60%,var(--sky));color:#fff;padding:54px 0 46px;}
   .hero-in{max-width:880px;margin:0 auto;padding:0 20px;}
   .brand{display:flex;align-items:center;gap:11px;margin-bottom:30px;}
+  .hero-back{margin-left:auto;font-size:12px;font-weight:600;color:#fff;text-decoration:none;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.32);border-radius:9px;padding:8px 13px;white-space:nowrap;}
+  .hero-back:hover{background:rgba(255,255,255,.24);}
+  .fixed-back{display:none;position:fixed;top:10px;left:12px;z-index:1000;background:#fff;border:1px solid var(--line);border-radius:10px;font-size:12px;font-weight:600;color:var(--navy);text-decoration:none;padding:9px 13px;box-shadow:0 4px 14px rgba(28,53,87,.22);}
+  @media(max-width:640px){ .fixed-back{display:inline-flex;align-items:center;} .hero-back{display:none;} }
   .logo{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:18px;}
   .brand .nm{font-family:'DM Sans',sans-serif;font-size:21px;font-weight:500;letter-spacing:.3px;}
   .eyebrow{font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--sky);text-transform:uppercase;margin-bottom:14px;}
@@ -119,7 +123,7 @@
 
 <div class="hero">
   <div class="hero-in">
-    <div class="brand"><span class="logo">継</span><span class="nm">TsuguAI</span></div>
+    <div class="brand"><span class="logo">継</span><span class="nm">TsuguAI</span><a class="hero-back" href="./index.html" onclick="backToPortal();return false;">← パートナーポータルへ戻る</a></div>
     <div class="eyebrow">認定パートナー向けナレッジ</div>
     <h1>M&Aは「紹介」で関わる。<br>だからこそ、業界の難しさとティーアップを知る。</h1>
     <p>認定パートナーはM&A仲介を行いません。経営者の想いを受け止め、適切なタイミングで専門家（運営・Batonz）へ橋渡しするのが役割です。本資料は、未経験からでも自信を持って「紹介」できるよう、いまのM&A業界の実情と、紹介の質を決める「ティーアップ」の型をまとめたものです。</p>
@@ -325,5 +329,12 @@
   </footer>
 
 </div>
+<a class="fixed-back" href="./index.html" onclick="backToPortal();return false;">← ポータルへ戻る</a>
+<script>
+  function backToPortal(){
+    try{ window.close(); }catch(e){}
+    setTimeout(function(){ location.href='./index.html'; }, 150);
+  }
+</script>
 </body>
 </html>
