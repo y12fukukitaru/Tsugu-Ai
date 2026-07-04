@@ -1041,7 +1041,13 @@
     var diagCount={};
     try{ var pr=await sb.from('ai_proposals').select('author_id').limit(5000);
       if(!pr.error){ (pr.data||[]).forEach(function(p){ diagCount[p.author_id]=(diagCount[p.author_id]||0)+1; }); } }catch(e){}
-    ADM_CACHE={fdes:fdes,custs:custs,nameOf:nameOf,clientCount:clientCount,kn:kn,scoreOf:scoreOf,lastMsg:lastMsg,lastActBy:lastActBy,diagCount:diagCount};
+    // 認定研修の読了状況（Phase52：テーブル未作成の場合はヒントを表示）
+    var trainingOf={}, trainingErr=null;
+    try{ var tr=await sb.from('training_progress').select('user_id,lesson_id,done_at').limit(10000);
+      if(tr.error){ trainingErr=tr.error.message; }
+      else{ (tr.data||[]).forEach(function(t){ var o=trainingOf[t.user_id]=trainingOf[t.user_id]||{n:0,last:null}; o.n++; if(!o.last||t.done_at>o.last) o.last=t.done_at; }); }
+    }catch(e){ trainingErr=String((e&&e.message)||e); }
+    ADM_CACHE={fdes:fdes,custs:custs,nameOf:nameOf,clientCount:clientCount,kn:kn,scoreOf:scoreOf,lastMsg:lastMsg,lastActBy:lastActBy,diagCount:diagCount,trainingOf:trainingOf,trainingErr:trainingErr};
     var unassigned=custs.filter(function(c){ return !c.consultant_id; }).length;
     var sum=$('adm-sum');
     if(sum){
@@ -1136,10 +1142,17 @@
     if(!rows.length){ fb.innerHTML='<div style="font-size:12px;color:#8AA0BE;">該当するパートナーがありません。</div>'; return; }
     rows.sort(function(a,b){ return (ADM_CACHE.clientCount[b.id]||0)-(ADM_CACHE.clientCount[a.id]||0); });
     var h='';
+    if(ADM_CACHE.trainingErr){
+      h+='<div style="font-size:11px;color:#8A6A12;background:#FAF3E2;border:1px solid #F0E2C0;border-radius:9px;padding:8px 11px;margin-bottom:8px;line-height:1.6;">※ 認定研修の読了状況を表示するには、Supabaseで「Phase52」のSQL（training_progressテーブル作成）を実行してください。</div>';
+    }
+    var trTotal=(typeof TRAINING_BASIC!=='undefined')?TRAINING_BASIC.length:5;
     rows.forEach(function(u){
       var rankOpts=FDE_RANKS.map(function(rk){ return '<option'+(u.fde_rank===rk?' selected':'')+'>'+rk+'</option>'; }).join('');
       var nc=ADM_CACHE.clientCount[u.id]||0;
       var dc=(ADM_CACHE.diagCount||{})[u.id]||0;
+      var tp=(ADM_CACHE.trainingOf||{})[u.id];
+      var tn=tp?tp.n:0;
+      var trTag=ADM_CACHE.trainingErr?'':('<span class="tag '+(tn>=trTotal?'green':(tn>0?'gold':'gray'))+'" title="'+(tp&&tp.last?('最終読了 '+esc(String(tp.last).slice(0,10))):'未受講')+'">研修 '+tn+'／'+trTotal+(tn>=trTotal?' ✓':'')+'</span>');
       var lastAct=daysSince((ADM_CACHE.lastActBy||{})[u.id]);
       var lastTag=lastAct>=9999?'<span class="tag gray">接触記録なし</span>':'<span class="tag '+(lastAct>14?'gold':'green')+'">最終接触 '+Math.round(lastAct)+'日前</span>';
       var stalled=(ADM_CACHE.custs||[]).filter(function(c){ return c.consultant_id===u.id && daysSince((ADM_CACHE.lastMsg||{})[c.id])>=30; }).length;
@@ -1147,6 +1160,7 @@
       h+='<div class="clcard" style="cursor:default;">'
         +'<div class="cl-top"><span class="cl-nm">'+esc(u.contact_name||u.company_name||u.email)+'</span>'
         +(u.fde_rank?'<span class="tag blue">'+esc(u.fde_rank)+'</span>':'<span class="tag gray">ランク未設定</span>')
+        +trTag
         +'<span class="tag '+(nc?'green':'gray')+'">担当 '+nc+'社</span>'
         +lastTag
         +'<span class="tag blue">診断 '+dc+'件</span>'
@@ -1703,7 +1717,7 @@
     tagCats(eff);
     showCat(navGroups(eff)[0][0], eff);
     if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); if(window.__role==='admin') loadAdmPreviewCustomers(); }
-    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderTraining(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); }
+    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderTraining(); loadTrainingProgress(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); }
     else { loadAdmin(); loadMarketBroker(); }
     startNotifPolling(eff);
     navSpyInit();
@@ -3220,7 +3234,11 @@
       +'</div>';
     });
     h+='</div>';
-    h+='<div style="font-size:11px;color:#8AA0BE;margin-top:8px;line-height:1.6;">運営が提供する認定パートナー向け研修です。経営者ポータルには表示されません。読了状況はこの端末・ログイン中の方ごとに保存されます。</div>';
+    h+='<div style="font-size:11px;color:#8AA0BE;margin-top:8px;line-height:1.6;">運営が提供する認定パートナー向け研修です。経営者ポータルには表示されません。'
+      +(TRAINING_DB_OK===false
+        ?'読了状況は現在この端末にのみ保存されています。'
+        :'読了状況は保存され、運営も確認できます（認定管理のため）。')
+      +'</div>';
     box.innerHTML=h;
   }
   function openTraining(id){
@@ -3243,9 +3261,29 @@
     var m=$('training-modal'); if(m){ m.classList.remove('hidden'); document.body.style.overflow='hidden'; }
   }
   function closeTraining(){ var m=$('training-modal'); if(m){ m.classList.add('hidden'); document.body.style.overflow=''; } }
-  function markTrainingDone(id){
+  async function markTrainingDone(id){
     var p=loadPrefs(); p.trainingDone=p.trainingDone||{}; p.trainingDone[id]=new Date().toISOString();
     savePrefs(p); renderTraining(); openTraining(id);
+    // Supabaseにも保存（テーブル未作成でもローカル保存で動作継続）
+    try{ if(ME) await sb.from('training_progress').upsert({ user_id:ME, lesson_id:id }); }catch(e){}
+  }
+  // Supabaseから読了記録を取得し、ローカル保存分（過去のブラウザ保存）もDBへ移行する
+  var TRAINING_DB_OK=null;
+  async function loadTrainingProgress(){
+    if(!ME) return;
+    try{
+      var res=await sb.from('training_progress').select('lesson_id,done_at').eq('user_id',ME);
+      if(res.error){ TRAINING_DB_OK=false; renderTraining(); return; }
+      TRAINING_DB_OK=true;
+      var p=loadPrefs(); p.trainingDone=p.trainingDone||{};
+      var db={}; (res.data||[]).forEach(function(r){ db[r.lesson_id]=r.done_at; });
+      Object.keys(db).forEach(function(k){ if(!p.trainingDone[k]) p.trainingDone[k]=db[k]; });
+      var missing=Object.keys(p.trainingDone).filter(function(k){ return !db[k] && TRAINING_BASIC.some(function(t){ return t.id===k; }); });
+      if(missing.length){
+        try{ await sb.from('training_progress').upsert(missing.map(function(k){ return { user_id:ME, lesson_id:k, done_at:p.trainingDone[k] }; })); }catch(e){}
+      }
+      savePrefs(p); renderTraining();
+    }catch(e){ TRAINING_DB_OK=false; renderTraining(); }
   }
   // ===== 公式ナレッジ（運営提供）一覧 =====
   // ★今後の追加はこの配列に1項目足すだけ。file は同梱HTMLのファイル名。
