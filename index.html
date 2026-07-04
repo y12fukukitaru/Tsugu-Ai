@@ -463,6 +463,17 @@
   </div>
 </div>
 
+<div id="training-modal" class="modal-back hidden" onclick="if(event.target===this)closeTraining()">
+  <div class="modal rep-sheet" style="max-width:680px;">
+    <div class="rep-bar modal-head">
+      <span class="mt" id="training-title">🎓 認定研修</span>
+      <span style="flex:1;"></span>
+      <button class="modal-close" onclick="closeTraining()" aria-label="閉じる">×</button>
+    </div>
+    <div id="training-body" class="modal-body"></div>
+  </div>
+</div>
+
 <script>
   const SUPABASE_URL = 'https://yaururnkxjhtiowkpvyu.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_-k-OPNThdG0uElX0h36eug_oGaCNlL4';
@@ -1625,6 +1636,7 @@
             +'<button class="btn2" style="padding:7px 14px;font-size:12px;" onclick="toggleKnForm()">＋ 投稿する</button>'
             +'</span></div>'
           +'<div style="font-size:11.5px;color:#8AA0BE;margin-bottom:8px;">パートナー全員の成功事例・Q&A・テンプレート集です。投稿はSenior以上または運営の承認後に公開され、投稿数・参照数はランク評価に反映されます。</div>'
+          +'<div id="cert-training" style="border:1px solid #E8DCC0;background:#FDFAF2;border-radius:11px;padding:13px 15px;margin:6px 0 10px;"></div>'
           +'<div id="official-kn" style="border:1px solid #C4DBF3;background:#F6FAFF;border-radius:11px;padding:13px 15px;margin:6px 0 14px;"></div>'
           +'<div id="kn-form" class="hidden" style="border:1px dashed #C9D6EA;border-radius:11px;padding:12px 14px;margin:8px 0;background:#FBFCFE;">'
             +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
@@ -1691,7 +1703,7 @@
     tagCats(eff);
     showCat(navGroups(eff)[0][0], eff);
     if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); if(window.__role==='admin') loadAdmPreviewCustomers(); }
-    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); }
+    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderTraining(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); }
     else { loadAdmin(); loadMarketBroker(); }
     startNotifPolling(eff);
     navSpyInit();
@@ -3131,6 +3143,109 @@
             :'<br><span style="font-size:11px;color:#8A6A12;">※ まだ未登録です。パートナーポータルの顧客カルテで保存してください。保存時にエラーが出る場合は、Supabaseで「Phase51」のSQLを実行してください。</span>')
         +'</div>';
     }catch(e){ out.innerHTML='<span style="color:#A83030;">エラー：'+esc(String((e&&e.message)||e))+'</span>'; }
+  }
+  // ===== 認定研修（運営提供）=====
+  // ★研修の追加はこの配列に1項目足すだけ。body はHTML文字列（.lg-h/.lg-p を使うと体裁が揃います）。
+  var TRAINING_BASIC = [
+    { id:'tr-purpose', no:'第1章', title:'Tsugu Ai -継- は何のためにあるのか', min:5, body:function(){ return ''
+      +'<div class="lg-p">日本の中小企業のおよそ半数で後継者が決まっていないと言われ、黒字のまま廃業する会社も少なくありません。会社が消えるとき、失われるのは売上だけではありません。<b>雇用、技術、取引先との信頼、そして地域の風景</b>が一緒に失われます。</div>'
+      +'<div class="lg-h">Tsuguの答え：AIと人の伴走</div>'
+      +'<div class="lg-p">Tsugu Ai -継- は、この課題に「AIの力」と「人（認定パートナー）の伴走」の両方で向き合うプラットフォームです。売り手と買い手を引き合わせるだけの「マッチングの場」ではなく、経営者と長く並走し、会社を<b>継げる状態に磨き上げていく場</b>です。</div>'
+      +'<div class="lg-h">支援の流れは5ステップ</div>'
+      +'<div class="lg-p">① <b>現状把握</b>（財務・資金繰りの見える化）→ ② <b>AI・自動化</b>（業務の効率化）→ ③ <b>コスト削減</b>（固定費・税の最適化）→ ④ <b>余力づくり</b>（利益とキャッシュの改善）→ ⑤ <b>次の投資・承継</b>（M&A・事業承継）。ポータルのあらゆる機能は、この流れのどこかを担っています。迷ったら「いま顧客はどのステップにいるか」に立ち返ってください。</div>'
+      +'<div class="lg-h">経営者に入力させない、という設計思想</div>'
+      +'<div class="lg-p">経営者は多忙です。だからTsuguでは、経営者は「メッセージで伝えるだけ」。数値の入力・試算・レポート作成はパートナーとAIが代行します。<b>経営者ダッシュボードは「確認する場所」、パートナーポータルは「動かす場所」</b>——この役割分担を常に意識してください。</div>'; } },
+    { id:'tr-mission', no:'第2章', title:'私たちの理念と目指す目標', min:4, body:function(){ return ''
+      +'<div class="lg-h">理念：AIと人で、会社の未来を継ぐ</div>'
+      +'<div class="lg-p">「継（つぐ）」には、事業承継の「継ぐ」だけでなく、<b>想いを継ぐ・技術を継ぐ・雇用を継ぐ</b>という意味を込めています。私たちは、1社でも多くの会社の「終わり」を「次のはじまり」に変えることを使命としています。</div>'
+      +'<div class="lg-h">大切にする4つの価値観</div>'
+      +'<div class="lg-p">1. <b>誠実であること</b>——手数料や成約のためではなく、経営者の利益のために提案する。<br>2. <b>隣に立つこと</b>——評論家ではなく伴走者。数字の裏にある経営者の想いに耳を傾ける。<br>3. <b>数字で語ること</b>——感覚ではなく、資金繰り・財務データに基づいて判断を支える。<br>4. <b>つなぐこと</b>——自分で抱え込まず、税理士・弁護士・金融機関など最適な専門家へ橋を架ける。</div>'
+      +'<div class="lg-h">目指す目標</div>'
+      +'<div class="lg-p">全国に認定パートナーのネットワークを広げ、どの地域の経営者も「近くに相談できる人がいる」状態をつくること。そして資金繰り改善からM&A・承継までを一つの場所で完結できる、<b>中小企業の経営インフラ</b>になることです。皆さん一人ひとりが、その最前線です。</div>'; } },
+    { id:'tr-role', no:'第3章', title:'認定パートナーの社会的な役割', min:5, body:function(){ return ''
+      +'<div class="lg-h">経営者の「最初の相談相手」になる</div>'
+      +'<div class="lg-p">多くの経営者には、資金繰りや承継の悩みを気軽に話せる相手がいません。顧問税理士には言いにくい、金融機関には弱みを見せられない——そんな孤独の受け皿になるのが認定パートナーです。医療でいえば<b>「かかりつけ医」</b>。まず話を聴き、全体を診て、必要な専門家(専門医)につなぐ役割です。</div>'
+      +'<div class="lg-h">「診る人」であって「治療を独占する人」ではない</div>'
+      +'<div class="lg-p">個別の税務判断は税理士、法律事務は弁護士、融資の実行は金融機関の領域です。パートナーの価値は、これらを自分でやることではなく、<b>経営者の状況を整理し、最適なタイミングで最適な専門家へ橋渡しすること</b>にあります。これは法令順守（第5章）であると同時に、経営者を守る最善の方法です。</div>'
+      +'<div class="lg-h">継続して伴走する</div>'
+      +'<div class="lg-p">単発の提案で終わらせず、月次レポート・経営課題PDCA・メッセージを通じて毎月関わり続けます。承継やM&Aは何年もかかる旅です。<b>「あの人がずっと見てくれている」という安心感そのものが、パートナーが社会に提供する価値</b>です。</div>'
+      +'<div class="lg-h">地域経済の担い手として</div>'
+      +'<div class="lg-p">1社の廃業を防ぐことは、そこで働く人の雇用と、取引先の売上と、地域の税収を守ることです。認定パートナーの仕事は営業活動であると同時に、<b>地域の経済と暮らしを次の世代へ継ぐ社会的な活動</b>である——この誇りを持って顧客の前に立ってください。</div>'; } },
+    { id:'tr-howto', no:'第4章', title:'ポータルの基本的な使い方', min:7, body:function(){ return ''
+      +'<div class="lg-h">画面は4つのカテゴリーでできています</div>'
+      +'<div class="lg-p">左のメニュー（スマホは右上の三本線）から切り替えます。<br>🏠 <b>ホーム</b>——ログインしたらまずここ。「今日やること」に返信漏れ・期日・接点切れが優先順で並びます。<br>👥 <b>日々の顧客対応</b>——顧客管理・課題PDCA・月次レポート承認。毎日の仕事の中心です。<br>📁 <b>案件・提案</b>——M&A案件、Tsugu投資・融資・M&A、相続・贈与シミュレーター。<br>📚 <b>学び・AIサポート</b>——このナレッジと、24時間相談できるAI秘書。</div>'
+      +'<div class="lg-h">仕事の基本サイクル</div>'
+      +'<div class="lg-p">① <b>顧客を追加</b>：「顧客管理」→「＋顧客を追加」で、登録済みメールアドレスを入力して担当に紐づけます。<br>② <b>カルテを開く</b>：顧客名をタップすると、その顧客専用のカルテ（会社情報・メッセージ・財務・AIツール・共有）が開きます。<br>③ <b>月次の数値を入力</b>：顧客からメッセージで届いた売上・支出をカルテの「月次財務メモ」に代行入力します。試算表の画像・PDFはAI読み取りが使えます。<br>④ <b>資金繰り診断を実行</b>：結果は顧客ダッシュボードの「資金繰りステータス」に自動反映されます。<br>⑤ <b>月次レポートを承認</b>：毎月1日にAIが下書きを自動生成します。内容を確認・編集して「承認して公開」を押すと顧客に届きます。<br>⑥ <b>メッセージで対話</b>：提案・確認・雑談まで、顧客との接点はメッセージが基本です。</div>'
+      +'<div class="lg-h">AIを味方につける</div>'
+      +'<div class="lg-p">カルテ内の<b>AI自動化診断・融資ナビ・事業計画書ドラフト・議事録整形</b>、そして「学び・AIサポート」の<b>AI秘書</b>が使えます。AIの出力は必ず自分の目で確認してから顧客に届けてください（誤りを含むことがあります）。</div>'
+      +'<div class="lg-h">困ったときは</div>'
+      +'<div class="lg-p">操作で迷ったらAI秘書に聞くか、運営へお問い合わせください。他のパートナーの成功事例はこの下の「ナレッジベース」に集まっています。</div>'; } },
+    { id:'tr-rules', no:'第5章', title:'ルールと行動規範', min:6, body:function(){ return ''
+      +'<div class="lg-p">認定パートナーとして活動するうえで、必ず守っていただくルールです。<b>顧客を守るためのルールは、同時にパートナー自身を守るルール</b>でもあります。</div>'
+      +'<div class="lg-h">1. 対応スピード</div>'
+      +'<div class="lg-p">顧客からのメッセージには<b>2〜3営業日以内</b>の返信を徹底してください（顧客画面にもこの目安が表示されています）。「今日やること」の返信漏れアラートを毎日確認する習慣をつけましょう。</div>'
+      +'<div class="lg-h">2. 専門家の独占業務を行わない</div>'
+      +'<div class="lg-p">・個別具体的な<b>税務相談・税務書類の作成</b>は行わない（税理士法）→ 税理士へつなぐ。<br>・遺留分・契約・紛争など<b>法律事務</b>は行わない（弁護士法）→ 弁護士へつなぐ。<br>・保険の募集・勧誘は、<b>自身の募集資格と所属ルールの範囲内</b>でのみ行う。<br>・融資・出資の<b>実行やあっせんは行わない</b>。Tsugu投資・融資・M&Aは引き合わせの場に徹する。<br>各試算画面の注意文言と「ご利用上の注意・免責事項」（メニュー下部）を必ず一読してください。</div>'
+      +'<div class="lg-h">3. 秘密保持・個人情報</div>'
+      +'<div class="lg-p">顧客の財務データ・相談内容は業務目的以外で利用せず、第三者に開示しないでください。データはポータル（カルテ）内で管理し、<b>スクリーンショットやファイルの外部持ち出しは禁止</b>です。M&A・マッチング案件では相手方への情報開示範囲を必ず顧客と合意してから進めます。</div>'
+      +'<div class="lg-h">4. 誠実な提案</div>'
+      +'<div class="lg-p">報酬や成約を目的とした、顧客の利益に反する提案は行わないでください。提案には根拠（数字・比較・リスク）を添え、メリットだけでなく<b>デメリットも必ず説明</b>します。M&Aは中小M&Aガイドラインの趣旨に沿い、「紹介」に徹します。</div>'
+      +'<div class="lg-h">5. 記録と透明性</div>'
+      +'<div class="lg-p">ポータル上の提案・共有・試算などの操作は監査ログに記録され、運営が確認できます。これは疑うためではなく、<b>トラブル時にパートナーの誠実な仕事を証明するため</b>の仕組みです。重要なやり取りは口頭で済ませず、メッセージ・カルテに残してください。</div>'
+      +'<div class="lg-h">6. ナレッジ投稿のルール</div>'
+      +'<div class="lg-p">事例を投稿する際は、<b>顧客が特定できる情報（社名・地名・固有の数値の組み合わせ）を必ず伏せて</b>ください。投稿は承認後に公開されます。</div>'
+      +'<div class="lg-h">7. 違反があったとき</div>'
+      +'<div class="lg-p">ルール違反が確認された場合、運営から是正のご連絡を行い、重大な場合や繰り返される場合は認定の停止・取消となることがあります。判断に迷う場面では、実行する前に運営へ相談してください。<b>「迷ったら、止まって聞く」</b>が合言葉です。</div>'; } }
+  ];
+  function trainingDone(){ var p=loadPrefs(); return p.trainingDone||{}; }
+  function renderTraining(){
+    var box=$('cert-training'); if(!box) return;
+    if(!TRAINING_BASIC.length){ box.style.display='none'; return; }
+    box.style.display='';
+    var done=trainingDone();
+    var n=TRAINING_BASIC.filter(function(t){ return done[t.id]; }).length;
+    var h='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:#1C3557;">🎓 認定研修：基礎編（はじめにお読みください）</div>'
+      +'<span class="tag gold" style="font-size:10px;">必修</span>'
+      +'<span style="margin-left:auto;font-size:11px;font-weight:700;color:'+(n===TRAINING_BASIC.length?'#1E6B45':'#9A7314')+';">'+n+'／'+TRAINING_BASIC.length+' 読了</span></div>'
+      +'<div style="height:5px;border-radius:99px;background:#EFE7D2;overflow:hidden;margin-bottom:10px;"><div style="height:100%;width:'+Math.round(n/TRAINING_BASIC.length*100)+'%;background:#C89620;border-radius:99px;"></div></div>'
+      +'<div style="display:flex;flex-direction:column;gap:7px;">';
+    TRAINING_BASIC.forEach(function(t){
+      var ok=!!done[t.id];
+      h+='<div onclick="openTraining(\''+t.id+'\')" style="display:flex;align-items:center;gap:10px;border:1px solid '+(ok?'#CFE3D6':'#EDE3C8')+';border-radius:9px;padding:9px 11px;background:#fff;cursor:pointer;">'
+        +'<span style="font-size:15px;flex-shrink:0;">'+(ok?'✅':'📖')+'</span>'
+        +'<div style="flex:1;min-width:0;"><div style="font-size:12.5px;font-weight:700;color:#1C3557;">'+esc(t.no)+'　'+esc(t.title)+'</div>'
+        +'<div style="font-size:10.5px;color:#8AA0BE;margin-top:1px;">目安 '+t.min+'分'+(ok?'　✓ 読了済み':'')+'</div></div>'
+        +'<span class="ghost" style="font-size:11px;white-space:nowrap;">'+(ok?'もう一度読む':'読む →')+'</span>'
+      +'</div>';
+    });
+    h+='</div>';
+    h+='<div style="font-size:11px;color:#8AA0BE;margin-top:8px;line-height:1.6;">運営が提供する認定パートナー向け研修です。経営者ポータルには表示されません。読了状況はこの端末・ログイン中の方ごとに保存されます。</div>';
+    box.innerHTML=h;
+  }
+  function openTraining(id){
+    var t=null; TRAINING_BASIC.forEach(function(x){ if(x.id===id) t=x; });
+    if(!t) return;
+    var tt=$('training-title'); if(tt) tt.textContent='🎓 '+t.no+'　'+t.title;
+    var done=!!trainingDone()[id];
+    var body=$('training-body');
+    if(body){
+      body.innerHTML=t.body()
+        +'<div style="display:flex;gap:8px;align-items:center;margin-top:18px;flex-wrap:wrap;border-top:1px solid var(--softline);padding-top:14px;">'
+        +(done
+          ?'<span style="font-size:12.5px;font-weight:700;color:#1E6B45;">✅ この章は読了済みです</span>'
+          :'<button class="btn2" onclick="markTrainingDone(\''+id+'\')">読了にする ✓</button>')
+        +'<span style="flex:1;"></span>'
+        +'<button class="ghost" style="border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:12px;" onclick="closeTraining()">閉じる</button>'
+        +'</div>';
+      body.scrollTop=0;
+    }
+    var m=$('training-modal'); if(m){ m.classList.remove('hidden'); document.body.style.overflow='hidden'; }
+  }
+  function closeTraining(){ var m=$('training-modal'); if(m){ m.classList.add('hidden'); document.body.style.overflow=''; } }
+  function markTrainingDone(id){
+    var p=loadPrefs(); p.trainingDone=p.trainingDone||{}; p.trainingDone[id]=new Date().toISOString();
+    savePrefs(p); renderTraining(); openTraining(id);
   }
   // ===== 公式ナレッジ（運営提供）一覧 =====
   // ★今後の追加はこの配列に1項目足すだけ。file は同梱HTMLのファイル名。
