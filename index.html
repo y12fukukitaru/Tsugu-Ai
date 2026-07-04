@@ -199,6 +199,14 @@
   .ch-chip{border:1px solid var(--line);background:var(--soft);color:var(--muted);font-size:11.5px;padding:5px 11px;border-radius:99px;cursor:pointer;font-family:inherit;}
   .ch-chip:hover{border-color:var(--blue);color:var(--blue);background:var(--card);}
   .catchip{font-size:11px;font-weight:600;color:var(--blue);background:rgba(44,110,189,.09);padding:4px 11px;border-radius:99px;flex-shrink:0;}
+  .lnote{font-size:11px;color:#9A7314;background:#FAF3E2;border:1px solid #F0E2C0;border-radius:9px;padding:9px 12px;margin:10px 0 4px;line-height:1.7;}
+  body.dark .lnote{background:#2E2712;border-color:#4A3E1A;color:#E0B23E;}
+  .lnote-lk{color:#2C6EBD;cursor:pointer;text-decoration:underline;white-space:nowrap;}
+  body.dark .lnote-lk{color:#5FA0E0;}
+  .sb-legal{display:block;font-size:10.5px;color:rgba(255,255,255,.55);cursor:pointer;margin-bottom:8px;text-decoration:underline;}
+  .sb-legal:hover{color:rgba(255,255,255,.85);}
+  .lg-h{font-size:13px;font-weight:700;color:var(--navy);margin:16px 0 6px;}
+  .lg-p{font-size:12px;color:var(--muted);line-height:1.8;}
   .ni{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;font-size:13px;color:rgba(255,255,255,.8);cursor:pointer;margin-bottom:2px;position:relative;}
   .ni:hover{background:rgba(255,255,255,.06);color:#fff;}
   .ni.active{background:var(--blue);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 rgba(255,255,255,.85);}
@@ -329,7 +337,7 @@
       <div id="msg-recovery" class="msg"></div>
     </div>
 
-    <div class="note">通信は暗号化されています。パスワードは大文字・小文字・数字を含む8文字以上で設定してください。ログインでお困りの場合は、担当パートナーまたは運営までご連絡ください。</div>
+    <div class="note">通信は暗号化されています。パスワードは大文字・小文字・数字を含む8文字以上で設定してください。ログインでお困りの場合は、担当パートナーまたは運営までご連絡ください。<br>ご利用にあたっては<span class="lnote-lk" onclick="openLegal()">ご利用上の注意・免責事項</span>をご確認ください。</div>
   </div>
 </div>
 
@@ -342,7 +350,7 @@
     </div>
     <div class="sb-co"><div id="sb-co-nm" class="co-nm">—</div><span id="app-role" class="plan-pill"></span></div>
     <nav id="app-nav" class="sb-nav"></nav>
-    <div class="sb-foot"><span id="app-email" class="sb-email"></span><button class="sb-out" onclick="openSettings()" style="margin-bottom:6px;">⚙️ 設定</button><button class="sb-out" onclick="signOut()">ログアウト</button></div>
+    <div class="sb-foot"><span id="app-email" class="sb-email"></span><span class="sb-legal" onclick="openLegal()">ご利用上の注意・免責事項</span><button class="sb-out" onclick="openSettings()" style="margin-bottom:6px;">⚙️ 設定</button><button class="sb-out" onclick="signOut()">ログアウト</button></div>
   </aside>
   <main class="main2">
     <div class="topbar2"><div id="app-greet" class="greet">ダッシュボード</div><span id="app-cat" class="catchip hidden"></span><div id="app-date" class="datechip"></div><button id="bell" class="bellbtn hidden" onclick="bellGo()" title="通知（要対応）" aria-label="通知（要対応）">🔔<span id="bell-n" class="nbadge hidden">0</span></button><button id="hbg" class="hbg" onclick="openDrawer()" aria-label="メニューを開く"><span class="b"></span><span class="b"></span><span class="b"></span><span id="hbg-dot" class="hbg-dot hidden"></span></button></div>
@@ -359,7 +367,7 @@
   </div>
   <div class="drawer-co"><div id="dw-co-nm" class="co-nm">—</div><span id="dw-role" class="plan-pill"></span></div>
   <nav id="drawer-nav" class="drawer-nav"></nav>
-  <div class="drawer-foot"><span id="dw-email" class="sb-email"></span><button class="sb-out" onclick="openSettings()" style="margin-bottom:6px;">⚙️ 設定</button><button class="sb-out" onclick="signOut()">ログアウト</button></div>
+  <div class="drawer-foot"><span id="dw-email" class="sb-email"></span><span class="sb-legal" onclick="openLegal()">ご利用上の注意・免責事項</span><button class="sb-out" onclick="openSettings()" style="margin-bottom:6px;">⚙️ 設定</button><button class="sb-out" onclick="signOut()">ログアウト</button></div>
 </aside>
 
 <!-- ===== CLIENT DETAIL MODAL ===== -->
@@ -421,6 +429,40 @@
   </div>
 </div>
 
+<div id="legal-modal" class="modal-back hidden" onclick="if(event.target===this)closeLegal()">
+  <div class="modal rep-sheet" style="max-width:640px;">
+    <div class="rep-bar modal-head">
+      <span class="mt">ご利用上の注意・免責事項</span>
+      <span style="flex:1;"></span>
+      <button class="modal-close" onclick="closeLegal()" aria-label="閉じる">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="lg-p">本プラットフォーム「Tsugu Ai -継-」（以下「本サービス」）が提供する試算・診断・シミュレーション・AIによる出力・レポート等（以下「試算等」）は、一般的な情報提供を目的とした<b>概算・参考情報</b>であり、その正確性・完全性・最新性を保証するものではありません。試算等の結果のみに基づいて契約・申告・投資その他の意思決定を行わないでください。</div>
+
+      <div class="lg-h">1. 税務に関する事項</div>
+      <div class="lg-p">相続税・贈与税・法人税等に関する試算は、一定の前提条件に基づく概算です。税制改正や個別の事情により結果は大きく異なります。個別具体的な税務相談、税務書類の作成および税務代理は、税理士法に基づき税理士のみが行うことができる業務です。実行・申告の前に必ず税理士にご相談ください。本サービスおよび担当パートナーは、税理士業務を行うものではありません。</div>
+
+      <div class="lg-h">2. 法務に関する事項</div>
+      <div class="lg-p">遺留分、株式・種類株式、契約、紛争対応など法的判断を伴う事項に関する情報は、一般的な制度の解説にとどまります。個別の法律相談・法律事務は、弁護士法に基づき弁護士のみが行うことができます。実行の前に必ず弁護士にご相談ください。</div>
+
+      <div class="lg-h">3. 保険に関する事項</div>
+      <div class="lg-p">必要保障額等の試算は目安であり、特定の保険商品の推奨・比較・募集・勧誘を行うものではありません。保険契約の締結に際しては、生命保険募集人・損害保険代理店等の有資格者による重要事項説明・意向確認を受けたうえで、契約概要・注意喚起情報・約款をご確認ください。税務上の取扱い（損金算入等）は、契約時の法令・通達および個別事情により異なるため、税理士にご確認ください。</div>
+
+      <div class="lg-h">4. 融資・投資・マッチングに関する事項</div>
+      <div class="lg-p">「Tsugu投資・融資・M&A」は、資金を集めたい企業と出したい企業の引き合わせ（マッチングの場の提供）のみを行うものであり、本サービスが融資・出資の実行、あっせん、投資助言・代理を行うものではありません。実際の融資・出資には、貸金業法・金融商品取引法・出資法等の関連法令の順守と、弁護士等の有資格者の関与が必要です。融資の可否・条件は各金融機関の審査によって決まり、本サービスの診断結果は融資を保証するものではありません。投資判断はご自身の責任で行ってください。</div>
+
+      <div class="lg-h">5. M&A・企業価値評価に関する事項</div>
+      <div class="lg-p">企業価値の簡易評価（年買法・EBITDA倍率等）は、限られた情報に基づく目安であり、実際の譲渡価額を示すものではありません。実際のM&Aの実行には、デューデリジェンス（財務・法務・税務等の調査）および税理士・弁護士・公認会計士等の専門家の関与が必要です。本サービスの支援は中小M&Aガイドラインの趣旨に沿って行います。</div>
+
+      <div class="lg-h">6. AIによる出力について</div>
+      <div class="lg-p">本サービスのAI機能（診断・レポート・事業計画書ドラフト・AI秘書等）による出力は、誤りや不正確な内容を含む可能性があります。重要な意思決定・外部提出の前に、必ず原資料（決算書・試算表等）との照合と、専門家による確認を行ってください。</div>
+
+      <div class="lg-h">7. 責任の制限</div>
+      <div class="lg-p">運営者および担当パートナーは、試算等の内容ならびに本サービスの利用または利用不能に起因して生じた損害について、故意または重過失による場合を除き、責任を負いません。詳細は利用規約をご確認ください。必要に応じて、税理士・弁護士等の専門家のご紹介も承ります。</div>
+    </div>
+  </div>
+</div>
+
 <script>
   const SUPABASE_URL = 'https://yaururnkxjhtiowkpvyu.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_-k-OPNThdG0uElX0h36eug_oGaCNlL4';
@@ -435,6 +477,22 @@
   function setMsg(which, txt, ok){ var e=$('msg-'+which); if(!e)return; e.textContent=txt||''; e.style.color=ok?'#1E6B45':'#A83030'; }
   function esc(s){ s=(s==null?'':String(s)); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function escA(s){ return esc(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  // ===== 法令・免責の注意文言（共通部品） =====
+  function openLegal(){ var m=$('legal-modal'); if(m){ m.classList.remove('hidden'); document.body.style.overflow='hidden'; } if(typeof closeDrawer==='function') closeDrawer(); }
+  function closeLegal(){ var m=$('legal-modal'); if(m){ m.classList.add('hidden'); document.body.style.overflow=''; } }
+  function lnote(kind){
+    var t={
+      tax:'税額等の試算は一定の前提に基づく概算です。個別の税務相談・税務書類の作成は税理士法により税理士の業務となるため、実行・申告の前に必ず税理士にご確認ください。',
+      sozoku:'本シミュレーターの結果は一定の前提に基づく概算です。個別の税務判断は税理士（税理士法）、遺留分・株式など法的判断は弁護士（弁護士法）の業務となります。実行前に必ず各専門家にご確認ください。',
+      ins:'本試算は必要額の目安であり、特定の保険商品の推奨・募集・勧誘ではありません。ご契約の際は募集人による重要事項説明を受け、税務上の取扱いは税理士にご確認ください。',
+      ma:'企業価値の評価は限られた情報に基づく簡易な目安であり、実際の譲渡価額を示すものではありません。実行にはデューデリジェンスと税理士・弁護士等の専門家の関与が必要です。',
+      fin:'本診断・試算はAI・自動計算による参考情報です。正確な判断には決算書等の原資料の精査と専門家の確認が必要です。',
+      loan:'融資の可否・金利・条件は各金融機関の審査により決まります。本結果は優先順位の目安であり、融資の実行を保証するものではありません。',
+      bp:'AIが作成するドラフトは誤りを含む可能性があります。数値・記載内容を原資料と照合し、金融機関への提出前に専門家の確認を受けてください。'
+    }[kind]||'';
+    if(!t) return '';
+    return '<div class="lnote">⚠ '+t+'　<span class="lnote-lk" onclick="openLegal()">ご利用上の注意</span></div>';
+  }
 
   var PANELS=['login','signup','reset','recovery'];
   function showTab(which){
@@ -1411,6 +1469,7 @@
           +'<div style="border-top:1px solid #EAF0F7;margin:18px 0 0;"></div>'
           +'<div style="font-weight:600;font-size:14px;color:#1C3557;margin:14px 0 6px;">③ 資金繰り診断</div>'
           +'<div style="font-size:12px;color:#8AA0BE;">担当パートナーが実施します。結果はダッシュボードの「資金繰りステータス」に表示されます。<button class="ghost" style="border:1px solid #D0DCF0;border-radius:8px;padding:5px 10px;margin-left:6px;" onclick="goSec(\'sec-status\')">ステータスを見る →</button></div>'
+          +lnote('fin')
         +'</div>'
         +'<div class="panel" id="sec-act"><div class="ph">アクション・課題</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">担当パートナーが設定した、取り組み中の課題・タスクの一覧です。追加・変更のご希望は「メッセージ」でお知らせください。</div>'
@@ -1431,11 +1490,11 @@
         +'</div>'
         +'<div class="panel" id="sec-ins"><div class="ph">試算結果（パートナーからの共有）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">保険（事業保障・損害保険・養老保険）や相続・贈与などの試算は担当パートナーが行い、ここに共有されます。試算のご希望や前提条件の変更は「メッセージ」でお伝えください。</div>'
-          +'<div id="my-ins" style="margin-top:4px;">読み込み中...</div>'
+          +lnote('ins')+'<div id="my-ins" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-ma"><div class="ph">利益のM&A活用 提案</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">利益や余剰資金をM&A（会社・事業の買収）で活かす方向性を、担当パートナーがAIで検討し、ここにご提案します。ご関心・ご希望は「メッセージ」でお知らせください。</div>'
-          +'<div id="my-ma">読み込み中...</div>'
+          +lnote('ma')+'<div id="my-ma">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-market"><div class="ph">💹 Tsugu投資・融資・M&A（プラットフォーム内マッチング）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;line-height:1.7;">資金を「集めたい」企業と「出したい（融資・出資）」企業を、Tsugu内でマッチングします。案件の掲載やお手続きは担当パートナーが代行します。気になる案件があれば「メッセージ」でお知らせください。担当が橋渡しします。</div>'
@@ -1527,6 +1586,7 @@
             +'<button class="btn2" style="padding:7px 14px;font-size:12px;" onclick="toggleMaForm()">＋ 案件を追加</button>'
             +'</span></div>'
           +'<div style="font-size:11.5px;color:#8AA0BE;margin-bottom:8px;">検討からPMI（統合）までの進捗・チェックリスト・PMI月次チェックをここで一元管理します。</div>'
+          +lnote('ma')
           +'<div id="ma-form" class="hidden" style="border:1px dashed #C9D6EA;border-radius:11px;padding:12px 14px;margin:8px 0;background:#FBFCFE;">'
             +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
               +'<div style="flex:1;min-width:180px;"><label class="fl">顧客</label><select id="ma-cust" class="inp2" style="width:100%;"></select></div>'
@@ -1599,6 +1659,7 @@
         +'</div>'
         +'<div class="panel" id="sec-sozoku"><div class="ph">相続・贈与・事業承継シミュレーター</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:14px;line-height:1.7;">目的に合わせて2つのフォームをご利用ください。「相続・贈与フォーム」は税額の試算、「事業承継・株対策フォーム」は承継の選択肢・株対策・遺留分・少数株主対策の整理に使えます。結果は印刷／PDFで顧客への提示・専門家への引き継ぎ資料になります。</div>'
+          +lnote('sozoku')
           +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
             +'<div style="border:1px solid #E5EEF8;border-radius:11px;padding:13px 15px;background:#fff;">'
               +'<div style="font-size:13px;font-weight:700;color:#1C3557;margin-bottom:5px;">🧮 相続・贈与フォーム</div>'
@@ -4294,6 +4355,7 @@
   function insPanelHtmlClient(custId){
     return '<div class="ph" style="font-size:13px;margin-top:16px;">パートナーAIツール：保険必要保障額の試算</div>'
       +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">この顧客向けに試算し、結果を顧客に共有（保存）できます（単位：万円）。</div>'
+      +lnote('ins')
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
         +'<div><label class="fl">法人実効税率(%)</label><select id="ci-tax-preset" class="inp2" onchange="if(this.value){document.getElementById(\'ci-tax-rate\').value=this.value;}">'+taxPresetOptions()+'</select></div>'
         +'<div><label class="fl">実効税率(%)</label><input id="ci-tax-rate" type="number" class="inp2" value="34"></div>'
@@ -4734,6 +4796,7 @@
         +'<button class="btn2" onclick="runLoanNav(\''+custId+'\')">診断する</button>'
       +'</div>'
       +'<div id="ln-result" style="margin-top:12px;"></div>'
+      +lnote('loan')
       +'<div class="ph" id="cs-meet" style="font-size:13px;margin-top:18px;">📝 議事録（面談メモのAI整形）</div>'
       +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">面談中のメモを貼り付けて「AIで整形」を押すと、要点・決定事項・ToDo・次回アジェンダに整理します。内容を確認・編集して保存できます。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">'
@@ -4749,6 +4812,7 @@
       +'<div id="mn-result" style="margin-top:10px;"></div>'
       +'<div id="mn-history" style="margin-top:14px;"></div>'
       +'<div class="ph" id="cs-mna" style="font-size:13px;margin-top:18px;">M&A活用提案（AI）</div>'
+      +lnote('ma')
       +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">AIでこの顧客向けのM&A方向性を作成し、提案メモとして送れます。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
         +'<div><label class="fl">年間利益・余剰資金(万円)</label><input id="ma2-profit" type="number" class="inp2" placeholder="例 3000"></div>'
@@ -4766,9 +4830,11 @@
         +'<button class="btn2" id="bp-run" onclick="runBizplan(\''+custId+'\')">計画書を作成</button>'
       +'</div>'
       +'<div id="bp-msg" style="font-size:12px;margin-top:6px;"></div>'
+      +lnote('bp')
       +'<div class="ph" style="font-size:13px;margin-top:18px;">相続・贈与シミュレーター</div>'
       +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">この顧客の相続・贈与対策（暦年贈与・精算課税・二次相続まで）は専用ツールで試算できます。結果のPDFはメッセージで案内するか面談時にご提示ください。</div>'
       +'<button class="btn2" style="background:#fff;color:#2C6EBD;border:1.5px solid #2C6EBD;" onclick="openSozoku()">シミュレーターを開く ↗</button>'
+      +lnote('sozoku')
       + insPanelHtmlClient(custId)
     +'</div>';
     // ---- タブ4：顧客からの共有 ----
