@@ -209,8 +209,21 @@
   .lg-p{font-size:12px;color:var(--muted);line-height:1.8;}
   /* ===== 経営者ダッシュボード：サイドバーなし・全幅・上部タブ ===== */
   body.cust-full .sb{display:none;}
-  body.cust-full .hbg{display:flex;}
+  body.cust-full .hbg{display:none!important;}
   body.cust-full .wrap{max-width:1240px;}
+  .acctbtn{display:none;position:relative;flex-shrink:0;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:#F7FAFD;cursor:pointer;font-size:16px;line-height:1;font-family:inherit;}
+  .acctbtn:hover{background:#EAF0F7;}
+  body.cust-full .acctbtn{display:block;}
+  body.dark .acctbtn{background:var(--soft);}
+  .acct-menu{position:fixed;top:60px;right:12px;z-index:70;width:min(280px,calc(100vw - 24px));background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:0 14px 44px rgba(16,42,74,.18);padding:8px;}
+  body.dark .acct-menu{background:var(--card);}
+  .acct-head{padding:9px 11px 10px;border-bottom:1px solid var(--softline);margin-bottom:6px;}
+  .acct-nm{font-size:13px;font-weight:700;color:var(--navy);}
+  .acct-em{font-size:11px;color:var(--muted);margin-top:2px;word-break:break-all;}
+  .acct-it{display:flex;align-items:center;gap:9px;width:100%;border:none;background:none;font-family:inherit;font-size:13px;color:var(--ink,#1C3557);padding:10px 11px;border-radius:9px;cursor:pointer;text-align:left;}
+  .acct-it:hover{background:#F2F6FB;}
+  body.dark .acct-it:hover{background:var(--soft);}
+  .acct-it.out{color:#A83030;}
   .cat-tabs{display:none;position:sticky;top:56px;z-index:4;background:#fff;border-bottom:1px solid var(--line);padding:0 18px;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .cat-tabs::-webkit-scrollbar{display:none;}
   body.cust-full .cat-tabs{display:flex;}
@@ -373,7 +386,13 @@
     <div class="sb-foot"><span id="app-email" class="sb-email"></span><span class="sb-legal" onclick="openLegal()">ご利用上の注意・免責事項</span><button class="sb-out" onclick="openSettings()" style="margin-bottom:6px;">⚙️ 設定</button><button class="sb-out" onclick="signOut()">ログアウト</button></div>
   </aside>
   <main class="main2">
-    <div class="topbar2"><div id="app-greet" class="greet">ダッシュボード</div><span id="app-cat" class="catchip hidden"></span><div id="app-date" class="datechip"></div><button id="bell" class="bellbtn hidden" onclick="bellGo()" title="通知（要対応）" aria-label="通知（要対応）">🔔<span id="bell-n" class="nbadge hidden">0</span></button><button id="hbg" class="hbg" onclick="openDrawer()" aria-label="メニューを開く"><span class="b"></span><span class="b"></span><span class="b"></span><span id="hbg-dot" class="hbg-dot hidden"></span></button></div>
+    <div class="topbar2"><div id="app-greet" class="greet">ダッシュボード</div><span id="app-cat" class="catchip hidden"></span><div id="app-date" class="datechip"></div><button id="bell" class="bellbtn hidden" onclick="bellGo()" title="通知（要対応）" aria-label="通知（要対応）">🔔<span id="bell-n" class="nbadge hidden">0</span></button><button id="acct-btn" class="acctbtn" onclick="toggleAcctMenu(event)" title="アカウント・設定" aria-label="アカウント・設定">⚙️</button><button id="hbg" class="hbg" onclick="openDrawer()" aria-label="メニューを開く"><span class="b"></span><span class="b"></span><span class="b"></span><span id="hbg-dot" class="hbg-dot hidden"></span></button></div>
+    <div id="acct-menu" class="acct-menu hidden">
+      <div class="acct-head"><div id="acct-nm" class="acct-nm">—</div><div id="acct-em" class="acct-em"></div></div>
+      <button class="acct-it" onclick="closeAcctMenu();openSettings()">⚙️ 設定（表示・メニューのカスタマイズ）</button>
+      <button class="acct-it" onclick="closeAcctMenu();openLegal()">📋 ご利用上の注意・免責事項</button>
+      <button class="acct-it out" onclick="closeAcctMenu();signOut()">↪ ログアウト</button>
+    </div>
     <div id="cat-tabs" class="cat-tabs" role="tablist"></div>
     <div class="wrap" id="app-body"></div>
   </main>
@@ -744,6 +763,17 @@
       return '<button class="cat-tab" role="tab" data-cat="'+escA(g[0])+'" onclick="catTo(\''+escA(g[0])+'\')"><span class="ci">'+(CAT_ICONS[g[0]]||'')+'</span>'+esc(g[0])+'</button>';
     }).join('');
   }
+  // 経営者用：右上のアカウントメニュー（設定・免責・ログアウトを統合）
+  function toggleAcctMenu(ev){
+    if(ev) ev.stopPropagation();
+    var m=$('acct-menu'); if(!m) return;
+    m.classList.toggle('hidden');
+  }
+  function closeAcctMenu(){ var m=$('acct-menu'); if(m) m.classList.add('hidden'); }
+  document.addEventListener('click',function(ev){
+    var m=$('acct-menu');
+    if(m && !m.classList.contains('hidden') && !m.contains(ev.target) && ev.target.id!=='acct-btn') closeAcctMenu();
+  });
   // カテゴリー先頭の見出しバー（そのカテゴリーに何があるかを一目で）
   function renderCatHead(cat,r){
     var el=$('cat-head'); if(!el) return;
@@ -1464,6 +1494,9 @@
     $('app-email').textContent=email||'';
     var dr=$('dw-role'); if(dr){ dr.textContent=roleLabel(r); dr.style.background=roleColor(r); dr.style.color='#fff'; }
     var de=$('dw-email'); if(de) de.textContent=email||'';
+    var an=$('acct-nm'); if(an) an.textContent=(prof.company_name||prof.contact_name||'アカウント');
+    var ae=$('acct-em'); if(ae) ae.textContent=email||'';
+    closeAcctMenu();
     closeDrawer();
     buildNav(eff);
     var g=$('app-greet'); if(g) g.textContent = (eff==='customer'?'経営者ダッシュボード':(eff==='admin'?'運営コンソール':'パートナーポータル'))+((r==='admin'&&eff!=='admin')?'（プレビュー）':'');
