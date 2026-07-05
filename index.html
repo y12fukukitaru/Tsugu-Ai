@@ -207,6 +207,26 @@
   .sb-legal:hover{color:rgba(255,255,255,.85);}
   .lg-h{font-size:13px;font-weight:700;color:var(--navy);margin:16px 0 6px;}
   .lg-p{font-size:12px;color:var(--muted);line-height:1.8;}
+  /* ===== 経営者ダッシュボード：サイドバーなし・全幅・上部タブ ===== */
+  body.cust-full .sb{display:none;}
+  body.cust-full .hbg{display:flex;}
+  body.cust-full .wrap{max-width:1240px;}
+  .cat-tabs{display:none;position:sticky;top:56px;z-index:4;background:#fff;border-bottom:1px solid var(--line);padding:0 18px;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .cat-tabs::-webkit-scrollbar{display:none;}
+  body.cust-full .cat-tabs{display:flex;}
+  body.dark .cat-tabs{background:var(--card);}
+  .cat-tab{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:13px 15px 11px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2.5px solid transparent;font-family:inherit;white-space:nowrap;}
+  .cat-tab:hover{color:var(--navy);}
+  .cat-tab.on{color:var(--navy);border-bottom-color:var(--blue);}
+  .cat-tab .ci{font-size:15px;}
+  /* グラフカード */
+  #my-charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(275px,1fr));gap:12px;}
+  .chart-card{background:#F7FAFD;border:1px solid #EAF0F7;border-radius:12px;padding:14px 16px;min-width:0;}
+  body.dark .chart-card{background:var(--soft);border-color:var(--line);}
+  .chart-card .ct{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;}
+  .chart-card svg{width:100%;height:auto;display:block;}
+  .chart-wide{grid-column:1/-1;}
+  @media(min-width:900px){ .chart-half{grid-column:span 1;} }
   .ni{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;font-size:13px;color:rgba(255,255,255,.8);cursor:pointer;margin-bottom:2px;position:relative;}
   .ni:hover{background:rgba(255,255,255,.06);color:#fff;}
   .ni.active{background:var(--blue);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 rgba(255,255,255,.85);}
@@ -354,6 +374,7 @@
   </aside>
   <main class="main2">
     <div class="topbar2"><div id="app-greet" class="greet">ダッシュボード</div><span id="app-cat" class="catchip hidden"></span><div id="app-date" class="datechip"></div><button id="bell" class="bellbtn hidden" onclick="bellGo()" title="通知（要対応）" aria-label="通知（要対応）">🔔<span id="bell-n" class="nbadge hidden">0</span></button><button id="hbg" class="hbg" onclick="openDrawer()" aria-label="メニューを開く"><span class="b"></span><span class="b"></span><span class="b"></span><span id="hbg-dot" class="hbg-dot hidden"></span></button></div>
+    <div id="cat-tabs" class="cat-tabs" role="tablist"></div>
     <div class="wrap" id="app-body"></div>
   </main>
 </div>
@@ -514,7 +535,7 @@
     });
   }
   function showRecovery(){ $('gate').classList.remove('hidden'); $('app').classList.add('hidden'); PANELS.forEach(function(t){ var p=$('panel-'+t); if(p)p.classList.toggle('hidden', t!=='recovery'); }); }
-  function showAuth(){ $('app').classList.add('hidden'); $('gate').classList.remove('hidden'); showTab('login'); }
+  function showAuth(){ document.body.classList.remove('cust-full'); $('app').classList.add('hidden'); $('gate').classList.remove('hidden'); showTab('login'); }
 
   async function doSignup(){
     var em=($('signup-email').value||'').trim().toLowerCase();
@@ -673,7 +694,7 @@
   }
   // ナビに出ない小セクションの所属カテゴリー（画面切替時にどのカテゴリーで表示するか）
   function catExtra(r){
-    if(r==='customer') return {'sec-status':'ホーム','sec-kpicards':'ホーム','sec-actsum':'ホーム','sec-journey':'ホーム','sec-notes':'やり取り・相談','sec-act':'確認する'};
+    if(r==='customer') return {'sec-status':'ホーム','sec-charts':'ホーム','sec-kpicards':'ホーム','sec-actsum':'ホーム','sec-journey':'ホーム','sec-notes':'やり取り・相談','sec-act':'確認する'};
     if(r==='admin') return {'sec-myfund':'案件・資金'};
     return {'sec-todo':'ホーム','sec-journey2':'学び・AIサポート'};
   }
@@ -706,8 +727,22 @@
       var n=$(nid); if(!n)return;
       Array.prototype.forEach.call(n.querySelectorAll('.sb-sec'),function(x){ x.classList.toggle('on', x.getAttribute('data-cat')===cat); });
     });
+    var tabs=$('cat-tabs');
+    if(tabs){ Array.prototype.forEach.call(tabs.querySelectorAll('.cat-tab'),function(x){
+      var on=x.getAttribute('data-cat')===cat;
+      x.classList.toggle('on', on);
+      if(on && x.scrollIntoView) try{ x.scrollIntoView({block:'nearest',inline:'nearest'}); }catch(e){}
+    }); }
     var chip=$('app-cat'); if(chip){ chip.textContent=cat; chip.classList.remove('hidden'); }
     renderCatHead(cat,r);
+  }
+  // 経営者用：画面上部のカテゴリータブ
+  var CAT_ICONS={'ホーム':'🏠','やり取り・相談':'💬','確認する':'📋','お金まわり':'💰','成長・活用':'🚀','基本情報':'🏢'};
+  function renderCatTabs(r){
+    var el=$('cat-tabs'); if(!el) return;
+    el.innerHTML=navGroups(r).map(function(g){
+      return '<button class="cat-tab" role="tab" data-cat="'+escA(g[0])+'" onclick="catTo(\''+escA(g[0])+'\')"><span class="ci">'+(CAT_ICONS[g[0]]||'')+'</span>'+esc(g[0])+'</button>';
+    }).join('');
   }
   // カテゴリー先頭の見出しバー（そのカテゴリーに何があるかを一目で）
   function renderCatHead(cat,r){
@@ -1446,6 +1481,7 @@
         +'<div id="my-nextmeet"></div>'
         +'<div id="my-annc"></div>'
         +'<div class="panel" id="sec-status"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">資金繰りステータス<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadCashStatus()">↺ 更新</span></div><div id="cash-status" style="margin-top:4px;">読み込み中...</div></div>'
+        +'<div class="panel" id="sec-charts"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">経営の見える化<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMyCharts()">↺ 更新</span></div><div id="my-charts" style="margin-top:4px;">読み込み中...</div></div>'
         +'<div class="panel" id="sec-kpicards"><div class="ph">経営サマリー</div><div id="kpi-cards">読み込み中...</div></div>'
         +'<div class="panel" id="sec-chat"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">担当パートナーとのメッセージ <span id="chat-unread" class="nbadge hidden">0</span><span class="ghost" style="font-size:11px;font-weight:400;margin-left:auto;" onclick="loadMyChat()">↺ 更新</span></div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;line-height:1.6;">数値の報告・質問・相談など、何でもお送りください。月次の売上などはメッセージで伝えるだけでOK（入力はパートナーが代行します）。</div>'
@@ -1713,10 +1749,12 @@
     }
 
     window.__eff=eff;
+    document.body.classList.toggle('cust-full', eff==='customer');
+    if(eff==='customer'){ renderCatTabs('customer'); } else { var _ct=$('cat-tabs'); if(_ct) _ct.innerHTML=''; }
     $('app-body').innerHTML='<div id="cat-head" data-cat="_top"></div>'+view;
     tagCats(eff);
     showCat(navGroups(eff)[0][0], eff);
-    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); if(window.__role==='admin') loadAdmPreviewCustomers(); }
+    if(eff==='customer'){ loadDashHero(); loadMyCharts(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); if(window.__role==='admin') loadAdmPreviewCustomers(); }
     else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderTraining(); loadTrainingProgress(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); }
     else { loadAdmin(); loadMarketBroker(); }
     startNotifPolling(eff);
@@ -4062,6 +4100,137 @@
     return out;
   }
 
+  // ===== 経営の見える化（グラフ）=====
+  function scoreCol(s){ return s>=80?'#1E6B45':(s>=60?'#2C6EBD':(s>=40?'#C89620':'#A83030')); }
+  function svgGauge(score){
+    var s=Math.max(0,Math.min(100,Number(score)||0)), col=scoreCol(s);
+    var r=52, c=2*Math.PI*r, off=c*(1-s/100);
+    var rank=s>=80?'A':(s>=60?'B':(s>=40?'C':'D'));
+    return '<svg viewBox="0 0 140 140" aria-label="資金繰りスコア '+s+'点">'
+      +'<circle cx="70" cy="70" r="'+r+'" fill="none" stroke="#E8EEF6" stroke-width="13"/>'
+      +'<circle cx="70" cy="70" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="13" stroke-linecap="round" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 70 70)"/>'
+      +'<text x="70" y="66" text-anchor="middle" font-size="30" font-weight="700" fill="'+col+'">'+s+'</text>'
+      +'<text x="70" y="86" text-anchor="middle" font-size="11" fill="#8AA0BE">点 ／ ランク'+rank+'</text>'
+    +'</svg>';
+  }
+  function svgSpark(vals){
+    if(vals.length<2) return '';
+    var w=280, h=64, pad=6;
+    var min=Math.min.apply(null,vals), max=Math.max.apply(null,vals); if(max===min){min-=1;max+=1;}
+    var pts=vals.map(function(v,i){ return [pad+i*(w-pad*2)/(vals.length-1), h-pad-(v-min)/(max-min)*(h-pad*2)]; });
+    var line=pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ');
+    var last=pts[pts.length-1];
+    return '<svg viewBox="0 0 '+w+' '+h+'" aria-label="スコアの推移">'
+      +'<polyline points="'+line+'" fill="none" stroke="#2C6EBD" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'
+      +'<circle cx="'+last[0].toFixed(1)+'" cy="'+last[1].toFixed(1)+'" r="4" fill="'+scoreCol(vals[vals.length-1])+'"/>'
+    +'</svg>';
+  }
+  function svgFinChart(rows){ // rows: 昇順 [{year_month,revenue,profit}] 万円
+    var w=580, h=250, padL=8, padR=8, padT=16, padB=30;
+    var vals=[]; rows.forEach(function(r){ if(r.revenue!=null)vals.push(Number(r.revenue)); if(r.profit!=null)vals.push(Number(r.profit)); });
+    var max=Math.max.apply(null,vals.concat([1])), min=Math.min.apply(null,vals.concat([0]));
+    var span=max-min||1;
+    function Y(v){ return padT+(max-v)/span*(h-padT-padB); }
+    var y0=Y(0), n=rows.length, slot=(w-padL-padR)/n, bw=Math.min(34,slot*0.55);
+    var s='<svg viewBox="0 0 '+w+' '+h+'" aria-label="売上と営業利益の推移">';
+    s+='<line x1="'+padL+'" y1="'+y0.toFixed(1)+'" x2="'+(w-padR)+'" y2="'+y0.toFixed(1)+'" stroke="#D5DFEC" stroke-width="1"/>';
+    var pts=[];
+    rows.forEach(function(r,i){
+      var cx=padL+slot*i+slot/2;
+      if(r.revenue!=null){
+        var rv=Number(r.revenue), yv=Y(rv);
+        s+='<rect x="'+(cx-bw/2).toFixed(1)+'" y="'+Math.min(yv,y0).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(2,Math.abs(y0-yv)).toFixed(1)+'" rx="3" fill="#7FB3DC"/>';
+        s+='<text x="'+cx.toFixed(1)+'" y="'+(Math.min(yv,y0)-4).toFixed(1)+'" text-anchor="middle" font-size="9.5" fill="#4A6080">'+Math.round(rv).toLocaleString('ja-JP')+'</text>';
+      }
+      if(r.profit!=null) pts.push([cx, Y(Number(r.profit)), Number(r.profit)]);
+      s+='<text x="'+cx.toFixed(1)+'" y="'+(h-10)+'" text-anchor="middle" font-size="9.5" fill="#8AA0BE">'+esc(String(r.year_month).slice(2).replace('-','/'))+'</text>';
+    });
+    if(pts.length>1) s+='<polyline points="'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" fill="none" stroke="#1E6B45" stroke-width="2.5" stroke-linejoin="round"/>';
+    pts.forEach(function(p){ s+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3.5" fill="'+(p[2]<0?'#A83030':'#1E6B45')+'"/>'; });
+    s+='</svg>';
+    return s;
+  }
+  function svgInOut(snap){ // 最新スナップショット：収入vs支出の横バー
+    var inc=Number(snap.monthly_in)||0, out=(Number(snap.monthly_out)||0)+(Number(snap.monthly_repay)||0);
+    var max=Math.max(inc,out,1), w=280;
+    function bar(y,label,v,col){
+      var bwv=Math.max(2,v/max*(w-120));
+      return '<text x="0" y="'+(y+11)+'" font-size="11" fill="#4A6080">'+label+'</text>'
+        +'<rect x="46" y="'+y+'" width="'+bwv.toFixed(1)+'" height="15" rx="4" fill="'+col+'"/>'
+        +'<text x="'+(50+bwv).toFixed(1)+'" y="'+(y+12)+'" font-size="10.5" fill="#1C3557" font-weight="700">'+Math.round(v).toLocaleString('ja-JP')+'万</text>';
+    }
+    var diff=inc-out;
+    return '<svg viewBox="0 0 '+w+' 78" aria-label="月の収入と支出">'
+      +bar(4,'収入',inc,'#2C6EBD')+bar(28,'支出',out,'#C89620')
+      +'<text x="0" y="68" font-size="11" fill="'+(diff>=0?'#1E6B45':'#A83030')+'" font-weight="700">月の収支 '+(diff>=0?'+':'')+Math.round(diff).toLocaleString('ja-JP')+'万円</text>'
+    +'</svg>';
+  }
+  function svgActDonut(done,total){
+    var pct=total?done/total:0, r=34, c=2*Math.PI*r;
+    return '<svg viewBox="0 0 90 90" aria-label="経営課題の進捗">'
+      +'<circle cx="45" cy="45" r="'+r+'" fill="none" stroke="#E8EEF6" stroke-width="10"/>'
+      +'<circle cx="45" cy="45" r="'+r+'" fill="none" stroke="#1E6B45" stroke-width="10" stroke-linecap="round" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+(c*(1-pct)).toFixed(1)+'" transform="rotate(-90 45 45)"/>'
+      +'<text x="45" y="43" text-anchor="middle" font-size="17" font-weight="700" fill="#1C3557">'+done+'/'+total+'</text>'
+      +'<text x="45" y="58" text-anchor="middle" font-size="9" fill="#8AA0BE">完了</text>'
+    +'</svg>';
+  }
+  async function loadMyCharts(){
+    var box=$('my-charts'); if(!box||!ME) return;
+    box.innerHTML='読み込み中...';
+    var r=await Promise.all([
+      sb.from('financial_entries').select('year_month,revenue,profit').eq('customer_id',ME).order('year_month',{ascending:false}).limit(12),
+      sb.from('cashflow_snapshots').select('score,cash,monthly_in,monthly_out,monthly_repay,created_at').eq('customer_id',ME).order('created_at',{ascending:false}).limit(12),
+      sb.from('action_items').select('status').eq('customer_id',ME)
+    ]);
+    var fin=((r[0].data)||[]).slice().reverse();
+    var snaps=((r[1].data)||[]).slice().reverse();
+    var acts=(r[2].data)||[];
+    var latest=snaps.length?snaps[snaps.length-1]:null;
+    if(!fin.length && !latest && !acts.length){
+      box.innerHTML='<div style="font-size:12px;color:#8AA0BE;line-height:1.8;">グラフに表示できるデータがまだありません。担当パートナーが財務データを入力し、資金繰り診断を行うと、ここに売上・利益の推移や資金繰りスコアがグラフで表示されます。<br><button class="btn2" style="margin-top:8px;" onclick="goSec(\'sec-chat\')">パートナーに相談する →</button></div>';
+      return;
+    }
+    var h='';
+    // ① 資金繰りスコア（ゲージ＋推移）
+    if(latest && latest.score!=null){
+      h+='<div class="chart-card" onclick="goSec(\'sec-status\')" style="cursor:pointer;">'
+        +'<div class="ct">資金繰りスコア（タップで詳細へ）</div>'
+        +'<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">'
+        +'<div style="width:128px;flex-shrink:0;">'+svgGauge(latest.score)+'</div>'
+        +'<div style="flex:1;min-width:140px;">'
+        +(snaps.length>1?('<div style="font-size:10.5px;color:#8AA0BE;margin-bottom:3px;">スコアの推移（直近'+snaps.length+'回）</div>'+svgSpark(snaps.map(function(x){return Number(x.score)||0;}))):'<div style="font-size:11px;color:#8AA0BE;">診断を重ねると推移がここに表示されます。</div>')
+        +'</div></div></div>';
+    }
+    // ② 月のお金の出入り＋現預金
+    if(latest && (latest.monthly_in!=null||latest.monthly_out!=null)){
+      h+='<div class="chart-card">'
+        +'<div class="ct">月のお金の出入り（直近の診断より）</div>'
+        +svgInOut(latest)
+        +(latest.cash!=null?'<div style="font-size:11px;color:#4A6080;margin-top:6px;">現預金 <b style="font-size:15px;color:#1C3557;">'+Math.round(Number(latest.cash)).toLocaleString('ja-JP')+'</b> 万円</div>':'')
+        +'</div>';
+    }
+    // ③ 経営課題の進捗
+    if(acts.length){
+      var done=acts.filter(function(a){return a.status==='done';}).length;
+      h+='<div class="chart-card" onclick="goSec(\'sec-act\')" style="cursor:pointer;">'
+        +'<div class="ct">経営課題の進み具合（タップで一覧へ）</div>'
+        +'<div style="display:flex;align-items:center;gap:14px;">'
+        +'<div style="width:86px;flex-shrink:0;">'+svgActDonut(done,acts.length)+'</div>'
+        +'<div style="font-size:11.5px;color:#4A6080;line-height:1.7;">全 '+acts.length+' 件のうち <b style="color:#1E6B45;">'+done+' 件完了</b>。<br>残り '+(acts.length-done)+' 件に取り組み中です。</div>'
+        +'</div></div>';
+    }
+    // ④ 売上・営業利益の推移（横長）
+    if(fin.length>=2){
+      h+='<div class="chart-card chart-wide">'
+        +'<div class="ct">売上・営業利益の推移（直近'+fin.length+'か月・万円）'
+        +'<span style="font-weight:400;font-size:10px;color:#8AA0BE;margin-left:10px;"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#7FB3DC;vertical-align:-1px;"></span> 売上　<span style="display:inline-block;width:9px;height:9px;border-radius:99px;background:#1E6B45;vertical-align:-1px;"></span> 営業利益（赤い点＝赤字）</span></div>'
+        +svgFinChart(fin)
+        +'</div>';
+    } else if(fin.length===1){
+      h+='<div class="chart-card chart-wide"><div class="ct">売上・営業利益の推移</div><div style="font-size:11.5px;color:#8AA0BE;line-height:1.7;">記録は現在1か月分です。2か月分以上たまると推移グラフが表示されます。</div></div>';
+    }
+    box.innerHTML=h||'<div style="font-size:12px;color:#8AA0BE;">表示できるグラフがまだありません。</div>';
+  }
   // ---- 今日のサマリー（ダッシュボード最上部）----
   async function loadDashHero(){
     var box=$('dash-hero'); if(!box)return;
