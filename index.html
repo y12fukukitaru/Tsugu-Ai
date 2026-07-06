@@ -659,7 +659,7 @@
   }
   // 役割ごとの全メニュー定義（ラベル付き）。設定で並び順・表示を変えられる
   function navDefs(r){
-    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
+    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','AI相談']];
     if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信']];
     return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
   }
@@ -692,7 +692,8 @@
   function navGroups(r){
     if(r==='customer') return [
       ['ホーム',['sec-flow']],
-      ['やり取り・相談',['sec-chat','sec-sec']],
+      ['メッセージ',['sec-chat']],
+      ['AI相談',['sec-sec']],
       ['確認する',['sec-reports','sec-mypdca']],
       ['お金まわり',['sec-cash','sec-ins']],
       ['成長・活用',['sec-ai','sec-ma','sec-market']],
@@ -708,14 +709,15 @@
       ['ホーム',['sec-flow']],
       ['日々の顧客対応',['sec-clients','sec-pdca','sec-reports']],
       ['案件・提案',['sec-madeals','sec-market','sec-sozoku']],
-      ['学び・AIサポート',['sec-knowledge','sec-sec']]
+      ['ナレッジ・研修',['sec-knowledge']],
+      ['AI秘書',['sec-sec']]
     ];
   }
   // ナビに出ない小セクションの所属カテゴリー（画面切替時にどのカテゴリーで表示するか）
   function catExtra(r){
-    if(r==='customer') return {'sec-status':'ホーム','sec-charts':'ホーム','sec-kpicards':'ホーム','sec-actsum':'ホーム','sec-journey':'ホーム','sec-notes':'やり取り・相談','sec-act':'確認する'};
+    if(r==='customer') return {'sec-status':'ホーム','sec-charts':'ホーム','sec-kpicards':'ホーム','sec-actsum':'ホーム','sec-journey':'ホーム','sec-notes':'メッセージ','sec-act':'確認する'};
     if(r==='admin') return {'sec-myfund':'案件・資金'};
-    return {'sec-todo':'ホーム','sec-journey2':'学び・AIサポート'};
+    return {'sec-todo':'ホーム','sec-journey2':'ナレッジ・研修'};
   }
   function catOf(r,id){
     var g=navGroups(r);
@@ -756,7 +758,7 @@
     renderCatHead(cat,r);
   }
   // 経営者用：画面上部のカテゴリータブ
-  var CAT_ICONS={'ホーム':'🏠','やり取り・相談':'💬','確認する':'📋','お金まわり':'💰','成長・活用':'🚀','基本情報':'🏢'};
+  var CAT_ICONS={'ホーム':'🏠','メッセージ':'💬','AI相談':'🤖','確認する':'📋','お金まわり':'💰','成長・活用':'🚀','基本情報':'🏢'};
   function renderCatTabs(r){
     var el=$('cat-tabs'); if(!el) return;
     el.innerHTML=navGroups(r).map(function(g){
@@ -1517,6 +1519,7 @@
         +'<div class="panel" id="sec-charts"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">経営の見える化<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMyCharts()">↺ 更新</span></div><div id="my-charts" style="margin-top:4px;">読み込み中...</div></div>'
         +'<div class="panel" id="sec-kpicards"><div class="ph">経営サマリー</div><div id="kpi-cards">読み込み中...</div></div>'
         +'<div class="panel" id="sec-chat"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">担当パートナーとのメッセージ <span id="chat-unread" class="nbadge hidden">0</span><span class="ghost" style="font-size:11px;font-weight:400;margin-left:auto;" onclick="loadMyChat()">↺ 更新</span></div>'
+          +'<div style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:#1C4E86;background:#EAF3FC;border:1px solid #C9DFF4;border-radius:9px;padding:8px 11px;margin-bottom:8px;line-height:1.6;"><span style="font-size:16px;flex-shrink:0;">👤</span><span>ここに送った内容は<b>担当パートナー（人）に届きます</b>。返信目安：2〜3営業日。すぐに調べたいこと・AIへの質問は <span class="lnote-lk" onclick="goSec(\'sec-sec\')">🤖 AI相談へ →</span></span></div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:8px;line-height:1.6;">数値の報告・質問・相談など、何でもお送りください。月次の売上などはメッセージで伝えるだけでOK（入力はパートナーが代行します）。</div>'
           +'<div id="chat-log" style="max-height:320px;overflow:auto;border:1px solid #EAF0F7;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;">読み込み中...</div>'
           +'<div style="display:flex;gap:8px;align-items:flex-end;">'
@@ -1603,8 +1606,9 @@
           +'</div>'
           +'<div id="market-open" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-sec"><div class="ph">パートナーAI（24時間いつでも相談できるAI）</div>'
-          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">担当パートナーへのメッセージとは別に、AIに24時間いつでも相談できます。日程・タスク整理、文章作成、調べ物、経営の壁打ちなどにどうぞ。</div>'
+        +'<div class="panel" id="sec-sec"><div class="ph">AI相談（24時間・自動応答）</div>'
+          +'<div style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:#5B4A0E;background:#FBF5E4;border:1px solid #EDE0BC;border-radius:9px;padding:8px 11px;margin-bottom:8px;line-height:1.6;"><span style="font-size:16px;flex-shrink:0;">🤖</span><span>ここは<b>AIによる自動応答</b>です。この内容は<b>担当パートナー（人）には届きません</b>。パートナーに伝えたいことは <span class="lnote-lk" onclick="goSec(\'sec-chat\')">👤 メッセージへ →</span></span></div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">日程・タスク整理、文章作成、調べ物、経営の壁打ちなど、24時間いつでもAIに相談できます。</div>'
           + secModesHtml()
           +'<div id="sec-log" style="max-height:300px;overflow:auto;border:1px solid #EAF0F7;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;"><div style="font-size:12px;color:#8AA0BE;">例：「来期の経営計画づくりの進め方を相談したい」「取引先へのお礼メールを作って」</div></div>'
           +'<div style="display:flex;gap:8px;align-items:flex-end;">'
@@ -4708,7 +4712,7 @@
   }
 
   function insPanelHtmlClient(custId){
-    return '<div class="ph" style="font-size:13px;margin-top:16px;">パートナーAIツール：保険必要保障額の試算</div>'
+    return '<div class="ph" style="font-size:13px;margin-top:16px;">AIツール：保険必要保障額の試算</div>'
       +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">この顧客向けに試算し、結果を顧客に共有（保存）できます（単位：万円）。</div>'
       +lnote('ins')
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
