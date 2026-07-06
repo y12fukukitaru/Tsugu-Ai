@@ -204,6 +204,8 @@
   .ch-chip{border:1px solid var(--line);background:var(--soft);color:var(--muted);font-size:11.5px;padding:5px 11px;border-radius:99px;cursor:pointer;font-family:inherit;}
   .ch-chip:hover{border-color:var(--blue);color:var(--blue);background:var(--card);}
   .catchip{font-size:11px;font-weight:600;color:var(--blue);background:rgba(44,110,189,.09);padding:4px 11px;border-radius:99px;flex-shrink:0;}
+  .cl-dot{flex-shrink:0;width:16px;height:16px;border-radius:99px;border:none;cursor:pointer;padding:0;margin-right:2px;}
+  .cl-dot:hover{transform:scale(1.2);}
   .lnote{font-size:11px;color:#9A7314;background:#FAF3E2;border:1px solid #F0E2C0;border-radius:9px;padding:9px 12px;margin:10px 0 4px;line-height:1.7;}
   body.dark .lnote{background:#2E2712;border-color:#4A3E1A;color:#E0B23E;}
   .lnote-lk{color:#2C6EBD;cursor:pointer;text-decoration:underline;white-space:nowrap;}
@@ -646,7 +648,7 @@
   function navItemsHtml(items, drawer){
     var h='';
     items.forEach(function(it,i){
-      var badge=(it[0]==='sec-chat'||it[0]==='sec-clients')?'<span id="nav-unread'+(drawer?'-d':'')+'" class="nbadge hidden">0</span>':'';
+      var badge=(it[0]==='sec-chat'||it[0]==='sec-clients')?'<span id="nav-unread'+(drawer?'-d':'')+'" class="nbadge hidden" title="顧客からの未読メッセージ件数">0</span>':'';
       h+='<div class="ni'+(i===0?' active':'')+'" data-sec="'+it[0]+'" onclick="navTo(\''+it[0]+'\')">'+it[1]+badge+'</div>';
     });
     return h;
@@ -666,7 +668,7 @@
   function navDefs(r){
     if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','AI相談']];
     if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信']];
-    return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
+    return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','シミュレーション'],['sec-sec','AI秘書']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
   function effectiveNav(r){
@@ -805,7 +807,7 @@
   }
   function niHtml(id,label,drawer){
     var ic=NAV_ICON[id]||'•';
-    var badge=(id==='sec-chat'||id==='sec-clients')?'<span id="nav-unread'+(drawer?'-d':'')+'" class="nbadge hidden">0</span>':'';
+    var badge=(id==='sec-chat'||id==='sec-clients')?'<span id="nav-unread'+(drawer?'-d':'')+'" class="nbadge hidden" title="顧客からの未読メッセージ件数">0</span>':'';
     return '<div class="ni" data-sec="'+id+'" onclick="navTo(\''+id+'\')"><span class="ni-ic">'+ic+'</span><span class="ni-tx">'+esc(label)+'</span>'+badge+'</div>';
   }
   function buildNav(r){
@@ -1654,6 +1656,13 @@
             +'<button class="sbtn" data-f="unread" onclick="setClFilter(\'unread\',this)">未読あり</button>'
             +'<button class="sbtn" data-f="share" onclick="setClFilter(\'share\',this)">共有あり</button>'
           +'</div>'
+          +'<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:2px 0 4px;" id="cl-colorbar">'
+            +'<span style="font-size:10.5px;color:#8AA0BE;">色ラベル：</span>'
+            +'<button class="sbtn on" onclick="setClColor(\'all\',this)">すべて</button>'
+            +CL_COLORS.map(function(c){ return '<button class="sbtn" onclick="setClColor(\''+c[0]+'\',this)" title="'+c[2]+'ラベルの顧客のみ表示"><span style="display:inline-block;width:10px;height:10px;border-radius:99px;background:'+c[1]+';vertical-align:-1px;"></span> '+c[2]+'</button>'; }).join('')
+            +'<button class="sbtn" onclick="setClColor(\'none\',this)">ラベルなし</button>'
+          +'</div>'
+          +'<div style="font-size:10.5px;color:#8AA0BE;margin:0 0 4px;">顧客カードの●をクリックすると色が切り替わります（なし→赤→黄→緑→青）。使い方は自由です。例：赤=至急、黄=対応中、緑=順調、青=新規。</div>'
           +'<div id="cl-list" style="margin-top:6px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-pdca">'
@@ -2130,6 +2139,43 @@
   // ===== パートナー：顧客管理（一覧・対応状況・未読を統合） =====
   var CL_CACHE={clients:[],cnt:{},lastMsg:{},unread:{}};
   var CL_FILTER='all';
+  // ===== 顧客カラーラベル（色分けで選別。使い方は自由）=====
+  var CL_COLORS=[['red','#E5484D','赤'],['gold','#C89620','黄'],['green','#1E6B45','緑'],['blue','#2C6EBD','青']];
+  var CL_LABELS={}; var CL_LABEL_DB=null; var CL_COLOR='all';
+  function clColorHex(c){ for(var i=0;i<CL_COLORS.length;i++){ if(CL_COLORS[i][0]===c) return CL_COLORS[i][1]; } return '#C6D2E2'; }
+  async function loadClientLabels(){
+    var p0=loadPrefs(); CL_LABELS=p0.clLabels||{};
+    if(!ME) return;
+    try{
+      var res=await sb.from('client_labels').select('customer_id,color').eq('consultant_id',ME);
+      if(res.error){ CL_LABEL_DB=false; return; }
+      CL_LABEL_DB=true;
+      (res.data||[]).forEach(function(r){ CL_LABELS[r.customer_id]=r.color; });
+      var p=loadPrefs(); p.clLabels=CL_LABELS; savePrefs(p);
+    }catch(e){ CL_LABEL_DB=false; }
+  }
+  async function cycleClientLabel(cid, ev){
+    if(ev){ ev.stopPropagation(); }
+    var seq=[null,'red','gold','green','blue'];
+    var cur=CL_LABELS[cid]||null;
+    var next=seq[(seq.indexOf(cur)+1)%seq.length];
+    if(next) CL_LABELS[cid]=next; else delete CL_LABELS[cid];
+    var p=loadPrefs(); p.clLabels=CL_LABELS; savePrefs(p);
+    renderClientList();
+    try{
+      if(ME && CL_LABEL_DB!==false){
+        if(next) await sb.from('client_labels').upsert({consultant_id:ME,customer_id:cid,color:next});
+        else await sb.from('client_labels').delete().eq('consultant_id',ME).eq('customer_id',cid);
+      }
+    }catch(e){}
+  }
+  function setClColor(c,el){
+    CL_COLOR=c;
+    var bar=$('cl-colorbar');
+    if(bar){ Array.prototype.forEach.call(bar.querySelectorAll('.sbtn'),function(b){ b.classList.remove('on'); }); }
+    if(el) el.classList.add('on');
+    renderClientList();
+  }
   function toggleAddClient(){ var d=$('cl-add'); if(d) d.classList.toggle('hidden'); }
   function setClFilter(f,el){ CL_FILTER=f; var bar=$('cl-filterbar'); if(bar){ Array.prototype.forEach.call(bar.querySelectorAll('.sbtn'),function(b){ b.classList.remove('on'); }); } if(el) el.classList.add('on'); renderClientList(); }
   async function loadClients(){
@@ -2199,6 +2245,7 @@
         +'<div class="sumchip" onclick="setClFilter(\'unread\',clFilterBtn(\'unread\'))"><div class="l">未読メッセージ</div><div class="v" style="color:'+(unreadN?'#A83030':'#1E6B45')+';">'+unreadN+'社</div></div>'
         +'<div class="sumchip" onclick="setClFilter(\'share\',clFilterBtn(\'share\'))"><div class="l">共有あり</div><div class="v" style="color:'+(sharesN?'#C89620':'#8AA0BE')+';">'+sharesN+'社</div></div>';
     }
+    await loadClientLabels();
     renderClientList();
     renderTodos();
   }
@@ -3092,6 +3139,9 @@
       if(q && (c.company_name||'').toLowerCase().indexOf(q)<0 && (c.email||'').toLowerCase().indexOf(q)<0) return false;
       if(CL_FILTER==='unread' && !CL_CACHE.unread[c.id]) return false;
       if(CL_FILTER==='share' && !CL_CACHE.cnt[c.id]) return false;
+      var lc=CL_LABELS[c.id]||null;
+      if(CL_COLOR==='none' && lc) return false;
+      if(CL_COLOR!=='all' && CL_COLOR!=='none' && lc!==CL_COLOR) return false;
       return true;
     });
     if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">該当する顧客がありません。検索条件・絞り込みを変更してください。</div>'; return; }
@@ -3115,8 +3165,9 @@
         var dt=(lm.created_at||'').replace('T',' ').slice(5,16);
         last='<div class="cl-last">💬 '+esc(who)+'（'+esc(dt)+'）：'+esc((lm.body||'').slice(0,60))+'</div>';
       }
-      h+='<div class="clcard'+(un?' unread':'')+'" onclick="viewClient(\''+c.id+'\',\''+escA(c.email)+'\',\''+escA(c.company_name||'')+'\')">'
-        +'<div class="cl-top"><span class="cl-nm">'+esc(c.company_name||c.email)+'</span>'
+      var lc=CL_LABELS[c.id]||null;
+      h+='<div class="clcard'+(un?' unread':'')+'"'+(lc?' style="border-left:4px solid '+clColorHex(lc)+';"':'')+' onclick="viewClient(\''+c.id+'\',\''+escA(c.email)+'\',\''+escA(c.company_name||'')+'\')">'
+        +'<div class="cl-top"><button class="cl-dot" style="background:'+(lc?clColorHex(lc):'#E4EAF2')+';'+(lc?'':'border:1.5px dashed #B8C6D8;')+'" onclick="cycleClientLabel(\''+c.id+'\',event)" title="クリックで色ラベルを切替（なし→赤→黄→緑→青）" aria-label="色ラベルを切替"></button><span class="cl-nm">'+esc(c.company_name||c.email)+'</span>'
         +(un?'<span class="nbadge" id="clb-'+c.id+'">未読 '+un+'</span>':'<span class="nbadge hidden" id="clb-'+c.id+'"></span>')
         +'<span style="margin-left:auto;color:#2C6EBD;font-size:11px;white-space:nowrap;">詳細 →</span></div>'
         +(c.company_name?'<div class="cl-em">'+esc(c.email)+'</div>':'')
@@ -5335,10 +5386,6 @@
       +'</div>'
       +'<div id="bp-msg" style="font-size:12px;margin-top:6px;"></div>'
       +lnote('bp')
-      +'<div class="ph" style="font-size:13px;margin-top:18px;">相続・贈与シミュレーター</div>'
-      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">この顧客の相続・贈与対策（暦年贈与・精算課税・二次相続まで）は専用ツールで試算できます。結果のPDFはメッセージで案内するか面談時にご提示ください。</div>'
-      +'<button class="btn2" style="background:#fff;color:#2C6EBD;border:1.5px solid #2C6EBD;" onclick="openSozoku()">シミュレーターを開く ↗</button>'
-      +lnote('sozoku')
       + insPanelHtmlClient(custId)
     +'</div>';
     // ---- タブ4：顧客からの共有 ----
