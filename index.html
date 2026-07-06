@@ -101,6 +101,11 @@
   .cl-side{flex:0 0 212px;position:sticky;top:62px;align-self:flex-start;background:#0F2035;border-radius:12px;padding:10px 8px;max-height:calc(94vh - 150px);overflow-y:auto;}
   #cl-main .ph{scroll-margin-top:66px;}
   .cl-side .sb-sec{font-size:10px;color:rgba(255,255,255,.45);font-weight:700;letter-spacing:.04em;margin:4px 8px 8px;cursor:default;padding:0;}
+  .cl-side .sb-sec.cl-gsec{cursor:pointer;display:flex;align-items:center;gap:6px;padding:5px 6px;margin:4px 4px 6px;border-radius:7px;}
+  .cl-side .sb-sec.cl-gsec:hover{color:rgba(255,255,255,.85);}
+  .cl-side .sb-sec.cl-gsec.on{color:#fff;}
+  .cl-side .sb-sec.cl-gsec.on::before{content:'';width:5px;height:5px;border-radius:99px;background:var(--sky);flex-shrink:0;}
+  .cl-side .sb-sec.cl-gsec:not(:first-child){margin-top:12px;border-top:1px solid rgba(255,255,255,.08);padding-top:11px;border-radius:0 0 7px 7px;}
   .cl-ni{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:9px;font-size:12.5px;color:rgba(255,255,255,.82);cursor:pointer;margin-bottom:2px;line-height:1.3;}
   .cl-ni:hover{background:rgba(255,255,255,.07);color:#fff;}
   .cl-ni.on{background:var(--blue);color:#fff;font-weight:600;}
@@ -413,7 +418,7 @@
 <!-- ===== CLIENT DETAIL MODAL ===== -->
 <div id="cl-modal" class="modal-back hidden" onclick="if(event.target===this)closeClientModal()">
   <div class="modal cl-wide">
-    <div class="modal-head"><button id="cl-menu-btn" class="cl-burger" onclick="clMenuToggle(event)" aria-label="ダッシュボードメニュー" title="ダッシュボードメニュー">☰</button><span id="cl-modal-title" class="mt">顧客の詳細</span><button class="modal-close" onclick="closeClientModal()" aria-label="閉じる">×</button><div id="cl-menu" class="cl-menu hidden"></div></div>
+    <div class="modal-head"><button id="cl-menu-btn" class="cl-burger" onclick="clMenuToggle(event)" aria-label="ダッシュボードメニュー" title="ダッシュボードメニュー">☰</button><span id="cl-modal-title" class="mt">顧客の詳細</span><button class="cl-burger" style="display:inline-flex;align-items:center;margin-left:auto;margin-right:4px;" onclick="openClSettings()" aria-label="カルテの表示設定" title="カルテの表示設定">⚙</button><button class="modal-close" onclick="closeClientModal()" aria-label="閉じる">×</button><div id="cl-menu" class="cl-menu hidden"></div></div>
     <div class="modal-body"><div id="cl-detail"></div></div>
   </div>
 </div>
@@ -4938,53 +4943,112 @@
   function clNi(id, icon, label){
     return '<div class="cl-ni" id="ni-'+id+'" onclick="clNav(\''+id+'\',this)"><span class="ci">'+icon+'</span><span>'+label+'</span></div>';
   }
+  // ===== カルテ内ダッシュボードナビ =====
+  // [カテゴリー名, 対応するラッパーID, 項目[id, アイコン, ラベル]]
+  var CL_NAV=[
+    ['やり取り',   'ctab-msg',    [['cs-company','🏢','会社情報'],['cs-msg','💬','メッセージ・提案']]],
+    ['財務・資金', 'ctab-fin',    [['cs-fin','📊','月次財務メモ'],['cs-pay','📅','支払予定'],['cs-cash','💰','資金繰り診断'],['cs-fund','🏦','資金調達ロードマップ'],['cs-market','💹','Tsugu投資・融資・M&A'],['cs-act','✅','課題・アクション']]],
+    ['AI・ツール', 'ctab-tools',  [['cs-ai','🤖','AI自動化診断'],['cs-loan','💴','融資ナビ'],['cs-meet','📝','議事録'],['cs-mna','🤝','M&A提案'],['cs-bp','📄','事業計画書']]],
+    ['共有',       'ctab-shared', [['cs-shared','📥','顧客からの共有']]]
+  ];
+  var CL_REQUIRED='cs-msg'; // メッセージは非表示不可
+  var CL_CAT=null;
+  function clAllItems(){ var o=[]; CL_NAV.forEach(function(g){ g[2].forEach(function(it){ o.push(it); }); }); return o; }
+  function ensureClConf(p){
+    p.clnav=p.clnav||{order:clAllItems().map(function(x){return x[0];}),hidden:[]};
+    var all=clAllItems().map(function(x){return x[0];});
+    all.forEach(function(id){ if(p.clnav.order.indexOf(id)<0) p.clnav.order.push(id); });
+    p.clnav.order=p.clnav.order.filter(function(id){ return all.indexOf(id)>=0; });
+    p.clnav.hidden=(p.clnav.hidden||[]).filter(function(id){ return all.indexOf(id)>=0 && id!==CL_REQUIRED; });
+    return p;
+  }
+  // 設定（並び順・非表示）を反映したカテゴリー構成を返す
+  function effectiveClNav(){
+    var p=ensureClConf(loadPrefs()), ord=p.clnav.order, hid=p.clnav.hidden;
+    return CL_NAV.map(function(g){
+      var items=g[2].filter(function(it){ return hid.indexOf(it[0])<0; })
+        .sort(function(a,b){ return ord.indexOf(a[0])-ord.indexOf(b[0]); });
+      return [g[0], g[1], items];
+    }).filter(function(g){ return g[2].length; });
+  }
+  function clCatOf(id){
+    for(var i=0;i<CL_NAV.length;i++){ if(CL_NAV[i][2].some(function(it){return it[0]===id;})) return CL_NAV[i][0]; }
+    return null;
+  }
+  function clWrapOf(cat){ for(var i=0;i<CL_NAV.length;i++){ if(CL_NAV[i][0]===cat) return CL_NAV[i][1]; } return null; }
+  function clSideHtml(){
+    var h='<div class="cl-side" id="cl-side">';
+    effectiveClNav().forEach(function(g){
+      h+='<div class="sb-sec cl-gsec" data-cat="'+escA(g[0])+'" onclick="clCatTo(\''+escA(g[0])+'\')" title="このカテゴリーを表示">'+esc(g[0])+'</div>';
+      g[2].forEach(function(it){ h+=clNi(it[0],it[1],it[2]); });
+    });
+    return h+'</div>';
+  }
+  // 各セクション（見出し＋続く要素）にセクションIDを割り当てる（非表示設定用）
+  function clTagSecs(){
+    CL_NAV.forEach(function(g){
+      var wrap=$(g[1]); if(!wrap) return;
+      var cur=null;
+      Array.prototype.forEach.call(wrap.children,function(el){
+        if(el.id && clCatOf(el.id)) cur=el.id;
+        if(cur) el.setAttribute('data-clsec',cur);
+      });
+    });
+  }
+  // カテゴリー表示＋項目非表示を反映
+  function clApplyVisibility(){
+    var eff=effectiveClNav();
+    if(!eff.length) return;
+    if(!CL_CAT || !eff.some(function(g){return g[0]===CL_CAT;})) CL_CAT=eff[0][0];
+    var hid=ensureClConf(loadPrefs()).clnav.hidden;
+    CL_NAV.forEach(function(g){
+      var wrap=$(g[1]); if(!wrap) return;
+      var catOn=(g[0]===CL_CAT) && eff.some(function(x){return x[0]===g[0];});
+      wrap.classList.toggle('cat-hidden', !catOn);
+      if(catOn){
+        Array.prototype.forEach.call(wrap.children,function(el){
+          var s=el.getAttribute('data-clsec');
+          el.classList.toggle('cat-hidden', !!s && hid.indexOf(s)>=0);
+        });
+      }
+    });
+    var side=$('cl-side');
+    if(side){ Array.prototype.forEach.call(side.querySelectorAll('.cl-gsec'),function(x){ x.classList.toggle('on', x.getAttribute('data-cat')===CL_CAT); }); }
+  }
+  function clCatTo(cat){
+    CL_CAT=cat;
+    clApplyVisibility();
+    var m=$('cl-modal'); if(m) m.scrollTop=0;
+    var eff=effectiveClNav(), first=null;
+    eff.forEach(function(g){ if(g[0]===cat&&g[2].length) first=first||g[2][0][0]; });
+    if(first) clSpySet(first);
+  }
+  function clInitCats(){
+    clTagSecs();
+    CL_CAT=null;
+    clApplyVisibility();
+    var eff=effectiveClNav();
+    if(eff.length&&eff[0][2].length) clSpySet(eff[0][2][0][0]);
+  }
+  function clRebuild(){
+    var old=$('cl-side');
+    if(old){ var tmp=document.createElement('div'); tmp.innerHTML=clSideHtml(); old.parentNode.replaceChild(tmp.firstChild, old); }
+    clApplyVisibility();
+  }
   function clNav(id, el){
+    var c=clCatOf(id);
+    if(c && c!==CL_CAT){ CL_CAT=c; clApplyVisibility(); }
     var t=$(id); if(!t)return;
     t.scrollIntoView({behavior:'smooth',block:'start'});
     clSpySet(id);
   }
-  function clSpySet(id){
-    var side=$('cl-side'); if(!side)return;
-    Array.prototype.forEach.call(side.querySelectorAll('.cl-ni'),function(n){ n.classList.toggle('on', n.id==='ni-'+id); });
-  }
-  var CL_SPY_IDS=['cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-bp','cs-shared'];
-  function clSpyInit(){
-    clSpySet('cs-company');
-    var scroller=document.querySelector('#cl-modal .modal') ? $('cl-modal') : null;
-    if(!scroller)return;
-    var ticking=false;
-    scroller.onscroll=function(){
-      if(ticking)return; ticking=true;
-      requestAnimationFrame(function(){
-        ticking=false;
-        var top=scroller.getBoundingClientRect().top, best='cs-msg', bestd=1e9;
-        CL_SPY_IDS.forEach(function(id){
-          var e=$(id); if(!e)return;
-          var d=Math.abs(e.getBoundingClientRect().top-top-80);
-          if(d<bestd){ bestd=d; best=id; }
-        });
-        clSpySet(best);
-      });
-    };
-  }
-  // ===== カルテ内ダッシュボードナビ（左サイド＆ヘッダーのハンバーガーで共用） =====
-  var CL_NAV=[
-    ['やり取り',   [['cs-company','🏢','会社情報'],['cs-msg','💬','メッセージ・提案']]],
-    ['財務・資金', [['cs-fin','📊','月次財務メモ'],['cs-pay','📅','支払予定'],['cs-cash','💰','資金繰り診断'],['cs-fund','🏦','資金調達ロードマップ'],['cs-market','💹','Tsugu投資・融資・M&A'],['cs-act','✅','課題・アクション']]],
-    ['AI・ツール', [['cs-ai','🤖','AI自動化診断'],['cs-loan','💴','融資ナビ'],['cs-meet','📝','議事録'],['cs-mna','🤝','M&A提案'],['cs-bp','📄','事業計画書']]],
-    ['共有',       [['cs-shared','📥','顧客からの共有']]]
-  ];
-  function clSideHtml(){
-    var h='<div class="cl-side" id="cl-side">';
-    CL_NAV.forEach(function(g){ h+='<div class="sb-sec">'+g[0]+'</div>'; g[1].forEach(function(it){ h+=clNi(it[0],it[1],it[2]); }); });
-    return h+'</div>';
-  }
   function clMenuHtml(){
     var h='';
-    CL_NAV.forEach(function(g){
-      h+='<div class="clmenu-sec">'+g[0]+'</div>';
-      g[1].forEach(function(it){ h+='<div class="clmenu-i" onclick="clMenuGo(\''+it[0]+'\')"><span class="ci">'+it[1]+'</span><span>'+it[2]+'</span></div>'; });
+    effectiveClNav().forEach(function(g){
+      h+='<div class="clmenu-sec" onclick="clMenuClose();clCatTo(\''+escA(g[0])+'\')" style="cursor:pointer;">'+esc(g[0])+'</div>';
+      g[2].forEach(function(it){ h+='<div class="clmenu-i" onclick="clMenuGo(\''+it[0]+'\')"><span class="ci">'+it[1]+'</span><span>'+it[2]+'</span></div>'; });
     });
+    h+='<div class="clmenu-i" onclick="clMenuClose();openClSettings()" style="border-top:1px solid var(--softline);margin-top:4px;padding-top:10px;"><span class="ci">⚙️</span><span>カルテの表示設定</span></div>';
     return h;
   }
   function clMenuToggle(e){
@@ -5001,6 +5065,87 @@
     if(d && !d.contains(ev.target) && (!b || !b.contains(ev.target))) clMenuClose();
   }
   function clMenuGo(id){ clMenuClose(); clNav(id); }
+  // ===== カルテの表示設定（並び替え・非表示）=====
+  function openClSettings(){
+    var m=$('settings-modal'); if(!m)return;
+    m.classList.remove('hidden');
+    renderClSettings();
+  }
+  function renderClSettings(){
+    var box=$('settings-body'); if(!box)return;
+    var p=ensureClConf(loadPrefs());
+    var ord=p.clnav.order, hid=p.clnav.hidden;
+    var meta={}; clAllItems().forEach(function(it){ meta[it[0]]={icon:it[1],label:it[2]}; });
+    var h='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:0 0 4px;">カルテ（顧客の詳細）のメニュー</div>'
+      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:10px;line-height:1.6;">▲▼で並び替え、目のボタンで表示／非表示を切り替えます。同じカテゴリーの中で順番が入れ替わります。この設定は全顧客のカルテに共通で、この端末・ログイン中の方ごとに保存されます。</div>';
+    CL_NAV.forEach(function(g){
+      h+='<div style="font-size:11px;font-weight:700;color:#8AA0BE;letter-spacing:.04em;margin:12px 0 6px;">'+esc(g[0])+'</div>';
+      var items=g[2].slice().sort(function(a,b){ return ord.indexOf(a[0])-ord.indexOf(b[0]); });
+      items.forEach(function(it,idx){
+        var id=it[0], hidden=hid.indexOf(id)>=0, req=(id===CL_REQUIRED);
+        h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:6px;border:1px solid var(--softline);border-radius:9px;background:var(--soft);">'
+          +'<span style="font-size:14px;">'+it[1]+'</span>'
+          +'<span style="flex:1;font-size:13px;'+(hidden?'color:#A8B6C8;text-decoration:line-through;':'')+'">'+esc(it[2])+(req?'<span style="font-size:10px;color:#8AA0BE;margin-left:6px;">（常時表示）</span>':'')+'</span>'
+          +'<button class="ghost" style="font-size:14px;padding:3px 7px;'+(idx===0?'opacity:.3;pointer-events:none;':'')+'" onclick="clMoveNav(\''+id+'\',-1)" aria-label="上へ">▲</button>'
+          +'<button class="ghost" style="font-size:14px;padding:3px 7px;'+(idx===items.length-1?'opacity:.3;pointer-events:none;':'')+'" onclick="clMoveNav(\''+id+'\',1)" aria-label="下へ">▼</button>'
+          +'<button class="ghost" style="font-size:14px;padding:3px 7px;'+(req?'opacity:.3;pointer-events:none;':'')+'" onclick="clToggleHidden(\''+id+'\')" aria-label="表示切替">'+(hidden?'🚫':'👁')+'</button>'
+        +'</div>';
+      });
+    });
+    h+='<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">'
+      +'<button class="ghost" style="font-size:12px;" onclick="clResetSettings()">初期設定に戻す</button>'
+      +'<span style="flex:1;"></span>'
+      +'<button class="btn2" onclick="closeSettings()">閉じる</button></div>';
+    box.innerHTML=h;
+  }
+  function clMoveNav(id,dir){
+    var p=ensureClConf(loadPrefs());
+    // 同一カテゴリー内でのみ入れ替える
+    var group=null; CL_NAV.forEach(function(g){ if(g[2].some(function(it){return it[0]===id;})) group=g; });
+    if(!group) return;
+    var gids=group[2].map(function(it){return it[0];});
+    var sorted=gids.slice().sort(function(a,b){ return p.clnav.order.indexOf(a)-p.clnav.order.indexOf(b); });
+    var i=sorted.indexOf(id), j=i+dir;
+    if(j<0||j>=sorted.length) return;
+    var oi=p.clnav.order.indexOf(sorted[i]), oj=p.clnav.order.indexOf(sorted[j]);
+    p.clnav.order[oi]=sorted[j]; p.clnav.order[oj]=sorted[i];
+    savePrefs(p); renderClSettings(); clRebuild();
+  }
+  function clToggleHidden(id){
+    if(id===CL_REQUIRED) return;
+    var p=ensureClConf(loadPrefs());
+    var i=p.clnav.hidden.indexOf(id);
+    if(i>=0) p.clnav.hidden.splice(i,1); else p.clnav.hidden.push(id);
+    savePrefs(p); renderClSettings(); clRebuild();
+  }
+  function clResetSettings(){
+    var p=loadPrefs(); delete p.clnav; savePrefs(p); renderClSettings(); clRebuild();
+  }
+  function clSpySet(id){
+    var side=$('cl-side'); if(!side)return;
+    Array.prototype.forEach.call(side.querySelectorAll('.cl-ni'),function(n){ n.classList.toggle('on', n.id==='ni-'+id); });
+  }
+  var CL_SPY_IDS=['cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-bp','cs-shared'];
+  function clSpyInit(){
+    clSpySet('cs-company');
+    var scroller=document.querySelector('#cl-modal .modal') ? $('cl-modal') : null;
+    if(!scroller)return;
+    var ticking=false;
+    scroller.onscroll=function(){
+      if(ticking)return; ticking=true;
+      requestAnimationFrame(function(){
+        ticking=false;
+        var top=scroller.getBoundingClientRect().top, best=null, bestd=1e9;
+        CL_SPY_IDS.forEach(function(id){
+          var e=$(id); if(!e||e.offsetParent===null)return;
+          var d=Math.abs(e.getBoundingClientRect().top-top-80);
+          if(d<bestd){ bestd=d; best=id; }
+        });
+        if(best) clSpySet(best);
+      });
+    };
+  }
+  // ===== カルテ内ダッシュボードナビ（左サイド＆ヘッダーのハンバーガーで共用）は上部で定義 =====
   async function viewClient(custId, email, company){
     CURRENT_CLIENT={ id:custId, email:email, company:company||'' };
     var box=$('cl-detail'); if(!box)return;
@@ -5208,6 +5353,7 @@
       +'<div id="cl-diag" style="margin-top:6px;">読み込み中...</div>'
     +'</div>';
     box.innerHTML=head+'<div class="cl-shell">'+side+'<div class="cl-main" id="cl-main">'+tabMsg+tabFin+tabTools+tabShared+'</div></div>';
+    clInitCats();
     clSpyInit();
     var f=await sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false});
     var fb=$('cl-fin'); if(fb) fb.innerHTML = f.error?('<div style="color:#A83030;font-size:12px;">'+esc(f.error.message)+'</div>'):finTable(f.data,true,'cl');
