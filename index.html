@@ -2186,11 +2186,13 @@
     var ai=await sb.from('automation_interests').select('customer_id,category');
     var ins=await sb.from('insurance_results').select('customer_id');
     var ch=await sb.from('chat_messages').select('customer_id,sender_role,created_at,body').order('created_at',{ascending:false}).limit(500);
+    MY_CLIENT_IDS={}; clients.forEach(function(c){ MY_CLIENT_IDS[c.id]=1; });
     var cnt={}, lastMsg={}, unread={};
     function bump(id,k){ if(!cnt[id])cnt[id]={auto:0,mna:0,ins:0}; cnt[id][k]++; }
     (ai.data||[]).forEach(function(r){ bump(r.customer_id, r.category==='mna'?'mna':'auto'); });
     (ins.data||[]).forEach(function(r){ bump(r.customer_id,'ins'); });
     if(!ch.error){ (ch.data||[]).forEach(function(m){
+      if(!MY_CLIENT_IDS[m.customer_id]) return; // 担当外（担当解除済み等）のメッセージは数えない
       if(!lastMsg[m.customer_id]) lastMsg[m.customer_id]=m;
       if(m.sender_role==='customer' && m.created_at>getLastRead(m.customer_id)) unread[m.customer_id]=(unread[m.customer_id]||0)+1;
     }); }
@@ -4469,6 +4471,7 @@
   // ---- 顧客⇔パートナー メッセージ ----
   // ===== メッセージ通知（未読バッジ） =====
   var UNREAD={total:0, perClient:{}};
+  var MY_CLIENT_IDS=null; // 担当顧客IDのセット（未読集計を担当顧客に限定するため）
   var NOTIF_TIMER=null;
   var BASE_TITLE=document.title;
   function lastReadKey(custId){ return 'tsugu_lastread_'+(ME||'')+(custId?('_'+custId):''); }
@@ -4666,8 +4669,16 @@
     } else if(eff==='consultant'){
       var ch=await sb.from('chat_messages').select('customer_id,sender_role,created_at').eq('sender_role','customer').order('created_at',{ascending:false}).limit(500);
       if(ch.error) return;
+      // 担当顧客のIDセットが未取得なら取得（担当外の古いメッセージを数えないため）
+      if(!MY_CLIENT_IDS){
+        try{ var pr=await sb.from('profiles').select('id').eq('consultant_id',ME);
+          if(!pr.error){ MY_CLIENT_IDS={}; (pr.data||[]).forEach(function(x){ MY_CLIENT_IDS[x.id]=1; }); } }catch(e){}
+      }
       var unread={};
-      (ch.data||[]).forEach(function(m){ if(m.created_at>getLastRead(m.customer_id)) unread[m.customer_id]=(unread[m.customer_id]||0)+1; });
+      (ch.data||[]).forEach(function(m){
+        if(MY_CLIENT_IDS && !MY_CLIENT_IDS[m.customer_id]) return;
+        if(m.created_at>getLastRead(m.customer_id)) unread[m.customer_id]=(unread[m.customer_id]||0)+1;
+      });
       var total=0; Object.keys(unread).forEach(function(id){ total+=unread[id]; });
       UNREAD.total=total; UNREAD.perClient=unread; CL_CACHE.unread=unread;
       applyNotifBadges();
