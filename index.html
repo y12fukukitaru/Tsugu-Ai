@@ -524,7 +524,9 @@
 <script>
   const SUPABASE_URL = 'https://yaururnkxjhtiowkpvyu.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_-k-OPNThdG0uElX0h36eug_oGaCNlL4';
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true } });
+  // Phase 42：認証フローを implicit → PKCE に変更（トークンがURLに露出せず、履歴・リファラに残らない）
+  // 注意：PKCEでは、パスワード再設定メールのリンクは「再設定を申請したのと同じブラウザ」で開く必要があります
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { flowType: 'pkce', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true } });
 
   let ME = null, MYROLE = 'customer', CURRENT_CLIENT = null;
   var VIEWAS = 'admin';
@@ -2187,6 +2189,7 @@
     var ins=await sb.from('insurance_results').select('customer_id');
     var ch=await sb.from('chat_messages').select('customer_id,sender_role,created_at,body').order('created_at',{ascending:false}).limit(500);
     MY_CLIENT_IDS={}; clients.forEach(function(c){ MY_CLIENT_IDS[c.id]=1; });
+    await loadReads(); // 他端末で読んだ既読を反映してから未読を数える（Phase 42）
     var cnt={}, lastMsg={}, unread={};
     function bump(id,k){ if(!cnt[id])cnt[id]={auto:0,mna:0,ins:0}; cnt[id][k]++; }
     (ai.data||[]).forEach(function(r){ bump(r.customer_id, r.category==='mna'?'mna':'auto'); });
@@ -4474,9 +4477,45 @@
   var MY_CLIENT_IDS=null; // 担当顧客IDのセット（未読集計を担当顧客に限定するため）
   var NOTIF_TIMER=null;
   var BASE_TITLE=document.title;
+  // ===== 既読の端末間同期（Phase 42） =====
+  // 既読日時は Supabase（chat_reads テーブル）に保存し、スマホ⇔PCで同期します。
+  // localStorage は「サーバー未設定時・オフライン時の控え」として併用（両方のうち新しい方を採用）。
+  // chat_reads 未作成でもエラーは出さず、従来どおり端末ごとの既読として動作します（自動フォールバック）。
+  var READS={};             // スレッドID（顧客ID）→ 既読ISO日時
+  var READS_DISABLED=false; // テーブル未作成などでサーバー同期を停止中か
+  function readThreadId(custId){ return custId||ME; } // 顧客本人のスレッドは自分のIDがキー
   function lastReadKey(custId){ return 'tsugu_lastread_'+(ME||'')+(custId?('_'+custId):''); }
-  function getLastRead(custId){ try{ return localStorage.getItem(lastReadKey(custId))||'1970-01-01T00:00:00Z'; }catch(e){ return '1970-01-01T00:00:00Z'; } }
-  function markRead(custId){ try{ localStorage.setItem(lastReadKey(custId), new Date().toISOString()); }catch(e){} }
+  function getLastRead(custId){
+    var local='1970-01-01T00:00:00Z';
+    try{ local=localStorage.getItem(lastReadKey(custId))||local; }catch(e){}
+    var remote=READS[readThreadId(custId)]||'1970-01-01T00:00:00Z';
+    return remote>local?remote:local;
+  }
+  async function loadReads(){
+    if(READS_DISABLED||!ME) return;
+    try{
+      var res=await sb.from('chat_reads').select('customer_id,last_read_at').eq('user_id',ME);
+      if(res.error){
+        if(/does not exist|schema cache|relation/i.test(res.error.message)) READS_DISABLED=true; // SQL未実施 → 端末ローカル動作に切替
+        return;
+      }
+      (res.data||[]).forEach(function(r){
+        if(r.last_read_at && (!READS[r.customer_id] || r.last_read_at>READS[r.customer_id])) READS[r.customer_id]=r.last_read_at;
+      });
+    }catch(e){}
+  }
+  function markRead(custId){
+    var iso=new Date().toISOString(), tid=readThreadId(custId);
+    try{ localStorage.setItem(lastReadKey(custId), iso); }catch(e){}
+    READS[tid]=iso;
+    if(READS_DISABLED||!ME||!tid) return;
+    // サーバーへは投げっぱなしで保存（画面は待たせない）。失敗してもローカル既読は維持される
+    try{
+      sb.from('chat_reads').upsert({ user_id:ME, customer_id:tid, last_read_at:iso }).then(function(res){
+        if(res.error && /does not exist|schema cache|relation/i.test(res.error.message)) READS_DISABLED=true;
+      });
+    }catch(e){}
+  }
   function applyNotifBadges(){
     var n=UNREAD.total||0;
     var bn=$('bell-n');
@@ -4659,6 +4698,7 @@
   }
   async function refreshNotifs(){
     if(!ME) return;
+    await loadReads(); // 他端末で読んだ既読を取り込んでから未読を数える（Phase 42）
     var eff=window.__eff||'customer';
     if(eff==='customer'){
       var res=await sb.from('chat_messages').select('created_at').eq('customer_id',ME).eq('sender_role','consultant').gt('created_at',getLastRead()).limit(100);
