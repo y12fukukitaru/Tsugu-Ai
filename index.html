@@ -4768,70 +4768,100 @@
   }
 
   function insPanelHtmlClient(custId){
-    return '<div class="ph" style="font-size:13px;margin-top:16px;">AIツール：保険必要保障額の試算</div>'
-      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">この顧客向けに試算し、結果を顧客に共有（保存）できます（単位：万円）。</div>'
+    var box0='border:1px solid #E5EEF8;border-radius:11px;padding:12px 14px;margin-top:12px;background:#FBFCFE;';
+    return '<div class="ph" id="cs-ins" style="font-size:13px;margin-top:16px;">保険試算（必要保障額・3つの計算）</div>'
+      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">①〜③はそれぞれ単独で計算できます（単位：万円）。実行した計算だけをまとめて顧客に共有（保存）できます。</div>'
       +lnote('ins')
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
         +'<div><label class="fl">法人実効税率(%)</label><select id="ci-tax-preset" class="inp2" onchange="if(this.value){document.getElementById(\'ci-tax-rate\').value=this.value;}">'+taxPresetOptions()+'</select></div>'
         +'<div><label class="fl">実効税率(%)</label><input id="ci-tax-rate" type="number" class="inp2" value="34"></div>'
+        +'<div style="font-size:10.5px;color:#8AA0BE;padding-bottom:9px;">※ ①と③の計算に使います</div>'
       +'</div>'
-      +'<div style="font-weight:600;font-size:12px;color:#1C3557;margin:12px 0 6px;">事業保障（経営者の万一）</div>'
-      +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
-        +'<div><label class="fl">借入金・負債残高</label><input id="ci-bp-debt" type="number" class="inp2" placeholder="例 8000"></div>'
-        +'<div><label class="fl">年間固定費</label><input id="ci-bp-fixed" type="number" class="inp2" placeholder="例 6000"></div>'
-        +'<div><label class="fl">立て直し月数</label><input id="ci-bp-months" type="number" class="inp2" value="12"></div>'
-        +'<div><label class="fl">現預金</label><input id="ci-bp-cash" type="number" class="inp2" placeholder="例 2000"></div>'
-        +'<div><label class="fl">既存の法人保険</label><input id="ci-bp-exist" type="number" class="inp2" placeholder="例 1000"></div>'
+      +'<div style="'+box0+'">'
+        +'<div style="font-weight:700;font-size:12.5px;color:#1C3557;margin-bottom:6px;">① 生命保険：事業保障（経営者の万一）</div>'
+        +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+          +'<div><label class="fl">借入金・負債残高</label><input id="ci-bp-debt" type="number" class="inp2" placeholder="例 8000"></div>'
+          +'<div><label class="fl">年間固定費</label><input id="ci-bp-fixed" type="number" class="inp2" placeholder="例 6000"></div>'
+          +'<div><label class="fl">立て直し月数</label><input id="ci-bp-months" type="number" class="inp2" value="12"></div>'
+          +'<div><label class="fl">現預金</label><input id="ci-bp-cash" type="number" class="inp2" placeholder="例 2000"></div>'
+          +'<div><label class="fl">既存の法人保険</label><input id="ci-bp-exist" type="number" class="inp2" placeholder="例 1000"></div>'
+        +'</div>'
+        +'<button class="btn2" style="margin-top:10px;" onclick="insCalcBp()">① 事業保障を計算</button>'
+        +'<div id="ci-r-bp" style="margin-top:10px;"></div>'
       +'</div>'
-      +'<div style="font-weight:600;font-size:12px;color:#1C3557;margin:12px 0 6px;">損害保険（業種診断）</div>'
-      +'<div><label class="fl">業種</label><select id="ci-pc-industry" class="inp2" style="width:auto;min-width:200px;">'+industryOptions()+'</select></div>'
-      +'<div style="font-weight:600;font-size:12px;color:#1C3557;margin:12px 0 6px;">養老保険（福利厚生プラン／向こう5年）</div>'
-      +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
-        +'<div><label class="fl">1人あたり死亡退職金(メモ)</label><input id="ci-ec-death" type="number" class="inp2" placeholder="例 500"></div>'
-        +'<div><label class="fl">加入人数(人)</label><input id="ci-ec-emp" type="number" class="inp2" placeholder="例 10"></div>'
-        +'<div><label class="fl">全体の年間保険料(万円)</label><input id="ci-ec-total" type="number" class="inp2" placeholder="例 300"></div>'
+      +'<div style="'+box0+'">'
+        +'<div style="font-weight:700;font-size:12.5px;color:#1C3557;margin-bottom:6px;">② 損害保険：業種リスク診断</div>'
+        +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+          +'<div><label class="fl">業種</label><select id="ci-pc-industry" class="inp2" style="width:auto;min-width:200px;">'+industryOptions()+'</select></div>'
+          +'<button class="btn2" onclick="insCalcPc()">② 損害保険を診断</button>'
+        +'</div>'
+        +'<div id="ci-r-pc" style="margin-top:10px;"></div>'
       +'</div>'
-      +'<button class="btn2" style="margin-top:14px;" onclick="insCalcFor(\''+custId+'\')">計算する</button>'
-      +'<div id="ci-ins-result" style="margin-top:12px;"></div>';
+      +'<div style="'+box0+'">'
+        +'<div style="font-weight:700;font-size:12.5px;color:#1C3557;margin-bottom:6px;">③ 養老保険：福利厚生プラン（向こう5年）</div>'
+        +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+          +'<div><label class="fl">1人あたり死亡退職金(メモ)</label><input id="ci-ec-death" type="number" class="inp2" placeholder="例 500"></div>'
+          +'<div><label class="fl">加入人数(人)</label><input id="ci-ec-emp" type="number" class="inp2" placeholder="例 10"></div>'
+          +'<div><label class="fl">全体の年間保険料(万円)</label><input id="ci-ec-total" type="number" class="inp2" placeholder="例 300"></div>'
+        +'</div>'
+        +'<button class="btn2" style="margin-top:10px;" onclick="insCalcEc()">③ 養老保険を計算</button>'
+        +'<div id="ci-r-ec" style="margin-top:10px;"></div>'
+      +'</div>'
+      +'<div style="display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap;">'
+        +'<button class="btn2" onclick="saveInsFor(\''+custId+'\')">実行した試算をまとめて顧客に共有（保存）</button>'
+        +'<div id="ci-ins-msg" style="font-size:12px;"></div>'
+      +'</div>';
   }
-  function insCalcFor(custId){
-    var box=$('ci-ins-result'); if(!box)return;
-    var rate=num('ci-tax-rate')/100; if(rate<=0) rate=0.34;
+  function ciRate(){ var r=num('ci-tax-rate')/100; if(r<=0) r=0.34; return r; }
+  function ciRow(l,v,c){ return '<div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0;border-top:1px solid #EAF0F7;"><span style="color:#4A6080;">'+l+'</span><span style="color:'+(c||'#131E2E')+';font-weight:600;text-align:right;">'+v+'</span></div>'; }
+  function insCalcBp(){
+    var box=$('ci-r-bp'); if(!box)return;
+    var rate=ciRate();
     var debt=num('ci-bp-debt'), fixed=num('ci-bp-fixed'), months=num('ci-bp-months');
-    var bpNeed=debt + fixed*(months/12);
-    var bpReady=num('ci-bp-cash')+num('ci-bp-exist');
-    var bpGap=Math.max(0, bpNeed - bpReady);
-    var bpGapTax=(rate<1)? bpGap/(1-rate) : bpGap;
-    var emp=num('ci-ec-emp'), premTotal=num('ci-ec-total'), death=num('ci-ec-death');
-    var loss=premTotal*0.5, taxSave=loss*rate, taxSave5=taxSave*5, asset5=premTotal*0.5*5;
+    var need=debt + fixed*(months/12);
+    var ready=num('ci-bp-cash')+num('ci-bp-exist');
+    var gap=Math.max(0, need - ready);
+    var gapTax=(rate<1)? gap/(1-rate) : gap;
+    box.innerHTML='<div style="border:1px solid #D0DCF0;border-radius:11px;padding:12px 14px;background:#fff;">'
+      +ciRow('必要額（負債＋固定費×月数）', yen(need))
+      +ciRow('準備済み（現預金＋既存保険）', yen(ready))
+      +ciRow('法人税を考慮した必要保障額', yen(gapTax), '#2C6EBD')
+    +'</div>';
+    window.__ciParts=window.__ciParts||{};
+    window.__ciParts.bp='[事業保障] 実効税率'+(rate*100).toFixed(0)+'% / 法人税考慮後の必要保障額'+yen(gapTax)+'（必要額'+yen(need)+'／準備済み'+yen(ready)+'）';
+  }
+  function insCalcPc(){
+    var box=$('ci-r-pc'); if(!box)return;
     var ind=($('ci-pc-industry')&&$('ci-pc-industry').value)||'';
-    function rowL(l,v,c){ return '<div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0;border-top:1px solid #EAF0F7;"><span style="color:#4A6080;">'+l+'</span><span style="color:'+(c||'#131E2E')+';font-weight:600;text-align:right;">'+v+'</span></div>'; }
-    function sec(t){ return '<div style="font-weight:600;font-size:13px;color:#1C3557;margin:12px 0 2px;">'+t+'</div>'; }
-    var h='<div style="border:1px solid #D0DCF0;border-radius:11px;padding:16px;">'
-      +sec('生命保険（事業保障）／実効税率 '+(rate*100).toFixed(0)+'%')
-      +rowL('必要額（負債＋固定費×月数）', yen(bpNeed))
-      +rowL('準備済み（現預金＋既存保険）', yen(bpReady))
-      +rowL('法人税を考慮した必要保障額', yen(bpGapTax), '#2C6EBD')
-      +sec('養老保険（福利厚生プラン／向こう5年）')
-      +rowL('加入人数', emp+' 人')
-      +rowL('年間保険料総額', yen(premTotal))
-      +rowL('年間の節税（繰延べ）目安', yen(taxSave), '#1E6B45')
-      +rowL('5年間の累計節税目安', yen(taxSave5), '#1E6B45')
-      +rowL('5年後の積立累計（退職金原資の目安）', yen(asset5))
-      +'</div>'
-      + pcDiagnosis(ind);
-    window.__ciSummary='【パートナー試算】実効税率'+(rate*100).toFixed(0)+'%'
-      +'\n[事業保障] 法人税考慮後の必要保障額'+yen(bpGapTax)+'（必要額'+yen(bpNeed)+'／準備済み'+yen(bpReady)+'）'
-      +'\n[養老保険(5年)] 加入'+emp+'人 / 年間保険料'+yen(premTotal)+' / 年間節税'+yen(taxSave)+' / 5年累計節税'+yen(taxSave5)+' / 5年積立'+yen(asset5)
-      +'\n[損害保険] 業種: '+(ind||'未選択');
-    h+='<button class="btn2" style="margin-top:10px;" onclick="saveInsFor(\''+custId+'\')">この試算を顧客に共有（保存）</button><div id="ci-ins-msg" style="font-size:12px;margin-top:8px;"></div>';
-    box.innerHTML=h;
+    if(!ind){ box.innerHTML='<div style="font-size:12px;color:#A83030;">業種を選択してから診断してください。</div>'; return; }
+    box.innerHTML=pcDiagnosis(ind);
+    window.__ciParts=window.__ciParts||{};
+    window.__ciParts.pc='[損害保険] 業種: '+ind;
+  }
+  function insCalcEc(){
+    var box=$('ci-r-ec'); if(!box)return;
+    var rate=ciRate();
+    var emp=num('ci-ec-emp'), premTotal=num('ci-ec-total');
+    var loss=premTotal*0.5, taxSave=loss*rate, taxSave5=taxSave*5, asset5=premTotal*0.5*5;
+    box.innerHTML='<div style="border:1px solid #D0DCF0;border-radius:11px;padding:12px 14px;background:#fff;">'
+      +ciRow('加入人数', emp+' 人')
+      +ciRow('年間保険料総額', yen(premTotal))
+      +ciRow('年間の節税（繰延べ）目安', yen(taxSave), '#1E6B45')
+      +ciRow('5年間の累計節税目安', yen(taxSave5), '#1E6B45')
+      +ciRow('5年後の積立累計（退職金原資の目安）', yen(asset5))
+    +'</div>';
+    window.__ciParts=window.__ciParts||{};
+    window.__ciParts.ec='[養老保険(5年)] 加入'+emp+'人 / 年間保険料'+yen(premTotal)+' / 年間節税'+yen(taxSave)+' / 5年累計節税'+yen(taxSave5)+' / 5年積立'+yen(asset5);
   }
   async function saveInsFor(custId){
-    var msg=$('ci-ins-msg'); var sum=window.__ciSummary||''; if(!sum) return;
+    var msg=$('ci-ins-msg');
+    var parts=window.__ciParts||{};
+    var arr=[parts.bp,parts.pc,parts.ec].filter(Boolean);
+    if(!arr.length){ if(msg){ msg.style.color='#A83030'; msg.textContent='先に①〜③のいずれかの計算を実行してください。'; } return; }
+    var sum='【パートナー試算】\n'+arr.join('\n');
     var res=await sb.from('insurance_results').insert({ customer_id:custId, summary:sum });
     if(res.error){ if(msg){ msg.style.color='#A83030'; msg.textContent='保存エラー：'+res.error.message; } return; }
-    if(msg){ msg.style.color='#1E6B45'; msg.textContent='顧客に共有しました（保険試算の共有結果に表示）。'; }
+    if(msg){ msg.style.color='#1E6B45'; msg.textContent='顧客に共有しました（'+arr.length+'件の計算結果／保険試算の共有結果に表示）。'; }
     loadClientInsurance(custId);
   }
 
@@ -4999,7 +5029,8 @@
   var CL_NAV=[
     ['やり取り',   'ctab-msg',    [['cs-company','🏢','会社情報'],['cs-msg','💬','メッセージ・提案']]],
     ['財務・資金', 'ctab-fin',    [['cs-fin','📊','月次財務メモ'],['cs-pay','📅','支払予定'],['cs-cash','💰','資金繰り診断'],['cs-fund','🏦','資金調達ロードマップ'],['cs-market','💹','Tsugu投資・融資・M&A'],['cs-act','✅','課題・アクション']]],
-    ['AI・ツール', 'ctab-tools',  [['cs-ai','🤖','AI自動化診断'],['cs-loan','💴','融資ナビ'],['cs-meet','📝','議事録'],['cs-mna','🤝','M&A提案'],['cs-bp','📄','事業計画書']]],
+    ['AI・ツール', 'ctab-tools',  [['cs-ai','🤖','AI自動化診断'],['cs-loan','💴','融資ナビ'],['cs-meet','📝','議事録'],['cs-bp','📄','事業計画書']]],
+    ['M&A・保険',  'ctab-prop',   [['cs-mna','🤝','M&A提案'],['cs-ins','🛡️','保険試算']]],
     ['共有',       'ctab-shared', [['cs-shared','📥','顧客からの共有']]]
   ];
   var CL_REQUIRED='cs-msg'; // メッセージは非表示不可
@@ -5176,7 +5207,7 @@
     var side=$('cl-side'); if(!side)return;
     Array.prototype.forEach.call(side.querySelectorAll('.cl-ni'),function(n){ n.classList.toggle('on', n.id==='ni-'+id); });
   }
-  var CL_SPY_IDS=['cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-bp','cs-shared'];
+  var CL_SPY_IDS=['cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-bp','cs-mna','cs-ins','cs-shared'];
   function clSpyInit(){
     clSpySet('cs-company');
     var scroller=document.querySelector('#cl-modal .modal') ? $('cl-modal') : null;
@@ -5199,6 +5230,7 @@
   // ===== カルテ内ダッシュボードナビ（左サイド＆ヘッダーのハンバーガーで共用）は上部で定義 =====
   async function viewClient(custId, email, company){
     CURRENT_CLIENT={ id:custId, email:email, company:company||'' };
+    window.__ciParts={};
     var box=$('cl-detail'); if(!box)return;
     var titleTxt=(company && company.length)?(company+'（'+email+'）'):email;
     var mt=$('cl-modal-title'); if(mt) mt.textContent=titleTxt;
@@ -5366,16 +5398,6 @@
       +'</div>'
       +'<div id="mn-result" style="margin-top:10px;"></div>'
       +'<div id="mn-history" style="margin-top:14px;"></div>'
-      +'<div class="ph" id="cs-mna" style="font-size:13px;margin-top:18px;">M&A活用提案（AI）</div>'
-      +lnote('ma')
-      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">AIでこの顧客向けのM&A方向性を作成し、提案メモとして送れます。</div>'
-      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
-        +'<div><label class="fl">年間利益・余剰資金(万円)</label><input id="ma2-profit" type="number" class="inp2" placeholder="例 3000"></div>'
-        +'<div style="flex:1;min-width:180px;"><label class="fl">事業内容・強み</label><input id="ma2-biz" class="inp2" style="width:100%;" value="'+escA(company||'')+'"></div>'
-        +'<div><label class="fl">目的</label><select id="ma2-goal" class="inp2"><option>売上・シェア拡大</option><option>人材・技術の獲得</option><option>エリア拡大</option><option>川上・川下への統合</option><option>新規事業への参入</option><option>後継者・事業承継の受け皿</option></select></div>'
-        +'<button class="btn2" id="ma2-run" onclick="runMaFor(\''+custId+'\')">AIで提案を作成</button>'
-      +'</div>'
-      +'<div id="ma2-result" style="margin-top:12px;"></div>'
       +'<div class="ph" id="cs-bp" style="font-size:13px;margin-top:18px;">事業計画書の作成（AI）</div>'
       +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">登録済みの財務データと資金繰り診断を自動で読み込み、金融機関提出用ドラフトを作成します（印刷／PDF可）。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
@@ -5386,6 +5408,19 @@
       +'</div>'
       +'<div id="bp-msg" style="font-size:12px;margin-top:6px;"></div>'
       +lnote('bp')
+    +'</div>';
+    // ---- 提案タブ：M&A・保険 ----
+    var tabProp='<div id="ctab-prop">'
+      +'<div class="ph" id="cs-mna" style="font-size:13px;margin-top:18px;">M&A活用提案（AI）</div>'
+      +lnote('ma')
+      +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:6px;">AIでこの顧客向けのM&A方向性を作成し、提案メモとして送れます。</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+        +'<div><label class="fl">年間利益・余剰資金(万円)</label><input id="ma2-profit" type="number" class="inp2" placeholder="例 3000"></div>'
+        +'<div style="flex:1;min-width:180px;"><label class="fl">事業内容・強み</label><input id="ma2-biz" class="inp2" style="width:100%;" value="'+escA(company||'')+'"></div>'
+        +'<div><label class="fl">目的</label><select id="ma2-goal" class="inp2"><option>売上・シェア拡大</option><option>人材・技術の獲得</option><option>エリア拡大</option><option>川上・川下への統合</option><option>新規事業への参入</option><option>後継者・事業承継の受け皿</option></select></div>'
+        +'<button class="btn2" id="ma2-run" onclick="runMaFor(\''+custId+'\')">AIで提案を作成</button>'
+      +'</div>'
+      +'<div id="ma2-result" style="margin-top:12px;"></div>'
       + insPanelHtmlClient(custId)
     +'</div>';
     // ---- タブ4：顧客からの共有 ----
@@ -5399,7 +5434,7 @@
       +'<div class="ph" style="font-size:13px;margin-top:16px;">AI自動化診断（顧客が実施した結果）</div>'
       +'<div id="cl-diag" style="margin-top:6px;">読み込み中...</div>'
     +'</div>';
-    box.innerHTML=head+'<div class="cl-shell">'+side+'<div class="cl-main" id="cl-main">'+tabMsg+tabFin+tabTools+tabShared+'</div></div>';
+    box.innerHTML=head+'<div class="cl-shell">'+side+'<div class="cl-main" id="cl-main">'+tabMsg+tabFin+tabTools+tabProp+tabShared+'</div></div>';
     clInitCats();
     clSpyInit();
     var f=await sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false});
