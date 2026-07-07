@@ -539,9 +539,9 @@
   }
   // 役割ごとの全メニュー定義（ラベル付き）。設定で並び順・表示を変えられる
   function navDefs(r){
-    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
+    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
     if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信']];
-    return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','相続・贈与'],['sec-sec','AI秘書']];
+    return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','相続・贈与'],['sec-billpay','お支払い'],['sec-sec','AI秘書']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
   function effectiveNav(r){
@@ -566,7 +566,7 @@
     'sec-cash':'💰','sec-ai':'🤖','sec-ins':'🧮','sec-ma':'🤝','sec-market':'💹','sec-sec':'🪄',
     'sec-clients':'👥','sec-pdca':'🔄','sec-madeals':'📁','sec-knowledge':'📚','sec-sozoku':'🎁',
     'sec-kpi':'📊','sec-risk':'🚨','sec-fde':'🧑‍💼','sec-cust':'🏢','sec-fund':'🏦',
-    'sec-billing':'💳','sec-audit':'🛡️','sec-broadcast':'📢'
+    'sec-billing':'💳','sec-billpay':'💳','sec-audit':'🛡️','sec-broadcast':'📢'
   };
   function navGroups(r){
     if(r==='customer') return [
@@ -862,7 +862,21 @@
         +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
           +'<div><label class="fl">取引金額（万円）</label><input id="lh-amt" type="number" class="inp2" style="width:160px;" placeholder="例 30000（＝3億円）" oninput="lehmanCalc()"></div>'
         +'</div>'
-        +'<div id="lh-out" style="margin-top:10px;"></div></div>'
+        +'<div id="lh-out" style="margin-top:10px;"></div>'
+        +'<div class="ph" style="font-size:13px;margin-top:18px;display:flex;align-items:center;justify-content:space-between;">💳 決済リンク（Stripe）管理<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadBillingAdminLinks()">↺ 更新</span></div>'
+        +'<div style="font-size:11px;color:#8AA0BE;margin-bottom:8px;line-height:1.7;">Stripeで作成した決済リンク（Payment Link）を登録すると、顧客・パートナーの「お支払い」メニューに即時表示されます。リンクの作り方は納品の「Stripe課金セットアップ手順」をご覧ください。</div>'
+        +'<div id="bl-links-list" style="margin-bottom:8px;">読み込み中...</div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;background:var(--soft);border-radius:10px;padding:10px 12px;">'
+          +'<div><label class="fl">対象</label><select id="bl-new-aud" class="inp2"><option value="customer">顧客</option><option value="consultant">パートナー</option></select></div>'
+          +'<div><label class="fl">名称</label><input id="bl-new-label" class="inp2" style="width:190px;" placeholder="例：月額顧問料（50,000円/月）"></div>'
+          +'<div style="flex:1;min-width:220px;"><label class="fl">決済リンクURL</label><input id="bl-new-url" class="inp2" style="width:100%;" placeholder="https://buy.stripe.com/…"></div>'
+          +'<div style="flex:1;min-width:180px;"><label class="fl">説明（任意）</label><input id="bl-new-desc" class="inp2" style="width:100%;" placeholder="例：毎月自動で決済されます"></div>'
+          +'<button class="btn2" onclick="admAddBillingLink()">追加</button>'
+        +'</div>'
+        +'<div id="bl-links-msg" style="font-size:11.5px;margin-top:6px;min-height:14px;"></div>'
+        +'<div class="ph" style="font-size:13px;margin-top:16px;">入金履歴（Stripe Webhook 自動記録）</div>'
+        +'<div id="bl-payevents" style="margin-top:4px;">読み込み中...</div>'
+        +'</div>'
       +'<div class="panel" id="sec-audit"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">🛡 監査・コンプライアンスログ<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmAudit()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#8AA0BE;margin:0 0 8px;">誰がいつ何を提案・共有・掲載したかの記録です（AI診断・保険/相続試算・マーケット掲載・提案メモ・月次レポート公開）。金融商品を扱う上での確認・監査にお使いください。</div>'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;" id="audit-filterbar">'
@@ -1350,6 +1364,12 @@
             +'</div>'
           ):'')
         +'</div>'
+        +'<div class="panel" id="sec-billpay"><div class="ph">💳 お支払い</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;line-height:1.7;">顧問料等のお支払いはこちらから。決済は国際的な決済基盤Stripeの安全なページで行われ、カード情報が当社のサーバーに保存されることはありません。</div>'
+          +'<div id="billpay-links">読み込み中...</div>'
+          +'<div class="ph" style="font-size:13px;margin-top:16px;">お支払い履歴</div>'
+          +'<div id="billpay-history" style="margin-top:4px;">読み込み中...</div>'
+        +'</div>'
         +'<div class="panel" id="sec-cash"><div class="ph">財務・資金繰り（担当パートナーが入力します）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:12px;">月次の数値や支払予定は担当パートナーが入力・更新します。数値や資料は「メッセージ」でお送りいただくだけでOKです。修正のご希望もメッセージでどうぞ。</div>'
           +'<div style="font-weight:600;font-size:14px;color:#1C3557;margin:2px 0 6px;">① 月次財務メモ</div>'
@@ -1572,6 +1592,12 @@
             +'</div>'
           +'</div>'
         +'</div>'
+        +'<div class="panel" id="sec-billpay"><div class="ph">💳 お支払い（プラットフォーム利用料）</div>'
+          +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;line-height:1.7;">月額利用料（基本料＋顧問先数に応じた加算）のお支払いはこちらから。決済はStripeの安全なページで行われ、カード情報が当社のサーバーに保存されることはありません。</div>'
+          +'<div id="billpay-links">読み込み中...</div>'
+          +'<div class="ph" style="font-size:13px;margin-top:16px;">お支払い履歴</div>'
+          +'<div id="billpay-history" style="margin-top:4px;">読み込み中...</div>'
+        +'</div>'
         +'<div class="panel" id="sec-sec"><div class="ph">AI秘書（業務の相談相手）</div>'
           +'<div style="font-size:12px;color:#8AA0BE;margin-bottom:10px;">提案資料の文面づくり、面談準備、調べ物、考えの壁打ちなどを相談できます。</div>'
           + secModesHtml()
@@ -1587,9 +1613,9 @@
 
     window.__eff=eff;
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); if(window.__role==='admin') loadAdmPreviewCustomers(); }
-    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); }
-    else { loadAdmin(); loadMarketBroker(); }
+    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); if(window.__role==='admin') loadAdmPreviewCustomers(); }
+    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); }
+    else { loadAdmin(); loadMarketBroker(); loadBillingAdminLinks(); }
     startNotifPolling(eff);
     navSpyInit();
   }
@@ -3004,6 +3030,86 @@
   function openKnowledgePage(page){
     if(location.protocol==='file:'){ window.open('https://y12fukukitaru.github.io/Tsugu-Ai/'+page,'_blank'); }
     else { window.open('./'+page,'_blank'); }
+  }
+  // ===== 課金 Phase1：Stripe決済リンク＋入金履歴 =====
+  async function loadBillingPay(aud){
+    var box=$('billpay-links'); if(!box) return;
+    var res=await sb.from('billing_links').select('id,label,description,url').eq('audience',aud).eq('active',true).order('sort',{ascending:true});
+    if(res.error){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">お支払いメニューは現在準備中です。</div>'; loadMyPayEvents(); return; }
+    if(!res.data||!res.data.length){
+      box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">お支払いメニューは現在準備中です。運営からのご案内をお待ちください。</div>';
+    } else {
+      box.innerHTML=res.data.map(function(l){
+        var u=String(l.url||'').replace(/["'<>\s\\]/g,'');
+        var url=u+(u.indexOf('?')>=0?'&':'?')+'prefilled_email='+encodeURIComponent(window.__email||'');
+        return '<div style="border:1px solid var(--softline);border-radius:10px;padding:11px 13px;margin-bottom:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">'
+          +'<div style="flex:1;min-width:180px;"><div style="font-size:13px;font-weight:700;color:var(--navy);">'+esc(l.label)+'</div>'
+          +(l.description?'<div style="font-size:11px;color:#8AA0BE;line-height:1.55;">'+esc(l.description)+'</div>':'')
+          +'</div><button class="btn2" style="white-space:nowrap;" onclick="window.open(\''+url+'\',\'_blank\')">お支払いへ ↗</button></div>';
+      }).join('');
+    }
+    loadMyPayEvents();
+  }
+  async function loadMyPayEvents(){
+    var box=$('billpay-history'); if(!box) return;
+    var res=await sb.from('payment_events').select('created_at,event_type,amount,description').order('created_at',{ascending:false}).limit(12);
+    if(res.error||!res.data||!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">お支払いが完了すると、ここに履歴が表示されます。</div>'; return; }
+    box.innerHTML=res.data.map(function(p){
+      var d=new Date(p.created_at); var ds=d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+      return '<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 2px;border-bottom:1px dashed var(--softline);font-size:12.5px;">'
+        +'<span>'+ds+'　'+esc(p.description||p.event_type||'お支払い')+'</span>'
+        +'<b style="color:var(--navy);">'+(p.amount!=null?('¥'+Number(p.amount).toLocaleString()):'')+'</b></div>';
+    }).join('');
+  }
+  // ---- 運営：決済リンク管理＋入金履歴 ----
+  async function loadBillingAdminLinks(){
+    var box=$('bl-links-list'); if(!box) return;
+    var res=await sb.from('billing_links').select('*').order('audience',{ascending:true}).order('sort',{ascending:true});
+    if(res.error){ box.innerHTML='<div style="font-size:12px;color:#A83030;">読み込みエラー：'+esc(res.error.message)+'（Supabaseで「Phase53」のSQLを実行してください）</div>'; return; }
+    if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">まだ登録がありません。下のフォームからStripeの決済リンクを追加してください。</div>'; }
+    else {
+      box.innerHTML=res.data.map(function(l){
+        return '<div style="display:flex;gap:8px;align-items:center;padding:7px 2px;border-bottom:1px dashed var(--softline);font-size:12.5px;flex-wrap:wrap;">'
+          +'<span style="background:'+(l.audience==='customer'?'#E6F1FB':'#FBF3E0')+';border-radius:99px;padding:2px 9px;font-size:10.5px;font-weight:700;color:#1C3557;">'+(l.audience==='customer'?'顧客':'パートナー')+'</span>'
+          +'<b style="color:var(--navy);">'+esc(l.label)+'</b>'
+          +'<span style="flex:1;min-width:120px;color:#8AA0BE;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(l.url)+'</span>'
+          +'<button class="ghost" style="color:#A83030;border-color:#E9C9C9;font-size:11px;padding:4px 9px;" onclick="admDelBillingLink(\''+l.id+'\')">削除</button></div>';
+      }).join('');
+    }
+    loadAdmPayEvents();
+  }
+  async function admAddBillingLink(){
+    var aud=($('bl-new-aud')||{}).value||'customer';
+    var label=(($('bl-new-label')||{}).value||'').trim();
+    var url=(($('bl-new-url')||{}).value||'').trim();
+    var desc=(($('bl-new-desc')||{}).value||'').trim();
+    var msg=$('bl-links-msg');
+    if(!label||!url){ if(msg){msg.style.color='#A83030';msg.textContent='名称と決済リンクURLを入力してください。';} return; }
+    if(!/^https:\/\/(buy|checkout)\.stripe\.com\//.test(url)){ if(msg){msg.style.color='#A83030';msg.textContent='URLはStripeの決済リンク（https://buy.stripe.com/…）を入力してください。';} return; }
+    var res=await sb.from('billing_links').insert({ audience:aud, label:label, url:url, description:(desc||null) });
+    if(res.error){ if(msg){msg.style.color='#A83030';msg.textContent='追加エラー：'+res.error.message;} return; }
+    if(msg){msg.style.color='#1E6B45';msg.textContent='追加しました。対象者の「お支払い」に即時表示されます。';}
+    if($('bl-new-label'))$('bl-new-label').value=''; if($('bl-new-url'))$('bl-new-url').value=''; if($('bl-new-desc'))$('bl-new-desc').value='';
+    loadBillingAdminLinks();
+  }
+  async function admDelBillingLink(id){
+    if(!confirm('この決済リンクを削除しますか？（対象者の「お支払い」から消えます）')) return;
+    var res=await sb.from('billing_links').delete().eq('id',id).select('id');
+    if(res.error||!res.data||!res.data.length){ alert('削除できませんでした：'+((res.error&&res.error.message)||'権限がありません')); return; }
+    loadBillingAdminLinks();
+  }
+  async function loadAdmPayEvents(){
+    var box=$('bl-payevents'); if(!box) return;
+    var res=await sb.from('payment_events').select('created_at,event_type,email,amount,description').order('created_at',{ascending:false}).limit(20);
+    if(res.error){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">入金履歴は、Stripe Webhookの設定（手順書参照）後に表示されます。</div>'; return; }
+    if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#8AA0BE;">まだ入金がありません。決済が完了すると自動で記録されます。</div>'; return; }
+    box.innerHTML=res.data.map(function(p){
+      var d=new Date(p.created_at); var ds=d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+      return '<div style="display:flex;gap:10px;align-items:center;padding:7px 2px;border-bottom:1px dashed var(--softline);font-size:12px;flex-wrap:wrap;">'
+        +'<span style="color:#8AA0BE;">'+ds+'</span>'
+        +'<span style="flex:1;min-width:140px;">'+esc(p.email||'')+'　'+esc(p.description||p.event_type||'')+'</span>'
+        +'<b style="color:var(--navy);">'+(p.amount!=null?('¥'+Number(p.amount).toLocaleString()):'')+'</b></div>';
+    }).join('');
   }
   // ===== 運営プレビュー：顧客の登録済み会社情報を確認 =====
   async function loadAdmPreviewCustomers(){
