@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>役員退職金シミュレーター｜認定パートナー向け｜TsuguAI</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1C3557;--blue:#2C6EBD;--sky:#4AADD6;
+    --ink:#131E2E;--muted:#4A6080;--line:#D0DCF0;--bg:#F2F5FA;
+    --card:#fff;--soft:#F7FAFD;--softline:#EAF0F7;
+    --red:#A83030;--redsoft:#FBEEEE;--redline:#E9C9C9;
+    --green:#1E6B45;--greensoft:#E9F5EE;--greenline:#BFE2CD;
+    --goldsoft:#FBF3E0;--goldline:#ECD9A6;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:var(--bg);line-height:1.8;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px;margin:0 auto;padding:0 18px 100px;}
+  a{color:var(--blue);}
+
+  .hero{background:linear-gradient(150deg,var(--navy),#16466f 58%,var(--sky));color:#fff;padding:48px 0 40px;}
+  .hero-in{max-width:900px;margin:0 auto;padding:0 18px;}
+  .brand{display:flex;align-items:center;gap:11px;margin-bottom:26px;}
+  .logo{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:18px;}
+  .brand .nm{font-family:'DM Sans',sans-serif;font-size:21px;font-weight:500;}
+  .hero-back{margin-left:auto;font-size:12px;font-weight:600;color:#fff;text-decoration:none;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.32);border-radius:9px;padding:8px 13px;white-space:nowrap;}
+  .hero-back:hover{background:rgba(255,255,255,.24);}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:1.4px;color:var(--sky);text-transform:uppercase;margin-bottom:12px;}
+  .hero h1{font-size:27px;font-weight:700;line-height:1.45;margin:0 0 14px;}
+  .hero p{font-size:14px;color:#D6E4F2;margin:0;max-width:680px;}
+  .hero .for{display:inline-block;margin-top:18px;font-size:12px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);border-radius:99px;padding:6px 15px;}
+
+  .nav{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);margin-bottom:26px;}
+  .nav-in{max-width:900px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;padding:8px 18px;}
+  .nav a{flex:0 0 auto;font-size:12px;color:var(--muted);text-decoration:none;padding:7px 12px;border-radius:9px;white-space:nowrap;font-weight:600;}
+  .nav a:hover{background:var(--soft);color:var(--navy);}
+
+  .kicker{display:flex;align-items:center;gap:11px;margin:40px 0 6px;scroll-margin-top:60px;}
+  .kicker .no{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#fff;background:var(--navy);min-width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 6px;}
+  .kicker h2{font-size:20px;font-weight:700;color:var(--navy);margin:0;}
+  .lead{font-size:14px;margin:6px 0 14px;}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:13px 0;}
+  .card h3{font-size:15px;font-weight:700;color:var(--navy);margin:0 0 8px;}
+  .card p{font-size:13.5px;margin:0 0 8px;} .card p:last-child{margin-bottom:0;}
+  .muted{color:var(--muted);} .small{font-size:12px;}
+
+  .note{border-radius:12px;padding:14px 16px;font-size:12.8px;line-height:1.75;margin:13px 0;}
+  .note .h{font-weight:700;display:block;margin-bottom:3px;}
+  .note.red{background:var(--redsoft);border:1px solid var(--redline);} .note.red .h{color:var(--red);}
+  .note.gold{background:var(--goldsoft);border:1px solid var(--goldline);} .note.gold .h{color:#8A6A12;}
+  .note.blue{background:#EAF2FB;border:1px solid #C4DBF3;} .note.blue .h{color:var(--blue);}
+  .note.green{background:var(--greensoft);border:1px solid var(--greenline);} .note.green .h{color:var(--green);}
+
+  label.fld{display:block;font-size:12px;font-weight:700;color:var(--navy);margin:0 0 5px;}
+  input[type=number],select{width:100%;padding:9px 11px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;font-family:inherit;background:#F8FAFD;color:var(--ink);outline:none;}
+  input:focus,select:focus{border-color:var(--blue);background:#fff;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+
+  .calc{background:var(--navy);color:#fff;border:none;border-radius:10px;font-size:13.5px;font-weight:700;padding:11px 20px;cursor:pointer;font-family:inherit;}
+  .ghost{background:#fff;color:var(--blue);border:1.5px solid var(--line);border-radius:9px;font-size:12.5px;font-weight:600;padding:8px 14px;cursor:pointer;}
+
+  .out{background:var(--soft);border:1px solid var(--softline);border-radius:11px;padding:14px 16px;font-size:13px;margin-top:12px;}
+  .out .row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed var(--line);}
+  .out .row:last-child{border-bottom:none;} .out .row b{color:var(--navy);}
+  .out .big{font-family:'DM Sans',sans-serif;font-weight:700;}
+  .out .hl{background:var(--greensoft);border-radius:8px;padding:8px 10px;margin-top:6px;}
+
+  .flag{display:flex;gap:9px;align-items:flex-start;border-radius:10px;padding:10px 13px;font-size:12.8px;margin:7px 0;line-height:1.65;}
+  .flag.ok{background:var(--greensoft);border:1px solid var(--greenline);}
+  .flag.warn{background:var(--goldsoft);border:1px solid var(--goldline);}
+  .flag.bad{background:var(--redsoft);border:1px solid var(--redline);}
+  .flag .ic{font-size:15px;line-height:1.3;}
+
+  textarea.sum{width:100%;min-height:200px;font-size:12.5px;line-height:1.7;font-family:'Noto Sans JP',monospace;padding:10px 12px;border:1.5px solid var(--line);border-radius:9px;background:#F8FAFD;}
+  footer{font-size:11.5px;color:var(--muted);line-height:1.85;border-top:1px solid var(--line);padding-top:20px;margin-top:36px;}
+
+  .mnav-btn{display:none;position:fixed;top:10px;right:12px;z-index:1000;background:#fff;border:1px solid var(--line);border-radius:10px;font-size:18px;line-height:1;color:var(--navy);padding:9px 13px;box-shadow:0 4px 14px rgba(28,53,87,.22);cursor:pointer;font-family:inherit;}
+  .mnav-menu{display:none;position:fixed;top:54px;right:12px;z-index:1000;background:#0F2035;border-radius:12px;padding:8px;width:min(80vw,270px);max-height:74vh;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,.34);}
+  .mnav-menu.open{display:block;}
+  .mnav-menu a{display:block;padding:11px 13px;border-radius:9px;font-size:13px;color:rgba(255,255,255,.9);text-decoration:none;line-height:1.4;}
+  .mnav-menu a:hover,.mnav-menu a:active{background:var(--blue);color:#fff;}
+  .mnav-back{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.18);}
+  .mnav-back.open{display:block;}
+
+  @media(max-width:680px){
+    .hero h1{font-size:21px;} .grid2,.grid3{grid-template-columns:1fr;}
+    .card{padding:16px;} .nav-in{padding:8px 14px;}
+  }
+  @media(max-width:640px){
+    .nav{display:none;}
+    .mnav-btn{display:inline-flex;align-items:center;}
+    .hero-back{display:none;}
+  }
+  @media print{ .nav,.mnav-btn,.mnav-menu,.mnav-back,.hero-back,.noprint{display:none!important;} body{background:#fff;} .card{break-inside:avoid;} }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-in">
+    <div class="brand"><span class="logo">継</span><span class="nm">TsuguAI</span><a class="hero-back" href="./index.html" onclick="backToPortal();return false;">← パートナーポータルへ戻る</a></div>
+    <div class="eyebrow">認定パートナー向け・退職金設計ナレッジ</div>
+    <h1>役員退職金シミュレーター<br><span style="font-size:17px;font-weight:500;color:#CFE0F0;">「いくら取れるか」と「手取りでいくら残るか」を概算する。</span></h1>
+    <p>役員退職金は、経営者人生で最大の「税制優遇された受け取り」です。功績倍率法による適正額の目安、退職所得課税（控除・2分の1課税・分離課税）を通した手取り額、法人側の損金効果までを一度に試算し、退職金準備（保険・積立）や事業承継・持分対策の設計につなげます。</p>
+    <span class="for">出力はすべて概算・一般情報です。適正額・税額の確定は税理士へ。</span>
+  </div>
+</div>
+
+<div class="nav"><div class="nav-in">
+  <a href="#s1">①仕組み</a>
+  <a href="#s2">②条件の入力</a>
+  <a href="#s3">③試算結果</a>
+  <a href="#s4">④注意点</a>
+  <a href="#s5">⑤準備の設計</a>
+  <a href="#s6">⑥サマリー</a>
+</div></div>
+
+<div class="wrap">
+
+  <!-- 1 -->
+  <div class="kicker" id="s1"><span class="no">1</span><h2>役員退職金はなぜ「有利」なのか</h2></div>
+  <div class="card">
+    <p><b>3つの優遇が重なるからです。</b>①<b>退職所得控除</b>：勤続年数に応じて大きな非課税枠（20年超は1年あたり70万円）。②<b>2分の1課税</b>：控除後の金額をさらに半分にしてから税率をかける。③<b>分離課税</b>：他の所得と合算されず、累進の影響を受けにくい。同じ1億円でも、役員報酬で受け取るのと退職金で受け取るのとでは手取りが大きく変わります。</p>
+    <p><b>適正額の目安は「功績倍率法」</b>：最終報酬月額 × 役員在任年数 × 功績倍率。功績倍率は理事長・社長で3.0程度が実務の目安とされます（これを大きく超えると法人側で損金否認のリスク）。</p>
+    <p><b>医療法人ではさらに一石二鳥。</b>退職金の支給は法人の純資産を圧縮するため、出資持分の評価・払戻請求権の額も同時に下がります。持分対策と勇退設計は必ずセットで考えます。</p>
+  </div>
+
+  <!-- 2 -->
+  <div class="kicker" id="s2"><span class="no">2</span><h2>条件の入力</h2></div>
+  <div class="card">
+    <div class="grid3">
+      <div><label class="fld">最終報酬月額（万円）</label><input type="number" id="sal" placeholder="例：150" oninput="recalc()"></div>
+      <div><label class="fld">役員在任年数（年）</label><input type="number" id="years" placeholder="例：30" oninput="recalc()"></div>
+      <div>
+        <label class="fld">功績倍率（役位の目安）</label>
+        <select id="mult" onchange="recalc()">
+          <option value="3.0">3.0（理事長・社長）</option>
+          <option value="2.5">2.5（専務）</option>
+          <option value="2.3">2.3（常務）</option>
+          <option value="2.0">2.0（取締役・理事）</option>
+          <option value="1.5">1.5（監査役・監事）</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid3" style="margin-top:12px;">
+      <div>
+        <label class="fld">特別功労加算（創業者等・任意）</label>
+        <select id="bonus" onchange="recalc()">
+          <option value="0">なし</option>
+          <option value="0.1">10%加算</option>
+          <option value="0.2">20%加算</option>
+          <option value="0.3">30%加算（上限目安）</option>
+        </select>
+      </div>
+      <div><label class="fld">支給額（万円）※空欄＝適正額目安で計算</label><input type="number" id="pay" placeholder="適正額を自動使用" oninput="recalc()"></div>
+      <div>
+        <label class="fld">法人実効税率（損金効果の概算用）</label>
+        <select id="corp" onchange="recalc()">
+          <option value="0.30">約30%（標準）</option>
+          <option value="0.23">約23%（所得800万円以下中心）</option>
+          <option value="0.33">約33%（所得が大きい法人）</option>
+        </select>
+      </div>
+    </div>
+    <p class="small muted" style="margin-top:8px;">※ 退職所得控除の勤続年数は役員在任年数を用います（1年未満切上げ）。従業員期間から通算する場合は年数を調整してください。</p>
+  </div>
+
+  <!-- 3 -->
+  <div class="kicker" id="s3"><span class="no">3</span><h2>試算結果</h2></div>
+  <div class="card">
+    <button class="calc" onclick="recalc()">計算する</button>
+    <div id="result"></div>
+    <div id="rflags"></div>
+  </div>
+
+  <!-- 4 -->
+  <div class="kicker" id="s4"><span class="no">4</span><h2>実務の注意点（つまずきやすい順）</h2></div>
+  <div class="card">
+    <p><b>① 過大退職金の否認リスク</b>：功績倍率が同業・同規模の水準（理事長・社長で3.0程度）を大きく超える部分は、法人側で損金算入が否認されるおそれがあります。金額だけでなく、株主総会・社員総会の決議、退職金規程の整備が必須です。</p>
+    <p><b>② 役員在任5年以下は「2分の1課税」なし</b>：特定役員退職手当等に該当し、税負担が大きく増えます。就任間もない役員の勇退は要注意。</p>
+    <p><b>③ 「実質的に退職していない」と見られない</b>：勇退後も代表権を持ち続ける、報酬が半分未満に下がっていない、経営の主要な意思決定に関与し続ける──といった場合、分掌変更による退職金が否認されるおそれがあります。</p>
+    <p><b>④ 資金繰り</b>：退職金は一時に大きな現金が出ます。借入・保険の解約返戻金・積立など、原資の設計を支給の数年前から行うのが実務です。</p>
+    <p><b>⑤ 同年内の複数退職金・小規模企業共済等との重複</b>：退職所得控除の調整計算が入る場合があります（概算対象外・税理士確認）。</p>
+  </div>
+
+  <!-- 5 -->
+  <div class="kicker" id="s5"><span class="no">5</span><h2>準備の設計 ― 保険・積立と持分対策</h2></div>
+  <div class="card">
+    <p><b>生命保険による原資準備</b>：勇退予定時期に解約返戻金のピークが来るよう法人保険を設計すれば、在任中は保障、勇退時は退職金原資になります。万一の死亡時には死亡退職金＋弔慰金（別枠の非課税）としても機能します。</p>
+    <p><b>医療法人の場合</b>：退職金支給→純資産圧縮→<b>出資持分の評価・払戻請求権も減少</b>。持分なし移行（認定医療法人）の前に適正額の退職金を支給する順番設計が定石です。規模感は「医療法人 持分シミュレーター」で確認できます。</p>
+    <p><b>死亡退職金の非課税枠</b>：相続人が受け取る死亡退職金には「500万円×法定相続人の数」の非課税枠が別途あります（生命保険金の非課税枠とは別枠）。</p>
+  </div>
+  <div class="note blue"><span class="h">パートナーの役割</span>本ツールで「取れる規模」と「手取り」を見える化し、退職金規程の整備・適正額の確定・議事録は<b>税理士・社労士・弁護士</b>へ、原資準備は保険・金融の実務へつなぎます。税額や損金算入可否の確定判断をパートナーが行うことはできません（税理士法）。</div>
+
+  <!-- 6 -->
+  <div class="kicker" id="s6"><span class="no">6</span><h2>引き継ぎサマリー</h2></div>
+  <div class="card">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;" class="noprint">
+      <button class="calc" onclick="genSummary()">サマリーを作成</button>
+      <button class="ghost" onclick="copySummary()">コピー</button>
+      <button class="ghost" onclick="window.print()">印刷／PDF保存</button>
+    </div>
+    <textarea id="summary" class="sum" placeholder="「サマリーを作成」を押すと、税理士等へ渡せる要約が表示されます。"></textarea>
+  </div>
+
+  <footer>
+    本ツールは認定パートナーの学習・実務補助を目的とした<b>一般的な情報提供</b>であり、特定の事案に対する税務助言ではありません。税率・控除は作成時点（2026年7月）の制度に基づく概算です（復興特別所得税2.1%込・住民税10%）。適正額・損金算入・税額の確定は必ず<b>税理士</b>にご確認ください。<br><br>株式会社福來 ｜ TsuguAI -継-
+  </footer>
+</div>
+
+<button class="mnav-btn" id="mnavBtn" aria-label="セクションメニュー" onclick="mnavToggle(event)">☰</button>
+<div class="mnav-back" id="mnavBack" onclick="mnavClose()"></div>
+<div class="mnav-menu" id="mnavMenu"></div>
+
+<script>
+  var $=function(id){return document.getElementById(id);};
+  function fmt(n){return Math.round(n).toLocaleString()+'万円';}
+  function flag(cls,ic,txt){return '<div class="flag '+cls+'"><span class="ic">'+ic+'</span><span>'+txt+'</span></div>';}
+  window.backToPortal=function(){ try{ window.close(); }catch(e){} setTimeout(function(){ location.href='./index.html'; },150); };
+
+  // 所得税（円）：課税退職所得に対する速算表
+  function incomeTax(yen){
+    var b=[[1950000,0.05,0],[3300000,0.10,97500],[6950000,0.20,427500],[9000000,0.23,636000],[18000000,0.33,1536000],[40000000,0.40,2796000],[Infinity,0.45,4796000]];
+    for(var i=0;i<b.length;i++){ if(yen<=b[i][0]) return yen*b[i][1]-b[i][2]; }
+    return 0;
+  }
+  // 退職所得控除（万円）
+  function deduction(y){
+    y=Math.ceil(y);
+    if(y<=0) return 0;
+    if(y<=20) return Math.max(40*y,80);
+    return 800+70*(y-20);
+  }
+
+  var LAST=null;
+  function recalc(){
+    var sal=parseFloat($('sal').value)||0;
+    var y=parseFloat($('years').value)||0;
+    var mult=parseFloat($('mult').value)||3.0;
+    var bonus=parseFloat($('bonus').value)||0;
+    var corp=parseFloat($('corp').value)||0.30;
+    var res=$('result'), fl=$('rflags');
+    if(sal<=0||y<=0){ res.innerHTML=''; fl.innerHTML=flag('warn','⚠️','最終報酬月額と役員在任年数を入力してください。'); LAST=null; return; }
+
+    var fair=sal*y*mult*(1+bonus);                 // 功績倍率法の目安（万円）
+    var pay=parseFloat($('pay').value)||fair;      // 支給額（万円）
+    var ded=deduction(y);                          // 控除（万円）
+    var isShort=(y<=5);                            // 特定役員（5年以下）→1/2なし
+    var taxableMan=Math.max(0,pay-ded);
+    if(!isShort) taxableMan=taxableMan/2;
+    var taxableYen=Math.floor(taxableMan*10000/1000)*1000; // 千円未満切捨
+    var it=incomeTax(taxableYen);
+    var itAll=Math.floor(it*1.021);                // 復興特別所得税込
+    var juu=Math.floor(taxableYen*0.10);           // 住民税10%
+    var taxManTotal=(itAll+juu)/10000;
+    var net=pay-taxManTotal;
+    var corpSave=pay*corp;
+
+    var h='<div class="out">';
+    h+='<div class="row"><span>適正額の目安（功績倍率法'+(bonus>0?'＋功労加算'+(bonus*100)+'%':'')+'）</span><b class="big">'+fmt(fair)+'</b></div>';
+    h+='<div class="row"><span>今回の支給額（試算対象）</span><b class="big">'+fmt(pay)+'</b></div>';
+    h+='<div class="row"><span>退職所得控除（在任'+Math.ceil(y)+'年）</span><b class="big">'+fmt(ded)+'</b></div>';
+    h+='<div class="row"><span>課税退職所得（'+(isShort?'2分の1課税なし':'2分の1課税後')+'）</span><b class="big">'+fmt(taxableYen/10000)+'</b></div>';
+    h+='<div class="row"><span>所得税（復興特別所得税込）</span><b class="big">'+fmt(itAll/10000)+'</b></div>';
+    h+='<div class="row"><span>住民税（10%）</span><b class="big">'+fmt(juu/10000)+'</b></div>';
+    h+='<div class="row"><span>税負担合計（実効 約'+(pay>0?(taxManTotal/pay*100).toFixed(1):0)+'%）</span><b class="big">'+fmt(taxManTotal)+'</b></div>';
+    h+='<div class="hl"><div class="row" style="border:none;"><span><b>手取り額の目安</b></span><b class="big" style="font-size:18px;color:var(--green);">'+fmt(net)+'</b></div></div>';
+    h+='<div class="row" style="margin-top:8px;"><span>法人側：損金算入による法人税等の軽減（概算）</span><b class="big">約 '+fmt(corpSave)+'</b></div>';
+    h+='<div class="row"><span>法人の実質負担（支給額 − 法人税軽減）</span><b class="big">約 '+fmt(pay-corpSave)+'</b></div>';
+    h+='</div>';
+    res.innerHTML=h;
+
+    var f='';
+    if(pay>fair*1.001) f+=flag('bad','🚩','支給額が功績倍率法の目安（'+fmt(fair)+'）を超えています。超過部分は<b>損金否認のリスク</b>。金額の根拠づけを税理士と設計してください。');
+    else f+=flag('ok','✅','支給額は功績倍率法の目安の範囲内です（総会決議・退職金規程の整備を忘れずに）。');
+    if(isShort) f+=flag('bad','⚠️','役員在任5年以下のため<b>2分の1課税が適用されません</b>（特定役員退職手当等）。税負担が大きくなっています。');
+    if(net>0) f+=flag('warn','💰','支給には'+fmt(pay)+'の現金が必要です。保険の解約返戻金・積立・借入など、原資の準備状況を確認してください。');
+    f+=flag('ok','🏥','医療法人の場合、この支給で純資産が約'+fmt(pay)+'圧縮され、<b>出資持分の評価・払戻請求権も同時に下がります</b>（持分シミュレーターで確認できます）。');
+    fl.innerHTML=f;
+
+    LAST={sal:sal,y:y,mult:mult,bonus:bonus,fair:fair,pay:pay,ded:ded,isShort:isShort,taxable:taxableYen/10000,tax:taxManTotal,net:net,corpSave:corpSave};
+  }
+
+  function genSummary(){
+    if(!LAST) recalc();
+    if(!LAST){ return; }
+    var L=LAST;
+    var t='【役員退職金 引き継ぎサマリー（概算・一般情報）】\n';
+    t+='作成：TsuguAI 認定パートナー\n───────────────\n';
+    t+='■ 前提\n  最終報酬月額：'+L.sal+'万円 ／ 役員在任：'+L.y+'年 ／ 功績倍率：'+L.mult+(L.bonus>0?('＋功労加算'+(L.bonus*100)+'%'):'')+'\n';
+    t+='■ 試算結果\n';
+    t+='  適正額の目安（功績倍率法）：'+fmt(L.fair)+'\n';
+    t+='  支給額（試算）：'+fmt(L.pay)+'\n';
+    t+='  退職所得控除：'+fmt(L.ded)+' ／ 課税退職所得：'+fmt(L.taxable)+(L.isShort?'（※在任5年以下・1/2課税なし）':'')+'\n';
+    t+='  税負担合計（所得税・復興税・住民税）：'+fmt(L.tax)+'\n';
+    t+='  手取り額の目安：'+fmt(L.net)+'\n';
+    t+='  法人税等の軽減（概算）：'+fmt(L.corpSave)+'\n';
+    t+='■ 専門家への依頼ポイント（例）\n';
+    t+='  ・適正額（功績倍率）の妥当性確認と損金算入の可否\n';
+    t+='  ・退職金規程の整備・総会決議・議事録\n';
+    t+='  ・原資準備（法人保険・積立）の設計と支給時期\n';
+    t+='  ・（医療法人）持分評価の圧縮効果と持分なし移行との順番設計\n';
+    t+='───────────────\n';
+    t+='※ 概算・一般情報です。確定判断は税理士にご確認ください。\n';
+    $('summary').value=t;
+  }
+  function copySummary(){
+    var ta=$('summary'); if(!ta.value) genSummary();
+    ta.select();
+    try{ document.execCommand('copy'); alert('サマリーをコピーしました。'); }
+    catch(e){ navigator.clipboard&&navigator.clipboard.writeText(ta.value).then(function(){alert('サマリーをコピーしました。');}); }
+  }
+
+  /* スマホ用ハンバーガー */
+  (function(){
+    function build(){
+      var src=document.querySelectorAll('.nav-in a'); var menu=$('mnavMenu'); if(!menu)return;
+      var h='<a href="./index.html" onclick="mnavClose();backToPortal();return false;" style="background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22);margin-bottom:6px;font-weight:600;">← パートナーポータルへ戻る</a>';
+      src.forEach(function(a){ h+='<a href="'+a.getAttribute('href')+'" onclick="mnavGo(event,this)">'+a.textContent+'</a>'; });
+      menu.innerHTML=h;
+    }
+    window.mnavToggle=function(e){ if(e)e.stopPropagation(); var m=$('mnavMenu'),b=$('mnavBack'); if(m.classList.contains('open')){mnavClose();}else{m.classList.add('open');b.classList.add('open');} };
+    window.mnavClose=function(){ var m=$('mnavMenu'),b=$('mnavBack'); if(m)m.classList.remove('open'); if(b)b.classList.remove('open'); };
+    window.mnavGo=function(e,a){ if(e)e.preventDefault(); mnavClose(); var id=(a.getAttribute('href')||'').slice(1); var el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(document.readyState!=='loading') build(); else document.addEventListener('DOMContentLoaded', build);
+  })();
+</script>
+</body>
+</html>
