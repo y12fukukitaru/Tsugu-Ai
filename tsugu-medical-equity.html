@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>医療法人 持分シミュレーター｜認定パートナー向け｜TsuguAI</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1C3557;--blue:#2C6EBD;--sky:#4AADD6;--gold:#C89620;
+    --ink:#131E2E;--muted:#4A6080;--line:#D0DCF0;--bg:#F2F5FA;
+    --card:#fff;--soft:#F7FAFD;--softline:#EAF0F7;
+    --red:#A83030;--redsoft:#FBEEEE;--redline:#E9C9C9;
+    --green:#1E6B45;--greensoft:#E9F5EE;--greenline:#BFE2CD;
+    --goldsoft:#FBF3E0;--goldline:#ECD9A6;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:var(--bg);line-height:1.8;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px;margin:0 auto;padding:0 18px 100px;}
+  a{color:var(--blue);}
+
+  .hero{background:linear-gradient(150deg,var(--navy),#16466f 58%,var(--sky));color:#fff;padding:48px 0 40px;}
+  .hero-in{max-width:900px;margin:0 auto;padding:0 18px;}
+  .brand{display:flex;align-items:center;gap:11px;margin-bottom:26px;}
+  .logo{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:18px;}
+  .brand .nm{font-family:'DM Sans',sans-serif;font-size:21px;font-weight:500;}
+  .hero-back{margin-left:auto;font-size:12px;font-weight:600;color:#fff;text-decoration:none;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.32);border-radius:9px;padding:8px 13px;white-space:nowrap;}
+  .hero-back:hover{background:rgba(255,255,255,.24);}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:1.4px;color:var(--sky);text-transform:uppercase;margin-bottom:12px;}
+  .hero h1{font-size:27px;font-weight:700;line-height:1.45;margin:0 0 14px;}
+  .hero p{font-size:14px;color:#D6E4F2;margin:0;max-width:680px;}
+  .hero .for{display:inline-block;margin-top:18px;font-size:12px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);border-radius:99px;padding:6px 15px;}
+
+  .nav{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);margin-bottom:26px;}
+  .nav-in{max-width:900px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;padding:8px 18px;}
+  .nav a{flex:0 0 auto;font-size:12px;color:var(--muted);text-decoration:none;padding:7px 12px;border-radius:9px;white-space:nowrap;font-weight:600;}
+  .nav a:hover{background:var(--soft);color:var(--navy);}
+
+  .kicker{display:flex;align-items:center;gap:11px;margin:40px 0 6px;scroll-margin-top:60px;}
+  .kicker .no{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#fff;background:var(--navy);min-width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 6px;}
+  .kicker h2{font-size:20px;font-weight:700;color:var(--navy);margin:0;}
+  .lead{font-size:14px;margin:6px 0 14px;}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:13px 0;}
+  .card h3{font-size:15px;font-weight:700;color:var(--navy);margin:0 0 8px;}
+  .card p{font-size:13.5px;margin:0 0 8px;} .card p:last-child{margin-bottom:0;}
+  .muted{color:var(--muted);} .small{font-size:12px;}
+
+  .md{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+  .md .b{border-radius:10px;padding:11px 13px;font-size:12.5px;line-height:1.7;}
+  .md .pro{background:var(--greensoft);border:1px solid var(--greenline);}
+  .md .con{background:var(--redsoft);border:1px solid var(--redline);}
+  .md .b .t{font-weight:700;margin-bottom:4px;} .md .pro .t{color:var(--green);} .md .con .t{color:var(--red);}
+  .md ul{margin:0;padding-left:16px;} .md li{margin:2px 0;}
+
+  .note{border-radius:12px;padding:14px 16px;font-size:12.8px;line-height:1.75;margin:13px 0;}
+  .note .h{font-weight:700;display:block;margin-bottom:3px;}
+  .note.red{background:var(--redsoft);border:1px solid var(--redline);} .note.red .h{color:var(--red);}
+  .note.gold{background:var(--goldsoft);border:1px solid var(--goldline);} .note.gold .h{color:#8A6A12;}
+  .note.blue{background:#EAF2FB;border:1px solid #C4DBF3;} .note.blue .h{color:var(--blue);}
+  .note.green{background:var(--greensoft);border:1px solid var(--greenline);} .note.green .h{color:var(--green);}
+
+  label.fld{display:block;font-size:12px;font-weight:700;color:var(--navy);margin:0 0 5px;}
+  input[type=text],input[type=number],select{width:100%;padding:9px 11px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;font-family:inherit;background:#F8FAFD;color:var(--ink);outline:none;}
+  input:focus,select:focus{border-color:var(--blue);background:#fff;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+
+  table.t{width:100%;border-collapse:collapse;font-size:12.8px;margin-top:6px;}
+  table.t th,table.t td{padding:7px 8px;border-bottom:1px solid var(--softline);text-align:left;vertical-align:middle;}
+  table.t th{background:var(--soft);color:var(--navy);font-weight:700;font-size:11.5px;}
+  table.t input,table.t select{padding:6px 8px;font-size:12.5px;}
+  .xbtn{background:var(--redsoft);color:var(--red);border:1px solid var(--redline);border-radius:7px;font-size:12px;padding:4px 9px;cursor:pointer;}
+  .addbtn{background:#fff;color:var(--blue);border:1.5px solid var(--blue);border-radius:9px;font-size:12.5px;font-weight:600;padding:8px 14px;cursor:pointer;margin-top:10px;}
+  .calc{background:var(--navy);color:#fff;border:none;border-radius:10px;font-size:13.5px;font-weight:700;padding:11px 20px;cursor:pointer;font-family:inherit;}
+  .ghost{background:#fff;color:var(--blue);border:1.5px solid var(--line);border-radius:9px;font-size:12.5px;font-weight:600;padding:8px 14px;cursor:pointer;}
+
+  .out{background:var(--soft);border:1px solid var(--softline);border-radius:11px;padding:14px 16px;font-size:13px;margin-top:12px;}
+  .out .row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed var(--line);}
+  .out .row:last-child{border-bottom:none;} .out .row b{color:var(--navy);}
+  .out .big{font-family:'DM Sans',sans-serif;font-weight:700;}
+
+  .flag{display:flex;gap:9px;align-items:flex-start;border-radius:10px;padding:10px 13px;font-size:12.8px;margin:7px 0;line-height:1.65;}
+  .flag.ok{background:var(--greensoft);border:1px solid var(--greenline);}
+  .flag.warn{background:var(--goldsoft);border:1px solid var(--goldline);}
+  .flag.bad{background:var(--redsoft);border:1px solid var(--redline);}
+  .flag .ic{font-size:15px;line-height:1.3;}
+
+  textarea.sum{width:100%;min-height:220px;font-size:12.5px;line-height:1.7;font-family:'Noto Sans JP',monospace;padding:10px 12px;border:1.5px solid var(--line);border-radius:9px;background:#F8FAFD;}
+  footer{font-size:11.5px;color:var(--muted);line-height:1.85;border-top:1px solid var(--line);padding-top:20px;margin-top:36px;}
+
+  /* スマホ用ハンバーガー */
+  .mnav-btn{display:none;position:fixed;top:10px;right:12px;z-index:1000;background:#fff;border:1px solid var(--line);border-radius:10px;font-size:18px;line-height:1;color:var(--navy);padding:9px 13px;box-shadow:0 4px 14px rgba(28,53,87,.22);cursor:pointer;font-family:inherit;}
+  .mnav-menu{display:none;position:fixed;top:54px;right:12px;z-index:1000;background:#0F2035;border-radius:12px;padding:8px;width:min(80vw,270px);max-height:74vh;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,.34);}
+  .mnav-menu.open{display:block;}
+  .mnav-menu a{display:block;padding:11px 13px;border-radius:9px;font-size:13px;color:rgba(255,255,255,.9);text-decoration:none;line-height:1.4;}
+  .mnav-menu a:hover,.mnav-menu a:active{background:var(--blue);color:#fff;}
+  .mnav-back{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.18);}
+  .mnav-back.open{display:block;}
+
+  @media(max-width:680px){
+    .hero h1{font-size:21px;} .md,.grid2,.grid3{grid-template-columns:1fr;}
+    .card{padding:16px;} .nav-in{padding:8px 14px;}
+  }
+  @media(max-width:640px){
+    .nav{display:none;}
+    .mnav-btn{display:inline-flex;align-items:center;}
+    .hero-back{display:none;}
+  }
+  @media print{ .nav,.mnav-btn,.mnav-menu,.mnav-back,.hero-back,.noprint{display:none!important;} body{background:#fff;} .card{break-inside:avoid;} }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-in">
+    <div class="brand"><span class="logo">継</span><span class="nm">TsuguAI</span><a class="hero-back" href="./index.html" onclick="backToPortal();return false;">← パートナーポータルへ戻る</a></div>
+    <div class="eyebrow">認定パートナー向け・医療法人ナレッジ</div>
+    <h1>医療法人 持分シミュレーター<br><span style="font-size:17px;font-weight:500;color:#CFE0F0;">出資持分の評価・払戻リスクを見える化し、持分なし移行を設計する。</span></h1>
+    <p>持分あり医療法人（経過措置型）は、配当が禁止されているため利益が内部に積み上がり、出資持分の評価が静かに膨らみます。相続税と払戻請求のリスクがどれほどの規模かを概算し、認定医療法人制度・退職金・保険による対策へつなぐための診断ツールです。</p>
+    <span class="for">出力はすべて概算・一般情報です。評価の確定・申請は税理士等の有資格者へ。</span>
+  </div>
+</div>
+
+<div class="nav"><div class="nav-in">
+  <a href="#s1">①基礎知識</a>
+  <a href="#s2">②法人の財産</a>
+  <a href="#s3">③出資者と持分</a>
+  <a href="#s4">④リスク診断</a>
+  <a href="#s5">⑤対策カタログ</a>
+  <a href="#s6">⑥引き継ぎサマリー</a>
+</div></div>
+
+<div class="wrap">
+
+  <!-- 1 -->
+  <div class="kicker" id="s1"><span class="no">1</span><h2>なぜ医療法人の「持分」が問題になるのか</h2></div>
+  <div class="card">
+    <h3>持分あり／持分なしの違い</h3>
+    <p><b>持分あり医療法人（経過措置型）</b>は2007年4月以降新設できず、既存法人だけが存続しています。それでも今なお医療法人の約6割がこの型です。出資者は「出資持分」＝法人の純資産に対する財産権を持ちます。</p>
+    <p><b>なぜ膨らむのか。</b>医療法人は配当が禁止されているため、利益はすべて内部留保として蓄積します。設立時の出資が数百万円でも、数十年で純資産が数億〜数十億円になれば、持分の価値も同じだけ膨らみます。しかも上場株のように売って換金できません。</p>
+    <p><b>2つのリスク。</b>①<b>相続税</b>：持分は相続財産となり、換金できないのに高額の相続税がかかる。②<b>払戻請求</b>：出資者（元役員・親族・その相続人）は退社時に持分の払戻しを請求でき、法人は<b>時価純資産ベース</b>の現金流出を迫られます。医業継続を揺るがす規模になり得ます。</p>
+  </div>
+
+  <!-- 2 -->
+  <div class="kicker" id="s2"><span class="no">2</span><h2>法人の財産状況（時価ベースの概算）</h2></div>
+  <p class="lead">決算書の純資産をベースに、含み損益をならして時価の概算を入力します。正確な評価は税理士が行いますので、ここではおおまかで構いません。</p>
+  <div class="card">
+    <div class="grid3">
+      <div><label class="fld">純資産（時価概算・万円）</label><input type="number" id="netAsset" placeholder="例：50000" oninput="recalc()"></div>
+      <div><label class="fld">うち現預金（万円）</label><input type="number" id="cash" placeholder="例：15000" oninput="recalc()"></div>
+      <div><label class="fld">年間の税引後利益（万円・任意）</label><input type="number" id="profit" placeholder="例：3000" oninput="recalc()"></div>
+    </div>
+    <p class="small muted" style="margin-top:8px;">※ 純資産＝総資産（時価）−負債。不動産の含み益・保険の解約返戻金なども含めた概算が理想です。年間利益を入れると「10年後の持分」の目安も表示します。</p>
+  </div>
+
+  <!-- 3 -->
+  <div class="kicker" id="s3"><span class="no">3</span><h2>出資者と持分の現在地</h2></div>
+  <p class="lead">出資者を行で追加してください。出資額の割合に応じて、各出資者の持分評価・払戻請求権の概算を自動計算します。</p>
+  <div class="card">
+    <table class="t" id="ownTable">
+      <thead><tr><th style="width:26%;">出資者名</th><th style="width:20%;">属性</th><th style="width:18%;">出資額（万円）</th><th style="width:26%;">持分評価・払戻概算</th><th></th></tr></thead>
+      <tbody id="ownBody"></tbody>
+    </table>
+    <button class="addbtn" onclick="addOwnRow()">＋ 出資者を追加</button>
+    <div class="out" style="margin-top:14px;">
+      <div class="row"><span>出資額の合計</span><b class="big" id="capSum">0万円</b></div>
+      <div class="row"><span>純資産（時価概算）</span><b class="big" id="naDisp">—</b></div>
+      <div class="row"><span>評価倍率（純資産 ÷ 出資額合計）</span><b class="big" id="multiple">—</b></div>
+      <div class="row"><span>10年後の純資産の目安（利益が同水準で継続した場合）</span><b class="big" id="na10">—</b></div>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="kicker" id="s4"><span class="no">4</span><h2>リスク診断</h2></div>
+  <div class="card">
+    <button class="calc" onclick="recalc(true)">診断を更新</button>
+    <div id="flags" style="margin-top:10px;"></div>
+    <div class="note red"><span class="h">必ずお読みください</span>持分の相続税評価は、実務では「取引相場のない株式」の評価に準じ、類似業種比準価額と純資産価額を組み合わせて算定します（比準併用で本概算より下がる場合があります）。一方、<b>払戻請求権は時価純資産ベース</b>で捉えるのが安全です。本シミュレーターは規模感の把握が目的であり、評価の確定は必ず税理士が行います。</div>
+  </div>
+
+  <!-- 5 -->
+  <div class="kicker" id="s5"><span class="no">5</span><h2>対策カタログ</h2></div>
+
+  <div class="card">
+    <h3>① 認定医療法人制度（持分なしへの移行）<span class="small" style="color:#8A6A12;font-weight:700;">　認定期限：2029年12月31日</span></h3>
+    <p>移行計画を作り厚生労働大臣の認定を受けて持分を放棄すると、通常なら法人に課される<b>みなし贈与税が非課税</b>になり、相続発生後でも持分を放棄すれば<b>相続税が猶予→免除</b>されます。認定から移行完了まで5年以内。非同族要件は求められておらず、同族経営のまま移行できます。</p>
+    <div class="md">
+      <div class="b pro"><div class="t">メリット</div><ul><li>相続税・払戻請求のリスクが根本から消える</li><li>贈与税非課税で移行できる（本来は高額課税）</li><li>相続発生後（申告期限まで）でも使える</li></ul></div>
+      <div class="b con"><div class="t">デメリット・注意</div><ul><li>移行後6年間は認定要件（役員報酬の適正性・特別利益供与の禁止等）を守り続ける必要。違反すると贈与税が課される</li><li>解散時の残余財産は国等に帰属（財産権の放棄）</li><li>要件充足の準備に時間がかかるため早めの着手が必要</li></ul></div>
+    </div>
+    <div class="note gold"><span class="h">期限の考え方</span>認定期限は2024年の見直しで2029年12月31日まで延長されました。ただし直前は申請が混み合うこと、直前期の決算で要件を満たす必要があることから、実務的には<b>2〜3年前からの準備</b>が推奨されます。「延長されたから後で」は最も危険な判断です。</div>
+  </div>
+
+  <div class="card">
+    <h3>② 役員退職金による純資産の圧縮</h3>
+    <p>理事長の勇退時に適正額の退職金を支給すると、法人の純資産が下がり、<b>持分評価・払戻請求権の額も同時に下がります</b>。損金算入により法人税も軽減され、退職所得は税制上優遇されるため、「持分対策」と「経営者の手取り最大化」を同時に実現できる王道の一手です。</p>
+    <p class="small muted">→ 具体額は「役員退職金シミュレーター」で試算できます（パートナーポータルのシミュレーターから開けます）。</p>
+  </div>
+
+  <div class="card">
+    <h3>③ 生前対策・資金対策</h3>
+    <p><b>生前贈与（暦年）</b>：持分を後継者へ少しずつ贈与。ただし評価が高いと少額ずつしか動かせず、時間がかかります。<br>
+    <b>生命保険</b>：相続税の納税資金や、他の出資者からの払戻請求への支払原資を、理事長の保険で準備。持分対策が完了するまでの「橋渡し」として有効です。<br>
+    <b>福祉医療機構（WAM）の経営安定化資金</b>：払戻請求への対応資金として融資制度（限度額2.5億円）があります。<br>
+    <b>出資者の整理</b>：経営に関与しない少数出資者の持分を早めに買い取り・整理し、将来の請求リスクの芽を摘む。</p>
+  </div>
+
+  <div class="note blue"><span class="h">パートナーの役割</span>本ツールで規模感とリスクを見える化し、経営者の「いつか考える」を「いま動く」に変えるのがパートナーの仕事です。認定申請・持分評価・贈与税の判断は、医療法人に強い<b>税理士・行政書士・弁護士</b>へ橋渡し（ティーアップ）します。パートナー自身が税額の確定や申請書類の作成を行うことはできません（税理士法・行政書士法）。</div>
+
+  <!-- 6 -->
+  <div class="kicker" id="s6"><span class="no">6</span><h2>専門家への引き継ぎサマリー</h2></div>
+  <div class="card">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;" class="noprint">
+      <button class="calc" onclick="genSummary()">サマリーを作成</button>
+      <button class="ghost" onclick="copySummary()">コピー</button>
+      <button class="ghost" onclick="window.print()">印刷／PDF保存</button>
+    </div>
+    <textarea id="summary" class="sum" placeholder="「サマリーを作成」を押すと、税理士等へ渡せる要約が表示されます。"></textarea>
+  </div>
+
+  <footer>
+    本ツールは認定パートナーの学習・実務補助を目的とした<b>一般的な情報提供</b>であり、特定の事案に対する税務・法務の助言ではありません。出資持分の評価、認定医療法人の申請、贈与税・相続税の判断は、必ず<b>税理士等の有資格専門家</b>におつなぎください。制度・期限は作成時点（2026年7月）の情報です（認定期限2029年12月31日／厚生労働省）。<br><br>株式会社福來 ｜ TsuguAI -継-
+  </footer>
+</div>
+
+<button class="mnav-btn" id="mnavBtn" aria-label="セクションメニュー" onclick="mnavToggle(event)">☰</button>
+<div class="mnav-back" id="mnavBack" onclick="mnavClose()"></div>
+<div class="mnav-menu" id="mnavMenu"></div>
+
+<script>
+  var $=function(id){return document.getElementById(id);};
+  function esc(s){return (s||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function fmt(n){return Math.round(n).toLocaleString()+'万円';}
+
+  window.backToPortal=function(){ try{ window.close(); }catch(e){} setTimeout(function(){ location.href='./index.html'; },150); };
+
+  var ATTR=['理事長（本人）','配偶者','子','親族','元役員','その他'];
+  function attrOpts(v){return ATTR.map(function(a){return '<option'+(a===v?' selected':'')+'>'+a+'</option>';}).join('');}
+  function addOwnRow(name,attr,amt){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td><input type="text" class="on_" value="'+esc(name||'')+'" placeholder="出資者名" oninput="recalc()"></td>'
+      +'<td><select class="oa" onchange="recalc()">'+attrOpts(attr||'子')+'</select></td>'
+      +'<td><input type="number" class="oc" value="'+(amt!=null?amt:'')+'" placeholder="万円" oninput="recalc()"></td>'
+      +'<td class="ov small" style="color:#1C3557;font-weight:600;">—</td>'
+      +'<td><button class="xbtn" onclick="this.closest(\'tr\').remove();recalc()">削除</button></td>';
+    $('ownBody').appendChild(tr);
+    recalc();
+  }
+  function flag(cls,ic,txt){return '<div class="flag '+cls+'"><span class="ic">'+ic+'</span><span>'+txt+'</span></div>';}
+
+  function recalc(){
+    var na=parseFloat($('netAsset').value)||0;
+    var cash=parseFloat($('cash').value)||0;
+    var pr=parseFloat($('profit').value)||0;
+    var rows=$('ownBody').querySelectorAll('tr');
+    var sum=0;
+    rows.forEach(function(tr){ sum+=parseFloat(tr.querySelector('.oc').value)||0; });
+    $('capSum').textContent=fmt(sum);
+    $('naDisp').textContent=na>0?fmt(na):'—';
+    $('multiple').textContent=(na>0&&sum>0)?('約 '+(na/sum).toFixed(1)+' 倍'):'—';
+    $('na10').textContent=(na>0&&pr>0)?fmt(na+pr*10):'—';
+    // 各行の持分評価・払戻概算
+    var outsiderPay=0, ownerPay=0;
+    rows.forEach(function(tr){
+      var amt=parseFloat(tr.querySelector('.oc').value)||0;
+      var cell=tr.querySelector('.ov');
+      if(na>0&&sum>0&&amt>0){
+        var share=amt/sum, pay=na*share;
+        cell.textContent=fmt(pay)+'（'+(share*100).toFixed(1)+'%）';
+        var a=tr.querySelector('.oa').value;
+        if(a==='元役員'||a==='その他') outsiderPay+=pay;
+        if(a==='理事長（本人）') ownerPay+=pay;
+      } else { cell.textContent='—'; }
+    });
+    // フラグ
+    var f='';
+    if(na>0&&sum>0){
+      var mult=na/sum;
+      if(mult>=10) f+=flag('bad','🚩','持分評価が出資額の<b>約'+mult.toFixed(0)+'倍</b>に膨らんでいます。相続・払戻の潜在リスクが大きく、対策の優先度は高いと考えられます。');
+      else if(mult>=3) f+=flag('warn','⚠️','持分評価が出資額の約'+mult.toFixed(1)+'倍。今後の利益蓄積でさらに拡大します。早めの方針決定を。');
+      else f+=flag('ok','✅','評価倍率は約'+mult.toFixed(1)+'倍。現時点のリスクは限定的ですが、利益が出続ける限り毎年膨らみます。');
+      if(ownerPay>0) f+=flag('warn','⚠️','理事長の持分評価は概算<b>'+fmt(ownerPay)+'</b>。相続財産に加算されます（納税資金の準備を確認）。詳細な相続税額は「相続・贈与フォーム」で試算できます。');
+      if(outsiderPay>0){
+        if(cash>0&&outsiderPay>cash) f+=flag('bad','🚩','経営外の出資者（元役員・その他）の払戻請求権が概算<b>'+fmt(outsiderPay)+'</b>で、現預金'+fmt(cash)+'を超えています。請求が行使されると<b>医業継続に支障</b>が出るおそれ。持分の整理・WAM融資・保険準備の検討を。');
+        else f+=flag('warn','⚠️','経営外の出資者の払戻請求権が概算'+fmt(outsiderPay)+'あります。関係が良好なうちに整理（買取り・放棄の合意）を検討してください。');
+      }
+      if(pr>0) f+=flag('warn','📈','利益が同水準で続くと、10年後の純資産（＝持分の総評価）は概算<b>'+fmt(na+pr*10)+'</b>。対策は「早いほど安い」構造です。');
+      f+=flag('ok','🎯','持分なし移行（認定医療法人制度）の認定期限は<b>2029年12月31日</b>。準備に2〜3年を要するのが実務の相場です。');
+    } else {
+      f+=flag('warn','⚠️','純資産と出資者の出資額を入力すると診断が表示されます。');
+    }
+    $('flags').innerHTML=f;
+  }
+
+  function genSummary(){
+    var na=$('netAsset').value||'未入力', cash=$('cash').value||'未入力', pr=$('profit').value||'未入力';
+    var rows=$('ownBody').querySelectorAll('tr'); var lst=[];
+    rows.forEach(function(tr){
+      var n=tr.querySelector('.on_').value, a=tr.querySelector('.oa').value;
+      var c=tr.querySelector('.oc').value, v=tr.querySelector('.ov').textContent;
+      if(n||c) lst.push('  ・'+(n||'(無名)')+'（'+a+'）出資'+(c||'0')+'万円 → 持分概算 '+v);
+    });
+    var t='【医療法人 持分 引き継ぎサマリー（概算・一般情報）】\n';
+    t+='作成：TsuguAI 認定パートナー\n───────────────\n';
+    t+='■ 法人の財産（時価概算）\n  純資産：'+na+'万円 ／ うち現預金：'+cash+'万円 ／ 年間税引後利益：'+pr+'万円\n';
+    t+='■ 出資者と持分（払戻請求権ベースの概算）\n'+(lst.length?lst.join('\n'):'  （未入力）')+'\n';
+    t+='  出資額合計：'+$('capSum').textContent+' ／ 評価倍率：'+$('multiple').textContent+'\n';
+    t+='■ 専門家への依頼ポイント（例）\n';
+    t+='  ・出資持分の評価の確定（類似業種比準・純資産価額の併用可否）\n';
+    t+='  ・認定医療法人制度の要件充足チェックと移行計画（認定期限 2029/12/31）\n';
+    t+='  ・役員退職金による純資産圧縮の設計（適正額・時期）\n';
+    t+='  ・経営外出資者の持分整理／払戻資金（WAM融資・生命保険）の検討\n';
+    t+='───────────────\n';
+    t+='※ 本サマリーは概算・一般情報です。評価・税額・申請は税理士等の有資格専門家にご確認ください。\n';
+    $('summary').value=t;
+  }
+  function copySummary(){
+    var ta=$('summary'); if(!ta.value) genSummary();
+    ta.select();
+    try{ document.execCommand('copy'); alert('サマリーをコピーしました。'); }
+    catch(e){ navigator.clipboard&&navigator.clipboard.writeText(ta.value).then(function(){alert('サマリーをコピーしました。');}); }
+  }
+
+  /* スマホ用ハンバーガー */
+  (function(){
+    function build(){
+      var src=document.querySelectorAll('.nav-in a'); var menu=$('mnavMenu'); if(!menu)return;
+      var h='<a href="./index.html" onclick="mnavClose();backToPortal();return false;" style="background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22);margin-bottom:6px;font-weight:600;">← パートナーポータルへ戻る</a>';
+      src.forEach(function(a){ h+='<a href="'+a.getAttribute('href')+'" onclick="mnavGo(event,this)">'+a.textContent+'</a>'; });
+      menu.innerHTML=h;
+    }
+    window.mnavToggle=function(e){ if(e)e.stopPropagation(); var m=$('mnavMenu'),b=$('mnavBack'); if(m.classList.contains('open')){mnavClose();}else{m.classList.add('open');b.classList.add('open');} };
+    window.mnavClose=function(){ var m=$('mnavMenu'),b=$('mnavBack'); if(m)m.classList.remove('open'); if(b)b.classList.remove('open'); };
+    window.mnavGo=function(e,a){ if(e)e.preventDefault(); mnavClose(); var id=(a.getAttribute('href')||'').slice(1); var el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(document.readyState!=='loading') build(); else document.addEventListener('DOMContentLoaded', build);
+  })();
+
+  /* 初期行 */
+  addOwnRow('理事長','理事長（本人）',300);
+  addOwnRow('','子',0);
+</script>
+</body>
+</html>
