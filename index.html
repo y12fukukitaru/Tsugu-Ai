@@ -4396,20 +4396,20 @@
     function sec(t){ return '<div style="font-weight:600;font-size:13px;color:#1C3557;margin:12px 0 2px;">'+t+'</div>'; }
     var h='<div style="border:1px solid #D0DCF0;border-radius:11px;padding:16px;">'
       +sec('生命保険（事業保障）／実効税率 '+(rate*100).toFixed(0)+'%')
-      +rowL('必要額（負債＋固定費×月数）', yen(bpNeed))
-      +rowL('準備済み（現預金＋既存保険）', yen(bpReady))
-      +rowL('法人税を考慮した必要保障額', yen(bpGapTax), '#2C6EBD')
+      +rowL('必要額（負債＋固定費×月数）', yenMan(bpNeed))
+      +rowL('準備済み（現預金＋既存保険）', yenMan(bpReady))
+      +rowL('法人税を考慮した必要保障額', yenMan(bpGapTax), '#2C6EBD')
       +sec('養老保険（福利厚生プラン／向こう5年）')
       +rowL('加入人数', emp+' 人')
-      +rowL('年間保険料総額', yen(premTotal))
-      +rowL('年間の節税（繰延べ）目安', yen(taxSave), '#1E6B45')
-      +rowL('5年間の累計節税目安', yen(taxSave5), '#1E6B45')
-      +rowL('5年後の積立累計（退職金原資の目安）', yen(asset5))
+      +rowL('年間保険料総額', yenMan(premTotal))
+      +rowL('年間の節税（繰延べ）目安', yenMan(taxSave), '#1E6B45')
+      +rowL('5年間の累計節税目安', yenMan(taxSave5), '#1E6B45')
+      +rowL('5年後の積立累計（退職金原資の目安）', yenMan(asset5))
       +'</div>'
       + pcDiagnosis(ind);
     window.__ciSummary='【パートナー試算】実効税率'+(rate*100).toFixed(0)+'%'
-      +'\n[事業保障] 法人税考慮後の必要保障額'+yen(bpGapTax)+'（必要額'+yen(bpNeed)+'／準備済み'+yen(bpReady)+'）'
-      +'\n[養老保険(5年)] 加入'+emp+'人 / 年間保険料'+yen(premTotal)+' / 年間節税'+yen(taxSave)+' / 5年累計節税'+yen(taxSave5)+' / 5年積立'+yen(asset5)
+      +'\n[事業保障] 法人税考慮後の必要保障額'+yenMan(bpGapTax)+'（必要額'+yenMan(bpNeed)+'／準備済み'+yenMan(bpReady)+'）'
+      +'\n[養老保険(5年)] 加入'+emp+'人 / 年間保険料'+yenMan(premTotal)+' / 年間節税'+yenMan(taxSave)+' / 5年累計節税'+yenMan(taxSave5)+' / 5年積立'+yenMan(asset5)
       +'\n[損害保険] 業種: '+(ind||'未選択');
     h+='<button class="btn2" style="margin-top:10px;" onclick="saveInsFor(\''+custId+'\')">この試算を顧客に共有（保存）</button><div id="ci-ins-msg" style="font-size:12px;margin-top:8px;"></div>';
     box.innerHTML=h;
@@ -5106,7 +5106,7 @@
   }
 
   function num(id){ var v=parseFloat(($(id)&&$(id).value)||''); return isNaN(v)?0:v; }
-  function yen(n){ return Math.round(n).toLocaleString('ja-JP')+' 万円'; }
+  function yenMan(n){ return Math.round(n).toLocaleString('ja-JP')+' 万円'; }
   function stepperHtml(cur){
     function st(n,t,s,act,tgt,c){ var on=(String(cur)===String(n)); var foot= on? '<div style="font-size:9px;color:#fff;background:'+c+';border-radius:99px;padding:1px 8px;display:inline-block;margin-top:5px;">現在地</div>' : '<div style="font-size:10px;color:'+c+';margin-top:6px;font-weight:600;">'+act+' ›</div>'; return '<div onclick="goSec(\''+tgt+'\')" style="flex:1 1 112px;min-width:112px;background:'+(on?'#EAF1FB':'#F7FAFD')+';border:'+(on?'2px':'1px')+' solid '+(on?c:'#EAF0F7')+';border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;"><div style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:'+c+';color:#fff;font-size:12px;font-weight:600;">'+n+'</div><div style="font-size:13px;font-weight:600;color:#131E2E;margin-top:6px;">'+t+'</div><div style="font-size:11px;color:#8AA0BE;margin-top:2px;line-height:1.4;">'+s+'</div>'+foot+'</div>'; }
     var ar='<div style="display:flex;align-items:center;color:#B7C4D6;font-size:16px;">→</div>';
@@ -5135,26 +5135,26 @@
     function sec(t){ return '<div style="font-weight:600;font-size:13px;color:#1C3557;margin:12px 0 2px;">'+t+'</div>'; }
     var h='<div style="border:1px solid #D0DCF0;border-radius:11px;padding:16px;">'
       +sec('生命保険（事業保障）／実効税率 '+(rate*100).toFixed(0)+'%')
-      +rowL('必要額（負債＋固定費×月数）', yen(bpNeed))
-      +rowL('準備済み（現預金＋既存保険）', yen(bpReady))
-      +rowL('不足（税引前）', yen(bpGap))
-      +rowL('法人税を考慮した必要保障額', yen(bpGapTax), '#2C6EBD')
+      +rowL('必要額（負債＋固定費×月数）', yenMan(bpNeed))
+      +rowL('準備済み（現預金＋既存保険）', yenMan(bpReady))
+      +rowL('不足（税引前）', yenMan(bpGap))
+      +rowL('法人税を考慮した必要保障額', yenMan(bpGapTax), '#2C6EBD')
       +'<div style="font-size:11px;color:#8AA0BE;margin-top:4px;line-height:1.6;">死亡保険金は法人の益金となり課税対象のため、不足額 ÷ (1−実効税率) で割り戻しています。死亡退職金・弔慰金（損金）で相殺できる場合は必要額は小さくなります。</div>'
       +sec('養老保険（福利厚生プラン）／向こう5年・税率一定の前提')
       +rowL('加入人数', emp+' 人')
-      +rowL('1人あたり死亡退職金（メモ）', yen(death))
-      +rowL('年間保険料総額', yen(premTotal))
-      +rowL('うち損金算入（1/2）', yen(loss))
-      +rowL('年間の節税（繰延べ）目安', yen(taxSave), '#1E6B45')
-      +rowL('5年間の累計節税目安', yen(taxSave5), '#1E6B45')
-      +rowL('5年後の簿価積立累計（退職金原資の目安）', yen(asset5))
+      +rowL('1人あたり死亡退職金（メモ）', yenMan(death))
+      +rowL('年間保険料総額', yenMan(premTotal))
+      +rowL('うち損金算入（1/2）', yenMan(loss))
+      +rowL('年間の節税（繰延べ）目安', yenMan(taxSave), '#1E6B45')
+      +rowL('5年間の累計節税目安', yenMan(taxSave5), '#1E6B45')
+      +rowL('5年後の簿価積立累計（退職金原資の目安）', yenMan(asset5))
       +'<div style="font-size:11px;color:#8AA0BE;margin-top:4px;line-height:1.6;">1/2損金は普遍的加入(全員または合理的基準)が要件。節税は繰延べで、満期金・解約返戻金は受取時に益金になります。一人あたり保険料は年齢・性別で変わるため、保険料は総額で入力しています。</div>'
       +'</div>';
     h+=pcDiagnosis(ind);
     h+='<div style="font-size:11px;color:#8AA0BE;margin-top:8px;line-height:1.7;">※ 概算・一般的な考え方です。正式な金額・税務上の取扱い・必要な補償範囲・商品選定は、個別事情をふまえた専門的な確認が必要です。</div>';
     window.__insSummary='【保険試算サマリー】 実効税率'+(rate*100).toFixed(0)+'%'
-      +'\n[事業保障] 必要額'+yen(bpNeed)+' / 準備済み'+yen(bpReady)+' / 法人税考慮後の必要保障額'+yen(bpGapTax)
-      +'\n[養老保険(向こう5年)] 加入'+emp+'人 / 年間保険料総額'+yen(premTotal)+' / 年間節税'+yen(taxSave)+' / 5年累計節税'+yen(taxSave5)+' / 5年積立'+yen(asset5)
+      +'\n[事業保障] 必要額'+yenMan(bpNeed)+' / 準備済み'+yenMan(bpReady)+' / 法人税考慮後の必要保障額'+yenMan(bpGapTax)
+      +'\n[養老保険(向こう5年)] 加入'+emp+'人 / 年間保険料総額'+yenMan(premTotal)+' / 年間節税'+yenMan(taxSave)+' / 5年累計節税'+yenMan(taxSave5)+' / 5年積立'+yenMan(asset5)
       +'\n[損害保険] 業種: '+(ind||'未選択');
     h+='<button class="btn2" style="margin-top:10px;" onclick="shareInsurance()">この試算結果をパートナーに共有</button><div id="ins-share-msg" style="font-size:12px;margin-top:8px;"></div>';
     var vi=$('vj-ins'); if(vi){ vi.value=Math.round(taxSave); vjCalc(); }
@@ -5265,7 +5265,7 @@
     h+=rowM('資金繰り余力（現預金÷月間支出）', (runway>=99?'十分':runway.toFixed(1)+' か月')+'', '何か月もつか', st3(runway,3,1.5));
     h+=rowM('CCC（資金化までの日数）', Math.round(ccc)+' 日', '売上債権'+Math.round(arDays)+'＋在庫'+Math.round(invDays)+'−仕入債務'+Math.round(apDays)+'。短いほど良', ccc<=30?'#1E6B45':(ccc<=60?'#C89620':'#A83030'));
     h+=rowM('借入月商倍率（有利子負債÷月商）', debtRatio.toFixed(1)+' 倍', '目安3倍以内', st3(6-debtRatio,4.5,0)==='#1E6B45'?'#1E6B45':(debtRatio<=6?'#C89620':'#A83030'));
-    h+=rowM('債務償還年数（有利子負債÷簡易CF）', (simpleCF>0?(repayYears>=99?'—':repayYears.toFixed(1)+' 年'):'算定不可（CF赤字）'), '簡易CF='+yen(simpleCF)+'。10年以内が目安', simpleCF<=0?'#A83030':(repayYears<=10?'#1E6B45':(repayYears<=15?'#C89620':'#A83030')));
+    h+=rowM('債務償還年数（有利子負債÷簡易CF）', (simpleCF>0?(repayYears>=99?'—':repayYears.toFixed(1)+' 年'):'算定不可（CF赤字）'), '簡易CF='+yenMan(simpleCF)+'。10年以内が目安', simpleCF<=0?'#A83030':(repayYears<=10?'#1E6B45':(repayYears<=15?'#C89620':'#A83030')));
     h+=rowM('返済カバー率（簡易CF÷年間返済）', (annualRepay>0?coverage.toFixed(1)+' 倍':'返済なし'), '1.0倍以上が目安', annualRepay<=0?'#1E6B45':st3(coverage,1.5,1));
     h+='</div>';
 
