@@ -961,10 +961,11 @@
         +'</div>'
         +'<div id="lh-out" style="margin-top:10px;"></div>'
         +'<div class="ph" style="font-size:13px;margin-top:18px;display:flex;align-items:center;justify-content:space-between;">💳 決済リンク（Stripe）管理<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadBillingAdminLinks()">↺ 更新</span></div>'
-        +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">Stripeで作成した決済リンク（Payment Link）を登録すると、顧客・パートナーの「お支払い」メニューに即時表示されます。リンクの作り方は納品の「Stripe課金セットアップ手順」をご覧ください。</div>'
+        +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">Stripeで作成した決済リンク（Payment Link）を登録すると、顧客・パートナーの「お支払い」メニューに即時表示されます。「対象顧客」で特定の会社を選ぶと、その顧客にだけ表示されます（割引後の金額別リンクの割り当てに使用）。リンクの作り方は納品の「Stripe課金セットアップ手順」をご覧ください。</div>'
         +'<div id="bl-links-list" style="margin-bottom:8px;">読み込み中...</div>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;background:var(--soft);border-radius:10px;padding:10px 12px;">'
-          +'<div><label class="fl">対象</label><select id="bl-new-aud" class="inp2"><option value="customer">顧客</option><option value="consultant">パートナー</option></select></div>'
+          +'<div><label class="fl">対象</label><select id="bl-new-aud" class="inp2" onchange="blAudChanged()"><option value="customer">顧客</option><option value="consultant">パートナー</option></select></div>'
+          +'<div id="bl-new-cust-wrap"><label class="fl">対象顧客</label><select id="bl-new-cust" class="inp2" style="max-width:200px;"><option value="">全顧客共通</option></select></div>'
           +'<div><label class="fl">名称</label><input id="bl-new-label" class="inp2" style="width:190px;" placeholder="例：月額顧問料（50,000円/月）"></div>'
           +'<div style="flex:1;min-width:220px;"><label class="fl">決済リンクURL</label><input id="bl-new-url" class="inp2" style="width:100%;" placeholder="https://buy.stripe.com/…"></div>'
           +'<div style="flex:1;min-width:180px;"><label class="fl">説明（任意）</label><input id="bl-new-desc" class="inp2" style="width:100%;" placeholder="例：毎月自動で決済されます"></div>'
@@ -3131,7 +3132,16 @@
   // ===== 課金 Phase1：Stripe決済リンク＋入金履歴 =====
   async function loadBillingPay(aud){
     var box=$('billpay-links'); if(!box) return;
-    var res=await sb.from('billing_links').select('id,label,description,url').eq('audience',aud).eq('active',true).order('sort',{ascending:true});
+    var res;
+    if(aud==='customer'){
+      var uid=(window.__prof&&window.__prof.id)||'';
+      res=await sb.from('billing_links').select('id,label,description,url').eq('audience',aud).eq('active',true).or('customer_id.is.null,customer_id.eq.'+uid).order('sort',{ascending:true});
+      if(res.error){ // Phase55未適用（customer_id列なし）の場合は従来表示にフォールバック
+        res=await sb.from('billing_links').select('id,label,description,url').eq('audience',aud).eq('active',true).order('sort',{ascending:true});
+      }
+    } else {
+      res=await sb.from('billing_links').select('id,label,description,url').eq('audience',aud).eq('active',true).order('sort',{ascending:true});
+    }
     if(res.error){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">お支払いメニューは現在準備中です。</div>'; loadMyPayEvents(); return; }
     if(!res.data||!res.data.length){
       box.innerHTML='<div style="font-size:12px;color:#94A2B6;">お支払いメニューは現在準備中です。運営からのご案内をお待ちください。</div>';
@@ -3159,15 +3169,40 @@
     }).join('');
   }
   // ---- 運営：決済リンク管理＋入金履歴 ----
+  var BL_CUSTS=[];
+  function blAudChanged(){
+    var aud=($('bl-new-aud')||{}).value||'customer';
+    var w=$('bl-new-cust-wrap'); if(w) w.style.display=(aud==='customer'?'':'none');
+  }
   async function loadBillingAdminLinks(){
     var box=$('bl-links-list'); if(!box) return;
+    // 顧客一覧（対象顧客セレクト＋割り当て表示用）
+    try{
+      var cr=await sb.from('profiles').select('id,company_name,contact_name').eq('role','customer').order('company_name',{ascending:true});
+      BL_CUSTS=(cr.data||[]);
+      var sel=$('bl-new-cust');
+      if(sel){
+        var cur=sel.value;
+        sel.innerHTML='<option value="">全顧客共通</option>'+BL_CUSTS.map(function(c){ return '<option value="'+c.id+'">'+esc(c.company_name||c.contact_name||'（名称未設定）')+'</option>'; }).join('');
+        sel.value=cur||'';
+      }
+    }catch(e){}
+    blAudChanged();
+    var custName={}; BL_CUSTS.forEach(function(c){ custName[c.id]=c.company_name||c.contact_name||''; });
     var res=await sb.from('billing_links').select('*').order('audience',{ascending:true}).order('sort',{ascending:true});
     if(res.error){ box.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みエラー：'+esc(res.error.message)+'（Supabaseで「Phase53」のSQLを実行してください）</div>'; return; }
     if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">まだ登録がありません。下のフォームからStripeの決済リンクを追加してください。</div>'; }
     else {
       box.innerHTML=res.data.map(function(l){
+        var assign='';
+        if(l.audience==='customer'){
+          assign = l.customer_id
+            ? '<span style="background:#F7EFDC;border-radius:99px;padding:2px 9px;font-size:10.5px;font-weight:700;color:#8F7230;">'+esc(custName[l.customer_id]||'割当顧客（削除済）')+' 専用</span>'
+            : '<span style="background:#EBF2ED;border-radius:99px;padding:2px 9px;font-size:10.5px;font-weight:700;color:#27684A;">全顧客共通</span>';
+        }
         return '<div style="display:flex;gap:8px;align-items:center;padding:7px 2px;border-bottom:1px dashed var(--softline);font-size:12.5px;flex-wrap:wrap;">'
           +'<span style="background:'+(l.audience==='customer'?'#EAF0F9':'#FBF3E0')+';border-radius:99px;padding:2px 9px;font-size:10.5px;font-weight:700;color:#1E3A66;">'+(l.audience==='customer'?'顧客':'パートナー')+'</span>'
+          +assign
           +'<b style="color:var(--navy);">'+esc(l.label)+'</b>'
           +'<span style="flex:1;min-width:120px;color:#94A2B6;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(l.url)+'</span>'
           +'<button class="ghost" style="color:#A9403D;border-color:#E9C9C9;font-size:11px;padding:4px 9px;" onclick="admDelBillingLink(\''+l.id+'\')">削除</button></div>';
@@ -3183,10 +3218,17 @@
     var msg=$('bl-links-msg');
     if(!label||!url){ if(msg){msg.style.color='#A9403D';msg.textContent='名称と決済リンクURLを入力してください。';} return; }
     if(!/^https:\/\/(buy|checkout)\.stripe\.com\//.test(url)){ if(msg){msg.style.color='#A9403D';msg.textContent='URLはStripeの決済リンク（https://buy.stripe.com/…）を入力してください。';} return; }
-    var res=await sb.from('billing_links').insert({ audience:aud, label:label, url:url, description:(desc||null) });
-    if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='追加エラー：'+res.error.message;} return; }
-    if(msg){msg.style.color='#27684A';msg.textContent='追加しました。対象者の「お支払い」に即時表示されます。';}
-    if($('bl-new-label'))$('bl-new-label').value=''; if($('bl-new-url'))$('bl-new-url').value=''; if($('bl-new-desc'))$('bl-new-desc').value='';
+    var cust=(aud==='customer') ? ((($('bl-new-cust')||{}).value)||'') : '';
+    var payload={ audience:aud, label:label, url:url, description:(desc||null) };
+    if(cust) payload.customer_id=cust;
+    var res=await sb.from('billing_links').insert(payload);
+    if(res.error){
+      var em=String(res.error.message||'');
+      if(cust && /customer_id/.test(em)){ if(msg){msg.style.color='#A9403D';msg.textContent='追加エラー：顧客別割り当てには Supabase で「Phase 55」のSQL実行が必要です。';} return; }
+      if(msg){msg.style.color='#A9403D';msg.textContent='追加エラー：'+em;} return;
+    }
+    if(msg){msg.style.color='#27684A';msg.textContent=cust?'追加しました。選択した顧客の「お支払い」にのみ表示されます。':'追加しました。対象者の「お支払い」に即時表示されます。';}
+    if($('bl-new-label'))$('bl-new-label').value=''; if($('bl-new-url'))$('bl-new-url').value=''; if($('bl-new-desc'))$('bl-new-desc').value=''; if($('bl-new-cust'))$('bl-new-cust').value='';
     loadBillingAdminLinks();
   }
   async function admDelBillingLink(id){
