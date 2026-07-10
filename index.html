@@ -33,7 +33,7 @@
 <style>
   :root{--navy:#1E3A66;--blue:#2C5DA8;--sky:#5B84C4;--gold:#C39B3F;--ink:#18202E;--muted:#5A6981;--line:#E2E7EF;--bg:#F5F7FA;--card:#fff;--panel:#fff;--soft:#F8F9FC;--softline:#EDF1F6;--deep:#0E1B33;}
   /* ===== ダークモード：インクブラック × シャンパンゴールド（視認性重視）===== */
-  body.dark{--navy:#EDF0F5;--blue:#8FB4E8;--sky:#7E9BC4;--gold:#CFAD62;--ink:#ECEEF2;--muted:#A3ACBD;--line:#2A3345;--bg:#0C0F16;--card:#141924;--panel:#141924;--soft:#1B2130;--softline:#242C3D;--deep:#080B11;}
+  body.dark{--navy:#EDF0F5;--blue:#8FB4E8;--sky:#7E9BC4;--gold:#CFAD62;--ink:#ECEEF2;--muted:#AEB7C7;--line:#2A3345;--bg:#0C0F16;--card:#141924;--panel:#141924;--soft:#1B2130;--softline:#242C3D;--deep:#080B11;}
   body.dark .panel,body.dark .clcard,body.dark .card{background:var(--panel);}
   body.dark .inp,body.dark .inp2,body.dark .searchbox,body.dark textarea,body.dark select,body.dark input{background:var(--soft);color:var(--ink);border-color:var(--line);}
   body.dark .topbar2,body.dark .sb,body.dark .drawer{background:var(--deep);}
@@ -317,8 +317,8 @@
   /* 文字色（見出し・本文は明るく、強コントラストに） */
   body.dark [style*="color:#1E3A66" i]{color:#EDF0F5!important;}
   body.dark [style*="color:#18202E" i]{color:#ECEEF2!important;}
-  body.dark [style*="color:#5A6981" i],body.dark [style*="color: rgb(90, 105, 129)"]{color:#A9B2C2!important;}
-  body.dark [style*="color:#94A2B6" i],body.dark [style*="color: rgb(148, 162, 182)"]{color:#A0ABBE!important;}
+  body.dark [style*="color:#5A6981" i],body.dark [style*="color: rgb(90, 105, 129)"]{color:#B2BBCB!important;}
+  body.dark [style*="color:#94A2B6" i],body.dark [style*="color: rgb(148, 162, 182)"]{color:#ACB6C8!important;}
   body.dark [style*="color:#2C5DA8" i],body.dark [style*="color: rgb(44, 93, 168)"],body.dark [style*="color:#1E5494" i]{color:#8FB4E8!important;}
   body.dark [style*="color:#A9403D" i],body.dark [style*="color: rgb(169, 64, 61)"]{color:#E8A29B!important;}
   body.dark [style*="color:#27684A" i],body.dark [style*="color: rgb(39, 104, 74)"]{color:#95D2B1!important;}
@@ -331,6 +331,33 @@
   body.dark [style*="solid #F3C9C9" i],body.dark [style*="border-color:#E9C9C9" i],body.dark [style*="border-color:#E3B9B7" i]{border-color:#4E2C2A!important;}
   body.dark [style*="solid #C9E2D2" i]{border-color:#27493C!important;}
   body.dark [style*="solid #2C5DA8" i]{border-color:#4E7FC4!important;}
+  /* ===== 可読性向上レイヤー（文字を濃く・大きく／印刷レイアウトは対象外）===== */
+  @media screen{
+  /* 補足文字の濃度アップ（ライトモード：薄グレー→読める濃度に） */
+  :root{--muted:#49566E;}
+  [style*="color:#94A2B6" i],[style*="color: rgb(148, 162, 182)"]{color:#63718A!important;}
+  [style*="color:#5A6981" i],[style*="color: rgb(90, 105, 129)"]{color:#49566E!important;}
+  .hint{opacity:1;}
+  .clcard .cl-em{opacity:1;}
+  /* 文字サイズの底上げ（インライン指定を一括変換） */
+  [style*="font-size:8.5px" i],[style*="font-size:9px" i],[style*="font-size:9.5px" i]{font-size:11px!important;}
+  [style*="font-size:10px" i]{font-size:11.5px!important;}
+  [style*="font-size:10.5px" i]{font-size:12px!important;}
+  [style*="font-size:11px" i]{font-size:12.5px!important;}
+  [style*="font-size:11.5px" i]{font-size:13px!important;}
+  [style*="font-size:12px" i]{font-size:13.5px!important;}
+  [style*="font-size:12.5px" i]{font-size:14px!important;}
+  [style*="font-size:13px" i]{font-size:14px!important;}
+  [style*="font-size:13.5px" i]{font-size:14.5px!important;}
+  /* 文字サイズの底上げ（共通クラス） */
+  .field label,.fl,.hint,.show,.note,.rolebadge,.pill,.rep-card .l,.sumchip .l,.clcard .cl-em{font-size:12px;}
+  .link,.msg,.rep-meta,.ghost,table.ft{font-size:13px;}
+  .tab,.kv,.inp2,.btn2,.clrow,.sbtn,.rep-h{font-size:14px;}
+  .cl-ni,.cl-menu .clmenu-i,.rep-li{font-size:13.5px;}
+  .cl-side .sb-sec,.cl-menu .clmenu-sec{font-size:11px;}
+  .tag{font-size:11.5px;}
+  .clcard .cl-last{font-size:12.5px;}
+  }
 </style>
 </head>
 <body>
