@@ -32,7 +32,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{--navy:#1E3A66;--blue:#2C5DA8;--sky:#5B84C4;--gold:#C39B3F;--ink:#18202E;--muted:#5A6981;--line:#E2E7EF;--bg:#F5F7FA;--card:#fff;--panel:#fff;--soft:#F8F9FC;--softline:#EDF1F6;--deep:#0E1B33;}
-  body.dark{--navy:#A8C4EC;--blue:#5E93DC;--sky:#82A9E0;--gold:#D9B45C;--ink:#E7ECF5;--muted:#97A6BF;--line:#2A3A55;--bg:#0D1526;--card:#152137;--panel:#152137;--soft:#19273F;--softline:#243453;--deep:#0A1425;}
+  /* ===== ダークモード：インクブラック × シャンパンゴールド（視認性重視）===== */
+  body.dark{--navy:#EDF0F5;--blue:#8FB4E8;--sky:#7E9BC4;--gold:#CFAD62;--ink:#ECEEF2;--muted:#A3ACBD;--line:#2A3345;--bg:#0C0F16;--card:#141924;--panel:#141924;--soft:#1B2130;--softline:#242C3D;--deep:#080B11;}
   body.dark .panel,body.dark .clcard,body.dark .card{background:var(--panel);}
   body.dark .inp,body.dark .inp2,body.dark .searchbox,body.dark textarea,body.dark select,body.dark input{background:var(--soft);color:var(--ink);border-color:var(--line);}
   body.dark .topbar2,body.dark .sb,body.dark .drawer{background:var(--deep);}
@@ -282,6 +283,54 @@
   .logo,.logo-ico{border:1px solid rgba(217,180,92,.4);}
   .sumchip .v,.rep-card .v{color:var(--navy);}
   .inp:focus,.searchbox:focus{border-color:var(--gold);}
+  /* ===== ダークモード仕上げ（Luxe Dark：シンプル×高視認性）===== */
+  /* 面と線：影を抑え、はっきり見える1px境界線で区切る */
+  body.dark .panel,body.dark .clcard{border:1px solid var(--line);box-shadow:none;}
+  body.dark .card{background:var(--card);border:1px solid #2B3447;box-shadow:0 40px 100px rgba(0,0,0,.6);}
+  body.dark .modal{border:1px solid var(--line);box-shadow:0 32px 90px rgba(0,0,0,.65);}
+  body.dark .topbar2{background:rgba(12,15,22,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  body.dark #rep-modal:not(.hidden),body.dark #bp-modal:not(.hidden){background:var(--bg);}
+  /* ボタン：深いロイヤルブルー（白文字が沈まない濃度）、フォーカスはゴールド */
+  body.dark .btn,body.dark .btn2{background:linear-gradient(180deg,#3266AC,#28517F);color:#F5F8FC;}
+  body.dark .sbtn.on{background:#2A5488;border-color:#3E6DAE;color:#F2F6FB;}
+  body.dark .inp:focus,body.dark .inp2:focus,body.dark textarea:focus,body.dark select:focus,body.dark .searchbox:focus{background:#1E2534;border-color:rgba(207,173,98,.6);}
+  body.dark .ni.active,body.dark .cl-ni.on{background:rgba(207,173,98,.11);}
+  /* タグ・状態色：ダーク上で読める淡い発色に統一 */
+  body.dark .tag.red{background:rgba(210,92,86,.16);color:#E8A29B;}
+  body.dark .tag.gold{background:rgba(207,173,98,.15);color:#DCC282;}
+  body.dark .tag.green{background:rgba(92,184,138,.15);color:#95D2B1;}
+  body.dark .clcard.unread{border-color:#54332F;background:#1A1315;}
+  body.dark .clcard:hover{border-color:#3E4A63;background:#181E2C;}
+  /* スクロールバー・選択色 */
+  body.dark ::-webkit-scrollbar{width:10px;height:10px;}
+  body.dark ::-webkit-scrollbar-thumb{background:#2A3345;border-radius:99px;border:2px solid var(--bg);}
+  body.dark ::-webkit-scrollbar-track{background:transparent;}
+  body.dark ::selection{background:rgba(207,173,98,.32);}
+  /* ---- インラインstyleの明色をダーク値へ変換（順序重要：#fff→色付き白の順）---- */
+  body.dark [style*="background:#fff" i]{background:var(--card)!important;}
+  body.dark [style*="background:#FFFBF3" i],body.dark [style*="background:#FFFBF2" i]{background:#272012!important;}
+  body.dark [style*="background:#F8F9FC" i],body.dark [style*="background:#FBFCFE" i],body.dark [style*="background:#FAFCFF" i],body.dark [style*="background:#F7F9FC" i],body.dark [style*="background:#F6FAFF" i],body.dark [style*="background:#F2F7FC" i],body.dark [style*="background:#F4F6F9" i],body.dark [style*="background:#EDF1F6" i],body.dark [style*="background: rgb(244, 246, 249)"]{background:var(--soft)!important;}
+  body.dark [style*="background:#EEF3FA" i],body.dark [style*="background:#EEF2F8" i],body.dark [style*="background:#EAF0F9" i]{background:#182233!important;}
+  body.dark [style*="background:#EBF2ED" i],body.dark [style*="background:#F0F8F3" i],body.dark [style*="background:#F2FBF6" i]{background:#142319!important;}
+  body.dark [style*="background:#F7EFDC" i],body.dark [style*="background:#F8F1DF" i],body.dark [style*="background:#F5EEDB" i]{background:#282112!important;}
+  body.dark [style*="background:#F9EDED" i],body.dark [style*="background:#FCEBEB" i],body.dark [style*="background:#FDFAF9" i]{background:#2A1818!important;}
+  /* 文字色（見出し・本文は明るく、強コントラストに） */
+  body.dark [style*="color:#1E3A66" i]{color:#EDF0F5!important;}
+  body.dark [style*="color:#18202E" i]{color:#ECEEF2!important;}
+  body.dark [style*="color:#5A6981" i],body.dark [style*="color: rgb(90, 105, 129)"]{color:#A9B2C2!important;}
+  body.dark [style*="color:#94A2B6" i],body.dark [style*="color: rgb(148, 162, 182)"]{color:#A0ABBE!important;}
+  body.dark [style*="color:#2C5DA8" i],body.dark [style*="color: rgb(44, 93, 168)"],body.dark [style*="color:#1E5494" i]{color:#8FB4E8!important;}
+  body.dark [style*="color:#A9403D" i],body.dark [style*="color: rgb(169, 64, 61)"]{color:#E8A29B!important;}
+  body.dark [style*="color:#27684A" i],body.dark [style*="color: rgb(39, 104, 74)"]{color:#95D2B1!important;}
+  body.dark [style*="color:#8F7230" i],body.dark [style*="color:#8A6" i],body.dark [style*="color:#8A5A00" i],body.dark [style*="color:#C39B3F" i]{color:#DCC282!important;}
+  body.dark [style*="color:#243B5A" i]{color:#C6D3E8!important;}
+  /* 枠線（面の区切りが確実に見える濃度に） */
+  body.dark [style*="solid #EDF1F6" i],body.dark [style*="solid #E2E7EF" i],body.dark [style*="solid #F0F2F6" i],body.dark [style*="solid #E6EEF8" i]{border-color:var(--line)!important;}
+  body.dark [style*="solid #E5EEF8" i],body.dark [style*="solid #D9E7F6" i],body.dark [style*="solid #D6E5F5" i],body.dark [style*="solid #C7DBF2" i],body.dark [style*="solid #C4DBF3" i],body.dark [style*="solid #C9D6EA" i]{border-color:#2F3E58!important;}
+  body.dark [style*="solid #EBDDB4" i]{border-color:#4C3F20!important;}
+  body.dark [style*="solid #F3C9C9" i],body.dark [style*="border-color:#E9C9C9" i],body.dark [style*="border-color:#E3B9B7" i]{border-color:#4E2C2A!important;}
+  body.dark [style*="solid #C9E2D2" i]{border-color:#27493C!important;}
+  body.dark [style*="solid #2C5DA8" i]{border-color:#4E7FC4!important;}
 </style>
 </head>
 <body>
