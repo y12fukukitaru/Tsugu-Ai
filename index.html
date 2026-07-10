@@ -922,8 +922,18 @@
           +'<button class="sbtn" data-f="all" onclick="setMkbFilter(\'all\',this)">すべて</button>'
         +'</div>'
         +'<div id="market-broker" style="margin-top:4px;">読み込み中...</div></div>'
-      +'<div class="panel" id="sec-billing"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">💳 課金・契約管理<span class="ghost" style="font-size:11px;font-weight:400;" onclick="renderAdmBilling()">↺ 再計算</span></div>'
+      +'<div class="panel" id="sec-billing"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">💳 課金・契約管理<span class="ghost" style="font-size:11px;font-weight:400;" onclick="renderAdmBilling();loadBillingAdminLinks();loadAdmPayEvents();">↺ 再計算</span></div>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 12px;">'
+          +'<button class="sbtn on" id="bl-tb-overview" onclick="blShowTab(\'overview\')">📊 概要</button>'
+          +'<button class="sbtn" id="bl-tb-partners" onclick="blShowTab(\'partners\')">🧑‍💼 パートナー別</button>'
+          +'<button class="sbtn" id="bl-tb-customers" onclick="blShowTab(\'customers\')">🏢 顧客別</button>'
+          +'<button class="sbtn" id="bl-tb-links" onclick="blShowTab(\'links\')">🔗 決済リンク</button>'
+          +'<button class="sbtn" id="bl-tb-payments" onclick="blShowTab(\'payments\')">💰 入金履歴</button>'
+        +'</div>'
+        // ---- タブ1：概要（MRRサマリー・料率設定・M&Aフィー） ----
+        +'<div id="bl-tab-overview">'
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">登録済みのパートナー・顧客から月次の売上（MRR）を自動試算します。料率は下で調整できます（試算用・保存はされません）。</div>'
+        +'<div id="bl-summary" style="margin-bottom:12px;">読み込み中...</div>'
         +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;background:var(--soft);border-radius:10px;padding:10px 12px;">'
           +'<div><label class="fl">パートナー基本（円/月）</label><input id="bl-pbase" type="number" class="inp2" style="width:120px;" value="3000" oninput="renderAdmBilling()"></div>'
           +'<div><label class="fl">顧問先1社あたり加算（円/月）</label><input id="bl-pclient" type="number" class="inp2" style="width:140px;" value="2000" oninput="renderAdmBilling()"></div>'
@@ -949,19 +959,38 @@
             +'<div><label class="fl">割引上限（合算）</label><input id="bl-cap" type="number" class="inp2" style="width:84px;" value="10" oninput="renderAdmBilling()"></div>'
           +'</div>'
         +'</div>'
-        +'<div id="bl-summary" style="margin-top:12px;">読み込み中...</div>'
-        +'<div class="ph" style="font-size:13px;margin-top:16px;">パートナー別 月額内訳</div>'
-        +'<div id="bl-detail" style="margin-top:4px;">読み込み中...</div>'
-        +'<div class="ph" style="font-size:13px;margin-top:16px;">顧客別 顧問料（割引適用後）</div>'
-        +'<div id="bl-cust" style="margin-top:4px;">読み込み中...</div>'
         +'<div class="ph" style="font-size:13px;margin-top:18px;">🤝 M&A仲介フィー計算（レーマン方式）</div>'
         +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">取引金額を入れると、標準レーマン方式（5億以下5%／5〜10億4%／10〜50億3%／50〜100億2%／100億超1%）で仲介フィーを段階計算します。実際の料率・最低報酬額は契約内容に従ってください。</div>'
         +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
           +'<div><label class="fl">取引金額（万円）</label><input id="lh-amt" type="number" class="inp2" style="width:160px;" placeholder="例 30000（＝3億円）" oninput="lehmanCalc()"></div>'
         +'</div>'
         +'<div id="lh-out" style="margin-top:10px;"></div>'
-        +'<div class="ph" style="font-size:13px;margin-top:18px;display:flex;align-items:center;justify-content:space-between;">💳 決済リンク（Stripe）管理<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadBillingAdminLinks()">↺ 更新</span></div>'
+        +'</div>'
+        // ---- タブ2：パートナー別 月額内訳 ----
+        +'<div id="bl-tab-partners" class="hidden">'
+        +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">'
+          +'<div class="ph" style="font-size:13px;margin:0;flex:1;">パートナー別 月額内訳</div>'
+          +'<input id="bl-p-search" class="inp2" style="width:200px;" placeholder="🔍 名前で絞り込み" oninput="renderAdmBilling()">'
+        +'</div>'
+        +'<div id="bl-detail" style="margin-top:4px;">読み込み中...</div>'
+        +'</div>'
+        // ---- タブ3：顧客別 顧問料 ----
+        +'<div id="bl-tab-customers" class="hidden">'
+        +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">'
+          +'<div class="ph" style="font-size:13px;margin:0;flex:1;">顧客別 顧問料（割引適用後）</div>'
+          +'<input id="bl-c-search" class="inp2" style="width:200px;" placeholder="🔍 会社名で絞り込み" oninput="renderAdmBilling()">'
+        +'</div>'
+        +'<div id="bl-cust" style="margin-top:4px;">読み込み中...</div>'
+        +'</div>'
+        // ---- タブ4：決済リンク管理 ----
+        +'<div id="bl-tab-links" class="hidden">'
+        +'<div class="ph" style="font-size:13px;margin-top:2px;display:flex;align-items:center;justify-content:space-between;">💳 決済リンク（Stripe）管理<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadBillingAdminLinks()">↺ 更新</span></div>'
         +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">Stripeで作成した決済リンク（Payment Link）を登録すると、顧客・パートナーの「お支払い」メニューに即時表示されます。「対象顧客」で特定の会社を選ぶと、その顧客にだけ表示されます（割引後の金額別リンクの割り当てに使用）。リンクの作り方は納品の「Stripe課金セットアップ手順」をご覧ください。</div>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">'
+          +'<button class="sbtn on" id="bl-lf-all" onclick="blLinkFilter(\'all\')">すべて</button>'
+          +'<button class="sbtn" id="bl-lf-customer" onclick="blLinkFilter(\'customer\')">顧客向け</button>'
+          +'<button class="sbtn" id="bl-lf-consultant" onclick="blLinkFilter(\'consultant\')">パートナー向け</button>'
+        +'</div>'
         +'<div id="bl-links-list" style="margin-bottom:8px;">読み込み中...</div>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;background:var(--soft);border-radius:10px;padding:10px 12px;">'
           +'<div><label class="fl">対象</label><select id="bl-new-aud" class="inp2" onchange="blAudChanged()"><option value="customer">顧客</option><option value="consultant">パートナー</option></select></div>'
@@ -972,8 +1001,17 @@
           +'<button class="btn2" onclick="admAddBillingLink()">追加</button>'
         +'</div>'
         +'<div id="bl-links-msg" style="font-size:11.5px;margin-top:6px;min-height:14px;"></div>'
-        +'<div class="ph" style="font-size:13px;margin-top:16px;">入金履歴（Stripe Webhook 自動記録）</div>'
+        +'</div>'
+        // ---- タブ5：入金履歴 ----
+        +'<div id="bl-tab-payments" class="hidden">'
+        +'<div class="ph" style="font-size:13px;margin-top:2px;display:flex;align-items:center;justify-content:space-between;">💰 入金履歴（Stripe Webhook 自動記録）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmPayEvents()">↺ 更新</span></div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">'
+          +'<div><label class="fl">年月</label><select id="bl-pay-month" class="inp2" onchange="loadAdmPayEvents()"></select></div>'
+          +'<div><label class="fl">対象</label><select id="bl-pay-aud" class="inp2" onchange="loadAdmPayEvents()"><option value="all">すべて</option><option value="customer">顧客</option><option value="consultant">パートナー</option></select></div>'
+        +'</div>'
+        +'<div id="bl-pay-sum" style="margin-bottom:8px;"></div>'
         +'<div id="bl-payevents" style="margin-top:4px;">読み込み中...</div>'
+        +'</div>'
         +'</div>'
       +'<div class="panel" id="sec-audit"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">🛡 監査・コンプライアンスログ<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmAudit()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 8px;">誰がいつ何を提案・共有・掲載したかの記録です（AI診断・保険/相続試算・マーケット掲載・提案メモ・月次レポート公開）。金融商品を扱う上での確認・監査にお使いください。</div>'
@@ -1257,8 +1295,11 @@
         var rows=fdes.map(function(f){ var n=cc[f.id]||0; var pi=partnerInfo[f.id]; var tp=partnerTierPct(pi.rank,pi.clients,pi.hd,cfg);
           return {name:(f.contact_name||f.company_name||f.email), rank:pi.rank, n:n, hd:pi.hd, tp:tp, fee:pbase+pcl*n}; });
         rows.sort(function(a,b){ return b.fee-a.fee; });
-        var h='';
-        rows.forEach(function(r){
+        var pq=((($('bl-p-search')||{}).value)||'').trim().toLowerCase();
+        var shown=pq ? rows.filter(function(r){ return String(r.name||'').toLowerCase().indexOf(pq)>=0; }) : rows;
+        var h='<div style="font-size:11.5px;color:#94A2B6;margin-bottom:2px;">'+(pq?('該当 '+shown.length+'名 / 全'+rows.length+'名'):('全'+rows.length+'名'))+'</div>';
+        if(!shown.length){ h+='<div style="font-size:12px;color:#94A2B6;padding:8px 0;">この条件に該当するパートナーはいません。</div>'; }
+        shown.forEach(function(r){
           h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #EDF1F6;flex-wrap:wrap;">'
             +'<span style="flex:1;min-width:120px;font-size:13px;color:#18202E;">'+esc(r.name)+(r.rank?' <span class="tag blue" style="font-size:10px;">'+esc(r.rank)+'</span>':'')+'</span>'
             +'<span class="tag '+(r.n?'green':'gray')+'">担当 '+r.n+'社</span>'
@@ -1274,8 +1315,11 @@
       if(!custRows.length){ cb.innerHTML='<div style="font-size:12px;color:#94A2B6;">顧客がまだいません。</div>'; }
       else {
         custRows.sort(function(a,b){ return b.pct-a.pct; });
-        var ch='';
-        custRows.forEach(function(r){
+        var cq=((($('bl-c-search')||{}).value)||'').trim().toLowerCase();
+        var cshown=cq ? custRows.filter(function(r){ return String(r.c.company_name||r.c.email||'').toLowerCase().indexOf(cq)>=0; }) : custRows;
+        var ch='<div style="font-size:11.5px;color:#94A2B6;margin-bottom:2px;">'+(cq?('該当 '+cshown.length+'社 / 全'+custRows.length+'社'):('全'+custRows.length+'社'))+'</div>';
+        if(!cshown.length){ ch+='<div style="font-size:12px;color:#94A2B6;padding:8px 0;">この条件に該当する顧客はいません。</div>'; }
+        cshown.forEach(function(r){
           var tags=r.parts.map(function(p){ return '<span class="tag gray" style="font-size:10px;">'+esc(p.t)+' '+p.p+'%</span>'; }).join('');
           ch+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #EDF1F6;flex-wrap:wrap;">'
             +'<span style="flex:1;min-width:140px;font-size:13px;color:#18202E;">'+esc(r.c.company_name||r.c.email)+'</span>'
@@ -3169,7 +3213,20 @@
     }).join('');
   }
   // ---- 運営：決済リンク管理＋入金履歴 ----
-  var BL_CUSTS=[];
+  var BL_CUSTS=[]; var BL_LINK_AUD='all'; var BL_ROLES=null;
+  function blShowTab(t){
+    ['overview','partners','customers','links','payments'].forEach(function(k){
+      var d=$('bl-tab-'+k); if(d) d.classList.toggle('hidden', k!==t);
+      var b=$('bl-tb-'+k); if(b) b.classList.toggle('on', k===t);
+    });
+    if(t==='links') loadBillingAdminLinks();
+    if(t==='payments') loadAdmPayEvents();
+  }
+  function blLinkFilter(a){
+    BL_LINK_AUD=a;
+    ['all','customer','consultant'].forEach(function(k){ var b=$('bl-lf-'+k); if(b) b.classList.toggle('on', k===a); });
+    loadBillingAdminLinks();
+  }
   function blAudChanged(){
     var aud=($('bl-new-aud')||{}).value||'customer';
     var w=$('bl-new-cust-wrap'); if(w) w.style.display=(aud==='customer'?'':'none');
@@ -3191,9 +3248,10 @@
     var custName={}; BL_CUSTS.forEach(function(c){ custName[c.id]=c.company_name||c.contact_name||''; });
     var res=await sb.from('billing_links').select('*').order('audience',{ascending:true}).order('sort',{ascending:true});
     if(res.error){ box.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みエラー：'+esc(res.error.message)+'（Supabaseで「Phase53」のSQLを実行してください）</div>'; return; }
-    if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">まだ登録がありません。下のフォームからStripeの決済リンクを追加してください。</div>'; }
+    var list=(res.data||[]).filter(function(l){ return BL_LINK_AUD==='all'||l.audience===BL_LINK_AUD; });
+    if(!list.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">'+(res.data.length?'この絞り込みに該当するリンクはありません。':'まだ登録がありません。下のフォームからStripeの決済リンクを追加してください。')+'</div>'; }
     else {
-      box.innerHTML=res.data.map(function(l){
+      box.innerHTML=list.map(function(l){
         var assign='';
         if(l.audience==='customer'){
           assign = l.customer_id
@@ -3239,13 +3297,51 @@
   }
   async function loadAdmPayEvents(){
     var box=$('bl-payevents'); if(!box) return;
-    var res=await sb.from('payment_events').select('created_at,event_type,email,amount,description').order('created_at',{ascending:false}).limit(20);
-    if(res.error){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">入金履歴は、Stripe Webhookの設定（手順書参照）後に表示されます。</div>'; return; }
-    if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">まだ入金がありません。決済が完了すると自動で記録されます。</div>'; return; }
-    box.innerHTML=res.data.map(function(p){
+    // 年月セレクト初期化（全期間＋直近24ヶ月）
+    var msel=$('bl-pay-month');
+    if(msel && msel.options.length<2){
+      var now=new Date(); var opts='<option value="">全期間</option>';
+      for(var i=0;i<24;i++){
+        var d=new Date(now.getFullYear(), now.getMonth()-i, 1);
+        var ymv=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2);
+        opts+='<option value="'+ymv+'">'+d.getFullYear()+'年'+(d.getMonth()+1)+'月</option>';
+      }
+      msel.innerHTML=opts; msel.value='';
+    }
+    // メール→役割マップ（顧客／パートナー判定用・セッション内キャッシュ）
+    if(!BL_ROLES){
+      BL_ROLES={};
+      try{ var pr=await sb.from('profiles').select('email,role'); (pr.data||[]).forEach(function(p){ if(p.email) BL_ROLES[String(p.email).toLowerCase()]=p.role; }); }catch(e){}
+    }
+    var ym=(msel&&msel.value)||'';
+    var q=sb.from('payment_events').select('created_at,event_type,email,amount,description').order('created_at',{ascending:false});
+    if(ym){
+      var yy=+ym.slice(0,4), mm=+ym.slice(5,7);
+      var to=(mm===12 ? (yy+1)+'-01' : yy+'-'+('0'+(mm+1)).slice(-2))+'-01';
+      q=q.gte('created_at', ym+'-01').lt('created_at', to).limit(500);
+    } else { q=q.limit(100); }
+    var res=await q;
+    var sumBox=$('bl-pay-sum');
+    if(res.error){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">入金履歴は、Stripe Webhookの設定（手順書参照）後に表示されます。</div>'; if(sumBox)sumBox.innerHTML=''; return; }
+    var aud=($('bl-pay-aud')||{}).value||'all';
+    var rows=(res.data||[]).filter(function(p){
+      if(aud==='all') return true;
+      return (BL_ROLES[String(p.email||'').toLowerCase()]||'')===aud;
+    });
+    var sum=rows.reduce(function(s,p){ return s+(Number(p.amount)||0); },0);
+    if(sumBox){
+      sumBox.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+        +'<div style="flex:1 1 150px;min-width:150px;background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:10px 13px;"><div style="font-size:10.5px;color:#94A2B6;">'+(ym?(+ym.slice(0,4))+'年'+(+ym.slice(5,7))+'月':'全期間（直近100件）')+' 入金合計</div><div style="font-size:18px;font-weight:700;color:#27684A;">¥'+sum.toLocaleString()+'</div></div>'
+        +'<div style="flex:1 1 150px;min-width:150px;background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:10px 13px;"><div style="font-size:10.5px;color:#94A2B6;">件数</div><div style="font-size:18px;font-weight:700;color:#1E3A66;">'+rows.length+'件</div></div>'
+      +'</div>';
+    }
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">該当する入金がありません。決済が完了すると自動で記録されます。</div>'; return; }
+    box.innerHTML=rows.map(function(p){
       var d=new Date(p.created_at); var ds=d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+      var r=BL_ROLES[String(p.email||'').toLowerCase()]||'';
+      var rb=(r==='customer')?'<span class="tag blue" style="font-size:10px;">顧客</span>':(r==='consultant')?'<span class="tag gold" style="font-size:10px;">パートナー</span>':'';
       return '<div style="display:flex;gap:10px;align-items:center;padding:7px 2px;border-bottom:1px dashed var(--softline);font-size:12px;flex-wrap:wrap;">'
-        +'<span style="color:#94A2B6;">'+ds+'</span>'
+        +'<span style="color:#94A2B6;">'+ds+'</span>'+rb
         +'<span style="flex:1;min-width:140px;">'+esc(p.email||'')+'　'+esc(p.description||p.event_type||'')+'</span>'
         +'<b style="color:var(--navy);">'+(p.amount!=null?('¥'+Number(p.amount).toLocaleString()):'')+'</b></div>';
     }).join('');
