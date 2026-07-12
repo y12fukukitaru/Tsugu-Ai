@@ -1071,7 +1071,7 @@
         +'<div id="exk-msg" style="font-size:11.5px;margin-top:6px;min-height:14px;"></div>'
         +'</div>'
       +'</div>'
-      +ownFundPanelHtml('運営（自社）の資金調達ロードマップ','Tsugu自身の調達計画（シード調達・補助金・クラファン等）をここで管理します。下の全社パイプラインには「運営」区分で表示されます。');
+      ;
   }
   var FDE_RANKS=['Associate','Senior','Executive','Premium Partner'];
   function roleSelect(u){
@@ -1083,7 +1083,6 @@
   var ADM_CUST_FILTER='all';
   function setAdmCustFilter(f,el){ ADM_CUST_FILTER=f; var bar=$('adm-cust-filterbar'); if(bar){ Array.prototype.forEach.call(bar.querySelectorAll('.sbtn'),function(b){ b.classList.remove('on'); }); } if(el) el.classList.add('on'); renderAdmCust(); }
   async function loadAdmin(){
-    loadOwnFunding();
     var res=await sb.from('profiles').select('*');
     var fb=$('adm-fde'), cb=$('adm-cust');
     if(res.error){ if(fb)fb.innerHTML='<div style="color:#A9403D;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
