@@ -637,7 +637,7 @@
   // 役割ごとの全メニュー定義（ラベル付き）。設定で並び順・表示を変えられる
   function navDefs(r){
     if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
-    if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信']];
+    if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信']];
     return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','相続・贈与'],['sec-billpay','お支払い'],['sec-sec','AI秘書']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
@@ -662,7 +662,7 @@
     'sec-flow':'🏠','sec-chat':'💬','sec-reports':'📄','sec-mypdca':'🎯','sec-company':'🏢',
     'sec-cash':'💰','sec-ai':'🤖','sec-ins':'🧮','sec-ma':'🤝','sec-market':'💹','sec-sec':'🪄',
     'sec-clients':'👥','sec-pdca':'🔄','sec-madeals':'📁','sec-knowledge':'📚','sec-sozoku':'🎁',
-    'sec-kpi':'📊','sec-risk':'🚨','sec-fde':'🧑‍💼','sec-cust':'🏢','sec-fund':'🏦',
+    'sec-kpi':'📊','sec-risk':'🚨','sec-fde':'🧑‍💼','sec-cust':'🏢','sec-fund':'🏦','sec-exec':'📋',
     'sec-billing':'💳','sec-billpay':'💳','sec-audit':'🛡️','sec-broadcast':'📢'
   };
   function navGroups(r){
@@ -675,7 +675,7 @@
     ];
     if(r==='admin') return [
       ['概況',['sec-flow','sec-kpi','sec-risk']],
-      ['管理',['sec-fde','sec-cust','sec-fund','sec-market']],
+      ['管理',['sec-fde','sec-cust','sec-fund','sec-exec','sec-market']],
       ['収益・統制',['sec-billing','sec-audit','sec-broadcast']]
     ];
     return [
@@ -1033,6 +1033,32 @@
         +'<div style="margin-top:8px;"><label class="fl">本文</label><textarea id="bc-body" class="inp2" rows="3" style="width:100%;" placeholder="お知らせの内容を入力"></textarea></div>'
         +'<div style="margin-top:10px;"><button class="btn2" onclick="postAnnouncement()">配信する</button><span id="bc-msg" style="font-size:12px;margin-left:8px;"></span></div>'
         +'<div id="bc-list" style="margin-top:12px;">読み込み中...</div></div>'
+      +'<div class="panel" id="sec-exec"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">📋 経営計画（社内）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadExecFunding();loadExecWeekly();">↺ 更新</span></div>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 12px;">'
+          +'<button class="sbtn on" id="ex-tb-fund" onclick="exShowTab(\'fund\')">💰 資金調達ロードマップ</button>'
+          +'<button class="sbtn" id="ex-tb-week" onclick="exShowTab(\'week\')">📅 週次行動計画（13週）</button>'
+        +'</div>'
+        +'<div id="ex-tab-fund">'
+        +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">自社（福來）の調達計画をフェーズ別に管理します。ステータスはその場で変更でき、自動保存されます。</div>'
+        +'<div id="ex-fund-sum" style="margin-bottom:10px;"></div>'
+        +'<div id="ex-fund-list">読み込み中...</div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;background:var(--soft);border-radius:10px;padding:10px 12px;margin-top:10px;">'
+          +'<div><label class="fl">フェーズ</label><select id="exf-phase" class="inp2"><option>Phase 1</option><option>Phase 2</option><option>Phase 3</option></select></div>'
+          +'<div style="min-width:110px;"><label class="fl">時期</label><input id="exf-period" class="inp2" style="width:110px;" placeholder="例：Y1 事業化"></div>'
+          +'<div style="flex:1;min-width:180px;"><label class="fl">調達手段</label><input id="exf-method" class="inp2" style="width:100%;" placeholder="例：信用保証協会付き融資"></div>'
+          +'<div><label class="fl">区分</label><select id="exf-cat" class="inp2"><option>自己資金</option><option>融資</option><option>資本性ローン</option><option>補助金</option><option>エクイティ</option><option>デット</option><option>その他</option></select></div>'
+          +'<div><label class="fl">金額（百万円）</label><input id="exf-amt" type="number" class="inp2" style="width:110px;" placeholder="例 20"></div>'
+          +'<div style="flex:1;min-width:160px;"><label class="fl">主な使途</label><input id="exf-usage" class="inp2" style="width:100%;"></div>'
+          +'<button class="btn2" onclick="addExecFundItem()">追加</button>'
+        +'</div>'
+        +'<div id="exf-msg" style="font-size:11.5px;margin-top:6px;min-height:14px;"></div>'
+        +'</div>'
+        +'<div id="ex-tab-week" class="hidden">'
+        +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">週次行動計画書（13週スプリント）と連動。今週の週はゴールドの枠で表示されます。ステータス・進捗・振り返りを更新して運用してください。</div>'
+        +'<div id="ex-week-sum" style="margin-bottom:10px;"></div>'
+        +'<div id="ex-week-list">読み込み中...</div>'
+        +'</div>'
+      +'</div>'
       +ownFundPanelHtml('運営（自社）の資金調達ロードマップ','Tsugu自身の調達計画（シード調達・補助金・クラファン等）をここで管理します。下の全社パイプラインには「運営」区分で表示されます。');
   }
   var FDE_RANKS=['Associate','Senior','Executive','Premium Partner'];
@@ -1757,7 +1783,7 @@
     $('app-body').innerHTML=view;
     if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); if(window.__role==='admin') loadAdmPreviewCustomers(); }
     else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); }
-    else { loadAdmin(); loadMarketBroker(); loadBillingAdminLinks(); }
+    else { loadAdmin(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); }
     startNotifPolling(eff);
     navSpyInit();
   }
@@ -4048,6 +4074,170 @@
     var res=await sb.from('funding_roadmap_items').delete().eq('id',id);
     if(res.error){ alert('削除エラー：'+res.error.message); return; }
     if(scope==='adm') loadFundingPipeline(); else if(CURRENT_CLIENT) loadClientFunding(CURRENT_CLIENT.id);
+  }
+  // ==== 経営計画（社内）：資金調達ロードマップ＋週次行動計画 ====
+  var EX_ERRMSG='<div style="font-size:12px;color:#A9403D;">読み込みエラー：Supabaseで「Phase 56」のSQLを実行してください。</div>';
+  function exShowTab(t){
+    ['fund','week'].forEach(function(k){
+      var d=$('ex-tab-'+k); if(d) d.classList.toggle('hidden', k!==t);
+      var b=$('ex-tb-'+k); if(b) b.classList.toggle('on', k===t);
+    });
+    if(t==='fund') loadExecFunding(); else loadExecWeekly();
+  }
+  var EX_CATSTYLE={'自己資金':['#F2F4F6','#5A6981'],'融資':['#EAF0F9','#1E3A66'],'資本性ローン':['#EAF0F9','#1E5494'],'補助金':['#EBF2ED','#27684A'],'エクイティ':['#F7EFDC','#8F7230'],'デット':['#F2F4F6','#5A6981'],'その他':['#F2F4F6','#5A6981']};
+  var EX_FUND_STATUSES=['検討中','公募確認','申請準備','申請中','審査中','実行中','完了','見送り','将来'];
+  async function loadExecFunding(){
+    var box=$('ex-fund-list'); if(!box) return;
+    var res=await sb.from('exec_funding_items').select('*').order('sort',{ascending:true}).order('created_at',{ascending:true});
+    if(res.error){ box.innerHTML=EX_ERRMSG; if($('ex-fund-sum'))$('ex-fund-sum').innerHTML=''; return; }
+    var items=res.data||[];
+    // サマリー：総額＋区分別
+    var byCat={}; var total=0;
+    items.forEach(function(it){ if(it.status==='見送り')return; var a=Number(it.amount_m)||0; total+=a; byCat[it.category||'その他']=(byCat[it.category||'その他']||0)+a; });
+    var sum=$('ex-fund-sum');
+    if(sum){
+      var cards='<div style="flex:1 1 160px;min-width:150px;background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:10px 13px;"><div style="font-size:10.5px;color:#94A2B6;">調達予定総額（見送り除く）</div><div style="font-size:19px;font-weight:700;color:#1E3A66;">'+total.toLocaleString()+'<span style="font-size:12px;font-weight:400;"> 百万円</span></div></div>';
+      Object.keys(byCat).forEach(function(c){
+        var st=EX_CATSTYLE[c]||EX_CATSTYLE['その他'];
+        cards+='<div style="flex:1 1 120px;min-width:110px;background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:10px 13px;"><div style="font-size:10.5px;color:'+st[1]+';">'+esc(c)+'</div><div style="font-size:16px;font-weight:700;color:#1E3A66;">'+byCat[c].toLocaleString()+'<span style="font-size:11px;font-weight:400;"> 百万円</span></div></div>';
+      });
+      sum.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;">'+cards+'</div>';
+    }
+    if(!items.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">まだ登録がありません。下のフォームから追加してください。</div>'; return; }
+    var curPhase='';
+    box.innerHTML=items.map(function(it){
+      var st=EX_CATSTYLE[it.category]||EX_CATSTYLE['その他'];
+      var head='';
+      if(it.phase!==curPhase){ curPhase=it.phase; head='<div style="font-size:12px;font-weight:700;color:var(--navy);border-left:3px solid #C39B3F;padding-left:8px;margin:14px 0 4px;">'+esc(it.phase)+'<span style="font-weight:400;color:#94A2B6;margin-left:8px;font-size:11px;">'+esc(it.period||'')+'</span></div>'; }
+      var opts=EX_FUND_STATUSES.map(function(o){ return '<option'+(it.status===o?' selected':'')+'>'+o+'</option>'; }).join('');
+      return head+'<div style="display:flex;gap:8px;align-items:center;padding:8px 2px;border-bottom:1px dashed var(--softline);font-size:12.5px;flex-wrap:wrap;">'
+        +'<span style="background:'+st[0]+';color:'+st[1]+';border-radius:99px;padding:2px 9px;font-size:10.5px;font-weight:700;">'+esc(it.category||'')+'</span>'
+        +'<b style="color:var(--navy);min-width:120px;flex:2;">'+esc(it.method)+'</b>'
+        +'<span style="flex:2;min-width:140px;color:#5A6981;font-size:11.5px;">'+esc(it.usage||'')+'</span>'
+        +'<b style="color:#1E3A66;white-space:nowrap;">'+(it.amount_m!=null?(Number(it.amount_m).toLocaleString()+'百万円'):'—')+'</b>'
+        +'<select class="inp2" style="width:100px;font-size:11.5px;padding:4px 6px;" onchange="updExecFund(\''+it.id+'\',{status:this.value})">'+opts+'</select>'
+        +'<button class="ghost" style="color:#A9403D;border-color:#E9C9C9;font-size:11px;padding:4px 9px;" onclick="delExecFund(\''+it.id+'\')">削除</button>'
+      +'</div>';
+    }).join('');
+  }
+  async function addExecFundItem(){
+    var msg=$('exf-msg');
+    var method=($('exf-method')||{}).value||'';
+    if(!method.trim()){ if(msg){msg.style.color='#A9403D';msg.textContent='調達手段を入力してください。';} return; }
+    var res=await sb.from('exec_funding_items').insert({
+      phase:($('exf-phase')||{}).value||'Phase 1', period:($('exf-period')||{}).value||null,
+      method:method.trim(), category:($('exf-cat')||{}).value||'その他',
+      amount_m:(($('exf-amt')||{}).value?Number($('exf-amt').value):null), usage:($('exf-usage')||{}).value||null, sort:99
+    });
+    if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='追加エラー：'+res.error.message;} return; }
+    if(msg){msg.style.color='#27684A';msg.textContent='追加しました。';}
+    if($('exf-method'))$('exf-method').value=''; if($('exf-amt'))$('exf-amt').value=''; if($('exf-usage'))$('exf-usage').value='';
+    loadExecFunding();
+  }
+  async function updExecFund(id,patch){
+    patch.updated_at=new Date().toISOString();
+    var res=await sb.from('exec_funding_items').update(patch).eq('id',id);
+    if(res.error){ alert('更新エラー：'+res.error.message); }
+    loadExecFunding();
+  }
+  async function delExecFund(id){
+    if(!confirm('この調達項目を削除します。よろしいですか？')) return;
+    await sb.from('exec_funding_items').delete().eq('id',id);
+    loadExecFunding();
+  }
+  // ---- 週次行動計画 ----
+  var EX_WEEKS=[];
+  async function loadExecWeekly(){
+    var box=$('ex-week-list'); if(!box) return;
+    var res=await sb.from('exec_weekly_plans').select('*').order('week_no',{ascending:true});
+    if(res.error){ box.innerHTML=EX_ERRMSG; if($('ex-week-sum'))$('ex-week-sum').innerHTML=''; return; }
+    EX_WEEKS=res.data||[];
+    if(!EX_WEEKS.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">週次計画がありません。Phase 56のSQLで初期13週が投入されます。</div>'; return; }
+    var today=new Date(); today.setHours(0,0,0,0);
+    var done=0, prog=0, curId=null;
+    EX_WEEKS.forEach(function(w){
+      if(w.status==='完了') done++;
+      prog+=Number(w.progress)||0;
+      if(w.week_start){ var st=new Date(w.week_start+'T00:00:00'); var en=new Date(st); en.setDate(en.getDate()+6);
+        if(today>=st && today<=en) curId=w.id; }
+    });
+    var avg=Math.round(prog/EX_WEEKS.length);
+    var sum=$('ex-week-sum');
+    if(sum){
+      var cur=EX_WEEKS.filter(function(w){return w.id===curId;})[0];
+      sum.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+        +'<div style="flex:1 1 140px;min-width:130px;background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:10px 13px;"><div style="font-size:10.5px;color:#94A2B6;">全体進捗（13週平均）</div><div style="font-size:19px;font-weight:700;color:#1E3A66;">'+avg+'%</div></div>'
+        +'<div style="flex:1 1 140px;min-width:130px;background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:10px 13px;"><div style="font-size:10.5px;color:#94A2B6;">完了した週</div><div style="font-size:19px;font-weight:700;color:#27684A;">'+done+'<span style="font-size:12px;font-weight:400;"> / '+EX_WEEKS.length+'週</span></div></div>'
+        +(cur?'<div style="flex:2 1 220px;min-width:200px;background:#F7EFDC;border:1px solid #EBDDB4;border-radius:10px;padding:10px 13px;"><div style="font-size:10.5px;color:#8F7230;">今週（W'+cur.week_no+'）</div><div style="font-size:14px;font-weight:700;color:#1E3A66;">'+esc(cur.theme||'')+'</div></div>':'')
+      +'</div>';
+    }
+    box.innerHTML=EX_WEEKS.map(function(w){ return exWeekCardHtml(w, w.id===curId); }).join('');
+  }
+  function exWeekDate(w){
+    if(!w.week_start) return '';
+    var st=new Date(w.week_start+'T00:00:00'); var en=new Date(st); en.setDate(en.getDate()+6);
+    function f(d){ return (d.getMonth()+1)+'/'+d.getDate(); }
+    return f(st)+'〜'+f(en);
+  }
+  function exWeekCardHtml(w, isCur){
+    var stBadge = w.status==='完了' ? '<span class="tag green" style="font-size:10px;">完了</span>'
+      : w.status==='進行中' ? '<span class="tag gold" style="font-size:10px;">進行中</span>'
+      : '<span style="background:#F2F4F6;color:#5A6981;border-radius:99px;padding:2px 8px;font-size:10px;font-weight:700;">未着手</span>';
+    var opts=['未着手','進行中','完了'].map(function(o){ return '<option'+(w.status===o?' selected':'')+'>'+o+'</option>'; }).join('');
+    var popts=[0,10,20,30,40,50,60,70,80,90,100].map(function(v){ return '<option value="'+v+'"'+((Number(w.progress)||0)===v?' selected':'')+'>'+v+'%</option>'; }).join('');
+    return '<div style="border:1px solid '+(isCur?'#C39B3F':'#EDF1F6')+';'+(isCur?'box-shadow:0 0 0 1px #C39B3F inset;':'')+'border-radius:12px;padding:12px 14px;margin-bottom:10px;background:#fff;">'
+      +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
+        +'<b style="color:#1E3A66;font-size:14px;">W'+w.week_no+'</b>'
+        +'<span style="color:#94A2B6;font-size:11px;">'+exWeekDate(w)+'</span>'
+        +(isCur?'<span style="background:#F7EFDC;color:#8F7230;border-radius:99px;padding:2px 9px;font-size:10px;font-weight:700;">今週</span>':'')
+        +'<b style="flex:1;color:#1E3A66;font-size:13px;">'+esc(w.theme||'')+'</b>'
+        +stBadge
+        +'<button class="ghost" style="font-size:11px;padding:4px 9px;" onclick="exWeekEdit(\''+w.id+'\')">✎ 編集</button>'
+      +'</div>'
+      +'<div id="ex-wbody-'+w.id+'">'
+      +'<div style="font-size:11px;color:#94A2B6;margin-top:6px;">関連WBS：'+esc(w.wbs_ref||'—')+'　／　狙い：'+esc(w.aim||'—')+'　／　主担当：'+esc(w.owner||'—')+'</div>'
+      +'<div style="font-size:12px;color:#18202E;margin-top:8px;white-space:pre-line;line-height:1.8;">'+esc(w.actions||'')+'</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">'
+        +'<div style="flex:1;min-width:200px;background:#F8F9FC;border-radius:8px;padding:8px 10px;"><div style="font-size:10.5px;color:#94A2B6;font-weight:700;">成果物</div><div style="font-size:11.5px;color:#18202E;white-space:pre-line;">'+esc(w.deliverables||'—')+'</div></div>'
+        +'<div style="flex:1;min-width:200px;background:#EBF2ED;border-radius:8px;padding:8px 10px;"><div style="font-size:10.5px;color:#27684A;font-weight:700;">完了の定義（DoD）</div><div style="font-size:11.5px;color:#18202E;white-space:pre-line;">'+esc(w.dod||'—')+'</div></div>'
+      +'</div>'
+      +'<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:10px;">'
+        +'<div><label class="fl">ステータス</label><select class="inp2" style="width:96px;font-size:11.5px;padding:4px 6px;" onchange="updExecWeek(\''+w.id+'\',{status:this.value})">'+opts+'</select></div>'
+        +'<div><label class="fl">進捗</label><select class="inp2" style="width:78px;font-size:11.5px;padding:4px 6px;" onchange="updExecWeek(\''+w.id+'\',{progress:Number(this.value)})">'+popts+'</select></div>'
+        +'<div style="flex:1;min-width:220px;"><label class="fl">振り返りメモ</label><input id="ex-rev-'+w.id+'" class="inp2" style="width:100%;font-size:11.5px;" value="'+esc(w.review||'').replace(/"/g,'&quot;')+'" placeholder="この週のふりかえり・持ち越し"></div>'
+        +'<button class="btn2" style="font-size:11.5px;padding:6px 12px;" onclick="updExecWeek(\''+w.id+'\',{review:($(\'ex-rev-'+w.id+'\')||{}).value||null})">保存</button>'
+      +'</div>'
+      +'</div>'
+    +'</div>';
+  }
+  function exWeekEdit(id){
+    var w=EX_WEEKS.filter(function(x){return x.id===id;})[0]; if(!w) return;
+    var body=$('ex-wbody-'+id); if(!body) return;
+    function ta(fid,label,val,h){ return '<div style="margin-top:8px;"><label class="fl">'+label+'</label><textarea id="'+fid+'" class="inp2" style="width:100%;min-height:'+(h||54)+'px;font-size:11.5px;">'+esc(val||'')+'</textarea></div>'; }
+    body.innerHTML=
+       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">'
+      +'<div style="flex:2;min-width:200px;"><label class="fl">テーマ</label><input id="ex-e-theme-'+id+'" class="inp2" style="width:100%;" value="'+esc(w.theme||'').replace(/"/g,'&quot;')+'"></div>'
+      +'<div style="min-width:110px;"><label class="fl">関連WBS</label><input id="ex-e-wbs-'+id+'" class="inp2" style="width:110px;" value="'+esc(w.wbs_ref||'').replace(/"/g,'&quot;')+'"></div>'
+      +'<div style="flex:1;min-width:130px;"><label class="fl">主担当</label><input id="ex-e-owner-'+id+'" class="inp2" style="width:100%;" value="'+esc(w.owner||'').replace(/"/g,'&quot;')+'"></div>'
+      +'</div>'
+      +ta('ex-e-actions-'+id,'重点アクション',w.actions,90)
+      +ta('ex-e-deliv-'+id,'成果物',w.deliverables)
+      +ta('ex-e-dod-'+id,'完了の定義（DoD）',w.dod)
+      +'<div style="display:flex;gap:8px;margin-top:10px;">'
+      +'<button class="btn2" style="font-size:11.5px;padding:6px 14px;" onclick="exWeekSave(\''+id+'\')">保存</button>'
+      +'<button class="ghost" style="font-size:11.5px;padding:6px 12px;" onclick="loadExecWeekly()">キャンセル</button>'
+      +'</div>';
+  }
+  async function exWeekSave(id){
+    function v(fid){ var e=$(fid); return e?e.value:null; }
+    await updExecWeek(id,{ theme:v('ex-e-theme-'+id), wbs_ref:v('ex-e-wbs-'+id), owner:v('ex-e-owner-'+id),
+      actions:v('ex-e-actions-'+id), deliverables:v('ex-e-deliv-'+id), dod:v('ex-e-dod-'+id) });
+  }
+  async function updExecWeek(id,patch){
+    patch.updated_at=new Date().toISOString();
+    var res=await sb.from('exec_weekly_plans').update(patch).eq('id',id);
+    if(res.error){ alert('更新エラー：'+res.error.message); }
+    loadExecWeekly();
   }
   async function loadOwnFunding(){
     var box=$('own-fund-list'); if(!box)return;
