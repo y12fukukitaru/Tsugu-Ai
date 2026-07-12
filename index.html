@@ -1732,6 +1732,33 @@
               +'<span id="kn-form-msg" style="font-size:12px;"></span>'
             +'</div>'
           +'</div>'
+          +'<div style="border:1.5px solid #E3B9B7;background:#FDF7F6;border-radius:12px;padding:12px 14px;margin:4px 0 14px;">'
+            +'<div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="var b=document.getElementById(\'kn-rules-body\');var a=document.getElementById(\'kn-rules-arrow\');if(b){b.classList.toggle(\'hidden\');if(a)a.textContent=b.classList.contains(\'hidden\')?\'▸\':\'▾\';}">'
+              +'<span style="font-size:15px;">⚠️</span>'
+              +'<b style="color:#A9403D;font-size:13.5px;flex:1;">認定パートナー 禁止行為ガイドライン（必読）</b>'
+              +'<span id="kn-rules-arrow" style="color:#A9403D;font-size:13px;">▸</span>'
+            +'</div>'
+            +'<div id="kn-rules-body" class="hidden" style="margin-top:10px;font-size:12px;line-height:1.9;color:#18202E;">'
+              +'<div style="font-size:11px;color:#5A6981;margin-bottom:8px;">以下の行為は、法令・利用規約・当社の理念（キャッシュベース思考＝売るためではなく顧客のために）に反するため禁止します。違反時は利用規約に基づき、警告・契約解除・報酬の不支給・損害賠償請求等の措置を行うことがあります。判断に迷う場合は、実行する前に必ず運営（メッセージまたはメール）へ相談してください。</div>'
+              +knRuleGrp('① 保険・金融に関する禁止行為',[
+                ['無資格での保険募集','募集人資格がない方は、特定の保険商品の勧誘・乗換の推奨・契約の媒介を行ってはいけません。本プラットフォームのシミュレーターは財務分析ツールであり、保険契約の解約・締結等の「実行」は必ず募集人資格を有する担当者（運営）に取り次いでください（保険業法275条）。'],
+                ['断定的判断の提供','「必ず得します」「絶対に損しません」「確実に月○万円になります」等、不確実な事項について断定的な判断を伝えて勧誘してはいけません。'],
+                ['記録なき提案','保険・M&A・投融資に関わる提案を、顧客カルテに意向把握・提案根拠・説明内容の記録を残さずに行ってはいけません。記録はあなた自身を守る証跡です。']]) 
+              +knRuleGrp('② 勧誘・営業活動に関する禁止行為',[
+                ['不実告知・事実の不告知・威迫','勧誘に際して事実と異なることを告げること、不利な事実を故意に告げないこと、威迫して困惑させることは法律で禁止されています（特定商取引法）。'],
+                ['無承認の広告・SNS発信','当社の事前承認なく、TsuguAIの名称・ロゴ・収入例・実績数値を用いた広告、チラシ、SNS投稿、セミナー等での紹介を行ってはいけません（パートナー募集の広告表現は法規制の対象となるため、必ず運営が管理します）。'],
+                ['誹謗中傷','他の保険会社・商品・専門家・他のパートナーを誹謗中傷して自らの提案を有利にしてはいけません。']])
+              +knRuleGrp('③ 専門家の独占業務（士業の領域）',[
+                ['個別の税務相談・税務書類の作成','個別具体的な税額計算・節税指導・申告書類の作成は税理士の独占業務です（税理士法52条）。一般的な制度の情報提供に留め、顧問税理士または提携税理士へ繋いでください。'],
+                ['法律事務・登記・許認可','法的紛争の代理・和解あっせん（弁護士法72条）、登記書類の作成（司法書士）、官公署提出書類の作成（行政書士）等を報酬を得て行ってはいけません。該当する相談は専門家へ引き継ぎます。']])
+              +knRuleGrp('④ 金銭・情報・利益相反に関する禁止行為',[
+                ['金銭の直接授受','顧客から顧問料・手数料等の現金を直接受け取ること、正規ルート（Stripe・当社請求）外での報酬受領、顧客との個人的な金銭貸借・立替は禁止です。'],
+                ['顧客情報の目的外利用','カルテ・財務データ・面談内容を、担当業務以外の目的で利用すること、第三者への提供、私的な端末・クラウドへの保存、SNS等への掲載（匿名加工を含め無承認のもの）は禁止です。'],
+                ['アカウントの共有・貸与','自分のログインID・パスワードを、家族・同僚・顧客を含む第三者に共有・貸与してはいけません。'],
+                ['利益相反・反社会的勢力','自己や親族の利益のために顧客の意思決定を誘導すること、反社会的勢力と関係を持つこと・取引を仲介することは禁止です。']])
+              +'<div style="font-size:11px;color:#5A6981;margin-top:6px;">本ガイドラインは弁護士レビューを経て随時更新されます（最終更新：2026年7月）。</div>'
+            +'</div>'
+          +'</div>'
           +'<input id="kn-search" class="searchbox" placeholder="🔍 タイトル・業種・内容で検索" oninput="renderKnowledge()">'
           +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px;" id="kn-filterbar">'
             +'<button class="sbtn on" data-f="all" onclick="setKnFilter(\'all\',this)">すべて</button>'
@@ -2895,6 +2922,16 @@
     if(res.error){ if(m){ m.style.color='#A9403D'; m.textContent='送信エラー：'+res.error.message; } return; }
     if(m){ m.style.color='#27684A'; m.textContent='送信しました。'; }
     setTimeout(loadMyMa, 600);
+  }
+  function knRuleGrp(title, rules){
+    var h='<div style="font-weight:700;color:#1E3A66;font-size:12.5px;margin:10px 0 4px;">'+title+'</div>';
+    rules.forEach(function(r){
+      h+='<div style="padding:6px 0 6px 10px;border-left:3px solid #E3B9B7;margin-bottom:6px;">'
+        +'<b style="color:#A9403D;">🚫 '+r[0]+'</b>'
+        +'<div style="color:#3A4557;margin-top:2px;">'+r[1]+'</div>'
+      +'</div>';
+    });
+    return h;
   }
   // ===== ナレッジベース（Phase 33） =====
   var KN_CACHE={items:[],me:{role:null,rank:null},names:{}};
