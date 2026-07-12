@@ -1033,10 +1033,11 @@
         +'<div style="margin-top:8px;"><label class="fl">本文</label><textarea id="bc-body" class="inp2" rows="3" style="width:100%;" placeholder="お知らせの内容を入力"></textarea></div>'
         +'<div style="margin-top:10px;"><button class="btn2" onclick="postAnnouncement()">配信する</button><span id="bc-msg" style="font-size:12px;margin-left:8px;"></span></div>'
         +'<div id="bc-list" style="margin-top:12px;">読み込み中...</div></div>'
-      +'<div class="panel" id="sec-exec"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">📋 経営計画（社内）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadExecFunding();loadExecWeekly();">↺ 更新</span></div>'
+      +'<div class="panel" id="sec-exec"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">📋 経営計画（社内）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadExecFunding();loadExecWeekly();loadExecKpi();">↺ 更新</span></div>'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 12px;">'
           +'<button class="sbtn on" id="ex-tb-fund" onclick="exShowTab(\'fund\')">💰 資金調達ロードマップ</button>'
           +'<button class="sbtn" id="ex-tb-week" onclick="exShowTab(\'week\')">📅 週次行動計画（13週）</button>'
+          +'<button class="sbtn" id="ex-tb-kpi" onclick="exShowTab(\'kpi\')">📈 KPIトラッキング</button>'
         +'</div>'
         +'<div id="ex-tab-fund">'
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">自社（福來）の調達計画をフェーズ別に管理します。ステータスはその場で変更でき、自動保存されます。</div>'
@@ -1057,6 +1058,20 @@
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">週次行動計画書（13週スプリント）と連動。今週の週はゴールドの枠で表示されます。ステータス・進捗・振り返りを更新して運用してください。</div>'
         +'<div id="ex-week-sum" style="margin-bottom:10px;"></div>'
         +'<div id="ex-week-list">読み込み中...</div>'
+        +'</div>'
+        +'<div id="ex-tab-kpi" class="hidden">'
+        +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px;">'
+          +'<div style="font-size:12px;color:#94A2B6;flex:1;min-width:220px;">月次の計画（計）と実績（実）を管理します。実績を入力すると自動保存され、計画以上なら緑・未達なら赤で表示されます。今月の列はゴールドで強調されます。</div>'
+          +'<button class="sbtn" onclick="exKpiFyShift(-1)">◀</button>'
+          +'<b id="ex-kpi-fy" style="color:var(--navy);font-size:13px;"></b>'
+          +'<button class="sbtn" onclick="exKpiFyShift(1)">▶</button>'
+        +'</div>'
+        +'<div id="ex-kpi-grid" style="overflow-x:auto;">読み込み中...</div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;background:var(--soft);border-radius:10px;padding:10px 12px;margin-top:10px;">'
+          +'<div style="flex:1;min-width:220px;"><label class="fl">指標名</label><input id="exk-name" class="inp2" style="width:100%;" placeholder="例：月次売上MRR（万円）"></div>'
+          +'<button class="btn2" onclick="addExecKpi()">指標を追加</button>'
+        +'</div>'
+        +'<div id="exk-msg" style="font-size:11.5px;margin-top:6px;min-height:14px;"></div>'
         +'</div>'
       +'</div>'
       +ownFundPanelHtml('運営（自社）の資金調達ロードマップ','Tsugu自身の調達計画（シード調達・補助金・クラファン等）をここで管理します。下の全社パイプラインには「運営」区分で表示されます。');
@@ -4078,11 +4093,11 @@
   // ==== 経営計画（社内）：資金調達ロードマップ＋週次行動計画 ====
   var EX_ERRMSG='<div style="font-size:12px;color:#A9403D;">読み込みエラー：Supabaseで「Phase 56」のSQLを実行してください。</div>';
   function exShowTab(t){
-    ['fund','week'].forEach(function(k){
+    ['fund','week','kpi'].forEach(function(k){
       var d=$('ex-tab-'+k); if(d) d.classList.toggle('hidden', k!==t);
       var b=$('ex-tb-'+k); if(b) b.classList.toggle('on', k===t);
     });
-    if(t==='fund') loadExecFunding(); else loadExecWeekly();
+    if(t==='fund') loadExecFunding(); else if(t==='week') loadExecWeekly(); else loadExecKpi();
   }
   var EX_CATSTYLE={'自己資金':['#F2F4F6','#5A6981'],'融資':['#EAF0F9','#1E3A66'],'資本性ローン':['#EAF0F9','#1E5494'],'補助金':['#EBF2ED','#27684A'],'エクイティ':['#F7EFDC','#8F7230'],'デット':['#F2F4F6','#5A6981'],'その他':['#F2F4F6','#5A6981']};
   var EX_FUND_STATUSES=['検討中','公募確認','申請準備','申請中','審査中','実行中','完了','見送り','将来'];
@@ -4238,6 +4253,77 @@
     var res=await sb.from('exec_weekly_plans').update(patch).eq('id',id);
     if(res.error){ alert('更新エラー：'+res.error.message); }
     loadExecWeekly();
+  }
+  // ---- KPIトラッキング（月次 計画vs実績） ----
+  var EX_KPI_FY=2026; var EX_KPI_DATA=[];
+  function exKpiMonths(){
+    var ms=[]; for(var i=0;i<12;i++){ var y=EX_KPI_FY+(i>=6?1:0); var m=(7+i-1)%12+1; ms.push(y+'-'+('0'+m).slice(-2)); } return ms;
+  }
+  function exKpiFyShift(d){ EX_KPI_FY+=d; loadExecKpi(); }
+  async function loadExecKpi(){
+    var box=$('ex-kpi-grid'); if(!box) return;
+    var fy=$('ex-kpi-fy'); if(fy) fy.textContent=EX_KPI_FY+'年度（'+EX_KPI_FY+'/7〜'+(EX_KPI_FY+1)+'/6）';
+    var res=await sb.from('exec_kpi_values').select('*');
+    if(res.error){ box.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みエラー：Supabaseで「Phase 57」のSQLを実行してください。</div>'; return; }
+    EX_KPI_DATA=res.data||[];
+    var months=exKpiMonths();
+    // 指標一覧（sort順・全期間から）
+    var meta={}; EX_KPI_DATA.forEach(function(r){ if(!(r.kpi in meta)) meta[r.kpi]=r.sort||0; else meta[r.kpi]=Math.min(meta[r.kpi],r.sort||0); });
+    var names=Object.keys(meta).sort(function(a,b){ return meta[a]-meta[b]; });
+    if(!names.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">指標がありません。下のフォームから追加してください。</div>'; return; }
+    var map={}; EX_KPI_DATA.forEach(function(r){ map[r.kpi+'|'+r.ym]=r; });
+    var now=new Date(); var curYm=now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2);
+    function fmt(v){ if(v==null||v==='') return ''; var n=Number(v); return (n%1===0)?n.toLocaleString():String(n); }
+    var h='<table style="border-collapse:collapse;min-width:900px;font-size:11.5px;">';
+    h+='<tr><th style="position:sticky;left:0;background:#F8F9FC;border:1px solid #EDF1F6;padding:6px 10px;text-align:left;color:#1E3A66;min-width:170px;">指標</th>';
+    months.forEach(function(ym){
+      var cur=(ym===curYm);
+      h+='<th style="border:1px solid #EDF1F6;padding:6px 6px;min-width:64px;background:'+(cur?'#F7EFDC':'#F8F9FC')+';color:'+(cur?'#8F7230':'#1E3A66')+';">'+(+ym.slice(5,7))+'月<div style="font-size:9px;font-weight:400;color:#94A2B6;">'+ym.slice(0,4)+'</div></th>';
+    });
+    h+='<th style="border:1px solid #EDF1F6;background:#F8F9FC;"></th></tr>';
+    names.forEach(function(name){
+      h+='<tr><td style="position:sticky;left:0;background:#fff;border:1px solid #EDF1F6;padding:6px 10px;font-weight:700;color:#1E3A66;">'+esc(name)+'</td>';
+      months.forEach(function(ym){
+        var r=map[name+'|'+ym]||{};
+        var achieved=(r.actual!=null&&r.plan!=null)?(Number(r.actual)>=Number(r.plan)):null;
+        var acol=achieved===null?'#18202E':(achieved?'#27684A':'#A9403D');
+        var cur=(ym===curYm);
+        h+='<td style="border:1px solid #EDF1F6;padding:4px 4px;vertical-align:top;'+(cur?'background:#FFFBF2;':'')+'">'
+          +'<div style="display:flex;align-items:center;gap:3px;"><span style="font-size:9px;color:#94A2B6;">計</span>'
+          +'<input type="number" step="any" value="'+fmt(r.plan)+'" style="width:56px;border:1px solid #EDF1F6;border-radius:5px;padding:2px 4px;font-size:11px;color:#5A6981;background:#F8F9FC;" onchange="updExecKpiCell(\''+esc(name).replace(/'/g,"\\'")+'\',\''+ym+'\',\'plan\',this.value)"></div>'
+          +'<div style="display:flex;align-items:center;gap:3px;margin-top:2px;"><span style="font-size:9px;color:#94A2B6;">実</span>'
+          +'<input type="number" step="any" value="'+fmt(r.actual)+'" style="width:56px;border:1px solid #D6E5F5;border-radius:5px;padding:2px 4px;font-size:11px;font-weight:700;color:'+acol+';background:#fff;" onchange="updExecKpiCell(\''+esc(name).replace(/'/g,"\\'")+'\',\''+ym+'\',\'actual\',this.value)"></div>'
+          +'</td>';
+      });
+      h+='<td style="border:1px solid #EDF1F6;padding:4px 6px;"><button class="ghost" style="color:#A9403D;border-color:#E9C9C9;font-size:10.5px;padding:3px 8px;" onclick="delExecKpi(\''+esc(name).replace(/'/g,"\\'")+'\')">削除</button></td></tr>';
+    });
+    h+='</table>';
+    box.innerHTML=h;
+  }
+  async function updExecKpiCell(kpi,ym,field,val){
+    var payload={kpi:kpi,ym:ym,updated_at:new Date().toISOString()};
+    payload[field]=(val===''?null:Number(val));
+    // sortを維持（既存指標の最小sortを引き継ぐ）
+    var ex=EX_KPI_DATA.filter(function(r){return r.kpi===kpi;})[0];
+    if(ex) payload.sort=ex.sort||0;
+    var res=await sb.from('exec_kpi_values').upsert(payload,{onConflict:'kpi,ym'});
+    if(res.error){ alert('保存エラー：'+res.error.message); }
+    loadExecKpi();
+  }
+  async function addExecKpi(){
+    var msg=$('exk-msg'); var name=(($('exk-name')||{}).value||'').trim();
+    if(!name){ if(msg){msg.style.color='#A9403D';msg.textContent='指標名を入力してください。';} return; }
+    var maxSort=0; EX_KPI_DATA.forEach(function(r){ maxSort=Math.max(maxSort,r.sort||0); });
+    var res=await sb.from('exec_kpi_values').upsert({kpi:name,ym:EX_KPI_FY+'-07',sort:maxSort+1},{onConflict:'kpi,ym'});
+    if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='追加エラー：'+res.error.message;} return; }
+    if(msg){msg.style.color='#27684A';msg.textContent='追加しました。各月の計画・実績を入力してください。';}
+    if($('exk-name'))$('exk-name').value='';
+    loadExecKpi();
+  }
+  async function delExecKpi(name){
+    if(!confirm('指標「'+name+'」を全期間分削除します。よろしいですか？')) return;
+    await sb.from('exec_kpi_values').delete().eq('kpi',name);
+    loadExecKpi();
   }
   async function loadOwnFunding(){
     var box=$('own-fund-list'); if(!box)return;
