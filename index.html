@@ -637,7 +637,7 @@
   // 役割ごとの全メニュー定義（ラベル付き）。設定で並び順・表示を変えられる
   function navDefs(r){
     if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
-    if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-fund','資金調達'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信']];
+    if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信']];
     return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','相続・贈与'],['sec-billpay','お支払い'],['sec-sec','AI秘書']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
@@ -662,7 +662,7 @@
     'sec-flow':'🏠','sec-chat':'💬','sec-reports':'📄','sec-mypdca':'🎯','sec-company':'🏢',
     'sec-cash':'💰','sec-ai':'🤖','sec-ins':'🧮','sec-ma':'🤝','sec-market':'💹','sec-sec':'🪄',
     'sec-clients':'👥','sec-pdca':'🔄','sec-madeals':'📁','sec-knowledge':'📚','sec-sozoku':'🎁',
-    'sec-kpi':'📊','sec-risk':'🚨','sec-fde':'🧑‍💼','sec-cust':'🏢','sec-fund':'🏦','sec-exec':'📋',
+    'sec-kpi':'📊','sec-risk':'🚨','sec-fde':'🧑‍💼','sec-cust':'🏢','sec-exec':'📋',
     'sec-billing':'💳','sec-billpay':'💳','sec-audit':'🛡️','sec-broadcast':'📢'
   };
   function navGroups(r){
@@ -675,7 +675,7 @@
     ];
     if(r==='admin') return [
       ['概況',['sec-flow','sec-kpi','sec-risk']],
-      ['管理',['sec-fde','sec-cust','sec-fund','sec-exec','sec-market']],
+      ['管理',['sec-fde','sec-cust','sec-exec','sec-market']],
       ['収益・統制',['sec-billing','sec-audit','sec-broadcast']]
     ];
     return [
@@ -912,9 +912,6 @@
           +'<button class="sbtn" data-f="unassigned" onclick="setAdmCustFilter(\'unassigned\',this)">担当未割当</button>'
         +'</div>'
         +'<div id="adm-cust" style="margin-top:6px;">読み込み中...</div></div>'
-      +'<div class="panel" id="sec-fund"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">資金調達パイプライン（全顧客）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadFundingPipeline()">↺ 更新</span></div>'
-        +'<div style="font-size:12px;color:#94A2B6;margin:0 0 8px;">パートナーが登録した全顧客の調達案件を一元管理できます。状態はここから直接変更できます（Tsugu融資の取次台帳としてそのまま発展させます）。</div>'
-        +'<div id="adm-fund" style="margin-top:4px;">読み込み中...</div></div>'
       +'<div class="panel" id="sec-market"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">💹 Tsugu投資・融資・M&A（全社）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketBroker()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 8px;">全顧客が掲載した資金調達・投資の案件とマッチング状況を一覧管理できます。</div>'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;" id="mkb-filterbar">'
@@ -1086,7 +1083,6 @@
   var ADM_CUST_FILTER='all';
   function setAdmCustFilter(f,el){ ADM_CUST_FILTER=f; var bar=$('adm-cust-filterbar'); if(bar){ Array.prototype.forEach.call(bar.querySelectorAll('.sbtn'),function(b){ b.classList.remove('on'); }); } if(el) el.classList.add('on'); renderAdmCust(); }
   async function loadAdmin(){
-    loadFundingPipeline();
     loadOwnFunding();
     var res=await sb.from('profiles').select('*');
     var fb=$('adm-fde'), cb=$('adm-cust');
