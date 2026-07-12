@@ -956,7 +956,7 @@
             +'<div><label class="fl">割引上限（合算）</label><input id="bl-cap" type="number" class="inp2" style="width:84px;" value="10" oninput="renderAdmBilling()"></div>'
           +'</div>'
         +'</div>'
-        +'<div class="ph" style="font-size:13px;margin-top:18px;">🤝 M&A仲介フィー計算（レーマン方式）</div>'
+        +'<div class="ph" style="font-size:13px;margin-top:18px;">🤝 M&A仲介フィーシミュレーター（レーマン方式）</div>'
         +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">取引金額を入れると、標準レーマン方式（5億以下5%／5〜10億4%／10〜50億3%／50〜100億2%／100億超1%）で仲介フィーを段階計算します。実際の料率・最低報酬額は契約内容に従ってください。</div>'
         +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
           +'<div><label class="fl">取引金額（万円）</label><input id="lh-amt" type="number" class="inp2" style="width:160px;" placeholder="例 30000（＝3億円）" oninput="lehmanCalc()"></div>'
@@ -1557,7 +1557,7 @@
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:6px;">借入返済・納税・賞与などの予定です。ダッシュボードの「資金繰りステータス」の残高見通しに反映されています。</div>'
           +'<div id="pay-list" style="margin-top:6px;">読み込み中...</div>'
           +'<div style="border-top:1px solid #EDF1F6;margin:18px 0 0;"></div>'
-          +'<div style="font-weight:600;font-size:14px;color:#1E3A66;margin:14px 0 6px;">③ 資金繰り診断</div>'
+          +'<div style="font-weight:600;font-size:14px;color:#1E3A66;margin:14px 0 6px;">③ 資金繰りシミュレーター</div>'
           +'<div style="font-size:12px;color:#94A2B6;">担当パートナーが実施します。結果はダッシュボードの「資金繰りステータス」に表示されます。<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;margin-left:6px;" onclick="goSec(\'sec-status\')">ステータスを見る →</button></div>'
         +'</div>'
         +'<div class="panel" id="sec-act"><div class="ph">アクション・課題</div>'
@@ -3975,7 +3975,7 @@
       var fin=(r[0].data||[]), snap=(r[1].data&&r[1].data[0])||null, pays=(r[2].data||[]), diag=(r[3].data&&r[3].data[0])||null;
       var co=(CURRENT_CLIENT&&CURRENT_CLIENT.company)||'対象企業';
       var finTxt=fin.length?fin.map(function(f){return f.year_month+': 売上'+(f.revenue==null?'-':f.revenue)+'万円/営業利益'+(f.profit==null?'-':f.profit)+'万円'+(f.memo?('（'+f.memo+'）'):'');}).join('\n'):'（月次財務データなし）';
-      var snapTxt=snap?('現預金'+(snap.cash||'-')+'万円、月商'+(snap.monthly_in||'-')+'万円、月間支出'+(snap.monthly_out||'-')+'万円、月間返済'+(snap.monthly_repay||'-')+'万円、資金繰りスコア'+(snap.score||'-')+'点'):'（資金繰り診断なし）';
+      var snapTxt=snap?('現預金'+(snap.cash||'-')+'万円、月商'+(snap.monthly_in||'-')+'万円、月間支出'+(snap.monthly_out||'-')+'万円、月間返済'+(snap.monthly_repay||'-')+'万円、資金繰りスコア'+(snap.score||'-')+'点'):'（資金繰りシミュレーターなし）';
       var payTxt=pays.length?pays.map(function(p){return p.due_date+' '+p.title+' '+p.amount+'万円';}).join('、'):'（支払予定なし）';
       var sys='あなたは中小企業の資金調達支援に精通した経営コンサルタントです。金融機関に提出できる水準の、誠実で現実的な事業計画書ドラフトを日本語で作成します。誇張や根拠のない数値は書かず、与えられたデータに基づき、不明な項目は「（要記入）」と明示します。出力は必ず次のJSON形式のみ：{"sections":[{"title":"見出し","body":"本文（改行は\\nで）"}]}。セクション構成：1.エグゼクティブサマリー 2.会社概要（要記入欄含む） 3.事業内容と強み 4.市場環境と顧客 5.財務状況（実績データの要約と分析） 6.資金計画（調達額・使途・自己資金） 7.返済計画・収支見通し 8.リスクと対応策 9.実行スケジュール。';
       var usr='企業名：'+co+'\n目的：'+goal+(amount?('\n調達希望額：'+amount+'万円'):'')+(use?('\n資金使途・補足：'+use):'')+'\n\n【月次財務実績（直近）】\n'+finTxt+'\n\n【資金繰り状況】\n'+snapTxt+'\n\n【今後の支払予定】\n'+payTxt+(diag?('\n\n【AI業務診断の要点】\n'+String(diag.result_text||'').slice(0,800)):'');
@@ -4552,7 +4552,7 @@
     } else if(snapErr){
       h+='<div style="font-size:12px;color:#94A2B6;line-height:1.7;">資金繰りステータスを使うには、Phase 22 のSQL設定が必要です。</div>';
     } else {
-      h+='<div style="font-size:12px;color:#94A2B6;line-height:1.7;">担当パートナーが資金繰り診断を行うと、ここにスコアと資金残高の見通しが常時表示されます。'
+      h+='<div style="font-size:12px;color:#94A2B6;line-height:1.7;">担当パートナーが資金繰りシミュレーターを行うと、ここにスコアと資金残高の見通しが常時表示されます。'
         +(future.length?'<br>（支払予定 '+future.length+' 件は登録済みです）':'')
         +'<br><button class="btn2" style="margin-top:8px;" onclick="goSec(\'sec-chat\')">パートナーに相談する →</button></div>';
       h+=fundProgressHtml(funds);
@@ -4861,9 +4861,178 @@
     loadClientNotes(custId);
   }
 
+  // ==== 保険最適化診断（パートナーツール）====
+  var IOD={ id:null, custId:null, items:[], note:'' };
+  var IOD_AXES=[['ax_purpose','目的'],['ax_fit','手段'],['ax_cost','コスト'],['ax_exit','出口']];
+  var IOD_RX=['継続','減額','払済','解約','据置','要検討'];
+  function insOptimPanelHtml(custId){
+    return '<div class="ph" style="font-size:13px;margin-top:18px;display:flex;align-items:center;justify-content:space-between;">🩺 保険最適化シミュレーター<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadInsDiagList(\''+custId+'\')">↺ 更新</span></div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">加入中の保険を一覧化し、4軸（目的・手段・コスト・出口）で判定して年間キャッシュ改善額を算出します。結果はA4の診断書として印刷／PDF保存できます（単位：万円）。※本ツールは財務分析を目的とするものであり、特定の保険商品の勧誘（保険募集）を行うものではありません。保険契約の解約・締結等の実行は、募集人資格を有する担当者にお繋ぎください。</div>'
+      +'<div id="iod-list" style="margin-bottom:8px;">読み込み中...</div>'
+      +'<button class="btn2" onclick="insOptimNew()">＋ 新規診断を作成</button>'
+      +'<div id="iod-editor" style="margin-top:10px;"></div>'
+      +'<div id="iod-msg" style="font-size:11.5px;margin-top:6px;min-height:14px;"></div>';
+  }
+  async function loadInsDiagList(custId){
+    var box=$('iod-list'); if(!box) return;
+    var res=await sb.from('insurance_diagnoses').select('id,diagnosed_on,summary').eq('customer_id',custId).order('created_at',{ascending:false});
+    if(res.error){ box.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みエラー：Supabaseで「Phase 59」のSQLを実行してください。</div>'; return; }
+    if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">まだ診断がありません。「＋ 新規診断を作成」から始めてください。</div>'; return; }
+    box.innerHTML=res.data.map(function(d){
+      var sm=d.summary||{}; var imp=Number(sm.improve)||0;
+      return '<div style="display:flex;gap:8px;align-items:center;padding:7px 2px;border-bottom:1px dashed var(--softline);font-size:12.5px;flex-wrap:wrap;">'
+        +'<span style="color:#94A2B6;">'+esc(d.diagnosed_on||'')+'</span>'
+        +'<b style="flex:1;color:'+(imp>0?'#27684A':'#1E3A66')+';">年間改善 '+imp.toLocaleString()+'万円</b>'
+        +'<span style="color:#94A2B6;font-size:11px;">現状'+(Number(sm.cur)||0).toLocaleString()+'万→'+(Number(sm.opt)||0).toLocaleString()+'万</span>'
+        +'<button class="ghost" style="font-size:11px;padding:4px 9px;" onclick="insOptimOpen(\''+d.id+'\')">開く</button>'
+        +'<button class="ghost" style="color:#A9403D;border-color:#E9C9C9;font-size:11px;padding:4px 9px;" onclick="insOptimDel(\''+d.id+'\')">削除</button>'
+      +'</div>';
+    }).join('');
+  }
+  function insOptimNew(){
+    IOD={ id:null, custId:(CURRENT_CLIENT||{}).id, items:[iodEmptyRow()], note:'' };
+    iodRenderEditor();
+  }
+  async function insOptimOpen(id){
+    var res=await sb.from('insurance_diagnoses').select('*').eq('id',id).single();
+    if(res.error){ alert('読み込みエラー：'+res.error.message); return; }
+    IOD={ id:res.data.id, custId:res.data.customer_id, items:(res.data.items||[]), note:res.data.note||'' };
+    if(!IOD.items.length) IOD.items=[iodEmptyRow()];
+    iodRenderEditor();
+  }
+  async function insOptimDel(id){
+    if(!confirm('この診断を削除します。よろしいですか？')) return;
+    await sb.from('insurance_diagnoses').delete().eq('id',id);
+    if(IOD.id===id){ IOD={id:null,custId:null,items:[],note:''}; var ed=$('iod-editor'); if(ed) ed.innerHTML=''; }
+    loadInsDiagList((CURRENT_CLIENT||{}).id);
+  }
+  function iodEmptyRow(){ return { name:'', co:'', prem:'', csv:'', purpose:'', ax_purpose:'緑', ax_fit:'緑', ax_cost:'緑', ax_exit:'緑', rx:'継続', opt_prem:'' }; }
+  function iodF(i,f,v){ if(IOD.items[i]){ IOD.items[i][f]=v; iodSummary(); } }
+  function iodAddRow(){ IOD.items.push(iodEmptyRow()); iodRenderEditor(); }
+  function iodDelRow(i){ IOD.items.splice(i,1); if(!IOD.items.length) IOD.items=[iodEmptyRow()]; iodRenderEditor(); }
+  function iodCalc(){
+    var cur=0,opt=0;
+    IOD.items.forEach(function(r){
+      var p=Number(r.prem)||0; cur+=p;
+      var op=(r.opt_prem===''||r.opt_prem==null)?p:(Number(r.opt_prem)||0);
+      if(r.rx==='解約'||r.rx==='払済') op=(r.opt_prem===''?0:Number(r.opt_prem)||0);
+      opt+=op;
+    });
+    return { cur:cur, opt:opt, improve:cur-opt };
+  }
+  function iodSummary(){
+    var el=$('iod-sum'); if(!el) return;
+    var c=iodCalc();
+    el.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      +'<div style="flex:1 1 120px;background:#F8F9FC;border:1px solid #EDF1F6;border-radius:10px;padding:8px 12px;"><div style="font-size:10px;color:#94A2B6;">現状 年間保険料</div><b style="font-size:15px;color:#1E3A66;">'+c.cur.toLocaleString()+'万円</b></div>'
+      +'<div style="flex:1 1 120px;background:#F8F9FC;border:1px solid #EDF1F6;border-radius:10px;padding:8px 12px;"><div style="font-size:10px;color:#94A2B6;">最適化後</div><b style="font-size:15px;color:#1E3A66;">'+c.opt.toLocaleString()+'万円</b></div>'
+      +'<div style="flex:1 1 140px;background:#EBF2ED;border:1px solid #C9E2D2;border-radius:10px;padding:8px 12px;"><div style="font-size:10px;color:#27684A;">年間キャッシュ改善</div><b style="font-size:16px;color:#27684A;">'+c.improve.toLocaleString()+'万円</b><span style="font-size:10px;color:#27684A;">（10年で'+(c.improve*10).toLocaleString()+'万円）</span></div>'
+    +'</div>';
+  }
+  function iodSel(i,f,cur,opts){
+    return '<select class="inp2" style="width:100%;font-size:11px;padding:3px 4px;" onchange="iodF('+i+',\''+f+'\',this.value)">'+opts.map(function(o){ return '<option'+(cur===o?' selected':'')+'>'+o+'</option>'; }).join('')+'</select>';
+  }
+  function iodRenderEditor(){
+    var ed=$('iod-editor'); if(!ed) return;
+    var h='<div style="border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
+      +'<div id="iod-sum" style="margin-bottom:8px;"></div>'
+      +'<div style="overflow-x:auto;"><table style="border-collapse:collapse;min-width:1020px;font-size:11px;width:100%;">'
+      +'<tr style="background:#F8F9FC;color:#1E3A66;">'
+      +'<th style="border:1px solid #EDF1F6;padding:4px 6px;min-width:120px;">商品名</th>'
+      +'<th style="border:1px solid #EDF1F6;padding:4px 6px;min-width:90px;">保険会社</th>'
+      +'<th style="border:1px solid #EDF1F6;padding:4px 6px;width:76px;">年間保険料<br>(万円)</th>'
+      +'<th style="border:1px solid #EDF1F6;padding:4px 6px;width:76px;">解約返戻金<br>(万円)</th>'
+      +'<th style="border:1px solid #EDF1F6;padding:4px 6px;min-width:110px;">加入目的</th>'
+      +IOD_AXES.map(function(a){ return '<th style="border:1px solid #EDF1F6;padding:4px 4px;width:56px;">'+a[1]+'</th>'; }).join('')
+      +'<th style="border:1px solid #EDF1F6;padding:4px 6px;width:78px;">処方</th>'
+      +'<th style="border:1px solid #EDF1F6;padding:4px 6px;width:80px;">最適化後<br>年間(万円)</th>'
+      +'<th style="border:1px solid #EDF1F6;width:40px;"></th></tr>';
+    IOD.items.forEach(function(r,i){
+      function inp(f,w,ph){ return '<input class="inp2" style="width:'+w+';font-size:11px;padding:3px 5px;" value="'+esc(String(r[f]==null?'':r[f])).replace(/"/g,'&quot;')+'" placeholder="'+(ph||'')+'" oninput="iodF('+i+',\''+f+'\',this.value)">'; }
+      h+='<tr>'
+        +'<td style="border:1px solid #EDF1F6;padding:3px;">'+inp('name','100%','例：長期平準定期')+'</td>'
+        +'<td style="border:1px solid #EDF1F6;padding:3px;">'+inp('co','100%','')+'</td>'
+        +'<td style="border:1px solid #EDF1F6;padding:3px;">'+inp('prem','100%','')+'</td>'
+        +'<td style="border:1px solid #EDF1F6;padding:3px;">'+inp('csv','100%','')+'</td>'
+        +'<td style="border:1px solid #EDF1F6;padding:3px;">'+inp('purpose','100%','社長の口から')+'</td>'
+        +IOD_AXES.map(function(a){ return '<td style="border:1px solid #EDF1F6;padding:3px;">'+iodSel(i,a[0],r[a[0]],['緑','黄','赤'])+'</td>'; }).join('')
+        +'<td style="border:1px solid #EDF1F6;padding:3px;">'+iodSel(i,'rx',r.rx,IOD_RX)+'</td>'
+        +'<td style="border:1px solid #EDF1F6;padding:3px;">'+inp('opt_prem','100%','空欄=現状維持')+'</td>'
+        +'<td style="border:1px solid #EDF1F6;padding:3px;text-align:center;"><button class="ghost" style="color:#A9403D;border-color:#E9C9C9;font-size:10px;padding:2px 6px;" onclick="iodDelRow('+i+')">✕</button></td>'
+      +'</tr>';
+    });
+    h+='</table></div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">'
+      +'<button class="ghost" style="font-size:11.5px;padding:5px 10px;" onclick="iodAddRow()">＋ 契約を追加</button>'
+      +'<div style="flex:1;min-width:220px;"><label class="fl">所見・メモ（診断書に印字されます）</label><input id="iod-note" class="inp2" style="width:100%;" value="'+esc(IOD.note||'').replace(/"/g,'&quot;')+'" oninput="IOD.note=this.value"></div>'
+      +'<button class="btn2" onclick="insOptimSave()">💾 保存</button>'
+      +'<button class="btn2" style="background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;" onclick="iodPrint()">🖨 診断書を印刷／PDF</button>'
+      +'</div></div>';
+    ed.innerHTML=h;
+    iodSummary();
+  }
+  async function insOptimSave(){
+    var msg=$('iod-msg');
+    var c=iodCalc();
+    var payload={ customer_id:IOD.custId, items:IOD.items, summary:{cur:c.cur,opt:c.opt,improve:c.improve}, note:IOD.note||null, updated_at:new Date().toISOString() };
+    var res;
+    if(IOD.id){ res=await sb.from('insurance_diagnoses').update(payload).eq('id',IOD.id); }
+    else { payload.created_by=(window.__prof||{}).id||null; res=await sb.from('insurance_diagnoses').insert(payload).select('id').single(); if(!res.error&&res.data) IOD.id=res.data.id; }
+    if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='保存エラー：'+res.error.message+'（Phase 59のSQL未実行の可能性）';} return; }
+    if(msg){msg.style.color='#27684A';msg.textContent='保存しました。';}
+    loadInsDiagList(IOD.custId);
+  }
+  function iodDot(v){ var c=v==='赤'?'#C0392B':(v==='黄'?'#C99A2E':'#2C9E5F'); return '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+c+';"></span>'; }
+  function iodPrint(){
+    var c=iodCalc();
+    var comp=esc((CURRENT_CLIENT||{}).company||'');
+    var who=esc(((window.__prof||{}).contact_name)||((window.__prof||{}).company_name)||'');
+    var today=new Date(); var ds=today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
+    var rows=IOD.items.map(function(r){
+      return '<tr><td>'+esc(r.name||'')+'</td><td>'+esc(r.co||'')+'</td><td class="num">'+(Number(r.prem)||0).toLocaleString()+'</td><td class="num">'+(Number(r.csv)||0).toLocaleString()+'</td><td>'+esc(r.purpose||'')+'</td>'
+        +IOD_AXES.map(function(a){ return '<td class="c">'+iodDot(r[a[0]])+'</td>'; }).join('')
+        +'<td class="c"><b>'+esc(r.rx||'')+'</b></td><td class="num">'+((r.opt_prem===''||r.opt_prem==null)?(Number(r.prem)||0).toLocaleString():(Number(r.opt_prem)||0).toLocaleString())+'</td></tr>';
+    }).join('');
+    var html='<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>保険最適化診断書</title><style>'
+      +'body{font-family:"Noto Sans JP","Yu Gothic",sans-serif;color:#18202E;margin:0;padding:28px 32px;}'
+      +'.hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid #1E3A66;padding-bottom:10px;}'
+      +'.brand{font-size:12px;color:#8F7230;font-weight:700;letter-spacing:.08em;}'
+      +'h1{font-size:21px;color:#1E3A66;margin:4px 0 0;}'
+      +'.meta{font-size:11px;color:#5A6981;text-align:right;line-height:1.8;}'
+      +'.sumbox{display:flex;gap:10px;margin:16px 0;}'
+      +'.sc{flex:1;border:1px solid #DCE3ED;border-radius:8px;padding:10px 14px;}'
+      +'.sc .l{font-size:10px;color:#5A6981;}.sc .v{font-size:20px;font-weight:700;color:#1E3A66;}'
+      +'.sc.g{background:#F0F8F3;border-color:#C9E2D2;}.sc.g .l,.sc.g .v{color:#1E6B45;}'
+      +'table{border-collapse:collapse;width:100%;font-size:10.5px;margin-top:6px;}'
+      +'th,td{border:1px solid #D8DFE9;padding:5px 6px;}th{background:#EEF2F8;color:#1E3A66;font-size:10px;}'
+      +'td.num{text-align:right;}td.c{text-align:center;}'
+      +'.leg{font-size:9.5px;color:#5A6981;margin-top:4px;}'
+      +'.note{margin-top:12px;font-size:11px;background:#F8F9FC;border:1px solid #E2E7EF;border-radius:8px;padding:10px 12px;}'
+      +'.warn{margin-top:14px;font-size:9.5px;color:#5A6981;line-height:1.8;border-top:1px solid #E2E7EF;padding-top:8px;}'
+      +'.ft{margin-top:10px;font-size:10px;color:#94A2B6;text-align:center;}'
+      +'@media print{body{padding:14px 18px;}}'
+      +'</style></head><body>'
+      +'<div class="hd"><div><div class="brand">Tsugu Ai -継-　キャッシュベース・コンサルティング</div><h1>保険最適化診断書</h1></div>'
+      +'<div class="meta">'+comp+' 御中<br>診断日：'+ds+'<br>担当：'+who+'</div></div>'
+      +'<div class="sumbox">'
+      +'<div class="sc"><div class="l">現状 年間保険料</div><div class="v">'+c.cur.toLocaleString()+'<span style="font-size:11px;"> 万円</span></div></div>'
+      +'<div class="sc"><div class="l">最適化後 年間保険料</div><div class="v">'+c.opt.toLocaleString()+'<span style="font-size:11px;"> 万円</span></div></div>'
+      +'<div class="sc g"><div class="l">年間キャッシュ改善額</div><div class="v">'+c.improve.toLocaleString()+'<span style="font-size:11px;"> 万円（10年で'+(c.improve*10).toLocaleString()+'万円）</span></div></div>'
+      +'</div>'
+      +'<table><tr><th style="min-width:110px;">商品名</th><th>保険会社</th><th>年間保険料<br>(万円)</th><th>解約返戻金<br>(万円)</th><th style="min-width:90px;">加入目的</th><th>目的</th><th>手段</th><th>コスト</th><th>出口</th><th>処方</th><th>最適化後<br>年間(万円)</th></tr>'+rows+'</table>'
+      +'<div class="leg">判定：<span style="color:#2C9E5F;">●</span> 問題なし　<span style="color:#C99A2E;">●</span> 要確認　<span style="color:#C0392B;">●</span> 要見直し　／　4軸＝目的（何のリスクか明確か）・手段（商品が目的に最適か）・コスト（CF負担が妥当か）・出口（終わり方が決まっているか）</div>'
+      +(IOD.note?'<div class="note"><b>所見：</b>'+esc(IOD.note)+'</div>':'')
+      +'<div class="warn">【ご留意事項】本診断書は財務分析による現状把握と検討の参考資料であり、保険募集（特定の保険契約の締結の代理・媒介）や特定商品の解約・乗換の勧誘を目的とするものではありません。実行の前に必ず、①被保険者の健康状態（再加入可否）、②解約返戻金に係る税務影響（顧問税理士とご確認ください）、③各契約の不利益事項をご確認ください。ご意向の把握と説明の記録は担当パートナーが保管します。実行のご判断は、本書面のお受け取りから一週間程度お考えのうえ行われることをお勧めします。</div>'
+      +'<div class="ft">株式会社福來　Tsugu Ai -継-　｜　本書の無断転載を禁じます</div>'
+      +'<script>window.onload=function(){setTimeout(function(){window.print();},300);}<\/script>'
+      +'</body></html>';
+    var w=window.open('','_blank');
+    if(!w){ alert('ポップアップがブロックされました。ブラウザの設定でこのサイトのポップアップを許可してください。'); return; }
+    w.document.write(html); w.document.close();
+  }
   function insPanelHtmlClient(custId){
-    return '<div class="ph" style="font-size:13px;margin-top:16px;">パートナーAIツール：保険必要保障額の試算</div>'
-      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">この顧客向けに試算し、結果を顧客に共有（保存）できます（単位：万円）。</div>'
+    return '<div class="ph" style="font-size:13px;margin-top:16px;">保険必要保障額シミュレーター</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">この顧客向けにシミュレーションし、結果を顧客に共有（保存）できます（単位：万円）。※一般的な計算による情報提供であり、特定の保険商品の勧誘（保険募集）を行うものではありません。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
         +'<div><label class="fl">法人実効税率(%)</label><select id="ci-tax-preset" class="inp2" onchange="if(this.value){document.getElementById(\'ci-tax-rate\').value=this.value;}">'+taxPresetOptions()+'</select></div>'
         +'<div><label class="fl">実効税率(%)</label><input id="ci-tax-rate" type="number" class="inp2" value="34"></div>'
@@ -5119,7 +5288,7 @@
   // ===== カルテ内ダッシュボードナビ（左サイド＆ヘッダーのハンバーガーで共用） =====
   var CL_NAV=[
     ['やり取り',   [['cs-company','🏢','会社情報'],['cs-msg','💬','メッセージ・提案']]],
-    ['財務・資金', [['cs-fin','📊','月次財務メモ'],['cs-pay','📅','支払予定'],['cs-cash','💰','資金繰り診断'],['cs-fund','🏦','資金調達ロードマップ'],['cs-market','💹','Tsugu投資・融資・M&A'],['cs-act','✅','課題・アクション']]],
+    ['財務・資金', [['cs-fin','📊','月次財務メモ'],['cs-pay','📅','支払予定'],['cs-cash','💰','資金繰りシミュレーター'],['cs-fund','🏦','資金調達ロードマップ'],['cs-market','💹','Tsugu投資・融資・M&A'],['cs-act','✅','課題・アクション']]],
     ['AI・ツール', [['cs-ai','🤖','AI自動化診断'],['cs-loan','💴','融資ナビ'],['cs-meet','📝','議事録'],['cs-mna','🤝','M&A提案'],['cs-bp','📄','事業計画書']]],
     ['共有',       [['cs-shared','📥','顧客からの共有']]]
   ];
@@ -5152,6 +5321,7 @@
   function clMenuGo(id){ clMenuClose(); clNav(id); }
   async function viewClient(custId, email, company){
     CURRENT_CLIENT={ id:custId, email:email, company:company||'' };
+    setTimeout(function(){ loadInsDiagList(custId); }, 300);
     var box=$('cl-detail'); if(!box)return;
     var titleTxt=(company && company.length)?(company+'（'+email+'）'):email;
     var mt=$('cl-modal-title'); if(mt) mt.textContent=titleTxt;
@@ -5188,7 +5358,7 @@
       +'</div>'
       +'<div class="ph" style="font-size:13px;margin-top:18px;">提案メモ（顧客のダッシュボードに表示）</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">'
-        +'<div style="flex:1;min-width:200px;"><label class="fl">提案・メモを書く</label><textarea id="cnote-body" rows="2" class="inp2" style="width:100%;" placeholder="例：養老保険の福利厚生プランをご提案します。次回、必要保障額の試算をお持ちします。"></textarea></div>'
+        +'<div style="flex:1;min-width:200px;"><label class="fl">提案・メモを書く</label><textarea id="cnote-body" rows="2" class="inp2" style="width:100%;" placeholder="例：養老保険の福利厚生プランをご提案します。次回、必要保障額のシミュレーション結果をお持ちします。"></textarea></div>'
         +'<button class="btn2" onclick="addClientNote(\''+custId+'\')">送信</button>'
       +'</div>'
       +'<div id="cl-notes" style="margin-top:10px;">読み込み中...</div>'
@@ -5223,7 +5393,7 @@
       +'</div>'
       +'<div id="cpay-msg" style="font-size:12px;margin-top:6px;"></div>'
       +'<div id="cl-pay" style="margin-top:8px;">読み込み中...</div>'
-      +'<div class="ph" id="cs-cash" style="font-size:13px;margin-top:18px;">資金繰り診断（実行すると顧客のダッシュボードに反映）</div>'
+      +'<div class="ph" id="cs-cash" style="font-size:13px;margin-top:18px;">資金繰りシミュレーター（実行すると顧客のダッシュボードに反映）</div>'
       +'<div style="margin:4px 0 8px;"><button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;" onclick="cfPrefillFor(\''+custId+'\')">↺ 月次財務メモから取り込む</button></div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
         +'<div><label class="fl">月商（万円）</label><input id="cf-sales" type="number" class="inp2" placeholder="例 2000"></div>'
@@ -5328,7 +5498,7 @@
       +'</div>'
       +'<div id="ma2-result" style="margin-top:12px;"></div>'
       +'<div class="ph" id="cs-bp" style="font-size:13px;margin-top:18px;">事業計画書の作成（AI）</div>'
-      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">登録済みの財務データと資金繰り診断を自動で読み込み、金融機関提出用ドラフトを作成します（印刷／PDF可）。</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">登録済みの財務データと資金繰りシミュレーターを自動で読み込み、金融機関提出用ドラフトを作成します（印刷／PDF可）。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
         +'<div><label class="fl">目的</label><select id="bp-goal" class="inp2"><option>銀行融資の申込</option><option>公庫融資の申込</option><option>補助金申請の事業計画</option><option>経営改善計画</option><option>社内計画・中期経営計画</option></select></div>'
         +'<div><label class="fl">調達希望額（万円・任意）</label><input id="bp-amount" type="number" class="inp2" placeholder="例 1000"></div>'
@@ -5336,6 +5506,7 @@
         +'<button class="btn2" id="bp-run" onclick="runBizplan(\''+custId+'\')">計画書を作成</button>'
       +'</div>'
       +'<div id="bp-msg" style="font-size:12px;margin-top:6px;"></div>'
+      + insOptimPanelHtml(custId)
       + insPanelHtmlClient(custId)
     +'</div>';
     // ---- タブ4：顧客からの共有 ----
@@ -5714,7 +5885,7 @@
     return h+'</div>';
   }
 
-  // ---- 資金繰り診断・資金調達ロードマップ ----
+  // ---- 資金繰りシミュレーター・資金調達ロードマップ ----
   function cfClamp(x){ return Math.max(0,Math.min(100,x)); }
   function cfPrefillFor(custId){
     sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false}).limit(1).then(function(res){
