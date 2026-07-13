@@ -111,6 +111,8 @@
   .cl-ni:hover{background:rgba(255,255,255,.07);color:#fff;}
   .cl-ni.on{background:rgba(255,255,255,.1);color:#fff;font-weight:600;box-shadow:inset 2px 0 0 var(--gold);}
   .cl-ni .ci{font-size:14px;flex-shrink:0;width:18px;text-align:center;}
+  .clnb{margin-left:auto;background:#D2544A;color:#fff;border-radius:99px;font-size:10px;font-weight:700;padding:1px 6px;min-width:16px;text-align:center;flex-shrink:0;}
+  .clmenu-i .clnb{margin-left:auto;}
   .cl-main{flex:1;min-width:0;}
   .csec{display:none;}
   .csec.on{display:block;animation:mpop .14s ease;}
@@ -618,7 +620,7 @@
   function navItemsHtml(items, drawer){
     var h='';
     items.forEach(function(it,i){
-      var badge=(it[0]==='sec-chat'||it[0]==='sec-clients')?'<span id="nav-unread'+(drawer?'-d':'')+'" class="nbadge hidden">0</span>':'';
+      var badge=(it[0]==='sec-chat')?'<span id="nav-unread'+(drawer?'-d':'')+'" class="nbadge hidden">0</span>':'';
       h+='<div class="ni'+(i===0?' active':'')+'" data-sec="'+it[0]+'" onclick="navTo(\''+it[0]+'\')">'+it[1]+badge+'</div>';
     });
     return h;
@@ -687,7 +689,7 @@
   }
   function niHtml(id,label,drawer){
     var ic=NAV_ICON[id]||'•';
-    var badge=(id==='sec-chat'||id==='sec-clients')?'<span id="nav-unread'+(drawer?'-d':'')+'" class="nbadge hidden">0</span>':'';
+    var badge=(id==='sec-chat')?'<span id="nav-unread'+(drawer?'-d':'')+'" class="nbadge hidden">0</span>':'';
     return '<div class="ni" data-sec="'+id+'" onclick="navTo(\''+id+'\')"><span class="ni-ic">'+ic+'</span><span class="ni-tx">'+esc(label)+'</span>'+badge+'</div>';
   }
   function buildNav(r){
@@ -1845,26 +1847,26 @@
           + stepperHtml()
         +'</div>'
         +'<div class="panel" id="sec-sozoku"><div class="ph">相続・贈与・事業承継シミュレーター</div>'
-          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:14px;line-height:1.7;">目的に合わせて4つのフォームをご利用ください。結果は印刷／PDFで顧客への提示・専門家への引き継ぎ資料になります。</div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:14px;line-height:1.7;">目的に合わせて4つのシミュレーターをご利用ください。結果は印刷／PDFで顧客への提示・専門家への引き継ぎ資料になります。</div>'
           +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
-            +'<div style="border:1px solid #E5EEF8;border-radius:11px;padding:13px 15px;background:#fff;">'
-              +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;">🧮 相続・贈与フォーム</div>'
-              +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.65;">法定相続分・保険非課税枠・暦年贈与加算（2024年改正対応）・相続時精算課税・配偶者軽減・小規模宅地・遺留分・二次相続までを1画面で試算。案件保存・JSON入出力対応。</div>'
-              +'<button class="btn2" style="width:100%;" onclick="openSozoku()">相続・贈与フォームを開く ↗</button>'
+            +'<div style="border:1px solid #E5EEF8;border-radius:11px;padding:13px 15px;background:#fff;display:flex;flex-direction:column;">'
+              +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;">🧮 相続・贈与シミュレーター</div>'
+              +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.65;flex:1;">法定相続分・保険非課税枠・暦年贈与加算（2024年改正対応）・相続時精算課税・配偶者軽減・小規模宅地・遺留分・二次相続までを1画面で試算。案件保存・JSON入出力対応。</div>'
+              +'<button class="btn2" style="width:100%;" onclick="openSozoku()">相続・贈与シミュレーターを開く ↗</button>'
             +'</div>'
-            +'<div style="border:1px solid #E5EEF8;border-radius:11px;padding:13px 15px;background:#fff;">'
-              +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;">🧭 事業承継・株対策フォーム</div>'
-              +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.65;">M&Aを含む4つの承継の道、株対策（種類株式・金庫株・事業承継税制）、遺留分の概算、少数株主・"変な主張"への対応までを横断で整理し、専門家への引き継ぎサマリーを作成。</div>'
-              +'<button class="btn2" style="width:100%;background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;" onclick="openKnowledgePage(\'tsugu-succession-form.html\')">事業承継・株対策フォームを開く ↗</button>'
+            +'<div style="border:1px solid #E5EEF8;border-radius:11px;padding:13px 15px;background:#fff;display:flex;flex-direction:column;">'
+              +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;">🧭 事業承継・株対策シミュレーター</div>'
+              +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.65;flex:1;">M&Aを含む4つの承継の道、株対策（種類株式・金庫株・事業承継税制）、遺留分の概算、少数株主・"変な主張"への対応までを横断で整理し、専門家への引き継ぎサマリーを作成。</div>'
+              +'<button class="btn2" style="width:100%;background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;" onclick="openKnowledgePage(\'tsugu-succession-form.html\')">事業承継・株対策シミュレーターを開く ↗</button>'
             +'</div>'
-            +'<div style="border:1px solid #E5EEF8;border-radius:11px;padding:13px 15px;background:#fff;">'
+            +'<div style="border:1px solid #E5EEF8;border-radius:11px;padding:13px 15px;background:#fff;display:flex;flex-direction:column;">'
               +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;">🏥 医療法人 持分シミュレーター</div>'
-              +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.65;">出資持分の評価・払戻請求権を出資者ごとに概算し、相続税・払戻リスクを診断。認定医療法人制度（持分なし移行・認定期限2029/12/31）や退職金・保険による対策設計へつなげます。</div>'
+              +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.65;flex:1;">出資持分の評価・払戻請求権を出資者ごとに概算し、相続税・払戻リスクを診断。認定医療法人制度（持分なし移行・認定期限2029/12/31）や退職金・保険による対策設計へつなげます。</div>'
               +'<button class="btn2" style="width:100%;" onclick="openKnowledgePage(\'tsugu-medical-equity.html\')">持分シミュレーターを開く ↗</button>'
             +'</div>'
-            +'<div style="border:1px solid #E5EEF8;border-radius:11px;padding:13px 15px;background:#fff;">'
+            +'<div style="border:1px solid #E5EEF8;border-radius:11px;padding:13px 15px;background:#fff;display:flex;flex-direction:column;">'
               +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;">💼 役員退職金シミュレーター</div>'
-              +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.65;">功績倍率法による適正額の目安、退職所得課税（控除・2分の1・分離課税）を通した手取り額、法人側の損金効果までを一度に試算。保険による原資準備・持分対策との連動設計に。</div>'
+              +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.65;flex:1;">功績倍率法による適正額の目安、退職所得課税（控除・2分の1・分離課税）を通した手取り額、法人側の損金効果までを一度に試算。保険による原資準備・持分対策との連動設計に。</div>'
               +'<button class="btn2" style="width:100%;background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;" onclick="openKnowledgePage(\'tsugu-retirement.html\')">退職金シミュレーターを開く ↗</button>'
             +'</div>'
           +'</div>'
@@ -5086,6 +5088,7 @@
     if(UNREAD.perClient && UNREAD.perClient[custId]){ UNREAD.total=Math.max(0,(UNREAD.total||0)-UNREAD.perClient[custId]); UNREAD.perClient[custId]=0; if(CL_CACHE.unread) CL_CACHE.unread[custId]=0; }
     applyNotifBadges();
     renderTodos();
+    if(typeof applyClKarteBadges==='function') applyClKarteBadges(custId);
   }
   async function sendClientChat(custId){
     var inp=$('cchat-input'); if(!inp)return; var b=inp.value.trim(); if(!b)return;
@@ -5528,7 +5531,7 @@
   }
 
   function clNi(id, icon, label){
-    return '<div class="cl-ni" id="ni-'+id+'" onclick="clNav(\''+id+'\',this)"><span class="ci">'+icon+'</span><span>'+label+'</span></div>';
+    return '<div class="cl-ni" id="ni-'+id+'" onclick="clNav(\''+id+'\',this)"><span class="ci">'+icon+'</span><span>'+label+'</span><span class="clnb hidden" id="clnb-'+id+'">0</span></div>';
   }
   function clNav(id, el){
     var t=$(id); if(!t)return;
@@ -5566,6 +5569,71 @@
     ['AI・ツール', [['cs-ai','🤖','AI自動化診断'],['cs-loan','💴','融資ナビ'],['cs-meet','📝','議事録'],['cs-mna','🤝','M&A提案'],['cs-bp','📄','事業計画書']]],
     ['共有',       [['cs-shared','📥','顧客からの共有']]]
   ];
+  // カルテ内「やること」件数（左タブに表示）— ダッシュボードの要対応と同じ判定基準
+  function clKarteTodoCounts(custId){
+    var now=new Date(), c={ 'cs-msg':0,'cs-fund':0,'cs-pay':0,'cs-act':0,'cs-mna':0,'cs-company':0 };
+    try{
+      // メッセージ：未読＋返信滞留（48時間以上）
+      var un=(CL_CACHE.unread||{})[custId]||0;
+      c['cs-msg']+=un;
+      var lm=(CL_CACHE.lastMsg||{})[custId];
+      if(lm && lm.sender_role==='customer' && !un){
+        if((now - new Date(lm.created_at))/3600000 >= 48) c['cs-msg']+=1;
+      }
+      // 調達：期日超過＋14日以内（進行中のみ）
+      (CL_CACHE.funding||[]).forEach(function(f){
+        if(f.customer_id!==custId || !f.target_date) return;
+        if(f.status==='実行済'||f.status==='見送り') return;
+        var d=daysBetween(f.target_date, now); if(d===null) return;
+        if(d<=14) c['cs-fund']+=1;
+      });
+      // 支払予定：7日以内
+      (CL_CACHE.pays||[]).forEach(function(p){
+        if(p.customer_id!==custId || !p.due_date) return;
+        var d=daysBetween(p.due_date, now); if(d===null) return;
+        if(d>=0 && d<=7) c['cs-pay']+=1;
+      });
+      // 経営課題PDCA：期日超過・7日以内・30日更新なし
+      (CL_CACHE.pdca||[]).forEach(function(d0){
+        if(d0.customer_id!==custId) return;
+        var hit=false;
+        if(d0.due_date){ var dd=daysBetween(d0.due_date, now); if(dd!==null && dd<=7) hit=true; }
+        if(!hit && d0.updated_at){ if(Math.floor((now - new Date(d0.updated_at))/(24*3600*1000))>=30) hit=true; }
+        if(hit) c['cs-act']+=1;
+      });
+      // M&A：PMI未回収/要注意・目標日30日以内・30日更新なし
+      var pu=null; (CL_CACHE.maPulses||[]).forEach(function(p){ if(p.customer_id===custId) pu=p; });
+      (CL_CACHE.maDeals||[]).forEach(function(d0){
+        if(d0.customer_id!==custId) return;
+        var hit=false;
+        if(d0.stage===7){ if((!pu && now.getDate()>=7) || (pu && pu.score>=3)) hit=true; }
+        if(!hit && d0.stage<8 && d0.target_date){ var dd=daysBetween(d0.target_date, now); if(dd!==null && dd>=0 && dd<=30) hit=true; }
+        if(!hit && d0.stage>=1 && d0.stage<8 && d0.updated_at){ if(Math.floor((now - new Date(d0.updated_at))/(24*3600*1000))>=30) hit=true; }
+        if(hit) c['cs-mna']+=1;
+      });
+      // 次回面談（3日以内・当日・超過）→ 会社情報（ヘッダーの次回面談表示）に紐づけ
+      var m=(CL_CACHE.nextMeet||{})[custId];
+      if(m && m.meet_at){
+        var md=new Date(m.meet_at);
+        var d0m=new Date(md.getFullYear(),md.getMonth(),md.getDate());
+        var n0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+        var days=Math.round((d0m-n0)/(24*3600*1000));
+        if(days<=3) c['cs-company']+=1;
+      }
+    }catch(e){}
+    return c;
+  }
+  function applyClKarteBadges(custId){
+    var c=clKarteTodoCounts(custId);
+    Object.keys(c).forEach(function(id){
+      var n=c[id]||0;
+      ['clnb-','clmb-'].forEach(function(pfx){
+        var e=$(pfx+id); if(!e) return;
+        e.textContent=n>99?'99+':n;
+        e.classList.toggle('hidden', !n);
+      });
+    });
+  }
   function clSideHtml(){
     var h='<div class="cl-side" id="cl-side">';
     CL_NAV.forEach(function(g){ h+='<div class="sb-sec">'+g[0]+'</div>'; g[1].forEach(function(it){ h+=clNi(it[0],it[1],it[2]); }); });
@@ -5575,7 +5643,7 @@
     var h='';
     CL_NAV.forEach(function(g){
       h+='<div class="clmenu-sec">'+g[0]+'</div>';
-      g[1].forEach(function(it){ h+='<div class="clmenu-i" onclick="clMenuGo(\''+it[0]+'\')"><span class="ci">'+it[1]+'</span><span>'+it[2]+'</span></div>'; });
+      g[1].forEach(function(it){ h+='<div class="clmenu-i" onclick="clMenuGo(\''+it[0]+'\')"><span class="ci">'+it[1]+'</span><span>'+it[2]+'</span><span class="clnb hidden" id="clmb-'+it[0]+'">0</span></div>'; });
     });
     return h;
   }
@@ -5584,6 +5652,7 @@
     var d=$('cl-menu'); if(!d)return;
     if(d.classList.contains('hidden')){
       d.innerHTML=clMenuHtml(); d.classList.remove('hidden');
+      if(CURRENT_CLIENT) applyClKarteBadges(CURRENT_CLIENT.id);
       setTimeout(function(){ document.addEventListener('click', clMenuOutside); }, 0);
     } else { clMenuClose(); }
   }
@@ -5801,6 +5870,7 @@
     +'</div>';
     box.innerHTML=head+'<div class="cl-shell">'+side+'<div class="cl-main" id="cl-main">'+tabMsg+tabFin+tabTools+tabShared+'</div></div>';
     clSpyInit();
+    applyClKarteBadges(custId);
     var f=await sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false});
     var fb=$('cl-fin'); if(fb) fb.innerHTML = f.error?('<div style="color:#A9403D;font-size:12px;">'+esc(f.error.message)+'</div>'):finTable(f.data,true,'cl');
     var cy=$('cfin-ym'); if(cy&&!cy.value) cy.value=new Date().toISOString().slice(0,7);
