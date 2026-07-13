@@ -1893,18 +1893,26 @@
             +'<textarea id="sup-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="運営への質問を入力（Enterで送信／Shift+Enterで改行）"></textarea>'
             +'<button class="btn2" id="sup-send" onclick="supportSend()">送信</button>'
           +'</div>'
-          +'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">'
-            +'<button class="ghost" style="font-size:11px;padding:4px 9px;border:1px solid var(--line);border-radius:7px;" onclick="supEscalate()" title="直前の質問を問い合わせフォームに転記します">📮 この質問を運営に送る</button>'
+          +'<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">'
+            +'<button class="btn2" style="font-size:12px;background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;" onclick="supEscalate()" title="直前の質問を問い合わせフォームに転記します">📮 AIで解決しない → この質問を運営に送る</button>'
+            +'<span style="flex:1;"></span>'
             +'<button class="ghost" style="font-size:11px;padding:4px 9px;border:1px solid var(--line);border-radius:7px;" onclick="supClearLog()">🗑 履歴消去</button>'
           +'</div>'
-          +'<div style="border-top:1px solid #EDF1F6;margin-top:14px;padding-top:14px;">'
-            +'<div class="ph" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;">📮 運営への問い合わせ<button class="ghost" style="font-size:11px;padding:4px 9px;border:1px solid var(--line);border-radius:7px;" onclick="supToggleInqForm()">＋ 新規問い合わせ</button></div>'
-            +'<div id="sup-inq-form" class="hidden" style="background:var(--soft);border-radius:10px;padding:12px;margin-top:8px;">'
+          +'<div style="border:1.5px solid #C9D6EA;border-radius:12px;padding:15px 16px;margin-top:16px;background:#F5F9FE;">'
+            +'<div style="font-size:14px;font-weight:700;color:#1E3A66;">📮 運営への問い合わせ（担当者が回答します）</div>'
+            +'<div style="font-size:12px;color:#5A6981;margin:5px 0 10px;line-height:1.7;">報酬・審査・規程など運営の確認が必要な内容や、AIで解決しなかった質問は、こちらから直接お送りください。回答はこのページの下の履歴に表示されます。</div>'
+            +'<button class="btn2" id="sup-open-btn" style="width:100%;font-size:14px;padding:12px;" onclick="supToggleInqForm(true)">✉ 問い合わせフォームを開く</button>'
+            +'<div id="sup-inq-form" class="hidden" style="background:#fff;border:1px solid #DDE6F2;border-radius:10px;padding:14px;margin-top:10px;">'
               +'<div><label class="fl">件名</label><input id="sup-inq-subject" class="inp2" style="width:100%;" placeholder="例：M&A成約時の報酬配分について"></div>'
-              +'<div style="margin-top:8px;"><label class="fl">内容</label><textarea id="sup-inq-body" class="inp2" rows="3" style="width:100%;" placeholder="質問・相談内容を入力"></textarea></div>'
-              +'<div style="margin-top:10px;"><button class="btn2" onclick="supSubmitInquiry()">送信する</button><span id="sup-inq-msg" style="font-size:12px;margin-left:8px;"></span></div>'
+              +'<div style="margin-top:8px;"><label class="fl">内容</label><textarea id="sup-inq-body" class="inp2" rows="4" style="width:100%;" placeholder="質問・相談内容を入力（できるだけ具体的に書いていただくと回答が早くなります）"></textarea></div>'
+              +'<div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap;">'
+                +'<button class="btn2" style="font-size:13px;padding:10px 22px;" onclick="supSubmitInquiry()">📮 運営に送信する</button>'
+                +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:8px 14px;" onclick="supToggleInqForm(false)">キャンセル</button>'
+                +'<span id="sup-inq-msg" style="font-size:12px;"></span>'
+              +'</div>'
             +'</div>'
-            +'<div id="sup-inq-list" style="margin-top:10px;">読み込み中...</div>'
+            +'<div class="ph" style="font-size:13px;margin-top:14px;">問い合わせ履歴と運営からの回答</div>'
+            +'<div id="sup-inq-list" style="margin-top:6px;">読み込み中...</div>'
           +'</div>'
         +'</div>';
     } else {
@@ -6865,13 +6873,25 @@
     }catch(e){ if(SUP_MSGS.length && SUP_MSGS[SUP_MSGS.length-1].content==='（考え中…）') SUP_MSGS.pop(); SUP_MSGS.push({role:'assistant',content:'エラー：'+String((e&&e.message)||e),ts:Date.now()}); }
     renderSupLog(); supSave(); if(btn)btn.disabled=false;
   }
-  function supToggleInqForm(){ var f=$('sup-inq-form'); if(f) f.classList.toggle('hidden'); }
+  function supToggleInqForm(open){
+    var f=$('sup-inq-form'), b=$('sup-open-btn');
+    if(!f) return;
+    var show = (open===true) ? true : (open===false ? false : f.classList.contains('hidden'));
+    f.classList.toggle('hidden', !show);
+    if(b) b.classList.toggle('hidden', show);
+    if(show){
+      var s=$('sup-inq-subject'); if(s) s.focus();
+      if(f.scrollIntoView) f.scrollIntoView({behavior:'smooth',block:'center'});
+    }
+  }
   function supEscalate(){
     var last=null;
     for(var i=SUP_MSGS.length-1;i>=0;i--){ if(SUP_MSGS[i].role==='user'){ last=SUP_MSGS[i].content; break; } }
-    var f=$('sup-inq-form'); if(f) f.classList.remove('hidden');
-    if(last){ var b=$('sup-inq-body'); if(b) b.value=last; var s=$('sup-inq-subject'); if(s&&!s.value) s.value=last.slice(0,30); }
-    var el=$('sup-inq-form'); if(el&&el.scrollIntoView) el.scrollIntoView({behavior:'smooth',block:'center'});
+    if(!last){ alert('まずは上のチャットで質問を送ってください。その質問をそのまま運営への問い合わせに転記できます。'); return; }
+    supToggleInqForm(true);
+    var b=$('sup-inq-body'); if(b) b.value=last;
+    var s=$('sup-inq-subject'); if(s&&!s.value) s.value=last.slice(0,30);
+    var m=$('sup-inq-msg'); if(m){ m.style.color='#5A6981'; m.textContent='チャットの質問を転記しました。内容を確認して「運営に送信する」を押してください。'; }
   }
   async function supSubmitInquiry(){
     var msg=$('sup-inq-msg');
@@ -6880,8 +6900,9 @@
     if(!subject&&!body){ if(msg){msg.style.color='#A9403D';msg.textContent='件名または内容を入力してください。';} return; }
     var res=await sb.from('support_inquiries').insert({ partner_id:ME, subject:(subject||'（件名なし）'), body:(body||null), status:'open' });
     if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='送信できませんでした：'+res.error.message+'（Supabaseで「Phase61」のSQLを実行してください）';} return; }
-    if(msg){msg.style.color='#3E7E4F';msg.textContent='運営に送信しました。回答はこの下の履歴に表示されます。';}
     var s=$('sup-inq-subject'); if(s)s.value=''; var b=$('sup-inq-body'); if(b)b.value='';
+    supToggleInqForm(false);
+    alert('運営に送信しました。担当者が確認のうえ、回答はこのページの「問い合わせ履歴」に表示されます。');
     loadMyInquiries();
   }
   function inqStTag(st){
