@@ -912,8 +912,25 @@
           +'<button class="sbtn" data-f="unassigned" onclick="setAdmCustFilter(\'unassigned\',this)">担当未割当</button>'
         +'</div>'
         +'<div id="adm-cust" style="margin-top:6px;">読み込み中...</div></div>'
-      +'<div class="panel" id="sec-market"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">💹 Tsugu投資・融資・M&A（全社）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketBroker()">↺ 更新</span></div>'
-        +'<div style="font-size:12px;color:#94A2B6;margin:0 0 8px;">全顧客が掲載した資金調達・投資の案件とマッチング状況を一覧管理できます。</div>'
+      +'<div class="panel" id="sec-market"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">💹 Tsugu投資・融資・M&A（全社）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketApps();loadMarketBroker()">↺ 更新</span></div>'
+        +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">案件の掲載・ステータス変更は<b>運営のみ</b>が行います。パートナーからの掲載申請を審査し、承認すると即時掲載されます。</div>'
+        +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:6px;">📥 掲載申請の審査<span id="mkapp-count" class="nbadge hidden">0</span></div>'
+        +'<div id="mkt-apps" style="margin:4px 0 14px;">読み込み中...</div>'
+        +'<details style="margin:0 0 14px;border:1px solid var(--softline);border-radius:10px;padding:8px 12px;"><summary style="font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;">➕ 運営による直接掲載（申請を経ずに登録）</summary>'
+          +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px;">'
+            +'<div style="min-width:180px;"><label class="fl">掲載主（顧客）</label><select id="amk-cust" class="inp2" style="max-width:220px;"><option value="">顧客を選択…</option></select></div>'
+            +'<div><label class="fl">立場</label><select id="amk-side" class="inp2"><option value="raise">集めたい／譲渡（売り手）</option><option value="provide">出したい／譲受（買い手）</option></select></div>'
+            +'<div><label class="fl">種別</label><select id="amk-kind" class="inp2"><option value="loan">融資</option><option value="equity">出資</option><option value="mna">M&A</option></select></div>'
+            +'<div><label class="fl">金額（万円）</label><input id="amk-amount" type="number" class="inp2" style="width:110px;"></div>'
+            +'<div style="flex:1;min-width:140px;"><label class="fl">業種（任意）</label><input id="amk-industry" class="inp2" style="width:100%;"></div>'
+          +'</div>'
+          +'<div style="margin-top:8px;"><label class="fl">タイトル</label><input id="amk-title" class="inp2" style="width:100%;"></div>'
+          +'<div style="margin-top:8px;"><label class="fl">希望条件（任意）</label><input id="amk-terms" class="inp2" style="width:100%;"></div>'
+          +'<div style="margin-top:8px;"><label class="fl">詳細・補足（任意）</label><textarea id="amk-detail" class="inp2" rows="2" style="width:100%;"></textarea></div>'
+          +'<label style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;color:#5A6981;cursor:pointer;"><input type="checkbox" id="amk-anon" checked>会社名を伏せて掲載する（他の顧客には匿名表示）</label>'
+          +'<div style="margin-top:8px;"><button class="btn2" onclick="admPostListing()">掲載する</button><span id="amk-msg" style="font-size:12px;margin-left:8px;"></span></div>'
+        +'</details>'
+        +'<div class="ph" style="font-size:13px;">掲載案件の一覧・ステータス管理</div>'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;" id="mkb-filterbar">'
           +'<button class="sbtn on" data-f="open" onclick="setMkbFilter(\'open\',this)">公開中</button>'
           +'<button class="sbtn" data-f="all" onclick="setMkbFilter(\'all\',this)">すべて</button>'
@@ -925,7 +942,8 @@
           +'<button class="sbtn" id="bl-tb-partners" onclick="blShowTab(\'partners\')">🧑‍💼 パートナー別</button>'
           +'<button class="sbtn" id="bl-tb-customers" onclick="blShowTab(\'customers\')">🏢 顧客別</button>'
           +'<button class="sbtn" id="bl-tb-links" onclick="blShowTab(\'links\')">🔗 決済リンク</button>'
-          +'<button class="sbtn" id="bl-tb-payments" onclick="blShowTab(\'payments\')">💰 入金履歴</button>'
+          +'<button class="sbtn" id="bl-tb-payments" onclick="blShowTab(\'payments\')">💰 売上・入金履歴</button>'
+          +'<button class="sbtn" id="bl-tb-revenue" onclick="blShowTab(\'revenue\')">🎯 売上目標・実績</button>'
         +'</div>'
         // ---- タブ1：概要（MRRサマリー・料率設定・M&Aフィー） ----
         +'<div id="bl-tab-overview">'
@@ -999,15 +1017,51 @@
         +'</div>'
         +'<div id="bl-links-msg" style="font-size:11.5px;margin-top:6px;min-height:14px;"></div>'
         +'</div>'
-        // ---- タブ5：入金履歴 ----
+        // ---- タブ5：売上・入金履歴（Stripe自動＋手動記録） ----
         +'<div id="bl-tab-payments" class="hidden">'
-        +'<div class="ph" style="font-size:13px;margin-top:2px;display:flex;align-items:center;justify-content:space-between;">💰 入金履歴（Stripe Webhook 自動記録）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmPayEvents()">↺ 更新</span></div>'
+        +'<div class="ph" style="font-size:13px;margin-top:2px;display:flex;align-items:center;justify-content:space-between;">💰 売上・入金履歴（Stripe自動＋手動記録）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmPayEvents()">↺ 更新</span></div>'
+        +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">Stripe決済はWebhookで自動記録されます（区分は「顧問料・会費」に計上）。M&A成約フィー・終活/相続・保険手数料など、Stripeを通らない入金は下の「手動記録」から追加してください。両方を合算して「売上目標・実績」タブに反映されます。</div>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">'
           +'<div><label class="fl">年月</label><select id="bl-pay-month" class="inp2" onchange="loadAdmPayEvents()"></select></div>'
           +'<div><label class="fl">対象</label><select id="bl-pay-aud" class="inp2" onchange="loadAdmPayEvents()"><option value="all">すべて</option><option value="customer">顧客</option><option value="consultant">パートナー</option></select></div>'
+          +'<div><label class="fl">記録種別</label><select id="bl-pay-src" class="inp2" onchange="loadAdmPayEvents()"><option value="all">すべて</option><option value="stripe">Stripe自動</option><option value="manual">手動記録</option></select></div>'
+          +'<div><label class="fl">区分</label><select id="bl-pay-cat" class="inp2" onchange="loadAdmPayEvents()"><option value="all">すべて</option><option value="advisory">顧問料・会費</option><option value="ma">M&A成約</option><option value="shukatsu">終活・相続</option><option value="insurance">保険関連</option><option value="other">その他</option></select></div>'
         +'</div>'
         +'<div id="bl-pay-sum" style="margin-bottom:8px;"></div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;background:var(--soft);border-radius:10px;padding:10px 12px;margin-bottom:6px;">'
+          +'<div><label class="fl">入金日</label><input id="rv-date" type="date" class="inp2" style="width:140px;"></div>'
+          +'<div><label class="fl">区分</label><select id="rv-cat" class="inp2"><option value="ma">M&A成約フィー</option><option value="shukatsu">終活・相続</option><option value="insurance">保険関連</option><option value="advisory">顧問料・会費</option><option value="other">その他</option></select></div>'
+          +'<div><label class="fl">金額（円）</label><input id="rv-amt" type="number" class="inp2" style="width:130px;" placeholder="例 1500000"></div>'
+          +'<div style="min-width:170px;"><label class="fl">対象顧客（任意）</label><select id="rv-cust" class="inp2" style="max-width:200px;"><option value="">（顧客ひも付けなし）</option></select></div>'
+          +'<div style="flex:1;min-width:140px;"><label class="fl">相手先（任意）</label><input id="rv-party" class="inp2" style="width:100%;" placeholder="例：〇〇株式会社"></div>'
+          +'<div style="flex:1;min-width:160px;"><label class="fl">摘要（任意）</label><input id="rv-desc" class="inp2" style="width:100%;" placeholder="例：M&A成約フィー（レーマン）"></div>'
+          +'<button class="btn2" onclick="admAddRevenueEntry()">手動記録</button>'
+        +'</div>'
+        +'<div id="rv-msg" style="font-size:11.5px;margin-bottom:6px;min-height:14px;"></div>'
         +'<div id="bl-payevents" style="margin-top:4px;">読み込み中...</div>'
+        +'</div>'
+        // ---- タブ6：売上目標・実績 ----
+        +'<div id="bl-tab-revenue" class="hidden">'
+        +'<div class="ph" style="font-size:13px;margin-top:2px;display:flex;align-items:center;justify-content:space-between;">🎯 年間売上目標・実績<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmRevenue()">↺ 更新</span></div>'
+        +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">Stripe入金（顧問料・会費に計上）と手動記録（M&A成約・終活/相続・保険関連など）を合算した<b>実数</b>と、年間目標に対する達成状況を表示します。目標は年・区分ごとに保存されます。</div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;">'
+          +'<div><label class="fl">対象年</label><select id="rvt-year" class="inp2" onchange="loadAdmRevenue()"></select></div>'
+        +'</div>'
+        +'<div id="rvt-sum" style="margin-bottom:12px;">読み込み中...</div>'
+        +'<div style="border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
+          +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">年間目標の設定（円）</div>'
+          +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
+            +'<div><label class="fl">合計目標</label><input id="rvt-total" type="number" class="inp2" style="width:140px;" placeholder="例 30000000"></div>'
+            +'<div><label class="fl">顧問料・会費</label><input id="rvt-advisory" type="number" class="inp2" style="width:120px;"></div>'
+            +'<div><label class="fl">M&A成約</label><input id="rvt-ma" type="number" class="inp2" style="width:120px;"></div>'
+            +'<div><label class="fl">終活・相続</label><input id="rvt-shukatsu" type="number" class="inp2" style="width:120px;"></div>'
+            +'<div><label class="fl">保険関連</label><input id="rvt-insurance" type="number" class="inp2" style="width:120px;"></div>'
+            +'<div><label class="fl">その他</label><input id="rvt-other" type="number" class="inp2" style="width:120px;"></div>'
+            +'<button class="btn2" onclick="admSaveRevenueTarget()">目標を保存</button>'
+          +'</div>'
+          +'<div id="rvt-msg" style="font-size:11.5px;margin-top:6px;min-height:14px;"></div>'
+        +'</div>'
+        +'<div id="rvt-monthly" style="margin-top:12px;"></div>'
         +'</div>'
         +'</div>'
       +'<div class="panel" id="sec-audit"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">🛡 監査・コンプライアンスログ<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmAudit()">↺ 更新</span></div>'
@@ -1586,9 +1640,9 @@
           +'<div id="my-ma">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-market"><div class="ph">💹 Tsugu投資・融資・M&A（プラットフォーム内マッチング）</div>'
-          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">資金を「集めたい」企業と「出したい（融資・出資）」企業を、Tsugu内でマッチングします。案件の掲載やお手続きは担当パートナーが代行します。気になる案件があれば「メッセージ」でお知らせください。担当が橋渡しします。</div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">資金を「集めたい」企業と「出したい（融資・出資）」企業を、Tsugu内でマッチングします。案件の掲載は、担当パートナーからの申請にもとづき<b>運営が審査のうえ</b>行います。掲載のご希望や気になる案件があれば「メッセージ」で担当パートナーにお知らせください。</div>'
           +'<div style="font-size:11px;color:#8F7230;background:#F8F1DF;border:1px solid #EBDDB4;border-radius:9px;padding:9px 12px;margin-bottom:12px;line-height:1.7;">⚠ 本機能は当事者の引き合わせ（マッチング）を支援するもので、実際の融資・出資の実行ではありません。実行には貸金業法・金融商品取引法など関連法令の順守と、弁護士・税理士・有資格者等の関与が必要です。</div>'
-          +'<div class="ph" style="font-size:13px;">あなたの掲載案件（担当パートナーが掲載）</div>'
+          +'<div class="ph" style="font-size:13px;">あなたの掲載案件（担当パートナーの申請にもとづき運営が掲載・ここで進捗を確認できます）</div>'
           +'<div id="market-mine" style="margin:4px 0 10px;">読み込み中...</div>'
           +'<div class="ph" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;">公開中の案件<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarket()">↺ 更新</span></div>'
           +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;" id="mk-filterbar">'
@@ -1692,8 +1746,8 @@
           +'<div id="ma-list" style="margin-top:6px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-market">'
-          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">💹 Tsugu投資・融資・M&A（仲介）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketBroker()">↺ 更新</span></div>'
-          +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">顧客が掲載した「集めたい／出したい」案件と、寄せられた関心の一覧です。掲載企業名・関心を出した企業名が確認でき、当事者の引き合わせ（仲介）を行えます。成立・終了の状態を更新できます。</div>'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">💹 Tsugu投資・融資・M&A（閲覧・進捗確認）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketBroker()">↺ 更新</span></div>'
+          +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">掲載中の「集めたい／出したい」案件と、寄せられた関心の一覧です。掲載企業名・関心を出した企業名を確認し、当事者への橋渡しの準備ができます。<b>案件の掲載・成立・終了などの登録/更新は、パートナーからの申請にもとづき運営が審査のうえ行います。</b>掲載のご希望は各顧客カルテの「掲載申請」からどうぞ。</div>'
           +'<div style="font-size:11px;color:#8F7230;background:#F8F1DF;border:1px solid #EBDDB4;border-radius:9px;padding:9px 12px;margin-bottom:10px;line-height:1.7;">⚠ 実際の融資・出資の実行には関連法令（貸金業法・金融商品取引法等）の順守と有資格者の関与が必要です。Tsuguはマッチングの場のみを提供します。</div>'
           +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;" id="mkb-filterbar">'
             +'<button class="sbtn on" data-f="open" onclick="setMkbFilter(\'open\',this)">公開中</button>'
@@ -1820,7 +1874,7 @@
     $('app-body').innerHTML=view;
     if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); if(window.__role==='admin') loadAdmPreviewCustomers(); }
     else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); }
-    else { loadAdmin(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); }
+    else { loadAdmin(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); }
     startNotifPolling(eff);
     navSpyInit();
   }
@@ -3288,12 +3342,13 @@
   // ---- 運営：決済リンク管理＋入金履歴 ----
   var BL_CUSTS=[]; var BL_LINK_AUD='all'; var BL_ROLES=null;
   function blShowTab(t){
-    ['overview','partners','customers','links','payments'].forEach(function(k){
+    ['overview','partners','customers','links','payments','revenue'].forEach(function(k){
       var d=$('bl-tab-'+k); if(d) d.classList.toggle('hidden', k!==t);
       var b=$('bl-tb-'+k); if(b) b.classList.toggle('on', k===t);
     });
     if(t==='links') loadBillingAdminLinks();
     if(t==='payments') loadAdmPayEvents();
+    if(t==='revenue') loadAdmRevenue();
   }
   function blLinkFilter(a){
     BL_LINK_AUD=a;
@@ -3368,6 +3423,9 @@
     if(res.error||!res.data||!res.data.length){ alert('削除できませんでした：'+((res.error&&res.error.message)||'権限がありません')); return; }
     loadBillingAdminLinks();
   }
+  // ===== 課金 Phase60：売上・入金履歴（Stripe自動＋手動記録）＋年間売上目標・実績 =====
+  var RV_CATS={advisory:'顧問料・会費',ma:'M&A成約',shukatsu:'終活・相続',insurance:'保険関連',other:'その他'};
+  function rvCatTag(c){ var col=(c==='ma')?'gold':(c==='shukatsu')?'green':(c==='insurance'||c==='advisory')?'blue':'gray'; return '<span class="tag '+col+'" style="font-size:10px;">'+esc(RV_CATS[c]||c||'その他')+'</span>'; }
   async function loadAdmPayEvents(){
     var box=$('bl-payevents'); if(!box) return;
     // 年月セレクト初期化（全期間＋直近24ヶ月）
@@ -3381,43 +3439,182 @@
       }
       msel.innerHTML=opts; msel.value='';
     }
+    // 手動記録フォーム：入金日の初期値と顧客セレクト
+    var dinp=$('rv-date'); if(dinp && !dinp.value){ var t=new Date(); dinp.value=t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2); }
+    var csel=$('rv-cust');
+    if(csel && csel.options.length<2){
+      try{ var cr2=await sb.from('profiles').select('id,company_name,contact_name,email').eq('role','customer').order('company_name',{ascending:true});
+        csel.innerHTML='<option value="">（顧客ひも付けなし）</option>'+(cr2.data||[]).map(function(c){ return '<option value="'+c.id+'">'+esc(c.company_name||c.contact_name||c.email)+'</option>'; }).join('');
+      }catch(e){}
+    }
     // メール→役割マップ（顧客／パートナー判定用・セッション内キャッシュ）
     if(!BL_ROLES){
       BL_ROLES={};
       try{ var pr=await sb.from('profiles').select('email,role'); (pr.data||[]).forEach(function(p){ if(p.email) BL_ROLES[String(p.email).toLowerCase()]=p.role; }); }catch(e){}
     }
     var ym=(msel&&msel.value)||'';
+    var to='';
+    if(ym){ var yy=+ym.slice(0,4), mm=+ym.slice(5,7); to=(mm===12 ? (yy+1)+'-01' : yy+'-'+('0'+(mm+1)).slice(-2))+'-01'; }
+    // ① Stripe自動記録
     var q=sb.from('payment_events').select('created_at,event_type,email,amount,description').order('created_at',{ascending:false});
-    if(ym){
-      var yy=+ym.slice(0,4), mm=+ym.slice(5,7);
-      var to=(mm===12 ? (yy+1)+'-01' : yy+'-'+('0'+(mm+1)).slice(-2))+'-01';
-      q=q.gte('created_at', ym+'-01').lt('created_at', to).limit(500);
-    } else { q=q.limit(100); }
+    if(ym){ q=q.gte('created_at', ym+'-01').lt('created_at', to).limit(500); } else { q=q.limit(200); }
     var res=await q;
+    // ② 手動記録（revenue_entries）
+    var q2=sb.from('revenue_entries').select('id,occurred_on,created_at,category,amount,customer_id,counterparty,description').order('occurred_on',{ascending:false});
+    if(ym){ q2=q2.gte('occurred_on', ym+'-01').lt('occurred_on', to).limit(500); } else { q2=q2.limit(200); }
+    var res2=await q2;
+    var custName={};
+    if(!res2.error && (res2.data||[]).length){
+      try{ var pn=await sb.from('profiles').select('id,company_name,contact_name,email'); (pn.data||[]).forEach(function(p){ custName[p.id]=p.company_name||p.contact_name||p.email; }); }catch(e){}
+    }
     var sumBox=$('bl-pay-sum');
-    if(res.error){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">入金履歴は、Stripe Webhookの設定（手順書参照）後に表示されます。</div>'; if(sumBox)sumBox.innerHTML=''; return; }
+    if(res.error && res2.error){
+      box.innerHTML='<div style="font-size:12px;color:#94A2B6;">入金履歴は、Stripe Webhookの設定（手順書参照）と「Phase60」のSQL実行後に表示されます。</div>';
+      if(sumBox)sumBox.innerHTML=''; return;
+    }
     var aud=($('bl-pay-aud')||{}).value||'all';
-    var rows=(res.data||[]).filter(function(p){
-      if(aud==='all') return true;
-      return (BL_ROLES[String(p.email||'').toLowerCase()]||'')===aud;
+    var srcF=($('bl-pay-src')||{}).value||'all';
+    var catF=($('bl-pay-cat')||{}).value||'all';
+    var items=[];
+    if(!res.error){ (res.data||[]).forEach(function(p){ items.push({src:'stripe', dt:p.created_at, cat:'advisory', amount:(Number(p.amount)||0), email:(p.email||''), text:esc(p.email||'')+'　'+esc(p.description||p.event_type||'')}); }); }
+    if(!res2.error){ (res2.data||[]).forEach(function(p){
+      var who=[]; if(p.customer_id&&custName[p.customer_id]) who.push(custName[p.customer_id]); if(p.counterparty) who.push(p.counterparty);
+      items.push({src:'manual', id:p.id, dt:(p.occurred_on? p.occurred_on+'T12:00:00' : p.created_at), cat:(p.category||'other'), amount:(Number(p.amount)||0), text:esc(who.join(' / ')||'—')+'　'+esc(p.description||'')});
+    }); }
+    items=items.filter(function(it){
+      if(srcF!=='all' && it.src!==srcF) return false;
+      if(catF!=='all' && it.cat!==catF) return false;
+      if(aud!=='all'){
+        if(it.src==='stripe') return (BL_ROLES[String(it.email||'').toLowerCase()]||'')===aud;
+        return aud==='customer'; // 手動記録は顧客側売上として扱う
+      }
+      return true;
     });
-    var sum=rows.reduce(function(s,p){ return s+(Number(p.amount)||0); },0);
+    items.sort(function(a,b){ return a.dt<b.dt?1:-1; });
+    var sum=0, sumS=0, sumM=0;
+    items.forEach(function(it){ sum+=it.amount; if(it.src==='stripe')sumS+=it.amount; else sumM+=it.amount; });
     if(sumBox){
       sumBox.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-        +'<div style="flex:1 1 150px;min-width:150px;background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:10px 13px;"><div style="font-size:10.5px;color:#94A2B6;">'+(ym?(+ym.slice(0,4))+'年'+(+ym.slice(5,7))+'月':'全期間（直近100件）')+' 入金合計</div><div style="font-size:18px;font-weight:700;color:#27684A;">¥'+sum.toLocaleString()+'</div></div>'
-        +'<div style="flex:1 1 150px;min-width:150px;background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:10px 13px;"><div style="font-size:10.5px;color:#94A2B6;">件数</div><div style="font-size:18px;font-weight:700;color:#1E3A66;">'+rows.length+'件</div></div>'
+        +'<div style="flex:1 1 150px;min-width:150px;background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:10px 13px;"><div style="font-size:10.5px;color:#94A2B6;">'+(ym?(+ym.slice(0,4))+'年'+(+ym.slice(5,7))+'月':'全期間（直近分）')+' 入金合計</div><div style="font-size:18px;font-weight:700;color:#27684A;">¥'+sum.toLocaleString()+'</div></div>'
+        +'<div style="flex:1 1 130px;min-width:130px;background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:10px 13px;"><div style="font-size:10.5px;color:#94A2B6;">うちStripe自動</div><div style="font-size:16px;font-weight:700;color:#1E3A66;">¥'+sumS.toLocaleString()+'</div></div>'
+        +'<div style="flex:1 1 130px;min-width:130px;background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:10px 13px;"><div style="font-size:10.5px;color:#94A2B6;">うち手動記録</div><div style="font-size:16px;font-weight:700;color:#8F7230;">¥'+sumM.toLocaleString()+'</div></div>'
+        +'<div style="flex:1 1 110px;min-width:110px;background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:10px 13px;"><div style="font-size:10.5px;color:#94A2B6;">件数</div><div style="font-size:16px;font-weight:700;color:#1E3A66;">'+items.length+'件</div></div>'
       +'</div>';
     }
-    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">該当する入金がありません。決済が完了すると自動で記録されます。</div>'; return; }
-    box.innerHTML=rows.map(function(p){
-      var d=new Date(p.created_at); var ds=d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
-      var r=BL_ROLES[String(p.email||'').toLowerCase()]||'';
-      var rb=(r==='customer')?'<span class="tag blue" style="font-size:10px;">顧客</span>':(r==='consultant')?'<span class="tag gold" style="font-size:10px;">パートナー</span>':'';
-      return '<div style="display:flex;gap:10px;align-items:center;padding:7px 2px;border-bottom:1px dashed var(--softline);font-size:12px;flex-wrap:wrap;">'
-        +'<span style="color:#94A2B6;">'+ds+'</span>'+rb
-        +'<span style="flex:1;min-width:140px;">'+esc(p.email||'')+'　'+esc(p.description||p.event_type||'')+'</span>'
-        +'<b style="color:var(--navy);">'+(p.amount!=null?('¥'+Number(p.amount).toLocaleString()):'')+'</b></div>';
+    var hint='';
+    if(res2.error && srcF!=='stripe') hint='<div style="font-size:11px;color:#8A6A12;background:#FBF3E0;border:1px solid #ECD9A6;border-radius:8px;padding:7px 10px;margin-bottom:6px;">手動記録を使うには、Supabaseで「Phase60」のSQLを実行してください（'+esc(res2.error.message)+'）</div>';
+    if(!items.length){ box.innerHTML=hint+'<div style="font-size:12px;color:#94A2B6;">該当する入金がありません。Stripe決済は自動記録され、その他の入金は上の「手動記録」から追加できます。</div>'; return; }
+    box.innerHTML=hint+items.map(function(it){
+      var d=new Date(it.dt); var ds=d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+      var srcTag=(it.src==='stripe')?'<span class="tag blue" style="font-size:10px;">Stripe</span>':'<span class="tag gold" style="font-size:10px;">手動</span>';
+      var roleTag='';
+      if(it.src==='stripe'){ var r=BL_ROLES[String(it.email||'').toLowerCase()]||''; roleTag=(r==='customer')?'<span class="tag blue" style="font-size:10px;">顧客</span>':(r==='consultant')?'<span class="tag gold" style="font-size:10px;">パートナー</span>':''; }
+      var del=(it.src==='manual')?'<button class="ghost" style="color:#A9403D;border:1px solid #E9C9C9;border-radius:8px;font-size:10.5px;padding:3px 8px;" onclick="admDelRevenueEntry(\''+it.id+'\')">削除</button>':'';
+      return '<div style="display:flex;gap:8px;align-items:center;padding:7px 2px;border-bottom:1px dashed var(--softline);font-size:12px;flex-wrap:wrap;">'
+        +'<span style="color:#94A2B6;">'+ds+'</span>'+srcTag+rvCatTag(it.cat)+roleTag
+        +'<span style="flex:1;min-width:140px;">'+it.text+'</span>'
+        +'<b style="color:var(--navy);">¥'+it.amount.toLocaleString()+'</b>'+del+'</div>';
     }).join('');
+  }
+  async function admAddRevenueEntry(){
+    var msg=$('rv-msg');
+    var dt=($('rv-date')||{}).value, cat=($('rv-cat')||{}).value||'other', amt=($('rv-amt')||{}).value;
+    var cust=($('rv-cust')||{}).value||'', party=(($('rv-party')||{}).value||'').trim(), desc=(($('rv-desc')||{}).value||'').trim();
+    if(!dt){ if(msg){msg.style.color='#A9403D';msg.textContent='入金日を入力してください。';} return; }
+    if(!amt||Number(amt)<=0){ if(msg){msg.style.color='#A9403D';msg.textContent='金額（円）を入力してください。';} return; }
+    var row={ occurred_on:dt, category:cat, amount:Number(amt), counterparty:(party||null), description:(desc||null), created_by:ME };
+    if(cust) row.customer_id=cust;
+    var res=await sb.from('revenue_entries').insert(row);
+    if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='記録エラー：'+res.error.message+'（Supabaseで「Phase60」のSQLを実行してください）';} return; }
+    if(msg){msg.style.color='#27684A';msg.textContent='記録しました（売上目標・実績にも反映されます）。';}
+    if($('rv-amt'))$('rv-amt').value=''; if($('rv-party'))$('rv-party').value=''; if($('rv-desc'))$('rv-desc').value=''; if($('rv-cust'))$('rv-cust').value='';
+    loadAdmPayEvents();
+  }
+  async function admDelRevenueEntry(id){
+    if(!confirm('この手動記録を削除しますか？（売上実績からも除外されます）')) return;
+    var res=await sb.from('revenue_entries').delete().eq('id',id).select('id');
+    if(res.error||!res.data||!res.data.length){ alert('削除できませんでした：'+((res.error&&res.error.message)||'権限がありません')); return; }
+    loadAdmPayEvents();
+  }
+  // ---- 年間売上目標・実績 ----
+  function rvBar(act,tgt,color){
+    var pct=(tgt>0)?Math.min(100,Math.round(act/tgt*100)):0;
+    return '<div style="background:#EDF1F6;border-radius:99px;height:8px;overflow:hidden;margin-top:5px;"><div style="height:8px;background:'+color+';width:'+pct+'%;"></div></div>';
+  }
+  async function loadAdmRevenue(){
+    var sumBox=$('rvt-sum'); if(!sumBox) return;
+    var ysel=$('rvt-year');
+    var nowY=(new Date()).getFullYear();
+    if(ysel && ysel.options.length<1+0 || (ysel&&!ysel.options.length)){
+      var oh=''; for(var y=nowY-2;y<=nowY+1;y++){ oh+='<option value="'+y+'"'+(y===nowY?' selected':'')+'>'+y+'年（1〜12月）</option>'; }
+      ysel.innerHTML=oh;
+    }
+    var Y=+((ysel&&ysel.value)||nowY);
+    sumBox.innerHTML='<span style="color:#94A2B6;font-size:12px;">集計中…</span>';
+    var from=Y+'-01-01', toEx=(Y+1)+'-01-01';
+    // 実績：Stripe（→顧問料・会費）＋手動記録（区分別）
+    var act={advisory:0,ma:0,shukatsu:0,insurance:0,other:0}; var monthly=[0,0,0,0,0,0,0,0,0,0,0,0];
+    var se=await sb.from('payment_events').select('created_at,amount').gte('created_at',from).lt('created_at',toEx).limit(5000);
+    if(!se.error){ (se.data||[]).forEach(function(p){ var a=Number(p.amount)||0; act.advisory+=a; var m=new Date(p.created_at).getMonth(); if(m>=0&&m<12) monthly[m]+=a; }); }
+    var me2=await sb.from('revenue_entries').select('occurred_on,category,amount').gte('occurred_on',from).lt('occurred_on',toEx).limit(5000);
+    var manualErr=(me2.error? String(me2.error.message||''):'');
+    if(!me2.error){ (me2.data||[]).forEach(function(p){ var a=Number(p.amount)||0; var c=(act[p.category]!==undefined)?p.category:'other'; act[c]+=a; var m=(+String(p.occurred_on||'').slice(5,7))-1; if(m>=0&&m<12) monthly[m]+=a; }); }
+    var total=act.advisory+act.ma+act.shukatsu+act.insurance+act.other;
+    // 目標
+    var tgt=null;
+    var tr=await sb.from('revenue_targets').select('*').eq('fiscal_year',Y).limit(1);
+    if(!tr.error && tr.data && tr.data.length) tgt=tr.data[0];
+    ['total','advisory','ma','shukatsu','insurance','other'].forEach(function(k){
+      var el=$('rvt-'+k); if(el) el.value=(tgt&&tgt['target_'+k]!=null)?tgt['target_'+k]:'';
+    });
+    var tTotal=(tgt&&Number(tgt.target_total))||0;
+    var pct=(tTotal>0)?Math.round(total/tTotal*100):null;
+    var h='<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      +'<div style="flex:1 1 170px;min-width:170px;background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:10px 13px;"><div style="font-size:10.5px;color:#94A2B6;">'+Y+'年 売上実績（合計・実数）</div><div style="font-size:20px;font-weight:700;color:#27684A;">¥'+total.toLocaleString()+'</div></div>'
+      +'<div style="flex:1 1 170px;min-width:170px;background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:10px 13px;"><div style="font-size:10.5px;color:#94A2B6;">年間目標</div><div style="font-size:20px;font-weight:700;color:#1E3A66;">'+(tTotal?('¥'+tTotal.toLocaleString()):'未設定')+'</div></div>'
+      +'<div style="flex:1 1 170px;min-width:170px;background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:10px 13px;"><div style="font-size:10.5px;color:#94A2B6;">達成率</div><div style="font-size:20px;font-weight:700;color:'+(pct!==null&&pct>=100?'#27684A':'#8F7230')+';">'+(pct!==null?(pct+'%'):'—')+'</div>'+(tTotal?rvBar(total,tTotal,'#27684A'):'')+'</div>'
+    +'</div>';
+    // 区分別
+    h+='<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">区分別 実績と目標</div>';
+    ['advisory','ma','shukatsu','insurance','other'].forEach(function(k){
+      var a=act[k]||0, t=(tgt&&Number(tgt['target_'+k]))||0;
+      var p=(t>0)?Math.round(a/t*100):null;
+      h+='<div style="display:flex;gap:10px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--softline);font-size:12px;flex-wrap:wrap;">'
+        +'<span style="min-width:92px;font-weight:700;color:var(--navy);">'+RV_CATS[k]+'</span>'
+        +'<div style="flex:1;min-width:130px;">'+rvBar(a,t||1,(k==='ma'?'#C39B3F':k==='shukatsu'?'#27684A':'#2C5DA8'))+'</div>'
+        +'<span style="min-width:150px;text-align:right;"><b style="color:var(--navy);">¥'+a.toLocaleString()+'</b><span style="color:#94A2B6;"> / '+(t?('¥'+t.toLocaleString()):'目標未設定')+(p!==null?('（'+p+'%）'):'')+'</span></span>'
+      +'</div>';
+    });
+    h+='</div>';
+    if(manualErr) h+='<div style="font-size:11px;color:#8A6A12;background:#FBF3E0;border:1px solid #ECD9A6;border-radius:8px;padding:7px 10px;margin-top:8px;">手動記録（M&A・終活/相続など）を集計に含めるには、Supabaseで「Phase60」のSQLを実行してください。</div>';
+    sumBox.innerHTML=h;
+    // 月別実績
+    var mBox=$('rvt-monthly');
+    if(mBox){
+      var mh='<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">月別実績（Stripe＋手動記録の合算）</div><div style="display:flex;gap:6px;flex-wrap:wrap;">';
+      var maxM=Math.max.apply(null,monthly.concat([1]));
+      for(var i2=0;i2<12;i2++){
+        var hpx=Math.max(3,Math.round(monthly[i2]/maxM*46));
+        mh+='<div style="flex:1 1 56px;min-width:56px;background:#fff;border:1px solid #EDF1F6;border-radius:9px;padding:8px 6px;text-align:center;">'
+          +'<div style="height:50px;display:flex;align-items:flex-end;justify-content:center;"><div style="width:16px;border-radius:4px 4px 0 0;background:'+(monthly[i2]?'#2C5DA8':'#E2E7EF')+';height:'+hpx+'px;"></div></div>'
+          +'<div style="font-size:10px;color:#94A2B6;margin-top:4px;">'+(i2+1)+'月</div>'
+          +'<div style="font-size:10.5px;font-weight:700;color:var(--navy);">'+(monthly[i2]?('¥'+monthly[i2].toLocaleString()):'—')+'</div>'
+        +'</div>';
+      }
+      mh+='</div>';
+      mBox.innerHTML=mh;
+    }
+  }
+  async function admSaveRevenueTarget(){
+    var msg=$('rvt-msg');
+    var Y=+((($('rvt-year')||{}).value)||(new Date()).getFullYear());
+    function nv(id){ var v=($(id)||{}).value; return (v===''||v==null)?null:Number(v); }
+    var row={ fiscal_year:Y, target_total:nv('rvt-total'), target_advisory:nv('rvt-advisory'), target_ma:nv('rvt-ma'), target_shukatsu:nv('rvt-shukatsu'), target_insurance:nv('rvt-insurance'), target_other:nv('rvt-other'), updated_at:new Date().toISOString() };
+    var res=await sb.from('revenue_targets').upsert(row,{onConflict:'fiscal_year'});
+    if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='保存エラー：'+res.error.message+'（Supabaseで「Phase60」のSQLを実行してください）';} return; }
+    if(msg){msg.style.color='#27684A';msg.textContent=Y+'年の目標を保存しました。';}
+    loadAdmRevenue();
   }
   // ===== 運営プレビュー：顧客の登録済み会社情報を確認 =====
   async function loadAdmPreviewCustomers(){
@@ -5459,8 +5656,8 @@
       +'</div>'
       +'<div id="fr-msg" style="font-size:12px;margin-top:6px;"></div>'
       +'<div id="cl-fund" style="margin-top:8px;">読み込み中...</div>'
-      +'<div class="ph" id="cs-market" style="font-size:13px;margin-top:18px;">💹 Tsugu投資・融資・M&A への掲載（代行）</div>'
-      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">この顧客の「資金調達／出資・融資の出し手／M&A（譲渡・譲受）」案件を代行で掲載します。掲載するとプラットフォーム内の他の顧客に公開され、関心が集まると「Tsugu投資・融資・M&A（仲介）」に表示されます。</div>'
+      +'<div class="ph" id="cs-market" style="font-size:13px;margin-top:18px;">💹 Tsugu投資・融資・M&A 掲載申請（運営審査制）</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">案件の掲載・ステータス変更は<b>運営が審査のうえ</b>行います。経営者の意向が固まった段階で、このフォームから運営に申請してください。承認されるとプラットフォームに掲載され、下の「掲載中の案件」で進捗を確認できます。</div>'
       +'<div style="font-size:11px;color:#5A6981;background:var(--soft);border-radius:8px;padding:7px 10px;margin-bottom:8px;">立場の目安：<b>集めたい</b>＝資金調達／会社・事業の<b>譲渡（売り手）</b>、<b>出したい</b>＝出資・融資／会社・事業の<b>譲受（買い手）</b>。種別で「M&A」を選ぶと譲渡・譲受の案件になります。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
         +'<div><label class="fl">立場</label><select id="cmk-side" class="inp2"><option value="raise">集めたい／譲渡（売り手）</option><option value="provide">出したい／譲受（買い手）</option></select></div>'
@@ -5471,9 +5668,14 @@
       +'<div style="margin-top:8px;"><label class="fl">タイトル</label><input id="cmk-title" class="inp2" style="width:100%;" placeholder="例：設備資金を募集／黒字企業へ出資したい／後継者不在の事業を譲渡したい"></div>'
       +'<div style="margin-top:8px;"><label class="fl">希望条件（任意）</label><input id="cmk-terms" class="inp2" style="width:100%;" placeholder="例：期間5年・金利2%以内／少数出資／譲渡価格○千万円・従業員雇用継続"></div>'
       +'<div style="margin-top:8px;"><label class="fl">詳細・補足（任意）</label><textarea id="cmk-detail" class="inp2" rows="2" style="width:100%;" placeholder="事業概要・資金使途・返済原資・期待リターンなど"></textarea></div>'
+      +'<div style="margin-top:8px;"><label class="fl">運営への申し送り（意向確認の状況・背景など）</label><textarea id="cmk-note" class="inp2" rows="2" style="width:100%;" placeholder="例：6/20の面談で社長ご本人の譲渡意向を確認済み。希望時期は年内。"></textarea></div>'
       +'<label style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;color:#5A6981;cursor:pointer;"><input type="checkbox" id="cmk-anon" checked>会社名を伏せて掲載する（他の顧客には匿名表示）</label>'
-      +'<div style="margin-top:10px;"><button class="btn2" onclick="postListingFor(\''+custId+'\')">この内容で掲載する</button><span id="cmk-msg" style="font-size:12px;margin-left:8px;"></span></div>'
-      +'<div id="cl-listings" style="margin-top:10px;">読み込み中...</div>'
+      +'<label style="display:flex;align-items:flex-start;gap:6px;margin-top:8px;font-size:12px;color:#5A6981;cursor:pointer;"><input type="checkbox" id="cmk-consent" style="margin-top:2px;">経営者ご本人の掲載意向を確認し、顧客カルテに記録しました（必須）</label>'
+      +'<div style="margin-top:10px;"><button class="btn2" onclick="submitListingApp(\''+custId+'\')">運営に掲載申請する</button><span id="cmk-msg" style="font-size:12px;margin-left:8px;"></span></div>'
+      +'<div class="ph" style="font-size:12.5px;margin-top:14px;">申請状況（運営の審査結果）</div>'
+      +'<div id="cl-apps" style="margin-top:4px;">読み込み中...</div>'
+      +'<div class="ph" style="font-size:12.5px;margin-top:14px;">掲載中の案件（ステータス変更は運営が行います）</div>'
+      +'<div id="cl-listings" style="margin-top:4px;">読み込み中...</div>'
       +'<div class="ph" id="cs-act" style="font-size:13px;margin-top:18px;">アクション・課題（顧客と共有・両者が編集可）</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">'
         +'<div style="flex:1;min-width:200px;"><label class="fl">課題を追加</label><input id="cact-title" class="inp2" style="width:100%;" placeholder="例：退職金規程の確認"></div>'
@@ -5578,6 +5780,7 @@
     loadDiagHistory(custId);
     loadClientProfileFields(custId);
     loadClientListings(custId);
+    loadClientApps(custId);
   }
   async function loadClientProfileFields(custId){
     var c=$('cpi-contact'); if(!c)return;
@@ -5601,27 +5804,62 @@
     var mt=$('cl-modal-title'); if(mt) mt.textContent=(company?company+'（'+(CURRENT_CLIENT?CURRENT_CLIENT.email:'')+'）':(CURRENT_CLIENT?CURRENT_CLIENT.email:''));
     if(typeof loadClients==='function') loadClients();
   }
-  // パートナーが顧客の代わりにマーケット案件を掲載
-  async function postListingFor(custId){
+  // パートナー → 運営への掲載申請（Phase60：運営が審査のうえ掲載）
+  async function submitListingApp(custId){
     var msg=$('cmk-msg');
     var side=$('cmk-side').value, kind=$('cmk-kind').value, title=($('cmk-title')||{}).value.trim();
     var amount=$('cmk-amount').value, industry=($('cmk-industry')||{}).value.trim(), terms=($('cmk-terms')||{}).value.trim(), detail=($('cmk-detail')||{}).value.trim();
+    var note=(($('cmk-note')||{}).value||'').trim();
     var anon=$('cmk-anon').checked;
     if(!title){ if(msg){msg.style.color='#A9403D';msg.textContent='タイトルを入力してください';} return; }
-    var row={ owner_id:custId, side:side, kind:kind, title:title, industry:(industry||null), amount:(amount===''?null:Number(amount)), rate:(terms||null), detail:(detail||null), anonymous:anon, status:'open' };
-    var res=await sb.from('market_listings').insert(row);
-    if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='掲載エラー：'+res.error.message+'（Phase41/42のSQL未実施の可能性があります）';} return; }
-    if(msg){msg.style.color='#27684A';msg.textContent='掲載しました。';}
-    $('cmk-title').value=''; $('cmk-amount').value=''; $('cmk-industry').value=''; $('cmk-terms').value=''; $('cmk-detail').value='';
-    loadClientListings(custId);
-    if(typeof loadMarketBroker==='function') loadMarketBroker();
+    if(!(($('cmk-consent')||{}).checked)){ if(msg){msg.style.color='#A9403D';msg.textContent='「経営者ご本人の掲載意向を確認」のチェックが必要です。';} return; }
+    var row={ partner_id:ME, customer_id:custId, side:side, kind:kind, title:title, industry:(industry||null), amount:(amount===''?null:Number(amount)), rate:(terms||null), detail:(detail||null), anonymous:anon, note:(note||null), status:'pending' };
+    var res=await sb.from('market_applications').insert(row);
+    if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='申請エラー：'+res.error.message+'（Supabaseで「Phase60」のSQL未実施の可能性があります）';} return; }
+    if(msg){msg.style.color='#27684A';msg.textContent='運営に申請しました。審査結果は下の「申請状況」に表示されます。';}
+    $('cmk-title').value=''; $('cmk-amount').value=''; $('cmk-industry').value=''; $('cmk-terms').value=''; $('cmk-detail').value=''; if($('cmk-note'))$('cmk-note').value=''; if($('cmk-consent'))$('cmk-consent').checked=false;
+    loadClientApps(custId);
+  }
+  function mkAppStTag(s){
+    if(s==='pending') return '<span class="tag gold">審査待ち</span>';
+    if(s==='approved') return '<span class="tag green">承認・掲載済み</span>';
+    if(s==='rejected') return '<span class="tag" style="background:#F7E3E2;color:#A9403D;">差し戻し</span>';
+    if(s==='withdrawn') return '<span class="tag gray">取り下げ</span>';
+    return '<span class="tag gray">'+esc(s||'')+'</span>';
+  }
+  async function loadClientApps(custId){
+    var box=$('cl-apps'); if(!box)return;
+    var res=await sb.from('market_applications').select('*').eq('customer_id',custId).order('created_at',{ascending:false}).limit(30);
+    if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">'+esc(res.error.message)+'<br><span style="color:#94A2B6;">（Supabaseで「Phase60」のSQLを実行してください）</span></div>'; return; }
+    var rows=res.data||[];
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">まだ申請はありません。</div>'; return; }
+    box.innerHTML=rows.map(function(a){
+      var d=new Date(a.created_at); var ds=d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+      var h='<div class="clcard" style="cursor:default;">'
+        +'<div class="cl-top"><span class="cl-nm">'+esc(a.title)+'</span>'
+        +'<span class="tag '+(a.side==='raise'?'blue':'green')+'">'+esc(mkSideLabel(a.side, a.kind))+'</span>'
+        +'<span class="tag gray">'+esc(mkKindLabel(a.kind))+'・'+esc(mkAmount(a.amount))+'</span>'
+        +mkAppStTag(a.status)+'</div>'
+        +'<div style="font-size:11px;color:#94A2B6;margin-top:4px;">申請日：'+ds+'</div>'
+        +(a.note?'<div style="font-size:11.5px;color:#5A6981;margin-top:4px;">申し送り：'+esc(a.note)+'</div>':'');
+      if(a.status==='rejected' && a.review_note) h+='<div style="font-size:11.5px;color:#A9403D;background:#FBEFEF;border-radius:8px;padding:6px 9px;margin-top:6px;">運営コメント：'+esc(a.review_note)+'</div>';
+      if(a.status==='pending') h+='<div style="margin-top:8px;"><button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="withdrawListingApp(\''+a.id+'\',\''+custId+'\')">申請を取り下げる</button></div>';
+      h+='</div>';
+      return h;
+    }).join('');
+  }
+  async function withdrawListingApp(id,custId){
+    if(!confirm('この申請を取り下げますか？')) return;
+    var res=await sb.from('market_applications').update({status:'withdrawn'}).eq('id',id).eq('status','pending');
+    if(res.error){ alert('取り下げできませんでした：'+res.error.message); return; }
+    loadClientApps(custId);
   }
   async function loadClientListings(custId){
     var box=$('cl-listings'); if(!box)return;
     var res=await sb.from('market_listings').select('*').eq('owner_id',custId).order('created_at',{ascending:false});
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">'+esc(res.error.message)+'<br><span style="color:#94A2B6;">（Phase41/42のSQL未実施の可能性があります）</span></div>'; return; }
     var rows=res.data||[];
-    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">この顧客の掲載案件はまだありません。</div>'; return; }
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">この顧客の掲載案件はまだありません。掲載は上の申請フォームから運営に依頼してください。</div>'; return; }
     var ids=rows.map(function(r){return r.id;}), cnt={};
     var ir=await sb.from('market_interests').select('listing_id').in('listing_id',ids);
     if(!ir.error){ (ir.data||[]).forEach(function(x){ cnt[x.listing_id]=(cnt[x.listing_id]||0)+1; }); }
@@ -5634,19 +5872,10 @@
         +'<span class="tag gray">'+esc(mkKindLabel(r.kind))+'・'+esc(mkAmount(r.amount))+'</span>'
         +'<span class="tag '+(r.status==='open'?'green':'gray')+'">'+esc(mkStatusLabel(r.status))+'</span></div>'
         +'<div style="font-size:11.5px;color:#2C5DA8;margin-top:6px;">関心：'+n+'件</div>'
-        +'<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">'
-          +(r.status!=='matched'?'<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="clientListingStatus(\''+r.id+'\',\'matched\',\''+custId+'\')">成立</button>':'')
-          +(r.status!=='closed'?'<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="clientListingStatus(\''+r.id+'\',\'closed\',\''+custId+'\')">終了</button>':'')
-          +(r.status!=='open'?'<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="clientListingStatus(\''+r.id+'\',\'open\',\''+custId+'\')">公開に戻す</button>':'')
-        +'</div></div>';
+        +'<div style="font-size:11px;color:#94A2B6;margin-top:6px;">※ 成立・終了などのステータス変更は運営が行います。ご要望は運営までご連絡ください。</div>'
+      +'</div>';
     });
     box.innerHTML=h;
-  }
-  async function clientListingStatus(id,status,custId){
-    var res=await sb.from('market_listings').update({status:status}).eq('id',id);
-    if(res.error){ alert('更新エラー：'+res.error.message); return; }
-    loadClientListings(custId);
-    if(typeof loadMarketBroker==='function') loadMarketBroker();
   }
 
   // ---- 顧客からの共有：確認後に「反応」または「削除」 ----
@@ -6381,17 +6610,108 @@
         o.ints.forEach(function(it){ h+='<div style="font-size:12px;color:#18202E;margin:2px 0;">・'+esc(it.name)+(it.message?('：'+esc(it.message)):'')+'</div>'; });
         h+='</div>';
       } else { h+='<div style="font-size:11.5px;color:#94A2B6;margin-top:6px;">関心はまだありません。</div>'; }
-      h+='<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">';
-      if(r.status!=='matched') h+='<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="brokerSetStatus(\''+r.id+'\',\'matched\')">成立にする</button>';
-      if(r.status!=='closed') h+='<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="brokerSetStatus(\''+r.id+'\',\'closed\')">終了にする</button>';
-      if(r.status!=='open') h+='<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="brokerSetStatus(\''+r.id+'\',\'open\')">公開に戻す</button>';
-      h+='</div></div>';
+      if((window.__eff||'')==='admin'){
+        h+='<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">';
+        if(r.status!=='matched') h+='<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="brokerSetStatus(\''+r.id+'\',\'matched\')">成立にする</button>';
+        if(r.status!=='closed') h+='<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="brokerSetStatus(\''+r.id+'\',\'closed\')">終了にする</button>';
+        if(r.status!=='open') h+='<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;font-size:12px;" onclick="brokerSetStatus(\''+r.id+'\',\'open\')">公開に戻す</button>';
+        h+='</div>';
+      } else {
+        h+='<div style="font-size:11px;color:#94A2B6;margin-top:8px;">※ 成立・終了などのステータス変更は運営が行います。掲載のご希望は各顧客カルテの「掲載申請」から運営へ申請してください。</div>';
+      }
+      h+='</div>';
     });
     box.innerHTML=h;
   }
   async function brokerSetStatus(id,status){
     var res=await sb.from('market_listings').update({status:status}).eq('id',id);
     if(res.error){ alert('更新エラー：'+res.error.message+'（パートナー/運営の更新ポリシー未設定の可能性があります）'); return; }
+    loadMarketBroker();
+  }
+
+  // ===== 掲載申請の審査（Phase60・運営コンソール） =====
+  async function loadMarketApps(){
+    var box=$('mkt-apps'); if(!box) return;
+    var res=await sb.from('market_applications').select('*').order('created_at',{ascending:false}).limit(100);
+    if(res.error){ box.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みエラー：'+esc(res.error.message)+'（Supabaseで「Phase60」のSQLを実行してください）</div>'; return; }
+    var rows=res.data||[];
+    var nameOf={};
+    try{ var pr=await sb.from('profiles').select('id,company_name,contact_name,email'); (pr.data||[]).forEach(function(p){ nameOf[p.id]=p.company_name||p.contact_name||p.email; }); }catch(e){}
+    // 直接掲載フォームの顧客セレクトも合わせて初期化
+    var csel=$('amk-cust');
+    if(csel && csel.options.length<2){
+      try{ var cr=await sb.from('profiles').select('id,company_name,contact_name,email').eq('role','customer').order('company_name',{ascending:true});
+        csel.innerHTML='<option value="">顧客を選択…</option>'+(cr.data||[]).map(function(c){ return '<option value="'+c.id+'">'+esc(c.company_name||c.contact_name||c.email)+'</option>'; }).join('');
+      }catch(e){}
+    }
+    var pend=rows.filter(function(a){return a.status==='pending';});
+    var done=rows.filter(function(a){return a.status!=='pending';}).slice(0,10);
+    var badge=$('mkapp-count'); if(badge){ badge.textContent=pend.length; badge.classList.toggle('hidden', !pend.length); }
+    var h='';
+    if(!pend.length){ h+='<div style="font-size:12px;color:#94A2B6;">審査待ちの申請はありません。パートナーが申請すると、ここに届きます。</div>'; }
+    pend.forEach(function(a){
+      var d=new Date(a.created_at); var ds=d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+      h+='<div class="clcard" style="cursor:default;border-left:3px solid #C39B3F;">'
+        +'<div class="cl-top"><span class="cl-nm">'+esc(a.title)+'</span>'
+        +'<span class="tag '+(a.side==='raise'?'blue':'green')+'">'+esc(mkSideLabel(a.side, a.kind))+'</span>'
+        +'<span class="tag gray">'+esc(mkKindLabel(a.kind))+'・'+esc(mkAmount(a.amount))+'</span>'
+        +'<span class="tag gold">審査待ち</span></div>'
+        +'<div style="font-size:11.5px;color:#5A6981;margin-top:5px;">掲載主：<b>'+esc(nameOf[a.customer_id]||'—')+'</b>'+(a.anonymous!==false?'（掲載時は匿名表示）':'（実名で掲載）')+' ／ 申請者：'+esc(nameOf[a.partner_id]||'—')+' ／ '+ds+(a.industry?(' ／ '+esc(a.industry)):'')+(a.rate?(' ／ 条件：'+esc(a.rate)):'')+'</div>'
+        +(a.detail?'<div style="font-size:12px;color:#5A6981;margin-top:6px;line-height:1.6;">'+esc(a.detail)+'</div>':'')
+        +(a.note?'<div style="font-size:11.5px;color:#8F7230;background:#F8F1DF;border-radius:8px;padding:6px 9px;margin-top:6px;">申し送り：'+esc(a.note)+'</div>':'')
+        +'<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap;">'
+          +'<button class="btn2" style="font-size:12px;" onclick="admApproveApp(\''+a.id+'\')">✔ 承認して掲載する</button>'
+          +'<button class="ghost" style="border:1px solid #E9C9C9;border-radius:8px;padding:6px 12px;font-size:12px;color:#A9403D;" onclick="admRejectApp(\''+a.id+'\')">↩ 差し戻す</button>'
+        +'</div></div>';
+    });
+    if(done.length){
+      h+='<details style="margin-top:8px;"><summary style="font-size:12px;color:#5A6981;cursor:pointer;">審査済みの申請（直近'+done.length+'件）</summary>';
+      done.forEach(function(a){
+        var d=new Date(a.created_at); var ds=d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+        h+='<div style="display:flex;gap:8px;align-items:center;padding:7px 2px;border-bottom:1px dashed var(--softline);font-size:12px;flex-wrap:wrap;">'
+          +'<span style="color:#94A2B6;">'+ds+'</span>'+mkAppStTag(a.status)
+          +'<span style="flex:1;min-width:140px;"><b>'+esc(a.title)+'</b>　'+esc(nameOf[a.customer_id]||'')+'</span>'
+          +(a.review_note?'<span style="color:#94A2B6;font-size:11px;">'+esc(a.review_note)+'</span>':'')
+        +'</div>';
+      });
+      h+='</details>';
+    }
+    box.innerHTML=h;
+  }
+  async function admApproveApp(id){
+    var r=await sb.from('market_applications').select('*').eq('id',id).limit(1);
+    if(r.error||!r.data||!r.data.length){ alert('申請を取得できませんでした：'+((r.error&&r.error.message)||'')); return; }
+    var a=r.data[0];
+    if(a.status!=='pending'){ alert('この申請はすでに処理済みです。'); loadMarketApps(); return; }
+    if(!confirm('この申請を承認し、案件として掲載しますか？')) return;
+    var row={ owner_id:a.customer_id, side:a.side, kind:a.kind, title:a.title, industry:(a.industry||null), amount:(a.amount==null?null:Number(a.amount)), rate:(a.rate||null), detail:(a.detail||null), anonymous:(a.anonymous!==false), status:'open' };
+    var ins=await sb.from('market_listings').insert(row).select('id');
+    if(ins.error){ alert('掲載エラー：'+ins.error.message+'（運営の掲載ポリシー未設定の可能性があります。Phase60のSQLをご確認ください）'); return; }
+    var lid=(ins.data&&ins.data[0]&&ins.data[0].id)||null;
+    var up=await sb.from('market_applications').update({status:'approved', reviewed_by:ME, reviewed_at:new Date().toISOString(), listing_id:lid}).eq('id',id);
+    if(up.error){ alert('掲載は完了しましたが、申請ステータスの更新に失敗しました：'+up.error.message); }
+    loadMarketApps(); loadMarketBroker();
+  }
+  async function admRejectApp(id){
+    var reason=prompt('差し戻しの理由（パートナーの申請状況に表示されます）','');
+    if(reason===null) return;
+    var res=await sb.from('market_applications').update({status:'rejected', review_note:(reason||null), reviewed_by:ME, reviewed_at:new Date().toISOString()}).eq('id',id).eq('status','pending');
+    if(res.error){ alert('差し戻しできませんでした：'+res.error.message); return; }
+    loadMarketApps();
+  }
+  async function admPostListing(){
+    var msg=$('amk-msg');
+    var cust=($('amk-cust')||{}).value||'';
+    var side=($('amk-side')||{}).value, kind=($('amk-kind')||{}).value, title=(($('amk-title')||{}).value||'').trim();
+    var amount=($('amk-amount')||{}).value, industry=(($('amk-industry')||{}).value||'').trim(), terms=(($('amk-terms')||{}).value||'').trim(), detail=(($('amk-detail')||{}).value||'').trim();
+    var anon=!!(($('amk-anon')||{}).checked);
+    if(!cust){ if(msg){msg.style.color='#A9403D';msg.textContent='掲載主（顧客）を選択してください。';} return; }
+    if(!title){ if(msg){msg.style.color='#A9403D';msg.textContent='タイトルを入力してください。';} return; }
+    var row={ owner_id:cust, side:side, kind:kind, title:title, industry:(industry||null), amount:(amount===''?null:Number(amount)), rate:(terms||null), detail:(detail||null), anonymous:anon, status:'open' };
+    var res=await sb.from('market_listings').insert(row);
+    if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='掲載エラー：'+res.error.message;} return; }
+    if(msg){msg.style.color='#27684A';msg.textContent='掲載しました。';}
+    if($('amk-title'))$('amk-title').value=''; if($('amk-amount'))$('amk-amount').value=''; if($('amk-industry'))$('amk-industry').value=''; if($('amk-terms'))$('amk-terms').value=''; if($('amk-detail'))$('amk-detail').value='';
     loadMarketBroker();
   }
 
