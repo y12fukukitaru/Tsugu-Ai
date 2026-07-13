@@ -640,7 +640,7 @@
   function navDefs(r){
     if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
     if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
-    return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','相続・贈与'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
+    return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
   function effectiveNav(r){
@@ -663,7 +663,7 @@
   var NAV_ICON={
     'sec-flow':'🏠','sec-chat':'💬','sec-reports':'📄','sec-mypdca':'🎯','sec-company':'🏢',
     'sec-cash':'💰','sec-ai':'🤖','sec-ins':'🧮','sec-ma':'🤝','sec-market':'💹','sec-sec':'🪄',
-    'sec-clients':'👥','sec-pdca':'🔄','sec-madeals':'📁','sec-knowledge':'📚','sec-sozoku':'🎁',
+    'sec-clients':'👥','sec-pdca':'🔄','sec-madeals':'📁','sec-knowledge':'📚','sec-sozoku':'🧮',
     'sec-kpi':'📊','sec-risk':'🚨','sec-fde':'🧑‍💼','sec-cust':'🏢','sec-exec':'📋',
     'sec-billing':'💳','sec-billpay':'💳','sec-audit':'🛡️','sec-broadcast':'📢','sec-support':'🛟'
   };
