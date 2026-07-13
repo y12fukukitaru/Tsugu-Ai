@@ -637,8 +637,8 @@
   // 役割ごとの全メニュー定義（ラベル付き）。設定で並び順・表示を変えられる
   function navDefs(r){
     if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
-    if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信']];
-    return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','相続・贈与'],['sec-billpay','お支払い'],['sec-sec','AI秘書']];
+    if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
+    return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','相続・贈与'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
   function effectiveNav(r){
@@ -663,7 +663,7 @@
     'sec-cash':'💰','sec-ai':'🤖','sec-ins':'🧮','sec-ma':'🤝','sec-market':'💹','sec-sec':'🪄',
     'sec-clients':'👥','sec-pdca':'🔄','sec-madeals':'📁','sec-knowledge':'📚','sec-sozoku':'🎁',
     'sec-kpi':'📊','sec-risk':'🚨','sec-fde':'🧑‍💼','sec-cust':'🏢','sec-exec':'📋',
-    'sec-billing':'💳','sec-billpay':'💳','sec-audit':'🛡️','sec-broadcast':'📢'
+    'sec-billing':'💳','sec-billpay':'💳','sec-audit':'🛡️','sec-broadcast':'📢','sec-support':'🛟'
   };
   function navGroups(r){
     if(r==='customer') return [
@@ -676,13 +676,13 @@
     if(r==='admin') return [
       ['概況',['sec-flow','sec-kpi','sec-risk']],
       ['管理',['sec-fde','sec-cust','sec-exec','sec-market']],
-      ['収益・統制',['sec-billing','sec-audit','sec-broadcast']]
+      ['収益・統制',['sec-billing','sec-audit','sec-broadcast','sec-support']]
     ];
     return [
       ['ホーム',['sec-flow']],
       ['顧客対応',['sec-clients','sec-pdca','sec-reports']],
       ['案件・収益',['sec-madeals','sec-market','sec-sozoku']],
-      ['学び・支援',['sec-knowledge','sec-sec']]
+      ['学び・支援',['sec-knowledge','sec-sec','sec-support']]
     ];
   }
   function niHtml(id,label,drawer){
@@ -1084,6 +1084,24 @@
         +'<div style="margin-top:8px;"><label class="fl">本文</label><textarea id="bc-body" class="inp2" rows="3" style="width:100%;" placeholder="お知らせの内容を入力"></textarea></div>'
         +'<div style="margin-top:10px;"><button class="btn2" onclick="postAnnouncement()">配信する</button><span id="bc-msg" style="font-size:12px;margin-left:8px;"></span></div>'
         +'<div id="bc-list" style="margin-top:12px;">読み込み中...</div></div>'
+      +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">🛟 サポート管理<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
+        +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:8px;">📥 パートナーからの問い合わせ<span id="adm-inq-count" class="nbadge hidden">0</span></div>'
+        +'<div id="adm-inq-list" style="margin-top:6px;">読み込み中...</div>'
+        +'<div style="border-top:1px solid #EDF1F6;margin-top:16px;padding-top:14px;">'
+          +'<div class="ph" style="font-size:13px;">📚 サポートBotナレッジ（AIの回答ネタ）</div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">ここに登録した内容が、パートナーポータルの「運営サポート」AIの知識になります。運営ルール・報酬規程・申請手順などを追加してください。「有効」のものだけがAIに読み込まれます（未登録でもAIは動作し、運営固有の質問は問い合わせを案内します）。</div>'
+          +'<div style="background:var(--soft);border-radius:10px;padding:12px;">'
+            +'<input type="hidden" id="kb-edit-id" value="">'
+            +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+              +'<div><label class="fl">カテゴリ</label><select id="kb-cat" class="inp2"><option value="rule">運営ルール</option><option value="fee">報酬・料金</option><option value="flow">申請・手続き</option><option value="faq">FAQ</option><option value="other">その他</option></select></div>'
+              +'<div style="flex:1;min-width:200px;"><label class="fl">タイトル</label><input id="kb-title" class="inp2" style="width:100%;" placeholder="例：M&A成約フィーの報酬配分ルール"></div>'
+            +'</div>'
+            +'<div style="margin-top:8px;"><label class="fl">内容（AIがこの文章をそのまま参照します）</label><textarea id="kb-content" class="inp2" rows="4" style="width:100%;" placeholder="例：M&A成約時のパートナー報酬は、成約フィーの◯％を…"></textarea></div>'
+            +'<div style="margin-top:10px;"><button class="btn2" onclick="admSaveKB()">保存する</button><button class="ghost" style="margin-left:8px;font-size:12px;border:1px solid var(--line);border-radius:8px;padding:6px 12px;" onclick="admResetKBForm()">クリア</button><span id="kb-msg" style="font-size:12px;margin-left:8px;"></span></div>'
+          +'</div>'
+          +'<div id="kb-list" style="margin-top:10px;">読み込み中...</div>'
+        +'</div>'
+      +'</div>'
       +'<div class="panel" id="sec-exec"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">📋 経営計画（社内）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadExecFunding();loadExecWeekly();loadExecKpi();">↺ 更新</span></div>'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 12px;">'
           +'<button class="sbtn on" id="ex-tb-fund" onclick="exShowTab(\'fund\')">💰 資金調達ロードマップ</button>'
@@ -1865,6 +1883,27 @@
             +'<textarea id="sec-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="相談内容を入力（Enterで送信／Shift+Enterで改行）"></textarea>'
             +'<button class="btn2" id="sec-send" onclick="secretarySend()">送信</button>'
           +'</div>'
+        +'</div>'
+        +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">🛟 運営サポート<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadSupportKnowledge();loadMyInquiries()">↺ 更新</span></div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">運営ルール・報酬・申請手順・機能の使い方など、運営に関する質問にAIがお答えします。AIで解決しない場合は、下の「運営に問い合わせる」から直接ご質問ください。</div>'
+          +'<div id="sup-log" style="max-height:300px;overflow:auto;border:1px solid #EDF1F6;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;"></div>'
+          +'<div style="display:flex;gap:8px;align-items:flex-end;">'
+            +'<textarea id="sup-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="運営への質問を入力（Enterで送信／Shift+Enterで改行）"></textarea>'
+            +'<button class="btn2" id="sup-send" onclick="supportSend()">送信</button>'
+          +'</div>'
+          +'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">'
+            +'<button class="ghost" style="font-size:11px;padding:4px 9px;border:1px solid var(--line);border-radius:7px;" onclick="supEscalate()" title="直前の質問を問い合わせフォームに転記します">📮 この質問を運営に送る</button>'
+            +'<button class="ghost" style="font-size:11px;padding:4px 9px;border:1px solid var(--line);border-radius:7px;" onclick="supClearLog()">🗑 履歴消去</button>'
+          +'</div>'
+          +'<div style="border-top:1px solid #EDF1F6;margin-top:14px;padding-top:14px;">'
+            +'<div class="ph" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;">📮 運営への問い合わせ<button class="ghost" style="font-size:11px;padding:4px 9px;border:1px solid var(--line);border-radius:7px;" onclick="supToggleInqForm()">＋ 新規問い合わせ</button></div>'
+            +'<div id="sup-inq-form" class="hidden" style="background:var(--soft);border-radius:10px;padding:12px;margin-top:8px;">'
+              +'<div><label class="fl">件名</label><input id="sup-inq-subject" class="inp2" style="width:100%;" placeholder="例：M&A成約時の報酬配分について"></div>'
+              +'<div style="margin-top:8px;"><label class="fl">内容</label><textarea id="sup-inq-body" class="inp2" rows="3" style="width:100%;" placeholder="質問・相談内容を入力"></textarea></div>'
+              +'<div style="margin-top:10px;"><button class="btn2" onclick="supSubmitInquiry()">送信する</button><span id="sup-inq-msg" style="font-size:12px;margin-left:8px;"></span></div>'
+            +'</div>'
+            +'<div id="sup-inq-list" style="margin-top:10px;">読み込み中...</div>'
+          +'</div>'
         +'</div>';
     } else {
       view=adminViewHtml(email, prof);
@@ -1873,8 +1912,8 @@
     window.__eff=eff;
     $('app-body').innerHTML=view;
     if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); if(window.__role==='admin') loadAdmPreviewCustomers(); }
-    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); }
-    else { loadAdmin(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); }
+    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); }
+    else { loadAdmin(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); loadAdmInquiries(); loadSupportKB(); }
     startNotifPolling(eff);
     navSpyInit();
   }
@@ -5342,6 +5381,7 @@
     if(e.key!=='Enter') return;
     var t=e.target; if(!t||!t.id) return;
     if(t.id==='sec-input'){ if(!e.shiftKey){ e.preventDefault(); secretarySend(); } return; }
+    if(t.id==='sup-input'){ if(!e.shiftKey){ e.preventDefault(); supportSend(); } return; }
     if(t.id==='chat-input'){ if(!e.shiftKey){ e.preventDefault(); sendMyChat(); } return; }
     if(t.id==='cchat-input'){ if(!e.shiftKey){ e.preventDefault(); if(CURRENT_CLIENT) sendClientChat(CURRENT_CLIENT.id); } return; }
     var map={ 'login-email':doLogin, 'login-pw':doLogin, 'signup-email':doSignup, 'signup-pw':doSignup, 'signup-pw2':doSignup, 'reset-email':doReset, 'rec-pw':doUpdatePassword, 'rec-pw2':doUpdatePassword };
@@ -6698,6 +6738,213 @@
     var res=await sb.from('market_applications').update({status:'rejected', review_note:(reason||null), reviewed_by:ME, reviewed_at:new Date().toISOString()}).eq('id',id).eq('status','pending');
     if(res.error){ alert('差し戻しできませんでした：'+res.error.message); return; }
     loadMarketApps();
+  }
+  // ---- 運営サポート（Phase61）: パートナー向けサポートAI＋問い合わせ ----
+  var SUP_MSGS=[], SUP_KN=null, KB_CACHE=[];
+  function supKey(){ return 'tsugu_sup_'+(ME||''); }
+  function supSave(){ try{ localStorage.setItem(supKey(), JSON.stringify(SUP_MSGS.slice(-30))); }catch(e){} }
+  function supRestore(){ try{ SUP_MSGS=JSON.parse(localStorage.getItem(supKey())||'[]'); }catch(e){ SUP_MSGS=[]; } renderSupLog(); }
+  function supClearLog(){ if(!confirm('サポートAIの会話履歴を消去します。よろしいですか？')) return; SUP_MSGS=[]; try{ localStorage.removeItem(supKey()); }catch(e){} renderSupLog(); }
+  async function loadSupportKnowledge(){
+    try{
+      var r=await sb.from('support_knowledge').select('category,title,content').eq('enabled',true).order('sort_order',{ascending:true}).order('created_at',{ascending:true});
+      SUP_KN=r.error?[]:(r.data||[]);
+    }catch(e){ SUP_KN=[]; }
+    supRestore();
+  }
+  function supBotSys(){
+    var base='あなたは中小企業の事業承継プラットフォーム「Tsugu Ai -継-」の運営サポートAIです。認定パートナー（保険・M&A・相続などを扱う独立系のプロ）からの、運営ルール・報酬・申請手順・プラットフォーム機能の使い方に関する質問に、日本語で丁寧かつ簡潔に答えてください。';
+    var kn=SUP_KN||[];
+    if(kn.length){
+      var cats={rule:'運営ルール',fee:'報酬・料金',flow:'申請・手続き',faq:'FAQ',other:'その他'};
+      base+='\n\n以下は運営が登録した公式ナレッジです。回答は必ずこの内容に基づいてください。ナレッジに記載のない運営固有の事項（報酬額・規程・審査基準など）は推測で断定せず、画面下部の「運営への問い合わせ」からの確認を案内してください。\n';
+      kn.forEach(function(k){ base+='\n【'+(cats[k.category]||k.category||'その他')+'】'+(k.title||'')+'\n'+(k.content||'')+'\n'; });
+    } else {
+      base+='\n\n現在、運営の公式ナレッジはまだ登録されていません。一般的な考え方や機能の一般的な説明はできますが、報酬額・規程・審査基準など運営固有のルールについては絶対に推測で断定せず、画面下部の「運営への問い合わせ」からの確認を必ず案内してください。';
+    }
+    base+='\n\n税務・法務の個別判断が必要な内容は、税理士・弁護士等の専門家への確認を促してください。回答は長くても400字程度に収めてください。';
+    return base;
+  }
+  function renderSupLog(){
+    var box=$('sup-log'); if(!box)return;
+    if(!SUP_MSGS.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">例：「掲載申請はどこから出せますか」「M&A成約時の報酬の考え方を教えて」</div>'; return; }
+    var h='';
+    SUP_MSGS.forEach(function(m){
+      var me=m.role==='user';
+      var thinking=(m.content==='（考え中…）');
+      var st='max-width:86%;padding:10px 13px;border-radius:12px;font-size:13px;line-height:1.6;'+(me?'background:#2C5DA8;color:#fff;white-space:pre-wrap;':'background:#fff;border:1px solid #E2E7EF;color:#18202E;');
+      var inner=(me||thinking)?esc(m.content):mdLite(m.content);
+      h+='<div style="display:flex;flex-direction:column;align-items:'+(me?'flex-end':'flex-start')+';margin-bottom:8px;"><div style="'+st+'">'+inner+'</div></div>';
+    });
+    box.innerHTML=h; box.scrollTop=box.scrollHeight;
+  }
+  async function supportSend(){
+    var inp=$('sup-input'); if(!inp)return;
+    var t=inp.value.trim(); if(!t)return;
+    if(SUP_KN===null){ try{ await loadSupportKnowledge(); }catch(e){} }
+    SUP_MSGS.push({role:'user',content:t,ts:Date.now()}); inp.value='';
+    SUP_MSGS.push({role:'assistant',content:'（考え中…）'}); renderSupLog();
+    var btn=$('sup-send'); if(btn)btn.disabled=true;
+    var msgs=SUP_MSGS.filter(function(m){return m.content!=='（考え中…）';}).slice(-12).map(function(m){return {role:m.role,content:m.content};});
+    try{
+      var res=await sb.functions.invoke('ai-proxy',{ body:{ system:supBotSys(), messages:msgs, model:'claude-sonnet-4-6', max_tokens:1200 } });
+      if(SUP_MSGS.length && SUP_MSGS[SUP_MSGS.length-1].content==='（考え中…）') SUP_MSGS.pop();
+      if(res.error){ SUP_MSGS.push({role:'assistant',content:'エラー：'+(res.error.message||'呼び出しに失敗しました'),ts:Date.now()}); }
+      else if(res.data && res.data.ok===false){ SUP_MSGS.push({role:'assistant',content:res.data.error||'エラーが発生しました',ts:Date.now()}); }
+      else { SUP_MSGS.push({role:'assistant',content:(res.data&&res.data.text)||'(応答なし)',ts:Date.now()}); }
+    }catch(e){ if(SUP_MSGS.length && SUP_MSGS[SUP_MSGS.length-1].content==='（考え中…）') SUP_MSGS.pop(); SUP_MSGS.push({role:'assistant',content:'エラー：'+String((e&&e.message)||e),ts:Date.now()}); }
+    renderSupLog(); supSave(); if(btn)btn.disabled=false;
+  }
+  function supToggleInqForm(){ var f=$('sup-inq-form'); if(f) f.classList.toggle('hidden'); }
+  function supEscalate(){
+    var last=null;
+    for(var i=SUP_MSGS.length-1;i>=0;i--){ if(SUP_MSGS[i].role==='user'){ last=SUP_MSGS[i].content; break; } }
+    var f=$('sup-inq-form'); if(f) f.classList.remove('hidden');
+    if(last){ var b=$('sup-inq-body'); if(b) b.value=last; var s=$('sup-inq-subject'); if(s&&!s.value) s.value=last.slice(0,30); }
+    var el=$('sup-inq-form'); if(el&&el.scrollIntoView) el.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  async function supSubmitInquiry(){
+    var msg=$('sup-inq-msg');
+    var subject=(($('sup-inq-subject')||{}).value||'').trim();
+    var body=(($('sup-inq-body')||{}).value||'').trim();
+    if(!subject&&!body){ if(msg){msg.style.color='#A9403D';msg.textContent='件名または内容を入力してください。';} return; }
+    var res=await sb.from('support_inquiries').insert({ partner_id:ME, subject:(subject||'（件名なし）'), body:(body||null), status:'open' });
+    if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='送信できませんでした：'+res.error.message+'（Supabaseで「Phase61」のSQLを実行してください）';} return; }
+    if(msg){msg.style.color='#3E7E4F';msg.textContent='運営に送信しました。回答はこの下の履歴に表示されます。';}
+    var s=$('sup-inq-subject'); if(s)s.value=''; var b=$('sup-inq-body'); if(b)b.value='';
+    loadMyInquiries();
+  }
+  function inqStTag(st){
+    if(st==='answered') return '<span class="tag green">回答済み</span>';
+    if(st==='closed') return '<span class="tag gray">クローズ</span>';
+    return '<span class="tag gold">運営確認中</span>';
+  }
+  async function loadMyInquiries(){
+    var box=$('sup-inq-list'); if(!box)return;
+    var r=await sb.from('support_inquiries').select('*').eq('partner_id',ME).order('created_at',{ascending:false}).limit(20);
+    if(r.error){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">問い合わせ機能を使うには、Supabaseで「Phase61」のSQLを実行してください。</div>'; return; }
+    var rows=r.data||[];
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">問い合わせ履歴はまだありません。</div>'; return; }
+    var h='';
+    rows.forEach(function(q){
+      var d=new Date(q.created_at); var ds=d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+      h+='<div style="border:1px solid #E2E7EF;border-radius:11px;padding:11px 13px;margin-bottom:8px;">'
+        +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><span style="font-size:12px;color:#94A2B6;">'+ds+'</span>'+inqStTag(q.status)+'<span style="font-size:13px;font-weight:600;color:#18202E;">'+esc(q.subject||'')+'</span></div>'
+        +(q.body?'<div style="font-size:12px;color:#5A6981;margin-top:5px;line-height:1.6;white-space:pre-wrap;">'+esc(q.body)+'</div>':'')
+        +(q.admin_reply?'<div style="font-size:12px;color:#1E3A66;background:#EFF5FC;border-radius:8px;padding:8px 10px;margin-top:7px;line-height:1.65;white-space:pre-wrap;"><b>運営からの回答：</b><br>'+esc(q.admin_reply)+'</div>':'')
+      +'</div>';
+    });
+    box.innerHTML=h;
+  }
+  // ---- 運営サポート（Phase61）: 運営側 受信箱＋ナレッジ管理 ----
+  async function loadAdmInquiries(){
+    var box=$('adm-inq-list'); if(!box)return;
+    var r=await sb.from('support_inquiries').select('*').order('created_at',{ascending:false}).limit(50);
+    if(r.error){ box.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みエラー：'+esc(r.error.message)+'（Supabaseで「Phase61」のSQLを実行してください）</div>'; return; }
+    var rows=r.data||[];
+    var nameOf={};
+    try{ var pr=await sb.from('profiles').select('id,company_name,contact_name,email'); (pr.data||[]).forEach(function(p){ nameOf[p.id]=p.company_name||p.contact_name||p.email; }); }catch(e){}
+    var open=rows.filter(function(q){return q.status==='open';});
+    var badge=$('adm-inq-count'); if(badge){ badge.textContent=open.length; badge.classList.toggle('hidden', !open.length); }
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">問い合わせはまだありません。パートナーが「運営サポート」から送信すると、ここに届きます。</div>'; return; }
+    var h='';
+    rows.forEach(function(q){
+      var d=new Date(q.created_at); var ds=d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+      var isOpen=q.status==='open';
+      h+='<div style="border:1px solid #E2E7EF;border-radius:11px;padding:11px 13px;margin-bottom:8px;'+(isOpen?'border-left:3px solid #C39B3F;':'')+'">'
+        +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><span style="font-size:12px;color:#94A2B6;">'+ds+'</span>'+inqStTag(q.status)+'<span style="font-size:13px;font-weight:600;color:#18202E;">'+esc(q.subject||'')+'</span><span style="font-size:12px;color:#5A6981;">'+esc(nameOf[q.partner_id]||'—')+'</span></div>'
+        +(q.body?'<div style="font-size:12px;color:#5A6981;margin-top:5px;line-height:1.6;white-space:pre-wrap;">'+esc(q.body)+'</div>':'')
+        +(q.admin_reply?'<div style="font-size:12px;color:#1E3A66;background:#EFF5FC;border-radius:8px;padding:8px 10px;margin-top:7px;line-height:1.65;white-space:pre-wrap;"><b>回答済み：</b><br>'+esc(q.admin_reply)+'</div>':'')
+        +(q.status!=='closed'
+          ? '<div style="margin-top:9px;">'
+            +(isOpen?'<textarea id="inq-rep-'+q.id+'" class="inp2" rows="2" style="width:100%;" placeholder="回答を入力（パートナーの問い合わせ履歴に表示されます）"></textarea>':'')
+            +'<div style="display:flex;gap:8px;margin-top:7px;flex-wrap:wrap;">'
+              +(isOpen?'<button class="btn2" style="font-size:12px;" onclick="admReplyInquiry(\''+q.id+'\')">回答する</button>':'')
+              +'<button class="ghost" style="border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12px;" onclick="admCloseInquiry(\''+q.id+'\')">クローズ</button>'
+            +'</div></div>'
+          : '')
+      +'</div>';
+    });
+    box.innerHTML=h;
+  }
+  async function admReplyInquiry(id){
+    var t=$('inq-rep-'+id); var v=(t&&t.value||'').trim();
+    if(!v){ alert('回答を入力してください。'); return; }
+    var res=await sb.from('support_inquiries').update({ admin_reply:v, status:'answered', replied_by:ME, replied_at:new Date().toISOString() }).eq('id',id);
+    if(res.error){ alert('回答を保存できませんでした：'+res.error.message); return; }
+    loadAdmInquiries();
+  }
+  async function admCloseInquiry(id){
+    if(!confirm('この問い合わせをクローズします。よろしいですか？')) return;
+    var res=await sb.from('support_inquiries').update({ status:'closed' }).eq('id',id);
+    if(res.error){ alert('クローズできませんでした：'+res.error.message); return; }
+    loadAdmInquiries();
+  }
+  var KB_CATS={rule:'運営ルール',fee:'報酬・料金',flow:'申請・手続き',faq:'FAQ',other:'その他'};
+  async function loadSupportKB(){
+    var box=$('kb-list'); if(!box)return;
+    var r=await sb.from('support_knowledge').select('*').order('sort_order',{ascending:true}).order('created_at',{ascending:true});
+    if(r.error){ box.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みエラー：'+esc(r.error.message)+'（Supabaseで「Phase61」のSQLを実行してください）</div>'; return; }
+    KB_CACHE=r.data||[];
+    if(!KB_CACHE.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">ナレッジはまだありません。上のフォームから追加すると、パートナー向けAIがその内容で回答するようになります。</div>'; return; }
+    var h='';
+    KB_CACHE.forEach(function(k){
+      var short=(k.content||''); if(short.length>120) short=short.slice(0,120)+'…';
+      h+='<div style="border:1px solid #E2E7EF;border-radius:11px;padding:10px 13px;margin-bottom:8px;'+(k.enabled?'':'opacity:.55;')+'">'
+        +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
+          +'<span class="tag '+(k.enabled?'green':'gray')+'">'+(k.enabled?'有効':'無効')+'</span>'
+          +'<span class="tag gray">'+esc(KB_CATS[k.category]||k.category||'その他')+'</span>'
+          +'<span style="font-size:13px;font-weight:600;color:#18202E;flex:1;min-width:140px;">'+esc(k.title||'')+'</span>'
+          +'<button class="ghost" style="font-size:11px;border:1px solid var(--line);border-radius:7px;padding:4px 9px;" onclick="admEditKB(\''+k.id+'\')">✎ 編集</button>'
+          +'<button class="ghost" style="font-size:11px;border:1px solid var(--line);border-radius:7px;padding:4px 9px;" onclick="admToggleKB(\''+k.id+'\','+(k.enabled?'false':'true')+')">'+(k.enabled?'無効にする':'有効にする')+'</button>'
+          +'<button class="ghost" style="font-size:11px;border:1px solid #E9C9C9;border-radius:7px;padding:4px 9px;color:#A9403D;" onclick="admDelKB(\''+k.id+'\')">✕ 削除</button>'
+        +'</div>'
+        +'<div style="font-size:12px;color:#5A6981;margin-top:5px;line-height:1.6;">'+esc(short)+'</div>'
+      +'</div>';
+    });
+    box.innerHTML=h;
+  }
+  async function admSaveKB(){
+    var msg=$('kb-msg');
+    var id=(($('kb-edit-id')||{}).value||'').trim();
+    var cat=($('kb-cat')||{}).value||'other';
+    var title=(($('kb-title')||{}).value||'').trim();
+    var content=(($('kb-content')||{}).value||'').trim();
+    if(!title||!content){ if(msg){msg.style.color='#A9403D';msg.textContent='タイトルと内容を入力してください。';} return; }
+    var res;
+    if(id){ res=await sb.from('support_knowledge').update({ category:cat, title:title, content:content }).eq('id',id); }
+    else { res=await sb.from('support_knowledge').insert({ category:cat, title:title, content:content, enabled:true, created_by:ME }); }
+    if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='保存できませんでした：'+res.error.message+'（Supabaseで「Phase61」のSQLを実行してください）';} return; }
+    if(msg){msg.style.color='#3E7E4F';msg.textContent=id?'更新しました。':'追加しました。パートナー向けAIに即時反映されます。';}
+    admResetKBForm(false); loadSupportKB();
+  }
+  function admResetKBForm(clearMsg){
+    var e=$('kb-edit-id'); if(e)e.value='';
+    var t=$('kb-title'); if(t)t.value='';
+    var c=$('kb-content'); if(c)c.value='';
+    var s=$('kb-cat'); if(s)s.value='rule';
+    if(clearMsg!==false){ var m=$('kb-msg'); if(m)m.textContent=''; }
+  }
+  function admEditKB(id){
+    var k=null; KB_CACHE.forEach(function(x){ if(x.id===id) k=x; });
+    if(!k) return;
+    var e=$('kb-edit-id'); if(e)e.value=k.id;
+    var s=$('kb-cat'); if(s)s.value=k.category||'other';
+    var t=$('kb-title'); if(t)t.value=k.title||'';
+    var c=$('kb-content'); if(c)c.value=k.content||'';
+    var m=$('kb-msg'); if(m){m.style.color='#5A6981';m.textContent='編集中：保存するまで反映されません。';}
+    if(t&&t.scrollIntoView) t.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  async function admToggleKB(id,en){
+    var res=await sb.from('support_knowledge').update({ enabled:(en==='true'||en===true) }).eq('id',id);
+    if(res.error){ alert('変更できませんでした：'+res.error.message); return; }
+    loadSupportKB();
+  }
+  async function admDelKB(id){
+    if(!confirm('このナレッジを削除します。よろしいですか？')) return;
+    var res=await sb.from('support_knowledge').delete().eq('id',id);
+    if(res.error){ alert('削除できませんでした：'+res.error.message); return; }
+    loadSupportKB();
   }
   async function admPostListing(){
     var msg=$('amk-msg');
