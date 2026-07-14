@@ -1684,6 +1684,10 @@
           +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:8px;">返信漏れ・期日・接点切れを自動チェックして、優先順に並べています。</div>'
           +'<div id="todo-list">読み込み中...</div>'
         +'</div>'
+        +'<div class="panel" id="sec-journey2"><div class="ph">価値の流れ（顧客への提案軸）</div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;">①現状把握 → ②AI・自動化 → ③コスト削減 → ④余力 → ⑤次の投資（M&A）の流れで支援します。</div>'
+          + stepperHtml()
+        +'</div>'
         +'<div class="panel" id="sec-clients">'
           +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">顧客管理'
             +'<span style="display:flex;gap:8px;align-items:center;">'
@@ -1832,10 +1836,6 @@
           +'</div>'
           +'<div id="kn-list" style="margin-top:6px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-journey2"><div class="ph">価値の流れ（顧客への提案軸）</div>'
-          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;">①現状把握 → ②AI・自動化 → ③コスト削減 → ④余力 → ⑤次の投資（M&A）の流れで支援します。</div>'
-          + stepperHtml()
-        +'</div>'
         +'<div class="panel" id="sec-sozoku"><div class="ph">相続・贈与・事業承継シミュレーター</div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:14px;line-height:1.7;">目的に合わせて4つのシミュレーターをご利用ください。結果は印刷／PDFで顧客への提示・専門家への引き継ぎ資料になります。</div>'
           +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
@@ -1877,28 +1877,34 @@
           +'</div>'
         +'</div>'
         +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">🛟 運営サポート<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadSupportKnowledge();loadMyInquiries()">↺ 更新</span></div>'
-          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">運営ルール・報酬・申請手順・機能の使い方など、運営に関する質問にAIがお答えします。AIで解決しない場合は、下の「運営に問い合わせる」から直接ご質問ください。</div>'
-          +'<div id="sup-log" style="max-height:300px;overflow:auto;border:1px solid #EDF1F6;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;"></div>'
-          +'<div style="display:flex;gap:8px;align-items:flex-end;">'
-            +'<textarea id="sup-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="運営への質問を入力（Enterで送信／Shift+Enterで改行）"></textarea>'
-            +'<button class="btn2" id="sup-send" onclick="supportSend()">送信</button>'
+          +'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">'
+            +'<button class="btn2" id="sup-tb-bot" style="flex:1;min-width:150px;font-size:13px;padding:10px;" onclick="supShowTab(\'bot\')">🤖 AIサポート（即答）</button>'
+            +'<button class="btn2" id="sup-tb-inq" style="flex:1;min-width:150px;font-size:13px;padding:10px;background:#fff;color:#1E3A66;border:1.5px solid #C9D6EA;" onclick="supShowTab(\'inq\')">📮 運営への問い合わせ<span id="sup-inq-badge" class="nbadge hidden" style="margin-left:6px;">0</span></button>'
           +'</div>'
-          +'<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">'
-            +'<button class="btn2" style="font-size:12px;background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;" onclick="supEscalate()" title="直前の質問を問い合わせフォームに転記します">📮 AIで解決しない → この質問を運営に送る</button>'
-            +'<span style="flex:1;"></span>'
-            +'<button class="ghost" style="font-size:11px;padding:4px 9px;border:1px solid var(--line);border-radius:7px;" onclick="supClearLog()">🗑 履歴消去</button>'
+          +'<div id="sup-tab-bot">'
+            +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">運営ルール・報酬・申請手順・機能の使い方など、運営に関する質問にAIがお答えします。AIで解決しない場合は「📮 運営への問い合わせ」タブから担当者に直接ご質問ください。</div>'
+            +'<div id="sup-log" style="max-height:300px;overflow:auto;border:1px solid #EDF1F6;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;"></div>'
+            +'<div style="display:flex;gap:8px;align-items:flex-end;">'
+              +'<textarea id="sup-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="運営への質問を入力（Enterで送信／Shift+Enterで改行）"></textarea>'
+              +'<button class="btn2" id="sup-send" onclick="supportSend()">送信</button>'
+            +'</div>'
+            +'<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">'
+              +'<button class="btn2" style="font-size:12px;background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;" onclick="supEscalate()" title="直前の質問を問い合わせフォームに転記します">📮 AIで解決しない → この質問を運営に送る</button>'
+              +'<span style="flex:1;"></span>'
+              +'<button class="ghost" style="font-size:11px;padding:4px 9px;border:1px solid var(--line);border-radius:7px;" onclick="supClearLog()">🗑 履歴消去</button>'
+            +'</div>'
           +'</div>'
-          +'<div style="border:1.5px solid #C9D6EA;border-radius:12px;padding:15px 16px;margin-top:16px;background:#F5F9FE;">'
-            +'<div style="font-size:14px;font-weight:700;color:#1E3A66;">📮 運営への問い合わせ（担当者が回答します）</div>'
-            +'<div style="font-size:12px;color:#5A6981;margin:5px 0 10px;line-height:1.7;">報酬・審査・規程など運営の確認が必要な内容や、AIで解決しなかった質問は、こちらから直接お送りください。回答はこのページの下の履歴に表示されます。</div>'
-            +'<button class="btn2" id="sup-open-btn" style="width:100%;font-size:14px;padding:12px;" onclick="supToggleInqForm(true)">✉ 問い合わせフォームを開く</button>'
-            +'<div id="sup-inq-form" class="hidden" style="background:#fff;border:1px solid #DDE6F2;border-radius:10px;padding:14px;margin-top:10px;">'
-              +'<div><label class="fl">件名</label><input id="sup-inq-subject" class="inp2" style="width:100%;" placeholder="例：M&A成約時の報酬配分について"></div>'
-              +'<div style="margin-top:8px;"><label class="fl">内容</label><textarea id="sup-inq-body" class="inp2" rows="4" style="width:100%;" placeholder="質問・相談内容を入力（できるだけ具体的に書いていただくと回答が早くなります）"></textarea></div>'
-              +'<div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap;">'
-                +'<button class="btn2" style="font-size:13px;padding:10px 22px;" onclick="supSubmitInquiry()">📮 運営に送信する</button>'
-                +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:8px 14px;" onclick="supToggleInqForm(false)">キャンセル</button>'
-                +'<span id="sup-inq-msg" style="font-size:12px;"></span>'
+          +'<div id="sup-tab-inq" class="hidden">'
+            +'<div style="border:1.5px solid #C9D6EA;border-radius:12px;padding:15px 16px;background:#F5F9FE;">'
+              +'<div style="font-size:14px;font-weight:700;color:#1E3A66;">📮 運営への問い合わせ（担当者が回答します）</div>'
+              +'<div style="font-size:12px;color:#5A6981;margin:5px 0 12px;line-height:1.7;">報酬・審査・規程など運営の確認が必要な内容や、AIで解決しなかった質問は、こちらから直接お送りください。回答は下の履歴に表示されます。</div>'
+              +'<div id="sup-inq-form" style="background:#fff;border:1px solid #DDE6F2;border-radius:10px;padding:14px;">'
+                +'<div><label class="fl">件名</label><input id="sup-inq-subject" class="inp2" style="width:100%;" placeholder="例：M&A成約時の報酬配分について"></div>'
+                +'<div style="margin-top:8px;"><label class="fl">内容</label><textarea id="sup-inq-body" class="inp2" rows="4" style="width:100%;" placeholder="質問・相談内容を入力（できるだけ具体的に書いていただくと回答が早くなります）"></textarea></div>'
+                +'<div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap;">'
+                  +'<button class="btn2" style="font-size:13px;padding:10px 22px;" onclick="supSubmitInquiry()">📮 運営に送信する</button>'
+                  +'<span id="sup-inq-msg" style="font-size:12px;"></span>'
+                +'</div>'
               +'</div>'
             +'</div>'
             +'<div class="ph" style="font-size:13px;margin-top:14px;">問い合わせ履歴と運営からの回答</div>'
@@ -6159,12 +6165,28 @@
   function stepperHtml(cur){
     function st(n,t,s,act,tgt,c){ var on=(String(cur)===String(n)); var foot= on? '<div style="font-size:9px;color:#fff;background:'+c+';border-radius:99px;padding:1px 8px;display:inline-block;margin-top:5px;">現在地</div>' : '<div style="font-size:10px;color:'+c+';margin-top:6px;font-weight:600;">'+act+' ›</div>'; return '<div onclick="goSec(\''+tgt+'\')" style="flex:1 1 112px;min-width:112px;background:'+(on?'#EAF1FB':'#F8F9FC')+';border:'+(on?'2px':'1px')+' solid '+(on?c:'#EDF1F6')+';border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;"><div style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:'+c+';color:#fff;font-size:12px;font-weight:600;">'+n+'</div><div style="font-size:13px;font-weight:600;color:#18202E;margin-top:6px;">'+t+'</div><div style="font-size:11px;color:#94A2B6;margin-top:2px;line-height:1.4;">'+s+'</div>'+foot+'</div>'; }
     var ar='<div style="display:flex;align-items:center;color:#B7C4D6;font-size:16px;">→</div>';
+    // 役割ごとに「押したときの飛び先」と行動ラベルを変える
+    var r=currentRole(), defs;
+    if(r==='consultant') defs=[
+      ['1','現状把握','財務の見える化','顧客カルテで入力','sec-clients','#2C5DA8'],
+      ['2','AI活用・自動化','業務を効率化','課題PDCAで実行','sec-pdca','#2C5DA8'],
+      ['3','コスト削減','固定費・税の最適化','シミュレーターへ','sec-sozoku','#2C5DA8'],
+      ['4','生まれた余力','利益・資金の確保','マーケットへ','sec-market','#27684A'],
+      ['5','次の投資','M&A・HD化で成長','M&A案件へ','sec-madeals','#27684A']];
+    else if(r==='admin') defs=[
+      ['1','現状把握','財務の見える化','顧客一覧へ','sec-cust','#2C5DA8'],
+      ['2','AI活用・自動化','業務を効率化','KPIを見る','sec-kpi','#2C5DA8'],
+      ['3','コスト削減','固定費・税の最適化','課金・契約へ','sec-billing','#2C5DA8'],
+      ['4','生まれた余力','利益・資金の確保','要対応を見る','sec-risk','#27684A'],
+      ['5','次の投資','M&A・HD化で成長','マーケットへ','sec-market','#27684A']];
+    else defs=[
+      ['1','現状把握','財務の見える化','財務を見る','sec-cash','#2C5DA8'],
+      ['2','AI活用・自動化','業務を効率化','AI診断する','sec-ai','#2C5DA8'],
+      ['3','コスト削減','固定費・税の最適化','保険を見る','sec-ins','#2C5DA8'],
+      ['4','生まれた余力','利益・資金の確保','資金を見る','sec-status','#27684A'],
+      ['5','次の投資','M&A・HD化で成長','M&Aを見る','sec-ma','#27684A']];
     return '<div style="display:flex;align-items:stretch;gap:6px;flex-wrap:wrap;">'
-      +st('1','現状把握','財務の見える化','財務を見る','sec-cash','#2C5DA8')+ar
-      +st('2','AI活用・自動化','業務を効率化','AI診断する','sec-ai','#2C5DA8')+ar
-      +st('3','コスト削減','固定費・税の最適化','保険を見る','sec-ins','#2C5DA8')+ar
-      +st('4','生まれた余力','利益・資金の確保','資金を見る','sec-status','#27684A')+ar
-      +st('5','次の投資','M&A・HD化で成長','M&Aを見る','sec-ma','#27684A')
+      + defs.map(function(d){ return st(d[0],d[1],d[2],d[3],d[4],d[5]); }).join(ar)
       +'</div>';
   }
   function vjCalc(){ var total=num('vj-auto')*12+num('vj-ins'); var el=$('vj-total'); if(el) el.textContent=Math.round(total).toLocaleString('ja-JP')+' 万円/年'; }
@@ -6864,25 +6886,25 @@
     }catch(e){ if(SUP_MSGS.length && SUP_MSGS[SUP_MSGS.length-1].content==='（考え中…）') SUP_MSGS.pop(); SUP_MSGS.push({role:'assistant',content:'エラー：'+String((e&&e.message)||e),ts:Date.now()}); }
     renderSupLog(); supSave(); if(btn)btn.disabled=false;
   }
-  function supToggleInqForm(open){
-    var f=$('sup-inq-form'), b=$('sup-open-btn');
-    if(!f) return;
-    var show = (open===true) ? true : (open===false ? false : f.classList.contains('hidden'));
-    f.classList.toggle('hidden', !show);
-    if(b) b.classList.toggle('hidden', show);
-    if(show){
-      var s=$('sup-inq-subject'); if(s) s.focus();
-      if(f.scrollIntoView) f.scrollIntoView({behavior:'smooth',block:'center'});
-    }
+  function supShowTab(t){
+    var bot=$('sup-tab-bot'), inq=$('sup-tab-inq');
+    if(bot) bot.classList.toggle('hidden', t!=='bot');
+    if(inq) inq.classList.toggle('hidden', t!=='inq');
+    var on='flex:1;min-width:150px;font-size:13px;padding:10px;';
+    var off=on+'background:#fff;color:#1E3A66;border:1.5px solid #C9D6EA;';
+    var tb=$('sup-tb-bot'); if(tb) tb.style.cssText=(t==='bot'?on:off);
+    var ti=$('sup-tb-inq'); if(ti) ti.style.cssText=(t==='inq'?on:off);
   }
   function supEscalate(){
     var last=null;
     for(var i=SUP_MSGS.length-1;i>=0;i--){ if(SUP_MSGS[i].role==='user'){ last=SUP_MSGS[i].content; break; } }
-    if(!last){ alert('まずは上のチャットで質問を送ってください。その質問をそのまま運営への問い合わせに転記できます。'); return; }
-    supToggleInqForm(true);
+    if(!last){ alert('まずはチャットで質問を送ってください。その質問をそのまま運営への問い合わせに転記できます。'); return; }
+    supShowTab('inq');
     var b=$('sup-inq-body'); if(b) b.value=last;
     var s=$('sup-inq-subject'); if(s&&!s.value) s.value=last.slice(0,30);
     var m=$('sup-inq-msg'); if(m){ m.style.color='#5A6981'; m.textContent='チャットの質問を転記しました。内容を確認して「運営に送信する」を押してください。'; }
+    var f=$('sup-inq-form'); if(f&&f.scrollIntoView) f.scrollIntoView({behavior:'smooth',block:'center'});
+    var su=$('sup-inq-subject'); if(su) su.focus();
   }
   async function supSubmitInquiry(){
     var msg=$('sup-inq-msg');
@@ -6892,8 +6914,7 @@
     var res=await sb.from('support_inquiries').insert({ partner_id:ME, subject:(subject||'（件名なし）'), body:(body||null), status:'open' });
     if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='送信できませんでした：'+res.error.message+'（Supabaseで「Phase61」のSQLを実行してください）';} return; }
     var s=$('sup-inq-subject'); if(s)s.value=''; var b=$('sup-inq-body'); if(b)b.value='';
-    supToggleInqForm(false);
-    alert('運営に送信しました。担当者が確認のうえ、回答はこのページの「問い合わせ履歴」に表示されます。');
+    alert('運営に送信しました。担当者が確認のうえ、回答は下の「問い合わせ履歴」に表示されます。');
     loadMyInquiries();
   }
   function inqStTag(st){
@@ -6906,6 +6927,8 @@
     var r=await sb.from('support_inquiries').select('*').eq('partner_id',ME).order('created_at',{ascending:false}).limit(20);
     if(r.error){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">問い合わせ機能を使うには、Supabaseで「Phase61」のSQLを実行してください。</div>'; return; }
     var rows=r.data||[];
+    var bd=$('sup-inq-badge');
+    if(bd){ var na=rows.filter(function(q){return q.status==='answered';}).length; bd.textContent=na; bd.classList.toggle('hidden', !na); }
     if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">問い合わせ履歴はまだありません。</div>'; return; }
     var h='';
     rows.forEach(function(q){
