@@ -3269,8 +3269,28 @@
     var res=await sb.from('fde_notes').select('*').eq('customer_id',custId).order('created_at',{ascending:false});
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
     if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">まだ提案メモはありません。</div>'; return; }
-    var h=''; res.data.forEach(function(n){ var dt=(n.created_at||'').slice(0,10); h+='<div style="border:1px solid #EDF1F6;border-radius:9px;padding:10px 12px;margin-bottom:6px;"><div style="font-size:11px;color:#94A2B6;margin-bottom:4px;">'+esc(dt)+'</div><div style="font-size:13px;color:#18202E;white-space:pre-wrap;line-height:1.6;">'+esc(n.body)+'</div></div>'; });
+    var h='';
+    res.data.forEach(function(n){
+      var dt=(n.created_at||'').slice(0,10);
+      var ack = n.acked
+        ? '<span class="tag green">✓ 顧客確認済み'+(n.acked_at?('（'+String(n.acked_at).slice(0,10)+'）'):'')+'</span>'
+        : '<span class="tag gray">顧客未確認</span>';
+      h+='<div style="border:1px solid #EDF1F6;border-radius:9px;padding:10px 12px;margin-bottom:6px;background:#fff;">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">'
+          +'<span style="font-size:11px;color:#94A2B6;">'+esc(dt)+'</span>'+ack
+          +'<span style="flex:1;"></span>'
+          +'<button class="ghost" style="font-size:11px;border:1px solid #E9C9C9;border-radius:7px;padding:3px 9px;color:#A9403D;" onclick="delClientNote(\''+n.id+'\',\''+custId+'\')">✕ 削除</button>'
+        +'</div>'
+        +'<div style="font-size:13px;color:#18202E;white-space:pre-wrap;line-height:1.6;">'+esc(n.body)+'</div>'
+      +'</div>';
+    });
     box.innerHTML=h;
+  }
+  async function delClientNote(id, custId){
+    if(!confirm('この提案メモを削除します。顧客のダッシュボードからも消えます。よろしいですか？')) return;
+    var res=await sb.from('fde_notes').delete().eq('id',id);
+    if(res.error){ alert('削除できませんでした：'+res.error.message+'\n（Supabaseで「Phase63」のSQLを実行してください）'); return; }
+    loadClientNotes(custId);
   }
   async function addClientNote(custId){
     var ta=$('cnote-body'); if(!ta)return; var b=ta.value.trim(); if(!b)return;
@@ -5114,8 +5134,24 @@
     var res=await sb.from('fde_notes').select('*').eq('customer_id',ME).order('created_at',{ascending:false});
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
     if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">担当パートナーからの提案はまだありません。</div>'; return; }
-    var h=''; res.data.forEach(function(n){ var dt=(n.created_at||'').slice(0,10); h+='<div style="border-left:3px solid #2C5DA8;background:#F8F9FC;border-radius:8px;padding:10px 12px;margin-bottom:6px;"><div style="font-size:11px;color:#94A2B6;margin-bottom:4px;">'+esc(dt)+'</div><div style="font-size:13px;color:#18202E;white-space:pre-wrap;line-height:1.6;">'+esc(n.body)+'</div></div>'; });
+    var h='';
+    res.data.forEach(function(n){
+      var dt=(n.created_at||'').slice(0,10);
+      var foot = n.acked
+        ? '<div style="font-size:11px;color:#27684A;margin-top:7px;">✓ 確認済み'+(n.acked_at?('（'+String(n.acked_at).slice(0,10)+'）'):'')+'　担当パートナーにも表示されます</div>'
+        : '<div style="margin-top:8px;"><button class="btn2" style="font-size:12px;padding:7px 16px;" onclick="ackMyNote(\''+n.id+'\')">✔ 内容を確認しました</button><span style="font-size:11px;color:#94A2B6;margin-left:8px;">押すと担当パートナーに「確認済み」と伝わります</span></div>';
+      h+='<div style="border-left:3px solid #2C5DA8;background:#F8F9FC;border-radius:8px;padding:10px 12px;margin-bottom:6px;">'
+        +'<div style="font-size:11px;color:#94A2B6;margin-bottom:4px;">'+esc(dt)+'</div>'
+        +'<div style="font-size:13px;color:#18202E;white-space:pre-wrap;line-height:1.6;">'+esc(n.body)+'</div>'
+        +foot
+      +'</div>';
+    });
     box.innerHTML=h;
+  }
+  async function ackMyNote(id){
+    var res=await sb.rpc('ack_fde_note',{ p_note_id:id });
+    if(res.error){ alert('確認を記録できませんでした：'+res.error.message); return; }
+    loadMyNotes();
   }
   async function loadFollowups(){ return loadClients(); }
 
