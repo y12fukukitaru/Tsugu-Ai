@@ -884,8 +884,10 @@
       +'<div class="panel"><span class="pill" style="background:#F7EFDC;color:#C39B3F;">運営コンソール</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">運営管理</h2>'
         +'<div class="kv">ログイン中：<b>'+esc(email)+'</b>　役割：<b>運営</b></div></div>'
-      +'<div class="panel" id="sec-flow"><div class="ph">成長ロードマップ</div>'
-        +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;">顧客支援の共通の流れです。</div>'+ stepperHtml() +'</div>'
+      +'<div class="panel" id="sec-flow"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">🚀 成長ロードマップ（事業計画連動）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmRoadmap()">↺ 更新</span></div>'
+        +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;">Tsugu Ai自体の成長ステージです。顧客・パートナー・調達の登録データから自動で現在地と進捗を表示します。目標の詳細は「経営計画」で管理します。</div>'
+        +'<div id="adm-roadmap">読み込み中...</div>'
+      +'</div>'
       +'<div class="panel"><div class="ph">登録状況サマリー</div><div id="adm-sum" class="sumchips" style="margin-top:4px;">読み込み中...</div></div>'
       +'<div class="panel" id="sec-kpi"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">📊 KPI（ステージ・ファネル／稼働）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">①現状把握→②自動化→③M&Aへの到達状況と、直近の稼働を可視化します。</div>'
@@ -1919,7 +1921,7 @@
     $('app-body').innerHTML=view;
     if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); if(window.__role==='admin') loadAdmPreviewCustomers(); }
     else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); }
-    else { loadAdmin(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); loadAdmInquiries(); loadSupportKB(); }
+    else { loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); loadAdmInquiries(); loadSupportKB(); }
     startNotifPolling(eff);
     navSpyInit();
   }
@@ -7050,6 +7052,65 @@
     var res=await sb.from('support_knowledge').delete().eq('id',id);
     if(res.error){ alert('削除できませんでした：'+res.error.message); return; }
     loadSupportKB();
+  }
+  // ---- 運営向け：事業計画連動の成長ロードマップ ----
+  async function loadAdmRoadmap(){
+    var box=$('adm-roadmap'); if(!box) return;
+    var custs=0, fdes=0, fundPlanM=0, fundDoneM=0;
+    try{
+      var pr=await sb.from('profiles').select('role');
+      if(!pr.error){ (pr.data||[]).forEach(function(p){ if(p.role==='customer')custs++; else if(p.role==='consultant')fdes++; }); }
+    }catch(e){}
+    try{
+      var fr=await sb.from('exec_funding_items').select('amount_m,status');
+      if(!fr.error){ (fr.data||[]).forEach(function(it){
+        if(it.status==='見送り') return;
+        var a=Number(it.amount_m)||0; fundPlanM+=a;
+        if(/実行|完了|着金/.test(it.status||'')) fundDoneM+=a;
+      }); }
+    }catch(e){}
+    var mrr = custs*5 + fdes*0.3; // 万円/月の概算（顧問5万円・パートナー基本料3千円）
+    // ステージ達成判定（事業計画のマイルストーン）
+    var s2done = (custs>=10 && fdes>=10);
+    var s3done = (fundDoneM>=50); // 5,000万円=50百万円
+    var s4done = (custs>=100);
+    var cur = !s2done?2 : (!s3done?3 : (!s4done?4 : 5));
+    function bar(label, v, tgt, unit, fmt){
+      var pc=Math.min(100, tgt>0?Math.round(v/tgt*100):0);
+      var vs=fmt?fmt(v):String(v);
+      return '<div style="margin-top:6px;text-align:left;">'
+        +'<div style="display:flex;justify-content:space-between;font-size:10px;color:#5A6981;"><span>'+label+'</span><span>'+vs+' / '+tgt+unit+'</span></div>'
+        +'<div style="height:5px;background:#E8EDF4;border-radius:99px;margin-top:2px;"><div style="height:5px;border-radius:99px;background:'+(pc>=100?'#27684A':'#2C5DA8')+';width:'+pc+'%;"></div></div>'
+      +'</div>';
+    }
+    function card(n,t,s,tgt,c,done,isCur,inner){
+      var st = done ? '<div style="font-size:9px;color:#fff;background:#27684A;border-radius:99px;padding:1px 8px;display:inline-block;margin-top:6px;">達成</div>'
+        : (isCur ? '<div style="font-size:9px;color:#fff;background:'+c+';border-radius:99px;padding:1px 8px;display:inline-block;margin-top:6px;">現在地</div>'
+        : '<div style="font-size:10px;color:#94A2B6;margin-top:6px;">今後</div>');
+      return '<div onclick="goSec(\''+tgt+'\')" style="flex:1 1 130px;min-width:130px;background:'+(isCur?'#FDF8EC':(done?'#F2F8F4':'#F8F9FC'))+';border:'+(isCur?'2px solid #C39B3F':(done?'1px solid #CFE3D6':'1px solid #EDF1F6'))+';border-radius:10px;padding:12px 10px;text-align:center;cursor:pointer;">'
+        +'<div style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:'+(done?'#27684A':c)+';color:#fff;font-size:12px;font-weight:600;">'+(done?'✓':n)+'</div>'
+        +'<div style="font-size:13px;font-weight:600;color:#18202E;margin-top:6px;">'+t+'</div>'
+        +'<div style="font-size:10.5px;color:#94A2B6;margin-top:2px;line-height:1.5;">'+s+'</div>'
+        +(inner||'')+st
+      +'</div>';
+    }
+    var ar='<div style="display:flex;align-items:center;color:#B7C4D6;font-size:16px;">→</div>';
+    var h='<div style="display:flex;align-items:stretch;gap:6px;flex-wrap:wrap;">'
+      + card('1','サービス基盤','本番運用・Stripe決済','sec-billing','#2C5DA8', true, false, '')
+      + ar
+      + card('2','初期トラクション','パートナー10名・顧問10社','sec-fde','#2C5DA8', s2done, cur===2,
+          bar('顧問先', custs, 10, '社') + bar('パートナー', fdes, 10, '名') + bar('MRR（概算）', Math.round(mrr), 50, '万円'))
+      + ar
+      + card('3','シード調達','FUNDINNO・VC 5,000万〜','sec-exec','#C39B3F', s3done, cur===3,
+          bar('実行済', Math.round(fundDoneM), 50, '百万円') + (fundPlanM?'<div style="font-size:10px;color:#94A2B6;margin-top:4px;text-align:left;">計画総額 '+Math.round(fundPlanM).toLocaleString()+'百万円</div>':''))
+      + ar
+      + card('4','組織化・スケール','COO/CTO採用・顧客100社','sec-kpi','#2C5DA8', s4done, cur===4,
+          bar('顧問先', custs, 100, '社'))
+      + ar
+      + card('5','IPO準備','グロース市場（5〜10年）','sec-exec','#27684A', false, cur===5, '')
+    +'</div>'
+    +'<div style="font-size:11px;color:#94A2B6;margin-top:10px;">※ 顧客・パートナー数は登録データ、調達は「経営計画」の資金調達リスト（状況が実行/完了/着金のもの）から自動集計。カードを押すと関連タブに移動します。</div>';
+    box.innerHTML=h;
   }
   async function admPostListing(){
     var msg=$('amk-msg');
