@@ -632,7 +632,7 @@
   function navDefs(r){
     if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
     if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
-    return [['sec-flow','ダッシュボード'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
+    return [['sec-flow','ダッシュボード'],['sec-growth','成長ロードマップ'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
   function effectiveNav(r){
@@ -657,7 +657,7 @@
     'sec-cash':'💰','sec-ai':'🤖','sec-ins':'🧮','sec-ma':'🤝','sec-market':'💹','sec-sec':'🪄',
     'sec-clients':'👥','sec-pdca':'🔄','sec-madeals':'📁','sec-knowledge':'📚','sec-sozoku':'🧮',
     'sec-kpi':'📊','sec-risk':'🚨','sec-fde':'🧑‍💼','sec-cust':'🏢','sec-exec':'📋',
-    'sec-billing':'💳','sec-billpay':'💳','sec-audit':'🛡️','sec-broadcast':'📢','sec-support':'🛟'
+    'sec-billing':'💳','sec-billpay':'💳','sec-audit':'🛡️','sec-broadcast':'📢','sec-support':'🛟','sec-growth':'🚀'
   };
   function niHtml(id,label,drawer){
     var ic=NAV_ICON[id]||'•';
@@ -1690,6 +1690,10 @@
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;">①現状把握 → ②AI・自動化 → ③コスト削減 → ④余力 → ⑤次の投資（M&A）の流れで支援します。</div>'
           + stepperHtml()
         +'</div>'
+        +'<div class="panel" id="sec-growth"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">🚀 パートナー成長ロードマップ<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadPartnerGrowth()">↺ 更新</span></div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;line-height:1.7;">認定パートナーのレベルと特典です。顧問契約数・HD化（M&A成約）実績に応じてレベルが上がり、外注費率と紹介先への割引が拡大します。実績はあなたの担当データから自動集計しています（正式なレベル認定は運営が行います）。</div>'
+          +'<div id="pg-body">読み込み中...</div>'
+        +'</div>'
         +'<div class="panel" id="sec-clients">'
           +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">顧客管理'
             +'<span style="display:flex;gap:8px;align-items:center;">'
@@ -1920,7 +1924,7 @@
     window.__eff=eff;
     $('app-body').innerHTML=view;
     if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); if(window.__role==='admin') loadAdmPreviewCustomers(); }
-    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); }
+    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); }
     else { loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); loadAdmInquiries(); loadSupportKB(); }
     startNotifPolling(eff);
     navSpyInit();
@@ -7110,6 +7114,71 @@
       + card('5','IPO準備','グロース市場（5〜10年）','sec-exec','#27684A', false, cur===5, '')
     +'</div>'
     +'<div style="font-size:11px;color:#94A2B6;margin-top:10px;">※ 顧客・パートナー数は登録データ、調達は「経営計画」の資金調達リスト（状況が実行/完了/着金のもの）から自動集計。カードを押すと関連タブに移動します。</div>';
+    box.innerHTML=h;
+  }
+  // ---- パートナー成長ロードマップ（認定レベル）----
+  var PG_LEVELS=[
+    { lv:1, name:'アソシエイト', cond:'研修修了でスタート', need:{cl:0,hd:0}, fee:'個別設定', off:'—' },
+    { lv:2, name:'シニア', cond:'初の顧問契約を獲得', need:{cl:1,hd:0}, fee:'60%', off:'2%OFF' },
+    { lv:3, name:'エグゼクティブ', cond:'顧問契約5件＋HD化1件', need:{cl:5,hd:1}, fee:'70%', off:'5%OFF' },
+    { lv:4, name:'プレミアム', cond:'顧問契約10件＋HD化2件', need:{cl:10,hd:2}, fee:'80%', off:'10%OFF' }
+  ];
+  async function loadPartnerGrowth(){
+    var box=$('pg-body'); if(!box) return;
+    var cl=0, hd=0;
+    try{
+      var pr=await sb.from('profiles').select('id').eq('consultant_id',ME).eq('role','customer');
+      var ids=(pr.error?[]:(pr.data||[])).map(function(x){return x.id;});
+      cl=ids.length;
+      if(ids.length){
+        var md=await sb.from('ma_deals').select('customer_id,stage').in('customer_id',ids);
+        if(!md.error){ (md.data||[]).forEach(function(d){ if((d.stage||0)>=7) hd++; }); }
+      }
+    }catch(e){}
+    // 目安レベル判定
+    var lv=1;
+    PG_LEVELS.forEach(function(L){ if(cl>=L.need.cl && hd>=L.need.hd) lv=Math.max(lv,L.lv); });
+    var next = PG_LEVELS.filter(function(L){ return L.lv===lv+1; })[0]||null;
+    function bar(label, v, tgt){
+      if(!tgt) return '';
+      var pc=Math.min(100, Math.round(v/tgt*100));
+      return '<div style="margin-top:6px;text-align:left;">'
+        +'<div style="display:flex;justify-content:space-between;font-size:10px;color:#5A6981;"><span>'+label+'</span><span>'+v+' / '+tgt+'</span></div>'
+        +'<div style="height:5px;background:#E8EDF4;border-radius:99px;margin-top:2px;"><div style="height:5px;border-radius:99px;background:'+(pc>=100?'#27684A':'#2C5DA8')+';width:'+pc+'%;"></div></div>'
+      +'</div>';
+    }
+    var ar='<div style="display:flex;align-items:center;color:#B7C4D6;font-size:16px;">→</div>';
+    var cards=PG_LEVELS.map(function(L){
+      var done=(L.lv<=lv), isCur=(L.lv===lv+1)||(lv===4&&L.lv===4);
+      if(lv===4) { done=(L.lv<=4); isCur=false; }
+      var inner='';
+      if(L.lv===lv+1){ inner = bar('顧問契約', cl, L.need.cl) + (L.need.hd?bar('HD化（M&A成約）', hd, L.need.hd):''); }
+      var st = done ? '<div style="font-size:9px;color:#fff;background:#27684A;border-radius:99px;padding:1px 8px;display:inline-block;margin-top:6px;">'+(L.lv===lv?'現在のレベル':'達成')+'</div>'
+        : (isCur ? '<div style="font-size:9px;color:#fff;background:#C39B3F;border-radius:99px;padding:1px 8px;display:inline-block;margin-top:6px;">次の目標</div>'
+        : '<div style="font-size:10px;color:#94A2B6;margin-top:6px;">今後</div>');
+      return '<div style="flex:1 1 150px;min-width:150px;background:'+(L.lv===lv?'#F2F8F4':(isCur?'#FDF8EC':'#F8F9FC'))+';border:'+(L.lv===lv?'2px solid #27684A':(isCur?'2px solid #C39B3F':'1px solid #EDF1F6'))+';border-radius:10px;padding:12px 10px;text-align:center;">'
+        +'<div style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:99px;padding:0 7px;background:'+(done?'#27684A':(isCur?'#C39B3F':'#94A2B6'))+';color:#fff;font-size:11px;font-weight:700;">Lv.'+L.lv+'</div>'
+        +'<div style="font-size:13px;font-weight:700;color:#18202E;margin-top:6px;">'+L.name+'</div>'
+        +'<div style="font-size:10.5px;color:#94A2B6;margin-top:2px;line-height:1.5;">'+L.cond+'</div>'
+        +'<div style="font-size:10.5px;color:#1E3A66;margin-top:6px;line-height:1.6;background:#fff;border:1px solid #E8EDF4;border-radius:8px;padding:5px 7px;">外注費率 <b>'+L.fee+'</b><br>紹介先の顧問料 <b>'+L.off+'</b></div>'
+        +inner+st
+      +'</div>';
+    }).join(ar);
+    var h='<div style="display:flex;align-items:stretch;gap:6px;flex-wrap:wrap;">'+cards+'</div>';
+    // 次のレベルまでのサマリー
+    if(next){
+      var needCl=Math.max(0, next.need.cl-cl), needHd=Math.max(0, next.need.hd-hd);
+      var parts=[];
+      if(needCl>0) parts.push('顧問契約 あと'+needCl+'件');
+      if(needHd>0) parts.push('HD化（M&A成約） あと'+needHd+'件');
+      h+='<div style="margin-top:12px;border:1.5px solid #C9D6EA;background:#F5F9FE;border-radius:11px;padding:12px 14px;font-size:13px;color:#1E3A66;">'
+        +'<b>Lv.'+next.lv+' '+next.name+'</b> まで：'+(parts.length?parts.join('・'):'条件達成！運営の認定をお待ちください')
+        +'<span style="font-size:11px;color:#5A6981;">（現在：顧問契約 '+cl+'件・HD化 '+hd+'件）</span>'
+      +'</div>';
+    } else {
+      h+='<div style="margin-top:12px;border:1.5px solid #CFE3D6;background:#F2F8F4;border-radius:11px;padding:12px 14px;font-size:13px;color:#27684A;"><b>最高レベル（Lv.4 プレミアム）の条件を満たしています。</b>いつもありがとうございます！</div>';
+    }
+    h+='<div style="font-size:11px;color:#94A2B6;margin-top:10px;line-height:1.7;">※ 顧問契約数＝担当顧客数、HD化＝担当顧客のM&A案件で「クロージング・PMI」以降に到達した件数として自動集計した目安です。正式なレベル認定・外注費率の適用は運営が行います。相違がある場合は<span style="color:#2C5DA8;cursor:pointer;font-weight:600;" onclick="goSec(\'sec-support\')">運営サポート</span>からお問い合わせください。</div>';
     box.innerHTML=h;
   }
   async function admPostListing(){
