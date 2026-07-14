@@ -630,7 +630,7 @@
   }
   // 役割ごとの全メニュー定義（ラベル付き）。設定で並び順・表示を変えられる
   function navDefs(r){
-    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-company','会社情報'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
+    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
     if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
     return [['sec-flow','ダッシュボード'],['sec-growth','成長ロードマップ'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
   }
@@ -1567,7 +1567,17 @@
         +'<div class="panel" id="sec-flow"><span class="pill">顧客ポータル</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">'+esc(prof.company_name||'経営者ダッシュボード')+'</h2>'
         +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b></div>'
-        +'<div id="dash-hero">読み込み中...</div></div>'
+        +'<div id="dash-hero">読み込み中...</div>'
+        +'<div id="my-partner"></div>'
+        +((r==='admin')?(
+          '<div id="adm-cust-verify" style="border-top:1px dashed var(--line);margin-top:14px;padding-top:12px;">'
+          +'<div style="font-size:12px;font-weight:700;color:#1E3A66;margin-bottom:5px;">🔎 運営：顧客の登録内容を確認</div>'
+          +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">この「（プレビュー）」画面は運営アカウント自身の情報を表示しています。パートナーが各顧客に登録した会社情報は、下で顧客を選ぶと確認できます。</div>'
+          +'<select id="adm-prev-cust" class="inp2" style="width:100%;" onchange="admCheckCustomerProfile(this.value)"><option value="">顧客を選択して確認…</option></select>'
+          +'<div id="adm-prev-cust-out" style="margin-top:8px;font-size:13px;"></div>'
+          +'</div>'
+        ):'')
+        +'</div>'
         +'<div id="my-nextmeet"></div>'
         +'<div id="my-annc"></div>'
         +'<div class="panel" id="sec-status"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">資金繰りステータス<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadCashStatus()">↺ 更新</span></div><div id="cash-status" style="margin-top:4px;">読み込み中...</div></div>'
@@ -1599,18 +1609,6 @@
         +'<div class="panel" id="sec-act"><div class="ph">アクション・課題</div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">担当パートナーが設定した、取り組み中の課題・タスクの一覧です。追加・変更のご希望は「メッセージ」でお知らせください。</div>'
           +'<div id="act-list" style="margin-top:6px;">読み込み中...</div>'
-        +'</div>'
-        +'<div class="panel" id="sec-company"><div class="ph">会社情報</div>'
-          +'<div class="kv" style="line-height:2;"><b>会社名：</b>'+esc(prof.company_name||'（未設定）')+'<br><b>ご担当者：</b>'+esc(prof.contact_name||'（未設定）')+'</div>'
-          +'<div style="font-size:12px;color:#94A2B6;margin-top:8px;">会社情報は担当パートナーが登録・管理します。内容に相違があれば「メッセージ」でお知らせください。担当が確認・修正します。</div>'
-          +((r==='admin')?(
-            '<div id="adm-cust-verify" style="border-top:1px dashed var(--line);margin-top:14px;padding-top:12px;">'
-            +'<div style="font-size:12px;font-weight:700;color:#1E3A66;margin-bottom:5px;">🔎 運営：顧客の登録内容を確認</div>'
-            +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">この「（プレビュー）」画面は運営アカウント自身の情報を表示しています（そのため上は「未設定」です）。パートナーが各顧客に登録した会社情報は、下で顧客を選ぶと確認できます。</div>'
-            +'<select id="adm-prev-cust" class="inp2" style="width:100%;" onchange="admCheckCustomerProfile(this.value)"><option value="">顧客を選択して確認…</option></select>'
-            +'<div id="adm-prev-cust-out" style="margin-top:8px;font-size:13px;"></div>'
-            +'</div>'
-          ):'')
         +'</div>'
         +'<div class="panel" id="sec-billpay"><div class="ph">💳 お支払い</div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">顧問料等のお支払いはこちらから。決済は国際的な決済基盤Stripeの安全なページで行われ、カード情報が当社のサーバーに保存されることはありません。</div>'
@@ -1923,7 +1921,7 @@
 
     window.__eff=eff;
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadDashHero(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); if(window.__role==='admin') loadAdmPreviewCustomers(); }
+    if(eff==='customer'){ loadDashHero(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); if(window.__role==='admin') loadAdmPreviewCustomers(); }
     else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); }
     else { loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); loadAdmInquiries(); loadSupportKB(); }
     startNotifPolling(eff);
@@ -4753,7 +4751,7 @@
         +'<div style="font-size:13px;color:#18202E;line-height:2;">'
         +'① <a onclick="goSec(\'sec-chat\')" style="color:#2C5DA8;cursor:pointer;font-weight:600;">メッセージ</a> で担当パートナーにあいさつ・直近の売上を送る<br>'
         +'② <a onclick="goSec(\'sec-ai\')" style="color:#2C5DA8;cursor:pointer;font-weight:600;">AI自動化診断</a> を試す（タップするだけ）<br>'
-        +'③ <a onclick="goSec(\'sec-company\')" style="color:#2C5DA8;cursor:pointer;font-weight:600;">会社情報</a> を確認（担当が登録します。相違があればメッセージで）'
+        +'③ <a onclick="goSec(\'sec-reports\')" style="color:#2C5DA8;cursor:pointer;font-weight:600;">月次レポート</a> を確認（毎月の数字とコメントはここに届きます）'
         +'</div></div>';
       box.innerHTML=h; return;
     }
@@ -5129,6 +5127,29 @@
     inp.value=''; loadClientChat(custId); loadFollowups();
   }
 
+  // 担当パートナーの表示（ダッシュボード）
+  async function loadMyPartner(){
+    var box=$('my-partner'); if(!box) return;
+    try{
+      var r=await sb.rpc('get_my_partner');
+      if(!r.error && r.data && r.data.length){
+        var p=r.data[0];
+        box.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid #E2E7EF;background:#F8F9FC;border-radius:11px;padding:11px 14px;margin-top:12px;">'
+          +'<span style="font-size:20px;">👤</span>'
+          +'<div style="flex:1;min-width:160px;"><div style="font-size:11px;color:#94A2B6;">あなたの担当パートナー</div>'
+          +'<div style="font-size:14px;font-weight:700;color:#18202E;">'+esc(p.partner_name||'—')+' 様'
+          +(p.partner_company?('<span style="font-size:11px;color:#5A6981;font-weight:400;">（'+esc(p.partner_company)+'）</span>'):'')+'</div></div>'
+          +'<button class="btn2" style="font-size:12px;" onclick="goSec(\'sec-chat\')">💬 メッセージで相談</button>'
+        +'</div>';
+        return;
+      }
+      if(!r.error){
+        box.innerHTML='<div style="font-size:12px;color:#94A2B6;margin-top:12px;">担当パートナーは調整中です。決まり次第、ここに表示されます。</div>';
+        return;
+      }
+    }catch(e){}
+    box.innerHTML='';
+  }
   async function loadMyNotes(){
     var box=$('my-notes'); if(!box)return;
     var res=await sb.from('fde_notes').select('*').eq('customer_id',ME).order('created_at',{ascending:false});
