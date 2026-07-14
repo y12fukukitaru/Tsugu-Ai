@@ -5009,8 +5009,7 @@
       if(focusMsg){
         // メッセージ欄まで移動して、すぐ返信できるようにする
         setTimeout(function(){
-          var t=$('cs-msg'); if(t) t.scrollIntoView({behavior:'smooth',block:'start'});
-          if(typeof clSpySet==='function') clSpySet('cs-msg');
+          if(typeof clShowSection==='function') clShowSection('cs-msg');
           var inp=$('cchat-input'); if(inp) try{ inp.focus(); }catch(e){}
         }, 450);
       }
@@ -5545,33 +5544,33 @@
     return '<div class="cl-ni" id="ni-'+id+'" onclick="clNav(\''+id+'\',this)"><span class="ci">'+icon+'</span><span>'+label+'</span><span class="clnb hidden" id="clnb-'+id+'">0</span></div>';
   }
   function clNav(id, el){
-    var t=$(id); if(!t)return;
-    t.scrollIntoView({behavior:'smooth',block:'start'});
-    clSpySet(id);
+    clShowSection(id);
   }
   function clSpySet(id){
     var side=$('cl-side'); if(!side)return;
     Array.prototype.forEach.call(side.querySelectorAll('.cl-ni'),function(n){ n.classList.toggle('on', n.id==='ni-'+id); });
   }
   var CL_SPY_IDS=['cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-bp','cs-shared'];
-  function clSpyInit(){
-    clSpySet('cs-company');
-    var scroller=document.querySelector('#cl-modal .modal') ? $('cl-modal') : null;
-    if(!scroller)return;
-    var ticking=false;
-    scroller.onscroll=function(){
-      if(ticking)return; ticking=true;
-      requestAnimationFrame(function(){
-        ticking=false;
-        var top=scroller.getBoundingClientRect().top, best='cs-msg', bestd=1e9;
-        CL_SPY_IDS.forEach(function(id){
-          var e=$(id); if(!e)return;
-          var d=Math.abs(e.getBoundingClientRect().top-top-80);
-          if(d<bestd){ bestd=d; best=id; }
-        });
-        clSpySet(best);
+  var CL_TAB_WRAPS=['ctab-msg','ctab-fin','ctab-tools','ctab-shared'];
+  // カルテ内タブ切替：見出し（cs-*）から次の見出しまでを1つのタブとして表示
+  function clShowSection(id){
+    if(CL_SPY_IDS.indexOf(id)<0) id='cs-company';
+    CL_TAB_WRAPS.forEach(function(wid){
+      var w=$(wid); if(!w) return;
+      var cur=null;
+      Array.prototype.forEach.call(w.children,function(ch){
+        if(ch.id && CL_SPY_IDS.indexOf(ch.id)>=0) cur=ch.id;
+        ch.style.display=(cur===id)?'':'none';
       });
-    };
+    });
+    clSpySet(id);
+    var m=$('cl-modal'); if(m) m.scrollTop=0;
+    // 非表示中はスクロール位置が反映されないため、メッセージを開いたら最新まで送る
+    if(id==='cs-msg'){ var lg=$('cchat-log'); if(lg) lg.scrollTop=lg.scrollHeight; }
+  }
+  function clSpyInit(){
+    var m=$('cl-modal'); if(m) m.onscroll=null; // 旧スクロール連動の解除
+    clShowSection('cs-company');
   }
   // ===== カルテ内ダッシュボードナビ（左サイド＆ヘッダーのハンバーガーで共用） =====
   var CL_NAV=[
