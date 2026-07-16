@@ -146,13 +146,8 @@
   .cl-tile .clnb{position:absolute;top:-5px;right:-5px;margin:0;box-shadow:0 0 0 2px var(--card);}
   .cl-sheet-hint{font-size:10.5px;color:var(--muted);margin-top:10px;line-height:1.6;}
   .cl-edit-row{display:flex;align-items:center;gap:8px;padding:8px 9px;border:1px solid var(--softline);border-radius:11px;margin-bottom:6px;background:var(--soft);}
-  .cl-edit-row.offrow{opacity:.5;}
   .cl-ebtn{border:1px solid var(--line);background:var(--card);color:var(--navy);border-radius:8px;font-size:11px;padding:6px 9px;cursor:pointer;font-family:inherit;flex-shrink:0;}
   .cl-ebtn:disabled{opacity:.3;cursor:default;}
-  .cl-evis{position:relative;width:40px;height:22px;border-radius:99px;background:var(--line);border:none;cursor:pointer;flex-shrink:0;transition:background .15s;padding:0;}
-  .cl-evis .knob{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.25);}
-  .cl-evis.on{background:#2C9E5F;}
-  .cl-evis.on .knob{left:20px;}
   body.dark .cl-sheet{background:var(--card);}
   @media(max-width:760px){
     .cl-shell{flex-direction:column;gap:12px;}
@@ -486,9 +481,9 @@
 </aside>
 
 <!-- ===== CLIENT DETAIL MODAL ===== -->
-<div id="cl-modal" class="modal-back hidden" onclick="if(event.target===this)closeClientModal()">
+<div id="cl-modal" class="modal-back hidden" onclick="if(event.target===this && !(window.__clGuard && Date.now()-window.__clGuard<450))closeClientModal()">
   <div class="modal cl-wide">
-    <div class="modal-head"><button id="cl-menu-btn" class="cl-burger" onclick="clMenuToggle(event)" aria-label="ダッシュボードメニュー" title="ダッシュボードメニュー"><span class="b"></span><span class="b"></span><span class="b"></span></button><span id="cl-modal-title" class="mt">顧客の詳細</span><button class="modal-close" onclick="closeClientModal()" aria-label="閉じる">×</button><div id="cl-menu" class="cl-sheet-back hidden" onclick="clMenuBackdrop(event)"><div class="cl-sheet"><div class="cl-grab"></div><div class="cl-sheet-head"><span class="cl-sheet-title" id="cl-sheet-title">メニュー</span><button class="cl-sheet-edit" id="cl-sheet-editbtn" onclick="clSheetEditToggle()">⚙ 編集</button><button class="modal-close" onclick="clMenuClose()" aria-label="閉じる" style="margin-left:0;">×</button></div><div class="cl-sheet-body" id="cl-sheet-body"></div></div></div></div>
+    <div class="modal-head"><button id="cl-menu-btn" class="cl-burger" onclick="clMenuToggle(event)" aria-label="ダッシュボードメニュー" title="ダッシュボードメニュー"><span class="b"></span><span class="b"></span><span class="b"></span></button><span id="cl-modal-title" class="mt">顧客の詳細</span><button class="modal-close" onclick="closeClientModal()" aria-label="閉じる">×</button><div id="cl-menu" class="cl-sheet-back hidden" onclick="clMenuBackdrop(event)"><div class="cl-sheet" onclick="event.stopPropagation()"><div class="cl-grab"></div><div class="cl-sheet-head"><span class="cl-sheet-title" id="cl-sheet-title">メニュー</span><button class="cl-sheet-edit" id="cl-sheet-editbtn" onclick="clSheetEditToggle()">⚙ 編集</button><button class="modal-close" onclick="event.stopPropagation();clMenuClose()" aria-label="メニューを閉じる" style="margin-left:0;">×</button></div><div class="cl-sheet-body" id="cl-sheet-body"></div></div></div></div>
     <div class="modal-body"><div id="cl-detail"></div></div>
   </div>
 </div>
@@ -5686,23 +5681,22 @@
     ['cs-meet','📝','議事録'],
     ['cs-act','✅','課題・アクション']
   ];
-  // 並び順・表示/非表示のカスタマイズ（この端末のブラウザに保存）
+  // 並び順のカスタマイズ（この端末のブラウザに保存）
   var CL_NAV_KEY='tsugu_clnav_v2';
   function clNavCustom(){
     try{ var c=JSON.parse(localStorage.getItem(CL_NAV_KEY)||'null');
-      if(c && Array.isArray(c.order) && Array.isArray(c.hidden)) return c;
+      if(c && Array.isArray(c.order)) return { order:c.order };
     }catch(e){}
-    return { order:CL_ITEMS.map(function(i){return i[0];}), hidden:[] };
+    return { order:CL_ITEMS.map(function(i){return i[0];}) };
   }
-  function clNavSave(c){ try{ localStorage.setItem(CL_NAV_KEY, JSON.stringify(c)); }catch(e){} }
-  function clNavList(includeHidden){
+  function clNavSave(c){ try{ localStorage.setItem(CL_NAV_KEY, JSON.stringify({order:c.order})); }catch(e){} }
+  function clNavList(){
     var c=clNavCustom(), map={};
     CL_ITEMS.forEach(function(it){ map[it[0]]=it; });
     var out=[];
     c.order.forEach(function(id){ if(map[id]){ out.push(map[id]); delete map[id]; } });
     CL_ITEMS.forEach(function(it){ if(map[it[0]]) out.push(it); }); // 将来追加された項目は末尾へ
-    if(includeHidden) return out;
-    return out.filter(function(it){ return c.hidden.indexOf(it[0])<0; });
+    return out;
   }
   // カルテ内「やること」件数（左タブに表示）— ダッシュボードの要対応と同じ判定基準
   function clKarteTodoCounts(custId){
@@ -5771,8 +5765,8 @@
   }
   function clSideHtml(){
     var h='<div class="cl-side" id="cl-side"><div class="sb-sec">メニュー</div>';
-    clNavList(false).forEach(function(it){ h+=clNi(it[0],it[1],it[2]); });
-    h+='<div class="cl-ni" onclick="clSheetOpen(true)"><span class="ci">⚙</span><span>表示のカスタマイズ</span></div>';
+    clNavList().forEach(function(it){ h+=clNi(it[0],it[1],it[2]); });
+    h+='<div class="cl-ni" onclick="clSheetOpen(true)"><span class="ci">⚙</span><span>並び順のカスタマイズ</span></div>';
     return h+'</div>';
   }
   // ===== ボトムシート型メニュー（スマホ）＋カスタマイズ =====
@@ -5793,6 +5787,7 @@
     var d=$('cl-menu'); if(d) d.classList.add('hidden');
     CL_EDIT=false;
     var b=$('cl-menu-btn'); if(b) b.classList.remove('open');
+    window.__clGuard=Date.now(); // シートを閉じた直後のタップすり抜けでカルテ本体が閉じるのを防ぐ
   }
   function clMenuBackdrop(ev){ if(ev && ev.target && ev.target.id==='cl-menu') clMenuClose(); }
   function clSheetRender(){
@@ -5804,22 +5799,20 @@
   }
   function clTilesHtml(){
     var h='<div class="cl-tiles">';
-    clNavList(false).forEach(function(it){
+    clNavList().forEach(function(it){
       h+='<div class="cl-tile'+(it[0]===CL_ACTIVE?' on':'')+'" onclick="clMenuGo(\''+it[0]+'\')"><span class="ti">'+it[1]+'</span><span class="tl">'+it[2]+'</span><span class="clnb hidden" id="clmb-'+it[0]+'">0</span></div>';
     });
-    return h+'</div><div class="cl-sheet-hint">右上の「⚙ 編集」から、タブの表示・非表示と並び順を変更できます。</div>';
+    return h+'</div><div class="cl-sheet-hint">右上の「⚙ 編集」から、タブの並び順を変更できます。</div>';
   }
   function clEditHtml(){
-    var c=clNavCustom(), list=clNavList(true);
-    var h='<div class="cl-sheet-hint" style="margin:0 0 8px;">▲▼で並び替え、スイッチで表示／非表示を切り替えます。設定はこの端末に保存され、メニューとPC版の左ナビの両方に反映されます。</div>';
+    var list=clNavList();
+    var h='<div class="cl-sheet-hint" style="margin:0 0 8px;">▲▼でよく使うタブを上に並べ替えられます。設定はこの端末に保存され、メニューとPC版の左ナビの両方に反映されます。</div>';
     list.forEach(function(it,idx){
-      var hid=c.hidden.indexOf(it[0])>=0, lock=(it[0]==='cs-company');
-      h+='<div class="cl-edit-row'+(hid?' offrow':'')+'">'
+      h+='<div class="cl-edit-row">'
         +'<span style="width:20px;text-align:center;font-size:15px;flex-shrink:0;">'+it[1]+'</span>'
-        +'<span style="flex:1;min-width:0;font-size:12.5px;font-weight:600;color:var(--ink);">'+it[2]+(lock?' <span style="font-size:10px;color:var(--muted);font-weight:400;">（常に表示）</span>':'')+'</span>'
+        +'<span style="flex:1;min-width:0;font-size:12.5px;font-weight:600;color:var(--ink);">'+it[2]+'</span>'
         +'<button class="cl-ebtn" onclick="clEditMove(\''+it[0]+'\',-1)"'+(idx===0?' disabled':'')+'>▲</button>'
         +'<button class="cl-ebtn" onclick="clEditMove(\''+it[0]+'\',1)"'+(idx===list.length-1?' disabled':'')+'>▼</button>'
-        +(lock?'<span style="width:40px;flex-shrink:0;"></span>':'<button class="cl-evis'+(hid?'':' on')+'" onclick="clEditVis(\''+it[0]+'\')" aria-label="表示切替"><span class="knob"></span></button>')
       +'</div>';
     });
     h+='<div style="display:flex;gap:8px;margin-top:10px;">'
@@ -5831,19 +5824,11 @@
   function clSheetEditToggle(){ CL_EDIT=!CL_EDIT; clSheetRender(); }
   function clEditMove(id,dir){
     var c=clNavCustom();
-    var order=clNavList(true).map(function(it){return it[0];});
+    var order=clNavList().map(function(it){return it[0];});
     var i=order.indexOf(id), j=i+dir;
     if(i<0 || j<0 || j>=order.length) return;
     order.splice(i,1); order.splice(j,0,id);
     c.order=order; clNavSave(c);
-    clSheetRender(); clNavRefreshSide();
-  }
-  function clEditVis(id){
-    if(id==='cs-company') return; // 会社情報は常に表示
-    var c=clNavCustom(); c.order=clNavList(true).map(function(it){return it[0];});
-    var k=c.hidden.indexOf(id);
-    if(k>=0) c.hidden.splice(k,1); else c.hidden.push(id);
-    clNavSave(c);
     clSheetRender(); clNavRefreshSide();
   }
   function clEditReset(){
