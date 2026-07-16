@@ -116,6 +116,17 @@
   .clnb{margin-left:auto;background:#D2544A;color:#fff;border-radius:99px;font-size:10px;font-weight:700;padding:1px 6px;min-width:16px;text-align:center;flex-shrink:0;}
   .clmenu-i .clnb{margin-left:auto;}
   .cl-main{flex:1;min-width:0;}
+  /* ===== PC：カルテを大画面・固定レイアウトに（メニューは固定、本文のみスクロール） ===== */
+  @media(min-width:761px){
+    #cl-modal{padding:22px 20px;}
+    #cl-modal .modal.cl-wide{max-width:1360px;height:calc(100vh - 44px);display:flex;flex-direction:column;overflow:hidden;}
+    #cl-modal .modal-head{flex-shrink:0;}
+    #cl-modal .modal-body{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;padding:16px 20px 18px;}
+    #cl-modal #cl-detail{flex:1;min-height:0;display:flex;flex-direction:column;}
+    #cl-modal .cl-shell{flex:1;min-height:0;align-items:stretch;}
+    #cl-modal .cl-side{position:static;align-self:stretch;max-height:none;overflow-y:auto;flex:0 0 220px;}
+    #cl-modal .cl-main{min-width:0;height:auto;overflow-y:auto;padding-right:8px;overscroll-behavior:contain;}
+  }
   .csec{display:none;}
   .csec.on{display:block;animation:mpop .14s ease;}
   body.dark .cl-side{background:var(--deep);}
@@ -5700,6 +5711,7 @@
     var hd=$('cl-head'); if(hd) hd.style.display=(id==='cs-company')?'':'none';
     clSpySet(id);
     var m=$('cl-modal'); if(m) m.scrollTop=0;
+    var mm=$('cl-main'); if(mm) mm.scrollTop=0; // PC：本文スクロールを先頭に戻す（メニューは動かない）
     // 非表示中はスクロール位置が反映されないため、メッセージを開いたら最新まで送る
     if(id==='cs-msg'){ var lg=$('cchat-log'); if(lg) lg.scrollTop=lg.scrollHeight; }
   }
