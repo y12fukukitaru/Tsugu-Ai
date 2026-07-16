@@ -126,16 +126,34 @@
   .cl-burger.open .b:nth-child(1){transform:translateY(6px) rotate(45deg);}
   .cl-burger.open .b:nth-child(2){opacity:0;transform:scaleX(.4);}
   .cl-burger.open .b:nth-child(3){transform:translateY(-6px) rotate(-45deg);}
-  .cl-menu{position:absolute;top:calc(100% + 8px);left:10px;right:10px;z-index:40;background:var(--deep);border-radius:16px;padding:12px;max-height:70vh;overflow-y:auto;box-shadow:0 18px 48px rgba(4,9,20,.45);animation:mpop .16s ease;}
-  .cl-menu .clmenu-sec{font-size:10px;color:rgba(255,255,255,.5);font-weight:700;letter-spacing:.14em;margin:12px 4px 6px;}
-  .cl-menu .clmenu-sec:first-child{margin-top:0;}
-  .cl-menu .clmenu-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
-  .cl-menu .clmenu-i{display:flex;align-items:center;gap:7px;padding:11px 10px;border-radius:10px;font-size:12px;color:rgba(255,255,255,.85);cursor:pointer;line-height:1.25;background:rgba(255,255,255,.05);transition:background .15s;}
-  .cl-menu .clmenu-i:hover{background:rgba(255,255,255,.12);color:#fff;}
-  .cl-menu .clmenu-i.on{background:rgba(255,255,255,.14);color:#fff;font-weight:700;box-shadow:inset 0 0 0 1.5px var(--gold);}
-  .cl-menu .clmenu-i .ci{width:18px;text-align:center;font-size:14px;flex-shrink:0;}
-  .cl-menu .clmenu-i span:nth-child(2){flex:1;min-width:0;}
-  body.dark .cl-menu{background:var(--deep);}
+  /* ===== カルテメニュー：ボトムシート（スマホ）＋カスタマイズ ===== */
+  .cl-sheet-back{position:fixed;inset:0;background:rgba(7,13,25,.45);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);z-index:70;display:flex;align-items:flex-end;justify-content:center;}
+  .cl-sheet{background:var(--card);width:100%;max-width:540px;border-radius:20px 20px 0 0;max-height:78vh;display:flex;flex-direction:column;box-shadow:0 -14px 44px rgba(4,9,20,.35);animation:sheetup .22s ease;padding:8px 14px calc(14px + env(safe-area-inset-bottom));}
+  @keyframes sheetup{from{transform:translateY(48px);opacity:0;}to{transform:none;opacity:1;}}
+  .cl-grab{width:38px;height:4px;border-radius:99px;background:var(--line);margin:2px auto 10px;flex-shrink:0;}
+  .cl-sheet-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-shrink:0;}
+  .cl-sheet-title{font-size:14px;font-weight:700;color:var(--navy);flex:1;}
+  .cl-sheet-edit{border:1px solid var(--line);background:var(--soft);color:var(--navy);font-size:11.5px;font-weight:600;border-radius:8px;padding:6px 11px;cursor:pointer;font-family:inherit;transition:background .15s;}
+  .cl-sheet-edit:hover{background:var(--softline);}
+  .cl-sheet-body{overflow-y:auto;padding-bottom:4px;}
+  .cl-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .cl-tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:14px 5px 11px;border-radius:14px;background:var(--soft);border:1px solid var(--softline);cursor:pointer;transition:background .15s,border-color .15s,transform .1s;}
+  .cl-tile:active{transform:scale(.96);}
+  .cl-tile .ti{font-size:22px;line-height:1;}
+  .cl-tile .tl{font-size:10.5px;font-weight:600;color:var(--ink);text-align:center;line-height:1.35;}
+  .cl-tile.on{background:var(--navy);border-color:var(--navy);}
+  .cl-tile.on .tl{color:#fff;}
+  .cl-tile .clnb{position:absolute;top:-5px;right:-5px;margin:0;box-shadow:0 0 0 2px var(--card);}
+  .cl-sheet-hint{font-size:10.5px;color:var(--muted);margin-top:10px;line-height:1.6;}
+  .cl-edit-row{display:flex;align-items:center;gap:8px;padding:8px 9px;border:1px solid var(--softline);border-radius:11px;margin-bottom:6px;background:var(--soft);}
+  .cl-edit-row.offrow{opacity:.5;}
+  .cl-ebtn{border:1px solid var(--line);background:var(--card);color:var(--navy);border-radius:8px;font-size:11px;padding:6px 9px;cursor:pointer;font-family:inherit;flex-shrink:0;}
+  .cl-ebtn:disabled{opacity:.3;cursor:default;}
+  .cl-evis{position:relative;width:40px;height:22px;border-radius:99px;background:var(--line);border:none;cursor:pointer;flex-shrink:0;transition:background .15s;padding:0;}
+  .cl-evis .knob{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.25);}
+  .cl-evis.on{background:#2C9E5F;}
+  .cl-evis.on .knob{left:20px;}
+  body.dark .cl-sheet{background:var(--card);}
   @media(max-width:760px){
     .cl-shell{flex-direction:column;gap:12px;}
     .cl-side{position:static;flex:1 1 auto;width:100%;max-height:none;display:flex;flex-wrap:wrap;gap:5px;padding:8px;}
@@ -233,7 +251,6 @@
   /* ===== ハンバーガーメニュー＆ドロワー（スマホ用） ===== */
   .hbg{display:none;position:relative;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--soft);cursor:pointer;padding:0;flex-shrink:0;}
   .hbg .b{display:block;width:18px;height:2px;border-radius:99px;background:var(--navy);}
-  .hbg-dot{position:absolute;top:6px;right:6px;width:9px;height:9px;border-radius:99px;background:#C4453F;}
   .drawer-back{position:fixed;inset:0;background:rgba(7,13,25,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:60;}
   .drawer{position:fixed;top:0;right:0;bottom:0;width:82%;max-width:300px;background:var(--deep);color:#fff;z-index:61;transform:translateX(105%);visibility:hidden;transition:transform .25s ease, visibility 0s linear .25s;display:flex;flex-direction:column;box-shadow:-12px 0 40px rgba(0,0,0,.4);}
   .drawer.open{transform:none;visibility:visible;transition:transform .25s ease;}
@@ -451,7 +468,7 @@
     <div class="sb-foot"><span id="app-email" class="sb-email"></span><button class="sb-out" onclick="openSettings()" style="margin-bottom:6px;">⚙️ 設定</button><button class="sb-out" onclick="signOut()">ログアウト</button></div>
   </aside>
   <main class="main2">
-    <div class="topbar2"><div id="app-greet" class="greet">ダッシュボード</div><div id="app-date" class="datechip"></div><button id="bell" class="bellbtn hidden" onclick="bellGo()" title="通知（要対応）" aria-label="通知（要対応）">🔔<span id="bell-n" class="nbadge hidden">0</span></button><button id="hbg" class="hbg" onclick="openDrawer()" aria-label="メニューを開く"><span class="b"></span><span class="b"></span><span class="b"></span><span id="hbg-dot" class="hbg-dot hidden"></span></button></div>
+    <div class="topbar2"><div id="app-greet" class="greet">ダッシュボード</div><div id="app-date" class="datechip"></div><button id="bell" class="bellbtn hidden" onclick="bellGo()" title="通知（要対応）" aria-label="通知（要対応）">🔔<span id="bell-n" class="nbadge hidden">0</span></button><button id="hbg" class="hbg" onclick="openDrawer()" aria-label="メニューを開く"><span class="b"></span><span class="b"></span><span class="b"></span></button></div>
     <div class="wrap" id="app-body"></div>
   </main>
 </div>
@@ -471,7 +488,7 @@
 <!-- ===== CLIENT DETAIL MODAL ===== -->
 <div id="cl-modal" class="modal-back hidden" onclick="if(event.target===this)closeClientModal()">
   <div class="modal cl-wide">
-    <div class="modal-head"><button id="cl-menu-btn" class="cl-burger" onclick="clMenuToggle(event)" aria-label="ダッシュボードメニュー" title="ダッシュボードメニュー"><span class="b"></span><span class="b"></span><span class="b"></span></button><span id="cl-modal-title" class="mt">顧客の詳細</span><button class="modal-close" onclick="closeClientModal()" aria-label="閉じる">×</button><div id="cl-menu" class="cl-menu hidden"></div></div>
+    <div class="modal-head"><button id="cl-menu-btn" class="cl-burger" onclick="clMenuToggle(event)" aria-label="ダッシュボードメニュー" title="ダッシュボードメニュー"><span class="b"></span><span class="b"></span><span class="b"></span></button><span id="cl-modal-title" class="mt">顧客の詳細</span><button class="modal-close" onclick="closeClientModal()" aria-label="閉じる">×</button><div id="cl-menu" class="cl-sheet-back hidden" onclick="clMenuBackdrop(event)"><div class="cl-sheet"><div class="cl-grab"></div><div class="cl-sheet-head"><span class="cl-sheet-title" id="cl-sheet-title">メニュー</span><button class="cl-sheet-edit" id="cl-sheet-editbtn" onclick="clSheetEditToggle()">⚙ 編集</button><button class="modal-close" onclick="clMenuClose()" aria-label="閉じる" style="margin-left:0;">×</button></div><div class="cl-sheet-body" id="cl-sheet-body"></div></div></div></div>
     <div class="modal-body"><div id="cl-detail"></div></div>
   </div>
 </div>
@@ -4897,14 +4914,13 @@
       // パートナーのベルは「対応が必要な顧客数」（未読＋今日やること）を表示し、開いた中身と一致させる
       var bellNum=n;
       if((window.__eff||'')==='consultant'){
-        try{ bellNum=Object.keys(buildTodos()).length; }catch(e){ bellNum=n; }
+        try{ bellNum=Math.max(Object.keys(buildTodos()).length, n); }catch(e){ bellNum=n; }
       }
       bn.textContent=bellNum>99?'99+':bellNum;
       bn.classList.toggle('hidden', !bellNum);
     }
     var nv=$('nav-unread'); if(nv){ nv.textContent=n>99?'99+':n; nv.classList.toggle('hidden', !n); }
     var nvd=$('nav-unread-d'); if(nvd){ nvd.textContent=n>99?'99+':n; nvd.classList.toggle('hidden', !n); }
-    var dot=$('hbg-dot'); if(dot) dot.classList.toggle('hidden', !n);
     var pb=$('chat-unread'); if(pb){ pb.textContent=n>99?'99+':n; pb.classList.toggle('hidden', !n); }
     Object.keys(UNREAD.perClient||{}).forEach(function(id){
       var e=$('clb-'+id); if(!e)return; var c=UNREAD.perClient[id]||0;
@@ -5652,14 +5668,42 @@
     clShowSection('cs-company');
   }
   // ===== カルテ内ダッシュボードナビ（左サイド＆ヘッダーのハンバーガーで共用） =====
-  var CL_NAV=[
-    ['やり取り・共有', [['cs-company','🏢','会社情報'],['cs-msg','💬','メッセージ・提案'],['cs-shared','📥','顧客からの共有']]],
-    ['財務・資金繰り', [['cs-fin','📊','月次財務メモ'],['cs-pay','📅','支払予定'],['cs-cash','💰','資金繰りシミュレーター']]],
-    ['資金調達',       [['cs-fund','🏦','資金調達ロードマップ'],['cs-loan','💴','融資ナビ'],['cs-bp','📄','事業計画書']]],
-    ['M&A・投資',      [['cs-market','💹','Tsugu投資・融資・M&A'],['cs-mna','🤝','M&A提案']]],
-    ['保険',           [['cs-ins','🩺','保険シミュレーター']]],
-    ['業務支援',       [['cs-ai','🤖','AI自動化診断'],['cs-meet','📝','議事録'],['cs-act','✅','課題・アクション']]]
+  // ===== カルテ内メニュー項目（フラット・カスタマイズ可能） =====
+  var CL_ITEMS=[
+    ['cs-company','🏢','会社情報'],
+    ['cs-msg','💬','メッセージ・提案'],
+    ['cs-shared','📥','顧客からの共有'],
+    ['cs-fin','📊','月次財務メモ'],
+    ['cs-pay','📅','支払予定'],
+    ['cs-cash','💰','資金繰りシミュレーター'],
+    ['cs-fund','🏦','資金調達ロードマップ'],
+    ['cs-loan','💴','融資ナビ'],
+    ['cs-bp','📄','事業計画書'],
+    ['cs-market','💹','Tsugu投資・融資・M&A'],
+    ['cs-mna','🤝','M&A提案'],
+    ['cs-ins','🩺','保険シミュレーター'],
+    ['cs-ai','🤖','AI自動化診断'],
+    ['cs-meet','📝','議事録'],
+    ['cs-act','✅','課題・アクション']
   ];
+  // 並び順・表示/非表示のカスタマイズ（この端末のブラウザに保存）
+  var CL_NAV_KEY='tsugu_clnav_v2';
+  function clNavCustom(){
+    try{ var c=JSON.parse(localStorage.getItem(CL_NAV_KEY)||'null');
+      if(c && Array.isArray(c.order) && Array.isArray(c.hidden)) return c;
+    }catch(e){}
+    return { order:CL_ITEMS.map(function(i){return i[0];}), hidden:[] };
+  }
+  function clNavSave(c){ try{ localStorage.setItem(CL_NAV_KEY, JSON.stringify(c)); }catch(e){} }
+  function clNavList(includeHidden){
+    var c=clNavCustom(), map={};
+    CL_ITEMS.forEach(function(it){ map[it[0]]=it; });
+    var out=[];
+    c.order.forEach(function(id){ if(map[id]){ out.push(map[id]); delete map[id]; } });
+    CL_ITEMS.forEach(function(it){ if(map[it[0]]) out.push(it); }); // 将来追加された項目は末尾へ
+    if(includeHidden) return out;
+    return out.filter(function(it){ return c.hidden.indexOf(it[0])<0; });
+  }
   // カルテ内「やること」件数（左タブに表示）— ダッシュボードの要対応と同じ判定基準
   function clKarteTodoCounts(custId){
     var now=new Date(), c={ 'cs-msg':0,'cs-fund':0,'cs-pay':0,'cs-act':0,'cs-mna':0,'cs-company':0 };
@@ -5726,33 +5770,92 @@
     });
   }
   function clSideHtml(){
-    var h='<div class="cl-side" id="cl-side">';
-    CL_NAV.forEach(function(g){ h+='<div class="sb-sec">'+g[0]+'</div>'; g[1].forEach(function(it){ h+=clNi(it[0],it[1],it[2]); }); });
+    var h='<div class="cl-side" id="cl-side"><div class="sb-sec">メニュー</div>';
+    clNavList(false).forEach(function(it){ h+=clNi(it[0],it[1],it[2]); });
+    h+='<div class="cl-ni" onclick="clSheetOpen(true)"><span class="ci">⚙</span><span>表示のカスタマイズ</span></div>';
     return h+'</div>';
   }
-  function clMenuHtml(){
-    var h='';
-    CL_NAV.forEach(function(g){
-      h+='<div class="clmenu-sec">'+g[0]+'</div><div class="clmenu-grid">';
-      g[1].forEach(function(it){ h+='<div class="clmenu-i'+(it[0]===CL_ACTIVE?' on':'')+'" onclick="clMenuGo(\''+it[0]+'\')"><span class="ci">'+it[1]+'</span><span>'+it[2]+'</span><span class="clnb hidden" id="clmb-'+it[0]+'">0</span></div>'; });
-      h+='</div>';
-    });
-    return h;
-  }
+  // ===== ボトムシート型メニュー（スマホ）＋カスタマイズ =====
+  var CL_EDIT=false;
   function clMenuToggle(e){
     if(e){ e.stopPropagation(); }
     var d=$('cl-menu'); if(!d)return;
-    if(d.classList.contains('hidden')){
-      d.innerHTML=clMenuHtml(); d.classList.remove('hidden');
-      var b=$('cl-menu-btn'); if(b) b.classList.add('open');
-      if(CURRENT_CLIENT) applyClKarteBadges(CURRENT_CLIENT.id);
-      setTimeout(function(){ document.addEventListener('click', clMenuOutside); }, 0);
-    } else { clMenuClose(); }
+    if(d.classList.contains('hidden')) clSheetOpen(false); else clMenuClose();
   }
-  function clMenuClose(){ var d=$('cl-menu'); if(d) d.classList.add('hidden'); var b=$('cl-menu-btn'); if(b) b.classList.remove('open'); document.removeEventListener('click', clMenuOutside); }
-  function clMenuOutside(ev){
-    var d=$('cl-menu'), b=$('cl-menu-btn');
-    if(d && !d.contains(ev.target) && (!b || !b.contains(ev.target))) clMenuClose();
+  function clSheetOpen(edit){
+    var d=$('cl-menu'); if(!d)return;
+    CL_EDIT=!!edit;
+    d.classList.remove('hidden');
+    clSheetRender();
+    var b=$('cl-menu-btn'); if(b) b.classList.add('open');
+  }
+  function clMenuClose(){
+    var d=$('cl-menu'); if(d) d.classList.add('hidden');
+    CL_EDIT=false;
+    var b=$('cl-menu-btn'); if(b) b.classList.remove('open');
+  }
+  function clMenuBackdrop(ev){ if(ev && ev.target && ev.target.id==='cl-menu') clMenuClose(); }
+  function clSheetRender(){
+    var body=$('cl-sheet-body'); if(!body)return;
+    var eb=$('cl-sheet-editbtn'); if(eb) eb.textContent=CL_EDIT?'完了':'⚙ 編集';
+    var tt=$('cl-sheet-title'); if(tt) tt.textContent=CL_EDIT?'メニューのカスタマイズ':'メニュー';
+    body.innerHTML=CL_EDIT?clEditHtml():clTilesHtml();
+    if(!CL_EDIT && CURRENT_CLIENT) applyClKarteBadges(CURRENT_CLIENT.id);
+  }
+  function clTilesHtml(){
+    var h='<div class="cl-tiles">';
+    clNavList(false).forEach(function(it){
+      h+='<div class="cl-tile'+(it[0]===CL_ACTIVE?' on':'')+'" onclick="clMenuGo(\''+it[0]+'\')"><span class="ti">'+it[1]+'</span><span class="tl">'+it[2]+'</span><span class="clnb hidden" id="clmb-'+it[0]+'">0</span></div>';
+    });
+    return h+'</div><div class="cl-sheet-hint">右上の「⚙ 編集」から、タブの表示・非表示と並び順を変更できます。</div>';
+  }
+  function clEditHtml(){
+    var c=clNavCustom(), list=clNavList(true);
+    var h='<div class="cl-sheet-hint" style="margin:0 0 8px;">▲▼で並び替え、スイッチで表示／非表示を切り替えます。設定はこの端末に保存され、メニューとPC版の左ナビの両方に反映されます。</div>';
+    list.forEach(function(it,idx){
+      var hid=c.hidden.indexOf(it[0])>=0, lock=(it[0]==='cs-company');
+      h+='<div class="cl-edit-row'+(hid?' offrow':'')+'">'
+        +'<span style="width:20px;text-align:center;font-size:15px;flex-shrink:0;">'+it[1]+'</span>'
+        +'<span style="flex:1;min-width:0;font-size:12.5px;font-weight:600;color:var(--ink);">'+it[2]+(lock?' <span style="font-size:10px;color:var(--muted);font-weight:400;">（常に表示）</span>':'')+'</span>'
+        +'<button class="cl-ebtn" onclick="clEditMove(\''+it[0]+'\',-1)"'+(idx===0?' disabled':'')+'>▲</button>'
+        +'<button class="cl-ebtn" onclick="clEditMove(\''+it[0]+'\',1)"'+(idx===list.length-1?' disabled':'')+'>▼</button>'
+        +(lock?'<span style="width:40px;flex-shrink:0;"></span>':'<button class="cl-evis'+(hid?'':' on')+'" onclick="clEditVis(\''+it[0]+'\')" aria-label="表示切替"><span class="knob"></span></button>')
+      +'</div>';
+    });
+    h+='<div style="display:flex;gap:8px;margin-top:10px;">'
+      +'<button class="btn2" style="flex:1;" onclick="clSheetEditToggle()">完了</button>'
+      +'<button class="cl-ebtn" style="padding:9px 14px;" onclick="clEditReset()">初期に戻す</button>'
+    +'</div>';
+    return h;
+  }
+  function clSheetEditToggle(){ CL_EDIT=!CL_EDIT; clSheetRender(); }
+  function clEditMove(id,dir){
+    var c=clNavCustom();
+    var order=clNavList(true).map(function(it){return it[0];});
+    var i=order.indexOf(id), j=i+dir;
+    if(i<0 || j<0 || j>=order.length) return;
+    order.splice(i,1); order.splice(j,0,id);
+    c.order=order; clNavSave(c);
+    clSheetRender(); clNavRefreshSide();
+  }
+  function clEditVis(id){
+    if(id==='cs-company') return; // 会社情報は常に表示
+    var c=clNavCustom(); c.order=clNavList(true).map(function(it){return it[0];});
+    var k=c.hidden.indexOf(id);
+    if(k>=0) c.hidden.splice(k,1); else c.hidden.push(id);
+    clNavSave(c);
+    clSheetRender(); clNavRefreshSide();
+  }
+  function clEditReset(){
+    try{ localStorage.removeItem(CL_NAV_KEY); }catch(e){}
+    clSheetRender(); clNavRefreshSide();
+  }
+  function clNavRefreshSide(){
+    var old=$('cl-side'); if(!old) return;
+    var tmp=document.createElement('div'); tmp.innerHTML=clSideHtml();
+    old.parentNode.replaceChild(tmp.firstChild, old);
+    clSpySet(CL_ACTIVE);
+    if(CURRENT_CLIENT) applyClKarteBadges(CURRENT_CLIENT.id);
   }
   function clMenuGo(id){ clMenuClose(); clNav(id); }
   async function viewClient(custId, email, company){
