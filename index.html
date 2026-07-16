@@ -905,8 +905,8 @@
   function adminSwitchHtml(active){
     return '<div class="panel" style="padding:12px 16px;"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:12px;color:#94A2B6;">表示モード：</span>'
       +'<button class="sbtn'+(active==='admin'?' on':'')+'" onclick="setAdminView(\'admin\')">運営</button>'
-      +'<button class="sbtn'+(active==='fde'?' on':'')+'" onclick="setAdminView(\'fde\')">パートナーとして見る</button>'
-      +'<button class="sbtn'+(active==='customer'?' on':'')+'" onclick="setAdminView(\'customer\')">顧客として見る</button>'
+      +'<button class="sbtn'+(active==='fde'?' on':'')+'" onclick="setAdminView(\'fde\')">認定パートナー</button>'
+      +'<button class="sbtn'+(active==='customer'?' on':'')+'" onclick="setAdminView(\'customer\')">顧客</button>'
       +'</div></div>';
   }
   function adminViewHtml(email, prof){
