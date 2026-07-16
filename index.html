@@ -1031,6 +1031,7 @@
           +'<div><label class="fl">パートナー基本（円/月）</label><input id="bl-pbase" type="number" class="inp2" style="width:120px;" value="3000" oninput="renderAdmBilling()"></div>'
           +'<div><label class="fl">顧問先1社あたり加算（円/月）</label><input id="bl-pclient" type="number" class="inp2" style="width:140px;" value="2000" oninput="renderAdmBilling()"></div>'
           +'<div><label class="fl">顧問料（円/月）</label><input id="bl-adv" type="number" class="inp2" style="width:120px;" value="50000" oninput="renderAdmBilling()"></div>'
+          +'<div><label class="fl">運営直接担当（円/月・一律）</label><input id="bl-direct" type="number" class="inp2" style="width:120px;" value="30000" oninput="renderAdmBilling()"></div>'
           +'<div><label class="fl">初期登録料（円・初回）</label><input id="bl-init" type="number" class="inp2" style="width:130px;" value="100000" oninput="renderAdmBilling()"></div>'
         +'</div>'
         +'<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
@@ -1459,14 +1460,20 @@
     // パートナー料
     var partnerMRR=0; fdes.forEach(function(f){ partnerMRR += pbase + pcl*(cc[f.id]||0); });
     var assignedClients=Object.keys(cc).reduce(function(s,k){ return s+(cc[k]||0); },0);
-    // 顧問料（割引適用）
-    var advGross=custs.length*adv, advNet=0, discTotal=0;
+    // 顧問料（割引適用）※運営直接担当はパートナー外注費が無いため一律料金（割引・階層付与の対象外）
+    var direct=blRate('bl-direct',30000);
     var cap=blRate('bl-cap',10);
+    var adminIds={}; (ADM_CACHE.admins||[]).forEach(function(a){ adminIds[a.id]=1; });
+    var advGross=0, advNet=0, discTotal=0;
     var custRows=custs.map(function(c){
+      if(c.consultant_id && adminIds[c.consultant_id]){
+        advGross+=direct; advNet+=direct;
+        return {c:c, raw:0, pct:0, isCap:false, parts:[], fee:direct, direct:true};
+      }
       var d=custDiscount(c, cfg, partnerInfo);
       var capped=Math.min(d.pct, cap);
-      var fee=adv*(1-capped/100); advNet+=fee; discTotal+=(adv-fee);
-      return {c:c, raw:d.pct, pct:capped, isCap:(d.pct>cap), parts:d.parts, fee:fee};
+      var fee=adv*(1-capped/100); advGross+=adv; advNet+=fee; discTotal+=(adv-fee);
+      return {c:c, raw:d.pct, pct:capped, isCap:(d.pct>cap), parts:d.parts, fee:fee, direct:false};
     });
     var mrr=partnerMRR+advNet;
     var ym=new Date().toISOString().slice(0,7);
@@ -1513,7 +1520,7 @@
           var tags=r.parts.map(function(p){ return '<span class="tag gray" style="font-size:10px;">'+esc(p.t)+' '+p.p+'%</span>'; }).join('');
           ch+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #EDF1F6;flex-wrap:wrap;">'
             +'<span style="flex:1;min-width:140px;font-size:13px;color:#18202E;">'+esc(r.c.company_name||r.c.email)+'</span>'
-            +(r.pct>0?'<span class="tag green">割引 '+r.pct+'%'+(r.isCap?'（上限）':'')+'</span>'+tags:'<span class="tag gray">割引なし</span>')
+            +(r.direct?'<span class="tag blue">運営直接担当・一律</span>':(r.pct>0?'<span class="tag green">割引 '+r.pct+'%'+(r.isCap?'（上限）':'')+'</span>'+tags:'<span class="tag gray">割引なし</span>'))
             +'<span style="font-size:13px;font-weight:700;color:#1E3A66;width:110px;text-align:right;">'+yen(r.fee)+'<span style="font-size:10px;color:#94A2B6;font-weight:400;">/月</span></span>'
           +'</div>';
         });
