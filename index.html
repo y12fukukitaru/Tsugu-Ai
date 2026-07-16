@@ -989,7 +989,10 @@
           +'<button class="sbtn on" data-f="all" onclick="setAdmCustFilter(\'all\',this)">すべて</button>'
           +'<button class="sbtn" data-f="unassigned" onclick="setAdmCustFilter(\'unassigned\',this)">担当未割当</button>'
         +'</div>'
-        +'<div id="adm-cust" style="margin-top:6px;">読み込み中...</div></div>'
+        +'<div id="adm-cust" style="margin-top:6px;">読み込み中...</div>'
+        +'<div class="ph" style="font-size:13px;margin-top:18px;">アカウントと役割の管理（全アカウント）</div>'
+        +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">登録されている<b>すべてのアカウント</b>の一覧です。役割の変更はここでのみ行えます。役割を誤って変更してしまい顧客一覧・パートナー一覧から消えた場合も、ここで正しい役割に戻せば復旧できます。</div>'
+        +'<div id="adm-roles">読み込み中...</div></div>'
       +'<div class="panel" id="sec-market"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">💹 Tsugu投資・融資・M&A（全社）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketApps();loadMarketBroker()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">案件の掲載・ステータス変更は<b>運営のみ</b>が行います。パートナーからの掲載申請を審査し、承認すると即時掲載されます。</div>'
         +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:6px;">📥 掲載申請の審査<span id="mkapp-count" class="nbadge hidden">0</span></div>'
@@ -1260,7 +1263,7 @@
     var diagCount={};
     try{ var pr=await sb.from('ai_proposals').select('author_id').limit(5000);
       if(!pr.error){ (pr.data||[]).forEach(function(p){ diagCount[p.author_id]=(diagCount[p.author_id]||0)+1; }); } }catch(e){}
-    ADM_CACHE={fdes:fdes,admins:admins,custs:custs,nameOf:nameOf,clientCount:clientCount,kn:kn,scoreOf:scoreOf,lastMsg:lastMsg,lastActBy:lastActBy,diagCount:diagCount};
+    ADM_CACHE={all:rows,fdes:fdes,admins:admins,custs:custs,nameOf:nameOf,clientCount:clientCount,kn:kn,scoreOf:scoreOf,lastMsg:lastMsg,lastActBy:lastActBy,diagCount:diagCount};
     var unassigned=custs.filter(function(c){ return !c.consultant_id; }).length;
     var sum=$('adm-sum');
     if(sum){
@@ -1272,6 +1275,7 @@
     renderAdmRisk();
     renderAdmFde();
     renderAdmCust();
+    renderAdmRoles();
     loadAnnouncements();
     loadAdmAudit();
     renderAdmBilling();
@@ -1374,7 +1378,6 @@
         +'<div class="cl-em">'+esc(u.email)+'</div>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;">'
           +'<span style="font-size:11px;color:#5A6981;">ランク</span><select class="inp2" style="width:160px;" onchange="setRank(\''+u.id+'\',this.value)"><option value="">未設定</option>'+rankOpts+'</select>'
-          +'<span style="font-size:11px;color:#5A6981;">役割</span>'+roleSelect(u)
         +'</div></div>';
     });
     fb.innerHTML=h;
@@ -1411,7 +1414,6 @@
         +'<div class="cl-em">'+esc(u.email)+'</div>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;">'
           +'<span style="font-size:11px;color:#5A6981;">担当</span>'+assignSel
-          +'<span style="font-size:11px;color:#5A6981;">役割</span>'+roleSelect(u)
         +'</div>'
       +'</div>';
     });
@@ -1423,7 +1425,30 @@
     loadAdmin();
   }
   async function setRank(id,rank){ var res=await sb.from('profiles').update({ fde_rank:(rank||null) }).eq('id',id); if(res.error) alert('ランク変更エラー：'+res.error.message); }
-  async function setUserRole(id,role){ var res=await sb.from('profiles').update({ role:role }).eq('id',id); if(res.error){ alert('役割変更エラー：'+res.error.message); } loadAdmin(); }
+  async function setUserRole(id,role){
+    var labels={customer:'顧客',consultant:'パートナー',admin:'運営'};
+    var u=(ADM_CACHE.all||[]).filter(function(r){ return r.id===id; })[0]||{};
+    var nm=u.company_name||u.contact_name||u.email||'このアカウント';
+    if(!confirm('「'+nm+'」の役割を「'+(labels[role]||role)+'」に変更します。\n役割を変えると、表示されるポータルと各一覧（顧客一覧・パートナー一覧）が変わります。\nよろしいですか？')){ renderAdmRoles(); return; }
+    var res=await sb.from('profiles').update({ role:role }).eq('id',id);
+    if(res.error){ alert('役割変更エラー：'+res.error.message); }
+    loadAdmin();
+  }
+  function renderAdmRoles(){
+    var box=$('adm-roles'); if(!box)return;
+    var rows=(ADM_CACHE.all||[]).slice();
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">アカウントがありません。</div>'; return; }
+    var order={admin:0,consultant:1,customer:2};
+    rows.sort(function(a,b){ var d=(order[a.role]!==undefined?order[a.role]:9)-(order[b.role]!==undefined?order[b.role]:9); if(d)return d; return (a.email||'').localeCompare(b.email||''); });
+    var tagOf=function(r){ return r==='admin'?'<span class="tag gold">運営</span>':(r==='consultant'?'<span class="tag blue">パートナー</span>':(r==='customer'?'<span class="tag green">顧客</span>':'<span class="tag gray">'+esc(r||'未設定')+'</span>')); };
+    box.innerHTML=rows.map(function(u){
+      return '<div style="display:flex;align-items:center;gap:8px;padding:8px 2px;border-top:1px solid var(--softline);flex-wrap:wrap;">'
+        +'<span style="flex:1;min-width:150px;font-size:12.5px;color:var(--ink);">'+esc(u.company_name||u.contact_name||u.email)+'<span style="font-size:10.5px;color:#94A2B6;"> '+esc(u.email||'')+'</span></span>'
+        +tagOf(u.role)
+        +'<span style="font-size:11px;color:#5A6981;">役割</span>'+roleSelect(u)
+      +'</div>';
+    }).join('');
+  }
   // ---- G. 課金・契約管理 ----
   function yen(n){ return '¥'+Math.round(n||0).toLocaleString('ja-JP'); }
   function blRate(id,def){ var el=$(id); var v=el?Number(el.value):NaN; return isFinite(v)?v:def; }
