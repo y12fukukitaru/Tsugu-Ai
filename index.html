@@ -5557,6 +5557,8 @@
     var box=$('cl-todo-body'); if(!box) return;
     var now=new Date(), ym=thisYM(), monthStart=ym+'-01';
     var rows=[], done={fin:false, meet:false, note:false, rep:false}, meetInfo=null;
+    var sig={msgOk:true, pdcaOk:true, dueOk:true, hasMa7:false, pmiDone:false, cash90:false, ins90:false, ai90:false};
+    function within(dstr,days){ if(!dstr) return false; return (now - new Date(dstr))/(24*3600*1000) <= days; }
     try{
       var rs=await Promise.all([
         sb.from('chat_messages').select('sender_role,created_at').eq('customer_id',custId).order('created_at',{ascending:false}).limit(100),
@@ -5568,17 +5570,20 @@
         sb.from('funding_roadmap_items').select('title,target_date,status').eq('customer_id',custId),
         sb.from('pdca_items').select('title,due_date,updated_at').eq('customer_id',custId).eq('status','active'),
         sb.from('ma_deals').select('stage,target_date,updated_at').eq('customer_id',custId),
-        sb.from('pmi_pulses').select('score').eq('customer_id',custId).eq('ym',ym).limit(1)
+        sb.from('pmi_pulses').select('score').eq('customer_id',custId).eq('ym',ym).limit(1),
+        sb.from('cashflow_snapshots').select('created_at').eq('customer_id',custId).order('created_at',{ascending:false}).limit(1),
+        sb.from('insurance_diagnoses').select('created_at').eq('customer_id',custId).order('created_at',{ascending:false}).limit(1),
+        sb.from('ai_proposals').select('created_at').eq('customer_id',custId).eq('source','automation').order('created_at',{ascending:false}).limit(1)
       ]);
       var d=function(i){ return (!rs[i].error && rs[i].data)?rs[i].data:[]; };
       // --- メッセージ：未読＋返信滞留 ---
       var msgs=d(0), un=0;
       var lr=getLastRead(custId);
       msgs.forEach(function(m){ if(m.sender_role==='customer' && m.created_at>lr) un++; });
-      if(un) rows.push(clTodoRow('red','💬 未読メッセージが <b>'+un+'件</b> あります',"clNav(\'cs-msg\')",'返信する'));
+      if(un){ sig.msgOk=false; rows.push(clTodoRow('red','💬 未読メッセージが <b>'+un+'件</b> あります',"clNav(\'cs-msg\')",'返信する')); }
       else if(msgs.length && msgs[0].sender_role==='customer'){
         var hrs=(now - new Date(msgs[0].created_at))/3600000;
-        if(hrs>=48) rows.push(clTodoRow('red','💬 顧客からのメッセージに <b>'+Math.floor(hrs/24)+'日間</b> 返信していません',"clNav(\'cs-msg\')",'返信する'));
+        if(hrs>=48){ sig.msgOk=false; rows.push(clTodoRow('red','💬 顧客からのメッセージに <b>'+Math.floor(hrs/24)+'日間</b> 返信していません',"clNav(\'cs-msg\')",'返信する')); }
       }
       // --- 次回面談 ---
       var mt=d(1)[0]||null; meetInfo=mt;
@@ -5591,17 +5596,19 @@
       // --- 支払予定（7日以内） ---
       d(5).forEach(function(p){
         if(!p.due_date) return; var dd=daysBetween(p.due_date, now); if(dd===null) return;
+        if(dd<0) sig.dueOk=false;
         if(dd>=0 && dd<=7) rows.push(clTodoRow('amber','💳 支払予定「'+esc(p.title)+'」が <b>'+(dd===0?'本日':dd+'日後')+'</b> です。資金繰りの確認を',"clNav(\'cs-pay\')",'確認する'));
       });
       // --- 資金調達（期日14日以内・超過） ---
       d(6).forEach(function(f){
         if(!f.target_date || f.status==='実行済' || f.status==='見送り') return;
         var dd=daysBetween(f.target_date, now); if(dd===null) return;
-        if(dd<0) rows.push(clTodoRow('red','🏦 資金調達「'+esc(f.title)+'」が目標日を <b>'+(-dd)+'日</b> 過ぎています',"clNav(\'cs-fund\')",'状況を更新'));
+        if(dd<0){ sig.dueOk=false; rows.push(clTodoRow('red','🏦 資金調達「'+esc(f.title)+'」が目標日を <b>'+(-dd)+'日</b> 過ぎています',"clNav(\'cs-fund\')",'状況を更新')); }
         else if(dd<=14) rows.push(clTodoRow('amber','🏦 資金調達「'+esc(f.title)+'」の目標日まで <b>'+dd+'日</b> です',"clNav(\'cs-fund\')",'確認する'));
       });
       // --- 経営課題（期日接近・超過・30日更新なし） ---
       d(7).forEach(function(p){
+        if(!p.updated_at || !within(p.updated_at,7)) sig.pdcaOk=false;
         if(p.due_date){ var dd=daysBetween(p.due_date, now);
           if(dd!==null && dd<0){ rows.push(clTodoRow('red','✅ 課題「'+esc(p.title)+'」が期限を過ぎています',"clNav(\'cs-act\')",'更新する')); return; }
           if(dd!==null && dd<=7){ rows.push(clTodoRow('amber','✅ 課題「'+esc(p.title)+'」の期限まで <b>'+dd+'日</b> です',"clNav(\'cs-act\')",'確認する')); return; }
@@ -5611,7 +5618,9 @@
       });
       // --- M&A（PMI未回収・目標日接近・停滞） ---
       var pulse=d(9)[0]||null;
+      sig.pmiDone=!!pulse;
       d(8).forEach(function(m0){
+        if(m0.stage===7){ sig.hasMa7=true; }
         if(m0.stage===7){
           if((!pulse && now.getDate()>=7)) rows.push(clTodoRow('amber','🤝 M&A：今月のPMIパルス（統合後の状況確認）が未回収です',"clNav(\'cs-mna\')",'確認する'));
           else if(pulse && pulse.score>=3) rows.push(clTodoRow('red','🤝 M&A：PMIパルスが要注意スコアです。早めのフォローを',"clNav(\'cs-mna\')",'対応する'));
@@ -5623,16 +5632,41 @@
       });
       // --- 今月の定型チェック ---
       done.fin=!!d(2).length; done.note=!!d(3).length; done.rep=!!d(4).length; done.meet=!!mt;
+      sig.cash90=!!(d(10)[0]&&within(d(10)[0].created_at,90));
+      sig.ins90=!!(d(11)[0]&&within(d(11)[0].created_at,90));
+      sig.ai90=!!(d(12)[0]&&within(d(12)[0].created_at,90));
     }catch(e){}
     var left='';
     if(rows.length) left+=rows.join('');
     else left+='<div style="background:#E9F5EE;border:1px solid #BFE2CD;border-radius:10px;padding:11px 13px;font-size:12.5px;color:#27684A;margin-bottom:6px;">✅ 現時点で急ぎの対応はありません。</div>';
-    var right='<div style="font-size:12px;font-weight:700;color:var(--navy);margin:0 0 2px;">今月（'+esc(ym.replace('-','年'))+'月）の定型作業</div>'
-      +clCheckRow(done.fin, '月次財務メモの入力', "clNav(\'cs-fin\')", '入力する')
+    // ---- 定型作業（期間別タブ）----
+    var daily=clCheckRow(sig.msgOk, 'メッセージの確認・返信（未読ゼロ・滞留なし）', "clNav(\'cs-msg\')", '確認する');
+    var weekly=clCheckRow(sig.pdcaOk, '課題・アクションの進捗更新（全件7日以内）', "clNav(\'cs-act\')", '更新する')
+      +clCheckRow(sig.dueOk, '支払・資金調達の期日確認（期日超過ゼロ）', "clNav(\'cs-fund\')", '確認する');
+    var monthly=clCheckRow(done.fin, '月次財務メモの入力', "clNav(\'cs-fin\')", '入力する')
       +clCheckRow(done.rep, '月次レポートの作成', "openMonthlyReport()", '作成する')
       +clCheckRow(done.note, '面談の実施・議事録の登録', "clNav(\'cs-meet\')", '登録する')
-      +clCheckRow(done.meet, '次回面談の設定'+(meetInfo?'（'+esc(fmtMeetWhen(meetInfo.meet_at))+'）':''), "clNav(\'cs-company\')", '設定する');
+      +clCheckRow(done.meet, '次回面談の設定'+(meetInfo?'（'+esc(fmtMeetWhen(meetInfo.meet_at))+'）':''), "clNav(\'cs-company\')", '設定する')
+      +(sig.hasMa7?clCheckRow(sig.pmiDone, 'PMIパルスの回収（M&A統合後の状況確認）', "clNav(\'cs-mna\')", '確認する'):'');
+    var quarterly=clCheckRow(sig.cash90, '資金繰りシミュレーターの更新（90日以内）', "clNav(\'cs-cash\')", '実行する')
+      +clCheckRow(sig.ins90, '保険最適化の見直し（90日以内）', "clNav(\'cs-ins\')", '実行する')
+      +clCheckRow(sig.ai90, 'AI自動化診断の見直し・提案（90日以内）', "clNav(\'cs-ai\')", '実行する');
+    CL_TODO_TABS={ d:daily, w:weekly, m:monthly, q:quarterly };
+    var pend={ d:(sig.msgOk?0:1), w:(sig.pdcaOk?0:1)+(sig.dueOk?0:1),
+      m:(done.fin?0:1)+(done.rep?0:1)+(done.note?0:1)+(done.meet?0:1)+((sig.hasMa7&&!sig.pmiDone)?1:0),
+      q:(sig.cash90?0:1)+(sig.ins90?0:1)+(sig.ai90?0:1) };
+    function tb(k,label){ var n=pend[k]||0; return '<button class="sbtn'+(k===CL_TODO_CUR?' on':'')+'" data-k="'+k+'" style="font-size:11.5px;padding:6px 12px;" onclick="clTodoFreq(\''+k+'\',this)">'+label+(n?' <span class="clnb" style="position:static;margin-left:2px;">'+n+'</span>':'')+'</button>'; }
+    var right='<div style="font-size:12px;font-weight:700;color:var(--navy);margin:0 0 6px;">定型作業（期間別・'+esc(ym.replace('-','年'))+'月）</div>'
+      +'<div id="cl-todo-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">'+tb('d','毎日')+tb('w','毎週')+tb('m','毎月')+tb('q','3か月ごと')+'</div>'
+      +'<div id="cl-todo-freq">'+CL_TODO_TABS[CL_TODO_CUR]+'</div>';
     box.innerHTML='<div class="cl-cols c64"><div class="cl-col"><div style="font-size:12px;font-weight:700;color:var(--navy);margin:0 0 6px;">要対応</div>'+left+'</div><div class="cl-col">'+right+'</div></div>';
+  }
+  var CL_TODO_TABS={}, CL_TODO_CUR='d';
+  function clTodoFreq(k,el){
+    CL_TODO_CUR=k;
+    var w=$('cl-todo-tabs');
+    if(w){ Array.prototype.forEach.call(w.querySelectorAll('.sbtn'),function(b){ b.classList.toggle('on', b.getAttribute('data-k')===k); }); }
+    var c=$('cl-todo-freq'); if(c && CL_TODO_TABS[k]!==undefined) c.innerHTML=CL_TODO_TABS[k];
   }
   // ===== 進捗ステージ：登録データから自動判定（手入力による誤りを防止） =====
   // 判定ルール（上から優先）：
@@ -6147,6 +6181,8 @@
       +'</div>'
       +'</div>'
       +'<div class="ph" id="cs-cash" style="font-size:13px;margin-top:18px;">資金繰りシミュレーター（実行すると顧客のダッシュボードに反映）</div>'
+      +'<div class="cl-cols">'
+      +'<div class="cl-col">'
       +'<div style="margin:4px 0 8px;"><button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;" onclick="cfPrefillFor(\''+custId+'\')">↺ 月次財務メモから取り込む</button></div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
         +'<div><label class="fl">月商（万円）</label><input id="cf-sales" type="number" class="inp2" placeholder="例 2000"></div>'
@@ -6163,7 +6199,12 @@
       +'</div>'
       +'<button class="btn2" style="margin-top:12px;" onclick="cashflowDiagnose(\''+custId+'\')">資金繰りを診断する</button>'
       +'<div id="cf-saved" style="font-size:12px;margin-top:6px;"></div>'
-      +'<div id="cf-result" style="margin-top:10px;"></div>'
+      +'</div>'
+      +'<div class="cl-col">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin:4px 0 4px;">診断結果</div>'
+      +'<div id="cf-result" style="margin-top:4px;"><div style="font-size:12px;color:#94A2B6;">左の項目を入力し「資金繰りを診断する」を押すと、ここに診断結果が表示されます。</div></div>'
+      +'</div>'
+      +'</div>'
       +'<div class="ph" id="cs-fund" style="font-size:13px;margin-top:18px;">資金調達ロードマップ（登録すると顧客にも進捗が表示されます）</div>'
       +'<div class="cl-cols">'
       +'<div class="cl-col">'
