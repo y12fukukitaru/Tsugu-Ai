@@ -149,6 +149,9 @@
   .cl-ebtn{border:1px solid var(--line);background:var(--card);color:var(--navy);border-radius:8px;font-size:11px;padding:6px 9px;cursor:pointer;font-family:inherit;flex-shrink:0;}
   .cl-ebtn:disabled{opacity:.3;cursor:default;}
   body.dark .cl-sheet{background:var(--card);}
+  .dash-sheet-foot{display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--softline);flex-shrink:0;}
+  .dash-sheet-foot .sb-out2{flex:1;padding:10px;border:1px solid var(--line);background:var(--soft);color:var(--navy);border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;}
+  .dash-sheet-foot .sb-out2:hover{background:var(--softline);}
   @media(max-width:760px){
     .cl-shell{flex-direction:column;gap:12px;}
     .cl-side{position:static;flex:1 1 auto;width:100%;max-height:none;display:flex;flex-wrap:wrap;gap:5px;padding:8px;}
@@ -485,6 +488,9 @@
   <nav id="drawer-nav" class="drawer-nav"></nav>
   <div class="drawer-foot"><span id="dw-email" class="sb-email"></span><button class="sb-out" onclick="openSettings()" style="margin-bottom:6px;">⚙️ 設定</button><button class="sb-out" onclick="signOut()">ログアウト</button></div>
 </aside>
+
+<!-- ===== 顧客ポータル用：ボトムシート型メニュー（タイル表示） ===== -->
+<div id="dash-sheet" class="cl-sheet-back hidden" onclick="if(event.target===this)dashSheetClose()"><div class="cl-sheet" onclick="event.stopPropagation()"><div class="cl-grab"></div><div class="cl-sheet-head"><span class="cl-sheet-title">メニュー</span><button class="modal-close" onclick="event.stopPropagation();dashSheetClose()" aria-label="メニューを閉じる" style="margin-left:0;">×</button></div><div class="cl-sheet-body" id="dash-sheet-body"></div><div class="dash-sheet-foot"><button class="sb-out2" onclick="dashSheetClose();openSettings()">⚙️ 設定</button><button class="sb-out2" onclick="signOut()">ログアウト</button></div></div></div>
 
 <!-- ===== CLIENT DETAIL MODAL ===== -->
 <div id="cl-modal" class="modal-back hidden" onclick="if(event.target===this && !(window.__clGuard && Date.now()-window.__clGuard<450))closeClientModal()">
@@ -893,6 +899,8 @@
     closeDrawer();
   }
   function openDrawer(){
+    // 顧客ポータルはタイル型ボトムシート（カルテメニューと同じ操作感）
+    if(currentRole()==='customer'){ dashSheetOpen(); return; }
     var d=$('drawer'), b=$('drawer-back');
     if(d){ d.classList.add('open'); d.setAttribute('aria-hidden','false'); }
     if(b) b.classList.remove('hidden');
@@ -904,6 +912,32 @@
     if(b) b.classList.add('hidden');
     document.body.style.overflow='';
   }
+  // ===== 顧客ポータル：タイル型メニューシート =====
+  function dashSheetOpen(){
+    var d=$('dash-sheet'), body=$('dash-sheet-body');
+    if(!d || !body){ // 念のためのフォールバック
+      var dr=$('drawer'), b=$('drawer-back');
+      if(dr){ dr.classList.add('open'); dr.setAttribute('aria-hidden','false'); }
+      if(b) b.classList.remove('hidden');
+      document.body.style.overflow='hidden';
+      return;
+    }
+    var h='<div class="cl-tiles">';
+    effectiveNav('customer').forEach(function(it){
+      var badge=(it[0]==='sec-chat')?'<span id="nav-unread-t" class="clnb hidden">0</span>':'';
+      h+='<div class="cl-tile'+(CURRENT_SEC===it[0]?' on':'')+'" onclick="dashTileGo(\''+it[0]+'\')"><span class="ti">'+(NAV_ICON[it[0]]||'•')+'</span><span class="tl">'+esc(it[1])+'</span>'+badge+'</div>';
+    });
+    h+='</div>';
+    body.innerHTML=h;
+    var nt=$('nav-unread-t'); if(nt){ var n=(UNREAD&&UNREAD.total)||0; nt.textContent=n>99?'99+':n; nt.classList.toggle('hidden', !n); }
+    d.classList.remove('hidden');
+    document.body.style.overflow='hidden';
+  }
+  function dashSheetClose(){
+    var d=$('dash-sheet'); if(d) d.classList.add('hidden');
+    document.body.style.overflow='';
+  }
+  function dashTileGo(id){ dashSheetClose(); showSection(id); }
   function goSec(id,el){ showSection(id); }
 
   var VIEWAS_NOTE=1; // 運営の表示モードは VIEWAS で管理
@@ -4922,6 +4956,7 @@
     }
     var nv=$('nav-unread'); if(nv){ nv.textContent=n>99?'99+':n; nv.classList.toggle('hidden', !n); }
     var nvd=$('nav-unread-d'); if(nvd){ nvd.textContent=n>99?'99+':n; nvd.classList.toggle('hidden', !n); }
+    var nvt=$('nav-unread-t'); if(nvt){ nvt.textContent=n>99?'99+':n; nvt.classList.toggle('hidden', !n); }
     var pb=$('chat-unread'); if(pb){ pb.textContent=n>99?'99+':n; pb.classList.toggle('hidden', !n); }
     Object.keys(UNREAD.perClient||{}).forEach(function(id){
       var e=$('clb-'+id); if(!e)return; var c=UNREAD.perClient[id]||0;
