@@ -5707,8 +5707,7 @@
         ch.style.display=(cur===id)?'':'none';
       });
     });
-    // 進捗ステージ・月次レポート・次回面談のヘッダーは「会社情報」タブのみ表示
-    var hd=$('cl-head'); if(hd) hd.style.display=(id==='cs-company')?'':'none';
+    // ヘッダー（進捗ステージ・月次レポート・次回面談）は会社情報セクション内に配置済みのため、タブ切替の共通処理で自動的に表示制御される
     clSpySet(id);
     var m=$('cl-modal'); if(m) m.scrollTop=0;
     var mm=$('cl-main'); if(mm) mm.scrollTop=0; // PC：本文スクロールを先頭に戻す（メニューは動かない）
@@ -5919,6 +5918,7 @@
     // ---- タブ1：メッセージ・提案 ----
     var tabMsg='<div id="ctab-msg">'
       +'<div class="ph" id="cs-company" style="font-size:13px;">会社情報（代行入力）</div>'
+      +head
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">経営者ポータルには確認用に表示されます（顧客側は閲覧のみ）。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
         +'<div style="flex:1;min-width:180px;"><label class="fl">会社名</label><input id="cpi-company" class="inp2" style="width:100%;" value="'+escA(company||'')+'" placeholder="例：株式会社○○"></div>'
@@ -6112,7 +6112,7 @@
       +'<div class="ph" style="font-size:13px;margin-top:16px;">AI自動化診断（顧客が実施した結果）</div>'
       +'<div id="cl-diag" style="margin-top:6px;">読み込み中...</div>'
     +'</div>';
-    box.innerHTML=head+'<div class="cl-shell">'+side+'<div class="cl-main" id="cl-main">'+tabMsg+tabFin+tabTools+tabShared+'</div></div>';
+    box.innerHTML='<div class="cl-shell">'+side+'<div class="cl-main" id="cl-main">'+tabMsg+tabFin+tabTools+tabShared+'</div></div>';
     clSpyInit();
     applyClKarteBadges(custId);
     var f=await sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false});
