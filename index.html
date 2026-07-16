@@ -1238,6 +1238,7 @@
     if(res.error){ if(fb)fb.innerHTML='<div style="color:#A9403D;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
     var rows=res.data||[];
     var fdes=rows.filter(function(r){ return r.role==='consultant'; });
+    var admins=rows.filter(function(r){ return r.role==='admin'; });
     var custs=rows.filter(function(r){ return r.role==='customer'; });
     var nameOf={}; rows.forEach(function(r){ nameOf[r.id]=r.company_name||r.contact_name||r.email; });
     var clientCount={}; custs.forEach(function(c){ if(c.consultant_id) clientCount[c.consultant_id]=(clientCount[c.consultant_id]||0)+1; });
@@ -1258,7 +1259,7 @@
     var diagCount={};
     try{ var pr=await sb.from('ai_proposals').select('author_id').limit(5000);
       if(!pr.error){ (pr.data||[]).forEach(function(p){ diagCount[p.author_id]=(diagCount[p.author_id]||0)+1; }); } }catch(e){}
-    ADM_CACHE={fdes:fdes,custs:custs,nameOf:nameOf,clientCount:clientCount,kn:kn,scoreOf:scoreOf,lastMsg:lastMsg,lastActBy:lastActBy,diagCount:diagCount};
+    ADM_CACHE={fdes:fdes,admins:admins,custs:custs,nameOf:nameOf,clientCount:clientCount,kn:kn,scoreOf:scoreOf,lastMsg:lastMsg,lastActBy:lastActBy,diagCount:diagCount};
     var unassigned=custs.filter(function(c){ return !c.consultant_id; }).length;
     var sum=$('adm-sum');
     if(sum){
@@ -1394,12 +1395,15 @@
     });
     var h='';
     var fdeOpts=(ADM_CACHE.fdes||[]).map(function(f){ return {id:f.id, name:(f.contact_name||f.company_name||f.email)}; });
+    var admOpts=(ADM_CACHE.admins||[]).map(function(a){ return {id:a.id, name:(a.contact_name||a.company_name||a.email)}; });
     rows.forEach(function(u){
       var fdeTag=u.consultant_id
         ?'<span class="tag green">担当：'+esc(ADM_CACHE.nameOf[u.consultant_id]||'パートナー')+'</span>'
         :'<span class="tag red">担当未割当</span>';
-      var assignSel='<select class="inp2" style="width:180px;" onchange="assignConsultant(\''+u.id+'\',this.value)"><option value="">（未割当）</option>'
-        +fdeOpts.map(function(f){ return '<option value="'+f.id+'"'+(u.consultant_id===f.id?' selected':'')+'>'+esc(f.name)+'</option>'; }).join('')+'</select>';
+      var assignSel='<select class="inp2" style="width:200px;" onchange="assignConsultant(\''+u.id+'\',this.value)"><option value="">（未割当）</option>'
+        +(admOpts.length?('<optgroup label="運営（直接担当）">'+admOpts.map(function(f){ return '<option value="'+f.id+'"'+(u.consultant_id===f.id?' selected':'')+'>'+esc(f.name)+'（運営）</option>'; }).join('')+'</optgroup>'):'')
+        +(fdeOpts.length?('<optgroup label="認定パートナー">'+fdeOpts.map(function(f){ return '<option value="'+f.id+'"'+(u.consultant_id===f.id?' selected':'')+'>'+esc(f.name)+'</option>'; }).join('')+'</optgroup>'):'')
+        +'</select>';
       h+='<div class="clcard" style="cursor:default;">'
         +'<div class="cl-top"><span class="cl-nm">'+esc(u.company_name||u.contact_name||u.email)+'</span>'
         +'<span class="tag gray">ステージ'+(u.stage||1)+'</span>'+fdeTag+'</div>'
@@ -5493,6 +5497,101 @@
     loadClientInsurance(custId);
   }
 
+  // ===== やること（カルテ内）：要対応アラート＋今月の定型チェック（パートナー専用・顧客非表示） =====
+  function clTodoRow(sev, txt, go, label){
+    var col=sev==='red'?['#FBEFEF','#E3B9B7','#A9403D']:(sev==='amber'?['#FDF8EC','#ECD9A6','#8A6A12']:['#EFF4FB','#C9D6EA','#2C5DA8']);
+    return '<div onclick="'+go+'" style="display:flex;align-items:center;gap:9px;background:'+col[0]+';border:1px solid '+col[1]+';border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer;">'
+      +'<span style="font-size:12.5px;color:'+col[2]+';flex:1;line-height:1.5;">'+txt+'</span>'
+      +'<span style="font-size:11px;font-weight:700;color:'+col[2]+';white-space:nowrap;">'+label+' →</span></div>';
+  }
+  function clCheckRow(done, txt, go, label){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 2px;border-top:1px dashed var(--softline);font-size:12.5px;">'
+      +'<span style="font-size:14px;flex-shrink:0;">'+(done?'✅':'⬜')+'</span>'
+      +'<span style="flex:1;color:'+(done?'var(--muted)':'var(--ink)')+';">'+txt+'</span>'
+      +(done?'<span style="font-size:11px;color:#27684A;white-space:nowrap;">済み</span>':'<span class="ghost" style="font-size:11px;white-space:nowrap;" onclick="'+go+'">'+label+' →</span>')
+    +'</div>';
+  }
+  async function loadClientTodo(custId){
+    var box=$('cl-todo-body'); if(!box) return;
+    var now=new Date(), ym=thisYM(), monthStart=ym+'-01';
+    var rows=[], done={fin:false, meet:false, note:false, rep:false}, meetInfo=null;
+    try{
+      var rs=await Promise.all([
+        sb.from('chat_messages').select('sender_role,created_at').eq('customer_id',custId).order('created_at',{ascending:false}).limit(100),
+        sb.from('meetings_scheduled').select('meet_at').eq('customer_id',custId).eq('status','scheduled').order('meet_at',{ascending:true}).limit(1),
+        sb.from('financial_entries').select('id').eq('customer_id',custId).eq('year_month',ym).limit(1),
+        sb.from('meeting_notes').select('id').eq('customer_id',custId).gte('meeting_date',monthStart).limit(1),
+        sb.from('monthly_reports').select('id').eq('customer_id',custId).eq('report_month',ym).limit(1),
+        sb.from('upcoming_payments').select('title,due_date').eq('customer_id',custId),
+        sb.from('funding_roadmap_items').select('title,target_date,status').eq('customer_id',custId),
+        sb.from('pdca_items').select('title,due_date,updated_at').eq('customer_id',custId).eq('status','active'),
+        sb.from('ma_deals').select('stage,target_date,updated_at').eq('customer_id',custId),
+        sb.from('pmi_pulses').select('score').eq('customer_id',custId).eq('ym',ym).limit(1)
+      ]);
+      var d=function(i){ return (!rs[i].error && rs[i].data)?rs[i].data:[]; };
+      // --- メッセージ：未読＋返信滞留 ---
+      var msgs=d(0), un=0;
+      var lr=getLastRead(custId);
+      msgs.forEach(function(m){ if(m.sender_role==='customer' && m.created_at>lr) un++; });
+      if(un) rows.push(clTodoRow('red','💬 未読メッセージが <b>'+un+'件</b> あります',"clNav(\'cs-msg\')",'返信する'));
+      else if(msgs.length && msgs[0].sender_role==='customer'){
+        var hrs=(now - new Date(msgs[0].created_at))/3600000;
+        if(hrs>=48) rows.push(clTodoRow('red','💬 顧客からのメッセージに <b>'+Math.floor(hrs/24)+'日間</b> 返信していません',"clNav(\'cs-msg\')",'返信する'));
+      }
+      // --- 次回面談 ---
+      var mt=d(1)[0]||null; meetInfo=mt;
+      if(mt && mt.meet_at){
+        var md=new Date(mt.meet_at);
+        var days=Math.round((new Date(md.getFullYear(),md.getMonth(),md.getDate()) - new Date(now.getFullYear(),now.getMonth(),now.getDate()))/(24*3600*1000));
+        if(days<0) rows.push(clTodoRow('red','📅 面談予定日（'+esc(fmtMeetWhen(mt.meet_at))+'）を過ぎています。実施済みなら議事録を登録し、次回を設定してください',"clNav(\'cs-meet\')",'議事録へ'));
+        else if(days<=3) rows.push(clTodoRow('amber','📅 次回面談が近づいています（'+esc(fmtMeetWhen(mt.meet_at))+'）。アジェンダ・資料の準備を',"clNav(\'cs-company\')",'確認する'));
+      }
+      // --- 支払予定（7日以内） ---
+      d(5).forEach(function(p){
+        if(!p.due_date) return; var dd=daysBetween(p.due_date, now); if(dd===null) return;
+        if(dd>=0 && dd<=7) rows.push(clTodoRow('amber','💳 支払予定「'+esc(p.title)+'」が <b>'+(dd===0?'本日':dd+'日後')+'</b> です。資金繰りの確認を',"clNav(\'cs-pay\')",'確認する'));
+      });
+      // --- 資金調達（期日14日以内・超過） ---
+      d(6).forEach(function(f){
+        if(!f.target_date || f.status==='実行済' || f.status==='見送り') return;
+        var dd=daysBetween(f.target_date, now); if(dd===null) return;
+        if(dd<0) rows.push(clTodoRow('red','🏦 資金調達「'+esc(f.title)+'」が目標日を <b>'+(-dd)+'日</b> 過ぎています',"clNav(\'cs-fund\')",'状況を更新'));
+        else if(dd<=14) rows.push(clTodoRow('amber','🏦 資金調達「'+esc(f.title)+'」の目標日まで <b>'+dd+'日</b> です',"clNav(\'cs-fund\')",'確認する'));
+      });
+      // --- 経営課題（期日接近・超過・30日更新なし） ---
+      d(7).forEach(function(p){
+        if(p.due_date){ var dd=daysBetween(p.due_date, now);
+          if(dd!==null && dd<0){ rows.push(clTodoRow('red','✅ 課題「'+esc(p.title)+'」が期限を過ぎています',"clNav(\'cs-act\')",'更新する')); return; }
+          if(dd!==null && dd<=7){ rows.push(clTodoRow('amber','✅ 課題「'+esc(p.title)+'」の期限まで <b>'+dd+'日</b> です',"clNav(\'cs-act\')",'確認する')); return; }
+        }
+        if(p.updated_at && Math.floor((now - new Date(p.updated_at))/(24*3600*1000))>=30)
+          rows.push(clTodoRow('amber','✅ 課題「'+esc(p.title)+'」が <b>30日以上</b> 更新されていません',"clNav(\'cs-act\')",'更新する'));
+      });
+      // --- M&A（PMI未回収・目標日接近・停滞） ---
+      var pulse=d(9)[0]||null;
+      d(8).forEach(function(m0){
+        if(m0.stage===7){
+          if((!pulse && now.getDate()>=7)) rows.push(clTodoRow('amber','🤝 M&A：今月のPMIパルス（統合後の状況確認）が未回収です',"clNav(\'cs-mna\')",'確認する'));
+          else if(pulse && pulse.score>=3) rows.push(clTodoRow('red','🤝 M&A：PMIパルスが要注意スコアです。早めのフォローを',"clNav(\'cs-mna\')",'対応する'));
+        }
+        if(m0.stage>=1 && m0.stage<8){
+          if(m0.target_date){ var dd=daysBetween(m0.target_date, now); if(dd!==null && dd>=0 && dd<=30) rows.push(clTodoRow('amber','🤝 M&A案件の目標日まで <b>'+dd+'日</b> です',"clNav(\'cs-mna\')",'確認する')); }
+          if(m0.updated_at && Math.floor((now - new Date(m0.updated_at))/(24*3600*1000))>=30) rows.push(clTodoRow('amber','🤝 M&A案件が <b>30日以上</b> 更新されていません',"clNav(\'cs-mna\')",'更新する'));
+        }
+      });
+      // --- 今月の定型チェック ---
+      done.fin=!!d(2).length; done.note=!!d(3).length; done.rep=!!d(4).length; done.meet=!!mt;
+    }catch(e){}
+    var h='';
+    if(rows.length) h+=rows.join('');
+    else h+='<div style="background:#E9F5EE;border:1px solid #BFE2CD;border-radius:10px;padding:11px 13px;font-size:12.5px;color:#27684A;margin-bottom:6px;">✅ 現時点で急ぎの対応はありません。</div>';
+    h+='<div style="font-size:12px;font-weight:700;color:var(--navy);margin:14px 0 2px;">今月（'+esc(ym.replace('-','年'))+'月）の定型作業</div>'
+      +clCheckRow(done.fin, '月次財務メモの入力', "clNav(\'cs-fin\')", '入力する')
+      +clCheckRow(done.rep, '月次レポートの作成', "openMonthlyReport()", '作成する')
+      +clCheckRow(done.note, '面談の実施・議事録の登録', "clNav(\'cs-meet\')", '登録する')
+      +clCheckRow(done.meet, '次回面談の設定'+(meetInfo?'（'+esc(fmtMeetWhen(meetInfo.meet_at))+'）':''), "clNav(\'cs-company\')", '設定する');
+    box.innerHTML=h;
+  }
   // ===== 進捗ステージ：登録データから自動判定（手入力による誤りを防止） =====
   // 判定ルール（上から優先）：
   //  5. 次の投資      … M&A案件、または投資・融資・M&Aの掲載/申請あり
@@ -5695,12 +5794,12 @@
     var side=$('cl-side'); if(!side)return;
     Array.prototype.forEach.call(side.querySelectorAll('.cl-ni'),function(n){ n.classList.toggle('on', n.id==='ni-'+id); });
   }
-  var CL_SPY_IDS=['cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-bp','cs-ins','cs-shared'];
+  var CL_SPY_IDS=['cs-todo','cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-bp','cs-ins','cs-shared'];
   var CL_TAB_WRAPS=['ctab-msg','ctab-fin','ctab-tools','ctab-shared'];
-  var CL_ACTIVE='cs-company';
+  var CL_ACTIVE='cs-todo';
   // カルテ内タブ切替：見出し（cs-*）から次の見出しまでを1つのタブとして表示
   function clShowSection(id){
-    if(CL_SPY_IDS.indexOf(id)<0) id='cs-company';
+    if(CL_SPY_IDS.indexOf(id)<0) id='cs-todo';
     CL_ACTIVE=id;
     CL_TAB_WRAPS.forEach(function(wid){
       var w=$(wid); if(!w) return;
@@ -5719,11 +5818,12 @@
   }
   function clSpyInit(){
     var m=$('cl-modal'); if(m) m.onscroll=null; // 旧スクロール連動の解除
-    clShowSection('cs-company');
+    clShowSection('cs-todo');
   }
   // ===== カルテ内ダッシュボードナビ（左サイド＆ヘッダーのハンバーガーで共用） =====
   // ===== カルテ内メニュー項目（フラット・カスタマイズ可能） =====
   var CL_ITEMS=[
+    ['cs-todo','📌','やること'],
     ['cs-company','🏢','会社情報'],
     ['cs-msg','💬','メッセージ・提案'],
     ['cs-shared','📥','顧客からの共有'],
@@ -5809,6 +5909,8 @@
         if(days<=3) c['cs-company']+=1;
       }
     }catch(e){}
+    // やることタブには合計件数をバッジ表示
+    c['cs-todo']=Object.keys(c).reduce(function(a,k){ return a+(c[k]||0); },0);
     return c;
   }
   function applyClKarteBadges(custId){
@@ -5920,6 +6022,9 @@
     var side=clSideHtml();
     // ---- タブ1：メッセージ・提案 ----
     var tabMsg='<div id="ctab-msg">'
+      +'<div class="ph" id="cs-todo" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;">📌 やること（この顧客の対応状況）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientTodo(\''+custId+'\')">↺ 更新</span></div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">対応が必要な項目と、今月の定型作業のチェックです。このリストは<b>パートナー専用</b>で、顧客には表示されません。</div>'
+      +'<div id="cl-todo-body">読み込み中...</div>'
       +'<div class="ph" id="cs-company" style="font-size:13px;">会社情報（代行入力）</div>'
       +head
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">経営者ポータルには確認用に表示されます（顧客側は閲覧のみ）。</div>'
@@ -6131,6 +6236,7 @@
     loadClientDiag(custId);
     loadClientNotes(custId);
     autoStageFor(custId);
+    loadClientTodo(custId);
     loadMeetingNotes(custId);
     loadDiagInterests(custId);
     loadNextMeeting(custId);
