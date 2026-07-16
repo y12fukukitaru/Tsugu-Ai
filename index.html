@@ -126,6 +126,16 @@
     #cl-modal .cl-shell{flex:1;min-height:0;align-items:stretch;}
     #cl-modal .cl-side{position:static;align-self:stretch;max-height:none;overflow-y:auto;flex:0 0 220px;}
     #cl-modal .cl-main{min-width:0;height:auto;overflow-y:auto;padding-right:8px;overscroll-behavior:contain;}
+    #cl-main .ph{font-size:14px;}
+  }
+  /* ===== PC：カルテ本文の2カラムレイアウト（広い画面を活用） ===== */
+  .cl-cols, .cl-col{min-width:0;}
+  @media(min-width:1000px){
+    .cl-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px 22px;align-items:start;}
+    .cl-cols.c64{grid-template-columns:1.4fr 1fr;}
+  }
+  @media(max-width:999px){
+    .cl-cols>.cl-col+.cl-col{margin-top:14px;}
   }
   .csec{display:none;}
   .csec.on{display:block;animation:mpop .14s ease;}
@@ -5614,15 +5624,15 @@
       // --- 今月の定型チェック ---
       done.fin=!!d(2).length; done.note=!!d(3).length; done.rep=!!d(4).length; done.meet=!!mt;
     }catch(e){}
-    var h='';
-    if(rows.length) h+=rows.join('');
-    else h+='<div style="background:#E9F5EE;border:1px solid #BFE2CD;border-radius:10px;padding:11px 13px;font-size:12.5px;color:#27684A;margin-bottom:6px;">✅ 現時点で急ぎの対応はありません。</div>';
-    h+='<div style="font-size:12px;font-weight:700;color:var(--navy);margin:14px 0 2px;">今月（'+esc(ym.replace('-','年'))+'月）の定型作業</div>'
+    var left='';
+    if(rows.length) left+=rows.join('');
+    else left+='<div style="background:#E9F5EE;border:1px solid #BFE2CD;border-radius:10px;padding:11px 13px;font-size:12.5px;color:#27684A;margin-bottom:6px;">✅ 現時点で急ぎの対応はありません。</div>';
+    var right='<div style="font-size:12px;font-weight:700;color:var(--navy);margin:0 0 2px;">今月（'+esc(ym.replace('-','年'))+'月）の定型作業</div>'
       +clCheckRow(done.fin, '月次財務メモの入力', "clNav(\'cs-fin\')", '入力する')
       +clCheckRow(done.rep, '月次レポートの作成', "openMonthlyReport()", '作成する')
       +clCheckRow(done.note, '面談の実施・議事録の登録', "clNav(\'cs-meet\')", '登録する')
       +clCheckRow(done.meet, '次回面談の設定'+(meetInfo?'（'+esc(fmtMeetWhen(meetInfo.meet_at))+'）':''), "clNav(\'cs-company\')", '設定する');
-    box.innerHTML=h;
+    box.innerHTML='<div class="cl-cols c64"><div class="cl-col"><div style="font-size:12px;font-weight:700;color:var(--navy);margin:0 0 6px;">要対応</div>'+left+'</div><div class="cl-col">'+right+'</div></div>';
   }
   // ===== 進捗ステージ：登録データから自動判定（手入力による誤りを防止） =====
   // 判定ルール（上から優先）：
@@ -6071,7 +6081,8 @@
       +'</div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-top:4px;">※ 契約社数・HD化は顧問料の割引（運営の課金管理）に反映されます。</div>'
       +'<div id="cpi-msg" style="font-size:12px;margin-top:6px;"></div>'
-      +'<div id="cs-msg" style="border:1.5px solid #C9D6EA;background:#F5F9FE;border-radius:12px;padding:14px 15px;margin-top:18px;">'
+      +'<div id="cs-msg" class="cl-cols c64" style="margin-top:18px;">'
+      +'<div class="cl-col" style="border:1.5px solid #C9D6EA;background:#F5F9FE;border-radius:12px;padding:14px 15px;">'
         +'<div class="ph" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;"><span>💬 メッセージ（顧客との双方向チャット）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientChat(\''+custId+'\')">↺ 更新</span></div>'
         +'<div style="font-size:11px;color:#5A6981;margin-bottom:8px;line-height:1.6;">日々のやり取り用。送信すると顧客ポータルの「メッセージ」に届き、顧客からも返信できます。</div>'
         +'<div id="cchat-log" style="max-height:280px;overflow:auto;border:1px solid #DDE6F2;border-radius:10px;padding:12px;margin:4px 0 8px;background:#fff;">読み込み中...</div>'
@@ -6080,7 +6091,7 @@
           +'<button class="btn2" id="cchat-send" onclick="sendClientChat(\''+custId+'\')">送信</button>'
         +'</div>'
       +'</div>'
-      +'<div style="border:1.5px solid #E4D3A8;background:#FDFAF1;border-radius:12px;padding:14px 15px;margin-top:14px;">'
+      +'<div class="cl-col" style="border:1.5px solid #E4D3A8;background:#FDFAF1;border-radius:12px;padding:14px 15px;">'
         +'<div class="ph" style="font-size:13px;margin-bottom:2px;">📝 提案メモ（顧客ダッシュボードへの掲示・一方向）</div>'
         +'<div style="font-size:11px;color:#8A6A12;margin-bottom:8px;line-height:1.6;">チャットとは別物です。送信すると顧客ダッシュボードの「担当パートナーからの提案」欄に掲示されます（顧客からの返信機能はありません）。保険・M&A等の正式なご提案の提示に使ってください。</div>'
         +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">'
@@ -6089,10 +6100,13 @@
         +'</div>'
         +'<div id="cl-notes" style="margin-top:10px;">読み込み中...</div>'
       +'</div>'
+      +'</div>'
     +'</div>';
     // ---- タブ2：財務・支払・課題 ----
     var tabFin='<div id="ctab-fin">'
       +'<div class="ph" id="cs-fin" style="font-size:13px;">月次財務メモ（代行入力）</div>'
+      +'<div class="cl-cols">'
+      +'<div class="cl-col">'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">保存すると顧客のダッシュボード（経営サマリー・資金繰り）にも反映されます。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
         +'<div><label class="fl">年月</label><input id="cfin-ym" type="month" class="inp2"></div>'
@@ -6109,8 +6123,15 @@
         +'<div id="fin-import-msg" style="font-size:12px;margin-top:6px;"></div>'
         +'<div id="fin-preview" style="margin-top:8px;"></div>'
       +'</div>'
-      +'<div id="cl-fin" style="margin:8px 0 6px;">読み込み中...</div>'
+      +'</div>'
+      +'<div class="cl-col">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;">登録済みの月次データ</div>'
+      +'<div id="cl-fin" style="margin:4px 0 6px;">読み込み中...</div>'
+      +'</div>'
+      +'</div>'
       +'<div class="ph" id="cs-pay" style="font-size:13px;margin-top:18px;">今後の支払予定（代行入力）</div>'
+      +'<div class="cl-cols">'
+      +'<div class="cl-col">'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">借入返済・納税・賞与・大口仕入など。顧客の「資金繰りステータス」の残高見通しに反映されます。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
         +'<div style="flex:1;min-width:160px;"><label class="fl">内容</label><input id="cpay-title" class="inp2" style="width:100%;" placeholder="例：法人税納付"></div>'
@@ -6119,7 +6140,12 @@
         +'<button class="btn2" onclick="addClientPayment(\''+custId+'\')">追加</button>'
       +'</div>'
       +'<div id="cpay-msg" style="font-size:12px;margin-top:6px;"></div>'
-      +'<div id="cl-pay" style="margin-top:8px;">読み込み中...</div>'
+      +'</div>'
+      +'<div class="cl-col">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;">登録済みの支払予定</div>'
+      +'<div id="cl-pay" style="margin-top:4px;">読み込み中...</div>'
+      +'</div>'
+      +'</div>'
       +'<div class="ph" id="cs-cash" style="font-size:13px;margin-top:18px;">資金繰りシミュレーター（実行すると顧客のダッシュボードに反映）</div>'
       +'<div style="margin:4px 0 8px;"><button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;" onclick="cfPrefillFor(\''+custId+'\')">↺ 月次財務メモから取り込む</button></div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
@@ -6139,6 +6165,8 @@
       +'<div id="cf-saved" style="font-size:12px;margin-top:6px;"></div>'
       +'<div id="cf-result" style="margin-top:10px;"></div>'
       +'<div class="ph" id="cs-fund" style="font-size:13px;margin-top:18px;">資金調達ロードマップ（登録すると顧客にも進捗が表示されます）</div>'
+      +'<div class="cl-cols">'
+      +'<div class="cl-col">'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">'
         +'<div><label class="fl">手段</label><select id="fr-type" class="inp2">'+fundTypeOptions()+'</select></div>'
         +'<div style="flex:1;min-width:160px;"><label class="fl">案件名</label><input id="fr-title" class="inp2" style="width:100%;" placeholder="例：公庫 運転資金"></div>'
@@ -6148,7 +6176,12 @@
         +'<button class="btn2" onclick="addFundItem(\''+custId+'\')">登録</button>'
       +'</div>'
       +'<div id="fr-msg" style="font-size:12px;margin-top:6px;"></div>'
-      +'<div id="cl-fund" style="margin-top:8px;">読み込み中...</div>'
+      +'</div>'
+      +'<div class="cl-col">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin:4px 0 4px;">登録済みの調達案件</div>'
+      +'<div id="cl-fund" style="margin-top:4px;">読み込み中...</div>'
+      +'</div>'
+      +'</div>'
       +'<div class="ph" id="cs-market" style="font-size:13px;margin-top:18px;">💹 Tsugu投資・融資・M&A 掲載申請（運営審査制）</div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">案件の掲載・ステータス変更は<b>運営が審査のうえ</b>行います。経営者の意向が固まった段階で、このフォームから運営に申請してください。承認されるとプラットフォームに掲載され、下の「掲載中の案件」で進捗を確認できます。</div>'
       +'<div style="font-size:11px;color:#5A6981;background:var(--soft);border-radius:8px;padding:7px 10px;margin-bottom:8px;">立場の目安：<b>集めたい</b>＝資金調達／会社・事業の<b>譲渡（売り手）</b>、<b>出したい</b>＝出資・融資／会社・事業の<b>譲受（買い手）</b>。種別で「M&A」を選ぶと譲渡・譲受の案件になります。</div>'
@@ -6170,12 +6203,19 @@
       +'<div class="ph" style="font-size:12.5px;margin-top:14px;">掲載中の案件（ステータス変更は運営が行います）</div>'
       +'<div id="cl-listings" style="margin-top:4px;">読み込み中...</div>'
       +'<div class="ph" id="cs-act" style="font-size:13px;margin-top:18px;">アクション・課題（顧客と共有・両者が編集可）</div>'
+      +'<div class="cl-cols">'
+      +'<div class="cl-col">'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">'
         +'<div style="flex:1;min-width:200px;"><label class="fl">課題を追加</label><input id="cact-title" class="inp2" style="width:100%;" placeholder="例：退職金規程の確認"></div>'
         +'<div><label class="fl">期限（任意）</label><input id="cact-due" type="date" class="inp2"></div>'
         +'<button class="btn2" onclick="addClientAction()">追加</button>'
       +'</div>'
-      +'<div id="cact-list" style="margin-top:10px;">読み込み中...</div>'
+      +'</div>'
+      +'<div class="cl-col">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin:4px 0 4px;">共有中の課題一覧</div>'
+      +'<div id="cact-list" style="margin-top:4px;">読み込み中...</div>'
+      +'</div>'
+      +'</div>'
     +'</div>';
     // ---- タブ3：AIツール・試算 ----
     var tabTools='<div id="ctab-tools">'
@@ -6243,14 +6283,25 @@
     +'</div>';
     // ---- タブ4：顧客からの共有 ----
     var tabShared='<div id="ctab-shared">'
-      +'<div class="ph" id="cs-shared" style="font-size:13px;">顧客が興味を示した自動化項目</div>'
-      +'<div id="cl-interest" style="margin-top:6px;">読み込み中...</div>'
-      +'<div class="ph" style="font-size:13px;margin-top:16px;">顧客が興味を示したM&Aの方向性</div>'
-      +'<div id="cl-mna" style="margin-top:6px;">読み込み中...</div>'
-      +'<div class="ph" style="font-size:13px;margin-top:16px;">保険試算の共有結果</div>'
-      +'<div id="cl-ins" style="margin-top:6px;">読み込み中...</div>'
-      +'<div class="ph" style="font-size:13px;margin-top:16px;">AI自動化診断（顧客が実施した結果）</div>'
-      +'<div id="cl-diag" style="margin-top:6px;">読み込み中...</div>'
+      +'<div class="ph" id="cs-shared" style="font-size:13px;">顧客からの共有</div>'
+      +'<div class="cl-cols">'
+      +'<div class="cl-col">'
+        +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin:2px 0 4px;">顧客が興味を示した自動化項目</div>'
+        +'<div id="cl-interest" style="margin-top:4px;">読み込み中...</div>'
+      +'</div>'
+      +'<div class="cl-col">'
+        +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin:2px 0 4px;">顧客が興味を示したM&Aの方向性</div>'
+        +'<div id="cl-mna" style="margin-top:4px;">読み込み中...</div>'
+      +'</div>'
+      +'<div class="cl-col">'
+        +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin:2px 0 4px;">保険試算の共有結果</div>'
+        +'<div id="cl-ins" style="margin-top:4px;">読み込み中...</div>'
+      +'</div>'
+      +'<div class="cl-col">'
+        +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin:2px 0 4px;">AI自動化診断（顧客が実施した結果）</div>'
+        +'<div id="cl-diag" style="margin-top:4px;">読み込み中...</div>'
+      +'</div>'
+      +'</div>'
     +'</div>';
     box.innerHTML='<div class="cl-shell">'+side+'<div class="cl-main" id="cl-main">'+tabMsg+tabFin+tabTools+tabShared+'</div></div>';
     clSpyInit();
