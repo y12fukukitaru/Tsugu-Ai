@@ -1654,14 +1654,6 @@
         +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b></div>'
         +'<div id="dash-hero">読み込み中...</div>'
         +'<div id="my-partner"></div>'
-        +((r==='admin')?(
-          '<div id="adm-cust-verify" style="border-top:1px dashed var(--line);margin-top:14px;padding-top:12px;">'
-          +'<div style="font-size:12px;font-weight:700;color:#1E3A66;margin-bottom:5px;">🔎 運営：顧客の登録内容を確認</div>'
-          +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">この「（プレビュー）」画面は運営アカウント自身の情報を表示しています。パートナーが各顧客に登録した会社情報は、下で顧客を選ぶと確認できます。</div>'
-          +'<select id="adm-prev-cust" class="inp2" style="width:100%;" onchange="admCheckCustomerProfile(this.value)"><option value="">顧客を選択して確認…</option></select>'
-          +'<div id="adm-prev-cust-out" style="margin-top:8px;font-size:13px;"></div>'
-          +'</div>'
-        ):'')
         +'</div>'
         +'<div id="my-nextmeet"></div>'
         +'<div id="my-annc"></div>'
@@ -2006,7 +1998,7 @@
 
     window.__eff=eff;
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadDashHero(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); if(window.__role==='admin') loadAdmPreviewCustomers(); }
+    if(eff==='customer'){ loadDashHero(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
     else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); }
     else { loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); loadAdmInquiries(); loadSupportKB(); }
     startNotifPolling(eff);
@@ -3770,30 +3762,6 @@
     if(msg){msg.style.color='#27684A';msg.textContent=Y+'年の目標を保存しました。';}
     loadAdmRevenue();
   }
-  // ===== 運営プレビュー：顧客の登録済み会社情報を確認 =====
-  async function loadAdmPreviewCustomers(){
-    var sel=$('adm-prev-cust'); if(!sel) return;
-    try{
-      var res=await sb.from('profiles').select('id,company_name,contact_name,email').eq('role','customer').order('company_name',{ascending:true});
-      if(res.error||!res.data) return;
-      sel.innerHTML='<option value="">顧客を選択して確認…</option>'+res.data.map(function(c){ return '<option value="'+c.id+'">'+esc(c.company_name||c.email)+'</option>'; }).join('');
-    }catch(e){}
-  }
-  async function admCheckCustomerProfile(id){
-    var out=$('adm-prev-cust-out'); if(!out) return;
-    if(!id){ out.innerHTML=''; return; }
-    out.innerHTML='<span style="color:#94A2B6;">確認中…</span>';
-    try{
-      var res=await sb.from('profiles').select('company_name,contact_name,email').eq('id',id).single();
-      if(res.error||!res.data){ out.innerHTML='<span style="color:#A9403D;">取得できませんでした：'+esc((res.error&&res.error.message)||'')+'</span>'; return; }
-      var d=res.data; var ok=!!(d.company_name||d.contact_name);
-      out.innerHTML='<div style="background:'+(ok?'#E9F5EE':'#FBF3E0')+';border:1px solid '+(ok?'#BFE2CD':'#ECD9A6')+';border-radius:9px;padding:10px 12px;line-height:1.9;">'
-        +'<b>会社名：</b>'+esc(d.company_name||'（未設定）')+'<br><b>ご担当者：</b>'+esc(d.contact_name||'（未設定）')
-        +(ok?'<br><span style="font-size:11px;color:#27684A;">✓ 登録済みです（経営者本人がログインすると、この内容が会社情報に表示されます）。</span>'
-            :'<br><span style="font-size:11px;color:#8A6A12;">※ まだ未登録です。パートナーポータルの顧客カルテで保存してください。保存時にエラーが出る場合は、Supabaseで「Phase51」のSQLを実行してください。</span>')
-        +'</div>';
-    }catch(e){ out.innerHTML='<span style="color:#A9403D;">エラー：'+esc(String((e&&e.message)||e))+'</span>'; }
-  }
   // ===== 公式ナレッジ（運営提供）一覧 =====
   // ★今後の追加はこの配列に1項目足すだけ。file は同梱HTMLのファイル名。
   //   tag（任意）：カテゴリ表示、badge（任意）：'NEW'などの強調、desc：説明。
@@ -5525,8 +5493,43 @@
     loadClientInsurance(custId);
   }
 
-  async function loadClientStage(custId){ var sel=$('cl-stage'); if(!sel)return; var res=await sb.from('profiles').select('stage').eq('id',custId).single(); if(!res.error && res.data && res.data.stage) sel.value=String(res.data.stage); }
-  async function setStage(custId,n){ var res=await sb.rpc('set_client_stage', { p_customer_id:custId, p_stage:parseInt(n,10) }); var m=$('stage-msg'); if(res.error){ alert('ステージ更新エラー：'+res.error.message+'\n（Supabaseで「Phase51」のSQLを実行してください）'); return; } if(typeof res.data==='string' && res.data.indexOf('error:')===0){ alert(res.data.replace('error:','').trim()); return; } if(m){ m.textContent='保存しました'; m.style.color='#27684A'; setTimeout(function(){ if(m) m.textContent=''; },2000); } }
+  // ===== 進捗ステージ：登録データから自動判定（手入力による誤りを防止） =====
+  // 判定ルール（上から優先）：
+  //  5. 次の投資      … M&A案件、または投資・融資・M&Aの掲載/申請あり
+  //  4. 生まれた余力  … 保険最適化で年間改善額を算出済み、または資金調達に「実行済」案件あり
+  //  3. コスト削減    … AI診断の施策を顧客へ提案済み
+  //  2. AI活用・自動化… AI自動化診断の実施、または顧客が自動化に関心登録
+  //  1. 現状把握      … 上記いずれもなし（会社情報・財務メモの登録段階）
+  async function autoStageFor(custId){
+    var el=$('cl-stage-auto');
+    var stage=1, basis='会社情報・財務メモの登録段階';
+    try{
+      var rs=await Promise.all([
+        sb.from('ma_deals').select('id').eq('customer_id',custId).limit(1),
+        sb.from('market_listings').select('id').eq('owner_id',custId).limit(1),
+        sb.from('market_applications').select('id').eq('customer_id',custId).limit(1),
+        sb.from('insurance_diagnoses').select('summary').eq('customer_id',custId).order('created_at',{ascending:false}).limit(5),
+        sb.from('funding_roadmap_items').select('id').eq('customer_id',custId).eq('status','実行済').limit(1),
+        sb.from('ai_proposals').select('id').eq('customer_id',custId).eq('source','automation').limit(1),
+        sb.from('ai_diagnoses').select('id').eq('customer_id',custId).limit(1),
+        sb.from('automation_interests').select('id').eq('customer_id',custId).limit(1)
+      ]);
+      var has=function(i){ return !rs[i].error && rs[i].data && rs[i].data.length>0; };
+      var insImp=false;
+      if(!rs[3].error && rs[3].data){ rs[3].data.forEach(function(d){ var s=d.summary||{}; if(Number(s.improve)>0) insImp=true; }); }
+      if(has(0)||has(1)||has(2)){ stage=5; basis='M&A・投資/調達案件の登録あり'; }
+      else if(insImp||has(4)){ stage=4; basis=insImp?'保険最適化で年間改善額を算出済み':'資金調達に実行済み案件あり'; }
+      else if(has(5)){ stage=3; basis='AI診断の施策を顧客へ提案済み'; }
+      else if(has(6)||has(7)){ stage=2; basis='AI自動化診断の実施・関心あり'; }
+    }catch(e){}
+    if(el) el.innerHTML='<b style="color:#1E3A66;">'+stage+'. '+esc(STAGE_NAMES[stage]||'')+'</b><span style="font-size:10.5px;color:#94A2B6;margin-left:6px;">（自動判定：'+esc(basis)+'）</span>';
+    // 顧客ダッシュボードの現在地・月次レポートと一致させるため、保存値と異なる場合のみ更新
+    try{
+      var cur=await sb.from('profiles').select('stage').eq('id',custId).single();
+      var saved=(cur.data&&cur.data.stage)?Number(cur.data.stage):null;
+      if(!cur.error && saved!==stage){ await sb.rpc('set_client_stage', { p_customer_id:custId, p_stage:stage }); }
+    }catch(e){}
+  }
 
   function openClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.remove('hidden'); document.body.style.overflow='hidden'; if(typeof clMenuClose==='function') clMenuClose(); }
   function closeClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.add('hidden'); document.body.style.overflow=''; if(typeof clMenuClose==='function') clMenuClose(); }
@@ -5908,7 +5911,7 @@
     openClientModal();
     // ---- 常時表示ヘッダー：ステージ＋レポート ----
     var head='<div id="cl-head"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">'
-      +'<span style="font-size:12px;color:#5A6981;">進捗ステージ</span><select id="cl-stage" class="inp2" onchange="setStage(\''+custId+'\',this.value)"><option value="1">1. 現状把握</option><option value="2">2. AI活用・自動化</option><option value="3">3. コスト削減</option><option value="4">4. 生まれた余力</option><option value="5">5. 次の投資</option></select><span id="stage-msg" style="font-size:11px;"></span>'
+      +'<span style="font-size:12px;color:#5A6981;">進捗ステージ</span><span id="cl-stage-auto" style="font-size:12.5px;">判定中…</span>'
       +'<span style="flex:1;"></span>'
       +'<button class="btn2" onclick="openMonthlyReport()" style="background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;">📄 月次レポート</button>'
     +'</div>'
@@ -6127,7 +6130,7 @@
     loadClientInsurance(custId);
     loadClientDiag(custId);
     loadClientNotes(custId);
-    loadClientStage(custId);
+    autoStageFor(custId);
     loadMeetingNotes(custId);
     loadDiagInterests(custId);
     loadNextMeeting(custId);
