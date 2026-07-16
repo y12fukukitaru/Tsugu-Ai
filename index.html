@@ -697,7 +697,7 @@
   }
   // 役割ごとの全メニュー定義（ラベル付き）。設定で並び順・表示を変えられる
   function navDefs(r){
-    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
+    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
     if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
     return [['sec-flow','ダッシュボード'],['sec-growth','成長ロードマップ'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
   }
@@ -721,7 +721,7 @@
   }
   var NAV_ICON={
     'sec-flow':'🏠','sec-chat':'💬','sec-reports':'📄','sec-mypdca':'🎯','sec-company':'🏢',
-    'sec-cash':'💰','sec-ai':'🤖','sec-ins':'🧮','sec-ma':'🤝','sec-market':'💹','sec-sec':'🪄',
+    'sec-cash':'💰','sec-value':'📈','sec-ai':'🤖','sec-ins':'🧮','sec-ma':'🤝','sec-market':'💹','sec-sec':'🪄',
     'sec-clients':'👥','sec-pdca':'🔄','sec-madeals':'📁','sec-knowledge':'📚','sec-sozoku':'🧮',
     'sec-kpi':'📊','sec-risk':'🚨','sec-fde':'🧑‍💼','sec-cust':'🏢','sec-exec':'📋',
     'sec-billing':'💳','sec-billpay':'💳','sec-audit':'🛡️','sec-broadcast':'📢','sec-support':'🛟','sec-growth':'🚀'
@@ -1768,6 +1768,10 @@
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">保険（事業保障・損害保険・養老保険）や相続・贈与などの試算は担当パートナーが行い、ここに共有されます。試算のご希望や前提条件の変更は「メッセージ」でお伝えください。</div>'
           +'<div id="my-ins" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
+        +'<div class="panel" id="sec-value"><div class="ph">📈 企業価値（毎月の推移）</div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">担当パートナーがEBITDA法で診断した、あなたの会社の推定企業価値です。利益（EBITDA）の改善と借入の圧縮が、そのまま会社の価値を押し上げます。※ 簡易試算であり、実際の譲渡・買収価格を保証するものではありません。</div>'
+          +'<div id="my-value">読み込み中...</div>'
+        +'</div>'
         +'<div class="panel" id="sec-ma"><div class="ph">利益のM&A活用 提案</div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">利益や余剰資金をM&A（会社・事業の買収）で活かす方向性を、担当パートナーがAIで検討し、ここにご提案します。ご関心・ご希望は「メッセージ」でお知らせください。</div>'
           +'<div id="my-ma">読み込み中...</div>'
@@ -2044,7 +2048,7 @@
 
     window.__eff=eff;
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadDashHero(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
+    if(eff==='customer'){ loadDashHero(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
     else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); }
     else { loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); loadAdmInquiries(); loadSupportKB(); }
     startNotifPolling(eff);
@@ -5668,6 +5672,114 @@
     if(w){ Array.prototype.forEach.call(w.querySelectorAll('.sbtn'),function(b){ b.classList.toggle('on', b.getAttribute('data-k')===k); }); }
     var c=$('cl-todo-freq'); if(c && CL_TODO_TABS[k]!==undefined) c.innerHTML=CL_TODO_TABS[k];
   }
+  // ===== 顧客側：企業価値の月次推移表示 =====
+  function valChartSvg(rows){ // rows: ym昇順 [{ym,equity_value}]
+    if(rows.length<2) return '';
+    var w=560,h=150,pl=10,pr=10,pt=14,pb=24;
+    var vs=rows.map(function(r){return Number(r.equity_value)||0;});
+    var mn=Math.min.apply(null,vs), mx=Math.max.apply(null,vs);
+    if(mn===mx){ mn=mn-1; mx=mx+1; }
+    var iw=(w-pl-pr)/(rows.length-1), ih=h-pt-pb;
+    var pts=rows.map(function(r,i){ var x=pl+iw*i; var y=pt+ih*(1-((Number(r.equity_value)||0)-mn)/(mx-mn)); return [x,y]; });
+    var line=pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ');
+    var area='M'+pts[0][0].toFixed(1)+','+(h-pb)+' L'+line.replace(/ /g,' L')+' L'+pts[pts.length-1][0].toFixed(1)+','+(h-pb)+' Z';
+    var dots=pts.map(function(p){ return '<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3.5" fill="#2C5DA8"/>'; }).join('');
+    var first=rows[0].ym.replace('-','/'), last=rows[rows.length-1].ym.replace('-','/');
+    return '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:auto;display:block;" xmlns="http://www.w3.org/2000/svg">'
+      +'<path d="'+area+'" fill="rgba(44,93,168,.08)"/>'
+      +'<polyline points="'+line+'" fill="none" stroke="#2C5DA8" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'
+      +dots
+      +'<text x="'+pl+'" y="'+(h-6)+'" font-size="11" fill="#94A2B6">'+first+'</text>'
+      +'<text x="'+(w-pr)+'" y="'+(h-6)+'" font-size="11" fill="#94A2B6" text-anchor="end">'+last+'</text>'
+      +'</svg>';
+  }
+  async function loadMyValuation(){
+    var box=$('my-value'); if(!box)return;
+    var res=await sb.from('valuation_snapshots').select('*').eq('customer_id',ME).order('ym',{ascending:true}).limit(12);
+    if(res.error){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">企業価値の診断データを読み込めませんでした。</div>'; return; }
+    var rows=res.data||[];
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">まだ診断がありません。担当パートナーが企業価値診断を実施すると、ここに毎月の推移が表示されます。</div>'; return; }
+    var cur=rows[rows.length-1], prev=(rows.length>1)?rows[rows.length-2]:null;
+    var eq=Number(cur.equity_value)||0;
+    var diff=prev?(eq-(Number(prev.equity_value)||0)):null;
+    var pct=(prev&&Number(prev.equity_value))?(diff/Number(prev.equity_value)*100):null;
+    var dHtml=(diff===null)?'' :'<span style="font-size:13px;font-weight:700;color:'+(diff>=0?'#27684A':'#A9403D')+';margin-left:8px;">'+(diff>=0?'▲ +':'▼ ')+Math.round(diff).toLocaleString()+'万円'+(pct!==null?('（'+(pct>=0?'+':'')+pct.toFixed(1)+'%）'):'')+'</span>';
+    var ebitda=Number(cur.ebitda)||0, mult=Number(cur.multiple)||5;
+    var grow=Math.round((ebitda*1.1)*mult+(Number(cur.cash)||0)-(Number(cur.debt)||0));
+    var h='<div style="background:var(--soft);border:1px solid var(--softline);border-radius:12px;padding:14px 16px;margin-bottom:10px;">'
+      +'<div style="font-size:11px;color:#5A6981;">現在の推定企業価値（'+esc((cur.ym||'').replace('-','年'))+'月・EBITDA '+Math.round(ebitda).toLocaleString()+'万円 × '+mult+'倍）</div>'
+      +'<div style="font-size:28px;font-weight:700;color:#1E3A66;margin-top:2px;">'+Math.round(eq).toLocaleString()+'<span style="font-size:14px;">万円</span>'+dHtml+'</div>'
+      +(rows.length>=2?('<div style="margin-top:10px;">'+valChartSvg(rows)+'</div>'):'')
+    +'</div>';
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      +'<div style="flex:1 1 220px;background:#EFF6F0;border:1px solid #BFE2CD;border-radius:11px;padding:12px 14px;">'
+        +'<div style="font-size:11px;font-weight:700;color:#27684A;">🏷 売り手として</div>'
+        +'<div style="font-size:12.5px;color:#18202E;line-height:1.8;margin-top:4px;">会社・事業を譲渡する場合の価値の目安は <b>'+Math.round(eq).toLocaleString()+'万円</b> です。利益（EBITDA）が10%改善すると、価値は約 <b>'+grow.toLocaleString()+'万円</b> に高まる計算です。</div>'
+      +'</div>'
+      +'<div style="flex:1 1 220px;background:#EFF3FB;border:1px solid #C9D6EA;border-radius:11px;padding:12px 14px;">'
+        +'<div style="font-size:11px;font-weight:700;color:#2C5DA8;">🛒 買い手として</div>'
+        +'<div style="font-size:12.5px;color:#18202E;line-height:1.8;margin-top:4px;">自己資金と借入余力を合わせると、<b>'+Math.round(Number(cur.buy_power)||0).toLocaleString()+'万円</b> 規模までの企業・事業の譲受が視野に入ります。M&Aによる成長にご関心があれば、担当パートナーへメッセージでご相談ください。</div>'
+      +'</div>'
+    +'</div>';
+    box.innerHTML=h;
+  }
+  // ===== 企業価値診断（EBITDA法）：診断→保存で顧客ダッシュボードに月次推移を表示 =====
+  function evPrefill(){
+    [['cf-op','ev-op'],['cf-dep','ev-dep'],['cf-cash','ev-cash'],['cf-debt','ev-debt']].forEach(function(p){
+      var s=$(p[0]), t=$(p[1]); if(s&&t&&s.value!=='') t.value=s.value;
+    });
+    var m=$('ev-msg'); if(m){ m.style.color='#5A6981'; m.textContent='資金繰りシミュレーターの入力値を取り込みました（未入力の項目は変わりません）。'; }
+  }
+  function evCalc(op,dep,mult,cash,debt,own){
+    var ebitda=op+dep;
+    var ev=ebitda*mult;
+    var equity=ev+cash-debt;
+    var ownUse=(own>0)?own:Math.round(cash*0.5);
+    var buy=ownUse+Math.max(0,ebitda)*3;
+    return {ebitda:ebitda, ev:ev, equity:equity, ownUse:ownUse, buy:buy};
+  }
+  function evMan(n){ return (Math.round(n)||0).toLocaleString('ja-JP')+'万円'; }
+  function evResultHtml(r, mult, ownGiven){
+    return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">'
+      +'<div style="flex:1 1 150px;background:#EFF6F0;border:1px solid #BFE2CD;border-radius:11px;padding:11px 13px;"><div style="font-size:10.5px;color:#27684A;font-weight:700;">🏷 売り手として（推定企業価値）</div><div style="font-size:20px;font-weight:700;color:#27684A;margin-top:2px;">'+evMan(r.equity)+'</div><div style="font-size:10.5px;color:#5A6981;margin-top:2px;">EBITDA '+evMan(r.ebitda)+' × '+mult+'倍 ＋ 現預金 − 有利子負債</div></div>'
+      +'<div style="flex:1 1 150px;background:#EFF3FB;border:1px solid #C9D6EA;border-radius:11px;padding:11px 13px;"><div style="font-size:10.5px;color:#2C5DA8;font-weight:700;">🛒 買い手として（譲受余力の目安）</div><div style="font-size:20px;font-weight:700;color:#2C5DA8;margin-top:2px;">'+evMan(r.buy)+'</div><div style="font-size:10.5px;color:#5A6981;margin-top:2px;">自己資金 '+evMan(r.ownUse)+(ownGiven?'':'（現預金の50%で仮置き）')+' ＋ 借入余力（EBITDA×3）</div></div>'
+      +'</div>';
+  }
+  async function runValuation(custId){
+    var msg=$('ev-msg'); var box=$('ev-result');
+    var ymEl=$('ev-ym'); var ym=(ymEl&&ymEl.value)?ymEl.value:thisYM();
+    var op=Number(($('ev-op')||{}).value)||0, dep=Number(($('ev-dep')||{}).value)||0;
+    var mult=Number(($('ev-mult')||{}).value)||5;
+    var cash=Number(($('ev-cash')||{}).value)||0, debt=Number(($('ev-debt')||{}).value)||0;
+    var ownRaw=($('ev-own')||{}).value, own=Number(ownRaw)||0;
+    if(!op && !dep){ if(msg){msg.style.color='#A9403D';msg.textContent='営業利益または減価償却費を入力してください。';} return; }
+    var r=evCalc(op,dep,mult,cash,debt,own);
+    if(box) box.innerHTML=evResultHtml(r, mult, ownRaw!=='');
+    var row={ customer_id:custId, created_by:ME, ym:ym, op_profit:op, dep:dep, multiple:mult, cash:cash, debt:debt,
+      own_funds:(ownRaw===''?null:own), ebitda:r.ebitda, ev:r.ev, equity_value:r.equity, buy_power:r.buy };
+    var res=await sb.from('valuation_snapshots').upsert(row, {onConflict:'customer_id,ym'});
+    if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='保存エラー：'+res.error.message+'（Supabaseで「Phase70」のSQL未実施の可能性があります）';} return; }
+    if(msg){msg.style.color='#27684A';msg.textContent=ym.replace('-','年')+'月分として保存しました。顧客ダッシュボードの「企業価値」に反映されます。';}
+    loadValHistory(custId);
+  }
+  async function loadValHistory(custId){
+    var box=$('ev-history'); if(!box)return;
+    var y=$('ev-ym'); if(y&&!y.value) y.value=thisYM();
+    var res=await sb.from('valuation_snapshots').select('*').eq('customer_id',custId).order('ym',{ascending:false}).limit(12);
+    if(res.error){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">まだ診断はありません（またはSupabaseで「Phase70」のSQLが未実施です）。</div>'; return; }
+    var rows=res.data||[];
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">まだ診断がありません。左のフォームから初回診断を実行してください。</div>'; return; }
+    box.innerHTML=rows.map(function(v,i){
+      var prev=rows[i+1];
+      var diff=prev?(Number(v.equity_value)-Number(prev.equity_value)):null;
+      var dTag=(diff===null)?'':(diff>=0?'<span class="tag green">+'+Math.round(diff).toLocaleString()+'万</span>':'<span class="tag red">'+Math.round(diff).toLocaleString()+'万</span>');
+      return '<div style="display:flex;align-items:center;gap:8px;padding:7px 2px;border-top:1px dashed var(--softline);font-size:12.5px;flex-wrap:wrap;">'
+        +'<span style="color:#94A2B6;">'+esc((v.ym||'').replace('-','/'))+'</span>'
+        +'<b style="flex:1;color:#1E3A66;">'+evMan(v.equity_value)+'</b>'+dTag
+        +'<span style="color:#94A2B6;font-size:11px;">EBITDA '+evMan(v.ebitda)+'・'+v.multiple+'倍</span>'
+      +'</div>';
+    }).join('');
+  }
   // ===== 進捗ステージ：登録データから自動判定（手入力による誤りを防止） =====
   // 判定ルール（上から優先）：
   //  5. 次の投資      … M&A案件、または投資・融資・M&Aの掲載/申請あり
@@ -5870,7 +5982,7 @@
     var side=$('cl-side'); if(!side)return;
     Array.prototype.forEach.call(side.querySelectorAll('.cl-ni'),function(n){ n.classList.toggle('on', n.id==='ni-'+id); });
   }
-  var CL_SPY_IDS=['cs-todo','cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-bp','cs-ins','cs-shared'];
+  var CL_SPY_IDS=['cs-todo','cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-value','cs-bp','cs-ins','cs-shared'];
   var CL_TAB_WRAPS=['ctab-msg','ctab-fin','ctab-tools','ctab-shared'];
   var CL_ACTIVE='cs-todo';
   // カルテ内タブ切替：見出し（cs-*）から次の見出しまでを1つのタブとして表示
@@ -5911,6 +6023,7 @@
     ['cs-bp','📄','事業計画書'],
     ['cs-market','💹','Tsugu投資・融資・M&A'],
     ['cs-mna','🤝','M&A提案'],
+    ['cs-value','📈','企業価値診断'],
     ['cs-ins','🩺','保険シミュレーター'],
     ['cs-ai','🤖','AI自動化診断'],
     ['cs-meet','📝','議事録'],
@@ -6310,6 +6423,30 @@
         +'<button class="btn2" id="ma2-run" onclick="runMaFor(\''+custId+'\')">AIで提案を作成</button>'
       +'</div>'
       +'<div id="ma2-result" style="margin-top:12px;"></div>'
+      +'<div class="ph" id="cs-value" style="font-size:13px;margin-top:18px;">📈 企業価値診断（EBITDA法・毎月の推移を顧客と共有）</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">診断して保存すると、顧客ダッシュボードの「企業価値」に毎月の推移として表示されます。同じ月に再診断すると上書きされます。※ 簡易試算であり、実際の譲渡価格・買収価格を保証するものではありません。</div>'
+      +'<div class="cl-cols">'
+      +'<div class="cl-col">'
+      +'<div style="margin:0 0 8px;"><button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;" onclick="evPrefill()">↺ 資金繰りシミュレーターの値を取り込む</button></div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+        +'<div><label class="fl">対象月</label><input id="ev-ym" type="month" class="inp2"></div>'
+        +'<div><label class="fl">営業利益（年・万円）</label><input id="ev-op" type="number" class="inp2" placeholder="例 1500"></div>'
+        +'<div><label class="fl">減価償却費（年・万円）</label><input id="ev-dep" type="number" class="inp2" placeholder="例 300"></div>'
+        +'<div><label class="fl">EV/EBITDA倍率</label><select id="ev-mult" class="inp2"><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option><option>8</option></select></div>'
+        +'<div><label class="fl">現預金（万円）</label><input id="ev-cash" type="number" class="inp2" placeholder="例 3000"></div>'
+        +'<div><label class="fl">有利子負債（万円）</label><input id="ev-debt" type="number" class="inp2" placeholder="例 6000"></div>'
+        +'<div><label class="fl">M&Aに使える自己資金（万円・任意）</label><input id="ev-own" type="number" class="inp2" placeholder="利益剰余金・余剰資金の目安"></div>'
+      +'</div>'
+      +'<button class="btn2" style="margin-top:12px;" onclick="runValuation(\''+custId+'\')">診断して保存（顧客と共有）</button>'
+      +'<div id="ev-msg" style="font-size:12px;margin-top:6px;"></div>'
+      +'</div>'
+      +'<div class="cl-col">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin:0 0 4px;">診断結果</div>'
+      +'<div id="ev-result"><div style="font-size:12px;color:#94A2B6;">左の項目を入力して診断すると、売り手・買い手それぞれの目線での企業価値が表示されます。</div></div>'
+      +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin:14px 0 4px;">診断履歴（月次）</div>'
+      +'<div id="ev-history">読み込み中...</div>'
+      +'</div>'
+      +'</div>'
       +'<div class="ph" id="cs-bp" style="font-size:13px;margin-top:18px;">事業計画書の作成（AI）</div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">登録済みの財務データと資金繰りシミュレーターを自動で読み込み、金融機関提出用ドラフトを作成します（印刷／PDF可）。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
@@ -6361,6 +6498,7 @@
     loadClientNotes(custId);
     autoStageFor(custId);
     loadClientTodo(custId);
+    loadValHistory(custId);
     loadMeetingNotes(custId);
     loadDiagInterests(custId);
     loadNextMeeting(custId);
