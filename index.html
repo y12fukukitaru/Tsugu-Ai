@@ -8130,12 +8130,13 @@
   }
   function salesPrintHeader(sub){
     var d=new Date(); var ds=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+    var nm=esc(((window.__prof||{}).full_name)||((window.__prof||{}).contact_name)||'');
     return '<div style="background:linear-gradient(135deg,#0a1526 0%,#132b4c 100%);border-radius:10px;padding:12px 20px 11px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
       +'<div>'
         +'<div style="font-size:10px;letter-spacing:.3em;color:#cfa860;font-weight:700;">TSUGU AI -継-　<span style="color:#a9c7ee;">中小企業承継エコシステム</span></div>'
         +'<div style="font-family:\'Hiragino Mincho ProN\',\'Yu Mincho\',\'Noto Serif CJK JP\',serif;font-size:21px;font-weight:700;color:#fff;margin-top:4px;letter-spacing:.02em;">'+sub+'</div>'
       +'</div>'
-      +'<div style="text-align:right;font-size:10px;color:#d6e2f4;line-height:1.9;white-space:nowrap;">実施日：'+ds+'<br>担当パートナー：＿＿＿＿＿＿＿＿＿＿</div>'
+      +'<div style="text-align:right;font-size:10px;color:#d6e2f4;line-height:1.9;white-space:nowrap;">実施日：'+ds+'<br>担当パートナー：'+(nm||'＿＿＿＿＿＿＿＿＿＿')+'</div>'
     +'</div>';
   }
   function salesPrintFooter(){
@@ -8189,7 +8190,7 @@
           }).join('')
       +'</div>'
       +'<div style="margin-top:6px;"><div style="font-size:9px;color:#5a6981;font-weight:700;margin-bottom:2px;">ご相談メモ（気になったこと・聞いてみたいことを自由にお書きください）</div>'
-        +'<div style="border:1.5px solid #c3cfdd;border-radius:6px;height:60px;background:#fff;background-image:repeating-linear-gradient(to bottom,transparent,transparent 20px,#e7edf4 20px,#e7edf4 21px);background-position:0 6px;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>'
+        +'<div style="border:1.5px solid #c3cfdd;border-radius:6px;height:44px;background:#fff;background-image:repeating-linear-gradient(to bottom,transparent,transparent 20px,#e7edf4 20px,#e7edf4 21px);background-position:0 6px;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>'
       +'</div>'
     +'</div>';
     h+=salesPrintFooter();
