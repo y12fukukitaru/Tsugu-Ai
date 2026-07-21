@@ -699,7 +699,7 @@
   function navDefs(r){
     if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
     if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
-    return [['sec-flow','ダッシュボード'],['sec-growth','成長ロードマップ'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
+    return [['sec-flow','ダッシュボード'],['sec-growth','成長ロードマップ'],['sec-sales','営業ツール'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
   function effectiveNav(r){
@@ -722,7 +722,7 @@
   var NAV_ICON={
     'sec-flow':'🏠','sec-chat':'💬','sec-reports':'📄','sec-mypdca':'🎯','sec-company':'🏢',
     'sec-cash':'💰','sec-value':'📈','sec-ai':'🤖','sec-ins':'🧮','sec-ma':'🤝','sec-market':'💹','sec-sec':'🪄',
-    'sec-clients':'👥','sec-pdca':'🔄','sec-madeals':'📁','sec-knowledge':'📚','sec-sozoku':'🧮',
+    'sec-clients':'👥','sec-sales':'🧲','sec-pdca':'🔄','sec-madeals':'📁','sec-knowledge':'📚','sec-sozoku':'🧮',
     'sec-kpi':'📊','sec-risk':'🚨','sec-fde':'🧑‍💼','sec-cust':'🏢','sec-exec':'📋',
     'sec-billing':'💳','sec-billpay':'💳','sec-audit':'🛡️','sec-broadcast':'📢','sec-support':'🛟','sec-growth':'🚀'
   };
@@ -1840,6 +1840,12 @@
             +'<button class="sbtn" data-f="share" onclick="setClFilter(\'share\',this)">共有あり</button>'
           +'</div>'
           +'<div id="cl-list" style="margin-top:6px;">読み込み中...</div>'
+        +'</div>'
+        +'<div class="panel" id="sec-sales">'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">🧲 営業ツール（課題ヒアリング診断）'
+            +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="salesRestart()">↺ 最初から</span></div>'
+          +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">お客様に画面をお見せしながら使う商談ツールです。「こんな問題を抱えていませんか？」という8つの問いかけで潜在ニーズを引き出し、最後は<b style="color:#8F7230;">「この問題を、このプラットフォームで解決できるとしたら？」</b>というクロージングにつながります。</div>'
+          +'<div id="sales-stage">'+salesIntroHtml()+'</div>'
         +'</div>'
         +'<div class="panel" id="sec-pdca">'
           +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">🔁 経営課題PDCA'
@@ -7897,6 +7903,191 @@
 
   var RECOVERING = /type=recovery/.test(location.hash) || /type=recovery/.test(location.search);
   sb.auth.onAuthStateChange(function(event, session){ if(event==='PASSWORD_RECOVERY'){ RECOVERING=true; showRecovery(); } });
+
+
+  // ===== 営業ツール（課題ヒアリング診断）=====
+  // 「こんな問題を抱えていませんか？」→「Tsuguならこう解決」→ クロージングの営業動線
+  var SALES_QS=[
+    { cat:'資金繰り', ic:'💰',
+      q:'「利益は出ているはずなのに、月末になると通帳の残高が気になる」——そんなことはありませんか？',
+      sub:'黒字なのに手元にお金が残らない。その原因が“どこ”にあるか、数字で説明できますか？',
+      hint:'「ある」なら→「最近いちばんヒヤッとした月はいつでしたか？」と具体的な場面を聞き、金額感を言葉にしてもらう。',
+      sol:'財務・資金繰りの見える化',
+      solDesc:'毎月の売上・利益・現預金の推移をダッシュボードで見える化。担当パートナーがキャッシュベース（現金の流れ）で原因を一緒に特定し、打ち手の実行まで伴走します。',
+      feat:'財務・資金繰りダッシュボード' },
+    { cat:'会社の値段', ic:'📈',
+      q:'ご自身の会社に「いま、いくらの値段がつくか」——即答できますか？',
+      sub:'会社の値段（企業価値）を知らないままでは、承継も売却も、銀行との交渉も、勘に頼ることになります。',
+      hint:'ほとんどの社長は即答できない。「実は今日、この場で目安を出せます」と企業価値かんたん診断の体験に直結させる。',
+      sol:'企業価値のかんたん診断',
+      solDesc:'決算書の数字を入れるだけで、EBITDA基準の企業価値の目安をその場で算出。毎年の推移を記録し、「会社の価値を高める経営」への第一歩になります。',
+      feat:'企業価値診断' },
+    { cat:'後継ぎ・承継', ic:'🤝',
+      q:'「後継者のこと、いつかは考えないと…」——その“いつか”を、何年後回しにしていますか？',
+      sub:'黒字のまま廃業する会社は少なくありません。準備の遅れが、取れる選択肢を一つずつ消していきます。',
+      hint:'責めずに「皆さん同じです」と共感してから、「選択肢が多いうちに整理だけでも」と提案する。',
+      sol:'承継・M&Aの選択肢づくり',
+      solDesc:'親族承継・従業員承継・M&A・存続の道を整理し、御社に合ったロードマップを設計。相手探しはTsuguのマッチングの場につながります。',
+      feat:'M&A活用・Tsuguマーケット' },
+    { cat:'人手・業務', ic:'🤖',
+      q:'請求書、シフト表、日報、転記作業…「毎月同じ作業」に、社長や幹部の時間が消えていませんか？',
+      sub:'人手不足の時代、“作業”に使う1時間は、本来“経営”に使えたはずの1時間です。',
+      hint:'「一番イヤな事務作業はどれですか？」と聞くと具体的な業務名が出やすい。その場でAI自動化診断をタップしてもらう。',
+      sol:'AI自動化診断',
+      solDesc:'困っている業務をタップで選ぶだけで、AI・自動化で解決しやすい業務を診断。導入の優先順位と進め方まで、担当パートナーが提案します。',
+      feat:'AI診断・自動化' },
+    { cat:'保険・固定費', ic:'🧮',
+      q:'会社で払っている保険料——「何のために・いくら」払っているか、すべて説明できますか？',
+      sub:'何年も見直していない保険や固定費は、気づかないうちに利益を削っていることがあります。',
+      hint:'契約内容の批判はしない。「整理して一覧にするだけでも価値があります」と中立に。具体的な保険提案・手続きは必ず有資格の担当者へ取り次ぐ。',
+      sol:'保険・保障の最適化試算',
+      solDesc:'現在の契約をもとに、保障とコストのバランスをシミュレーションで確認できます。見直しの検討材料を数字で整理し、手続きが必要な場合は資格を持つ担当者が対応します。',
+      feat:'保険シミュレーター' },
+    { cat:'相談相手', ic:'💬',
+      q:'経営の悩みを、本音で相談できる相手が「社外に」いますか？',
+      sub:'税理士には数字の話、銀行には借入の話。でも“経営全体”を横断して話せる相手は、意外といないものです。',
+      hint:'この質問は沈黙が生まれやすい。急かさず待つ。「孤独です」という言葉が出たら最大の共感ポイント。',
+      sol:'専任パートナー＋AIによる伴走',
+      solDesc:'御社担当の認定パートナーにメッセージでいつでも相談できます。24時間使えるAI相談も備え、「ひとりで抱える経営」から卒業できます。',
+      feat:'メッセージ・パートナーAI' },
+    { cat:'数字の振り返り', ic:'📄',
+      q:'自社の数字を「月に一度、誰かと一緒に」振り返る時間はありますか？',
+      sub:'試算表は届く。でも“読む時間”と“解説してくれる人”がなければ、数字は経営に活きません。',
+      hint:'「試算表、正直どこを見ればいいか分からなくないですか？」と自己開示気味に聞くと本音が出やすい。',
+      sol:'コメント付きの月次レポート',
+      solDesc:'毎月、御社の数字に担当パートナーのコメントが付いたレポートが届きます。良い変化も悪い兆候も毎月キャッチし、翌月の打ち手につなげます。',
+      feat:'月次レポート' },
+    { cat:'資金調達・成長', ic:'💹',
+      q:'銀行融資“以外”の資金調達や成長の選択肢を、いくつ挙げられますか？',
+      sub:'出資・私募・M&Aによる成長…。選択肢を知らないことは、それ自体が機会損失かもしれません。',
+      hint:'知識マウントにならないように。「選択肢を知ったうえで銀行融資を選ぶのと、それしか知らないのは違いますよね」と価値づけ。',
+      sol:'Tsugu投資・融資・M&Aマーケット',
+      solDesc:'「資金を集めたい」「事業を譲りたい・譲り受けたい」を掲載し、関心のある相手とつながる場を提供。実行の場面では関連法令にもとづき有資格者が関与します。',
+      feat:'Tsugu投資・融資・M&Aマーケット' }
+  ];
+  var SALES_I=0, SALES_ANS=[];
+  function salesIntroHtml(){
+    return '<div style="border:1px solid #E5EEF8;border-radius:14px;background:#fff;padding:24px 20px;text-align:center;">'
+      +'<div style="font-size:12px;color:#2C5DA8;font-weight:700;letter-spacing:.08em;">経営課題かんたん診断</div>'
+      +'<div style="font-size:21px;font-weight:700;color:#18202E;line-height:1.7;margin-top:10px;">社長、こんな<span style="color:#A9403D;">“問題”</span>を<br>抱えていませんか？</div>'
+      +'<div style="font-size:13px;color:#5A6981;line-height:1.9;margin-top:12px;">8つの質問に「ある／ない」で答えるだけ。<br>所要時間は約3分です。</div>'
+      +'<button class="btn2" style="margin-top:18px;padding:13px 34px;font-size:15px;" onclick="salesStart()">診断をはじめる ▶</button>'
+      +'<div style="margin-top:18px;text-align:left;border-top:1px dashed #E2E7EF;padding-top:12px;">'
+        +'<div style="font-size:11.5px;color:#94A2B6;cursor:pointer;" onclick="salesHint(\'sales-intro-hint\')">💡 パートナー向け：使い方のコツ（タップで開く）</div>'
+        +'<div id="sales-intro-hint" class="hidden" style="font-size:11.5px;color:#5A6981;line-height:1.9;margin-top:8px;background:#F8F9FC;border-radius:9px;padding:10px 12px;">'
+          +'・画面をお客様に向け、質問は<b>お客様ご自身に読んでいただく</b>のが効果的です。<br>'
+          +'・「ある」が出たら、すぐ次に進まず「具体的には？」「いつ頃から？」と<b>一言だけ深掘り</b>してください。お客様が自分の言葉で語った問題ほど、解決したい気持ちが強くなります。<br>'
+          +'・売り込みは最後まで我慢。診断結果の画面が自然にクロージングまで案内します。'
+        +'</div>'
+      +'</div>'
+    +'</div>';
+  }
+  function salesStart(){ SALES_I=0; SALES_ANS=SALES_QS.map(function(){return null;}); renderSalesQ(); }
+  function salesRestart(){ SALES_I=0; SALES_ANS=[]; var b=$('sales-stage'); if(b){ b.innerHTML=salesIntroHtml(); try{ b.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){} } }
+  function salesHint(id){ var e=$(id); if(e) e.classList.toggle('hidden'); }
+  function renderSalesQ(){
+    var b=$('sales-stage'); if(!b) return;
+    var i=SALES_I, q=SALES_QS[i], n=SALES_QS.length;
+    var pct=Math.round((i)/n*100);
+    var h='<div style="border:1px solid #E5EEF8;border-radius:14px;background:#fff;padding:22px 20px;">'
+      +'<div style="display:flex;align-items:center;gap:10px;">'
+        +'<span style="font-size:11.5px;color:#94A2B6;font-weight:600;white-space:nowrap;">質問 '+(i+1)+' / '+n+'</span>'
+        +'<div style="flex:1;height:6px;background:#EDF1F6;border-radius:99px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:#2C5DA8;border-radius:99px;"></div></div>'
+      +'</div>'
+      +'<div style="margin-top:14px;"><span style="background:#EAF0F9;color:#2C5DA8;border-radius:99px;padding:3px 12px;font-size:11.5px;font-weight:700;">'+q.ic+' '+esc(q.cat)+'</span></div>'
+      +'<div style="font-size:19px;font-weight:700;color:#18202E;line-height:1.8;margin-top:12px;">'+esc(q.q)+'</div>'
+      +'<div style="font-size:13px;color:#5A6981;line-height:1.8;margin-top:10px;">'+esc(q.sub)+'</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">'
+        +'<button class="btn2" style="flex:1;min-width:150px;padding:14px 10px;font-size:14.5px;" onclick="salesAnswer(1)">ある・思い当たる</button>'
+        +'<button style="flex:1;min-width:150px;padding:14px 10px;font-size:14.5px;background:#fff;color:#5A6981;border:1.5px solid #E2E7EF;border-radius:10px;cursor:pointer;" onclick="salesAnswer(0)">いまは困っていない</button>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;">'
+        +'<span class="ghost" style="font-size:12px;'+(i===0?'visibility:hidden;':'')+'" onclick="salesBack()">← 前の質問へ</span>'
+        +'<span style="font-size:11px;color:#C2CCDA;cursor:pointer;" onclick="salesHint(\'sales-q-hint\')">💡 ヒント</span>'
+      +'</div>'
+      +'<div id="sales-q-hint" class="hidden" style="font-size:11.5px;color:#5A6981;line-height:1.8;margin-top:8px;background:#F8F9FC;border-radius:9px;padding:9px 12px;">'+esc(q.hint)+'</div>'
+    +'</div>';
+    b.innerHTML=h;
+    try{ b.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
+  }
+  function salesAnswer(v){
+    SALES_ANS[SALES_I]=v;
+    if(SALES_I<SALES_QS.length-1){ SALES_I++; renderSalesQ(); }
+    else renderSalesResult();
+  }
+  function salesBack(){ if(SALES_I>0){ SALES_I--; renderSalesQ(); } }
+  function renderSalesResult(){
+    var b=$('sales-stage'); if(!b) return;
+    var yes=[]; SALES_QS.forEach(function(q,i){ if(SALES_ANS[i]===1) yes.push(q); });
+    var h='';
+    if(!yes.length){
+      h+='<div style="border:1px solid #CFE3D6;border-radius:14px;background:#F2F8F4;padding:22px 20px;text-align:center;">'
+        +'<div style="font-size:18px;font-weight:700;color:#27684A;line-height:1.7;">素晴らしい経営状態です</div>'
+        +'<div style="font-size:13px;color:#5A6981;line-height:1.9;margin-top:10px;">いま特に困りごとがないのは、日頃の経営の賜物です。<br>ただ一つだけ——<b>「会社の値段」</b>はご存じですか？<br>好調ないまこそ、企業価値を数字で知っておく価値があります。</div>'
+        +'<div style="font-size:13px;color:#18202E;font-weight:700;margin-top:14px;line-height:1.8;">よろしければ、この場で3分でできる<br>「企業価値かんたん診断」だけ体験してみませんか？</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">'
+        +'<button class="btn2" style="font-size:12.5px;" onclick="salesRestart()">↺ もう一度診断する</button>'
+      +'</div>';
+      b.innerHTML=h;
+      try{ b.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
+      return;
+    }
+    h+='<div style="text-align:center;padding:6px 0 2px;">'
+      +'<div style="font-size:12px;color:#94A2B6;">診断結果</div>'
+      +'<div style="font-size:19px;font-weight:700;color:#18202E;margin-top:4px;"><span style="color:#A9403D;font-size:26px;">'+yes.length+'個</span> の「ある」が見つかりました</div>'
+      +'<div style="font-size:12.5px;color:#5A6981;margin-top:4px;">それぞれの問題に、このプラットフォームでの解決策があります。</div>'
+    +'</div>';
+    yes.forEach(function(q,idx){
+      h+='<div style="border:1px solid #EDF1F6;border-radius:12px;background:#fff;padding:14px 16px;margin-top:10px;">'
+        +'<div style="font-size:11px;color:#A9403D;font-weight:700;">問題 '+(idx+1)+'｜'+q.ic+' '+esc(q.cat)+'</div>'
+        +'<div style="font-size:13.5px;font-weight:600;color:#18202E;line-height:1.7;margin-top:4px;">'+esc(q.q)+'</div>'
+        +'<div style="display:flex;gap:9px;align-items:flex-start;background:#F2F8F4;border:1px solid #CFE3D6;border-radius:10px;padding:11px 13px;margin-top:10px;">'
+          +'<span style="font-size:15px;">✅</span>'
+          +'<div style="flex:1;">'
+            +'<div style="font-size:13px;font-weight:700;color:#27684A;">Tsuguならこう解決：'+esc(q.sol)+'</div>'
+            +'<div style="font-size:12px;color:#5A6981;line-height:1.8;margin-top:3px;">'+esc(q.solDesc)+'</div>'
+            +'<span style="display:inline-block;background:#fff;border:1px solid #CFE3D6;color:#27684A;border-radius:99px;padding:2px 10px;font-size:10.5px;font-weight:700;margin-top:6px;">機能：'+esc(q.feat)+'</span>'
+          +'</div>'
+        +'</div>'
+      +'</div>';
+    });
+    h+='<div style="border:2px solid #C39B3F;background:#FDFAF2;border-radius:14px;padding:22px 18px;margin-top:16px;text-align:center;">'
+      +'<div style="font-size:11.5px;color:#8F7230;font-weight:700;letter-spacing:.08em;">最後に、一つだけお聞かせください</div>'
+      +'<div style="font-size:18px;font-weight:700;color:#18202E;line-height:1.9;margin-top:10px;">もし——いま「ある」と答えた<span style="color:#A9403D;">'+yes.length+'個の問題</span>を、<br>この<b style="color:#8F7230;">一つのプラットフォーム</b>で、<br>専任の担当者と一緒に解決していけるとしたら、<br>いかがですか？</div>'
+      +'<div style="font-size:12px;color:#5A6981;line-height:1.9;margin-top:12px;">Tsugu -継- は、資金繰り・企業価値・承継・自動化・保険をワンストップで伴走する、<br>中小企業のための経営プラットフォームです。</div>'
+    +'</div>';
+    h+='<div style="border:1px solid #E5EEF8;border-radius:12px;background:#fff;padding:14px 16px;margin-top:12px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:#1E3A66;">▶ この場でできる次の一歩</div>'
+      +'<div style="font-size:12px;color:#5A6981;line-height:2.0;margin-top:6px;">'
+        +'① <b>企業価値かんたん診断を体験</b>——決算書の数字でその場で目安を算出（顧客カルテの「企業価値」から）<br>'
+        +'② <b>月次レポートのサンプルを見せる</b>——「毎月これが届きます」が一番伝わります<br>'
+        +'③ <b>アカウント発行のご案内</b>——ご登録後、「顧客管理 → ＋顧客を追加」で担当に紐づけ'
+      +'</div>'
+    +'</div>';
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">'
+      +'<button class="btn2" style="font-size:12.5px;" onclick="salesCopyResult()">📋 結果をコピー（フォロー連絡用）</button>'
+      +'<button style="font-size:12.5px;background:#fff;color:#5A6981;border:1.5px solid #E2E7EF;border-radius:10px;padding:9px 16px;cursor:pointer;" onclick="salesRestart()">↺ もう一度診断する</button>'
+      +'<span id="sales-copy-msg" style="font-size:12px;color:#27684A;align-self:center;"></span>'
+    +'</div>';
+    h+='<div style="font-size:10.5px;color:#94A2B6;line-height:1.8;margin-top:12px;">※ 商談では「必ず」「絶対に」など効果を断定する表現は使わないでください。保険等の具体的な提案・契約手続きは資格を持つ担当者が行います（禁止行為ガイドライン参照）。</div>';
+    b.innerHTML=h;
+    try{ b.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
+  }
+  function salesCopyResult(){
+    var yes=[]; SALES_QS.forEach(function(q,i){ if(SALES_ANS[i]===1) yes.push(q); });
+    var t='【経営課題かんたん診断 結果】\n「ある」と答えた問題：'+yes.length+'個\n\n';
+    yes.forEach(function(q,idx){
+      t+='■ 問題'+(idx+1)+'（'+q.cat+'）\n'+q.q+'\n → 解決策：'+q.sol+'（機能：'+q.feat+'）\n\n';
+    });
+    t+='もし、これらの問題をひとつのプラットフォームで解決できるとしたら——\nTsugu -継- が、専任パートナーとともに解決まで伴走します。';
+    function done(ok){ var m=$('sales-copy-msg'); if(m){ m.textContent= ok?'コピーしました':'コピーできませんでした'; setTimeout(function(){ if(m) m.textContent=''; },2500); } }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){ done(true); },function(){ done(false); });
+    } else {
+      try{ var ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done(true); }catch(e){ done(false); }
+    }
+  }
 
   (async function init(){
     if(RECOVERING){ showRecovery(); return; }
