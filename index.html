@@ -6104,7 +6104,7 @@
     var side=$('cl-side'); if(!side)return;
     Array.prototype.forEach.call(side.querySelectorAll('.cl-ni'),function(n){ n.classList.toggle('on', n.id==='ni-'+id); });
   }
-  var CL_SPY_IDS=['cs-todo','cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-value','cs-bp','cs-ins','cs-shared'];
+  var CL_SPY_IDS=['cs-todo','cs-onboard','cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-value','cs-bp','cs-ins','cs-shared'];
   var CL_TAB_WRAPS=['ctab-msg','ctab-fin','ctab-tools','ctab-shared'];
   var CL_ACTIVE='cs-todo';
   // カルテ内タブ切替：見出し（cs-*）から次の見出しまでを1つのタブとして表示
@@ -6134,6 +6134,7 @@
   // ===== カルテ内メニュー項目（フラット・カスタマイズ可能） =====
   var CL_ITEMS=[
     ['cs-todo','📌','やること'],
+    ['cs-onboard','🚀','導入チェックリスト'],
     ['cs-company','🏢','会社情報'],
     ['cs-msg','💬','メッセージ・提案'],
     ['cs-shared','📥','顧客からの共有'],
@@ -6336,6 +6337,9 @@
       +'<div class="ph" id="cs-todo" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;">📌 やること（この顧客の対応状況）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientTodo(\''+custId+'\')">↺ 更新</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">対応が必要な項目と、今月の定型作業のチェックです。このリストは<b>パートナー専用</b>で、顧客には表示されません。</div>'
       +'<div id="cl-todo-body">読み込み中...</div>'
+      +'<div class="ph" id="cs-onboard" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;">🚀 導入チェックリスト（Phase 0）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadOnboard(\''+custId+'\')">↺ 更新</span></div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">導入初期費用に対応する導入作業（資料受領 → データ整備 → 初期診断 → 報告）の進捗管理です。すべて完了すると「導入診断報告書」の4つの成果物が揃います。</div>'
+      +'<div id="cl-onboard-body">読み込み中...</div>'
       +'<div class="ph" id="cs-company" style="font-size:13px;">会社情報（代行入力）</div>'
       +head
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">経営者ポータルには確認用に表示されます（顧客側は閲覧のみ）。</div>'
@@ -6619,6 +6623,7 @@
     loadClientNotes(custId);
     autoStageFor(custId);
     loadClientTodo(custId);
+    loadOnboard(custId);
     loadValHistory(custId);
     loadMeetingNotes(custId);
     loadDiagInterests(custId);
@@ -8229,6 +8234,98 @@
     h+=salesPrintFooter();
     h+='</div>';
     return h;
+  }
+
+
+  // ===== 導入チェックリスト（Phase 0）＝初期費用に対応する導入作業の標準手順 =====
+  // action_items テーブルを「【導入】」プレフィックス付きで利用（SQL追加なし・課題一覧/やることアラートと連動）
+  var ONBOARD_PREFIX='【導入】';
+  var ONBOARD_STEPS=[
+    ['STEP 1｜資料の受領（1週目）',7,['キックオフ面談（進め方・サービス範囲の説明）','決算書2〜3期分の受領','保険証券・共済契約一覧の受領','借入一覧（返済予定表）の受領']],
+    ['STEP 2｜データ整備（1〜2週目）',14,['月次財務データの入力（直近12ヶ月）','支払予定・固定費の登録']],
+    ['STEP 3｜初期診断（2〜3週目）',21,['企業価値のかんたん診断（初回）の実施','保険・固定費の棚卸しシミュレーション','AI自動化診断の実施','資金繰りシミュレーターの初期設定']],
+    ['STEP 4｜報告・運用開始（4週目）',28,['導入診断報告書の作成・初回報告面談','12ヶ月改善ロードマップの合意・課題への登録']]
+  ];
+  function onboardStdTitles(){ var a=[]; ONBOARD_STEPS.forEach(function(st){ st[2].forEach(function(t){ a.push(t); }); }); return a; }
+  async function loadOnboard(custId){
+    var box=$('cl-onboard-body'); if(!box) return;
+    box.innerHTML='読み込み中...';
+    var res=await sb.from('action_items').select('*').eq('customer_id',custId).order('created_at',{ascending:true});
+    if(res.error){ box.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
+    var items=(res.data||[]).filter(function(a){ return (a.title||'').indexOf(ONBOARD_PREFIX)===0; });
+    if(!items.length){
+      box.innerHTML='<div style="border:1px dashed #C9D6EA;border-radius:12px;padding:16px;text-align:center;">'
+        +'<div style="font-size:13px;font-weight:700;color:#1E3A66;">導入フェーズ（Phase 0）をはじめましょう</div>'
+        +'<div style="font-size:12px;color:#5A6981;line-height:1.8;margin-top:6px;">初期費用に対応する標準12項目（資料受領 → データ整備 → 初期診断 → 報告）を、期限付きの課題として一括登録します。<br>完了すると導入診断報告書の4つの成果物（①企業価値診断書 ②資金繰り現状レポート ③保険・固定費棚卸し ④12ヶ月改善ロードマップ）が揃います。</div>'
+        +'<button class="btn2" style="margin-top:12px;" onclick="onboardSeed()">標準12項目を作成する</button>'
+      +'</div>';
+      return;
+    }
+    var byTitle={}; items.forEach(function(a){ byTitle[(a.title||'').slice(ONBOARD_PREFIX.length)]=a; });
+    var std=onboardStdTitles();
+    var done=items.filter(function(a){ return a.status==='done'; }).length, total=items.length;
+    var pct=total?Math.round(done/total*100):0;
+    var d0=new Date(); var todayS=d0.getFullYear()+'-'+String(d0.getMonth()+1).padStart(2,'0')+'-'+String(d0.getDate()).padStart(2,'0');
+    var h='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">'
+      +'<div style="flex:1;height:8px;background:#EDF1F6;border-radius:99px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:'+(pct===100?'#2E7D53':'#2C5DA8')+';border-radius:99px;"></div></div>'
+      +'<b style="font-size:12.5px;color:#1E3A66;white-space:nowrap;">'+done+' / '+total+' 完了</b>'
+    +'</div>';
+    if(total>0 && done===total){
+      h+='<div style="border:2px solid #C39B3F;background:#FDFAF2;border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:12.5px;color:#5C4A17;line-height:1.7;"><b>🎉 導入フェーズ完了。</b>4つの成果物が揃いました。導入診断報告書をお渡しし、月次運用（月次レポート・定例面談）へ移行しましょう。</div>';
+    }
+    function row(a,label){
+      var isDone=a.status==='done';
+      var over=!isDone && a.due_date && a.due_date<todayS;
+      return '<label style="display:flex;gap:8px;align-items:flex-start;padding:5px 2px;cursor:pointer;border-bottom:1px solid #F3F6FA;">'
+        +'<input type="checkbox" '+(isDone?'checked':'')+' onchange="onboardToggle(\''+a.id+'\','+(isDone?1:0)+')" style="margin-top:2px;">'
+        +'<span style="flex:1;font-size:12.5px;line-height:1.5;'+(isDone?'color:#94A2B6;text-decoration:line-through;':'color:#18202E;')+'">'+esc(label)
+        +(a.due_date?'　<span style="font-size:10.5px;color:'+(over?'#A9403D':'#94A2B6')+';">期限 '+esc(a.due_date)+(over?'（超過）':'')+'</span>':'')
+        +'</span>'
+      +'</label>';
+    }
+    ONBOARD_STEPS.forEach(function(st){
+      h+='<div style="font-size:11px;color:#2C5DA8;font-weight:700;letter-spacing:.04em;margin:10px 0 4px;">'+esc(st[0])+'</div>';
+      st[2].forEach(function(t){
+        var a=byTitle[t];
+        if(!a){ h+='<div style="font-size:11.5px;color:#C2CCDA;padding:3px 0 3px 2px;">□ '+esc(t)+'（未登録）</div>'; return; }
+        h+=row(a,t);
+      });
+    });
+    var extra=items.filter(function(a){ return std.indexOf((a.title||'').slice(ONBOARD_PREFIX.length))<0; });
+    if(extra.length){
+      h+='<div style="font-size:11px;color:#2C5DA8;font-weight:700;margin:10px 0 4px;">追加項目</div>';
+      extra.forEach(function(a){ h+=row(a,(a.title||'').slice(ONBOARD_PREFIX.length)); });
+    }
+    h+='<div style="font-size:10.5px;color:#94A2B6;margin-top:8px;line-height:1.6;">※ 各項目は「課題・アクション」にも表示され、期限の変更・削除はそちらで行えます。項目を追加したい場合は、課題・アクションで先頭に'+ONBOARD_PREFIX+'を付けて登録すると、この一覧に自動で表示されます。</div>';
+    box.innerHTML=h;
+  }
+  async function onboardSeed(){
+    if(!CURRENT_CLIENT || !CURRENT_CLIENT.id){ alert('顧客が選択されていません'); return; }
+    if(!confirm('導入チェックリストの標準12項目を、期限付きの課題として一括登録します。\n期限は本日から STEP1:1週間後 → STEP4:4週間後 で自動設定されます。\n（登録済みの項目はスキップされます）\nよろしいですか？')) return;
+    var custId=CURRENT_CLIENT.id;
+    var chk=await sb.from('action_items').select('title').eq('customer_id',custId);
+    if(chk.error){ alert('確認エラー：'+chk.error.message); return; }
+    var have={}; (chk.data||[]).forEach(function(a){ have[a.title]=1; });
+    var rows=[]; var base=new Date();
+    ONBOARD_STEPS.forEach(function(st){
+      var d=new Date(base.getTime()+st[1]*86400000);
+      var ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      st[2].forEach(function(t){ var full=ONBOARD_PREFIX+t; if(!have[full]) rows.push({ customer_id:custId, title:full, due_date:ds, created_by:ME, status:'open' }); });
+    });
+    if(!rows.length){ alert('標準12項目はすべて登録済みです'); loadOnboard(custId); return; }
+    var ins=await sb.from('action_items').insert(rows);
+    if(ins.error){ alert('登録エラー：'+ins.error.message); return; }
+    loadOnboard(custId);
+    if(typeof reloadClientActions==='function'){ try{ reloadClientActions(custId); }catch(e){} }
+    if(typeof loadClientTodo==='function'){ try{ loadClientTodo(custId); }catch(e){} }
+  }
+  async function onboardToggle(id, wasDone){
+    var res=await sb.from('action_items').update({ status: wasDone? 'open':'done' }).eq('id',id);
+    if(res.error){ alert('更新エラー：'+res.error.message); }
+    if(CURRENT_CLIENT && CURRENT_CLIENT.id){
+      loadOnboard(CURRENT_CLIENT.id);
+      if(typeof reloadClientActions==='function'){ try{ reloadClientActions(CURRENT_CLIENT.id); }catch(e){} }
+    }
   }
 
   (async function init(){
