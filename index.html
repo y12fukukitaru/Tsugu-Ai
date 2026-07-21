@@ -7944,14 +7944,16 @@
       solDesc:'決算書の数字を入れるだけで、EBITDA基準の企業価値の目安をその場で算出。毎年の推移を記録し、「会社の価値を高める経営」への第一歩になります。',
       feat:'企業価値診断' },
     { cat:'後継ぎ・承継', ic:'🤝',
-      q:'「後継者のこと、いつかは考えないと…」——その“いつか”を、何年後回しにしていますか？',
+      q:'後継者・承継先は決まっていますか？',
+      ansYes:'まだ決まっていない', ansNo:'決まっている',
+      sheetNote:'※「まだ決まっていない」という方は ☑ をおつけください。',
       sub:'黒字のまま廃業する会社は少なくありません。準備の遅れが、取れる選択肢を一つずつ消していきます。',
       hint:'責めずに「皆さん同じです」と共感してから、「選択肢が多いうちに整理だけでも」と提案する。',
       sol:'承継・M&Aの選択肢づくり',
       solDesc:'親族承継・従業員承継・M&A・存続の道を整理し、御社に合ったロードマップを設計。相手探しはTsuguのマッチングの場につながります。',
       feat:'M&A活用・Tsuguマーケット' },
     { cat:'人手・人件費', ic:'🤖',
-      q:'人手不足や人件費について、「そろそろ改善に取り組みたい」と感じていませんか？',
+      q:'人手不足や人件費について、「改善に取り組みたい」と感じていませんか？',
       sub:'請求書・シフト・日報などの毎月の作業は、AIと自動化で減らすことができます。',
       hint:'「一番負担に感じている作業やコストはどれですか？」と聞くと具体名が出やすい。その場でAI自動化診断をタップしてもらう。',
       sol:'AI自動化診断',
@@ -8020,8 +8022,8 @@
       +'<div style="font-size:19px;font-weight:700;color:#18202E;line-height:1.8;margin-top:12px;">'+esc(q.q)+'</div>'
       +'<div style="font-size:13px;color:#5A6981;line-height:1.8;margin-top:10px;">'+esc(q.sub)+'</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">'
-        +'<button class="btn2" style="flex:1;min-width:150px;padding:14px 10px;font-size:14.5px;" onclick="salesAnswer(1)">ある・思い当たる</button>'
-        +'<button style="flex:1;min-width:150px;padding:14px 10px;font-size:14.5px;background:#fff;color:#5A6981;border:1.5px solid #E2E7EF;border-radius:10px;cursor:pointer;" onclick="salesAnswer(0)">いまは困っていない</button>'
+        +'<button class="btn2" style="flex:1;min-width:150px;padding:14px 10px;font-size:14.5px;" onclick="salesAnswer(1)">'+esc(q.ansYes||'ある・思い当たる')+'</button>'
+        +'<button style="flex:1;min-width:150px;padding:14px 10px;font-size:14.5px;background:#fff;color:#5A6981;border:1.5px solid #E2E7EF;border-radius:10px;cursor:pointer;" onclick="salesAnswer(0)">'+esc(q.ansNo||'いまは困っていない')+'</button>'
       +'</div>'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;">'
         +'<span class="ghost" style="font-size:12px;'+(i===0?'visibility:hidden;':'')+'" onclick="salesBack()">← 前の質問へ</span>'
@@ -8163,6 +8165,7 @@
           +'<b style="font-size:11px;line-height:1.5;color:#121a26;">'+esc(q.q)+'</b>'
         +'</div>'
         +'<div style="font-size:8.5px;color:#3f4e66;line-height:1.42;margin-top:2px;">'+esc(q.sub)+'</div>'
+        +(q.sheetNote?'<div style="font-size:8px;color:#24507f;font-weight:700;margin-top:2px;">'+esc(q.sheetNote)+'</div>':'')
       +'</div>';
     });
     h+='</div>';
