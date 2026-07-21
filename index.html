@@ -7950,10 +7950,10 @@
       sol:'承継・M&Aの選択肢づくり',
       solDesc:'親族承継・従業員承継・M&A・存続の道を整理し、御社に合ったロードマップを設計。相手探しはTsuguのマッチングの場につながります。',
       feat:'M&A活用・Tsuguマーケット' },
-    { cat:'人手・業務', ic:'🤖',
-      q:'請求書、シフト表、日報、転記作業…「毎月同じ作業」に、社長や幹部の時間が消えていませんか？',
-      sub:'人手不足の時代、“作業”に使う1時間は、本来“経営”に使えたはずの1時間です。',
-      hint:'「一番イヤな事務作業はどれですか？」と聞くと具体的な業務名が出やすい。その場でAI自動化診断をタップしてもらう。',
+    { cat:'人手・人件費', ic:'🤖',
+      q:'人手不足や人件費について、「そろそろ改善に取り組みたい」と感じていませんか？',
+      sub:'請求書・シフト・日報などの毎月の作業は、AIと自動化で減らすことができます。',
+      hint:'「一番負担に感じている作業やコストはどれですか？」と聞くと具体名が出やすい。その場でAI自動化診断をタップしてもらう。',
       sol:'AI自動化診断',
       solDesc:'困っている業務をタップで選ぶだけで、AI・自動化で解決しやすい業務を診断。導入の優先順位と進め方まで、担当パートナーが提案します。',
       feat:'AI診断・自動化' },
@@ -8130,54 +8130,66 @@
   }
   function salesPrintHeader(sub){
     var d=new Date(); var ds=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
-    return '<div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:2.5px solid #C39B3F;padding-bottom:7px;">'
+    return '<div style="background:linear-gradient(135deg,#0a1526 0%,#132b4c 100%);border-radius:10px;padding:12px 20px 11px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
       +'<div>'
-        +'<div style="font-size:10px;letter-spacing:.22em;color:#C39B3F;font-weight:700;">TSUGU -継-　中小企業承継エコシステム</div>'
-        +'<div style="font-size:18px;font-weight:700;color:#18202E;margin-top:2px;">'+sub+'</div>'
+        +'<div style="font-size:10px;letter-spacing:.3em;color:#cfa860;font-weight:700;">TSUGU AI -継-　<span style="color:#a9c7ee;">中小企業承継エコシステム</span></div>'
+        +'<div style="font-family:\'Hiragino Mincho ProN\',\'Yu Mincho\',\'Noto Serif CJK JP\',serif;font-size:21px;font-weight:700;color:#fff;margin-top:4px;letter-spacing:.02em;">'+sub+'</div>'
       +'</div>'
-      +'<div style="text-align:right;font-size:10px;color:#5A6981;line-height:1.8;">実施日：'+ds+'<br>担当パートナー：＿＿＿＿＿＿＿＿＿＿</div>'
+      +'<div style="text-align:right;font-size:10px;color:#d6e2f4;line-height:1.9;white-space:nowrap;">実施日：'+ds+'<br>担当パートナー：＿＿＿＿＿＿＿＿＿＿</div>'
     +'</div>';
   }
   function salesPrintFooter(){
-    return '<div style="border-top:1px solid #D8DFE8;margin-top:9px;padding-top:6px;display:flex;justify-content:space-between;gap:10px;font-size:9.5px;color:#5A6981;line-height:1.7;">'
-      +'<div>ご相談窓口（担当パートナー）　会社名：＿＿＿＿＿＿＿＿＿＿＿＿＿　氏名：＿＿＿＿＿＿＿＿＿　連絡先：＿＿＿＿＿＿＿＿＿＿＿＿＿</div>'
-    +'</div>'
-    +'<div style="font-size:8.5px;color:#94A2B6;margin-top:4px;line-height:1.6;">※ 本シートは経営課題の整理を目的としたものであり、効果を保証するものではありません。保険・税務・法務等の個別の提案・手続きは、それぞれ資格を持つ担当者・専門家が行います。　TSUGU -継-（株式会社福來）</div>';
+    return '<div style="font-size:8.5px;color:#5a6981;margin-top:6px;line-height:1.5;">※ 本シートは経営課題の整理を目的としたものであり、効果を保証するものではありません。保険・税務・法務等の個別の提案・手続きは、それぞれ資格を持つ担当者・専門家が行います。ご記入いただいた情報は、ご相談対応の目的にのみ使用します。</div>'
+    +'<div style="background:#0a1526;border-radius:6px;margin-top:5px;padding:6px 14px;display:flex;justify-content:space-between;align-items:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
+      +'<span style="font-family:\'Hiragino Mincho ProN\',\'Yu Mincho\',\'Noto Serif CJK JP\',serif;font-size:10.5px;font-weight:700;color:#cfa860;letter-spacing:.06em;">Tsugu Ai -継-</span>'
+      +'<span style="font-size:9px;color:#a9c7ee;letter-spacing:.18em;">中小企業承継エコシステム</span>'
+    +'</div>';
   }
   function salesSheetHtml(){
-    var h='<div style="color:#18202E;font-size:11px;line-height:1.5;padding:2px;">';
+    var h='<div style="color:#18202e;line-height:1.5;">';
     h+=salesPrintHeader('経営課題かんたん診断シート');
-    h+='<div style="display:flex;align-items:center;gap:10px;margin-top:8px;">'
-      +'<div style="flex:1;font-size:13.5px;font-weight:700;color:#18202E;">社長、こんな<span style="color:#A9403D;">“問題”</span>を抱えていませんか？</div>'
-      +'<div style="font-size:10px;color:#5A6981;">あてはまるものに <b style="font-size:12px;">☑</b> をつけてください（所要 約3分）</div>'
+    h+='<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:8px;">'
+      +'<div style="font-family:\'Hiragino Mincho ProN\',\'Yu Mincho\',\'Noto Serif CJK JP\',serif;font-size:17.5px;font-weight:700;color:#0e2038;">社長、こんな<span style="color:#a9403d;">“問題”</span>を抱えていませんか？</div>'
+      +'<div style="font-size:10px;color:#3f4e66;white-space:nowrap;">あてはまるものに <b style="font-size:13px;color:#cfa860;">☑</b> をつけてください（約3分）</div>'
     +'</div>';
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px;">';
     SALES_QS.forEach(function(q,i){
-      h+='<div style="border:1px solid #D8DFE8;border-radius:8px;padding:6px 9px;margin-top:5px;break-inside:avoid;page-break-inside:avoid;">'
-        +'<div style="display:flex;gap:7px;align-items:flex-start;">'
-          +'<span style="font-size:14px;line-height:1.2;">□</span>'
-          +'<div style="flex:1;">'
-            +'<div style="font-size:10.5px;"><span style="color:#2C5DA8;font-weight:700;">'+q.ic+' '+esc(q.cat)+'｜</span><b>'+esc(q.q)+'</b></div>'
-            +'<div style="font-size:9px;color:#5A6981;margin-top:1px;">'+esc(q.sub)+'</div>'
-            +'<div style="font-size:9.5px;color:#27684A;margin-top:2px;">✅ <b>Tsuguならこう解決：</b>'+esc(q.sol)+'（'+esc(q.feat)+'）</div>'
-          +'</div>'
+      h+='<div style="background:#fff;border:1px solid #dfe6ef;border-top:3px solid #cfa860;border-radius:8px;padding:8px 11px 7px;position:relative;break-inside:avoid;page-break-inside:avoid;">'
+        +'<div style="position:absolute;top:8px;right:10px;font-size:9px;color:#a8894a;font-weight:700;letter-spacing:.12em;">0'+(i+1)+'</div>'
+        +'<div style="font-size:9px;color:#24507f;font-weight:700;letter-spacing:.08em;">'+q.ic+' '+esc(q.cat)+'</div>'
+        +'<div style="display:flex;gap:7px;align-items:flex-start;margin-top:4px;">'
+          +'<span style="width:13px;height:13px;border:1.6px solid #9db1c9;border-radius:3px;flex:0 0 auto;margin-top:2px;"></span>'
+          +'<b style="font-size:11px;line-height:1.5;color:#121a26;">'+esc(q.q)+'</b>'
         +'</div>'
+        +'<div style="font-size:8.5px;color:#3f4e66;line-height:1.42;margin-top:2px;">'+esc(q.sub)+'</div>'
       +'</div>';
     });
-    h+='<div style="border:2px solid #C39B3F;background:#FDFAF2;border-radius:9px;padding:9px 12px;margin-top:8px;text-align:center;break-inside:avoid;page-break-inside:avoid;">'
-      +'<div style="font-size:9px;color:#8F7230;font-weight:700;letter-spacing:.1em;">最後に、一つだけお聞かせください</div>'
-      +'<div style="font-size:12.5px;font-weight:700;line-height:1.7;margin-top:3px;">もし——<b style="color:#A9403D;">☑</b> がついた問題を、この<span style="color:#8F7230;">一つのプラットフォーム</span>で、<br>専任の担当者と一緒に解決していけるとしたら、いかがですか？</div>'
-      +'<div style="font-size:9px;color:#5A6981;margin-top:3px;">Tsugu -継- は、資金繰り・企業価値・承継・自動化・保険をワンストップで伴走する、中小企業のための経営プラットフォームです。</div>'
-    +'</div>';
-    h+='<div style="display:flex;gap:8px;margin-top:6px;break-inside:avoid;page-break-inside:avoid;">'
-      +'<div style="flex:1.2;border:1px solid #D8DFE8;border-radius:8px;padding:6px 9px;">'
-        +'<div style="font-size:10px;font-weight:700;color:#1E3A66;">▶ この場でできる次の一歩</div>'
-        +'<div style="font-size:9.5px;color:#5A6981;line-height:1.9;margin-top:2px;">□ 企業価値かんたん診断を体験（無料・約3分）<br>□ 月次レポートのサンプルを見る<br>□ アカウント発行のご案内を受ける</div>'
+    h+='</div>';
+    h+='<div style="text-align:center;font-size:10px;color:#3f4e66;margin-top:5px;">チェックがついた数：＿＿＿＿ 個　／　<b style="color:#24507f;">1つでもついた方は、下へお進みください。</b></div>';
+    h+='<div style="background:linear-gradient(135deg,#0e2038 0%,#173458 100%);border:2px solid #cfa860;border-radius:10px;padding:11px 16px 10px;margin-top:7px;text-align:center;break-inside:avoid;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
+      +'<div style="font-size:9.5px;color:#ddb670;font-weight:700;letter-spacing:.26em;">最後に、一つだけお聞かせください</div>'
+      +'<div style="font-family:\'Hiragino Mincho ProN\',\'Yu Mincho\',\'Noto Serif CJK JP\',serif;font-size:14.5px;font-weight:700;line-height:1.65;color:#fff;margin-top:4px;">もし——<b style="color:#cfa860;">☑</b> のついた問題を、<span style="color:#cfa860;">一つのプラットフォーム</span>で、<br>専属の経営パートナーと解決していけるとしたら、いかがですか？</div>'
+      +'<div style="font-size:9.5px;color:#d6e2f4;line-height:1.6;margin-top:4px;"><b style="color:#fff;">Tsugu Ai -継-</b> は、AIと認定パートナーが月額5万円で経営に伴走する、中小企業のための経営プラットフォーム。8つの問題すべてに、対応する仕組みをご用意しています。</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:6px;">'
+        +['財務・資金繰りの見える化','企業価値のかんたん診断','AI業務自動化','保険・固定費の最適化','コメント付き月次レポート','M&A・承継、投資・融資マッチング'].map(function(c){
+            return '<span style="border:1px solid rgba(169,199,238,.55);color:#e8f0fa;border-radius:99px;font-size:8.5px;font-weight:700;padding:3px 10px;"><span style="color:#cfa860;">✓</span> '+c+'</span>';
+          }).join('')
       +'</div>'
-      +'<div style="flex:1;border:1px solid #D8DFE8;border-radius:8px;padding:6px 9px;">'
-        +'<div style="font-size:10px;font-weight:700;color:#1E3A66;">✎ ご相談メモ</div>'
-        +'<div style="border-bottom:1px solid #C9D6EA;height:15px;"></div>'
-        +'<div style="border-bottom:1px solid #C9D6EA;height:15px;"></div>'
-        +'<div style="border-bottom:1px solid #C9D6EA;height:15px;"></div>'
+    +'</div>';
+    h+='<div style="display:flex;gap:14px;align-items:center;border:1px solid #dfe6ef;border-radius:8px;padding:6px 12px;margin-top:7px;break-inside:avoid;page-break-inside:avoid;">'
+      +'<b style="font-size:10px;color:#0e2038;white-space:nowrap;">▶ この場でできる次の一歩</b>'
+      +'<span style="font-size:9.5px;color:#3f4e66;">□ 企業価値かんたん診断を体験（無料・約3分）　□ 月次レポートのサンプルを見る　□ アカウント発行のご案内を受ける</span>'
+    +'</div>';
+    h+='<div style="margin-top:7px;break-inside:avoid;page-break-inside:avoid;">'
+      +'<div style="font-size:11px;font-weight:700;color:#0e2038;"><span style="color:#cfa860;">✎</span> ご記入欄（ご相談を希望される方）</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:5px;">'
+        +[['会社名',''],['お名前',''],['お電話番号',''],['メールアドレス','']].map(function(f){
+            return '<div><div style="font-size:9px;color:#5a6981;font-weight:700;margin-bottom:2px;">'+f[0]+'</div>'
+              +'<div style="border:1.5px solid #c3cfdd;border-radius:6px;height:30px;background:#fff;"></div></div>';
+          }).join('')
+      +'</div>'
+      +'<div style="margin-top:6px;"><div style="font-size:9px;color:#5a6981;font-weight:700;margin-bottom:2px;">ご相談メモ（気になったこと・聞いてみたいことを自由にお書きください）</div>'
+        +'<div style="border:1.5px solid #c3cfdd;border-radius:6px;height:60px;background:#fff;background-image:repeating-linear-gradient(to bottom,transparent,transparent 20px,#e7edf4 20px,#e7edf4 21px);background-position:0 6px;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>'
       +'</div>'
     +'</div>';
     h+=salesPrintFooter();
@@ -8189,7 +8201,7 @@
     var h='<div style="color:#18202E;font-size:11px;line-height:1.5;padding:2px;">';
     h+=salesPrintHeader('経営課題かんたん診断　結果レポート');
     h+='<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;">'
-      +'<div style="font-size:10.5px;color:#5A6981;">お客様名：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿ 様</div>'
+      +'<div style="font-size:11.5px;color:#3f4e66;font-weight:700;">お客様名：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿ 様</div>'
       +'<div style="font-size:12px;font-weight:700;">「ある」と答えた問題：<span style="color:#A9403D;font-size:16px;">'+yes.length+'個</span> / '+SALES_QS.length+'問</div>'
     +'</div>';
     yes.forEach(function(q,idx){
