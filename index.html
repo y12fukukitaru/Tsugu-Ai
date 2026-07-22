@@ -488,8 +488,7 @@
   .btn2.ai-btn{background:#0e2038;color:#cfa860;border:1.5px solid #0e2038;font-weight:700;letter-spacing:.04em;transition:border-color .15s,color .15s,opacity .15s;}
   .btn2.ai-btn:hover{border-color:#cfa860;color:#fff;opacity:1;}
   .btn2.ai-btn:disabled{opacity:.75;border-color:#cfa860;cursor:default;}
-  /* AI相談モードのチップ（AI欄の中だけに限定し、他画面の .sbtn には影響させない） */
-  #sec-sec .sbtn.on{border-color:#0e2038;background:#0e2038;color:#cfa860;}
+  /* AI相談モードのチップは他タブと同じ .sbtn（紺塗り＋白文字）をそのまま使う */
   /* AI結果カードのゴールド差し色 */
   .ai-card{background:#fff;border:1px solid #E2E7EF;border-top:2.5px solid #cfa860;border-radius:10px;}
   body.dark .ai-card{background:#141924;border-color:#2A3345;border-top-color:#cfa860;}
@@ -1860,13 +1859,13 @@
           +'</div>'
           +'<div id="market-open" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-sec"><div class="ai-band"><div><div class="lb">TSUGU AI -継-</div><div class="tt">🪄 パートナーAI（24時間いつでも相談）</div></div></div>'
+        +'<div class="panel" id="sec-sec"><div class="ph">🪄 パートナーAI（24時間いつでも相談）</div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">担当パートナーへのメッセージとは別に、AIに24時間いつでも相談できます。日程・タスク整理、文章作成、調べ物、経営の壁打ちなどにどうぞ。</div>'
           + secModesHtml()
           +'<div id="sec-log" class="ai-panelbox" style="max-height:300px;overflow:auto;padding:12px;margin-bottom:10px;"><div style="font-size:12px;color:#94A2B6;">例：「来期の経営計画づくりの進め方を相談したい」「取引先へのお礼メールを作って」</div></div>'
           +'<div style="display:flex;gap:8px;align-items:flex-end;">'
             +'<textarea id="sec-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="相談内容を入力（Enterで送信／Shift+Enterで改行）"></textarea>'
-            +'<button class="btn2 ai-btn" id="sec-send" onclick="secretarySend()">送信</button>'
+            +'<button class="btn2" id="sec-send" onclick="secretarySend()">送信</button>'
           +'</div>'
         +'</div>';
     } else if(eff==='consultant'){
@@ -2092,16 +2091,17 @@
           +'<div class="ph" style="font-size:13px;margin-top:16px;">お支払い履歴</div>'
           +'<div id="billpay-history" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-sec"><div class="ai-band"><div><div class="lb">TSUGU AI -継-</div><div class="tt">🪄 AI秘書（業務の相談相手）</div></div></div>'
+        +'<div class="panel" id="sec-sec"><div class="ph">🪄 AI秘書（業務の相談相手）</div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">提案資料の文面づくり、面談準備、調べ物、考えの壁打ちなどを相談できます。</div>'
           + secModesHtml()
           +'<div id="sec-log" class="ai-panelbox" style="max-height:300px;overflow:auto;padding:12px;margin-bottom:10px;"><div style="font-size:12px;color:#94A2B6;">例：「医療法人オーナー向けの初回面談の流れを整理して」</div></div>'
           +'<div style="display:flex;gap:8px;align-items:flex-end;">'
             +'<textarea id="sec-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="相談内容を入力（Enterで送信／Shift+Enterで改行）"></textarea>'
-            +'<button class="btn2 ai-btn" id="sec-send" onclick="secretarySend()">送信</button>'
+            +'<button class="btn2" id="sec-send" onclick="secretarySend()">送信</button>'
           +'</div>'
         +'</div>'
-        +'<div class="panel" id="sec-support"><div class="ai-band"><div><div class="lb">TSUGU AI -継-</div><div class="tt">🛟 運営サポート</div></div><span class="rt" onclick="loadSupportKnowledge();loadMyInquiries()">↺ 更新</span></div>'
+        +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">🛟 運営サポート'
+          +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadSupportKnowledge();loadMyInquiries()">↺ 更新</span></div>'
           +'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">'
             +'<button class="btn2 ai-btn" id="sup-tb-bot" style="flex:1;min-width:150px;font-size:13px;padding:10px;" onclick="supShowTab(\'bot\')">🤖 AIサポート（即答）</button>'
             +'<button class="btn2" id="sup-tb-inq" style="flex:1;min-width:150px;font-size:13px;padding:10px;background:#fff;color:#1E3A66;border:1.5px solid #C9D6EA;" onclick="supShowTab(\'inq\')">📮 運営への問い合わせ<span id="sup-inq-badge" class="nbadge hidden" style="margin-left:6px;">0</span></button>'
