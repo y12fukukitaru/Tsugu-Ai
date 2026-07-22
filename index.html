@@ -1245,7 +1245,8 @@
         +'<div style="margin-top:8px;"><label class="fl">本文</label><textarea id="bc-body" class="inp2" rows="3" style="width:100%;" placeholder="お知らせの内容を入力"></textarea></div>'
         +'<div style="margin-top:10px;"><button class="btn2" onclick="postAnnouncement()">配信する</button><span id="bc-msg" style="font-size:12px;margin-left:8px;"></span></div>'
         +'<div id="bc-list" style="margin-top:12px;">読み込み中...</div></div>'
-      +'<div class="panel" id="sec-support"><div class="ai-band"><div><div class="lb">TSUGU AI -継-</div><div class="tt">🛟 サポート管理</div></div><span class="rt" onclick="loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
+      +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">🛟 サポート管理'
+        +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
         +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:8px;">📥 パートナーからの問い合わせ<span id="adm-inq-count" class="nbadge hidden">0</span></div>'
         +'<div id="adm-inq-list" style="margin-top:6px;">読み込み中...</div>'
         +'<div style="border-top:1px solid #EDF1F6;margin-top:16px;padding-top:14px;">'
@@ -1821,7 +1822,7 @@
           +'<div style="font-weight:600;font-size:14px;color:#1E3A66;margin:14px 0 6px;">③ 資金繰りシミュレーター</div>'
           +'<div style="font-size:12px;color:#94A2B6;">担当パートナーが実施します。結果はダッシュボードの「資金繰りステータス」に表示されます。<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;margin-left:6px;" onclick="goSec(\'sec-status\')">ステータスを見る →</button></div>'
         +'</div>'
-        +'<div class="panel" id="sec-ai"><div class="ai-band"><div><div class="lb">TSUGU AI -継-</div><div class="tt">🤖 AI活用・自動化のご相談</div></div></div>'
+        +'<div class="panel" id="sec-ai"><div class="ph">🤖 AI活用・自動化のご相談</div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">「こんな業務を楽にできたら」という気になることを選んで送るだけ。担当パートナーがAIで具体的な自動化プランを診断し、結果をこちらにご提案・フィードバックします。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
             +'<div style="flex:1;min-width:200px;"><label class="fl">業種・事業内容（任意）</label><input id="ai-gyo" class="inp2" style="width:100%;" placeholder="例：金属加工業、調剤薬局 など"></div>'
@@ -6598,7 +6599,7 @@
     +'</div>';
     // ---- タブ3：AIツール・試算 ----
     var tabTools='<div id="ctab-tools">'
-      +'<div class="ai-band" id="cs-ai"><div><div class="lb">TSUGU AI -継-</div><div class="tt">🤖 AI自動化診断</div></div></div>'
+      +'<div class="ph" id="cs-ai" style="font-size:13px;">🤖 AI自動化診断</div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">顧客が送った「気になる業務」を踏まえ、AIが業務フロー・ボトルネック・ツール構成・実装手順・削減時間と金額・投資回収まで踏み込んで診断します。結果を確認し、必要なら各施策を「深掘り」して、顧客にフィードバック・提案できます。</div>'
       +'<div id="diag-interests" style="margin-bottom:8px;"></div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
