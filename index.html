@@ -427,6 +427,62 @@
   .tag{font-size:11.5px;}
   .clcard .cl-last{font-size:12.5px;}
   }
+  /* ===== AI関連の共通デザイン：紺(#0e2038)×ゴールド(#cfa860) ===== */
+  /* 見た目専用のクラス群。既存セレクタは書き換えず、AI画面にのみ付与して使う。 */
+  @keyframes tsg-rot{to{transform:rotate(360deg);}}
+  /* ローディング：紺の角丸ボックス内で、ゴールドの弧（円周の一部が欠けたリング）だけが回転し、中央の「継」は静止する */
+  .tsg-spin{position:relative;display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:16px;background:#0e2038;flex:0 0 auto;}
+  .tsg-spin::before{content:'';position:absolute;inset:8px;border-radius:50%;border:2.5px solid #cfa860;border-right-color:transparent;animation:tsg-rot .9s linear infinite;}
+  .tsg-spin .k{font-family:'Shippori Mincho','Hiragino Mincho ProN','Yu Mincho','Noto Serif CJK JP',serif;font-size:21px;font-weight:700;color:#cfa860;line-height:1;}
+  .tsg-spin.sm{width:26px;height:26px;border-radius:8px;}
+  .tsg-spin.sm::before{inset:4px;border-width:1.8px;}
+  .tsg-spin.sm .k{font-size:11px;}
+  body.dark .tsg-spin{background:#16233c;}
+  /* ローディングの外枠（結果欄に出す大きめの表示） */
+  .tsg-load{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;border:1px solid #D8E0EC;border-radius:12px;background:#FAFBFD;padding:22px 18px;}
+  .tsg-load .hint{font-size:11.5px;color:#94A2B6;line-height:1.6;text-align:center;}
+  body.dark .tsg-load{background:#16233c;border-color:#2A3345;}
+  body.dark .tsg-load .hint{color:#AEB7C7;}
+  /* AI回答エリア共通：紺のアクセント＋ゴールドの差し色（診断シートと同トーン） */
+  .ai-out{border:1px solid #D8E0EC;border-left:4px solid #0e2038;border-radius:12px;background:#fff;box-shadow:inset 0 2px 0 #cfa860;padding:14px 16px;font-size:13px;line-height:1.75;color:#18202E;}
+  .ai-out b,.ai-out strong{color:#0e2038;}
+  .ai-out h2,.ai-out h3,.ai-out h4{color:#0e2038;border-bottom:1px solid #EDE0C4;padding-bottom:3px;}
+  body.dark .ai-out{background:#141924;border-color:#2A3345;border-left-color:#cfa860;color:#ECEEF2;}
+  body.dark .ai-out b,body.dark .ai-out strong{color:#CFAD62;}
+  body.dark .ai-out h2,body.dark .ai-out h3,body.dark .ai-out h4{color:#CFAD62;border-bottom-color:#2A3345;}
+  /* AI回答の総括ブロック（紺地×ゴールド見出し） */
+  .ai-sum{border:1px solid #C7DBF2;border-top:3px solid #cfa860;background:#F8F9FC;border-radius:12px;padding:14px 16px;margin-bottom:12px;}
+  .ai-sum .ai-sum-h{font-size:9.5px;letter-spacing:.28em;color:#cfa860;font-weight:700;}
+  .ai-sum .ai-sum-t{font-size:13.5px;font-weight:700;color:#0e2038;margin:2px 0 8px;}
+  body.dark .ai-sum{background:#16233c;border-color:#2A3345;border-top-color:#cfa860;}
+  body.dark .ai-sum .ai-sum-t{color:#EDF0F5;}
+  /* AI注記（※ AIが生成した提案です 等） */
+  .ai-note{font-size:11px;color:#8A6A12;background:#FDFAF2;border:1px solid #EBDDB4;border-radius:9px;padding:8px 12px;margin-top:10px;line-height:1.7;}
+  body.dark .ai-note{background:#1B2130;border-color:#3A3245;color:#CFAD62;}
+  /* 見出し帯：TSUGU AI -継- のヘッダー帯と同トーン */
+  .ai-band{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(135deg,#0a1526 0%,#132b4c 100%);border-radius:10px;padding:11px 16px;margin:0 0 10px;}
+  .ai-band .lb{font-size:9.5px;letter-spacing:.3em;color:#cfa860;font-weight:700;line-height:1.4;}
+  .ai-band .tt{font-family:'Shippori Mincho','Hiragino Mincho ProN','Yu Mincho','Noto Serif CJK JP',serif;font-size:15.5px;font-weight:700;color:#fff;letter-spacing:.06em;line-height:1.4;}
+  .ai-band .rt{margin-left:auto;font-size:11px;color:#a9c7ee;font-weight:400;cursor:pointer;}
+  .ai-band .rt:hover{color:#cfa860;}
+  @media(max-width:640px){ .ai-band{padding:10px 13px;} .ai-band .tt{font-size:14px;} }
+  /* 吹き出し：AI回答＝白地＋紺の左ボーダー＋ゴールドの上ヘアライン／ユーザー発言＝紺ベタ */
+  .ai-bubble{max-width:86%;padding:11px 14px;border-radius:12px;font-size:13px;line-height:1.6;background:#fff;border:1px solid #E2E7EF;border-left:4px solid #0e2038;box-shadow:inset 0 2px 0 #cfa860;color:#18202E;}
+  .ai-bubble-me{max-width:86%;padding:11px 14px;border-radius:12px;font-size:13px;line-height:1.6;background:#0e2038;color:#fff;white-space:pre-wrap;border:1px solid #0e2038;}
+  body.dark .ai-bubble{background:#141924;border-color:#2A3345;border-left-color:#cfa860;color:#ECEEF2;}
+  body.dark .ai-bubble-me{background:#16233c;border-color:#2A3345;}
+  /* AIログ枠 */
+  .ai-panelbox{border:1px solid #D8E0EC;border-radius:10px;background:#FAFBFD;}
+  body.dark .ai-panelbox{background:#16233c;border-color:#2A3345;}
+  /* AI起動ボタン */
+  .btn2.ai-btn{background:#0e2038;color:#cfa860;border:1.5px solid #0e2038;font-weight:700;letter-spacing:.04em;transition:border-color .15s,color .15s,opacity .15s;}
+  .btn2.ai-btn:hover{border-color:#cfa860;color:#fff;opacity:1;}
+  .btn2.ai-btn:disabled{opacity:.75;border-color:#cfa860;cursor:default;}
+  /* AI相談モードのチップ（AI欄の中だけに限定し、他画面の .sbtn には影響させない） */
+  #sec-sec .sbtn.on{border-color:#0e2038;background:#0e2038;color:#cfa860;}
+  /* AI結果カードのゴールド差し色 */
+  .ai-card{background:#fff;border:1px solid #E2E7EF;border-top:2.5px solid #cfa860;border-radius:10px;}
+  body.dark .ai-card{background:#141924;border-color:#2A3345;border-top-color:#cfa860;}
 </style>
 </head>
 <body>
@@ -1180,7 +1236,7 @@
         +'<div style="margin-top:8px;"><label class="fl">本文</label><textarea id="bc-body" class="inp2" rows="3" style="width:100%;" placeholder="お知らせの内容を入力"></textarea></div>'
         +'<div style="margin-top:10px;"><button class="btn2" onclick="postAnnouncement()">配信する</button><span id="bc-msg" style="font-size:12px;margin-left:8px;"></span></div>'
         +'<div id="bc-list" style="margin-top:12px;">読み込み中...</div></div>'
-      +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">🛟 サポート管理<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
+      +'<div class="panel" id="sec-support"><div class="ai-band"><div><div class="lb">TSUGU AI -継-</div><div class="tt">🛟 サポート管理</div></div><span class="rt" onclick="loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
         +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:8px;">📥 パートナーからの問い合わせ<span id="adm-inq-count" class="nbadge hidden">0</span></div>'
         +'<div id="adm-inq-list" style="margin-top:6px;">読み込み中...</div>'
         +'<div style="border-top:1px solid #EDF1F6;margin-top:16px;padding-top:14px;">'
@@ -1756,7 +1812,7 @@
           +'<div style="font-weight:600;font-size:14px;color:#1E3A66;margin:14px 0 6px;">③ 資金繰りシミュレーター</div>'
           +'<div style="font-size:12px;color:#94A2B6;">担当パートナーが実施します。結果はダッシュボードの「資金繰りステータス」に表示されます。<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;margin-left:6px;" onclick="goSec(\'sec-status\')">ステータスを見る →</button></div>'
         +'</div>'
-        +'<div class="panel" id="sec-ai"><div class="ph">🤖 AI活用・自動化のご相談</div>'
+        +'<div class="panel" id="sec-ai"><div class="ai-band"><div><div class="lb">TSUGU AI -継-</div><div class="tt">🤖 AI活用・自動化のご相談</div></div></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">「こんな業務を楽にできたら」という気になることを選んで送るだけ。担当パートナーがAIで具体的な自動化プランを診断し、結果をこちらにご提案・フィードバックします。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
             +'<div style="flex:1;min-width:200px;"><label class="fl">業種・事業内容（任意）</label><input id="ai-gyo" class="inp2" style="width:100%;" placeholder="例：金属加工業、調剤薬局 など"></div>'
@@ -1765,7 +1821,7 @@
           +'<div id="ai-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px;"></div>'
           +'<label class="fl">具体的な困りごと（任意）</label>'
           +'<input id="ai-note" class="inp2" style="width:100%;margin-bottom:10px;" placeholder="例：請求書の作成と入金確認に毎月20時間かかっている">'
-          +'<button class="btn2" id="ai-send" onclick="sendInterests()">担当パートナーに相談する</button>'
+          +'<button class="btn2 ai-btn" id="ai-send" onclick="sendInterests()">担当パートナーに相談する</button>'
           +'<div id="ai-result" style="margin-top:14px;"></div>'
           +'<div id="my-ai-props" style="margin-top:14px;"></div>'
         +'</div>'
@@ -1794,13 +1850,13 @@
           +'</div>'
           +'<div id="market-open" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-sec"><div class="ph">パートナーAI（24時間いつでも相談できるAI）</div>'
+        +'<div class="panel" id="sec-sec"><div class="ai-band"><div><div class="lb">TSUGU AI -継-</div><div class="tt">🪄 パートナーAI（24時間いつでも相談）</div></div></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">担当パートナーへのメッセージとは別に、AIに24時間いつでも相談できます。日程・タスク整理、文章作成、調べ物、経営の壁打ちなどにどうぞ。</div>'
           + secModesHtml()
-          +'<div id="sec-log" style="max-height:300px;overflow:auto;border:1px solid #EDF1F6;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;"><div style="font-size:12px;color:#94A2B6;">例：「来期の経営計画づくりの進め方を相談したい」「取引先へのお礼メールを作って」</div></div>'
+          +'<div id="sec-log" class="ai-panelbox" style="max-height:300px;overflow:auto;padding:12px;margin-bottom:10px;"><div style="font-size:12px;color:#94A2B6;">例：「来期の経営計画づくりの進め方を相談したい」「取引先へのお礼メールを作って」</div></div>'
           +'<div style="display:flex;gap:8px;align-items:flex-end;">'
             +'<textarea id="sec-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="相談内容を入力（Enterで送信／Shift+Enterで改行）"></textarea>'
-            +'<button class="btn2" id="sec-send" onclick="secretarySend()">送信</button>'
+            +'<button class="btn2 ai-btn" id="sec-send" onclick="secretarySend()">送信</button>'
           +'</div>'
         +'</div>';
     } else if(eff==='consultant'){
@@ -2026,26 +2082,26 @@
           +'<div class="ph" style="font-size:13px;margin-top:16px;">お支払い履歴</div>'
           +'<div id="billpay-history" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-sec"><div class="ph">AI秘書（業務の相談相手）</div>'
+        +'<div class="panel" id="sec-sec"><div class="ai-band"><div><div class="lb">TSUGU AI -継-</div><div class="tt">🪄 AI秘書（業務の相談相手）</div></div></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">提案資料の文面づくり、面談準備、調べ物、考えの壁打ちなどを相談できます。</div>'
           + secModesHtml()
-          +'<div id="sec-log" style="max-height:300px;overflow:auto;border:1px solid #EDF1F6;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;"><div style="font-size:12px;color:#94A2B6;">例：「医療法人オーナー向けの初回面談の流れを整理して」</div></div>'
+          +'<div id="sec-log" class="ai-panelbox" style="max-height:300px;overflow:auto;padding:12px;margin-bottom:10px;"><div style="font-size:12px;color:#94A2B6;">例：「医療法人オーナー向けの初回面談の流れを整理して」</div></div>'
           +'<div style="display:flex;gap:8px;align-items:flex-end;">'
             +'<textarea id="sec-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="相談内容を入力（Enterで送信／Shift+Enterで改行）"></textarea>'
-            +'<button class="btn2" id="sec-send" onclick="secretarySend()">送信</button>'
+            +'<button class="btn2 ai-btn" id="sec-send" onclick="secretarySend()">送信</button>'
           +'</div>'
         +'</div>'
-        +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">🛟 運営サポート<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadSupportKnowledge();loadMyInquiries()">↺ 更新</span></div>'
+        +'<div class="panel" id="sec-support"><div class="ai-band"><div><div class="lb">TSUGU AI -継-</div><div class="tt">🛟 運営サポート</div></div><span class="rt" onclick="loadSupportKnowledge();loadMyInquiries()">↺ 更新</span></div>'
           +'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">'
-            +'<button class="btn2" id="sup-tb-bot" style="flex:1;min-width:150px;font-size:13px;padding:10px;" onclick="supShowTab(\'bot\')">🤖 AIサポート（即答）</button>'
+            +'<button class="btn2 ai-btn" id="sup-tb-bot" style="flex:1;min-width:150px;font-size:13px;padding:10px;" onclick="supShowTab(\'bot\')">🤖 AIサポート（即答）</button>'
             +'<button class="btn2" id="sup-tb-inq" style="flex:1;min-width:150px;font-size:13px;padding:10px;background:#fff;color:#1E3A66;border:1.5px solid #C9D6EA;" onclick="supShowTab(\'inq\')">📮 運営への問い合わせ<span id="sup-inq-badge" class="nbadge hidden" style="margin-left:6px;">0</span></button>'
           +'</div>'
           +'<div id="sup-tab-bot">'
             +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">運営ルール・報酬・申請手順・機能の使い方など、運営に関する質問にAIがお答えします。AIで解決しない場合は「📮 運営への問い合わせ」タブから担当者に直接ご質問ください。</div>'
-            +'<div id="sup-log" style="max-height:300px;overflow:auto;border:1px solid #EDF1F6;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;"></div>'
+            +'<div id="sup-log" class="ai-panelbox" style="max-height:300px;overflow:auto;padding:12px;margin-bottom:10px;"></div>'
             +'<div style="display:flex;gap:8px;align-items:flex-end;">'
               +'<textarea id="sup-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="運営への質問を入力（Enterで送信／Shift+Enterで改行）"></textarea>'
-              +'<button class="btn2" id="sup-send" onclick="supportSend()">送信</button>'
+              +'<button class="btn2 ai-btn" id="sup-send" onclick="supportSend()">送信</button>'
             +'</div>'
             +'<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">'
               +'<button class="btn2" style="font-size:12px;background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;" onclick="supEscalate()" title="直前の質問を問い合わせフォームに転記します">📮 AIで解決しない → この質問を運営に送る</button>'
@@ -4000,7 +4056,7 @@
     var snap=null; try{ var sr=await sb.from('cashflow_snapshots').select('*').eq('customer_id',custId).order('created_at',{ascending:false}).limit(1); if(!sr.error&&sr.data&&sr.data.length) snap=sr.data[0]; }catch(e){}
     var finCtx=snap?('月商'+(snap.monthly_in||'-')+'万円、月間支出'+(snap.monthly_out||'-')+'万円、資金繰りスコア'+(snap.score||'-')+'点'):'（財務データなし）';
     btn.disabled=true; var ot=btn.textContent; btn.textContent='AIが詳細分析中...';
-    result.innerHTML='<div style="padding:20px;text-align:center;color:#5A6981;font-size:13px;">AIが業務フロー・ツール構成・投資回収まで踏み込んで分析しています…（30秒前後）</div>';
+    result.innerHTML=tsgLoad('30秒ほどかかります');
     var sys='あなたは中小企業のDX・業務自動化を専門とする上級コンサルタントです。バックオフィスに限らず、現場・営業・物流・製造・マーケ・人事まで全部門が対象です。後継者不在も視野に入る黒字中小企業の生産性向上と財務改善（固定費・人件費の最適化）を目的に、業務フローの分解→ボトルネック特定→具体的ツール構成→実装手順→定量効果（時間・金額）→投資回収まで、実装できるレベルまで掘り下げて提案します。数値は与えられた平均人件費を用いて時間を金額換算し、現実的な根拠で概算します。出力は指定したJSONオブジェクトのみとし、前置き・後置き・コードフェンス・説明文を一切付けないこと。';
     var usr='【対象企業】\n業種・事業内容: '+(gyo||'（未記入）')+'\n従業員規模: '+size+'\n平均人件費: '+wage+'円/時\n現状の業務・使用ツール: '+(tools||'（情報なし）')+'\n財務状況: '+finCtx+'\n顧客が相談してきた気になる業務: '+(interests||'（指定なし）')+'\nパートナーからの補足: '+(note||'（特になし）')+'\n\n【依頼】\nこの企業で効果の大きい自動化・効率化の施策を6〜8件、効果順に提案（うち1〜2件はすぐ着手できる「クイックウィン」を必ず含める）。同業中小企業の一般的な水準と比べた所感を「現状サマリー」に一言含める。顧客が挙げた業務を優先的にカバーし、中小企業が無理なく始められる現実的な手段を優先。推奨ツールは「Claudeプロジェクト」「Custom GPT」「専用AIアシスタント」「RPA(Power Automate等)」「既存SaaS連携」など具体名を含める。削減時間は平均人件費('+wage+'円/時)で年間金額に換算する。\n\n【出力JSON（このオブジェクトのみ）】\n{"総括":{"現状サマリー":"2〜3文","年間削減時間目安":"約◯◯時間/年","年間削減コスト目安":"約◯◯万円/年","想定投資額目安":"約◯◯万円","回収期間目安":"約◯◯ヶ月","着手順序":"フェーズ1→2→3の要点","財務インパクト":"固定費・粗利・資金繰りへの効果","次フェーズ(M&A)への布石":"自動化で生まれた余力をどう次の投資/承継につなげるか"},"施策":[{"業務":"...","対象部署":"...","現状フロー":"...","ボトルネック":"...","自動化案":"...","推奨ツール構成":"...","実装ステップ":["手順1","手順2","手順3"],"KPI":"...","月間削減時間":"約◯時間/月","年間削減コスト":"約◯万円/年","投資コスト目安":"初期◯万円/月額◯円","回収期間":"約◯ヶ月","難易度":"低|中|高","優先度":"高|中|低","定着のコツ・リスク":"..."}]}';
     try{
@@ -4032,13 +4088,13 @@
     var items=obj['施策']||[]; window.__diagItems=items;
     var sm=obj['総括']||{};
     var pfx='dg'+(++__aiSeq)+'_';
-    function chip(l,v,c){ if(!v)return ''; return '<div style="flex:1 1 130px;min-width:130px;background:#fff;border:1px solid '+(c||'#EDF1F6')+';border-radius:9px;padding:9px 11px;"><div style="font-size:10.5px;color:#94A2B6;">'+l+'</div><div style="font-size:14px;font-weight:700;color:'+(c||'#1E3A66')+';margin-top:2px;line-height:1.4;">'+esc(v)+'</div></div>'; }
+    function chip(l,v,c){ if(!v)return ''; return '<div class="ai-card" style="flex:1 1 130px;min-width:130px;border-color:'+(c||'#E2E7EF')+';border-radius:9px;padding:9px 11px;"><div style="font-size:10.5px;color:#94A2B6;">'+l+'</div><div style="font-size:14px;font-weight:700;color:'+(c||'#1E3A66')+';margin-top:2px;line-height:1.4;">'+esc(v)+'</div></div>'; }
     function line(l,v){ if(!v)return ''; return '<div style="font-size:12px;line-height:1.7;margin:4px 0;"><span style="color:#94A2B6;font-weight:600;">'+l+'：</span><span style="color:#1E3A66;">'+esc(v)+'</span></div>'; }
     var h='';
     // 総括
     if(Object.keys(sm).length){
-      h+='<div style="border:1px solid #C7DBF2;background:#F8F9FC;border-radius:12px;padding:14px 16px;margin-bottom:12px;">'
-        +'<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">📋 総括（経営インパクト）</div>'
+      h+='<div class="ai-sum">'
+        +'<div class="ai-sum-h">TSUGU AI -継-</div><div class="ai-sum-t">📋 総括（経営インパクト）</div>'
         +(sm['現状サマリー']?'<div style="font-size:12.5px;color:#18202E;line-height:1.75;margin-bottom:10px;">'+esc(sm['現状サマリー'])+'</div>':'')
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
           +chip('年間削減時間',sm['年間削減時間目安'],'#2C5DA8')
@@ -4062,7 +4118,7 @@
       var steps=it['実装ステップ'];
       var stepHtml='';
       if(steps&&steps.length){ stepHtml='<div style="font-size:12px;color:#94A2B6;font-weight:600;margin:6px 0 2px;">実装ステップ</div><ol style="margin:2px 0 6px;padding-left:20px;font-size:12px;color:#1E3A66;line-height:1.7;">'+steps.map(function(s){return '<li style="margin:2px 0;">'+esc(s)+'</li>';}).join('')+'</ol>'; }
-      h+='<div style="border:1px solid #E2E7EF;border-radius:11px;margin-bottom:8px;overflow:hidden;">'
+      h+='<div class="ai-card" style="border-radius:11px;margin-bottom:8px;overflow:hidden;">'
         +'<div onclick="aiToggle(\''+pfx+i+'\')" style="display:flex;align-items:center;gap:8px;padding:11px 14px;cursor:pointer;">'
           +'<span style="flex:1;font-size:13px;font-weight:600;color:#18202E;">'+esc(it['業務']||'')+(it['対象部署']?'<span style="font-size:11px;color:#94A2B6;font-weight:400;">（'+esc(it['対象部署'])+'）</span>':'')+'</span>'
           +bdg('優先 '+pr,pc(pr))+bdg('難易度 '+df,dc(df))
@@ -4083,7 +4139,7 @@
         +'</div>'
       +'</div>';
     });
-    h+='<div style="font-size:11px;color:#94A2B6;margin-top:6px;">※ AIが生成した提案です。実際の導入可否・効果・投資額は個別精査が必要です。</div>';
+    h+='<div class="ai-note">※ AIが生成した提案です。実際の導入可否・効果・投資額は個別精査が必要です。</div>';
     return h;
   }
   // 1施策をさらに深掘り：実装手順書をAI生成
@@ -4092,7 +4148,7 @@
     var box=btn&&btn.parentNode&&btn.parentNode.querySelector('[id$="_drill"]');
     if(!box) return;
     var ot=btn.textContent; btn.disabled=true; btn.textContent='生成中…';
-    box.innerHTML='<div style="font-size:12px;color:#5A6981;padding:8px;">実装手順書を作成しています…</div>';
+    box.innerHTML=tsgLoad();
     var gyo=($('diag-gyo')||{}).value.trim(), wage=Number(($('diag-wage')||{}).value)||3000;
     var sys='あなたは中小企業のDX導入を伴走する実装コンサルタントです。指定された1つの業務について、現場担当者がそのまま着手できる具体的な実装手順書を日本語で作成します。ツールの具体名・設定の流れ・必要データ・プロンプト例・体制・スケジュール・運用・注意点まで踏み込みます。Markdown（見出し##、箇条書き-、番号付き）で簡潔かつ実務的に。';
     var usr='企業の業種: '+(gyo||'（未記入）')+'／平均人件費: '+wage+'円/時\n\n対象業務: '+(it['業務']||'')+'\n自動化案: '+(it['自動化案']||'')+'\n推奨ツール構成: '+(it['推奨ツール構成']||'')+'\n\nこの業務の自動化を実現する実装手順書を、次の構成で作成してください：\n## 全体像（Before/After）\n## 必要なツール・アカウント・初期費用\n## 導入ステップ（番号付き・各ステップに具体操作）\n## 設定・プロンプト例（あれば具体例）\n## 必要データ・連携\n## 体制と所要期間（誰が・いつまでに）\n## 月次の運用フロー\n## 効果測定（KPIと測り方）\n## つまずきやすい点・注意';
@@ -5312,7 +5368,7 @@
     var profit=(($('ma2-profit')||{}).value||'').trim(), biz=(($('ma2-biz')||{}).value||'').trim(), goal=($('ma2-goal')||{}).value||'';
     if(!biz){ result.innerHTML='<div style="font-size:12px;color:#A9403D;">事業内容・強みを入力してください。</div>'; return; }
     btn.disabled=true; var ot=btn.textContent; btn.textContent='AIが分析中...';
-    result.innerHTML='<div style="padding:20px;text-align:center;color:#5A6981;font-size:13px;">AIがM&A活用の方向性を検討しています...</div>';
+    result.innerHTML=tsgLoad();
     var sys='あなたは中小企業のM&A・事業承継に詳しいアドバイザーです。黒字企業が利益・余剰資金をM&A（会社や事業の買収）で活かす現実的な方向性を提案します。スモールM&Aを前提に過大な案は避けます。出力は指定のJSON配列のみ、前置き・コードフェンス禁止。';
     var usr='企業情報：\n年間利益・余剰資金: '+(profit||'（未記入）')+'万円\n事業内容・強み: '+biz+'\nM&Aで実現したいこと: '+goal+'\n\nこの企業が利益をM&Aで活かす方向性を3〜5件、現実的な順に提案してください。\n\n必ず次の形式のJSON配列のみを出力：\n[{"方向性":"...","ターゲット像":"...","期待シナジー":"...","予算感":"例: 数百万〜数千万円","留意点":"..."}]';
     try{
@@ -6504,7 +6560,7 @@
     +'</div>';
     // ---- タブ3：AIツール・試算 ----
     var tabTools='<div id="ctab-tools">'
-      +'<div class="ph" id="cs-ai" style="font-size:13px;">🤖 AI自動化診断</div>'
+      +'<div class="ai-band" id="cs-ai"><div><div class="lb">TSUGU AI -継-</div><div class="tt">🤖 AI自動化診断</div></div></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">顧客が送った「気になる業務」を踏まえ、AIが業務フロー・ボトルネック・ツール構成・実装手順・削減時間と金額・投資回収まで踏み込んで診断します。結果を確認し、必要なら各施策を「深掘り」して、顧客にフィードバック・提案できます。</div>'
       +'<div id="diag-interests" style="margin-bottom:8px;"></div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
@@ -6515,7 +6571,7 @@
       +'<div style="margin-top:8px;"><label class="fl">現状の業務・使用中のツール（任意）</label><input id="diag-tools" class="inp2" style="width:100%;" placeholder="例：受発注はFAXと手入力、会計は弥生、勤怠は紙タイムカード"></div>'
       +'<label class="fl" style="margin-top:8px;">補足・重点を置きたい点（任意）</label>'
       +'<input id="diag-note" class="inp2" style="width:100%;margin-bottom:8px;" placeholder="顧客の困りごとや、特に診断したい業務など">'
-      +'<button class="btn2" id="diag-run" onclick="runDiag(\''+custId+'\')">AIで詳細診断する</button>'
+      +'<button class="btn2 ai-btn" id="diag-run" onclick="runDiag(\''+custId+'\')">AIで詳細診断する</button>'
       +'<div id="diag-result" style="margin-top:12px;"></div>'
       +'<div class="ph" style="font-size:12.5px;margin-top:16px;display:flex;align-items:center;justify-content:space-between;">この顧客への診断・提案の履歴<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadDiagHistory(\''+custId+'\')">↺ 更新</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">提案・保存した診断結果の一覧です。対応が済んだものは削除して整理できます。</div>'
@@ -6800,7 +6856,7 @@
   function aiCards(txt, selectable){
     var arr=null;
     try{ var s=txt.indexOf('['), e=txt.lastIndexOf(']'); if(s>=0&&e>s) arr=JSON.parse(txt.slice(s,e+1)); }catch(err){ arr=null; }
-    if(!arr||!arr.length) return '<div style="font-size:13px;color:#18202E;">'+mdLite(txt)+'</div>';
+    if(!arr||!arr.length) return '<div class="ai-out">'+mdLite(txt)+'</div>';
     var rank={'高':0,'中':1,'低':2};
     arr.sort(function(a,b){ var ra=rank[a['優先度']], rb=rank[b['優先度']]; return (ra==null?9:ra)-(rb==null?9:rb); });
     if(selectable) window.__lastProps=arr;
@@ -6813,7 +6869,7 @@
     arr.forEach(function(it, i){
       var pr=it['優先度']||'-', df=it['難易度']||'-';
       var chk = selectable ? '<label style="cursor:pointer;" onclick="event.stopPropagation()"><input type="checkbox" class="ai-pick" data-i="'+i+'"></label>' : '';
-      h+='<div style="border:1px solid #E2E7EF;border-radius:11px;margin-bottom:8px;overflow:hidden;">'
+      h+='<div class="ai-card" style="border-radius:11px;margin-bottom:8px;overflow:hidden;">'
         +'<div onclick="aiToggle(\''+pfx+i+'\')" style="display:flex;align-items:center;gap:8px;padding:11px 14px;cursor:pointer;">'
           +chk
           +'<span style="flex:1;font-size:13px;font-weight:600;color:#18202E;">'+esc(it['業務']||'')+'</span>'
@@ -7142,7 +7198,7 @@
     }catch(e){}
     var gyo=($('diag-gyo')||{}).value.trim() || (CURRENT_CLIENT&&CURRENT_CLIENT.company)||'';
     if(btn){ btn.disabled=true; var ot=btn.textContent; btn.textContent='AIが財務分析中…'; }
-    box.innerHTML='<div style="padding:18px;text-align:center;color:#5A6981;font-size:13px;">AIが収益性・安全性・効率性・成長性の4観点で財務を診断しています…（30秒前後）</div>';
+    box.innerHTML=tsgLoad('30秒ほどかかります');
     var metrics='資金繰りスコア '+m.score+'点（ランク'+m.rank+'：'+m.label+'）\n'
       +'月商 '+m.sales+'万円／現預金 '+m.cash+'万円／月間支出 '+m.outflow+'万円／月間返済 '+m.repay+'万円\n'
       +'手元流動性 '+(m.liqMonths||0).toFixed(1)+'か月／資金繰り余力 '+(m.runway>=99?'十分':(m.runway||0).toFixed(1)+'か月')+'\n'
@@ -7253,28 +7309,40 @@
     'M&A':'あなたは中小企業のM&A・事業承継に明るいアドバイザーです。買収・売却・承継の進め方や留意点を簡潔に日本語で説明します。実行は専門家の関与を前提とします。'
   };
   // ===== AI秘書：会話の永続化（localStorage・モード別）＋保存期間 =====
-  function aisecKey(mode){ return 'tsugu_aisec_'+((typeof ME!=='undefined'&&ME)?ME:'guest')+'_'+(mode||SEC_MODE); }
+  // パートナーポータルの「AI秘書」と顧客ダッシュボードの「パートナーAI」は同じコードを共用しているため、
+  // 保存キーにポータル種別（consultant / customer / admin）を含めて会話を完全に分離する。
+  // currentRole() は運営の表示切替（VIEWAS）も考慮して現在のポータルを返す既存関数。
+  function aisecPortal(){ try{ return (typeof currentRole==='function')?currentRole():((window.__role)||'customer'); }catch(e){ return (window.__role)||'customer'; } }
+  function aisecKey(mode){ return 'tsugu_aisec_'+((typeof ME!=='undefined'&&ME)?ME:'guest')+'_'+aisecPortal()+'_'+(mode||SEC_MODE); }
   function aisecRetentionDays(){ try{ var d=parseInt((loadPrefs().aisecRetention)||30,10); return (d===7||d===15||d===30)?d:30; }catch(e){ return 30; } }
-  function aisecLoad(mode){
+  // 指定キーの会話に保存期間を適用して返す（キーの形に依存しないため、旧キーもそのまま整理できる）
+  function aisecPruneKey(key){
     try{
-      var raw=localStorage.getItem(aisecKey(mode)); if(!raw) return [];
+      var raw=localStorage.getItem(key); if(!raw) return [];
       var arr=JSON.parse(raw); if(!Array.isArray(arr)) return [];
       var cutoff=Date.now()-aisecRetentionDays()*86400000;
       var keep=arr.filter(function(m){ return !m.ts || m.ts>=cutoff; });
-      if(keep.length!==arr.length){ try{ localStorage.setItem(aisecKey(mode), JSON.stringify(keep)); }catch(e){} }
+      if(keep.length!==arr.length){ try{ localStorage.setItem(key, JSON.stringify(keep)); }catch(e){} }
       return keep;
     }catch(e){ return []; }
   }
+  function aisecLoad(mode){ return aisecPruneKey(aisecKey(mode)); }
   function aisecSave(){
     try{ var arr=SEC_MSGS.filter(function(m){ return m.content!=='（考え中…）'; }); localStorage.setItem(aisecKey(SEC_MODE), JSON.stringify(arr)); }catch(e){}
   }
   function aisecPruneAll(){
-    try{ var pre='tsugu_aisec_'+((typeof ME!=='undefined'&&ME)?ME:'guest')+'_'; for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i); if(k&&k.indexOf(pre)===0) aisecLoad(k.slice(pre.length)); } }catch(e){}
+    try{ var pre='tsugu_aisec_'+((typeof ME!=='undefined'&&ME)?ME:'guest')+'_'; for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i); if(k&&k.indexOf(pre)===0) aisecPruneKey(k); } }catch(e){}
   }
   function restoreSecLog(){ try{ SEC_MSGS=aisecLoad(SEC_MODE); }catch(e){ SEC_MSGS=[]; } renderSecLog(); }
   function clearSecLog(){ if(!confirm('このAIモードの会話履歴を消去します。よろしいですか？')) return; SEC_MSGS=[]; try{ localStorage.removeItem(aisecKey(SEC_MODE)); }catch(e){} renderSecLog(); }
   function secModesHtml(){ function b(m){ return '<button class="sbtn'+(m===SEC_MODE?' on':'')+'" onclick="setSecMode(\''+m+'\',this)">'+m+'</button>'; } return '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;align-items:center;">'+b('経営')+b('税務')+b('労務')+b('マーケ')+b('資金調達')+b('M&A')+'<span style="flex:1;"></span><button class="ghost" style="font-size:11px;padding:4px 9px;border:1px solid var(--line);border-radius:7px;" onclick="clearSecLog()" title="このモードの会話履歴を消去">🗑 履歴消去</button></div>'; }
   function setSecMode(m,el){ aisecSave(); SEC_MODE=m; var box=el&&el.parentNode; if(box){ Array.prototype.forEach.call(box.querySelectorAll('.sbtn'),function(b){ b.classList.remove('on'); }); } if(el) el.classList.add('on'); SEC_MSGS=aisecLoad(m); renderSecLog(); }
+  // ===== AI共通：ローディング表示（見た目のみ。会話データ・送受信処理には一切関与しない）=====
+  // 紺の角丸ボックスの中でゴールドの弧だけが回転し、中央の「継」は静止する
+  function tsgSpin(sm){ return '<span class="tsg-spin'+(sm?' sm':'')+'" aria-hidden="true"><span class="k">継</span></span>'; }
+  // 回転するリングのみ。時間のかかる処理では hint に所要時間の目安だけを渡す
+  function tsgLoad(hint){ return '<div class="tsg-load">'+tsgSpin(false)+(hint?'<div class="hint">'+esc(hint)+'</div>':'')+'</div>'; }
+  function tsgThinking(){ return tsgSpin(true); }
   function renderSecLog(){
     var box=$('sec-log'); if(!box)return;
     if(!SEC_MSGS.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">例：「来期の経営計画づくりの進め方を相談したい」「取引先へのお礼メールを作って」</div>'; return; }
@@ -7283,9 +7351,8 @@
       var me=m.role==='user';
       var tag=(!me && m.model)?'<div style="font-size:10px;color:#94A2B6;margin-bottom:2px;">'+esc(m.model)+'</div>':'';
       var thinking=(m.content==='（考え中…）');
-      var bubbleStyle='max-width:86%;padding:10px 13px;border-radius:12px;font-size:13px;line-height:1.6;'+(me?'background:#2C5DA8;color:#fff;white-space:pre-wrap;':'background:#fff;border:1px solid #E2E7EF;color:#18202E;');
-      var inner=(me||thinking)?esc(m.content):mdLite(m.content);
-      h+='<div style="display:flex;flex-direction:column;align-items:'+(me?'flex-end':'flex-start')+';margin-bottom:8px;">'+tag+'<div style="'+bubbleStyle+'">'+inner+'</div></div>';
+      var inner=thinking?tsgThinking():(me?esc(m.content):mdLite(m.content));
+      h+='<div style="display:flex;flex-direction:column;align-items:'+(me?'flex-end':'flex-start')+';margin-bottom:8px;">'+tag+'<div class="'+(me?'ai-bubble-me':'ai-bubble')+'">'+inner+'</div></div>';
     });
     box.innerHTML=h; box.scrollTop=box.scrollHeight;
   }
@@ -7318,7 +7385,7 @@
   function maCards(txt, selectable){
     var arr=null;
     try{ var s=txt.indexOf('['), e=txt.lastIndexOf(']'); if(s>=0&&e>s) arr=JSON.parse(txt.slice(s,e+1)); }catch(err){ arr=null; }
-    if(!arr||!arr.length) return '<div style="font-size:13px;color:#18202E;">'+mdLite(txt)+'</div>';
+    if(!arr||!arr.length) return '<div class="ai-out">'+mdLite(txt)+'</div>';
     if(selectable) window.__lastMa=arr;
     function rw(l,v){ if(!v)return''; return '<div style="font-size:12px;line-height:1.65;margin-bottom:4px;"><span style="color:#94A2B6;font-weight:600;">'+l+'：</span><span style="color:#1E3A66;">'+esc(v)+'</span></div>'; }
     var h='';
@@ -7326,7 +7393,7 @@
       var head = selectable
         ? '<label style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><input type="checkbox" class="ma-pick" data-i="'+i+'">'+esc(it['方向性']||it['戦略']||'')+'</label>'
         : esc(it['方向性']||it['戦略']||'');
-      h+='<div style="border:1px solid #E2E7EF;border-radius:11px;padding:14px 16px;margin-bottom:10px;">'
+      h+='<div class="ai-card" style="border-radius:11px;padding:14px 16px;margin-bottom:10px;">'
         +'<div style="font-size:14px;font-weight:600;color:#18202E;margin-bottom:8px;">'+head+'</div>'
         +rw('狙う対象（ターゲット像）',it['ターゲット像']||it['対象'])
         +rw('期待できるシナジー',it['期待シナジー']||it['期待効果'])
@@ -7334,7 +7401,7 @@
         +rw('留意点・リスク',it['留意点']||it['リスク'])
         +'</div>';
     });
-    h+='<div style="font-size:11px;color:#94A2B6;margin-top:8px;">※ AIが生成した提案です。実行にはデューデリジェンスや専門家の関与が必要です。</div>';
+    h+='<div class="ai-note">※ AIが生成した提案です。実行にはデューデリジェンスや専門家の関与が必要です。</div>';
     if(selectable){ h+='<button class="btn2" style="margin-top:12px;" onclick="shareMaInterests()">選択した方向性をパートナーに共有</button><div id="ma-share-msg" style="font-size:12px;margin-top:8px;"></div>'; }
     return h;
   }
@@ -7355,7 +7422,7 @@
     var profit=$('ma-profit').value.trim(), biz=$('ma-biz').value.trim(), goal=$('ma-goal').value;
     if(!biz){ result.innerHTML='<div style="font-size:12px;color:#A9403D;">事業内容・強みを入力してください。</div>'; return; }
     btn.disabled=true; var ot=btn.textContent; btn.textContent='AIが分析中...';
-    result.innerHTML='<div style="padding:24px;text-align:center;color:#5A6981;font-size:13px;">AIがM&A活用の方向性を検討しています...</div>';
+    result.innerHTML=tsgLoad();
     var sys='あなたは中小企業のM&A・事業承継に詳しいアドバイザーです。黒字企業が利益・余剰資金をM&A（会社や事業の買収）で活かす現実的な方向性を提案します。スモールM&Aを前提に過大な案は避けます。出力は指定のJSON配列のみ、前置き・コードフェンス禁止。';
     var usr='企業情報：\n年間利益・余剰資金: '+(profit||'（未記入）')+'万円\n事業内容・強み: '+biz+'\nM&Aで実現したいこと: '+goal+'\n\nこの企業が利益をM&Aで活かす方向性を3〜5件、現実的な順に提案してください。\n\n必ず次の形式のJSON配列のみを出力：\n[{"方向性":"...","ターゲット像":"...","期待シナジー":"...","予算感":"例: 数百万〜数千万円","留意点":"..."}]';
     try{
@@ -7605,9 +7672,8 @@
     SUP_MSGS.forEach(function(m){
       var me=m.role==='user';
       var thinking=(m.content==='（考え中…）');
-      var st='max-width:86%;padding:10px 13px;border-radius:12px;font-size:13px;line-height:1.6;'+(me?'background:#2C5DA8;color:#fff;white-space:pre-wrap;':'background:#fff;border:1px solid #E2E7EF;color:#18202E;');
-      var inner=(me||thinking)?esc(m.content):mdLite(m.content);
-      h+='<div style="display:flex;flex-direction:column;align-items:'+(me?'flex-end':'flex-start')+';margin-bottom:8px;"><div style="'+st+'">'+inner+'</div></div>';
+      var inner=thinking?tsgThinking():(me?esc(m.content):mdLite(m.content));
+      h+='<div style="display:flex;flex-direction:column;align-items:'+(me?'flex-end':'flex-start')+';margin-bottom:8px;"><div class="'+(me?'ai-bubble-me':'ai-bubble')+'">'+inner+'</div></div>';
     });
     box.innerHTML=h; box.scrollTop=box.scrollHeight;
   }
