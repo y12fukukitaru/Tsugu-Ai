@@ -446,10 +446,20 @@
   /* AI回答エリア共通：紺のアクセント＋ゴールドの差し色（診断シートと同トーン） */
   .ai-out{border:1px solid #D8E0EC;border-left:4px solid #0e2038;border-radius:12px;background:#fff;box-shadow:inset 0 2px 0 #cfa860;padding:14px 16px;font-size:13px;line-height:1.75;color:#18202E;}
   .ai-out b,.ai-out strong{color:#0e2038;}
-  .ai-out h2,.ai-out h3,.ai-out h4{color:#0e2038;border-bottom:1px solid #EDE0C4;padding-bottom:3px;}
   body.dark .ai-out{background:#141924;border-color:#2A3345;border-left-color:#cfa860;color:#ECEEF2;}
   body.dark .ai-out b,body.dark .ai-out strong{color:#CFAD62;}
-  body.dark .ai-out h2,body.dark .ai-out h3,body.dark .ai-out h4{color:#CFAD62;border-bottom-color:#2A3345;}
+  /* AI回答内の小見出し（mdLite が # 見出し・太字だけの行に付与） */
+  .ai-h{border-left:3px solid #cfa860;padding-left:10px;color:#0e2038;font-weight:500;font-size:15px;line-height:1.55;margin:14px 0 6px;}
+  .ai-h:first-child{margin-top:2px;}
+  body.dark .ai-h{color:#EDF0F5;border-left-color:#cfa860;}
+  /* AI回答内の表（mdLite がパイプ区切りの行を変換） */
+  .ai-tblwrap{overflow-x:auto;margin:8px 0 10px;}
+  table.ai-tbl{border-collapse:collapse;width:100%;font-size:12.5px;min-width:300px;}
+  table.ai-tbl th{background:#0e2038;color:#cfa860;font-weight:700;text-align:left;padding:7px 10px;border:1px solid #0e2038;line-height:1.5;}
+  table.ai-tbl td{padding:6px 10px;border:1px solid #E2E7EF;color:#18202E;vertical-align:top;line-height:1.6;}
+  table.ai-tbl tbody tr:nth-child(even) td{background:#F8F9FC;}
+  body.dark table.ai-tbl td{border-color:#2A3345;color:#ECEEF2;}
+  body.dark table.ai-tbl tbody tr:nth-child(even) td{background:#1B2130;}
   /* AI回答の総括ブロック（紺地×ゴールド見出し） */
   .ai-sum{border:1px solid #C7DBF2;border-top:3px solid #cfa860;background:#F8F9FC;border-radius:12px;padding:14px 16px;margin-bottom:12px;}
   .ai-sum .ai-sum-h{font-size:9.5px;letter-spacing:.28em;color:#cfa860;font-weight:700;}
@@ -457,7 +467,7 @@
   body.dark .ai-sum{background:#16233c;border-color:#2A3345;border-top-color:#cfa860;}
   body.dark .ai-sum .ai-sum-t{color:#EDF0F5;}
   /* AI注記（※ AIが生成した提案です 等） */
-  .ai-note{font-size:11px;color:#8A6A12;background:#FDFAF2;border:1px solid #EBDDB4;border-radius:9px;padding:8px 12px;margin-top:10px;line-height:1.7;}
+  .ai-note{font-size:11px;color:#8A6A12;background:#FDF8EC;border:1px solid #ECD9A6;border-radius:9px;padding:8px 12px;margin:10px 0;line-height:1.7;}
   body.dark .ai-note{background:#1B2130;border-color:#3A3245;color:#CFAD62;}
   /* 見出し帯：TSUGU AI -継- のヘッダー帯と同トーン */
   .ai-band{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(135deg,#0a1526 0%,#132b4c 100%);border-radius:10px;padding:11px 16px;margin:0 0 10px;}
@@ -2688,10 +2698,38 @@
       var tag=ordered?'ol':'ul';
       out.push('<'+tag+' style="margin:4px 0 8px;padding-left:20px;line-height:1.7;">'+buf.join('')+'</'+tag+'>');
     }
+    // ---- 表：|区切り＋区切り線（|---|---|）の並びを <table> に整形 ----
+    function isTblSep(s){ return /^\s*\|?(\s*:?-{2,}:?\s*\|)+\s*:?-{2,}:?\s*\|?\s*$/.test(s) || /^\s*\|(\s*:?-{2,}:?\s*\|)+\s*$/.test(s); }
+    function cells(s){ return s.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(function(c){ return c.trim(); }); }
+    function table(){
+      var head=cells(lines[i]); i+=2; // ヘッダー行と区切り行を読み飛ばす
+      var body=[];
+      while(i<lines.length && /\|/.test(lines[i]) && !/^\s*$/.test(lines[i])){ body.push(cells(lines[i])); i++; }
+      var h='<table class="ai-tbl"><thead><tr>'+head.map(function(c){ return '<th>'+inline(c)+'</th>'; }).join('')+'</tr></thead>';
+      if(body.length){
+        h+='<tbody>'+body.map(function(r){
+          return '<tr>'+r.map(function(c){ return '<td>'+inline(c)+'</td>'; }).join('')+'</tr>';
+        }).join('')+'</tbody>';
+      }
+      out.push('<div class="ai-tblwrap">'+h+'</table></div>');
+    }
     while(i<lines.length){
       var ln=lines[i].replace(/\s+$/,'');
       var hm=/^\s*(#{1,6})\s+(.*)$/.exec(ln);
-      if(hm){ flushPara(); out.push('<div style="font-weight:700;color:var(--navy);margin:10px 0 4px;font-size:1.04em;">'+inline(hm[2])+'</div>'); i++; continue; }
+      if(hm){ flushPara(); out.push('<div class="ai-h">'+inline(hm[2])+'</div>'); i++; continue; }
+      // 表（次の行が区切り線のときだけ表とみなすので、本文中の | を誤検出しない）
+      if(/\|/.test(ln) && i+1<lines.length && isTblSep(lines[i+1])){ flushPara(); table(); continue; }
+      // ※ で始まる行は注記枠にまとめる
+      if(/^\s*※/.test(ln)){
+        flushPara();
+        var nb=[];
+        while(i<lines.length && /^\s*※/.test(lines[i])){ nb.push(inline(lines[i].replace(/\s+$/,''))); i++; }
+        out.push('<div class="ai-note">'+nb.join('<br>')+'</div>');
+        continue;
+      }
+      // 太字だけの行は小見出しとして扱う（AIが「**業種別の目安**」のように出力するケース）
+      var bm=/^\s*\*\*([^*]+)\*\*\s*[:：]?\s*$/.exec(ln);
+      if(bm){ flushPara(); out.push('<div class="ai-h">'+inline(bm[1])+'</div>'); i++; continue; }
       if(/^\s*[-*・]\s+/.test(ln)){ flushPara(); list(false); continue; }
       if(/^\s*\d+[.)]\s+/.test(ln)){ flushPara(); list(true); continue; }
       if(/^\s*$/.test(ln)){ flushPara(); i++; continue; }
