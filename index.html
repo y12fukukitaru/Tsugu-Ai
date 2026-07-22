@@ -1727,6 +1727,7 @@
         +'<div class="panel" id="sec-reports"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">📊 月次レポート<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMyReports()">↺ 更新</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:8px;">担当パートナーが毎月の数字とコメントをまとめたレポートです。</div>'
           +'<div id="my-reports">読み込み中...</div>'
+          +'<div id="my-obr" style="margin-top:14px;"></div>'
           +'<div id="my-meetings" style="margin-top:14px;"></div>'
         +'</div>'
         +'<div class="panel" id="sec-mypdca"><div class="ph">🔁 経営課題の取り組み</div>'
@@ -2075,7 +2076,7 @@
 
     window.__eff=eff;
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadDashHero(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
+    if(eff==='customer'){ loadDashHero(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
     else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); }
     else { loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); loadAdmInquiries(); loadSupportKB(); }
     startNotifPolling(eff);
@@ -6104,7 +6105,7 @@
     var side=$('cl-side'); if(!side)return;
     Array.prototype.forEach.call(side.querySelectorAll('.cl-ni'),function(n){ n.classList.toggle('on', n.id==='ni-'+id); });
   }
-  var CL_SPY_IDS=['cs-todo','cs-onboard','cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-value','cs-bp','cs-ins','cs-shared'];
+  var CL_SPY_IDS=['cs-todo','cs-onboard','cs-report','cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-value','cs-bp','cs-ins','cs-shared'];
   var CL_TAB_WRAPS=['ctab-msg','ctab-fin','ctab-tools','ctab-shared'];
   var CL_ACTIVE='cs-todo';
   // カルテ内タブ切替：見出し（cs-*）から次の見出しまでを1つのタブとして表示
@@ -6135,6 +6136,7 @@
   var CL_ITEMS=[
     ['cs-todo','📌','やること'],
     ['cs-onboard','🚀','導入チェックリスト'],
+    ['cs-report','📘','導入診断報告書'],
     ['cs-company','🏢','会社情報'],
     ['cs-msg','💬','メッセージ・提案'],
     ['cs-shared','📥','顧客からの共有'],
@@ -6340,6 +6342,9 @@
       +'<div class="ph" id="cs-onboard" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;">🚀 導入チェックリスト（Phase 0）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadOnboard(\''+custId+'\')">↺ 更新</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">導入初期費用に対応する導入作業（資料受領 → データ整備 → 初期診断 → 報告）の進捗管理です。すべて完了すると「導入診断報告書」の4つの成果物が揃います。</div>'
       +'<div id="cl-onboard-body">読み込み中...</div>'
+      +'<div class="ph" id="cs-report" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;">📘 導入診断報告書<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadObr(\''+custId+'\')">↺ 更新</span></div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">導入フェーズの4つの成果物（①企業価値診断 ②資金繰り現状 ③保険・固定費の棚卸し ④12ヶ月改善ロードマップ）をまとめる、初回報告面談用の報告書です。<b>「公開」にすると顧客ポータルの「月次レポート」欄にも表示されます。</b>印刷（PDF）は報告書全体・4項目の個別どちらも可能です。</div>'
+      +'<div id="obr-body">読み込み中...</div>'
       +'<div class="ph" id="cs-company" style="font-size:13px;">会社情報（代行入力）</div>'
       +head
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">経営者ポータルには確認用に表示されます（顧客側は閲覧のみ）。</div>'
@@ -6624,6 +6629,7 @@
     autoStageFor(custId);
     loadClientTodo(custId);
     loadOnboard(custId);
+    loadObr(custId);
     loadValHistory(custId);
     loadMeetingNotes(custId);
     loadDiagInterests(custId);
@@ -8326,6 +8332,483 @@
       loadOnboard(CURRENT_CLIENT.id);
       if(typeof reloadClientActions==='function'){ try{ reloadClientActions(CURRENT_CLIENT.id); }catch(e){} }
     }
+  }
+
+  // ===== 導入診断報告書（Phase 0 の成果物をまとめる初回報告書）=====
+  // onboarding_reports テーブル（customer_id 一意）に upsert。顧客側は status='published' のみ閲覧可。
+  // 成果物：① 企業価値診断 ② 資金繰り現状レポート ③ 保険・固定費の棚卸し ④ 12ヶ月改善ロードマップ
+  var OBR_ROAD_THEMES=['現状把握・数値の見える化','資金繰り表の運用開始','固定費・保険の見直し実行','AI・業務自動化の着手','売上構成の分析と改善','上期の振り返り・金融機関面談','借入条件の見直し交渉','人材・組織の課題整理','企業価値の再診断','事業承継・M&Aの方向性検討','次期経営計画の策定','年間総括・次年度ロードマップ'];
+  var OBR_JUDGE=['要確認','継続','見直し','解約'];
+  var OBR_DATA=null;   // パートナー側：編集中の報告書
+  var OBR_CUST=null;   // パートナー側：対象顧客ID
+  var OBR_MY=null;     // 顧客側：公開済みの報告書
+  var OBR_FIN=[];      // 印刷時に転記する financial_entries（直近6ヶ月）
+  function obrMan(n){ return (Math.round(Number(n)||0)).toLocaleString('ja-JP')+'万円'; }
+  function obrNum(v){ var n=parseFloat(v); return isNaN(n)?0:n; }
+  function obrFN(id){ var e=$(id); return obrNum(e&&e.value); }
+  function obrFS(id){ var e=$(id); return e?String(e.value==null?'':e.value).trim():''; }
+  function obrToday(){ var d=new Date(Date.now()+9*3600*1000); return d.toISOString().slice(0,10); }
+  function obrDateJp(s){ if(!s) return ''; var a=String(s).slice(0,10).split('-'); if(a.length<3) return String(s); return a[0]+'年'+Number(a[1])+'月'+Number(a[2])+'日'; }
+  function obrDefaultRoad(){ return OBR_ROAD_THEMES.map(function(t,i){ return { m:(i+1), theme:t, action:'', kpi:'', owner:'' }; }); }
+  function obrEmpty(custId){
+    return { customer_id:custId, report_date:obrToday(), status:'draft',
+      op_profit:0, dep:0, multiple:5, cash:0, debt:0, value_note:'',
+      cash_now:0, month_out:0, month_sales:0, loan_balance:0, repay_year:0, cash_note:'',
+      insurances:[], roadmap:obrDefaultRoad(), summary:'' };
+  }
+  // jsonb は配列・文字列どちらで返ってきても配列に正規化する
+  function obrArr(v){
+    if(Array.isArray(v)) return v;
+    if(typeof v==='string' && v.trim()){ try{ var a=JSON.parse(v); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+    return [];
+  }
+  function obrNorm(d, custId){
+    var e=obrEmpty(custId||d.customer_id), o={};
+    Object.keys(e).forEach(function(k){ o[k]=(d[k]==null?e[k]:d[k]); });
+    o.insurances=obrArr(d.insurances);
+    o.roadmap=obrArr(d.roadmap); if(!o.roadmap.length) o.roadmap=obrDefaultRoad();
+    o.report_date=String(o.report_date||'').slice(0,10)||obrToday();
+    return o;
+  }
+  // ---- 計算（既存の企業価値診断と同じ式）----
+  function obrCalcValue(d){
+    var ebitda=obrNum(d.op_profit)+obrNum(d.dep);
+    var ev=ebitda*obrNum(d.multiple);
+    var equity=ev+obrNum(d.cash)-obrNum(d.debt);
+    return { ebitda:ebitda, ev:ev, equity:equity };
+  }
+  function obrCalcCash(d){
+    var out=obrNum(d.month_out);
+    var months=out>0?(obrNum(d.cash_now)/out):null;
+    var sales=obrNum(d.month_sales);
+    var mos=sales>0?(obrNum(d.cash_now)/sales):null;
+    return { months:months, monthsOfSales:mos, repayRatio:(obrNum(d.repay_year)>0&&sales>0)?(obrNum(d.repay_year)/(sales*12)*100):null };
+  }
+  function obrInsTotal(d){
+    var prem=0, save=0;
+    (d.insurances||[]).forEach(function(r){ prem+=obrNum(r.premium); save+=obrNum(r.save); });
+    return { premium:prem, save:save };
+  }
+
+  // ---- パートナー側：読み込み ----
+  async function loadObr(custId){
+    var box=$('obr-body'); if(!box) return;
+    OBR_CUST=custId; box.innerHTML='読み込み中...';
+    var res=await sb.from('onboarding_reports').select('*').eq('customer_id',custId).maybeSingle();
+    if(res.error){
+      box.innerHTML='<div style="border:1px solid #E6C9C7;background:#FDF6F6;border-radius:10px;padding:12px 14px;font-size:12px;color:#A9403D;line-height:1.8;">読み込みエラー：'+esc(res.error.message)
+        +'<br><span style="color:#5A6981;">Supabase に <b>onboarding_reports</b> テーブルが未作成の可能性があります。作成後に「↺ 更新」を押してください。</span></div>';
+      return;
+    }
+    OBR_DATA = res.data ? obrNorm(res.data, custId) : obrEmpty(custId);
+    obrRender();
+  }
+  // ---- パートナー側：描画 ----
+  function obrRender(){
+    var box=$('obr-body'); if(!box||!OBR_DATA) return;
+    var d=OBR_DATA;
+    var pbtn='background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;';
+    var h='';
+    h+='<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">'
+      +'<div><label class="fl">報告日</label><input id="obr-date" type="date" class="inp2" value="'+escA(d.report_date||'')+'"></div>'
+      +'<div><label class="fl">公開状態</label><select id="obr-status" class="inp2" style="width:180px;">'
+        +'<option value="draft"'+(d.status==='published'?'':' selected')+'>下書き（顧客に非表示）</option>'
+        +'<option value="published"'+(d.status==='published'?' selected':'')+'>公開（顧客に表示）</option>'
+      +'</select></div>'
+      +'<button class="btn2" onclick="obrSave()">保存する</button>'
+      +'<span id="obr-msg" style="font-size:12px;align-self:center;line-height:1.6;"></span>'
+    +'</div>';
+    h+='<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #EDF1F6;">'
+      +'<button class="btn2" style="background:#0E1B33;" onclick="obrPrint(\'all\')">🖨 報告書を印刷（全体）</button>'
+      +'<span style="font-size:11px;color:#94A2B6;">個別印刷：</span>'
+      +'<button class="btn2" style="'+pbtn+'" onclick="obrPrint(\'value\')">① 企業価値</button>'
+      +'<button class="btn2" style="'+pbtn+'" onclick="obrPrint(\'cash\')">② 資金繰り</button>'
+      +'<button class="btn2" style="'+pbtn+'" onclick="obrPrint(\'ins\')">③ 保険棚卸し</button>'
+      +'<button class="btn2" style="'+pbtn+'" onclick="obrPrint(\'road\')">④ ロードマップ</button>'
+    +'</div>';
+    // ① 企業価値
+    h+='<div class="ph" style="font-size:13px;">① 企業価値診断</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.6;">単位はすべて<b>万円</b>です。EBITDA・推定株主価値は入力に応じて自動計算されます（企業価値診断と同じ計算式）。</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+        +'<div><label class="fl">営業利益（年）</label><input id="obr-op" type="number" class="inp2" style="width:120px;" value="'+escA(d.op_profit)+'" oninput="obrCalc()"></div>'
+        +'<div><label class="fl">減価償却費（年）</label><input id="obr-dep" type="number" class="inp2" style="width:120px;" value="'+escA(d.dep)+'" oninput="obrCalc()"></div>'
+        +'<div><label class="fl">評価倍率（倍）</label><input id="obr-mult" type="number" step="0.1" class="inp2" style="width:100px;" value="'+escA(d.multiple)+'" oninput="obrCalc()"></div>'
+        +'<div><label class="fl">現預金</label><input id="obr-cash" type="number" class="inp2" style="width:120px;" value="'+escA(d.cash)+'" oninput="obrCalc()"></div>'
+        +'<div><label class="fl">有利子負債</label><input id="obr-debt" type="number" class="inp2" style="width:120px;" value="'+escA(d.debt)+'" oninput="obrCalc()"></div>'
+      +'</div>'
+      +'<div id="obr-val-result" style="margin-top:8px;"></div>'
+      +'<div style="margin-top:6px;"><label class="fl">所見・コメント</label><textarea id="obr-val-note" rows="2" class="inp2" style="width:100%;" placeholder="例：EBITDAは安定しているが、有利子負債が重く株主価値を圧迫。返済条件の見直しで改善余地あり。">'+esc(d.value_note||'')+'</textarea></div>';
+    // ② 資金繰り
+    h+='<div class="ph" style="font-size:13px;margin-top:16px;">② 資金繰りの現状</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.6;">単位はすべて<b>万円</b>です。印刷時には月次財務メモ（直近6ヶ月）が自動で転記されます。</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+        +'<div><label class="fl">現預金残高</label><input id="obr-cashnow" type="number" class="inp2" style="width:120px;" value="'+escA(d.cash_now)+'" oninput="obrCalc()"></div>'
+        +'<div><label class="fl">月間平均支出</label><input id="obr-mout" type="number" class="inp2" style="width:120px;" value="'+escA(d.month_out)+'" oninput="obrCalc()"></div>'
+        +'<div><label class="fl">平均月商</label><input id="obr-msales" type="number" class="inp2" style="width:120px;" value="'+escA(d.month_sales)+'" oninput="obrCalc()"></div>'
+        +'<div><label class="fl">借入残高</label><input id="obr-loan" type="number" class="inp2" style="width:120px;" value="'+escA(d.loan_balance)+'" oninput="obrCalc()"></div>'
+        +'<div><label class="fl">年間返済額</label><input id="obr-repay" type="number" class="inp2" style="width:120px;" value="'+escA(d.repay_year)+'" oninput="obrCalc()"></div>'
+      +'</div>'
+      +'<div id="obr-cash-result" style="margin-top:8px;"></div>'
+      +'<div style="margin-top:6px;"><label class="fl">所見・コメント</label><textarea id="obr-cash-note" rows="2" class="inp2" style="width:100%;" placeholder="例：手元資金は月商の1.2ヶ月分。まずは3ヶ月分の確保を目標に、支払サイトの調整と固定費の削減を並行して進める。">'+esc(d.cash_note||'')+'</textarea></div>';
+    // ③ 保険・固定費の棚卸し
+    h+='<div class="ph" style="font-size:13px;margin-top:16px;">③ 保険・固定費の棚卸し</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.6;">受領した保険証券・共済契約を1行ずつ登録します。金額はすべて<b>万円</b>です。「削減見込」は見直し・解約により<b>年間</b>で削減できる想定額を入力してください。</div>'
+      +'<div id="obr-ins-table">'+obrInsTableHtml()+'</div>'
+      +'<div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap;">'
+        +'<button class="btn2" style="'+pbtn+'" onclick="obrInsAdd()">＋ 契約を追加</button>'
+        +'<span id="obr-ins-total" style="font-size:12px;color:#5A6981;"></span>'
+      +'</div>';
+    // ④ 12ヶ月ロードマップ
+    h+='<div class="ph" style="font-size:13px;margin-top:16px;">④ 12ヶ月改善ロードマップ</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.6;">初回報告面談で合意する12ヶ月の進め方です。テーマは標準案が入っています。実施内容・目標指標・担当を埋めてご活用ください。</div>'
+      +'<div id="obr-road-table">'+obrRoadTableHtml()+'</div>'
+      +'<div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap;">'
+        +'<button class="btn2" style="'+pbtn+'" onclick="obrRoadAdd()">＋ 行を追加</button>'
+        +'<button class="btn2" style="'+pbtn+'" onclick="obrRoadReset()">↺ 標準12ヶ月に戻す</button>'
+      +'</div>';
+    // 総括
+    h+='<div class="ph" style="font-size:13px;margin-top:16px;">総括・次のアクション</div>'
+      +'<textarea id="obr-summary" rows="3" class="inp2" style="width:100%;" placeholder="例：現状は「見える化」が完了した段階です。今後12ヶ月は資金繰りの安定化を最優先に、固定費削減で生まれた余力を人材と設備へ再投資していきます。">'+esc(d.summary||'')+'</textarea>'
+      +'<div style="font-size:10.5px;color:#94A2B6;margin-top:8px;line-height:1.7;">※ 「公開」に切り替えて保存すると、顧客ポータルの「月次レポート」欄に報告書が表示され、顧客も印刷（PDF保存）できます。</div>';
+    box.innerHTML=h;
+    obrCalc();
+  }
+  function obrInsTableHtml(){
+    var rows=(OBR_DATA.insurances||[]);
+    var th='style="text-align:left;font-size:10.5px;color:#5A6981;font-weight:600;padding:5px 6px;border-bottom:1px solid #E2E7EF;white-space:nowrap;"';
+    var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:820px;">'
+      +'<tr style="background:#F8F9FC;">'
+      +'<th '+th+'>契約名</th><th '+th+'>保険会社</th><th '+th+'>種類</th>'
+      +'<th '+th+'>年払保険料</th><th '+th+'>保障額</th><th '+th+'>解約返戻金</th>'
+      +'<th '+th+'>判定</th><th '+th+'>削減見込/年</th><th '+th+'></th></tr>';
+    if(!rows.length){
+      h+='<tr><td colspan="9" style="font-size:12px;color:#94A2B6;padding:12px 6px;">まだ登録がありません。「＋ 契約を追加」から、受領した保険証券・共済契約を登録してください。</td></tr>';
+    }
+    rows.forEach(function(r,i){
+      var td='style="padding:3px 4px;border-bottom:1px solid #F3F6FA;"';
+      h+='<tr>'
+        +'<td '+td+'><input id="obr-ins-'+i+'-name" class="inp2" style="width:130px;" value="'+escA(r.name||'')+'" placeholder="例：長期平準定期"></td>'
+        +'<td '+td+'><input id="obr-ins-'+i+'-insurer" class="inp2" style="width:110px;" value="'+escA(r.insurer||'')+'"></td>'
+        +'<td '+td+'><input id="obr-ins-'+i+'-kind" class="inp2" style="width:100px;" value="'+escA(r.kind||'')+'" placeholder="例：定期/養老"></td>'
+        +'<td '+td+'><input id="obr-ins-'+i+'-premium" type="number" class="inp2" style="width:90px;" value="'+escA(r.premium==null?'':r.premium)+'" oninput="obrCalc()"></td>'
+        +'<td '+td+'><input id="obr-ins-'+i+'-cover" type="number" class="inp2" style="width:90px;" value="'+escA(r.cover==null?'':r.cover)+'"></td>'
+        +'<td '+td+'><input id="obr-ins-'+i+'-surrender" type="number" class="inp2" style="width:90px;" value="'+escA(r.surrender==null?'':r.surrender)+'"></td>'
+        +'<td '+td+'><select id="obr-ins-'+i+'-judge" class="inp2" style="width:90px;">'
+          +OBR_JUDGE.map(function(j){ return '<option value="'+escA(j)+'"'+((r.judge||OBR_JUDGE[0])===j?' selected':'')+'>'+esc(j)+'</option>'; }).join('')
+        +'</select></td>'
+        +'<td '+td+'><input id="obr-ins-'+i+'-save" type="number" class="inp2" style="width:90px;" value="'+escA(r.save==null?'':r.save)+'" oninput="obrCalc()"></td>'
+        +'<td '+td+'><span onclick="obrInsDel('+i+')" style="color:#A9403D;cursor:pointer;font-size:11px;white-space:nowrap;">削除</span></td>'
+      +'</tr>';
+    });
+    return h+'</table></div>';
+  }
+  function obrRoadTableHtml(){
+    var rows=(OBR_DATA.roadmap||[]);
+    var th='style="text-align:left;font-size:10.5px;color:#5A6981;font-weight:600;padding:5px 6px;border-bottom:1px solid #E2E7EF;white-space:nowrap;"';
+    var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:760px;">'
+      +'<tr style="background:#F8F9FC;"><th '+th+'>月</th><th '+th+'>テーマ</th><th '+th+'>実施内容</th><th '+th+'>目標指標</th><th '+th+'>担当</th><th '+th+'></th></tr>';
+    rows.forEach(function(r,i){
+      var td='style="padding:3px 4px;border-bottom:1px solid #F3F6FA;"';
+      h+='<tr>'
+        +'<td '+td+'><input id="obr-road-'+i+'-m" type="number" class="inp2" style="width:60px;" value="'+escA(r.m==null?(i+1):r.m)+'"></td>'
+        +'<td '+td+'><input id="obr-road-'+i+'-theme" class="inp2" style="width:180px;" value="'+escA(r.theme||'')+'"></td>'
+        +'<td '+td+'><input id="obr-road-'+i+'-action" class="inp2" style="width:220px;" value="'+escA(r.action||'')+'" placeholder="例：資金繰り表を毎月更新"></td>'
+        +'<td '+td+'><input id="obr-road-'+i+'-kpi" class="inp2" style="width:140px;" value="'+escA(r.kpi||'')+'" placeholder="例：手元資金3ヶ月分"></td>'
+        +'<td '+td+'><input id="obr-road-'+i+'-owner" class="inp2" style="width:100px;" value="'+escA(r.owner||'')+'"></td>'
+        +'<td '+td+'><span onclick="obrRoadDel('+i+')" style="color:#A9403D;cursor:pointer;font-size:11px;white-space:nowrap;">削除</span></td>'
+      +'</tr>';
+    });
+    return h+'</table></div>';
+  }
+  // ---- パートナー側：DOM → OBR_DATA ----
+  function obrCollect(){
+    if(!OBR_DATA || !$('obr-date')) return OBR_DATA;
+    var d=OBR_DATA;
+    d.report_date=obrFS('obr-date')||obrToday();
+    d.status=obrFS('obr-status')||'draft';
+    d.op_profit=obrFN('obr-op'); d.dep=obrFN('obr-dep'); d.multiple=obrFN('obr-mult')||5;
+    d.cash=obrFN('obr-cash'); d.debt=obrFN('obr-debt'); d.value_note=obrFS('obr-val-note');
+    d.cash_now=obrFN('obr-cashnow'); d.month_out=obrFN('obr-mout'); d.month_sales=obrFN('obr-msales');
+    d.loan_balance=obrFN('obr-loan'); d.repay_year=obrFN('obr-repay'); d.cash_note=obrFS('obr-cash-note');
+    d.summary=obrFS('obr-summary');
+    d.insurances=(d.insurances||[]).map(function(r,i){
+      if(!$('obr-ins-'+i+'-name')) return r;
+      return { name:obrFS('obr-ins-'+i+'-name'), insurer:obrFS('obr-ins-'+i+'-insurer'), kind:obrFS('obr-ins-'+i+'-kind'),
+        premium:obrFN('obr-ins-'+i+'-premium'), cover:obrFN('obr-ins-'+i+'-cover'), surrender:obrFN('obr-ins-'+i+'-surrender'),
+        judge:obrFS('obr-ins-'+i+'-judge')||OBR_JUDGE[0], save:obrFN('obr-ins-'+i+'-save') };
+    });
+    d.roadmap=(d.roadmap||[]).map(function(r,i){
+      if(!$('obr-road-'+i+'-m')) return r;
+      return { m:obrFN('obr-road-'+i+'-m')||(i+1), theme:obrFS('obr-road-'+i+'-theme'), action:obrFS('obr-road-'+i+'-action'),
+        kpi:obrFS('obr-road-'+i+'-kpi'), owner:obrFS('obr-road-'+i+'-owner') };
+    });
+    return d;
+  }
+  // ---- パートナー側：自動計算の再描画（入力のたびに呼ばれる）----
+  function obrCalc(){
+    if(!OBR_DATA) return;
+    var v=obrCalcValue({ op_profit:obrFN('obr-op'), dep:obrFN('obr-dep'), multiple:obrFN('obr-mult')||5, cash:obrFN('obr-cash'), debt:obrFN('obr-debt') });
+    var vb=$('obr-val-result');
+    if(vb){
+      vb.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+        +'<div style="flex:1 1 150px;background:#F8F9FC;border:1px solid #EDF1F6;border-radius:10px;padding:9px 12px;"><div style="font-size:10.5px;color:#5A6981;font-weight:700;">EBITDA（営業利益＋減価償却）</div><div style="font-size:18px;font-weight:700;color:#1E3A66;margin-top:2px;">'+obrMan(v.ebitda)+'</div></div>'
+        +'<div style="flex:1 1 150px;background:#EFF3FB;border:1px solid #C9D6EA;border-radius:10px;padding:9px 12px;"><div style="font-size:10.5px;color:#2C5DA8;font-weight:700;">事業価値（EBITDA×倍率）</div><div style="font-size:18px;font-weight:700;color:#2C5DA8;margin-top:2px;">'+obrMan(v.ev)+'</div></div>'
+        +'<div style="flex:1 1 150px;background:#EFF6F0;border:1px solid #BFE2CD;border-radius:10px;padding:9px 12px;"><div style="font-size:10.5px;color:#27684A;font-weight:700;">推定株主価値</div><div style="font-size:18px;font-weight:700;color:#27684A;margin-top:2px;">'+obrMan(v.equity)+'</div><div style="font-size:10px;color:#5A6981;margin-top:2px;">＋現預金 −有利子負債</div></div>'
+      +'</div>';
+    }
+    var c=obrCalcCash({ cash_now:obrFN('obr-cashnow'), month_out:obrFN('obr-mout'), month_sales:obrFN('obr-msales'), repay_year:obrFN('obr-repay') });
+    var cb=$('obr-cash-result');
+    if(cb){
+      var mo=(c.months==null)?'—':(Math.round(c.months*10)/10)+'ヶ月分';
+      var moCol=(c.months==null)?'#5A6981':(c.months<1?'#A9403D':(c.months<3?'#B07A18':'#27684A'));
+      var ms=(c.monthsOfSales==null)?'—':(Math.round(c.monthsOfSales*10)/10)+'ヶ月分';
+      var rr=(c.repayRatio==null)?'—':(Math.round(c.repayRatio*10)/10)+'%';
+      cb.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+        +'<div style="flex:1 1 150px;background:#F8F9FC;border:1px solid #EDF1F6;border-radius:10px;padding:9px 12px;"><div style="font-size:10.5px;color:#5A6981;font-weight:700;">手元資金（支出ベース）</div><div style="font-size:18px;font-weight:700;color:'+moCol+';margin-top:2px;">'+mo+'</div><div style="font-size:10px;color:#94A2B6;margin-top:2px;">目安：3ヶ月分以上</div></div>'
+        +'<div style="flex:1 1 150px;background:#F8F9FC;border:1px solid #EDF1F6;border-radius:10px;padding:9px 12px;"><div style="font-size:10.5px;color:#5A6981;font-weight:700;">手元資金（月商ベース）</div><div style="font-size:18px;font-weight:700;color:#1E3A66;margin-top:2px;">'+ms+'</div></div>'
+        +'<div style="flex:1 1 150px;background:#F8F9FC;border:1px solid #EDF1F6;border-radius:10px;padding:9px 12px;"><div style="font-size:10.5px;color:#5A6981;font-weight:700;">年商に対する年間返済比率</div><div style="font-size:18px;font-weight:700;color:#1E3A66;margin-top:2px;">'+rr+'</div></div>'
+      +'</div>';
+    }
+    var t={ premium:0, save:0 };
+    (OBR_DATA.insurances||[]).forEach(function(r,i){
+      t.premium+=$('obr-ins-'+i+'-premium')?obrFN('obr-ins-'+i+'-premium'):obrNum(r.premium);
+      t.save+=$('obr-ins-'+i+'-save')?obrFN('obr-ins-'+i+'-save'):obrNum(r.save);
+    });
+    var it=$('obr-ins-total');
+    if(it) it.innerHTML='年間保険料の合計 <b style="color:#1E3A66;">'+obrMan(t.premium)+'</b>　／　削減見込の合計 <b style="color:#27684A;">'+obrMan(t.save)+'</b>（年）';
+  }
+  function obrInsAdd(){ obrCollect(); OBR_DATA.insurances.push({ name:'', insurer:'', kind:'', premium:0, cover:0, surrender:0, judge:OBR_JUDGE[0], save:0 }); obrRender(); }
+  function obrInsDel(i){ obrCollect(); OBR_DATA.insurances.splice(i,1); obrRender(); }
+  function obrRoadAdd(){ obrCollect(); OBR_DATA.roadmap.push({ m:(OBR_DATA.roadmap.length+1), theme:'', action:'', kpi:'', owner:'' }); obrRender(); }
+  function obrRoadDel(i){ obrCollect(); OBR_DATA.roadmap.splice(i,1); obrRender(); }
+  function obrRoadReset(){
+    if(!confirm('12ヶ月ロードマップを標準テーマで作り直します。入力済みの実施内容・目標指標・担当は消えます。よろしいですか？')) return;
+    obrCollect(); OBR_DATA.roadmap=obrDefaultRoad(); obrRender();
+  }
+  // ---- パートナー側：保存 ----
+  async function obrSave(){
+    if(!OBR_DATA || !OBR_CUST){ alert('顧客が選択されていません'); return; }
+    obrCollect();
+    var msg=$('obr-msg');
+    var d=OBR_DATA;
+    var row={ customer_id:OBR_CUST, created_by:ME, report_date:d.report_date, status:d.status,
+      op_profit:d.op_profit, dep:d.dep, multiple:d.multiple, cash:d.cash, debt:d.debt, value_note:d.value_note||null,
+      cash_now:d.cash_now, month_out:d.month_out, month_sales:d.month_sales, loan_balance:d.loan_balance, repay_year:d.repay_year, cash_note:d.cash_note||null,
+      insurances:d.insurances||[], roadmap:d.roadmap||[], summary:d.summary||null, updated_at:new Date().toISOString() };
+    if(msg){ msg.style.color='#5A6981'; msg.textContent='保存中...'; }
+    var res=await sb.from('onboarding_reports').upsert(row,{onConflict:'customer_id'});
+    if(res.error){ if(msg){ msg.style.color='#A9403D'; msg.textContent='保存エラー：'+res.error.message+'（onboarding_reports テーブルが未作成の可能性があります）'; } return; }
+    if(msg){ msg.style.color='#27684A'; msg.textContent=(d.status==='published')?'保存しました（顧客に公開中）':'保存しました（下書き・顧客には非表示）'; }
+  }
+
+  // ---- 顧客側：公開済みの報告書を表示 ----
+  async function loadMyObr(){
+    var box=$('my-obr'); if(!box) return;
+    var res=await sb.from('onboarding_reports').select('*').eq('customer_id',ME).eq('status','published').maybeSingle();
+    if(res.error || !res.data){ box.innerHTML=''; OBR_MY=null; return; }
+    OBR_MY=obrNorm(res.data, ME);
+    var pbtn='background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;';
+    var h='<div style="border:1.5px solid #E4D3A8;background:#FDFAF1;border-radius:12px;padding:14px 15px;">'
+      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+        +'<span style="font-size:14px;font-weight:700;color:#1E3A66;">📘 導入診断報告書</span>'
+        +'<span style="margin-left:auto;font-size:10.5px;color:#94A2B6;">'+esc(obrDateJp(OBR_MY.report_date))+'</span>'
+      +'</div>'
+      +'<div style="font-size:11.5px;color:#8A6A12;line-height:1.7;margin-top:4px;">導入時に担当パートナーが作成した、①企業価値 ②資金繰り ③保険・固定費 ④12ヶ月ロードマップ の診断結果です。</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:10px 0 12px;">'
+        +'<button class="btn2" style="background:#0E1B33;" onclick="obrMyPrint(\'all\')">🖨 印刷・PDF保存（全体）</button>'
+        +'<button class="btn2" style="'+pbtn+'" onclick="obrMyPrint(\'value\')">① 企業価値</button>'
+        +'<button class="btn2" style="'+pbtn+'" onclick="obrMyPrint(\'cash\')">② 資金繰り</button>'
+        +'<button class="btn2" style="'+pbtn+'" onclick="obrMyPrint(\'ins\')">③ 保険棚卸し</button>'
+        +'<button class="btn2" style="'+pbtn+'" onclick="obrMyPrint(\'road\')">④ ロードマップ</button>'
+      +'</div>'
+      +'<div style="background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:12px 13px;">'
+        +obrSecValue(OBR_MY)+obrSecCash(OBR_MY,false)+obrSecIns(OBR_MY)+obrSecRoad(OBR_MY)+obrSecSummary(OBR_MY)
+      +'</div>'
+    +'</div>';
+    box.innerHTML=h;
+  }
+
+  // ---- 印刷（既存の #sales-print / body.sales-printing を流用）----
+  function obrPrint(kind){
+    if(!OBR_DATA){ alert('報告書が読み込まれていません'); return; }
+    obrCollect();
+    var company=(CURRENT_CLIENT&&CURRENT_CLIENT.company)||'';
+    obrDoPrint(kind, OBR_DATA, OBR_CUST, company);
+  }
+  function obrMyPrint(kind){
+    if(!OBR_MY){ alert('報告書が読み込まれていません'); return; }
+    obrDoPrint(kind, OBR_MY, ME, ((window.__prof||{}).company_name)||'');
+  }
+  async function obrDoPrint(kind, d, custId, company){
+    var p=$('sales-print'); if(!p) return;
+    // 印刷のたびに月次財務メモ（直近6ヶ月）を取り直して②へ転記する
+    OBR_FIN=[];
+    try{
+      var f=await sb.from('financial_entries').select('year_month,revenue,profit,memo').eq('customer_id',custId).order('year_month',{ascending:false}).limit(6);
+      if(!f.error) OBR_FIN=(f.data||[]).slice().reverse();
+    }catch(e){}
+    p.innerHTML=obrPrintHtml(kind, d, company);
+    // カルテはモーダル内から印刷するため、開いている間に付く body の overflow:hidden を一時的に解除する（2ページ目以降が欠けるのを防ぐ）
+    var prevOv=document.body.style.overflow;
+    document.body.style.overflow='';
+    document.body.classList.add('sales-printing');
+    var done=false;
+    function fin(){ if(done)return; done=true; document.body.classList.remove('sales-printing'); document.body.style.overflow=prevOv; p.innerHTML=''; window.removeEventListener('afterprint',fin); }
+    window.addEventListener('afterprint',fin);
+    setTimeout(function(){ try{ window.print(); }catch(e){} setTimeout(fin,800); },60);
+  }
+  function obrPrintHeader(sub, company, dateStr){
+    var nm=esc(((window.__prof||{}).full_name)||((window.__prof||{}).contact_name)||'');
+    return '<div style="background:linear-gradient(135deg,#0a1526 0%,#132b4c 100%);border-radius:10px;padding:12px 20px 11px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact;break-inside:avoid;page-break-inside:avoid;">'
+      +'<div>'
+        +'<div style="font-size:10px;letter-spacing:.3em;color:#cfa860;font-weight:700;">TSUGU AI -継-　<span style="color:#a9c7ee;">中小企業承継エコシステム</span></div>'
+        +'<div style="font-family:\'Hiragino Mincho ProN\',\'Yu Mincho\',\'Noto Serif CJK JP\',serif;font-size:21px;font-weight:700;color:#fff;margin-top:4px;letter-spacing:.02em;">'+esc(sub)+'</div>'
+        +(company?'<div style="font-size:11px;color:#d6e2f4;margin-top:3px;">'+esc(company)+' 御中</div>':'')
+      +'</div>'
+      +'<div style="text-align:right;font-size:10px;color:#d6e2f4;line-height:1.9;white-space:nowrap;">報告日：'+esc(obrDateJp(dateStr)||obrDateJp(obrToday()))+'<br>担当パートナー：'+(nm||'＿＿＿＿＿＿＿＿＿＿')+'</div>'
+    +'</div>';
+  }
+  function obrPrintFooter(){
+    return '<div style="font-size:8.5px;color:#5a6981;margin-top:8px;line-height:1.5;">※ 本報告書は、ご提供いただいた資料・数値をもとに現状を整理したものであり、将来の成果や企業価値を保証するものではありません。保険・税務・法務・M&A等の個別の提案および手続きは、それぞれ資格を持つ担当者・専門家が行います。</div>'
+    +'<div style="background:#0a1526;border-radius:6px;margin-top:5px;padding:6px 14px;display:flex;justify-content:space-between;align-items:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
+      +'<span style="font-family:\'Hiragino Mincho ProN\',\'Yu Mincho\',\'Noto Serif CJK JP\',serif;font-size:10.5px;font-weight:700;color:#cfa860;letter-spacing:.06em;">Tsugu Ai -継-</span>'
+      +'<span style="font-size:9px;color:#a9c7ee;letter-spacing:.18em;">中小企業承継エコシステム</span>'
+    +'</div>';
+  }
+  var OBR_TITLES={ all:'導入診断報告書', value:'導入診断報告書｜① 企業価値診断', cash:'導入診断報告書｜② 資金繰りの現状', ins:'導入診断報告書｜③ 保険・固定費の棚卸し', road:'導入診断報告書｜④ 12ヶ月改善ロードマップ' };
+  function obrPrintHtml(kind, d, company){
+    var h='<div style="color:#18202E;font-size:11px;line-height:1.5;padding:2px;">';
+    h+=obrPrintHeader(OBR_TITLES[kind]||OBR_TITLES.all, company, d.report_date);
+    if(kind==='all'){
+      h+='<div style="border:1px solid #D8DFE8;border-radius:8px;padding:7px 10px;margin-top:8px;font-size:10px;color:#3f4e66;line-height:1.7;break-inside:avoid;page-break-inside:avoid;">'
+        +'<b style="color:#0e2038;">本報告書の構成</b>　① 企業価値診断　② 資金繰りの現状　③ 保険・固定費の棚卸し　④ 12ヶ月改善ロードマップ'
+      +'</div>';
+    }
+    if(kind==='all'||kind==='value') h+=obrSecValue(d);
+    if(kind==='all'||kind==='cash') h+=obrSecCash(d,true);
+    if(kind==='all'||kind==='ins') h+=obrSecIns(d);
+    if(kind==='all'||kind==='road') h+=obrSecRoad(d);
+    if(kind==='all') h+=obrSecSummary(d);
+    h+=obrPrintFooter();
+    return h+'</div>';
+  }
+  function obrSecH(t){
+    return '<div style="display:flex;align-items:center;gap:8px;margin:10px 0 5px;break-inside:avoid;page-break-inside:avoid;">'
+      +'<span style="background:#0e2038;color:#cfa860;font-size:10px;font-weight:700;letter-spacing:.1em;border-radius:5px;padding:3px 9px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'+esc(t)+'</span>'
+      +'<span style="flex:1;height:1px;background:#dfe6ef;"></span>'
+    +'</div>';
+  }
+  function obrKpi(label, value, sub, col){
+    return '<div style="flex:1 1 140px;border:1px solid #dfe6ef;border-top:3px solid #cfa860;border-radius:8px;padding:7px 11px;break-inside:avoid;page-break-inside:avoid;">'
+      +'<div style="font-size:9px;color:#3f4e66;font-weight:700;">'+esc(label)+'</div>'
+      +'<div style="font-size:17px;font-weight:700;color:'+(col||'#0e2038')+';margin-top:1px;">'+esc(value)+'</div>'
+      +(sub?'<div style="font-size:8.5px;color:#5a6981;margin-top:1px;">'+esc(sub)+'</div>':'')
+    +'</div>';
+  }
+  function obrNote(t){
+    if(!String(t||'').trim()) return '';
+    return '<div style="background:#F8F9FC;border-left:3px solid #2C5DA8;border-radius:0 7px 7px 0;padding:6px 10px;margin-top:6px;break-inside:avoid;page-break-inside:avoid;">'
+      +'<div style="font-size:9px;color:#2C5DA8;font-weight:700;">担当パートナーの所見</div>'
+      +'<div style="font-size:10.5px;color:#1E3A66;line-height:1.75;white-space:pre-wrap;margin-top:2px;">'+esc(t)+'</div>'
+    +'</div>';
+  }
+  function obrSecValue(d){
+    var v=obrCalcValue(d);
+    var h=obrSecH('① 企業価値診断');
+    h+='<div style="display:flex;gap:7px;flex-wrap:wrap;">'
+      +obrKpi('EBITDA（営業利益＋減価償却）',obrMan(v.ebitda),'営業利益 '+obrMan(d.op_profit)+' ＋ 償却 '+obrMan(d.dep))
+      +obrKpi('事業価値',obrMan(v.ev),'EBITDA × '+(obrNum(d.multiple)||5)+'倍','#24507f')
+      +obrKpi('推定株主価値',obrMan(v.equity),'＋現預金 '+obrMan(d.cash)+' −有利子負債 '+obrMan(d.debt),'#27684A')
+    +'</div>';
+    h+=obrNote(d.value_note);
+    return h;
+  }
+  function obrFinTableHtml(){
+    if(!OBR_FIN || !OBR_FIN.length) return '<div style="font-size:9.5px;color:#94A2B6;margin-top:5px;">※ 月次財務メモが未登録のため、直近6ヶ月の推移は転記されていません。</div>';
+    var th='style="text-align:left;font-size:9px;color:#3f4e66;font-weight:700;padding:3px 6px;border-bottom:1px solid #c3cfdd;"';
+    var h='<div style="margin-top:6px;break-inside:avoid;page-break-inside:avoid;">'
+      +'<div style="font-size:9.5px;font-weight:700;color:#0e2038;margin-bottom:3px;">直近6ヶ月の推移（月次財務メモより自動転記・単位：万円）</div>'
+      +'<table style="width:100%;border-collapse:collapse;font-size:9.5px;">'
+      +'<tr style="background:#f4f7fb;"><th '+th+'>年月</th><th '+th+' >売上</th><th '+th+'>営業利益</th><th '+th+'>営業利益率</th><th '+th+'>メモ</th></tr>';
+    OBR_FIN.forEach(function(r){
+      var rev=obrNum(r.revenue), pf=obrNum(r.profit);
+      var rate=(rev>0)?(Math.round(pf/rev*1000)/10)+'%':'—';
+      var td='style="padding:3px 6px;border-bottom:1px solid #eef2f7;"';
+      h+='<tr><td '+td+'>'+esc(ymJp(r.year_month))+'</td>'
+        +'<td '+td+'>'+(r.revenue==null?'—':obrMan(rev))+'</td>'
+        +'<td '+td+' >'+(r.profit==null?'—':'<span style="color:'+(pf<0?'#A9403D':'#0e2038')+';">'+obrMan(pf)+'</span>')+'</td>'
+        +'<td '+td+'>'+esc(rate)+'</td>'
+        +'<td '+td+'>'+esc(r.memo||'')+'</td></tr>';
+    });
+    return h+'</table></div>';
+  }
+  function obrSecCash(d, withFin){
+    var c=obrCalcCash(d);
+    var mo=(c.months==null)?'—':(Math.round(c.months*10)/10)+'ヶ月分';
+    var moCol=(c.months==null)?'#0e2038':(c.months<1?'#A9403D':(c.months<3?'#B07A18':'#27684A'));
+    var ms=(c.monthsOfSales==null)?'—':(Math.round(c.monthsOfSales*10)/10)+'ヶ月分';
+    var rr=(c.repayRatio==null)?'—':(Math.round(c.repayRatio*10)/10)+'%';
+    var h=obrSecH('② 資金繰りの現状');
+    h+='<div style="display:flex;gap:7px;flex-wrap:wrap;">'
+      +obrKpi('現預金残高',obrMan(d.cash_now),'月間平均支出 '+obrMan(d.month_out))
+      +obrKpi('手元資金（支出ベース）',mo,'目安：3ヶ月分以上',moCol)
+      +obrKpi('手元資金（月商ベース）',ms,'平均月商 '+obrMan(d.month_sales))
+      +obrKpi('借入残高／年間返済',obrMan(d.loan_balance),'年間返済 '+obrMan(d.repay_year)+'（年商比 '+rr+'）')
+    +'</div>';
+    if(withFin!==false) h+=obrFinTableHtml();
+    h+=obrNote(d.cash_note);
+    return h;
+  }
+  function obrSecIns(d){
+    var rows=(d.insurances||[]), t=obrInsTotal(d);
+    var h=obrSecH('③ 保険・固定費の棚卸し');
+    if(!rows.length){ return h+'<div style="font-size:10px;color:#5a6981;">保険・共済契約の登録がありません。</div>'; }
+    var th='style="text-align:left;font-size:9px;color:#3f4e66;font-weight:700;padding:3px 6px;border-bottom:1px solid #c3cfdd;"';
+    h+='<table style="width:100%;border-collapse:collapse;font-size:9.5px;break-inside:avoid;page-break-inside:avoid;">'
+      +'<tr style="background:#f4f7fb;"><th '+th+'>契約名</th><th '+th+'>保険会社</th><th '+th+'>種類</th><th '+th+'>年払保険料</th><th '+th+'>保障額</th><th '+th+'>解約返戻金</th><th '+th+'>判定</th><th '+th+'>削減見込/年</th></tr>';
+    rows.forEach(function(r){
+      var td='style="padding:3px 6px;border-bottom:1px solid #eef2f7;"';
+      var j=r.judge||'要確認';
+      var jc=(j==='解約')?'#A9403D':((j==='見直し')?'#B07A18':((j==='継続')?'#27684A':'#5a6981'));
+      h+='<tr><td '+td+'>'+esc(r.name||'')+'</td><td '+td+'>'+esc(r.insurer||'')+'</td><td '+td+'>'+esc(r.kind||'')+'</td>'
+        +'<td '+td+'>'+obrMan(r.premium)+'</td><td '+td+'>'+obrMan(r.cover)+'</td><td '+td+'>'+obrMan(r.surrender)+'</td>'
+        +'<td '+td+'><b style="color:'+jc+';">'+esc(j)+'</b></td>'
+        +'<td '+td+'>'+(obrNum(r.save)>0?'<b style="color:#27684A;">'+obrMan(r.save)+'</b>':'—')+'</td></tr>';
+    });
+    h+='<tr style="background:#f4f7fb;"><td colspan="3" style="padding:4px 6px;font-weight:700;">合計</td>'
+      +'<td style="padding:4px 6px;font-weight:700;">'+obrMan(t.premium)+'</td><td></td><td></td><td></td>'
+      +'<td style="padding:4px 6px;font-weight:700;color:#27684A;">'+obrMan(t.save)+'</td></tr>';
+    h+='</table>';
+    if(t.save>0){
+      h+='<div style="border:1.5px solid #C39B3F;background:#FDFAF2;border-radius:8px;padding:6px 11px;margin-top:6px;font-size:10.5px;color:#5C4A17;line-height:1.7;break-inside:avoid;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
+        +'見直し・解約により、<b style="font-size:13px;color:#8A6A12;">年間 '+obrMan(t.save)+'</b> の削減が見込まれます（5年間で '+obrMan(t.save*5)+' 相当）。生まれた余力は、④のロードマップに沿って再投資していきます。'
+      +'</div>';
+    }
+    return h;
+  }
+  function obrSecRoad(d){
+    var rows=(d.roadmap||[]);
+    var h=obrSecH('④ 12ヶ月改善ロードマップ');
+    if(!rows.length){ return h+'<div style="font-size:10px;color:#5a6981;">ロードマップが未作成です。</div>'; }
+    var th='style="text-align:left;font-size:9px;color:#3f4e66;font-weight:700;padding:3px 6px;border-bottom:1px solid #c3cfdd;"';
+    h+='<table style="width:100%;border-collapse:collapse;font-size:9.5px;">'
+      +'<tr style="background:#f4f7fb;"><th '+th+' width="8%">月</th><th '+th+' width="24%">テーマ</th><th '+th+'>実施内容</th><th '+th+' width="20%">目標指標</th><th '+th+' width="12%">担当</th></tr>';
+    rows.forEach(function(r,i){
+      var td='style="padding:3px 6px;border-bottom:1px solid #eef2f7;vertical-align:top;"';
+      var m=(r.m==null?(i+1):r.m);
+      h+='<tr style="break-inside:avoid;page-break-inside:avoid;">'
+        +'<td '+td+'><b style="color:#24507f;">'+esc(m)+'ヶ月目</b></td>'
+        +'<td '+td+'><b>'+esc(r.theme||'')+'</b></td>'
+        +'<td '+td+'>'+esc(r.action||'')+'</td>'
+        +'<td '+td+'>'+esc(r.kpi||'')+'</td>'
+        +'<td '+td+'>'+esc(r.owner||'')+'</td></tr>';
+    });
+    return h+'</table>';
+  }
+  function obrSecSummary(d){
+    if(!String(d.summary||'').trim()) return '';
+    return obrSecH('総括・次のアクション')
+      +'<div style="border:1.5px solid #C39B3F;background:#FDFAF2;border-radius:8px;padding:8px 12px;font-size:10.5px;color:#1E3A66;line-height:1.85;white-space:pre-wrap;break-inside:avoid;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'+esc(d.summary)+'</div>';
   }
 
   (async function init(){
