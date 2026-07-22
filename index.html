@@ -217,7 +217,17 @@
     body.sales-printing #sales-print, body.sales-printing #sales-print *{visibility:visible;}
     body.sales-printing #sales-print{display:block!important;position:absolute;left:0;top:0;width:100%;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     #rep-modal:not(.hidden), #rep-modal:not(.hidden) *, #bp-modal:not(.hidden), #bp-modal:not(.hidden) *{visibility:visible;}
-    #rep-modal:not(.hidden), #bp-modal:not(.hidden){position:absolute;inset:0;background:#fff;padding:0;display:block;overflow:visible;}
+    /* bottom:0（inset:0）はボックスを包含ブロックいっぱいに引き伸ばし、余分なページを生む。
+       高さは内容なりにする。 */
+    #rep-modal:not(.hidden), #bp-modal:not(.hidden){position:absolute;top:0;left:0;right:0;bottom:auto;height:auto;min-height:0;background:#fff;padding:0;display:block;overflow:visible;}
+    /* 空白ページ対策：visibility:hidden はボックス（高さ）を残すため、#app などが
+       そのぶんのページを生成してしまう。印刷対象がレポート／計画書のときだけ、
+       本体レイアウトを display:none で完全に取り除き、モーダルを通常フローで流す。
+       :has() 非対応ブラウザではこのブロックごと無視され、従来の挙動に戻るだけ。 */
+    body:has(#rep-modal:not(.hidden)) > *:not(#rep-modal){display:none!important;}
+    body:has(#bp-modal:not(.hidden)) > *:not(#bp-modal){display:none!important;}
+    body:has(#rep-modal:not(.hidden)) #rep-modal,
+    body:has(#bp-modal:not(.hidden)) #bp-modal{position:static!important;height:auto!important;min-height:0!important;}
     #rep-modal .modal, #bp-modal .modal{box-shadow:none;border-radius:0;max-width:none;width:100%;margin:0;animation:none;}
     .rep-bar{display:none!important;}
     #rep-body, #bp-body{padding:0!important;}
@@ -233,6 +243,8 @@
     #rep-body table.ft th, #rep-body table.ft td{padding:3px 4px!important;}
     .rep-card{break-inside:avoid;}
     .rep-sec{break-inside:avoid;}
+    /* 末尾の余白が1行ぶん溢れて次ページを作らないように */
+    #rep-body > *:last-child, #bp-body > *:last-child{margin-bottom:0!important;padding-bottom:0!important;}
     /* 背景色を薄くしてインク節約・にじみ防止 */
     #rep-body *, #bp-body *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   }
