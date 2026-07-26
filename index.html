@@ -613,8 +613,8 @@
       <span class="mt" onclick="modalToTop('rep-modal')" style="cursor:pointer;" title="タップで先頭へ戻る">月次レポート</span>
       <input type="month" id="rep-month" class="inp2" onchange="renderReport()" style="width:auto;">
       <span class="rep-spacer" style="flex:1;"></span>
-      <button class="btn2" onclick="repPrint(false)" title="プリンタで印刷します">🖨 印刷</button>
-      <button class="btn2" onclick="repPrint(true)" title="印刷ダイアログで送信先を「PDFで保存」に選ぶとPDFになります" style="background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;">📄 PDFで保存</button>
+      <button class="btn2" onclick="repPrint(false)" title="プリンタで印刷します"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 9V3h11v6"/><path d="M6.5 17.5H5a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2h-1.5"/><rect x="6.5" y="14" width="11" height="7" rx="1"/></svg>印刷</button>
+      <button class="btn2" onclick="repPrint(true)" title="印刷ダイアログで送信先を「PDFで保存」に選ぶとPDFになります" style="background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>PDFで保存</button>
       <button class="modal-close" onclick="closeReport()" aria-label="閉じる">×</button>
     </div>
     <div id="rep-body" class="modal-body">読み込み中...</div>
@@ -627,8 +627,8 @@
     <div class="rep-bar modal-head">
       <span class="mt" onclick="modalToTop('bp-modal')" style="cursor:pointer;" title="タップで先頭へ戻る">事業計画書（ドラフト）</span>
       <span class="rep-spacer" style="flex:1;"></span>
-      <button class="btn2" onclick="repPrint(false)" title="プリンタで印刷します">🖨 印刷</button>
-      <button class="btn2" onclick="repPrint(true)" title="印刷ダイアログで送信先を「PDFで保存」に選ぶとPDFになります" style="background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;">📄 PDFで保存</button>
+      <button class="btn2" onclick="repPrint(false)" title="プリンタで印刷します"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 9V3h11v6"/><path d="M6.5 17.5H5a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2h-1.5"/><rect x="6.5" y="14" width="11" height="7" rx="1"/></svg>印刷</button>
+      <button class="btn2" onclick="repPrint(true)" title="印刷ダイアログで送信先を「PDFで保存」に選ぶとPDFになります" style="background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>PDFで保存</button>
       <button class="modal-close" onclick="closeBizplan()" aria-label="閉じる">×</button>
     </div>
     <div id="bp-body" class="modal-body">読み込み中...</div>
@@ -638,7 +638,7 @@
 <div id="notif-modal" class="modal-back hidden" onclick="if(event.target===this)closeNotif()">
   <div class="modal rep-sheet" style="max-width:520px;">
     <div class="rep-bar modal-head">
-      <span class="mt">🔔 通知センター</span>
+      <span class="mt"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 8.5a6 6 0 1 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5z"/><path d="M13.7 20a2 2 0 0 1-3.4 0"/></svg>通知センター</span>
       <span style="flex:1;"></span>
       <button class="modal-close" onclick="closeNotif()" aria-label="閉じる">×</button>
     </div>
@@ -649,7 +649,7 @@
 <div id="settings-modal" class="modal-back hidden" onclick="if(event.target===this)closeSettings()">
   <div class="modal rep-sheet" style="max-width:560px;">
     <div class="rep-bar modal-head">
-      <span class="mt">⚙️ 設定</span>
+      <span class="mt"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3.2"/><path d="M18.9 14.7a1.6 1.6 0 0 0 .32 1.77l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.6 1.6 0 0 0-1.77-.32 1.6 1.6 0 0 0-.97 1.47V21a2 2 0 0 1-4 0v-.1a1.6 1.6 0 0 0-1.05-1.47 1.6 1.6 0 0 0-1.77.32l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.6 1.6 0 0 0 .32-1.77 1.6 1.6 0 0 0-1.47-.97H3a2 2 0 0 1 0-4h.1a1.6 1.6 0 0 0 1.47-1.05 1.6 1.6 0 0 0-.32-1.77l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.6 1.6 0 0 0 1.77.32 1.6 1.6 0 0 0 .97-1.47V3a2 2 0 0 1 4 0v.1a1.6 1.6 0 0 0 .97 1.47 1.6 1.6 0 0 0 1.77-.32l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.6 1.6 0 0 0-.32 1.77v.02a1.6 1.6 0 0 0 1.47.97H21a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.47.97z"/></svg>設定</span>
       <span style="flex:1;"></span>
       <button class="modal-close" onclick="closeSettings()" aria-label="閉じる">×</button>
     </div>
@@ -800,15 +800,77 @@
     if(!out.length) out=[all[0]];
     return out;
   }
+  // ===== 線アイコン（LP準拠：viewBox 24 / stroke 1.5 / linecap・linejoin round）=====
+  // 絵文字はOS依存で描画が変わり線幅も色も揃わないため、全ナビをSVGに統一した。
+  var ICON_PATH={
+    home:'<path d="M3 10.2 12 3l9 7.2V20a1 1 0 0 1-1 1h-4.5v-6h-7v6H4a1 1 0 0 1-1-1z"/>',
+    chat:'<path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/>',
+    doc:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/>',
+    book:'<path d="M4 19.2A2.8 2.8 0 0 1 6.8 16.4H20"/><path d="M6.8 3H20v18H6.8A2.8 2.8 0 0 1 4 18.2V5.8A2.8 2.8 0 0 1 6.8 3z"/>',
+    target:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>',
+    building:'<path d="M3 21h18"/><path d="M6 21V4.5A1.5 1.5 0 0 1 7.5 3h5A1.5 1.5 0 0 1 14 4.5V21"/><path d="M14 10h3.5A1.5 1.5 0 0 1 19 11.5V21"/><path d="M9 7h2M9 11h2M9 15h2"/>',
+    wallet:'<path d="M20 9V7a2 2 0 0 0-2-2H5.5A2.5 2.5 0 0 0 3 7.5v9A2.5 2.5 0 0 0 5.5 19H18a2 2 0 0 0 2-2v-2"/><path d="M21 9v6h-4.5a3 3 0 0 1 0-6z"/>',
+    trend:'<path d="m3 16.5 5.5-5.5 3.5 3.5L21 5"/><path d="M15 5h6v6"/>',
+    cpu:'<rect x="5" y="5" width="14" height="14" rx="2.5"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9.5 2v3M14.5 2v3M9.5 19v3M14.5 19v3M2 9.5h3M2 14.5h3M19 9.5h3M19 14.5h3"/>',
+    calc:'<rect x="4.5" y="3" width="15" height="18" rx="2.5"/><path d="M8 7.5h8"/><path d="M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/>',
+    link:'<path d="M9.5 14.5 14.5 9.5"/><path d="M11 6.5 12.4 5a4.2 4.2 0 0 1 6 6L17 12.4"/><path d="M13 17.5 11.6 19a4.2 4.2 0 0 1-6-6L7 11.6"/>',
+    market:'<path d="M3 8h14l-3.5-3.5"/><path d="M21 16H7l3.5 3.5"/>',
+    sparkle:'<path d="m12 3.5 1.8 4.9 4.9 1.8-4.9 1.8L12 16.9l-1.8-4.9L5.3 10.2l4.9-1.8z"/><path d="m18.5 15.5.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>',
+    users:'<path d="M15 21v-1.8a3.7 3.7 0 0 0-3.7-3.7H6.2A3.7 3.7 0 0 0 2.5 19.2V21"/><circle cx="8.75" cy="7.5" r="3.7"/><path d="M21.5 21v-1.8a3.7 3.7 0 0 0-2.8-3.6"/><path d="M15.5 4a3.7 3.7 0 0 1 0 7.1"/>',
+    cycle:'<path d="M20.5 12a8.5 8.5 0 0 1-14.6 5.9L3.5 15.5"/><path d="M3.5 12A8.5 8.5 0 0 1 18.1 6.1L20.5 8.5"/><path d="M20.5 3.5v5h-5"/><path d="M3.5 20.5v-5h5"/>',
+    folder:'<path d="M4.5 20A2.5 2.5 0 0 1 2 17.5v-11A2.5 2.5 0 0 1 4.5 4h4.2a2 2 0 0 1 1.66.89l.74 1.11a2 2 0 0 0 1.66.89h6.74A2.5 2.5 0 0 1 22 9.39V17.5a2.5 2.5 0 0 1-2.5 2.5z"/>',
+    chart:'<path d="M3 21h18"/><path d="M7 21v-8M12 21V5M17 21v-5"/>',
+    alert:'<path d="m10.3 3.9-8.1 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.1l-8-14a2 2 0 0 0-3.4 0z"/><path d="M12 9.5v4"/><path d="M12 17h.01"/>',
+    flag:'<path d="M4.5 21V3.5"/><path d="M4.5 4.5h12l-2 4 2 4h-12"/>',
+    card:'<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/><path d="M6.5 14.5h3"/>',
+    shield:'<path d="M12 21.5s7.5-3.8 7.5-9.5V5.2L12 2.5 4.5 5.2v6.8c0 5.7 7.5 9.5 7.5 9.5z"/>',
+    shieldCheck:'<path d="M12 21.5s7.5-3.8 7.5-9.5V5.2L12 2.5 4.5 5.2v6.8c0 5.7 7.5 9.5 7.5 9.5z"/><path d="m9 11.6 2.1 2.1 4-4.3"/>',
+    megaphone:'<path d="m3.5 10.2 15-5.2v14l-15-5.2z"/><path d="M11.6 16.2a3 3 0 0 1-5.5-1.2"/><path d="M20.5 9.5v5"/>',
+    life:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.8"/><path d="m5.6 5.6 3.7 3.7M14.7 14.7l3.7 3.7M14.7 9.3l3.7-3.7M5.6 18.4l3.7-3.7"/>',
+    up:'<path d="m6.5 13.5 5.5-5.5 5.5 5.5"/><path d="m6.5 19 5.5-5.5 5.5 5.5"/>',
+    pin:'<path d="M12 16.5V22"/><path d="M8.5 3h7l-1 6 2.8 3.2v1.3H6.7v-1.3L9.5 9z"/>',
+    checks:'<path d="m3 6.5 1.5 1.5L7.5 5"/><path d="m3 13 1.5 1.5L7.5 11.5"/><path d="m3 19.5 1.5 1.5L7.5 18"/><path d="M11 6.5h10M11 13h10M11 19.5h10"/>',
+    inbox:'<path d="M21.5 12.5H16l-1.8 2.8H9.8L8 12.5H2.5"/><path d="M5.6 5.1 2.5 12.5V18a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-5.5l-3.1-7.4A2 2 0 0 0 16.6 4H7.4a2 2 0 0 0-1.8 1.1z"/>',
+    calendar:'<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/>',
+    bank:'<path d="M3 21h18"/><path d="M4 9.5h16"/><path d="m12 3 8 6.5H4z"/><path d="M6.5 9.5V18M10.5 9.5V18M13.5 9.5V18M17.5 9.5V18"/>',
+    yen:'<circle cx="12" cy="12" r="9"/><path d="m8.5 8 3.5 4.5L15.5 8"/><path d="M8.5 13.5h7M8.5 16.5h7M12 12.5V18"/>',
+    note:'<path d="M11 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a2 2 0 0 1 2.83 2.83L12.5 14.2l-3.6.95.95-3.6z"/>',
+    checkCircle:'<circle cx="12" cy="12" r="9"/><path d="m8.3 12.3 2.5 2.5 4.9-5.3"/>',
+    clipboard:'<rect x="8.5" y="2.5" width="7" height="4" rx="1.2"/><path d="M15.5 4.5H18a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2h2.5"/><path d="M8.5 11h7M8.5 15h4.5"/>',
+    bell:'<path d="M18 8.5a6 6 0 1 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5z"/><path d="M13.7 20a2 2 0 0 1-3.4 0"/>',
+    printer:'<path d="M6.5 9V3h11v6"/><path d="M6.5 17.5H5a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2h-1.5"/><rect x="6.5" y="14" width="11" height="7" rx="1"/>',
+    send:'<path d="M21 3 10.5 13.5"/><path d="M21 3l-6.8 18-3.7-8.5L2 8.8z"/>',
+    trash:'<path d="M3.5 6h17"/><path d="M8.5 6V4.5A1.5 1.5 0 0 1 10 3h4a1.5 1.5 0 0 1 1.5 1.5V6"/><path d="M18.5 6v13a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2V6"/><path d="M10 11v5M14 11v5"/>',
+    x:'<path d="M18 6 6 18M6 6l12 12"/>',
+    zoom:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.3 15.3 5.2 5.2"/><path d="M8 10.5h5M10.5 8v5"/>',
+    pencil:'<path d="M18.4 2.6a2 2 0 0 1 2.83 2.83L7.5 19.2l-4.5 1.3 1.3-4.5z"/><path d="m15.5 5.5 3 3"/>',
+    check:'<path d="m4.5 12.5 5 5 10-11"/>',
+    save:'<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M7 21v-8h10v8"/><path d="M7 3v5h7"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>',
+    compass:'<circle cx="12" cy="12" r="9"/><path d="m15.8 8.2-2 5.6-5.6 2 2-5.6z"/>',
+    hospital:'<path d="M3 21h18"/><path d="M5 21V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v15"/><path d="M12 8v6M9 11h6"/>',
+    briefcase:'<rect x="2.5" y="7" width="19" height="13" rx="2"/><path d="M8.5 7V5.5A2 2 0 0 1 10.5 3.5h3a2 2 0 0 1 2 2V7"/><path d="M2.5 12.5h19"/>',
+    tag:'<path d="M20.6 12.6 12.4 20.8a2 2 0 0 1-2.8 0l-6.4-6.4a2 2 0 0 1-.6-1.5l.3-6a2 2 0 0 1 1.9-1.9l6-.3a2 2 0 0 1 1.5.6l6.4 6.4a2 2 0 0 1 0 2.9z"/><circle cx="8" cy="8" r="1.3"/>',
+    cart:'<circle cx="9.5" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2.5 3.5h2.6l2.4 11.2a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L21 7H6"/>',
+    star:'<path d="m12 3.5 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17.5l-5.4 2.9 1-6.1L3.2 10l6.1-.9z"/>',
+    bulb:'<path d="M9.5 18h5"/><path d="M10 21h4"/><path d="M8.5 14.5a5.5 5.5 0 1 1 7 0c-.7.6-1 1.4-1 2.2h-5c0-.8-.3-1.6-1-2.2z"/>',
+    gear:'<circle cx="12" cy="12" r="3.2"/><path d="M18.9 14.7a1.6 1.6 0 0 0 .32 1.77l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.6 1.6 0 0 0-1.77-.32 1.6 1.6 0 0 0-.97 1.47V21a2 2 0 0 1-4 0v-.1a1.6 1.6 0 0 0-1.05-1.47 1.6 1.6 0 0 0-1.77.32l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.6 1.6 0 0 0 .32-1.77 1.6 1.6 0 0 0-1.47-.97H3a2 2 0 0 1 0-4h.1a1.6 1.6 0 0 0 1.47-1.05 1.6 1.6 0 0 0-.32-1.77l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.6 1.6 0 0 0 1.77.32 1.6 1.6 0 0 0 .97-1.47V3a2 2 0 0 1 4 0v.1a1.6 1.6 0 0 0 .97 1.47 1.6 1.6 0 0 0 1.77-.32l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.6 1.6 0 0 0-.32 1.77v.02a1.6 1.6 0 0 0 1.47.97H21a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.47.97z"/>'
+  };
+  // キーが無い場合は渡された文字列をそのまま返す（絵文字が残っていても壊れない）
+  function icoSvg(k){
+    var p=ICON_PATH[k];
+    if(!p) return (k==null?'':String(k));
+    return '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+p+'</svg>';
+  }
   var NAV_ICON={
-    'sec-flow':'🏠','sec-chat':'💬','sec-reports':'📄','sec-mypdca':'🎯','sec-company':'🏢',
-    'sec-cash':'💰','sec-value':'📈','sec-ai':'🤖','sec-ins':'🧮','sec-ma':'🤝','sec-market':'💹','sec-sec':'🪄',
-    'sec-clients':'👥','sec-sales':'🧲','sec-pdca':'🔄','sec-madeals':'📁','sec-knowledge':'📚','sec-sozoku':'🧮',
-    'sec-kpi':'📊','sec-risk':'🚨','sec-fde':'🧑‍💼','sec-cust':'🏢','sec-exec':'📋',
-    'sec-billing':'💳','sec-billpay':'💳','sec-audit':'🛡️','sec-broadcast':'📢','sec-support':'🛟','sec-growth':'🚀'
+    'sec-flow':'home','sec-chat':'chat','sec-reports':'doc','sec-mypdca':'target','sec-company':'building',
+    'sec-cash':'wallet','sec-value':'trend','sec-ai':'cpu','sec-ins':'shieldCheck','sec-ma':'link','sec-market':'market','sec-sec':'sparkle',
+    'sec-clients':'building','sec-sales':'clipboard','sec-pdca':'cycle','sec-madeals':'folder','sec-knowledge':'book','sec-sozoku':'calc',
+    'sec-kpi':'chart','sec-risk':'alert','sec-fde':'users','sec-cust':'building','sec-exec':'flag',
+    'sec-billing':'card','sec-billpay':'card','sec-audit':'shield','sec-broadcast':'megaphone','sec-support':'life','sec-growth':'up'
   };
   function niHtml(id,label,drawer){
-    var ic=NAV_ICON[id]||'•';
+    var ic=icoSvg(NAV_ICON[id]||'');
     var badge=(id==='sec-chat')?'<span id="nav-unread'+(drawer?'-d':'')+'" class="nbadge hidden">0</span>':'';
     return '<div class="ni" data-sec="'+id+'" onclick="navTo(\''+id+'\')"><span class="ni-ic">'+ic+'</span><span class="ni-tx">'+esc(label)+'</span>'+badge+'</div>';
   }
@@ -1031,7 +1093,7 @@
     var h='<div class="cl-tiles">';
     effectiveNav('customer').forEach(function(it){
       var badge=(it[0]==='sec-chat')?'<span id="nav-unread-t" class="clnb hidden">0</span>':'';
-      h+='<div class="cl-tile'+(CURRENT_SEC===it[0]?' on':'')+'" onclick="dashTileGo(\''+it[0]+'\')"><span class="ti">'+(NAV_ICON[it[0]]||'•')+'</span><span class="tl">'+esc(it[1])+'</span>'+badge+'</div>';
+      h+='<div class="cl-tile'+(CURRENT_SEC===it[0]?' on':'')+'" onclick="dashTileGo(\''+it[0]+'\')"><span class="ti">'+icoSvg(NAV_ICON[it[0]]||'')+'</span><span class="tl">'+esc(it[1])+'</span>'+badge+'</div>';
     });
     h+='</div>';
     body.innerHTML=h;
@@ -1060,15 +1122,15 @@
       +'<div class="panel"><span class="pill" style="background:#F7EFDC;color:#C39B3F;">運営コンソール</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">運営管理</h2>'
         +'<div class="kv">ログイン中：<b>'+esc(email)+'</b>　役割：<b>運営</b></div></div>'
-      +'<div class="panel" id="sec-flow"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">🚀 成長ロードマップ（事業計画連動）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmRoadmap()">↺ 更新</span></div>'
+      +'<div class="panel" id="sec-flow"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6.5 13.5 5.5-5.5 5.5 5.5"/><path d="m6.5 19 5.5-5.5 5.5 5.5"/></svg>成長ロードマップ（事業計画連動）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmRoadmap()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;">Tsugu Ai自体の成長ステージです。顧客・パートナー・調達の登録データから自動で現在地と進捗を表示します。目標の詳細は「経営計画」で管理します。</div>'
         +'<div id="adm-roadmap">読み込み中...</div>'
       +'</div>'
       +'<div class="panel"><div class="ph">登録状況サマリー</div><div id="adm-sum" class="sumchips" style="margin-top:4px;">読み込み中...</div></div>'
-      +'<div class="panel" id="sec-kpi"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">📊 KPI（ステージ・ファネル／稼働）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
+      +'<div class="panel" id="sec-kpi"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 21h18"/><path d="M7 21v-8M12 21V5M17 21v-5"/></svg>KPI（ステージ・ファネル／稼働）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">①現状把握→②自動化→③M&Aへの到達状況と、直近の稼働を可視化します。</div>'
         +'<div id="adm-kpi">読み込み中...</div></div>'
-      +'<div class="panel" id="sec-risk"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">🚨 要対応アラート（顧客リスク検知）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
+      +'<div class="panel" id="sec-risk"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m10.3 3.9-8.1 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.1l-8-14a2 2 0 0 0-3.4 0z"/><path d="M12 9.5v4"/><path d="M12 17h.01"/></svg>要対応アラート（顧客リスク検知）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">資金繰りスコア低下・接触切れ・ステージ停滞・担当未割当を自動で抽出します。担当パートナーへの指示にお使いください。</div>'
         +'<div id="adm-risk">読み込み中...</div></div>'
       +'<div class="panel" id="sec-fde"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">パートナー 一覧・稼働モニタ<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
@@ -1084,11 +1146,11 @@
         +'<div class="ph" style="font-size:13px;margin-top:18px;">アカウントと役割の管理（全アカウント）</div>'
         +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">登録されている<b>すべてのアカウント</b>の一覧です。役割の変更はここでのみ行えます。役割を誤って変更してしまい顧客一覧・パートナー一覧から消えた場合も、ここで正しい役割に戻せば復旧できます。</div>'
         +'<div id="adm-roles">読み込み中...</div></div>'
-      +'<div class="panel" id="sec-market"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">💹 Tsugu投資・融資・M&A（全社）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketApps();loadMarketBroker()">↺ 更新</span></div>'
+      +'<div class="panel" id="sec-market"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8h14l-3.5-3.5"/><path d="M21 16H7l3.5 3.5"/></svg>Tsugu投資・融資・M&A（全社）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketApps();loadMarketBroker()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">案件の掲載・ステータス変更は<b>運営のみ</b>が行います。パートナーからの掲載申請を審査し、承認すると即時掲載されます。</div>'
-        +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:6px;">📥 掲載申請の審査<span id="mkapp-count" class="nbadge hidden">0</span></div>'
+        +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:6px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.5 12.5H16l-1.8 2.8H9.8L8 12.5H2.5"/><path d="M5.6 5.1 2.5 12.5V18a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-5.5l-3.1-7.4A2 2 0 0 0 16.6 4H7.4a2 2 0 0 0-1.8 1.1z"/></svg>掲載申請の審査</span><span id="mkapp-count" class="nbadge hidden">0</span></div>'
         +'<div id="mkt-apps" style="margin:4px 0 14px;">読み込み中...</div>'
-        +'<details style="margin:0 0 14px;border:1px solid var(--softline);border-radius:10px;padding:8px 12px;"><summary style="font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;">➕ 運営による直接掲載（申請を経ずに登録）</summary>'
+        +'<details style="margin:0 0 14px;border:1px solid var(--softline);border-radius:10px;padding:8px 12px;"><summary style="font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>運営による直接掲載（申請を経ずに登録）</summary>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px;">'
             +'<div style="min-width:180px;"><label class="fl">掲載主（顧客）</label><select id="amk-cust" class="inp2" style="max-width:220px;"><option value="">顧客を選択…</option></select></div>'
             +'<div><label class="fl">立場</label><select id="amk-side" class="inp2"><option value="raise">集めたい／譲渡（売り手）</option><option value="provide">出したい／譲受（買い手）</option></select></div>'
@@ -1108,14 +1170,14 @@
           +'<button class="sbtn" data-f="all" onclick="setMkbFilter(\'all\',this)">すべて</button>'
         +'</div>'
         +'<div id="market-broker" style="margin-top:4px;">読み込み中...</div></div>'
-      +'<div class="panel" id="sec-billing"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">💳 課金・契約管理<span class="ghost" style="font-size:11px;font-weight:400;" onclick="renderAdmBilling();loadBillingAdminLinks();loadAdmPayEvents();">↺ 再計算</span></div>'
+      +'<div class="panel" id="sec-billing"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/><path d="M6.5 14.5h3"/></svg>課金・契約管理</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="renderAdmBilling();loadBillingAdminLinks();loadAdmPayEvents();">↺ 再計算</span></div>'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 12px;">'
-          +'<button class="sbtn on" id="bl-tb-overview" onclick="blShowTab(\'overview\')">📊 概要</button>'
-          +'<button class="sbtn" id="bl-tb-partners" onclick="blShowTab(\'partners\')">🧑‍💼 パートナー別</button>'
-          +'<button class="sbtn" id="bl-tb-customers" onclick="blShowTab(\'customers\')">🏢 顧客別</button>'
-          +'<button class="sbtn" id="bl-tb-links" onclick="blShowTab(\'links\')">🔗 決済リンク</button>'
-          +'<button class="sbtn" id="bl-tb-payments" onclick="blShowTab(\'payments\')">💰 売上・入金履歴</button>'
-          +'<button class="sbtn" id="bl-tb-revenue" onclick="blShowTab(\'revenue\')">🎯 売上目標・実績</button>'
+          +'<button class="sbtn on" id="bl-tb-overview" onclick="blShowTab(\'overview\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 21h18"/><path d="M7 21v-8M12 21V5M17 21v-5"/></svg>概要</button>'
+          +'<button class="sbtn" id="bl-tb-partners" onclick="blShowTab(\'partners\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 21v-1.8a3.7 3.7 0 0 0-3.7-3.7H6.2A3.7 3.7 0 0 0 2.5 19.2V21"/><circle cx="8.75" cy="7.5" r="3.7"/><path d="M21.5 21v-1.8a3.7 3.7 0 0 0-2.8-3.6"/><path d="M15.5 4a3.7 3.7 0 0 1 0 7.1"/></svg>パートナー別</button>'
+          +'<button class="sbtn" id="bl-tb-customers" onclick="blShowTab(\'customers\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 21h18"/><path d="M6 21V4.5A1.5 1.5 0 0 1 7.5 3h5A1.5 1.5 0 0 1 14 4.5V21"/><path d="M14 10h3.5A1.5 1.5 0 0 1 19 11.5V21"/><path d="M9 7h2M9 11h2M9 15h2"/></svg>顧客別</button>'
+          +'<button class="sbtn" id="bl-tb-links" onclick="blShowTab(\'links\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 14.5 14.5 9.5"/><path d="M11 6.5 12.4 5a4.2 4.2 0 0 1 6 6L17 12.4"/><path d="M13 17.5 11.6 19a4.2 4.2 0 0 1-6-6L7 11.6"/></svg>決済リンク</button>'
+          +'<button class="sbtn" id="bl-tb-payments" onclick="blShowTab(\'payments\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 9V7a2 2 0 0 0-2-2H5.5A2.5 2.5 0 0 0 3 7.5v9A2.5 2.5 0 0 0 5.5 19H18a2 2 0 0 0 2-2v-2"/><path d="M21 9v6h-4.5a3 3 0 0 1 0-6z"/></svg>売上・入金履歴</button>'
+          +'<button class="sbtn" id="bl-tb-revenue" onclick="blShowTab(\'revenue\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></svg>売上目標・実績</button>'
         +'</div>'
         // ---- タブ1：概要（MRRサマリー・料率設定・M&Aフィー） ----
         +'<div id="bl-tab-overview">'
@@ -1147,7 +1209,7 @@
             +'<div><label class="fl">割引上限（合算）</label><input id="bl-cap" type="number" class="inp2" style="width:84px;" value="10" oninput="renderAdmBilling()"></div>'
           +'</div>'
         +'</div>'
-        +'<div class="ph" style="font-size:13px;margin-top:18px;">🤝 M&A仲介フィーシミュレーター（レーマン方式）</div>'
+        +'<div class="ph" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 14.5 14.5 9.5"/><path d="M11 6.5 12.4 5a4.2 4.2 0 0 1 6 6L17 12.4"/><path d="M13 17.5 11.6 19a4.2 4.2 0 0 1-6-6L7 11.6"/></svg>M&A仲介フィーシミュレーター（レーマン方式）</span></div>'
         +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">取引金額を入れると、標準レーマン方式（5億以下5%／5〜10億4%／10〜50億3%／50〜100億2%／100億超1%）で仲介フィーを段階計算します。実際の料率・最低報酬額は契約内容に従ってください。</div>'
         +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
           +'<div><label class="fl">取引金額（万円）</label><input id="lh-amt" type="number" class="inp2" style="width:160px;" placeholder="例 30000（＝3億円）" oninput="lehmanCalc()"></div>'
@@ -1172,7 +1234,7 @@
         +'</div>'
         // ---- タブ4：決済リンク管理 ----
         +'<div id="bl-tab-links" class="hidden">'
-        +'<div class="ph" style="font-size:13px;margin-top:2px;display:flex;align-items:center;justify-content:space-between;">💳 決済リンク（Stripe）管理<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadBillingAdminLinks()">↺ 更新</span></div>'
+        +'<div class="ph" style="font-size:13px;margin-top:2px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/><path d="M6.5 14.5h3"/></svg>決済リンク（Stripe）管理</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadBillingAdminLinks()">↺ 更新</span></div>'
         +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">Stripeで作成した決済リンク（Payment Link）を登録すると、顧客・パートナーの「お支払い」メニューに即時表示されます。「対象顧客」で特定の会社を選ぶと、その顧客にだけ表示されます（割引後の金額別リンクの割り当てに使用）。リンクの作り方は納品の「Stripe課金セットアップ手順」をご覧ください。</div>'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">'
           +'<button class="sbtn on" id="bl-lf-all" onclick="blLinkFilter(\'all\')">すべて</button>'
@@ -1192,7 +1254,7 @@
         +'</div>'
         // ---- タブ5：売上・入金履歴（Stripe自動＋手動記録） ----
         +'<div id="bl-tab-payments" class="hidden">'
-        +'<div class="ph" style="font-size:13px;margin-top:2px;display:flex;align-items:center;justify-content:space-between;">💰 売上・入金履歴（Stripe自動＋手動記録）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmPayEvents()">↺ 更新</span></div>'
+        +'<div class="ph" style="font-size:13px;margin-top:2px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 9V7a2 2 0 0 0-2-2H5.5A2.5 2.5 0 0 0 3 7.5v9A2.5 2.5 0 0 0 5.5 19H18a2 2 0 0 0 2-2v-2"/><path d="M21 9v6h-4.5a3 3 0 0 1 0-6z"/></svg>売上・入金履歴（Stripe自動＋手動記録）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmPayEvents()">↺ 更新</span></div>'
         +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">Stripe決済はWebhookで自動記録されます（区分は「顧問料・会費」に計上）。M&A成約フィー・終活/相続・保険手数料など、Stripeを通らない入金は下の「手動記録」から追加してください。両方を合算して「売上目標・実績」タブに反映されます。</div>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">'
           +'<div><label class="fl">年月</label><select id="bl-pay-month" class="inp2" onchange="loadAdmPayEvents()"></select></div>'
@@ -1215,7 +1277,7 @@
         +'</div>'
         // ---- タブ6：売上目標・実績 ----
         +'<div id="bl-tab-revenue" class="hidden">'
-        +'<div class="ph" style="font-size:13px;margin-top:2px;display:flex;align-items:center;justify-content:space-between;">🎯 年間売上目標・実績<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmRevenue()">↺ 更新</span></div>'
+        +'<div class="ph" style="font-size:13px;margin-top:2px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></svg>年間売上目標・実績</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmRevenue()">↺ 更新</span></div>'
         +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">Stripe入金（顧問料・会費に計上）と手動記録（M&A成約・終活/相続・保険関連など）を合算した<b>実数</b>と、年間目標に対する達成状況を表示します。目標は年・区分ごとに保存されます。</div>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;">'
           +'<div><label class="fl">対象年</label><select id="rvt-year" class="inp2" onchange="loadAdmRevenue()"></select></div>'
@@ -1237,7 +1299,7 @@
         +'<div id="rvt-monthly" style="margin-top:12px;"></div>'
         +'</div>'
         +'</div>'
-      +'<div class="panel" id="sec-audit"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">🛡 監査・コンプライアンスログ<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmAudit()">↺ 更新</span></div>'
+      +'<div class="panel" id="sec-audit"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21.5s7.5-3.8 7.5-9.5V5.2L12 2.5 4.5 5.2v6.8c0 5.7 7.5 9.5 7.5 9.5z"/></svg>監査・コンプライアンスログ</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmAudit()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 8px;">誰がいつ何を提案・共有・掲載したかの記録です（AI診断・保険/相続試算・マーケット掲載・提案メモ・月次レポート公開）。金融商品を扱う上での確認・監査にお使いください。</div>'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;" id="audit-filterbar">'
           +'<button class="sbtn on" data-f="all" onclick="setAuditFilter(\'all\',this)">すべて</button>'
@@ -1248,7 +1310,7 @@
           +'<button class="sbtn" data-f="report" onclick="setAuditFilter(\'report\',this)">レポート</button>'
         +'</div>'
         +'<div id="adm-audit" style="margin-top:4px;">読み込み中...</div></div>'
-      +'<div class="panel" id="sec-broadcast"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">📢 一斉お知らせ配信<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAnnouncements()">↺ 更新</span></div>'
+      +'<div class="panel" id="sec-broadcast"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3.5 10.2 15-5.2v14l-15-5.2z"/><path d="M11.6 16.2a3 3 0 0 1-5.5-1.2"/><path d="M20.5 9.5v5"/></svg>一斉お知らせ配信</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAnnouncements()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 8px;">パートナー・顧客のダッシュボードに表示されるお知らせを配信します（新機能・運用ルール周知など）。</div>'
         +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
           +'<div><label class="fl">配信先</label><select id="bc-aud" class="inp2"><option value="all">全員</option><option value="consultant">パートナーのみ</option><option value="customer">顧客のみ</option></select></div>'
@@ -1257,12 +1319,12 @@
         +'<div style="margin-top:8px;"><label class="fl">本文</label><textarea id="bc-body" class="inp2" rows="3" style="width:100%;" placeholder="お知らせの内容を入力"></textarea></div>'
         +'<div style="margin-top:10px;"><button class="btn2" onclick="postAnnouncement()">配信する</button><span id="bc-msg" style="font-size:12px;margin-left:8px;"></span></div>'
         +'<div id="bc-list" style="margin-top:12px;">読み込み中...</div></div>'
-      +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">🛟 サポート管理'
-        +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
-        +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:8px;">📥 パートナーからの問い合わせ<span id="adm-inq-count" class="nbadge hidden">0</span></div>'
+      +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.8"/><path d="m5.6 5.6 3.7 3.7M14.7 14.7l3.7 3.7M14.7 9.3l3.7-3.7M5.6 18.4l3.7-3.7"/></svg>サポート管理'
+        +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
+        +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.5 12.5H16l-1.8 2.8H9.8L8 12.5H2.5"/><path d="M5.6 5.1 2.5 12.5V18a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-5.5l-3.1-7.4A2 2 0 0 0 16.6 4H7.4a2 2 0 0 0-1.8 1.1z"/></svg>パートナーからの問い合わせ</span><span id="adm-inq-count" class="nbadge hidden">0</span></div>'
         +'<div id="adm-inq-list" style="margin-top:6px;">読み込み中...</div>'
         +'<div style="border-top:1px solid #EDF1F6;margin-top:16px;padding-top:14px;">'
-          +'<div class="ph" style="font-size:13px;">📚 サポートBotナレッジ（AIの回答ネタ）</div>'
+          +'<div class="ph" style="font-size:13px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 19.2A2.8 2.8 0 0 1 6.8 16.4H20"/><path d="M6.8 3H20v18H6.8A2.8 2.8 0 0 1 4 18.2V5.8A2.8 2.8 0 0 1 6.8 3z"/></svg>サポートBotナレッジ（AIの回答ネタ）</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">ここに登録した内容が、パートナーポータルの「運営サポート」AIの知識になります。運営ルール・報酬規程・申請手順などを追加してください。「有効」のものだけがAIに読み込まれます（未登録でもAIは動作し、運営固有の質問は問い合わせを案内します）。</div>'
           +'<div style="background:var(--soft);border-radius:10px;padding:12px;">'
             +'<input type="hidden" id="kb-edit-id" value="">'
@@ -1276,11 +1338,11 @@
           +'<div id="kb-list" style="margin-top:10px;">読み込み中...</div>'
         +'</div>'
       +'</div>'
-      +'<div class="panel" id="sec-exec"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">📋 経営計画（社内）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadExecFunding();loadExecWeekly();loadExecKpi();">↺ 更新</span></div>'
+      +'<div class="panel" id="sec-exec"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 21V3.5"/><path d="M4.5 4.5h12l-2 4 2 4h-12"/></svg>経営計画（社内）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadExecFunding();loadExecWeekly();loadExecKpi();">↺ 更新</span></div>'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 12px;">'
-          +'<button class="sbtn on" id="ex-tb-fund" onclick="exShowTab(\'fund\')">💰 資金調達ロードマップ</button>'
-          +'<button class="sbtn" id="ex-tb-week" onclick="exShowTab(\'week\')">📅 週次行動計画（13週）</button>'
-          +'<button class="sbtn" id="ex-tb-kpi" onclick="exShowTab(\'kpi\')">📈 KPIトラッキング</button>'
+          +'<button class="sbtn on" id="ex-tb-fund" onclick="exShowTab(\'fund\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 9V7a2 2 0 0 0-2-2H5.5A2.5 2.5 0 0 0 3 7.5v9A2.5 2.5 0 0 0 5.5 19H18a2 2 0 0 0 2-2v-2"/><path d="M21 9v6h-4.5a3 3 0 0 1 0-6z"/></svg>資金調達ロードマップ</button>'
+          +'<button class="sbtn" id="ex-tb-week" onclick="exShowTab(\'week\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/></svg>週次行動計画（13週）</button>'
+          +'<button class="sbtn" id="ex-tb-kpi" onclick="exShowTab(\'kpi\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 16.5 5.5-5.5 3.5 3.5L21 5"/><path d="M15 5h6v6"/></svg>KPIトラッキング</button>'
         +'</div>'
         +'<div id="ex-tab-fund">'
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">自社（福來）の調達計画をフェーズ別に管理します。ステータスはその場で変更でき、自動保存されます。</div>'
@@ -1745,7 +1807,7 @@
     var aud = (role==='consultant') ? ['all','consultant'] : ['all','customer'];
     var res=await sb.from('announcements').select('*').in('audience',aud).order('created_at',{ascending:false}).limit(8);
     if(res.error || !(res.data||[]).length){ box.innerHTML=''; return; }
-    var h='<div class="panel"><div class="ph">📢 運営からのお知らせ</div>';
+    var h='<div class="panel"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3.5 10.2 15-5.2v14l-15-5.2z"/><path d="M11.6 16.2a3 3 0 0 1-5.5-1.2"/><path d="M20.5 9.5v5"/></svg>運営からのお知らせ</span></div>';
     (res.data||[]).forEach(function(a){
       var dt=(a.created_at||'').slice(0,10);
       h+='<div style="border-left:3px solid #C39B3F;background:#FFFBF2;border-radius:8px;padding:9px 12px;margin-bottom:6px;"><div style="font-size:11px;color:#94A2B6;">'+esc(dt)+'</div><div style="font-size:13px;font-weight:700;color:#18202E;">'+esc(a.title)+'</div><div style="font-size:12px;color:#5A6981;line-height:1.6;margin-top:2px;white-space:pre-wrap;">'+esc(a.body)+'</div></div>';
@@ -1802,13 +1864,13 @@
           +'<div style="font-size:11px;color:#94A2B6;margin-top:6px;line-height:1.6;">※ 返信には少しお時間をいただく場合があります（目安：2〜3営業日以内）。お急ぎの場合はお電話等でご連絡ください。</div>'
         +'</div>'
         +'<div class="panel"><div class="ph">担当パートナーからの提案</div><div id="my-notes" style="margin-top:4px;">読み込み中...</div></div>'
-        +'<div class="panel" id="sec-reports"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">📊 月次レポート<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMyReports()">↺ 更新</span></div>'
+        +'<div class="panel" id="sec-reports"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>月次レポート</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMyReports()">↺ 更新</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:8px;">担当パートナーが毎月の数字とコメントをまとめたレポートです。</div>'
           +'<div id="my-reports">読み込み中...</div>'
           +'<div id="my-obr" style="margin-top:14px;"></div>'
           +'<div id="my-meetings" style="margin-top:14px;"></div>'
         +'</div>'
-        +'<div class="panel" id="sec-mypdca"><div class="ph">🔁 経営課題の取り組み</div>'
+        +'<div class="panel" id="sec-mypdca"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 12a8.5 8.5 0 0 1-14.6 5.9L3.5 15.5"/><path d="M3.5 12A8.5 8.5 0 0 1 18.1 6.1L20.5 8.5"/><path d="M20.5 3.5v5h-5"/><path d="M3.5 20.5v-5h5"/></svg>経営課題の取り組み</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:8px;">担当パートナーと一緒に進めている課題の進捗です。詳しくはメッセージでご相談ください。</div>'
           +'<div id="my-pdca">読み込み中...</div>'
         +'</div>'
@@ -1816,7 +1878,7 @@
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">担当パートナーが設定した、取り組み中の課題・タスクの一覧です。追加・変更のご希望は「メッセージ」でお知らせください。</div>'
           +'<div id="act-list" style="margin-top:6px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-billpay"><div class="ph">💳 お支払い</div>'
+        +'<div class="panel" id="sec-billpay"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/><path d="M6.5 14.5h3"/></svg>お支払い</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">顧問料等のお支払いはこちらから。決済は国際的な決済基盤Stripeの安全なページで行われ、カード情報が当社のサーバーに保存されることはありません。</div>'
           +'<div id="billpay-links">読み込み中...</div>'
           +'<div class="ph" style="font-size:13px;margin-top:16px;">お支払い履歴</div>'
@@ -1834,7 +1896,7 @@
           +'<div style="font-weight:600;font-size:14px;color:#1E3A66;margin:14px 0 6px;">③ 資金繰りシミュレーター</div>'
           +'<div style="font-size:12px;color:#94A2B6;">担当パートナーが実施します。結果はダッシュボードの「資金繰りステータス」に表示されます。<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;margin-left:6px;" onclick="goSec(\'sec-status\')">ステータスを見る →</button></div>'
         +'</div>'
-        +'<div class="panel" id="sec-ai"><div class="ph">🤖 AI活用・自動化のご相談</div>'
+        +'<div class="panel" id="sec-ai"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="5" width="14" height="14" rx="2.5"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9.5 2v3M14.5 2v3M9.5 19v3M14.5 19v3M2 9.5h3M2 14.5h3M19 9.5h3M19 14.5h3"/></svg>AI活用・自動化のご相談</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">「こんな業務を楽にできたら」という気になることを選んで送るだけ。担当パートナーがAIで具体的な自動化プランを診断し、結果をこちらにご提案・フィードバックします。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
             +'<div style="flex:1;min-width:200px;"><label class="fl">業種・事業内容（任意）</label><input id="ai-gyo" class="inp2" style="width:100%;" placeholder="例：金属加工業、調剤薬局 など"></div>'
@@ -1851,7 +1913,7 @@
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">保険（事業保障・損害保険・養老保険）や相続・贈与などの試算は担当パートナーが行い、ここに共有されます。試算のご希望や前提条件の変更は「メッセージ」でお伝えください。</div>'
           +'<div id="my-ins" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-value"><div class="ph">📈 企業価値（毎月の推移）</div>'
+        +'<div class="panel" id="sec-value"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 16.5 5.5-5.5 3.5 3.5L21 5"/><path d="M15 5h6v6"/></svg>企業価値（毎月の推移）</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">担当パートナーがEBITDA法で診断した、あなたの会社の推定企業価値です。利益（EBITDA）の改善と借入の圧縮が、そのまま会社の価値を押し上げます。※ 簡易試算であり、実際の譲渡・買収価格を保証するものではありません。</div>'
           +'<div id="my-value">読み込み中...</div>'
         +'</div>'
@@ -1859,7 +1921,7 @@
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">利益や余剰資金をM&A（会社・事業の買収）で活かす方向性を、担当パートナーがAIで検討し、ここにご提案します。ご関心・ご希望は「メッセージ」でお知らせください。</div>'
           +'<div id="my-ma">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-market"><div class="ph">💹 Tsugu投資・融資・M&A（プラットフォーム内マッチング）</div>'
+        +'<div class="panel" id="sec-market"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8h14l-3.5-3.5"/><path d="M21 16H7l3.5 3.5"/></svg>Tsugu投資・融資・M&A（プラットフォーム内マッチング）</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">資金を「集めたい」企業と「出したい（融資・出資）」企業を、Tsugu内でマッチングします。案件の掲載は、担当パートナーからの申請にもとづき<b>運営が審査のうえ</b>行います。掲載のご希望や気になる案件があれば「メッセージ」で担当パートナーにお知らせください。</div>'
           +'<div style="font-size:11px;color:#8F7230;background:#F8F1DF;border:1px solid #EBDDB4;border-radius:9px;padding:9px 12px;margin-bottom:12px;line-height:1.7;">⚠ 本機能は当事者の引き合わせ（マッチング）を支援するもので、実際の融資・出資の実行ではありません。実行には貸金業法・金融商品取引法など関連法令の順守と、弁護士・税理士・有資格者等の関与が必要です。</div>'
           +'<div class="ph" style="font-size:13px;">あなたの掲載案件（担当パートナーの申請にもとづき運営が掲載・ここで進捗を確認できます）</div>'
@@ -1889,8 +1951,8 @@
         +'<div id="fde-hero" style="display:flex;gap:8px;flex-wrap:wrap;">読み込み中...</div></div>'
         +'<div id="my-annc"></div>'
         +'<div class="panel" id="sec-todo">'
-          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">📋 今日やること'
-            +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClients()">↺ 更新</span></div>'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 16.5V22"/><path d="M8.5 3h7l-1 6 2.8 3.2v1.3H6.7v-1.3L9.5 9z"/></svg>今日やること'
+            +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClients()">↺ 更新</span></div>'
           +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:8px;">返信漏れ・期日・接点切れを自動チェックして、優先順に並べています。</div>'
           +'<div id="todo-list">読み込み中...</div>'
         +'</div>'
@@ -1911,7 +1973,7 @@
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;">①現状把握 → ②AI・自動化 → ③コスト削減 → ④余力 → ⑤次の投資（M&A）の流れで支援します。</div>'
           + stepperHtml()
         +'</div>'
-        +'<div class="panel" id="sec-growth"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">🚀 パートナー成長ロードマップ<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadPartnerGrowth()">↺ 更新</span></div>'
+        +'<div class="panel" id="sec-growth"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6.5 13.5 5.5-5.5 5.5 5.5"/><path d="m6.5 19 5.5-5.5 5.5 5.5"/></svg>パートナー成長ロードマップ</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadPartnerGrowth()">↺ 更新</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;line-height:1.7;">認定パートナーのレベルと特典です。顧問契約数・HD化（M&A成約）実績に応じてレベルが上がり、外注費率と紹介先への割引が拡大します。実績はあなたの担当データから自動集計しています（正式なレベル認定は運営が行います）。</div>'
           +'<div id="pg-body">読み込み中...</div>'
         +'</div>'
@@ -1929,7 +1991,7 @@
             +'</div><div id="cl-msg" style="font-size:12px;margin-top:8px;"></div>'
           +'</div>'
           +'<div id="cl-hero" class="sumchips"></div>'
-          +'<div style="font-size:11.5px;color:#94A2B6;margin:4px 0 6px;">💡 登録前のお客様との商談には <span style="color:#2C5DA8;font-weight:700;cursor:pointer;" onclick="salesGo()">🧲 営業ツール（課題ヒアリング診断）→</span> が使えます。</div>'
+          +'<div style="font-size:11.5px;color:#94A2B6;margin:4px 0 6px;">💡 登録前のお客様との商談には <span style="color:#2C5DA8;font-weight:700;cursor:pointer;" onclick="salesGo()"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="2.5" width="7" height="4" rx="1.2"/><path d="M15.5 4.5H18a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2h2.5"/><path d="M8.5 11h7M8.5 15h4.5"/></svg>営業ツール（課題ヒアリング診断）→</span> が使えます。</div>'
           +'<input id="cl-search" class="searchbox" placeholder="🔍 会社名・メールアドレスで検索" oninput="renderClientList()">'
           +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px;" id="cl-filterbar">'
             +'<button class="sbtn on" data-f="all" onclick="setClFilter(\'all\',this)">すべて</button>'
@@ -1939,17 +2001,17 @@
           +'<div id="cl-list" style="margin-top:6px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-sales">'
-          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">🧲 営業ツール（課題ヒアリング診断）'
-            +'<span style="display:flex;gap:12px;align-items:center;">'
-            +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="salesPrintSheet()">🖨 診断シートを印刷（PDF）</span>'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="2.5" width="7" height="4" rx="1.2"/><path d="M15.5 4.5H18a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2h2.5"/><path d="M8.5 11h7M8.5 15h4.5"/></svg>営業ツール（課題ヒアリング診断）'
+            +'</span><span style="display:flex;gap:12px;align-items:center;">'
+            +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="salesPrintSheet()"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 9V3h11v6"/><path d="M6.5 17.5H5a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2h-1.5"/><rect x="6.5" y="14" width="11" height="7" rx="1"/></svg>診断シートを印刷（PDF）</span>'
             +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="salesRestart()">↺ 最初から</span>'
             +'</span></div>'
           +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">お客様に画面をお見せしながら使う商談ツールです。「こんな問題を抱えていませんか？」という8つの問いかけで潜在ニーズを引き出し、最後は<b style="color:#8F7230;">「この問題を、このプラットフォームで解決できるとしたら？」</b>というクロージングにつながります。</div>'
           +'<div id="sales-stage">'+salesIntroHtml()+'</div>'
         +'</div>'
         +'<div class="panel" id="sec-pdca">'
-          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">🔁 経営課題PDCA'
-            +'<span style="display:flex;gap:8px;align-items:center;">'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 12a8.5 8.5 0 0 1-14.6 5.9L3.5 15.5"/><path d="M3.5 12A8.5 8.5 0 0 1 18.1 6.1L20.5 8.5"/><path d="M20.5 3.5v5h-5"/><path d="M3.5 20.5v-5h5"/></svg>経営課題PDCA'
+            +'</span><span style="display:flex;gap:8px;align-items:center;">'
             +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadPdca()">↺ 更新</span>'
             +'<button class="btn2" style="padding:7px 14px;font-size:12px;" onclick="togglePdcaForm()">＋ 課題を追加</button>'
             +'</span></div>'
@@ -1974,8 +2036,8 @@
           +'<div id="pdca-list" style="margin-top:6px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-madeals">'
-          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">🤝 M&A案件管理'
-            +'<span style="display:flex;gap:8px;align-items:center;">'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 14.5 14.5 9.5"/><path d="M11 6.5 12.4 5a4.2 4.2 0 0 1 6 6L17 12.4"/><path d="M13 17.5 11.6 19a4.2 4.2 0 0 1-6-6L7 11.6"/></svg>M&A案件管理'
+            +'</span><span style="display:flex;gap:8px;align-items:center;">'
             +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMaDeals()">↺ 更新</span>'
             +'<button class="btn2" style="padding:7px 14px;font-size:12px;" onclick="toggleMaForm()">＋ 案件を追加</button>'
             +'</span></div>'
@@ -1997,7 +2059,7 @@
           +'<div id="ma-list" style="margin-top:6px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-market">'
-          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">💹 Tsugu投資・融資・M&A（閲覧・進捗確認）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketBroker()">↺ 更新</span></div>'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8h14l-3.5-3.5"/><path d="M21 16H7l3.5 3.5"/></svg>Tsugu投資・融資・M&A（閲覧・進捗確認）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketBroker()">↺ 更新</span></div>'
           +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">掲載中の「集めたい／出したい」案件と、寄せられた関心の一覧です。掲載企業名・関心を出した企業名を確認し、当事者への橋渡しの準備ができます。<b>案件の掲載・成立・終了などの登録/更新は、パートナーからの申請にもとづき運営が審査のうえ行います。</b>掲載のご希望は各顧客カルテの「掲載申請」からどうぞ。</div>'
           +'<div style="font-size:11px;color:#8F7230;background:#F8F1DF;border:1px solid #EBDDB4;border-radius:9px;padding:9px 12px;margin-bottom:10px;line-height:1.7;">⚠ 実際の融資・出資の実行には関連法令（貸金業法・金融商品取引法等）の順守と有資格者の関与が必要です。Tsuguはマッチングの場のみを提供します。</div>'
           +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;" id="mkb-filterbar">'
@@ -2007,13 +2069,13 @@
           +'<div id="market-broker" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-reports">'
-          +'<div class="ph">📊 月次レポートの承認</div>'
-          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">毎月1日に自動生成される下書きです。内容とコメントを確認・編集し、<b style="color:#1E3A66;">「承認して公開」</b>ボタンを押すと、その月のレポートが経営者ダッシュボードに表示されます。承認待ちがあるとここに一覧表示されます。</div>'
+          +'<div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>月次レポートの承認</span></div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">月次レポートの下書きです。内容とコメントを確認・編集し、<b style="color:#1E3A66;">「承認して公開」</b>ボタンを押すと、その月のレポートが経営者ダッシュボードに表示されます。承認待ちがあるとここに一覧表示されます。</div>'
           +'<div id="rep-drafts">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-knowledge">'
-          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">💡 ナレッジベース'
-            +'<span style="display:flex;gap:8px;align-items:center;">'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 19.2A2.8 2.8 0 0 1 6.8 16.4H20"/><path d="M6.8 3H20v18H6.8A2.8 2.8 0 0 1 4 18.2V5.8A2.8 2.8 0 0 1 6.8 3z"/></svg>ナレッジベース'
+            +'</span><span style="display:flex;gap:8px;align-items:center;">'
             +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadKnowledge()">↺ 更新</span>'
             +'<button class="btn2" style="padding:7px 14px;font-size:12px;" onclick="toggleKnForm()">＋ 投稿する</button>'
             +'</span></div>'
@@ -2113,11 +2175,11 @@
             +'<button class="btn2" id="sec-send" onclick="secretarySend()">送信</button>'
           +'</div>'
         +'</div>'
-        +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">🛟 運営サポート'
-          +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadSupportKnowledge();loadMyInquiries()">↺ 更新</span></div>'
+        +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.8"/><path d="m5.6 5.6 3.7 3.7M14.7 14.7l3.7 3.7M14.7 9.3l3.7-3.7M5.6 18.4l3.7-3.7"/></svg>運営サポート'
+          +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadSupportKnowledge();loadMyInquiries()">↺ 更新</span></div>'
           +'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">'
-            +'<button class="btn2 ai-btn" id="sup-tb-bot" style="flex:1;min-width:150px;font-size:13px;padding:10px;" onclick="supShowTab(\'bot\')">🤖 AIサポート（即答）</button>'
-            +'<button class="btn2" id="sup-tb-inq" style="flex:1;min-width:150px;font-size:13px;padding:10px;background:#fff;color:#1E3A66;border:1.5px solid #C9D6EA;" onclick="supShowTab(\'inq\')">📮 運営への問い合わせ<span id="sup-inq-badge" class="nbadge hidden" style="margin-left:6px;">0</span></button>'
+            +'<button class="btn2 ai-btn" id="sup-tb-bot" style="flex:1;min-width:150px;font-size:13px;padding:10px;" onclick="supShowTab(\'bot\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="5" width="14" height="14" rx="2.5"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9.5 2v3M14.5 2v3M9.5 19v3M14.5 19v3M2 9.5h3M2 14.5h3M19 9.5h3M19 14.5h3"/></svg>AIサポート（即答）</button>'
+            +'<button class="btn2" id="sup-tb-inq" style="flex:1;min-width:150px;font-size:13px;padding:10px;background:#fff;color:#1E3A66;border:1.5px solid #C9D6EA;" onclick="supShowTab(\'inq\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 3 10.5 13.5"/><path d="M21 3l-6.8 18-3.7-8.5L2 8.8z"/></svg>運営への問い合わせ<span id="sup-inq-badge" class="nbadge hidden" style="margin-left:6px;">0</span></button>'
           +'</div>'
           +'<div id="sup-tab-bot">'
             +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">運営ルール・報酬・申請手順・機能の使い方など、運営に関する質問にAIがお答えします。AIで解決しない場合は「📮 運営への問い合わせ」タブから担当者に直接ご質問ください。</div>'
@@ -2127,20 +2189,20 @@
               +'<button class="btn2 ai-btn" id="sup-send" onclick="supportSend()">送信</button>'
             +'</div>'
             +'<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">'
-              +'<button class="btn2" style="font-size:12px;background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;" onclick="supEscalate()" title="直前の質問を問い合わせフォームに転記します">📮 AIで解決しない → この質問を運営に送る</button>'
+              +'<button class="btn2" style="font-size:12px;background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;" onclick="supEscalate()" title="直前の質問を問い合わせフォームに転記します"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 3 10.5 13.5"/><path d="M21 3l-6.8 18-3.7-8.5L2 8.8z"/></svg>AIで解決しない → この質問を運営に送る</button>'
               +'<span style="flex:1;"></span>'
-              +'<button class="ghost" style="font-size:11px;padding:4px 9px;border:1px solid var(--line);border-radius:7px;" onclick="supClearLog()">🗑 履歴消去</button>'
+              +'<button class="ghost" style="font-size:11px;padding:4px 9px;border:1px solid var(--line);border-radius:7px;" onclick="supClearLog()"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3.5 6h17"/><path d="M8.5 6V4.5A1.5 1.5 0 0 1 10 3h4a1.5 1.5 0 0 1 1.5 1.5V6"/><path d="M18.5 6v13a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2V6"/><path d="M10 11v5M14 11v5"/></svg>履歴消去</button>'
             +'</div>'
           +'</div>'
           +'<div id="sup-tab-inq" class="hidden">'
             +'<div style="border:1.5px solid #C9D6EA;border-radius:12px;padding:15px 16px;background:#F5F9FE;">'
-              +'<div style="font-size:14px;font-weight:700;color:#1E3A66;">📮 運営への問い合わせ（担当者が回答します）</div>'
+              +'<div style="font-size:14px;font-weight:700;color:#1E3A66;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 3 10.5 13.5"/><path d="M21 3l-6.8 18-3.7-8.5L2 8.8z"/></svg>運営への問い合わせ（担当者が回答します）</div>'
               +'<div style="font-size:12px;color:#5A6981;margin:5px 0 12px;line-height:1.7;">報酬・審査・規程など運営の確認が必要な内容や、AIで解決しなかった質問は、こちらから直接お送りください。回答は下の履歴に表示されます。</div>'
               +'<div id="sup-inq-form" style="background:#fff;border:1px solid #DDE6F2;border-radius:10px;padding:14px;">'
                 +'<div><label class="fl">件名</label><input id="sup-inq-subject" class="inp2" style="width:100%;" placeholder="例：M&A成約時の報酬配分について"></div>'
                 +'<div style="margin-top:8px;"><label class="fl">内容</label><textarea id="sup-inq-body" class="inp2" rows="4" style="width:100%;" placeholder="質問・相談内容を入力（できるだけ具体的に書いていただくと回答が早くなります）"></textarea></div>'
                 +'<div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap;">'
-                  +'<button class="btn2" style="font-size:13px;padding:10px 22px;" onclick="supSubmitInquiry()">📮 運営に送信する</button>'
+                  +'<button class="btn2" style="font-size:13px;padding:10px 22px;" onclick="supSubmitInquiry()"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 3 10.5 13.5"/><path d="M21 3l-6.8 18-3.7-8.5L2 8.8z"/></svg>運営に送信する</button>'
                   +'<span id="sup-inq-msg" style="font-size:12px;"></span>'
                 +'</div>'
               +'</div>'
@@ -2759,7 +2821,7 @@
     if(!v) return '';
     var posColor=v.position==='上位水準'?'#27684A':(v.position==='要改善'?'#A9403D':'#1E3A66');
     var h='<div style="border:1px solid #EDF1F6;border-radius:11px;padding:11px 13px;margin-top:10px;background:#FBFCFE;">'
-      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:12px;font-weight:700;color:#1E3A66;">🏷️ 市場から見た企業価値の目安</span>'
+      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:12px;font-weight:700;color:#1E3A66;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.6 12.6 12.4 20.8a2 2 0 0 1-2.8 0l-6.4-6.4a2 2 0 0 1-.6-1.5l.3-6a2 2 0 0 1 1.9-1.9l6-.3a2 2 0 0 1 1.5.6l6.4 6.4a2 2 0 0 1 0 2.9z"/><circle cx="8" cy="8" r="1.3"/></svg>市場から見た企業価値の目安</span>'
       +'<span class="tag '+(v.position==='上位水準'?'green':(v.position==='要改善'?'red':'blue'))+'">利益率 '+(v.margin_pct===null?'—':v.margin_pct+'%')+'・'+esc(v.position)+'</span></div>'
       +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">'
         +'<div style="flex:1 1 130px;background:#fff;border:1px solid #EDF1F6;border-radius:9px;padding:8px 11px;"><div style="font-size:10px;color:#5A6981;">年間売上'+(v.annualized?'（年換算）':'')+'</div><div style="font-size:14px;font-weight:700;color:#1E3A66;">'+Number(v.annual_revenue).toLocaleString()+'万円</div></div>'
@@ -3020,7 +3082,7 @@
     var nx=pmiNextTasks(d);
     if(!nx.length) return '<div style="font-size:11.5px;color:#27684A;margin-top:6px;">PMIタスクは完了済み。月次チェックの推移を継続確認してください。</div>';
     var items=nx.map(function(x){ return '<li style="font-size:12px;color:#1E3A66;margin:2px 0;">'+esc(x.task)+'<span style="color:#94A2B6;font-size:10.5px;">（'+esc(x.phase)+'）</span></li>'; }).join('');
-    return '<div style="background:#F2F7FC;border:1px solid #D6E5F5;border-radius:8px;padding:8px 11px;margin-top:6px;"><div style="font-size:11px;font-weight:700;color:#1E5494;margin-bottom:3px;">⭐ 今月の重点（まずこの'+nx.length+'件）</div><ul style="margin:0;padding-left:16px;">'+items+'</ul></div>';
+    return '<div style="background:#F2F7FC;border:1px solid #D6E5F5;border-radius:8px;padding:8px 11px;margin-top:6px;"><div style="font-size:11px;font-weight:700;color:#1E5494;margin-bottom:3px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17.5l-5.4 2.9 1-6.1L3.2 10l6.1-.9z"/></svg>今月の重点（まずこの'+nx.length+'件）</div><ul style="margin:0;padding-left:16px;">'+items+'</ul></div>';
   }
   function dealFeeHtml(d){
     var price=(d.closed_price!=null?d.closed_price:d.expected_price);
@@ -3037,7 +3099,7 @@
     var inpro=(MA_CACHE.deals||[]).filter(function(d){ return d.stage===PMI_STAGE; });
     if(!inpro.length){ box.innerHTML=''; return; }
     var h='<div style="border:1px solid #D6E5F5;border-radius:12px;padding:14px 16px;background:#FAFCFF;">'
-      +'<div style="font-size:13px;font-weight:700;color:#1E5494;margin-bottom:4px;">🚩 PMI進行中（クロージング後フォロー）　'+inpro.length+'件</div>'
+      +'<div style="font-size:13px;font-weight:700;color:#1E5494;margin-bottom:4px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 21V3.5"/><path d="M4.5 4.5h12l-2 4 2 4h-12"/></svg>PMI進行中（クロージング後フォロー）　'+inpro.length+'件</div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">時間をかけず効果を出すために、各社「今月の重点」だけ押さえてください。詳細は下の該当案件で。</div>';
     inpro.forEach(function(d){
       var pdone=d.pmi_done||[]; var total=0; PMI_PLAN.forEach(function(ph){total+=ph.t.length;});
@@ -3234,7 +3296,7 @@
       +'</div>';
       if(d.stage===PMI_STAGE && !answered){
         h+='<div id="pulse-box" style="border:1.5px solid #C9D6EA;border-radius:11px;padding:12px 14px;margin-bottom:10px;background:#fff;">'
-          +'<div style="font-size:13px;font-weight:700;color:#1E3A66;">📋 今月のPMIチェック（30秒・3問）</div>'
+          +'<div style="font-size:13px;font-weight:700;color:#1E3A66;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 21V3.5"/><path d="M4.5 4.5h12l-2 4 2 4h-12"/></svg>今月のPMIチェック（30秒・3問）</div>'
           +'<div style="font-size:11px;color:#94A2B6;margin:4px 0 8px;">統合後の状況を教えてください。担当パートナーのフォローに使います。</div>'
           +PULSE_QS.map(function(q){
             return '<div style="margin-top:8px;"><label class="fl">'+q.label+'</label><select id="pulse-'+q.k+'" class="inp2" style="width:100%;">'
@@ -3512,7 +3574,7 @@
         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">'
           +'<span style="font-size:11px;color:#94A2B6;">'+esc(dt)+'</span>'+ack
           +'<span style="flex:1;"></span>'
-          +'<button class="ghost" style="font-size:11px;border:1px solid #E9C9C9;border-radius:7px;padding:3px 9px;color:#A9403D;" onclick="delClientNote(\''+n.id+'\',\''+custId+'\')">✕ 削除</button>'
+          +'<button class="ghost" style="font-size:11px;border:1px solid #E9C9C9;border-radius:7px;padding:3px 9px;color:#A9403D;" onclick="delClientNote(\''+n.id+'\',\''+custId+'\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"/></svg>削除</button>'
         +'</div>'
         +'<div style="font-size:13px;color:#18202E;white-space:pre-wrap;line-height:1.6;">'+esc(n.body)+'</div>'
       +'</div>';
@@ -3928,7 +3990,7 @@
     var box=$('official-kn'); if(!box) return;
     if(!OFFICIAL_KNOWLEDGE.length){ box.style.display='none'; return; }
     box.style.display='';
-    var h='<div style="font-size:12.5px;font-weight:700;color:#1E3A66;margin-bottom:8px;">📘 公式ナレッジ（運営提供）</div>';
+    var h='<div style="font-size:12.5px;font-weight:700;color:#1E3A66;margin-bottom:8px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 19.2A2.8 2.8 0 0 1 6.8 16.4H20"/><path d="M6.8 3H20v18H6.8A2.8 2.8 0 0 1 4 18.2V5.8A2.8 2.8 0 0 1 6.8 3z"/></svg>公式ナレッジ（運営提供）</div>';
     h+='<div style="display:flex;flex-direction:column;gap:8px;">';
     OFFICIAL_KNOWLEDGE.forEach(function(k){
       h+='<div style="display:flex;align-items:center;gap:10px;border:1px solid #E5EEF8;border-radius:9px;padding:9px 11px;background:#fff;">'
@@ -4151,7 +4213,7 @@
             +chip('月間削減時間',it['月間削減時間'],'#2C5DA8')+chip('年間削減コスト',it['年間削減コスト'],'#27684A')+chip('投資コスト',it['投資コスト目安'],'#C39B3F')+chip('回収期間',it['回収期間'],'#2C5DA8')
           +'</div>'
           +line('定着のコツ・リスク',it['定着のコツ・リスク'])
-          +(controls?'<button class="ghost" style="font-size:12px;border:1px solid #2C5DA8;color:#2C5DA8;border-radius:8px;padding:6px 12px;margin-top:6px;" onclick="diagDrill(\''+custId+'\','+i+',this)">🔬 この施策をさらに深掘り（実装手順書）</button><div id="'+pfx+i+'_drill" style="margin-top:8px;"></div>':'')
+          +(controls?'<button class="ghost" style="font-size:12px;border:1px solid #2C5DA8;color:#2C5DA8;border-radius:8px;padding:6px 12px;margin-top:6px;" onclick="diagDrill(\''+custId+'\','+i+',this)"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.3 15.3 5.2 5.2"/><path d="M8 10.5h5M10.5 8v5"/></svg>この施策をさらに深掘り（実装手順書）</button><div id="'+pfx+i+'_drill" style="margin-top:8px;"></div>':'')
         +'</div>'
       +'</div>';
     });
@@ -4372,7 +4434,7 @@
     var m=(res.data||[])[0];
     var h='<div style="border:1px solid var(--softline);border-radius:11px;padding:11px 13px;background:var(--soft);">'
       +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
-      +'<span style="font-size:12.5px;font-weight:700;color:var(--navy);">📅 次回面談</span>';
+      +'<span style="font-size:12.5px;font-weight:700;color:var(--navy);"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/></svg>次回面談</span>';
     if(m){
       var cd=meetCountdown(m.meet_at);
       h+='<span class="tag '+cd.cls+'">'+cd.txt+'</span>'
@@ -4455,7 +4517,7 @@
     var box=$('my-meetings'); if(!box)return;
     var res=await sb.from('meeting_notes').select('*').eq('customer_id',ME).eq('shared',true).order('meeting_date',{ascending:false}).limit(20);
     if(res.error || !(res.data||[]).length){ box.innerHTML=''; return; }
-    var h='<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">📝 面談記録</div>';
+    var h='<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a2 2 0 0 1 2.83 2.83L12.5 14.2l-3.6.95.95-3.6z"/></svg>面談記録</div>';
     (res.data||[]).forEach(function(r){
       h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:12px 14px;margin-bottom:9px;background:var(--card);">'
         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:13px;font-weight:700;color:var(--ink);">'+esc(r.title||'面談記録')+'</span>'
@@ -4709,7 +4771,7 @@
         +(isCur?'<span style="background:#F7EFDC;color:#8F7230;border-radius:99px;padding:2px 9px;font-size:10px;font-weight:700;">今週</span>':'')
         +'<b style="flex:1;color:#1E3A66;font-size:13px;">'+esc(w.theme||'')+'</b>'
         +stBadge
-        +'<button class="ghost" style="font-size:11px;padding:4px 9px;" onclick="exWeekEdit(\''+w.id+'\')">✎ 編集</button>'
+        +'<button class="ghost" style="font-size:11px;padding:4px 9px;" onclick="exWeekEdit(\''+w.id+'\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18.4 2.6a2 2 0 0 1 2.83 2.83L7.5 19.2l-4.5 1.3 1.3-4.5z"/><path d="m15.5 5.5 3 3"/></svg>編集</button>'
       +'</div>'
       +'<div id="ex-wbody-'+w.id+'">'
       +'<div style="font-size:11px;color:#94A2B6;margin-top:6px;">関連WBS：'+esc(w.wbs_ref||'—')+'　／　狙い：'+esc(w.aim||'—')+'　／　主担当：'+esc(w.owner||'—')+'</div>'
@@ -5274,7 +5336,7 @@
           +'<div style="flex:1;min-width:160px;"><div style="font-size:11px;color:#94A2B6;">あなたの担当パートナー</div>'
           +'<div style="font-size:14px;font-weight:700;color:#18202E;">'+esc(p.partner_name||'—')+' 様'
           +(p.partner_company?('<span style="font-size:11px;color:#5A6981;font-weight:400;">（'+esc(p.partner_company)+'）</span>'):'')+'</div></div>'
-          +'<button class="btn2" style="font-size:12px;" onclick="goSec(\'sec-chat\')">💬 メッセージで相談</button>'
+          +'<button class="btn2" style="font-size:12px;" onclick="goSec(\'sec-chat\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>メッセージで相談</button>'
         +'</div>';
         return;
       }
@@ -5295,7 +5357,7 @@
       var dt=(n.created_at||'').slice(0,10);
       var foot = n.acked
         ? '<div style="font-size:11px;color:#27684A;margin-top:7px;">✓ 確認済み'+(n.acked_at?('（'+String(n.acked_at).slice(0,10)+'）'):'')+'　担当パートナーにも表示されます</div>'
-        : '<div style="margin-top:8px;"><button class="btn2" style="font-size:12px;padding:7px 16px;" onclick="ackMyNote(\''+n.id+'\')">✔ 内容を確認しました</button><span style="font-size:11px;color:#94A2B6;margin-left:8px;">押すと担当パートナーに「確認済み」と伝わります</span></div>';
+        : '<div style="margin-top:8px;"><button class="btn2" style="font-size:12px;padding:7px 16px;" onclick="ackMyNote(\''+n.id+'\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m4.5 12.5 5 5 10-11"/></svg>内容を確認しました</button><span style="font-size:11px;color:#94A2B6;margin-left:8px;">押すと担当パートナーに「確認済み」と伝わります</span></div>';
       h+='<div style="border-left:3px solid #2C5DA8;background:#F8F9FC;border-radius:8px;padding:10px 12px;margin-bottom:6px;">'
         +'<div style="font-size:11px;color:#94A2B6;margin-bottom:4px;">'+esc(dt)+'</div>'
         +'<div style="font-size:13px;color:#18202E;white-space:pre-wrap;line-height:1.6;">'+esc(n.body)+'</div>'
@@ -5436,15 +5498,15 @@
         +IOD_AXES.map(function(a){ return '<td style="border:1px solid #EDF1F6;padding:3px;">'+iodSel(i,a[0],r[a[0]],['緑','黄','赤'])+'</td>'; }).join('')
         +'<td style="border:1px solid #EDF1F6;padding:3px;">'+iodSel(i,'rx',r.rx,IOD_RX)+'</td>'
         +'<td style="border:1px solid #EDF1F6;padding:3px;">'+inp('opt_prem','100%','空欄=現状維持')+'</td>'
-        +'<td style="border:1px solid #EDF1F6;padding:3px;text-align:center;"><button class="ghost" style="color:#A9403D;border-color:#E9C9C9;font-size:10px;padding:2px 6px;" onclick="iodDelRow('+i+')">✕</button></td>'
+        +'<td style="border:1px solid #EDF1F6;padding:3px;text-align:center;"><button class="ghost" style="color:#A9403D;border-color:#E9C9C9;font-size:10px;padding:2px 6px;" onclick="iodDelRow('+i+')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"/></svg></button></td>'
       +'</tr>';
     });
     h+='</table></div>'
       +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">'
       +'<button class="ghost" style="font-size:11.5px;padding:5px 10px;" onclick="iodAddRow()">＋ 契約を追加</button>'
       +'<div style="flex:1;min-width:220px;"><label class="fl">所見・メモ（診断書に印字されます）</label><input id="iod-note" class="inp2" style="width:100%;" value="'+esc(IOD.note||'').replace(/"/g,'&quot;')+'" oninput="IOD.note=this.value"></div>'
-      +'<button class="btn2" onclick="insOptimSave()">💾 保存</button>'
-      +'<button class="btn2" style="background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;" onclick="iodPrint()">🖨 診断書を印刷／PDF</button>'
+      +'<button class="btn2" onclick="insOptimSave()"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M7 21v-8h10v8"/><path d="M7 3v5h7"/></svg>保存</button>'
+      +'<button class="btn2" style="background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;" onclick="iodPrint()"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 9V3h11v6"/><path d="M6.5 17.5H5a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2h-1.5"/><rect x="6.5" y="14" width="11" height="7" rx="1"/></svg>診断書を印刷／PDF</button>'
       +'</div></div>';
     ed.innerHTML=h;
     iodSummary();
@@ -5511,7 +5573,7 @@
   // ===== 保険シミュレーター（3つの診断＋既存保険の最適化をタブで切替） =====
   function insTabHtml(custId){
     function pill(k,label,on){ return '<button class="sbtn'+(on?' on':'')+'" data-k="'+k+'" style="font-size:11.5px;padding:7px 13px;" onclick="insTab(\''+k+'\')">'+label+'</button>'; }
-    return '<div class="ph" id="cs-ins" style="font-size:13px;margin-top:18px;">🩺 保険シミュレーター</div>'
+    return '<div class="ph" id="cs-ins" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21.5s7.5-3.8 7.5-9.5V5.2L12 2.5 4.5 5.2v6.8c0 5.7 7.5 9.5 7.5 9.5z"/><path d="m9 11.6 2.1 2.1 4-4.3"/></svg>保険シミュレーター</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">目的別に3つの診断と、既存契約の最適化ができます。各診断の結果は個別に顧客へ共有できます。※ 一般的な計算による情報提供であり、特定の保険商品の勧誘（保険募集）を行うものではありません。契約の実行は募集人資格を有する担当者にお繋ぎください。</div>'
       +'<div>'
       +'<div id="ins-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">'
@@ -5840,11 +5902,11 @@
     +'</div>';
     h+='<div style="display:flex;gap:8px;flex-wrap:wrap;">'
       +'<div style="flex:1 1 220px;background:#EFF6F0;border:1px solid #BFE2CD;border-radius:11px;padding:12px 14px;">'
-        +'<div style="font-size:11px;font-weight:700;color:#27684A;">🏷 売り手として</div>'
+        +'<div style="font-size:11px;font-weight:700;color:#27684A;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.6 12.6 12.4 20.8a2 2 0 0 1-2.8 0l-6.4-6.4a2 2 0 0 1-.6-1.5l.3-6a2 2 0 0 1 1.9-1.9l6-.3a2 2 0 0 1 1.5.6l6.4 6.4a2 2 0 0 1 0 2.9z"/><circle cx="8" cy="8" r="1.3"/></svg>売り手として</div>'
         +'<div style="font-size:12.5px;color:#18202E;line-height:1.8;margin-top:4px;">会社・事業を譲渡する場合の価値の目安は <b>'+Math.round(eq).toLocaleString()+'万円</b> です。利益（EBITDA）が10%改善すると、価値は約 <b>'+grow.toLocaleString()+'万円</b> に高まる計算です。</div>'
       +'</div>'
       +'<div style="flex:1 1 220px;background:#EFF3FB;border:1px solid #C9D6EA;border-radius:11px;padding:12px 14px;">'
-        +'<div style="font-size:11px;font-weight:700;color:#2C5DA8;">🛒 買い手として</div>'
+        +'<div style="font-size:11px;font-weight:700;color:#2C5DA8;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2.5 3.5h2.6l2.4 11.2a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L21 7H6"/></svg>買い手として</div>'
         +'<div style="font-size:12.5px;color:#18202E;line-height:1.8;margin-top:4px;">自己資金と借入余力を合わせると、<b>'+Math.round(Number(cur.buy_power)||0).toLocaleString()+'万円</b> 規模までの企業・事業の譲受が視野に入ります。M&Aによる成長にご関心があれば、担当パートナーへメッセージでご相談ください。</div>'
       +'</div>'
     +'</div>';
@@ -5868,8 +5930,8 @@
   function evMan(n){ return (Math.round(n)||0).toLocaleString('ja-JP')+'万円'; }
   function evResultHtml(r, mult, ownGiven){
     return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">'
-      +'<div style="flex:1 1 150px;background:#EFF6F0;border:1px solid #BFE2CD;border-radius:11px;padding:11px 13px;"><div style="font-size:10.5px;color:#27684A;font-weight:700;">🏷 売り手として（推定企業価値）</div><div style="font-size:20px;font-weight:700;color:#27684A;margin-top:2px;">'+evMan(r.equity)+'</div><div style="font-size:10.5px;color:#5A6981;margin-top:2px;">EBITDA '+evMan(r.ebitda)+' × '+mult+'倍 ＋ 現預金 − 有利子負債</div></div>'
-      +'<div style="flex:1 1 150px;background:#EFF3FB;border:1px solid #C9D6EA;border-radius:11px;padding:11px 13px;"><div style="font-size:10.5px;color:#2C5DA8;font-weight:700;">🛒 買い手として（譲受余力の目安）</div><div style="font-size:20px;font-weight:700;color:#2C5DA8;margin-top:2px;">'+evMan(r.buy)+'</div><div style="font-size:10.5px;color:#5A6981;margin-top:2px;">自己資金 '+evMan(r.ownUse)+(ownGiven?'':'（現預金の50%で仮置き）')+' ＋ 借入余力（EBITDA×3）</div></div>'
+      +'<div style="flex:1 1 150px;background:#EFF6F0;border:1px solid #BFE2CD;border-radius:11px;padding:11px 13px;"><div style="font-size:10.5px;color:#27684A;font-weight:700;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.6 12.6 12.4 20.8a2 2 0 0 1-2.8 0l-6.4-6.4a2 2 0 0 1-.6-1.5l.3-6a2 2 0 0 1 1.9-1.9l6-.3a2 2 0 0 1 1.5.6l6.4 6.4a2 2 0 0 1 0 2.9z"/><circle cx="8" cy="8" r="1.3"/></svg>売り手として（推定企業価値）</div><div style="font-size:20px;font-weight:700;color:#27684A;margin-top:2px;">'+evMan(r.equity)+'</div><div style="font-size:10.5px;color:#5A6981;margin-top:2px;">EBITDA '+evMan(r.ebitda)+' × '+mult+'倍 ＋ 現預金 − 有利子負債</div></div>'
+      +'<div style="flex:1 1 150px;background:#EFF3FB;border:1px solid #C9D6EA;border-radius:11px;padding:11px 13px;"><div style="font-size:10.5px;color:#2C5DA8;font-weight:700;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2.5 3.5h2.6l2.4 11.2a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.2L21 7H6"/></svg>買い手として（譲受余力の目安）</div><div style="font-size:20px;font-weight:700;color:#2C5DA8;margin-top:2px;">'+evMan(r.buy)+'</div><div style="font-size:10.5px;color:#5A6981;margin-top:2px;">自己資金 '+evMan(r.ownUse)+(ownGiven?'':'（現預金の50%で仮置き）')+' ＋ 借入余力（EBITDA×3）</div></div>'
       +'</div>';
   }
   async function runValuation(custId){
@@ -6100,7 +6162,7 @@
   }
 
   function clNi(id, icon, label){
-    return '<div class="cl-ni" id="ni-'+id+'" onclick="clNav(\''+id+'\',this)"><span class="ci">'+icon+'</span><span>'+label+'</span><span class="clnb hidden" id="clnb-'+id+'">0</span></div>';
+    return '<div class="cl-ni" id="ni-'+id+'" onclick="clNav(\''+id+'\',this)"><span class="ci">'+icoSvg(icon)+'</span><span>'+label+'</span><span class="clnb hidden" id="clnb-'+id+'">0</span></div>';
   }
   function clNav(id, el){
     clShowSection(id);
@@ -6138,25 +6200,25 @@
   // ===== カルテ内ダッシュボードナビ（左サイド＆ヘッダーのハンバーガーで共用） =====
   // ===== カルテ内メニュー項目（フラット・カスタマイズ可能） =====
   var CL_ITEMS=[
-    ['cs-todo','📌','やること'],
-    ['cs-onboard','🚀','導入チェックリスト'],
-    ['cs-report','📘','導入診断報告書'],
-    ['cs-company','🏢','会社情報'],
-    ['cs-msg','💬','メッセージ・提案'],
-    ['cs-shared','📥','顧客からの共有'],
-    ['cs-fin','📊','月次財務メモ'],
-    ['cs-pay','📅','支払予定'],
-    ['cs-cash','💰','資金繰りシミュレーター'],
-    ['cs-fund','🏦','資金調達ロードマップ'],
-    ['cs-loan','💴','融資ナビ'],
-    ['cs-bp','📄','事業計画書'],
-    ['cs-market','💹','Tsugu投資・融資・M&A'],
-    ['cs-mna','🤝','M&A提案'],
-    ['cs-value','📈','企業価値診断'],
-    ['cs-ins','🩺','保険シミュレーター'],
-    ['cs-ai','🤖','AI自動化診断'],
-    ['cs-meet','📝','議事録'],
-    ['cs-act','✅','課題・アクション']
+    ['cs-todo','pin','やること'],
+    ['cs-onboard','checks','導入チェックリスト'],
+    ['cs-report','book','導入診断報告書'],
+    ['cs-company','building','会社情報'],
+    ['cs-msg','chat','メッセージ・提案'],
+    ['cs-shared','inbox','顧客からの共有'],
+    ['cs-fin','chart','月次財務メモ'],
+    ['cs-pay','calendar','支払予定'],
+    ['cs-cash','wallet','資金繰りシミュレーター'],
+    ['cs-fund','bank','資金調達ロードマップ'],
+    ['cs-loan','yen','融資ナビ'],
+    ['cs-bp','doc','事業計画書'],
+    ['cs-market','market','Tsugu投資・融資・M&A'],
+    ['cs-mna','link','M&A提案'],
+    ['cs-value','trend','企業価値診断'],
+    ['cs-ins','shieldCheck','保険シミュレーター'],
+    ['cs-ai','cpu','AI自動化診断'],
+    ['cs-meet','note','議事録'],
+    ['cs-act','checkCircle','課題・アクション']
   ];
   // 並び順のカスタマイズ（この端末のブラウザに保存）
   var CL_NAV_KEY='tsugu_clnav_v2';
@@ -6245,7 +6307,7 @@
   function clSideHtml(){
     var h='<div class="cl-side" id="cl-side"><div class="sb-sec">メニュー</div>';
     clNavList().forEach(function(it){ h+=clNi(it[0],it[1],it[2]); });
-    h+='<div class="cl-ni" onclick="clSheetOpen(true)"><span class="ci">⚙</span><span>並び順のカスタマイズ</span></div>';
+    h+='<div class="cl-ni" onclick="clSheetOpen(true)"><span class="ci">'+icoSvg('gear')+'</span><span>並び順のカスタマイズ</span></div>';
     return h+'</div>';
   }
   // ===== ボトムシート型メニュー（スマホ）＋カスタマイズ =====
@@ -6279,7 +6341,7 @@
   function clTilesHtml(){
     var h='<div class="cl-tiles">';
     clNavList().forEach(function(it){
-      h+='<div class="cl-tile'+(it[0]===CL_ACTIVE?' on':'')+'" onclick="clMenuGo(\''+it[0]+'\')"><span class="ti">'+it[1]+'</span><span class="tl">'+it[2]+'</span><span class="clnb hidden" id="clmb-'+it[0]+'">0</span></div>';
+      h+='<div class="cl-tile'+(it[0]===CL_ACTIVE?' on':'')+'" onclick="clMenuGo(\''+it[0]+'\')"><span class="ti">'+icoSvg(it[1])+'</span><span class="tl">'+it[2]+'</span><span class="clnb hidden" id="clmb-'+it[0]+'">0</span></div>';
     });
     return h+'</div><div class="cl-sheet-hint">右上の「⚙ 編集」から、タブの並び順を変更できます。</div>';
   }
@@ -6288,7 +6350,7 @@
     var h='<div class="cl-sheet-hint" style="margin:0 0 8px;">▲▼でよく使うタブを上に並べ替えられます。設定はこの端末に保存され、メニューとPC版の左ナビの両方に反映されます。</div>';
     list.forEach(function(it,idx){
       h+='<div class="cl-edit-row">'
-        +'<span style="width:20px;text-align:center;font-size:15px;flex-shrink:0;">'+it[1]+'</span>'
+        +'<span style="width:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+icoSvg(it[1])+'</span>'
         +'<span style="flex:1;min-width:0;font-size:12.5px;font-weight:600;color:var(--ink);">'+it[2]+'</span>'
         +'<button class="cl-ebtn" onclick="clEditMove(\''+it[0]+'\',-1)"'+(idx===0?' disabled':'')+'>▲</button>'
         +'<button class="cl-ebtn" onclick="clEditMove(\''+it[0]+'\',1)"'+(idx===list.length-1?' disabled':'')+'>▼</button>'
@@ -6333,20 +6395,20 @@
     var head='<div id="cl-head"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">'
       +'<span style="font-size:12px;color:#5A6981;">進捗ステージ</span><span id="cl-stage-auto" style="font-size:12.5px;">判定中…</span>'
       +'<span style="flex:1;"></span>'
-      +'<button class="btn2" onclick="openMonthlyReport()" style="background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;">📄 月次レポート</button>'
+      +'<button class="btn2" onclick="openMonthlyReport()" style="background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>月次レポート</button>'
     +'</div>'
     +'<div id="cl-nextmeet" style="margin-bottom:12px;">読み込み中...</div></div>';
     // ---- 左サイド・ダッシュボードナビ（カルテ内の全機能を左から確認） ----
     var side=clSideHtml();
     // ---- タブ1：メッセージ・提案 ----
     var tabMsg='<div id="ctab-msg">'
-      +'<div class="ph" id="cs-todo" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;">📌 やること（この顧客の対応状況）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientTodo(\''+custId+'\')">↺ 更新</span></div>'
+      +'<div class="ph" id="cs-todo" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 16.5V22"/><path d="M8.5 3h7l-1 6 2.8 3.2v1.3H6.7v-1.3L9.5 9z"/></svg>やること（この顧客の対応状況）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientTodo(\''+custId+'\')">↺ 更新</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">対応が必要な項目と、今月の定型作業のチェックです。このリストは<b>パートナー専用</b>で、顧客には表示されません。</div>'
       +'<div id="cl-todo-body">読み込み中...</div>'
-      +'<div class="ph" id="cs-onboard" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;">🚀 導入チェックリスト（Phase 0）<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadOnboard(\''+custId+'\')">↺ 更新</span></div>'
+      +'<div class="ph" id="cs-onboard" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 6.5 1.5 1.5L7.5 5"/><path d="m3 13 1.5 1.5L7.5 11.5"/><path d="m3 19.5 1.5 1.5L7.5 18"/><path d="M11 6.5h10M11 13h10M11 19.5h10"/></svg>導入チェックリスト（Phase 0）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadOnboard(\''+custId+'\')">↺ 更新</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">導入初期費用に対応する導入作業（資料受領 → データ整備 → 初期診断 → 報告）の進捗管理です。すべて完了すると「導入診断報告書」の4つの成果物が揃います。</div>'
       +'<div id="cl-onboard-body">読み込み中...</div>'
-      +'<div class="ph" id="cs-report" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;">📘 導入診断報告書<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadObr(\''+custId+'\')">↺ 更新</span></div>'
+      +'<div class="ph" id="cs-report" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 19.2A2.8 2.8 0 0 1 6.8 16.4H20"/><path d="M6.8 3H20v18H6.8A2.8 2.8 0 0 1 4 18.2V5.8A2.8 2.8 0 0 1 6.8 3z"/></svg>導入診断報告書</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadObr(\''+custId+'\')">↺ 更新</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">導入フェーズの4つの成果物（①企業価値診断 ②資金繰り現状 ③保険・固定費の棚卸し ④12ヶ月改善ロードマップ）をまとめる、初回報告面談用の報告書です。<b>「公開」にすると顧客ポータルの「月次レポート」欄にも表示されます。</b>印刷（PDF）は報告書全体・4項目の個別どちらも可能です。</div>'
       +'<div id="obr-body">読み込み中...</div>'
       +'<div class="ph" id="cs-company" style="font-size:13px;">会社情報（代行入力）</div>'
@@ -6374,7 +6436,7 @@
         +'</div>'
       +'</div>'
       +'<div class="cl-col" style="border:1.5px solid #E4D3A8;background:#FDFAF1;border-radius:12px;padding:14px 15px;">'
-        +'<div class="ph" style="font-size:13px;margin-bottom:2px;">📝 提案メモ（顧客ダッシュボードへの掲示・一方向）</div>'
+        +'<div class="ph" style="font-size:13px;margin-bottom:2px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a2 2 0 0 1 2.83 2.83L12.5 14.2l-3.6.95.95-3.6z"/></svg>提案メモ（顧客ダッシュボードへの掲示・一方向）</span></div>'
         +'<div style="font-size:11px;color:#8A6A12;margin-bottom:8px;line-height:1.6;">チャットとは別物です。送信すると顧客ダッシュボードの「担当パートナーからの提案」欄に掲示されます（顧客からの返信機能はありません）。保険・M&A等の正式なご提案の提示に使ってください。</div>'
         +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">'
           +'<div style="flex:1;min-width:200px;"><label class="fl">提案・メモを書く</label><textarea id="cnote-body" rows="2" class="inp2" style="width:100%;" placeholder="例：養老保険の福利厚生プランをご提案します。次回、必要保障額のシミュレーション結果をお持ちします。"></textarea></div>'
@@ -6399,7 +6461,7 @@
       +'</div>'
       +'<div id="cfin-msg" style="font-size:12px;margin-top:6px;"></div>'
       +'<div style="border:1px dashed #C9D6EA;border-radius:11px;padding:12px 14px;margin:10px 0;background:#FBFCFE;">'
-        +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">📄 試算表ファイルから一括入力</div>'
+        +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:4px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>試算表ファイルから一括入力</div>'
         +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;">CSV・Excelは自動で読み取ります。PDF・画像はAIが読み取ります。<b>読み取り後に必ず内容を確認・修正してから確定</b>してください（自動では保存されません）。</div>'
         +'<input type="file" id="fin-file" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg" style="font-size:12px;" onchange="onFinFile(\''+custId+'\')">'
         +'<div id="fin-import-msg" style="font-size:12px;margin-top:6px;"></div>'
@@ -6471,7 +6533,7 @@
       +'<div id="cl-fund" style="margin-top:4px;">読み込み中...</div>'
       +'</div>'
       +'</div>'
-      +'<div class="ph" id="cs-market" style="font-size:13px;margin-top:18px;">💹 Tsugu投資・融資・M&A 掲載申請（運営審査制）</div>'
+      +'<div class="ph" id="cs-market" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8h14l-3.5-3.5"/><path d="M21 16H7l3.5 3.5"/></svg>Tsugu投資・融資・M&A 掲載申請（運営審査制）</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">案件の掲載・ステータス変更は<b>運営が審査のうえ</b>行います。経営者の意向が固まった段階で、このフォームから運営に申請してください。承認されるとプラットフォームに掲載され、下の「掲載中の案件」で進捗を確認できます。</div>'
       +'<div style="font-size:11px;color:#5A6981;background:var(--soft);border-radius:8px;padding:7px 10px;margin-bottom:8px;">立場の目安：<b>集めたい</b>＝資金調達／会社・事業の<b>譲渡（売り手）</b>、<b>出したい</b>＝出資・融資／会社・事業の<b>譲受（買い手）</b>。種別で「M&A」を選ぶと譲渡・譲受の案件になります。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
@@ -6508,7 +6570,7 @@
     +'</div>';
     // ---- タブ3：AIツール・試算 ----
     var tabTools='<div id="ctab-tools">'
-      +'<div class="ph" id="cs-ai" style="font-size:13px;">🤖 AI自動化診断</div>'
+      +'<div class="ph" id="cs-ai" style="font-size:13px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="5" width="14" height="14" rx="2.5"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9.5 2v3M14.5 2v3M9.5 19v3M14.5 19v3M2 9.5h3M2 14.5h3M19 9.5h3M19 14.5h3"/></svg>AI自動化診断</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">顧客が送った「気になる業務」を踏まえ、AIが業務フロー・ボトルネック・ツール構成・実装手順・削減時間と金額・投資回収まで踏み込んで診断します。結果を確認し、必要なら各施策を「深掘り」して、顧客にフィードバック・提案できます。</div>'
       +'<div id="diag-interests" style="margin-bottom:8px;"></div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
@@ -6524,7 +6586,7 @@
       +'<div class="ph" style="font-size:12.5px;margin-top:16px;display:flex;align-items:center;justify-content:space-between;">この顧客への診断・提案の履歴<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadDiagHistory(\''+custId+'\')">↺ 更新</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">提案・保存した診断結果の一覧です。対応が済んだものは削除して整理できます。</div>'
       +'<div id="diag-history" style="margin-top:4px;">読み込み中...</div>'
-      +'<div class="ph" id="cs-loan" style="font-size:13px;margin-top:18px;">💴 融資ナビ（最適な融資の優先順位）</div>'
+      +'<div class="ph" id="cs-loan" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8.5 8 3.5 4.5L15.5 8"/><path d="M8.5 13.5h7M8.5 16.5h7M12 12.5V18"/></svg>融資ナビ（最適な融資の優先順位）</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">資金の性質を選ぶと、適した融資制度を優先順位つきで提示します。判定は制度の特徴に基づく確定ルール（AIではありません）。最終判断は金融機関・専門家にご確認ください。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
         +'<div><label class="fl">資金使途</label><select id="ln-use" class="inp2"><option value="startup">創業・開業資金</option><option value="working">運転資金（仕入・人件費等）</option><option value="equip">設備投資</option><option value="bridge">補助金・入金までのつなぎ</option><option value="emergency">業績悪化・資金繰り改善</option><option value="ma">M&A・事業承継資金</option><option value="rd">研究開発・新規事業</option></select></div>'
@@ -6535,7 +6597,7 @@
         +'<button class="btn2" onclick="runLoanNav(\''+custId+'\')">診断する</button>'
       +'</div>'
       +'<div id="ln-result" style="margin-top:12px;"></div>'
-      +'<div class="ph" id="cs-meet" style="font-size:13px;margin-top:18px;">📝 議事録（面談メモのAI整形）</div>'
+      +'<div class="ph" id="cs-meet" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a2 2 0 0 1 2.83 2.83L12.5 14.2l-3.6.95.95-3.6z"/></svg>議事録（面談メモのAI整形）</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">面談中のメモを貼り付けて「AIで整形」を押すと、要点・決定事項・ToDo・次回アジェンダに整理します。内容を確認・編集して保存できます。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">'
         +'<div><label class="fl">面談日</label><input id="mn-date" type="date" class="inp2" value="'+new Date().toISOString().slice(0,10)+'"></div>'
@@ -6558,7 +6620,7 @@
         +'<button class="btn2" id="ma2-run" onclick="runMaFor(\''+custId+'\')">AIで提案を作成</button>'
       +'</div>'
       +'<div id="ma2-result" style="margin-top:12px;"></div>'
-      +'<div class="ph" id="cs-value" style="font-size:13px;margin-top:18px;">📈 企業価値診断（EBITDA法・毎月の推移を顧客と共有）</div>'
+      +'<div class="ph" id="cs-value" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 16.5 5.5-5.5 3.5 3.5L21 5"/><path d="M15 5h6v6"/></svg>企業価値診断（EBITDA法・毎月の推移を顧客と共有）</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">診断して保存すると、顧客ダッシュボードの「企業価値」に毎月の推移として表示されます。同じ月に再診断すると上書きされます。※ 簡易試算であり、実際の譲渡価格・買収価格を保証するものではありません。</div>'
       +'<div class="cl-cols">'
       +'<div class="cl-col">'
@@ -6857,7 +6919,7 @@
     var box=$('my-ai-props'); if(!box)return;
     var res=await sb.from('ai_proposals').select('*').eq('customer_id',ME).eq('shared',true).order('created_at',{ascending:false}).limit(10);
     if(res.error || !(res.data||[]).length){ box.innerHTML=''; return; }
-    var h='<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">💡 担当パートナーからの自動化プラン</div>';
+    var h='<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 18h5"/><path d="M10 21h4"/><path d="M8.5 14.5a5.5 5.5 0 1 1 7 0c-.7.6-1 1.4-1 2.2h-5c0-.8-.3-1.6-1-2.2z"/></svg>担当パートナーからの自動化プラン</div>';
     (res.data||[]).forEach(function(p){
       h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:4px 4px;margin-bottom:10px;background:var(--card);">'
         +diagReport(p.result_text||'', null, false)
@@ -7165,7 +7227,7 @@
         +(mr['必要な準備']?'<div style="font-size:11.5px;color:#5A6981;margin-top:3px;">必要な準備：'+esc(mr['必要な準備'])+'</div>':'')
       +'</div>';
     }
-    if(o['顧客への説明文']) h+='<div style="border:1px solid #C9E2D2;background:#F2FBF6;border-radius:10px;padding:10px 12px;margin-top:10px;"><div style="font-size:11px;font-weight:700;color:#27684A;margin-bottom:3px;">📣 顧客への説明（このまま共有できます）</div><div style="font-size:12.5px;color:#18202E;line-height:1.75;">'+esc(o['顧客への説明文'])+'</div></div>';
+    if(o['顧客への説明文']) h+='<div style="border:1px solid #C9E2D2;background:#F2FBF6;border-radius:10px;padding:10px 12px;margin-top:10px;"><div style="font-size:11px;font-weight:700;color:#27684A;margin-bottom:3px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3.5 10.2 15-5.2v14l-15-5.2z"/><path d="M11.6 16.2a3 3 0 0 1-5.5-1.2"/><path d="M20.5 9.5v5"/></svg>顧客への説明（このまま共有できます）</div><div style="font-size:12.5px;color:#18202E;line-height:1.75;">'+esc(o['顧客への説明文'])+'</div></div>';
     h+='<div style="font-size:11px;color:#94A2B6;margin-top:8px;">※ AIによる診断です。最終判断は試算表・決算書の精査と専門家確認が必要です。</div>';
     return h+'</div>';
   }
@@ -7447,7 +7509,7 @@
         +(a.detail?'<div style="font-size:12px;color:#5A6981;margin-top:6px;line-height:1.6;">'+esc(a.detail)+'</div>':'')
         +(a.note?'<div style="font-size:11.5px;color:#8F7230;background:#F8F1DF;border-radius:8px;padding:6px 9px;margin-top:6px;">申し送り：'+esc(a.note)+'</div>':'')
         +'<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap;">'
-          +'<button class="btn2" style="font-size:12px;" onclick="admApproveApp(\''+a.id+'\')">✔ 承認して掲載する</button>'
+          +'<button class="btn2" style="font-size:12px;" onclick="admApproveApp(\''+a.id+'\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m4.5 12.5 5 5 10-11"/></svg>承認して掲載する</button>'
           +'<button class="ghost" style="border:1px solid #E9C9C9;border-radius:8px;padding:6px 12px;font-size:12px;color:#A9403D;" onclick="admRejectApp(\''+a.id+'\')">↩ 差し戻す</button>'
         +'</div></div>';
     });
@@ -7655,9 +7717,9 @@
           +'<span class="tag '+(k.enabled?'green':'gray')+'">'+(k.enabled?'有効':'無効')+'</span>'
           +'<span class="tag gray">'+esc(KB_CATS[k.category]||k.category||'その他')+'</span>'
           +'<span style="font-size:13px;font-weight:600;color:#18202E;flex:1;min-width:140px;">'+esc(k.title||'')+'</span>'
-          +'<button class="ghost" style="font-size:11px;border:1px solid var(--line);border-radius:7px;padding:4px 9px;" onclick="admEditKB(\''+k.id+'\')">✎ 編集</button>'
+          +'<button class="ghost" style="font-size:11px;border:1px solid var(--line);border-radius:7px;padding:4px 9px;" onclick="admEditKB(\''+k.id+'\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18.4 2.6a2 2 0 0 1 2.83 2.83L7.5 19.2l-4.5 1.3 1.3-4.5z"/><path d="m15.5 5.5 3 3"/></svg>編集</button>'
           +'<button class="ghost" style="font-size:11px;border:1px solid var(--line);border-radius:7px;padding:4px 9px;" onclick="admToggleKB(\''+k.id+'\','+(k.enabled?'false':'true')+')">'+(k.enabled?'無効にする':'有効にする')+'</button>'
-          +'<button class="ghost" style="font-size:11px;border:1px solid #E9C9C9;border-radius:7px;padding:4px 9px;color:#A9403D;" onclick="admDelKB(\''+k.id+'\')">✕ 削除</button>'
+          +'<button class="ghost" style="font-size:11px;border:1px solid #E9C9C9;border-radius:7px;padding:4px 9px;color:#A9403D;" onclick="admDelKB(\''+k.id+'\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"/></svg>削除</button>'
         +'</div>'
         +'<div style="font-size:12px;color:#5A6981;margin-top:5px;line-height:1.6;">'+esc(short)+'</div>'
       +'</div>';
@@ -7919,7 +7981,7 @@
       +'<div style="font-size:21px;font-weight:700;color:#18202E;line-height:1.7;margin-top:10px;">社長、こんな<span style="color:#A9403D;">“問題”</span>を<br>抱えていませんか？</div>'
       +'<div style="font-size:13px;color:#5A6981;line-height:1.9;margin-top:12px;">8つの質問に「ある／ない」で答えるだけ。<br>所要時間は約3分です。</div>'
       +'<button class="btn2" style="margin-top:18px;padding:13px 34px;font-size:15px;" onclick="salesStart()">診断をはじめる ▶</button>'
-      +'<div style="margin-top:12px;"><span class="ghost" style="font-size:12px;" onclick="salesPrintSheet()">🖨 紙で使う：診断シートを印刷（PDF保存もできます）</span></div>'
+      +'<div style="margin-top:12px;"><span class="ghost" style="font-size:12px;" onclick="salesPrintSheet()"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 9V3h11v6"/><path d="M6.5 17.5H5a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2h-1.5"/><rect x="6.5" y="14" width="11" height="7" rx="1"/></svg>紙で使う：診断シートを印刷（PDF保存もできます）</span></div>'
       +'<div style="margin-top:18px;text-align:left;border-top:1px dashed #E2E7EF;padding-top:12px;">'
         +'<div style="font-size:11.5px;color:#94A2B6;cursor:pointer;" onclick="salesHint(\'sales-intro-hint\')">💡 パートナー向け：使い方のコツ（タップで開く）</div>'
         +'<div id="sales-intro-hint" class="hidden" style="font-size:11.5px;color:#5A6981;line-height:1.9;margin-top:8px;background:#F8F9FC;border-radius:9px;padding:10px 12px;">'
@@ -8014,7 +8076,7 @@
       +'</div>'
     +'</div>';
     h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">'
-      +'<button class="btn2" style="font-size:12.5px;" onclick="salesPrintResult()">🖨 結果を印刷・PDF保存</button>'
+      +'<button class="btn2" style="font-size:12.5px;" onclick="salesPrintResult()"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 9V3h11v6"/><path d="M6.5 17.5H5a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2h-1.5"/><rect x="6.5" y="14" width="11" height="7" rx="1"/></svg>結果を印刷・PDF保存</button>'
       +'<button style="font-size:12.5px;background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;border-radius:10px;padding:9px 16px;cursor:pointer;" onclick="salesCopyResult()">📋 結果をコピー</button>'
       +'<button style="font-size:12.5px;background:#fff;color:#5A6981;border:1.5px solid #E2E7EF;border-radius:10px;padding:9px 16px;cursor:pointer;" onclick="salesRestart()">↺ もう一度診断する</button>'
       +'<span id="sales-copy-msg" style="font-size:12px;color:#27684A;align-self:center;"></span>'
@@ -8137,7 +8199,7 @@
         +'<div style="font-size:9px;color:#A9403D;font-weight:700;">問題 '+(idx+1)+'｜'+q.ic+' '+esc(q.cat)+'</div>'
         +'<div style="font-size:10.5px;font-weight:700;margin-top:1px;">'+esc(q.q)+'</div>'
         +'<div style="background:#F2F8F4;border:1px solid #CFE3D6;border-radius:6px;padding:4px 8px;margin-top:3px;">'
-          +'<span style="font-size:9.5px;color:#27684A;font-weight:700;">✅ Tsuguならこう解決：'+esc(q.sol)+'</span>'
+          +'<span style="font-size:9.5px;color:#27684A;font-weight:700;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m4.5 12.5 5 5 10-11"/></svg>Tsuguならこう解決：'+esc(q.sol)+'</span>'
           +'<div style="font-size:9px;color:#5A6981;margin-top:1px;">'+esc(q.solDesc)+'　<b>［機能：'+esc(q.feat)+'］</b></div>'
         +'</div>'
       +'</div>';
@@ -8332,7 +8394,7 @@
       +'<span id="obr-msg" style="font-size:12px;align-self:center;line-height:1.6;"></span>'
     +'</div>';
     h+='<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #EDF1F6;">'
-      +'<button class="btn2" style="background:#0E1B33;" onclick="obrPrint(\'all\')">🖨 報告書を印刷（全体）</button>'
+      +'<button class="btn2" style="background:#0E1B33;" onclick="obrPrint(\'all\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 9V3h11v6"/><path d="M6.5 17.5H5a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2h-1.5"/><rect x="6.5" y="14" width="11" height="7" rx="1"/></svg>報告書を印刷（全体）</button>'
       +'<span style="font-size:11px;color:#94A2B6;">個別印刷：</span>'
       +'<button class="btn2" style="'+pbtn+'" onclick="obrPrint(\'value\')">① 企業価値</button>'
       +'<button class="btn2" style="'+pbtn+'" onclick="obrPrint(\'cash\')">② 資金繰り</button>'
@@ -8523,12 +8585,12 @@
     var pbtn='background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;';
     var h='<div style="border:1.5px solid #E4D3A8;background:#FDFAF1;border-radius:12px;padding:14px 15px;">'
       +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
-        +'<span style="font-size:14px;font-weight:700;color:#1E3A66;">📘 導入診断報告書</span>'
+        +'<span style="font-size:14px;font-weight:700;color:#1E3A66;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 19.2A2.8 2.8 0 0 1 6.8 16.4H20"/><path d="M6.8 3H20v18H6.8A2.8 2.8 0 0 1 4 18.2V5.8A2.8 2.8 0 0 1 6.8 3z"/></svg>導入診断報告書</span>'
         +'<span style="margin-left:auto;font-size:10.5px;color:#94A2B6;">'+esc(obrDateJp(OBR_MY.report_date))+'</span>'
       +'</div>'
       +'<div style="font-size:11.5px;color:#8A6A12;line-height:1.7;margin-top:4px;">導入時に担当パートナーが作成した、①企業価値 ②資金繰り ③保険・固定費 ④12ヶ月ロードマップ の診断結果です。</div>'
       +'<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:10px 0 12px;">'
-        +'<button class="btn2" style="background:#0E1B33;" onclick="obrMyPrint(\'all\')">🖨 印刷・PDF保存（全体）</button>'
+        +'<button class="btn2" style="background:#0E1B33;" onclick="obrMyPrint(\'all\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 9V3h11v6"/><path d="M6.5 17.5H5a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2h-1.5"/><rect x="6.5" y="14" width="11" height="7" rx="1"/></svg>印刷・PDF保存（全体）</button>'
         +'<button class="btn2" style="'+pbtn+'" onclick="obrMyPrint(\'value\')">① 企業価値</button>'
         +'<button class="btn2" style="'+pbtn+'" onclick="obrMyPrint(\'cash\')">② 資金繰り</button>'
         +'<button class="btn2" style="'+pbtn+'" onclick="obrMyPrint(\'ins\')">③ 保険棚卸し</button>'
