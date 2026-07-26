@@ -2233,18 +2233,6 @@
     return h+'</table>';
   }
 
-  async function saveFinance(){
-    var ym=$('fin-ym').value, rev=$('fin-rev').value, prof=$('fin-prof').value, memo=$('fin-memo').value.trim();
-    var msg=$('fin-msg');
-    if(!ym){ msg.style.color='#A9403D'; msg.textContent='年月を選んでください'; return; }
-    var row={ customer_id:ME, year_month:ym, revenue:(rev===''?null:Number(rev)), profit:(prof===''?null:Number(prof)), memo:(memo||null) };
-    var res=await sb.from('financial_entries').insert(row);
-    if(res.error){ msg.style.color='#A9403D'; msg.textContent='保存エラー：'+res.error.message; return; }
-    $('fin-ym').value=new Date().toISOString().slice(0,7); $('fin-rev').value=''; $('fin-prof').value=''; $('fin-memo').value='';
-    msg.style.color='#27684A'; msg.textContent='保存しました';
-    loadMyFinance(); cfPrefill();
-  }
-
   async function loadMyFinance(){
     var box=$('fin-list'); if(!box)return;
     var res=await sb.from('financial_entries').select('*').eq('customer_id',ME).order('year_month',{ascending:false});
@@ -2411,14 +2399,6 @@
     setTimeout(function(){ var b=$('fin-preview'); if(b) b.innerHTML=''; }, 1500);
     reloadClientFin(custId);
   }
-  async function saveProfileInfo(){
-    var c=$('pi-company').value.trim(), n=$('pi-contact').value.trim();
-    var res=await sb.from('profiles').update({ company_name:(c||null), contact_name:(n||null) }).eq('id',ME);
-    var msg=$('pi-msg'); if(!msg)return;
-    if(res.error){ msg.style.color='#A9403D'; msg.textContent='保存エラー：'+res.error.message; return; }
-    msg.style.color='#27684A'; msg.textContent='保存しました';
-  }
-
   function actTable(rows, scope){
     if(!rows || !rows.length) return '<div style="font-size:12px;color:#94A2B6;">課題はありません。</div>';
     var h='';
@@ -2440,13 +2420,6 @@
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
     box.innerHTML=actTable(res.data,'me');
     var td=$('todo-list'); if(td) td.innerHTML=todoCards(res.data);
-  }
-  async function addMyAction(){
-    var t=$('act-title').value.trim(), d=$('act-due').value||null;
-    if(!t)return;
-    var res=await sb.from('action_items').insert({ customer_id:ME, title:t, due_date:d, created_by:ME, status:'open' });
-    if(res.error){ alert('追加エラー：'+res.error.message); return; }
-    $('act-title').value=''; $('act-due').value=''; loadMyActions();
   }
   async function reloadClientActions(custId){
     var box=$('cact-list'); if(!box)return;
@@ -3420,7 +3393,7 @@
     var res=await sb.from('monthly_reports').select('*').eq('status','draft').order('created_at',{ascending:false}).limit(50);
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'<br><span style="color:#94A2B6;">（Phase 32のSQL未実施の可能性があります）</span></div>'; return; }
     var drafts=res.data||[];
-    if(!drafts.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">承認待ちのレポートはありません。毎月1日に自動生成されます。</div>'; return; }
+    if(!drafts.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">承認待ちのレポートはありません。新しい下書きが用意されると、ここに表示されます。</div>'; return; }
     var ids=drafts.map(function(d){ return d.customer_id; });
     var pr=await sb.from('profiles').select('id,company_name,email').in('id',ids);
     var nm={}; (pr.data||[]).forEach(function(x){ nm[x.id]=x.company_name||x.email; });
@@ -3459,7 +3432,7 @@
     var res=await sb.from('monthly_reports').select('*').eq('customer_id',ME).eq('status','published').order('report_month',{ascending:false}).limit(12);
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
     var reps=res.data||[];
-    if(!reps.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">公開されたレポートはまだありません。毎月、担当パートナーの確認後にここへ届きます。</div>'; return; }
+    if(!reps.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">公開されたレポートはまだありません。担当パートナーの確認後にここへ届きます。</div>'; return; }
     var h='';
     reps.forEach(function(d,i){
       h+='<div style="border:1px solid #EDF1F6;border-radius:11px;padding:13px 14px;margin-bottom:9px;background:#fff;">'
@@ -3580,14 +3553,6 @@
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'<br><span style="color:#94A2B6;">（Phase22のSQL未実施の可能性があります）</span></div>'; return; }
     box.innerHTML=payTable(res.data,'me',false);
     loadCashStatus();
-  }
-  async function addMyPayment(){
-    var t=$('pay-title').value.trim(), a=$('pay-amount').value, d=$('pay-due').value;
-    if(!t||!d){ alert('内容と支払日を入力してください'); return; }
-    var res=await sb.from('upcoming_payments').insert({ customer_id:ME, title:t, amount:(a===''?0:Number(a)), due_date:d, created_by:ME });
-    if(res.error){ alert('追加エラー：'+res.error.message); return; }
-    $('pay-title').value=''; $('pay-amount').value=''; $('pay-due').value='';
-    loadMyPayments();
   }
   async function loadMyInsurance(){
     var box=$('my-ins'); if(!box)return;
@@ -4868,74 +4833,6 @@
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">'+esc(res.error.message)+'<br><span style="color:#94A2B6;">（Phase27のSQL未実施の可能性があります）</span></div>'; return; }
     box.innerHTML=fundTable(res.data,'own',true);
   }
-  async function addOwnFundItem(){
-    var t=$('of-title').value.trim(), ty=$('of-type').value, a=$('of-amount').value, d=$('of-date').value, n=$('of-note').value.trim();
-    var msg=$('of-msg');
-    if(!t){ if(msg){msg.style.color='#A9403D'; msg.textContent='案件名を入力してください';} return; }
-    var res=await sb.from('funding_roadmap_items').insert({ customer_id:ME, source_type:ty, title:t, amount:(a===''?0:Number(a)), target_date:(d||null), note:(n||null), created_by:ME });
-    if(res.error){ if(msg){msg.style.color='#A9403D'; msg.textContent='登録エラー：'+res.error.message+'（Phase27のSQL未実施の可能性があります）';} return; }
-    $('of-title').value=''; $('of-amount').value=''; $('of-date').value=''; $('of-note').value='';
-    if(msg){msg.style.color='#27684A'; msg.textContent='登録しました';}
-    loadOwnFunding();
-  }
-  function ownFundPanelHtml(title, desc){
-    return '<div class="panel" id="sec-myfund"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">'+title+'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadOwnFunding()">↺ 更新</span></div>'
-      +'<div style="font-size:12px;color:#94A2B6;margin:0 0 8px;">'+desc+'</div>'
-      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
-        +'<div><label class="fl">手段</label><select id="of-type" class="inp2">'+fundTypeOptions()+'</select></div>'
-        +'<div style="flex:1;min-width:160px;"><label class="fl">案件名</label><input id="of-title" class="inp2" style="width:100%;" placeholder="例：IT導入補助金 2026"></div>'
-        +'<div><label class="fl">金額（万円）</label><input id="of-amount" type="number" class="inp2" placeholder="例 450"></div>'
-        +'<div><label class="fl">目標日（任意）</label><input id="of-date" type="date" class="inp2"></div>'
-        +'<div style="flex:1;min-width:140px;"><label class="fl">メモ（任意）</label><input id="of-note" class="inp2" style="width:100%;" placeholder="例：採択発表9月予定"></div>'
-        +'<button class="btn2" onclick="addOwnFundItem()">登録</button>'
-      +'</div>'
-      +'<div id="of-msg" style="font-size:12px;margin-top:6px;"></div>'
-      +'<div id="own-fund-list" style="margin-top:8px;">読み込み中...</div>'
-    +'</div>';
-  }
-  async function loadFundingPipeline(){
-    var box=$('adm-fund'); if(!box)return;
-    var r=await Promise.all([
-      sb.from('funding_roadmap_items').select('*').order('updated_at',{ascending:false}),
-      sb.from('profiles').select('id,email,company_name,role')
-    ]);
-    if(r[0].error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">'+esc(r[0].error.message)+'<br><span style="color:#94A2B6;">（Phase26のSQL未実施の可能性があります）</span></div>'; return; }
-    var items=r[0].data||[]; var profs={}; (r[1].data||[]).forEach(function(p){ profs[p.id]=p; });
-    if(!items.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">調達案件はまだありません。パートナーが顧客詳細から登録すると、ここに全社のパイプラインが表示されます。</div>'; return; }
-    var active=items.filter(function(i){ return i.status!=='見送り'; });
-    var sumAll=active.reduce(function(a,i){ return a+Number(i.amount||0); },0);
-    var sumDone=items.filter(function(i){ return i.status==='実行済'; }).reduce(function(a,i){ return a+Number(i.amount||0); },0);
-    var sumProg=items.filter(function(i){ return i.status==='申請中'||i.status==='審査中'||i.status==='承認'; }).reduce(function(a,i){ return a+Number(i.amount||0); },0);
-    function fchip(l,v,c){ return '<div style="flex:1 1 130px;min-width:130px;background:#F8F9FC;border:1px solid #EDF1F6;border-radius:11px;padding:10px 14px;"><div style="font-size:11px;color:#5A6981;">'+l+'</div><div style="font-size:17px;font-weight:700;color:'+c+';margin-top:2px;">'+v+'</div></div>'; }
-    var h='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">'
-      +fchip('案件数（見送り除く）', active.length+'件', '#1E3A66')
-      +fchip('調達予定総額', sumAll.toLocaleString('ja-JP')+'万円', '#2C5DA8')
-      +fchip('申請〜承認中', sumProg.toLocaleString('ja-JP')+'万円', '#C39B3F')
-      +fchip('実行済', sumDone.toLocaleString('ja-JP')+'万円', '#27684A')
-    +'</div>';
-    h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">';
-    FUND_STATUS.forEach(function(st){ var n=items.filter(function(i){return i.status===st;}).length; if(n) h+='<span style="font-size:11px;color:'+fundColor(st)+';border:1px solid '+fundColor(st)+'44;border-radius:99px;padding:3px 10px;">'+st+' '+n+'</span>'; });
-    h+='</div>';
-    var roleCnt={customer:0,consultant:0,admin:0};
-    items.forEach(function(i){ var rr=(profs[i.customer_id]||{}).role||'customer'; roleCnt[rr]=(roleCnt[rr]||0)+1; });
-    h+='<div style="font-size:11px;color:#5A6981;margin-bottom:8px;">区分別：顧客 '+(roleCnt.customer||0)+'件 ／ パートナー '+(roleCnt.consultant||0)+'件 ／ 運営 '+(roleCnt.admin||0)+'件</div>';
-    h+='<table class="ft"><tr><th>区分</th><th>対象</th><th>手段</th><th>案件名</th><th style="text-align:right;">金額(万円)</th><th>目標日</th><th>状態（変更可）</th></tr>';
-    items.forEach(function(i){
-      var pr=profs[i.customer_id]||{};
-      var rl=pr.role==='admin'?'運営':(pr.role==='consultant'?'パートナー':'顧客');
-      var rc=pr.role==='admin'?'#C39B3F':(pr.role==='consultant'?'#2C5DA8':'#5A6981');
-      h+='<tr><td><span style="font-size:10px;font-weight:600;color:'+rc+';border:1px solid '+rc+'55;border-radius:99px;padding:2px 8px;white-space:nowrap;">'+rl+'</span></td>'
-        +'<td style="font-weight:600;color:#1E3A66;">'+esc(pr.company_name||pr.email||'-')+'</td>'
-        +'<td style="color:#5A6981;">'+esc(i.source_type||'')+'</td>'
-        +'<td>'+esc(i.title)+(i.note?'<div style="font-size:10px;color:#94A2B6;">'+esc(i.note)+'</div>':'')+'</td>'
-        +'<td style="text-align:right;font-weight:600;">'+Number(i.amount||0).toLocaleString('ja-JP')+'</td>'
-        +'<td style="color:#5A6981;">'+esc(i.target_date||'-')+'</td>'
-        +'<td>'+fundStatusSelect(i.id, i.status, 'adm')+'</td></tr>';
-    });
-    h+='</table>';
-    box.innerHTML=h;
-  }
-
   // ---- 資金見通しの共通計算 ----
   function cfProject(snap, pays){
     var today=new Date(); var todayS=today.toISOString().slice(0,10);
@@ -7038,56 +6935,6 @@
       + defs.map(function(d){ return st(d[0],d[1],d[2],d[3],d[4],d[5]); }).join(ar)
       +'</div>';
   }
-  function vjCalc(){ var total=num('vj-auto')*12+num('vj-ins'); var el=$('vj-total'); if(el) el.textContent=Math.round(total).toLocaleString('ja-JP')+' 万円/年'; }
-  function goMa(){ var t=$('ma-profit')||$('ma-run'); if(t) t.scrollIntoView({behavior:'smooth',block:'start'}); }
-  function insCalc(){
-    var box=$('ins-result'); if(!box)return;
-    var rate=num('tax-rate')/100; if(rate<=0) rate=0.34;
-    var debt=num('bp-debt'), fixed=num('bp-fixed'), months=num('bp-months');
-    var bpNeed=debt + fixed*(months/12);
-    var bpReady=num('bp-cash')+num('bp-exist');
-    var bpGap=Math.max(0, bpNeed - bpReady);
-    var bpGapTax=(rate<1)? bpGap/(1-rate) : bpGap;
-    var emp=num('ec-emp'), premTotal=num('ec-total'), death=num('ec-death');
-    var loss=premTotal*0.5, taxSave=loss*rate, taxSave5=taxSave*5, asset5=premTotal*0.5*5;
-    var ind=($('pc-industry')&&$('pc-industry').value)||'';
-    function rowL(l,v,c){ return '<div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0;border-top:1px solid #EDF1F6;"><span style="color:#5A6981;">'+l+'</span><span style="color:'+(c||'#18202E')+';font-weight:600;text-align:right;">'+v+'</span></div>'; }
-    function sec(t){ return '<div style="font-weight:600;font-size:13px;color:#1E3A66;margin:12px 0 2px;">'+t+'</div>'; }
-    var h='<div style="border:1px solid #E2E7EF;border-radius:11px;padding:16px;">'
-      +sec('生命保険（事業保障）／実効税率 '+(rate*100).toFixed(0)+'%')
-      +rowL('必要額（負債＋固定費×月数）', yenMan(bpNeed))
-      +rowL('準備済み（現預金＋既存保険）', yenMan(bpReady))
-      +rowL('不足（税引前）', yenMan(bpGap))
-      +rowL('法人税を考慮した必要保障額', yenMan(bpGapTax), '#2C5DA8')
-      +'<div style="font-size:11px;color:#94A2B6;margin-top:4px;line-height:1.6;">死亡保険金は法人の益金となり課税対象のため、不足額 ÷ (1−実効税率) で割り戻しています。死亡退職金・弔慰金（損金）で相殺できる場合は必要額は小さくなります。</div>'
-      +sec('養老保険（福利厚生プラン）／向こう5年・税率一定の前提')
-      +rowL('加入人数', emp+' 人')
-      +rowL('1人あたり死亡退職金（メモ）', yenMan(death))
-      +rowL('年間保険料総額', yenMan(premTotal))
-      +rowL('うち損金算入（1/2）', yenMan(loss))
-      +rowL('年間の節税（繰延べ）目安', yenMan(taxSave), '#27684A')
-      +rowL('5年間の累計節税目安', yenMan(taxSave5), '#27684A')
-      +rowL('5年後の簿価積立累計（退職金原資の目安）', yenMan(asset5))
-      +'<div style="font-size:11px;color:#94A2B6;margin-top:4px;line-height:1.6;">1/2損金は普遍的加入(全員または合理的基準)が要件。節税は繰延べで、満期金・解約返戻金は受取時に益金になります。一人あたり保険料は年齢・性別で変わるため、保険料は総額で入力しています。</div>'
-      +'</div>';
-    h+=pcDiagnosis(ind);
-    h+='<div style="font-size:11px;color:#94A2B6;margin-top:8px;line-height:1.7;">※ 概算・一般的な考え方です。正式な金額・税務上の取扱い・必要な補償範囲・商品選定は、個別事情をふまえた専門的な確認が必要です。</div>';
-    window.__insSummary='【保険試算サマリー】 実効税率'+(rate*100).toFixed(0)+'%'
-      +'\n[事業保障] 必要額'+yenMan(bpNeed)+' / 準備済み'+yenMan(bpReady)+' / 法人税考慮後の必要保障額'+yenMan(bpGapTax)
-      +'\n[養老保険(向こう5年)] 加入'+emp+'人 / 年間保険料総額'+yenMan(premTotal)+' / 年間節税'+yenMan(taxSave)+' / 5年累計節税'+yenMan(taxSave5)+' / 5年積立'+yenMan(asset5)
-      +'\n[損害保険] 業種: '+(ind||'未選択');
-    h+='<button class="btn2" style="margin-top:10px;" onclick="shareInsurance()">この試算結果をパートナーに共有</button><div id="ins-share-msg" style="font-size:12px;margin-top:8px;"></div>';
-    var vi=$('vj-ins'); if(vi){ vi.value=Math.round(taxSave); vjCalc(); }
-    box.innerHTML=h;
-  }
-  async function shareInsurance(){
-    var msg=$('ins-share-msg');
-    var sum=window.__insSummary||'';
-    if(!sum) return;
-    var res=await sb.from('insurance_results').insert({ customer_id:ME, summary:sum });
-    if(res.error){ if(msg){ msg.style.color='#A9403D'; msg.textContent='共有エラー：'+res.error.message; } return; }
-    if(msg){ msg.style.color='#27684A'; msg.textContent='試算結果をパートナーに共有しました。'; }
-  }
   var INDUSTRY_PC={
     '製造業':[['火災保険（建物・機械設備）','工場・設備の火災や自然災害による損害'],['機械保険・動産総合','機械の偶発的な事故・故障'],['生産物賠償責任(PL)','製品の欠陥による対人・対物事故'],['休業損害（利益保険）','操業停止中の利益・固定費'],['労災上乗せ（使用者賠償）','従業員の労災に対する企業の賠償']],
     '建設業':[['建設工事保険・組立保険','工事中の建物・資材の損害'],['請負業者賠償責任','工事に起因する第三者への対人・対物事故'],['労災上乗せ（使用者賠償）','現場での労災・重大事故'],['業務用自動車保険','車両・重機の事故']],
@@ -7123,14 +6970,6 @@
     {v:'',l:'手入力'}
   ];
   function taxPresetOptions(){ return TAX_PRESETS.map(function(p){ return '<option value="'+p.v+'">'+p.l+'</option>'; }).join(''); }
-  function pcDiagnosis(ind){
-    if(!ind || !INDUSTRY_PC[ind]) return '<div style="border:1px dashed #E2E7EF;border-radius:11px;padding:14px 16px;margin-top:12px;font-size:12px;color:#94A2B6;">損害保険の診断：上の「業種」を選んで計算すると、押さえるべき保障範囲を表示します。</div>';
-    var rows=INDUSTRY_PC[ind];
-    var h='<div style="border:1px solid #E2E7EF;border-radius:11px;padding:16px;margin-top:12px;"><div style="font-weight:600;font-size:13px;color:#1E3A66;margin-bottom:8px;">損害保険：押さえるべき保障範囲（'+esc(ind)+'）</div>';
-    rows.forEach(function(r){ h+='<div style="padding:7px 0;border-top:1px solid #EDF1F6;"><div style="font-size:13px;font-weight:600;color:#18202E;">'+esc(r[0])+'</div><div style="font-size:12px;color:#5A6981;margin-top:2px;">'+esc(r[1])+'</div></div>'; });
-    return h+'</div>';
-  }
-
   // ---- 資金繰りシミュレーター・資金調達ロードマップ ----
   function cfClamp(x){ return Math.max(0,Math.min(100,x)); }
   function cfPrefillFor(custId){
@@ -7468,23 +7307,6 @@
     if(res.error){ if(msg){ msg.style.color='#A9403D'; msg.textContent='共有エラー：'+res.error.message; } return; }
     if(msg){ msg.style.color='#27684A'; msg.textContent=rows.length+'件をパートナーに共有しました。'; }
   }
-  async function runMa(){
-    var btn=$('ma-run'), result=$('ma-result');
-    var profit=$('ma-profit').value.trim(), biz=$('ma-biz').value.trim(), goal=$('ma-goal').value;
-    if(!biz){ result.innerHTML='<div style="font-size:12px;color:#A9403D;">事業内容・強みを入力してください。</div>'; return; }
-    btn.disabled=true; var ot=btn.textContent; btn.textContent='AIが分析中...';
-    result.innerHTML=tsgLoad();
-    var sys='あなたは中小企業のM&A・事業承継に詳しいアドバイザーです。黒字企業が利益・余剰資金をM&A（会社や事業の買収）で活かす現実的な方向性を提案します。スモールM&Aを前提に過大な案は避けます。出力は指定のJSON配列のみ、前置き・コードフェンス禁止。';
-    var usr='企業情報：\n年間利益・余剰資金: '+(profit||'（未記入）')+'万円\n事業内容・強み: '+biz+'\nM&Aで実現したいこと: '+goal+'\n\nこの企業が利益をM&Aで活かす方向性を3〜5件、現実的な順に提案してください。\n\n必ず次の形式のJSON配列のみを出力：\n[{"方向性":"...","ターゲット像":"...","期待シナジー":"...","予算感":"例: 数百万〜数千万円","留意点":"..."}]';
-    try{
-      var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:[{role:'user',content:usr}], model:'claude-sonnet-4-6', max_tokens:2000 } });
-      if(res.error){ result.innerHTML='<div style="font-size:12px;color:#A9403D;">呼び出しエラー：'+esc(res.error.message||String(res.error))+'</div>'; }
-      else if(res.data && res.data.ok===false){ result.innerHTML='<div style="font-size:12px;color:#A9403D;">'+esc(res.data.error||'エラー')+'</div>'; }
-      else { result.innerHTML=maCards((res.data&&res.data.text)||'', true); }
-    }catch(e){ result.innerHTML='<div style="font-size:12px;color:#A9403D;">エラー：'+esc(String((e&&e.message)||e))+'</div>'; }
-    btn.disabled=false; btn.textContent=ot;
-  }
-
   // ===== Tsugu投資・融資・M&A（顧客間マッチング・Phase41） =====
   var MK_FILTER='all', MKB_FILTER='open', MK_CACHE=[], MKB_CACHE=[];
   function mkSideLabel(s, kind){ if(kind==='mna') return s==='raise'?'譲渡（売り手）':'譲受（買い手）'; return s==='raise'?'資金を集めたい':'資金を出したい'; }
@@ -7493,19 +7315,6 @@
   function mkAmount(a){ return (a===null||a===undefined||a==='')?'金額応相談':(Number(a).toLocaleString('ja-JP')+'万円'); }
   function setMkFilter(f,el){ MK_FILTER=f; var b=$('mk-filterbar'); if(b){Array.prototype.forEach.call(b.querySelectorAll('.sbtn'),function(x){x.classList.remove('on');});} if(el)el.classList.add('on'); renderMarket(); }
   function setMkbFilter(f,el){ MKB_FILTER=f; var b=$('mkb-filterbar'); if(b){Array.prototype.forEach.call(b.querySelectorAll('.sbtn'),function(x){x.classList.remove('on');});} if(el)el.classList.add('on'); renderMarketBroker(); }
-  async function postListing(){
-    var msg=$('mk-post-msg');
-    var side=$('mk-side').value, kind=$('mk-kind').value, title=($('mk-title')||{}).value.trim();
-    var amount=$('mk-amount').value, industry=($('mk-industry')||{}).value.trim(), terms=($('mk-terms')||{}).value.trim(), detail=($('mk-detail')||{}).value.trim();
-    var anon=$('mk-anon').checked;
-    if(!title){ if(msg){msg.style.color='#A9403D';msg.textContent='タイトルを入力してください';} return; }
-    var row={ owner_id:ME, side:side, kind:kind, title:title, industry:industry||null, amount:(amount===''?null:Number(amount)), rate:terms||null, detail:detail||null, anonymous:anon, status:'open' };
-    var res=await sb.from('market_listings').insert(row);
-    if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='掲載エラー：'+res.error.message+'（Phase41のSQL未実施の可能性があります）';} return; }
-    if(msg){msg.style.color='#27684A';msg.textContent='掲載しました。';}
-    $('mk-title').value=''; $('mk-amount').value=''; $('mk-industry').value=''; $('mk-terms').value=''; $('mk-detail').value='';
-    loadMyListings(); loadMarket();
-  }
   async function loadMyListings(){
     var box=$('market-mine'); if(!box)return;
     var res=await sb.from('market_listings').select('*').eq('owner_id',ME).order('created_at',{ascending:false});
@@ -7529,11 +7338,6 @@
       +'</div>';
     });
     box.innerHTML=h;
-  }
-  async function setListingStatus(id,status){
-    var res=await sb.from('market_listings').update({status:status}).eq('id',id);
-    if(res.error){ alert('更新エラー：'+res.error.message); return; }
-    loadMyListings(); loadMarket();
   }
   async function loadMarket(){
     var box=$('market-open'); if(!box)return;
@@ -7559,14 +7363,6 @@
       +'</div>';
     });
     box.innerHTML=h;
-  }
-  async function sendMarketInterest(id){
-    var inp=$('mki-'+id), msg=$('mkim-'+id);
-    var message=(inp&&inp.value.trim())||'';
-    var res=await sb.from('market_interests').insert({ listing_id:id, from_id:ME, message:(message||null) });
-    if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='送信エラー：'+res.error.message;} return; }
-    if(msg){msg.style.color='#27684A';msg.textContent='関心を伝えました。担当パートナーが橋渡しします。';}
-    if(inp)inp.value='';
   }
   async function loadMarketBroker(){
     var box=$('market-broker'); if(!box)return;
