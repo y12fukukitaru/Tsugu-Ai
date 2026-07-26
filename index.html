@@ -504,6 +504,41 @@
   /* AI結果カードのゴールド差し色 */
   .ai-card{background:#fff;border:1px solid #E2E7EF;border-top:2.5px solid #cfa860;border-radius:10px;}
   body.dark .ai-card{background:#141924;border-color:#2A3345;border-top-color:#cfa860;}
+
+  /* ===================================================================
+     線アイコン（LP: Tsugu LP/index.html と同じ仕様）
+     ナビの絵文字をやめ、24viewBox / stroke1.5 / currentColor の線画に統一。
+     ※ 書式（フォント・角丸・余白・影）は従来のまま。ここはアイコンの見た目だけを定義する。
+     =================================================================== */
+  .ico{width:1em;height:1em;display:block;flex-shrink:0;stroke:currentColor;fill:none;}
+  .ni-ic{color:rgba(255,255,255,.82);}
+  .ni-ic .ico{width:16.5px;height:16.5px;}
+  .ni:hover .ni-ic{color:#fff;}
+  .ni.active .ni-ic{color:var(--deep);}           /* 金地の上は紺の線に反転 */
+  body.dark .ni.active .ni-ic{color:#0C0F16;}
+  .cl-ni .ci{color:rgba(255,255,255,.8);}
+  .cl-ni .ci .ico{width:14.5px;height:14.5px;}
+  .cl-ni:hover .ci{color:#fff;}
+  .cl-ni.on .ci{color:var(--deep);}
+  body.dark .cl-ni.on .ci{color:#0C0F16;}
+  .cl-tile .ti{color:var(--navy);display:flex;align-items:center;justify-content:center;}
+  .cl-tile .ti .ico{width:21px;height:21px;}
+  .cl-tile.on .ti{color:#fff;}
+  .cl-edit-row .ico{width:15px;height:15px;color:var(--muted);}
+  /* 見出し内のアイコン：文字と同じ色・同じ行に収め、書式（サイズ・字間・余白）は変えない */
+  .ph .ico,.mt .ico{display:inline-block;width:1.02em;height:1.02em;vertical-align:-.15em;margin-right:.4em;}
+  /* アイコンと見出し文字を1つの塊に。display:flex の見出しで両者が引き離されるのを防ぐ */
+  .ph-t{display:inline-block;}
+  /* ボタン・チップ・小見出しの中のアイコン：文字と同じ大きさ・同じ色で行内に収める */
+  .btn2 .ico,.ghost .ico,.sbtn .ico,.ico.inl{display:inline-block;width:1em;height:1em;vertical-align:-.14em;margin-right:.34em;}
+  /* AI相談の「例文」チップ：モード切替ではなく入力のきっかけなので、選択状態を持たない控えめな見た目 */
+  .ai-sugrow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;align-items:center;}
+  .ai-sug{font-family:inherit;font-size:11.5px;line-height:1.4;color:var(--muted);background:transparent;
+    border:1px dashed var(--line);border-radius:99px;padding:5px 11px;cursor:pointer;text-align:left;
+    transition:border-color .15s,color .15s,background .15s;}
+  .ai-sug:hover{border-style:solid;border-color:var(--blue);color:var(--blue);background:var(--soft);}
+  .ai-sug::before{content:'+';margin-right:5px;opacity:.55;font-weight:600;}
+  body.dark .ai-sug:hover{background:var(--soft);}
 </style>
 </head>
 <body>
@@ -1824,7 +1859,7 @@
     var eff = (r==='admin') ? (VIEWAS==='fde'?'consultant':(VIEWAS==='customer'?'customer':'admin')) : r;
     window.__prof=prof; window.__email=email||''; window.__role=r;
     applyDisplayPrefs();
-    SEC_MSGS=[]; SEC_MODE='経営';
+    SEC_MSGS=[];
     var rb=$('app-role'); rb.textContent=roleLabel(r); rb.style.background=roleColor(r); rb.style.color='#fff';
     $('app-email').textContent=email||'';
     var dr=$('dw-role'); if(dr){ dr.textContent=roleLabel(r); dr.style.background=roleColor(r); dr.style.color='#fff'; }
@@ -1934,8 +1969,8 @@
           +'</div>'
           +'<div id="market-open" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-sec"><div class="ph">🪄 パートナーAI（24時間いつでも相談）</div>'
-          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">担当パートナーへのメッセージとは別に、AIに24時間いつでも相談できます。日程・タスク整理、文章作成、調べ物、経営の壁打ちなどにどうぞ。</div>'
+        +'<div class="panel" id="sec-sec"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 1.8 4.9 4.9 1.8-4.9 1.8L12 16.9l-1.8-4.9L5.3 10.2l4.9-1.8z"/><path d="m18.5 15.5.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>パートナーAI（24時間いつでも相談）</span></div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">担当パートナーへのメッセージとは別に、AIに24時間いつでも相談できます。分野を選ぶ必要はありません。資金繰り・税務・労務・採用・値上げ・資金調達・事業承継／M&amp;Aまで、経営のことなら何でもそのままお尋ねください。</div>'
           + secModesHtml()
           +'<div id="sec-log" class="ai-panelbox" style="max-height:300px;overflow:auto;padding:12px;margin-bottom:10px;"><div style="font-size:12px;color:#94A2B6;">例：「来期の経営計画づくりの進め方を相談したい」「取引先へのお礼メールを作って」</div></div>'
           +'<div style="display:flex;gap:8px;align-items:flex-end;">'
@@ -2139,35 +2174,35 @@
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:14px;line-height:1.7;">目的に合わせて4つのシミュレーターをご利用ください。結果は印刷／PDFで顧客への提示・専門家への引き継ぎ資料になります。</div>'
           +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
             +'<div style="border:1px solid #E5EEF8;border-radius:11px;padding:13px 15px;background:#fff;display:flex;flex-direction:column;">'
-              +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;">🧮 相続・贈与シミュレーター</div>'
+              +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4.5" y="3" width="15" height="18" rx="2.5"/><path d="M8 7.5h8"/><path d="M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg>相続・贈与シミュレーター</div>'
               +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.65;flex:1;">法定相続分・保険非課税枠・暦年贈与加算（2024年改正対応）・相続時精算課税・配偶者軽減・小規模宅地・遺留分・二次相続までを1画面で試算。案件保存・JSON入出力対応。</div>'
               +'<button class="btn2" style="width:100%;" onclick="openSozoku()">相続・贈与シミュレーターを開く ↗</button>'
             +'</div>'
             +'<div style="border:1px solid #E5EEF8;border-radius:11px;padding:13px 15px;background:#fff;display:flex;flex-direction:column;">'
-              +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;">🧭 事業承継・株対策シミュレーター</div>'
+              +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m15.8 8.2-2 5.6-5.6 2 2-5.6z"/></svg>事業承継・株対策シミュレーター</div>'
               +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.65;flex:1;">M&Aを含む4つの承継の道、株対策（種類株式・金庫株・事業承継税制）、遺留分の概算、少数株主・"変な主張"への対応までを横断で整理し、専門家への引き継ぎサマリーを作成。</div>'
               +'<button class="btn2" style="width:100%;background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;" onclick="openKnowledgePage(\'tsugu-succession-form.html\')">事業承継・株対策シミュレーターを開く ↗</button>'
             +'</div>'
             +'<div style="border:1px solid #E5EEF8;border-radius:11px;padding:13px 15px;background:#fff;display:flex;flex-direction:column;">'
-              +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;">🏥 医療法人 持分シミュレーター</div>'
+              +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 21h18"/><path d="M5 21V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v15"/><path d="M12 8v6M9 11h6"/></svg>医療法人 持分シミュレーター</div>'
               +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.65;flex:1;">出資持分の評価・払戻請求権を出資者ごとに概算し、相続税・払戻リスクを診断。認定医療法人制度（持分なし移行・認定期限2029/12/31）や退職金・保険による対策設計へつなげます。</div>'
               +'<button class="btn2" style="width:100%;" onclick="openKnowledgePage(\'tsugu-medical-equity.html\')">持分シミュレーターを開く ↗</button>'
             +'</div>'
             +'<div style="border:1px solid #E5EEF8;border-radius:11px;padding:13px 15px;background:#fff;display:flex;flex-direction:column;">'
-              +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;">💼 役員退職金シミュレーター</div>'
+              +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="7" width="19" height="13" rx="2"/><path d="M8.5 7V5.5A2 2 0 0 1 10.5 3.5h3a2 2 0 0 1 2 2V7"/><path d="M2.5 12.5h19"/></svg>役員退職金シミュレーター</div>'
               +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.65;flex:1;">功績倍率法による適正額の目安、退職所得課税（控除・2分の1・分離課税）を通した手取り額、法人側の損金効果までを一度に試算。保険による原資準備・持分対策との連動設計に。</div>'
               +'<button class="btn2" style="width:100%;background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;" onclick="openKnowledgePage(\'tsugu-retirement.html\')">退職金シミュレーターを開く ↗</button>'
             +'</div>'
           +'</div>'
         +'</div>'
-        +'<div class="panel" id="sec-billpay"><div class="ph">💳 お支払い（プラットフォーム利用料）</div>'
+        +'<div class="panel" id="sec-billpay"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/><path d="M6.5 14.5h3"/></svg>お支払い（プラットフォーム利用料）</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">月額利用料（基本料＋顧問先数に応じた加算）のお支払いはこちらから。決済はStripeの安全なページで行われ、カード情報が当社のサーバーに保存されることはありません。</div>'
           +'<div id="billpay-links">読み込み中...</div>'
           +'<div class="ph" style="font-size:13px;margin-top:16px;">お支払い履歴</div>'
           +'<div id="billpay-history" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-sec"><div class="ph">🪄 AI秘書（業務の相談相手）</div>'
-          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">提案資料の文面づくり、面談準備、調べ物、考えの壁打ちなどを相談できます。</div>'
+        +'<div class="panel" id="sec-sec"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 1.8 4.9 4.9 1.8-4.9 1.8L12 16.9l-1.8-4.9L5.3 10.2l4.9-1.8z"/><path d="m18.5 15.5.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>AI秘書（業務の相談相手）</span></div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">分野を選ばずに相談できます。提案資料の文面づくり、面談準備、決算書の見方、税務・労務・資金調達・M&amp;Aの論点整理まで、そのままの言葉でどうぞ。</div>'
           + secModesHtml()
           +'<div id="sec-log" class="ai-panelbox" style="max-height:300px;overflow:auto;padding:12px;margin-bottom:10px;"><div style="font-size:12px;color:#94A2B6;">例：「医療法人オーナー向けの初回面談の流れを整理して」</div></div>'
           +'<div style="display:flex;gap:8px;align-items:flex-end;">'
@@ -7251,21 +7286,67 @@
 
   // ---- AI秘書チャット ----
   var SEC_MSGS=[];
-  var SEC_MODE='経営';
-  var SEC_PROMPTS={
-    '経営':'あなたは中小企業の経営者を支える有能な経営アドバイザー兼秘書です。意思決定・段取り・文章作成・経営の壁打ちを、簡潔で実務的に日本語で支援します。不確実なことは確認を促します。',
-    '税務':'あなたは中小企業の税務に明るいアドバイザーです。法人税・消費税・節税・申告の一般的な考え方を簡潔に日本語で説明します。具体的な申告・判断は税理士の確認を促します。',
-    '労務':'あなたは中小企業の労務・人事に明るいアドバイザーです。就業規則・社会保険・採用・労働時間・助成金の一般的な考え方を簡潔に日本語で説明します。個別判断は社労士の確認を促します。',
-    'マーケ':'あなたは中小企業のマーケティングに明るいアドバイザーです。集客・販促・SNS・価格設計・顧客維持の実務的な打ち手を簡潔に日本語で提案します。',
-    '資金調達':'あなたは中小企業の資金調達に明るいアドバイザーです。融資・補助金・助成金・資金繰りの考え方と準備を簡潔に日本語で説明します。個別の可否は金融機関等の確認を促します。',
-    'M&A':'あなたは中小企業のM&A・事業承継に明るいアドバイザーです。買収・売却・承継の進め方や留意点を簡潔に日本語で説明します。実行は専門家の関与を前提とします。'
-  };
+  // 分野の切り替えは廃止し、経営全般をひとつの相談窓口として扱う。
+  // 旧6分野（経営／税務／労務／マーケ／資金調達／M&A）の守備範囲と、
+  // 各分野にあった「専門家の確認を促す」注意書きはこの1本に統合している（省略しないこと）。
+  var SEC_SYS=[
+    'あなたは日本の中小企業の経営者を支える、有能な経営アドバイザー兼秘書です。',
+    '経営全般（意思決定・計画づくり・段取り・文章作成・壁打ち）に加えて、税務、労務・人事、マーケティング、資金調達、M&A・事業承継まで、分野を問わず一つの窓口として相談に応じます。',
+    '回答は日本語で、簡潔かつ実務的に。抽象論ではなく「次に何をするか」が分かる形で示します。',
+    '前提が足りず答えが大きく変わる場合は、決めつけずに要点を1〜2個だけ質問し直します。',
+    '数字や制度を断定する前に、それが一般論なのか個別事情によるのかを明示します。',
+    '次の分野は必ず専門家の確認を促してください：税額・申告の具体的判断は税理士、就業規則や社会保険の個別判断は社労士、融資の可否や条件は金融機関、M&Aの実行は専門家の関与を前提とします。',
+    '不確実なことを、確からしく語らないでください。'
+  ].join('');
+  // 相談の入口（分野切替ではなく、入力欄に文章を入れるだけの「例文」）
+  function secSuggests(){
+    if(aisecPortal()==='consultant') return [
+      '初回面談の流れを組み立てたい',
+      '決算書から経営課題を洗い出す観点は？',
+      'この提案の切り口を壁打ちしたい',
+      '経営者に響く言い方に直して'
+    ];
+    return [
+      '来期の経営計画の立て方を相談したい',
+      '資金繰りが厳しい。打ち手を整理したい',
+      '後継者がいない。選択肢を知りたい',
+      '値上げを検討している。進め方は？'
+    ];
+  }
   // ===== AI秘書：会話の永続化（localStorage・モード別）＋保存期間 =====
   // パートナーポータルの「AI秘書」と顧客ダッシュボードの「パートナーAI」は同じコードを共用しているため、
   // 保存キーにポータル種別（consultant / customer / admin）を含めて会話を完全に分離する。
   // currentRole() は運営の表示切替（VIEWAS）も考慮して現在のポータルを返す既存関数。
   function aisecPortal(){ try{ return (typeof currentRole==='function')?currentRole():((window.__role)||'customer'); }catch(e){ return (window.__role)||'customer'; } }
-  function aisecKey(mode){ return 'tsugu_aisec_'+((typeof ME!=='undefined'&&ME)?ME:'guest')+'_'+aisecPortal()+'_'+(mode||SEC_MODE); }
+  function aisecBase(){ return 'tsugu_aisec_'+((typeof ME!=='undefined'&&ME)?ME:'guest')+'_'+aisecPortal(); }
+  function aisecKey(){ return aisecBase()+'_all'; }
+  // 旧・分野別キー（統合前の会話を拾い上げるためだけに残す）
+  var SEC_OLD_MODES=['経営','税務','労務','マーケ','資金調達','M&A'];
+  // 分野別に分かれていた会話を1本にまとめる。時系列に並べ直し、重複は落とす。
+  // 統合済みなら何もしない（起動のたびに走っても副作用はない）。
+  function aisecMigrate(){
+    try{
+      var base=aisecBase(), newKey=aisecKey();
+      var merged=[], found=false;
+      SEC_OLD_MODES.forEach(function(m){
+        var k=base+'_'+m, raw=localStorage.getItem(k);
+        if(!raw) return;
+        found=true;
+        try{ var arr=JSON.parse(raw); if(Array.isArray(arr)) merged=merged.concat(arr); }catch(e){}
+        localStorage.removeItem(k);
+      });
+      if(!found) return;
+      try{ var cur=JSON.parse(localStorage.getItem(newKey)||'[]'); if(Array.isArray(cur)) merged=merged.concat(cur); }catch(e){}
+      merged.sort(function(a,b){ return (a&&a.ts||0)-(b&&b.ts||0); });
+      var seen={}, out=[];
+      merged.forEach(function(m){
+        if(!m||!m.content) return;
+        var sig=m.role+'|'+m.ts+'|'+String(m.content).slice(0,40);
+        if(seen[sig]) return; seen[sig]=1; out.push(m);
+      });
+      localStorage.setItem(newKey, JSON.stringify(out));
+    }catch(e){}
+  }
   function aisecRetentionDays(){ try{ var d=parseInt((loadPrefs().aisecRetention)||30,10); return (d===7||d===15||d===30)?d:30; }catch(e){ return 30; } }
   // 指定キーの会話に保存期間を適用して返す（キーの形に依存しないため、旧キーもそのまま整理できる）
   function aisecPruneKey(key){
@@ -7278,17 +7359,31 @@
       return keep;
     }catch(e){ return []; }
   }
-  function aisecLoad(mode){ return aisecPruneKey(aisecKey(mode)); }
+  function aisecLoad(){ aisecMigrate(); return aisecPruneKey(aisecKey()); }
   function aisecSave(){
-    try{ var arr=SEC_MSGS.filter(function(m){ return m.content!=='（考え中…）'; }); localStorage.setItem(aisecKey(SEC_MODE), JSON.stringify(arr)); }catch(e){}
+    try{ var arr=SEC_MSGS.filter(function(m){ return m.content!=='（考え中…）'; }); localStorage.setItem(aisecKey(), JSON.stringify(arr)); }catch(e){}
   }
   function aisecPruneAll(){
     try{ var pre='tsugu_aisec_'+((typeof ME!=='undefined'&&ME)?ME:'guest')+'_'; for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i); if(k&&k.indexOf(pre)===0) aisecPruneKey(k); } }catch(e){}
   }
-  function restoreSecLog(){ try{ SEC_MSGS=aisecLoad(SEC_MODE); }catch(e){ SEC_MSGS=[]; } renderSecLog(); }
-  function clearSecLog(){ if(!confirm('このAIモードの会話履歴を消去します。よろしいですか？')) return; SEC_MSGS=[]; try{ localStorage.removeItem(aisecKey(SEC_MODE)); }catch(e){} renderSecLog(); }
-  function secModesHtml(){ function b(m){ return '<button class="sbtn'+(m===SEC_MODE?' on':'')+'" onclick="setSecMode(\''+m+'\',this)">'+m+'</button>'; } return '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;align-items:center;">'+b('経営')+b('税務')+b('労務')+b('マーケ')+b('資金調達')+b('M&A')+'<span style="flex:1;"></span><button class="ghost" style="font-size:11px;padding:4px 9px;border:1px solid var(--line);border-radius:7px;" onclick="clearSecLog()" title="このモードの会話履歴を消去">🗑 履歴消去</button></div>'; }
-  function setSecMode(m,el){ aisecSave(); SEC_MODE=m; var box=el&&el.parentNode; if(box){ Array.prototype.forEach.call(box.querySelectorAll('.sbtn'),function(b){ b.classList.remove('on'); }); } if(el) el.classList.add('on'); SEC_MSGS=aisecLoad(m); renderSecLog(); }
+  function restoreSecLog(){ try{ SEC_MSGS=aisecLoad(); }catch(e){ SEC_MSGS=[]; } renderSecLog(); }
+  function clearSecLog(){ if(!confirm('この会話履歴を消去します。よろしいですか？')) return; SEC_MSGS=[]; try{ localStorage.removeItem(aisecKey()); }catch(e){} renderSecLog(); }
+  // 分野チップは廃止。代わりに「例文を入力欄に入れるだけ」のきっかけを置く（会話は1本のまま）
+  function secModesHtml(){
+    var chips=secSuggests().map(function(s){
+      return '<button class="ai-sug" onclick="secAsk(this)" data-q="'+escA(s)+'">'+esc(s)+'</button>';
+    }).join('');
+    return '<div class="ai-sugrow">'+chips
+      +'<span style="flex:1;min-width:0;"></span>'
+      +'<button class="ghost" id="sec-clear" style="font-size:11px;padding:4px 9px;border:1px solid var(--line);border-radius:7px;" onclick="clearSecLog()" title="会話履歴を消去"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3.5 6h17"/><path d="M8.5 6V4.5A1.5 1.5 0 0 1 10 3h4a1.5 1.5 0 0 1 1.5 1.5V6"/><path d="M18.5 6v13a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2V6"/><path d="M10 11v5M14 11v5"/></svg>履歴消去</button></div>';
+  }
+  // 例文は「送信」ではなく「入力欄に入れる」。そのまま送っても、書き換えてから送ってもよい。
+  function secAsk(el){
+    var q=el&&el.getAttribute('data-q'); if(!q) return;
+    var inp=$('sec-input'); if(!inp) return;
+    inp.value=q; inp.focus();
+    try{ inp.setSelectionRange(q.length,q.length); }catch(e){}
+  }
   // ===== AI共通：ローディング表示（見た目のみ。会話データ・送受信処理には一切関与しない）=====
   // 紺の角丸ボックスの中でゴールドの弧だけが回転し、中央の「継」は静止する
   function tsgSpin(sm){ return '<span class="tsg-spin'+(sm?' sm':'')+'" aria-hidden="true"><span class="k">継</span></span>'; }
@@ -7297,7 +7392,7 @@
   function tsgThinking(){ return tsgSpin(true); }
   function renderSecLog(){
     var box=$('sec-log'); if(!box)return;
-    if(!SEC_MSGS.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">例：「来期の経営計画づくりの進め方を相談したい」「取引先へのお礼メールを作って」</div>'; return; }
+    if(!SEC_MSGS.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;line-height:1.8;">経営のことなら分野を問わず相談できます。<br>資金繰り・税務・労務・採用・値上げ・資金調達・事業承継／M&amp;A まで、そのままの言葉でどうぞ。</div>'; return; }
     var h='';
     SEC_MSGS.forEach(function(m){
       var me=m.role==='user';
@@ -7308,20 +7403,30 @@
     });
     box.innerHTML=h; box.scrollTop=box.scrollHeight;
   }
-  function pickModel(text){
+  // ===== モデルの使い分け =====
+  // 分野チップを廃したので、どの分野かではなく「その質問が判断を要するか」で選ぶ。
+  // この製品の本業は経営判断の相談なので、既定は Opus。
+  // Sonnet に落とすのは、判断を含まない短い事務作業（文面づくり・要約・言い換え等）だけ。
+  // 会話が深まっている（往復が続いている）ときは、短い一言でも文脈を踏まえた判断が要るため Opus を維持する。
+  var SEC_CLERICAL=/(メール|文面|挨拶|お礼|案内文|議事録|要約|まとめて|言い換え|書き直|添削|誤字|翻訳|英訳|和訳|タイトル|件名|箇条書き)/;
+  var SEC_JUDGEMENT=/(べき|どう|なぜ|理由|判断|方針|戦略|計画|比較|検討|リスク|課題|改善|選択肢|進め方|優先|いくら|試算|見通し|相続|承継|M&A|融資|資金繰り|節税|解雇|値上げ)/;
+  function pickModel(text, turns){
     var t=text||'';
-    var heavy = t.length>120 || /(戦略|分析|計画|設計|比較|検討|試算|シミュレーション|提案|レビュー|添削|文章|資料|構成|要約|長文|複雑|どうすれば|なぜ|理由|改善|方針|考え方)/.test(t);
-    return heavy ? 'claude-opus-4-8' : 'claude-sonnet-4-6';
+    var deep=(turns||0)>=4;                                   // 往復が続いている＝文脈込みの相談
+    if(deep) return 'claude-opus-4-8';
+    var clerical = SEC_CLERICAL.test(t) && !SEC_JUDGEMENT.test(t) && t.length<=120;
+    return clerical ? 'claude-sonnet-4-6' : 'claude-opus-4-8';
   }
   async function secretarySend(){
     var inp=$('sec-input'); if(!inp)return;
     var t=inp.value.trim(); if(!t)return;
-    var model=pickModel(t);
-    var label=(model.indexOf('opus')>=0)?'Opus（じっくり回答）':'Sonnet（軽快に回答）';
+    var turns=SEC_MSGS.filter(function(m){ return m.role==='user'; }).length;
+    var model=pickModel(t, turns);
+    var label=(model.indexOf('opus')>=0)?'じっくり考えて回答':'すばやく回答';
     SEC_MSGS.push({role:'user',content:t,ts:Date.now()}); inp.value='';
     SEC_MSGS.push({role:'assistant',content:'（考え中…）'}); renderSecLog();
     var btn=$('sec-send'); if(btn)btn.disabled=true;
-    var sys=SEC_PROMPTS[SEC_MODE]||SEC_PROMPTS['経営'];
+    var sys=SEC_SYS;
     var msgs=SEC_MSGS.filter(function(m){return m.content!=='（考え中…）';}).map(function(m){return {role:m.role,content:m.content};});
     try{
       var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:msgs, model:model, max_tokens:1400 } });
