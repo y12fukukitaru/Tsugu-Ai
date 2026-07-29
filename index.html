@@ -388,6 +388,8 @@
   body.dark ::-webkit-scrollbar-track{background:transparent;}
   body.dark ::selection{background:rgba(207,173,98,.32);}
   /* ---- インラインstyleの明色をダーク値へ変換（順序重要：#fff→色付き白の順）---- */
+  /* 印刷物（#sales-print 等）は白い紙が前提なので、置換は画面表示時のみに限定する */
+  @media screen{
   body.dark [style*="background:#fff" i]{background:var(--card)!important;}
   body.dark [style*="background:#FFFBF3" i],body.dark [style*="background:#FFFBF2" i]{background:#272012!important;}
   body.dark [style*="background:#F8F9FC" i],body.dark [style*="background:#FBFCFE" i],body.dark [style*="background:#FAFCFF" i],body.dark [style*="background:#F7F9FC" i],body.dark [style*="background:#F6FAFF" i],body.dark [style*="background:#F2F7FC" i],body.dark [style*="background:#F4F6F9" i],body.dark [style*="background:#EDF1F6" i],body.dark [style*="background: rgb(244, 246, 249)"]{background:var(--soft)!important;}
@@ -412,6 +414,23 @@
   body.dark [style*="solid #F3C9C9" i],body.dark [style*="border-color:#E9C9C9" i],body.dark [style*="border-color:#E3B9B7" i]{border-color:#4E2C2A!important;}
   body.dark [style*="solid #C9E2D2" i]{border-color:#27493C!important;}
   body.dark [style*="solid #2C5DA8" i]{border-color:#4E7FC4!important;}
+  /* ---- 追加分：背景が明色のまま残り、文字色だけ明色化して読めなくなっていた箇所 ---- */
+  body.dark [style*="background:#E8EDF4" i],body.dark [style*="background:#F2F4F6" i],body.dark [style*="background:#F4F7FB" i],body.dark [style*="background:#DFE6EF" i]{background:var(--soft)!important;}
+  body.dark [style*="background:#EFF3FB" i],body.dark [style*="background:#EFF5FC" i],body.dark [style*="background:#F5F9FE" i],body.dark [style*="background:#EAF1FB" i]{background:#182233!important;}
+  body.dark [style*="background:#EFF6F0" i],body.dark [style*="background:#F2F8F4" i],body.dark [style*="background:#E9F5EE" i]{background:#142319!important;}
+  body.dark [style*="background:#FDFAF2" i],body.dark [style*="background:#FDFAF1" i],body.dark [style*="background:#FBF3E0" i]{background:#282112!important;}
+  body.dark [style*="background:#FDF7F6" i],body.dark [style*="background:#FDF6F6" i],body.dark [style*="background:#FBEFEF" i],body.dark [style*="background:#F7E3E2" i]{background:#2A1818!important;}
+  body.dark [style*="linear-gradient(135deg,#F6FAFF" i]{background:linear-gradient(135deg,#182233 0%,#282112 100%)!important;}
+  /* ---- 追加分：暗い文字色がそのまま残り、暗い面に沈んでいた箇所 ---- */
+  body.dark [style*="color:#3A4557" i]{color:#B2BBCB!important;}
+  body.dark [style*="color:#5C4A17" i]{color:#DCC282!important;}
+  /* ---- 追加分：枠線（点線を含む）---- */
+  body.dark [style*="solid #D8DFE8" i],body.dark [style*="solid #DFE6EF" i],body.dark [style*="solid #F3F6FA" i],body.dark [style*="solid #EEF2F7" i],body.dark [style*="solid #C3CFDD" i],body.dark [style*="solid #E8EDF4" i],body.dark [style*="solid #D8E0EC" i],body.dark [style*="dashed #E2E7EF" i],body.dark [style*="dashed #EDF1F6" i]{border-color:var(--line)!important;}
+  body.dark [style*="solid #DDE6F2" i],body.dark [style*="solid #9DB1C9" i],body.dark [style*="dashed #C9D6EA" i]{border-color:#2F3E58!important;}
+  body.dark [style*="solid #ECD9A6" i],body.dark [style*="solid #E4D3A8" i],body.dark [style*="solid #E3D9BE" i]{border-color:#4C3F20!important;}
+  body.dark [style*="solid #BFE2CD" i],body.dark [style*="solid #CFE3D6" i]{border-color:#27493C!important;}
+  body.dark [style*="solid #E6C9C7" i]{border-color:#4E2C2A!important;}
+  }
   /* ===== 可読性向上レイヤー（文字を濃く・大きく／印刷レイアウトは対象外）===== */
   @media screen{
   /* 補足文字の濃度アップ（ライトモード：薄グレー→読める濃度に） */
