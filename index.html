@@ -172,6 +172,9 @@
   .cl-ebtn{border:1px solid var(--line);background:var(--card);color:var(--navy);border-radius:8px;font-size:11px;padding:6px 9px;cursor:pointer;font-family:inherit;flex-shrink:0;}
   .cl-ebtn:disabled{opacity:.3;cursor:default;}
   body.dark .cl-sheet{background:var(--card);}
+  /* 選択中タイルは背景に var(--navy) を使うが、ダークでは --navy が明色に反転して
+     .tl/.ti の #fff と重なり読めなくなるため、選択色を青系に差し替える（.sbtn.on と同じ扱い）*/
+  body.dark .cl-tile.on{background:#2A5488;border-color:#3E6DAE;}
   .dash-sheet-foot{display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--softline);flex-shrink:0;}
   .dash-sheet-foot .sb-out2{flex:1;padding:10px;border:1px solid var(--line);background:var(--soft);color:var(--navy);border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;}
   .dash-sheet-foot .sb-out2:hover{background:var(--softline);}
@@ -421,6 +424,10 @@
   body.dark [style*="background:#FDFAF2" i],body.dark [style*="background:#FDFAF1" i],body.dark [style*="background:#FBF3E0" i]{background:#282112!important;}
   body.dark [style*="background:#FDF7F6" i],body.dark [style*="background:#FDF6F6" i],body.dark [style*="background:#FBEFEF" i],body.dark [style*="background:#F7E3E2" i]{background:#2A1818!important;}
   body.dark [style*="linear-gradient(135deg,#F6FAFF" i]{background:linear-gradient(135deg,#182233 0%,#282112 100%)!important;}
+  /* JS の三項演算子で組み立てられる背景色（成長ロードマップの現在地カード等）*/
+  body.dark [style*="background:#FDF8EC" i]{background:#282112!important;}
+  body.dark [style*="background:#F2FBF5" i]{background:#142319!important;}
+  body.dark [style*="background:#E2E7EF" i]{background:var(--soft)!important;}
   /* ---- 追加分：暗い文字色がそのまま残り、暗い面に沈んでいた箇所 ---- */
   body.dark [style*="color:#3A4557" i]{color:#B2BBCB!important;}
   body.dark [style*="color:#5C4A17" i]{color:#DCC282!important;}
@@ -428,7 +435,7 @@
   body.dark [style*="solid #D8DFE8" i],body.dark [style*="solid #DFE6EF" i],body.dark [style*="solid #F3F6FA" i],body.dark [style*="solid #EEF2F7" i],body.dark [style*="solid #C3CFDD" i],body.dark [style*="solid #E8EDF4" i],body.dark [style*="solid #D8E0EC" i],body.dark [style*="dashed #E2E7EF" i],body.dark [style*="dashed #EDF1F6" i]{border-color:var(--line)!important;}
   body.dark [style*="solid #DDE6F2" i],body.dark [style*="solid #9DB1C9" i],body.dark [style*="dashed #C9D6EA" i]{border-color:#2F3E58!important;}
   body.dark [style*="solid #ECD9A6" i],body.dark [style*="solid #E4D3A8" i],body.dark [style*="solid #E3D9BE" i]{border-color:#4C3F20!important;}
-  body.dark [style*="solid #BFE2CD" i],body.dark [style*="solid #CFE3D6" i]{border-color:#27493C!important;}
+  body.dark [style*="solid #BFE2CD" i],body.dark [style*="solid #CFE3D6" i],body.dark [style*="solid #BFE3CC" i]{border-color:#27493C!important;}
   body.dark [style*="solid #E6C9C7" i]{border-color:#4E2C2A!important;}
   }
   /* ===== 可読性向上レイヤー（文字を濃く・大きく／印刷レイアウトは対象外）===== */
