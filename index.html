@@ -8274,16 +8274,23 @@
   function trKindLabel(k){ return {guide:'ガイド',video:'動画',link:'画面で確認',doc:'資料',quiz:'テスト'}[k]||''; }
 
   // ---- 進捗（localStorage を正、Supabase があれば同期）----
-  var TR_PROG={}, TR_REMOTE=false;
+  // training_progress は旧「認定研修（Phase52）」で作られたテーブルをそのまま使う。
+  // 当時の日時列は done_at。将来 completed_at で作り直された場合にも動くよう、
+  // 読み込み時に実在する列名を拾い、書き込みは列名なし版へ段階的にフォールバックする。
+  var TR_PROG={}, TR_REMOTE=false, TR_TSCOL='done_at';
   function trKey(){ return 'tsugu_training_'+(ME||'guest'); }
   function trSaveLocal(){ try{ localStorage.setItem(trKey(), JSON.stringify(TR_PROG)); }catch(e){} }
+  function trRowTs(x){ return x.done_at || x.completed_at || new Date().toISOString(); }
   async function trLoadProgress(){
     try{ TR_PROG=JSON.parse(localStorage.getItem(trKey())||'{}')||{}; }catch(e){ TR_PROG={}; }
     try{
-      var r=await sb.from('training_progress').select('lesson_id,completed_at').eq('user_id',ME);
+      var r=await sb.from('training_progress').select('*').eq('user_id',ME);
       if(r.error){ TR_REMOTE=false; return; }
       TR_REMOTE=true;
-      (r.data||[]).forEach(function(x){ TR_PROG[x.lesson_id]=x.completed_at||new Date().toISOString(); });
+      (r.data||[]).forEach(function(x){
+        if(x.done_at===undefined && x.completed_at!==undefined) TR_TSCOL='completed_at';
+        TR_PROG[x.lesson_id]=trRowTs(x);
+      });
       trSaveLocal();
     }catch(e){ TR_REMOTE=false; }
   }
@@ -8291,11 +8298,20 @@
     if(TR_PROG[id]) return;
     TR_PROG[id]=new Date().toISOString();
     trSaveLocal();
-    if(TR_REMOTE){
-      try{ await sb.from('training_progress').upsert({ user_id:ME, lesson_id:id, completed_at:TR_PROG[id] },{onConflict:'user_id,lesson_id'}); }catch(e){}
-    }
+    if(TR_REMOTE) trPush(id);
     renderTraining();
     if($('pg-body')) loadPartnerGrowth();
+  }
+  // 日時列の名前・主キーの構成が想定と違っても記録だけは残るように、3段階で試す
+  async function trPush(id){
+    var row={ user_id:ME, lesson_id:id }; row[TR_TSCOL]=TR_PROG[id];
+    try{
+      var a=await sb.from('training_progress').upsert(row,{onConflict:'user_id,lesson_id'});
+      if(!a.error) return;
+      var b=await sb.from('training_progress').upsert({ user_id:ME, lesson_id:id },{onConflict:'user_id,lesson_id'});
+      if(!b.error) return;
+      await sb.from('training_progress').upsert({ user_id:ME, lesson_id:id });
+    }catch(e){}
   }
   function trIsComplete(){ return trLessons().every(function(l){ return !!TR_PROG[l.id]; }); }
 
@@ -8325,7 +8341,8 @@
     +'</div>';
     if(!TR_REMOTE){
       h+='<div style="font-size:11px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:8px 11px;margin-bottom:12px;line-height:1.6;">'
-        +'進捗はこの端末にのみ保存されています。端末をまたいで引き継ぐ・運営が修了を確認できるようにするには、Supabaseで「Phase64」のSQLを実行してください。</div>';
+        +'進捗をサーバーに保存できなかったため、この端末にのみ記録しています（受講は問題なく続けられます）。'
+        +'端末をまたいだ引き継ぎと、運営による修了確認を有効にするには、<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="goSec(\'sec-support\')">運営サポート</span>までご連絡ください。</div>';
     }
     TRAINING.forEach(function(c){
       var cd=c.lessons.filter(function(l){ return !!TR_PROG[l.id]; }).length;
