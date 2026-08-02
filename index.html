@@ -565,6 +565,83 @@
   .ai-sug:hover{border-style:solid;border-color:var(--blue);color:var(--blue);background:var(--soft);}
   .ai-sug::before{content:'+';margin-right:5px;opacity:.55;font-weight:600;}
   body.dark .ai-sug:hover{background:var(--soft);}
+  /* ===== 研修プログラム（Phase64）===== */
+  /* レッスン一覧 */
+  .tr-ch{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden;background:var(--card);}
+  .tr-chh{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;background:var(--soft);}
+  .tr-chh .n{flex-shrink:0;width:24px;height:24px;border-radius:99px;background:var(--navy);color:var(--card);
+    font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+  .tr-chh .t{flex:1;min-width:0;font-size:13.5px;font-weight:700;color:var(--navy);}
+  .tr-chh .s{font-size:11px;color:var(--muted);white-space:nowrap;}
+  .tr-ls{border-top:1px solid var(--softline);}
+  .tr-l{display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:1px solid var(--softline);cursor:pointer;transition:background .15s;}
+  .tr-l:last-child{border-bottom:none;}
+  .tr-l:hover{background:var(--soft);}
+  .tr-l .ck{flex-shrink:0;width:20px;height:20px;border-radius:99px;border:1.5px solid var(--line);
+    display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);}
+  .tr-l.done .ck{background:#27684A;border-color:#27684A;color:#fff;}
+  .tr-l .tt{flex:1;min-width:0;font-size:13px;color:var(--ink);}
+  .tr-l .mt2{font-size:11px;color:var(--muted);white-space:nowrap;}
+  .tr-kind{font-size:10px;border:1px solid var(--line);border-radius:99px;padding:1px 7px;color:var(--muted);white-space:nowrap;}
+  .tr-bar{height:6px;background:var(--softline);border-radius:99px;overflow:hidden;}
+  .tr-bar > i{display:block;height:100%;background:var(--blue);border-radius:99px;transition:width .3s;}
+  /* プレイヤー（自動再生ガイド） */
+  .tg-wrap{background:var(--deep);border-radius:12px;overflow:hidden;}
+  .tg-stage{position:relative;width:100%;aspect-ratio:16/9;background:#F5F7FA;overflow:hidden;
+    font-size:11px;color:#18202E;user-select:none;}
+  .tg-stage *{box-sizing:border-box;}
+  /* 疑似UIの部品（実画面の縮小再現。ダークモードでも見え方を変えないため固定色） */
+  .tg-win{position:absolute;inset:0;display:flex;flex-direction:column;background:#F5F7FA;}
+  .tg-top{height:9%;background:#0E1B33;color:#fff;display:flex;align-items:center;gap:8px;padding:0 12px;font-size:10px;flex-shrink:0;}
+  .tg-body{flex:1;display:flex;min-height:0;}
+  .tg-side{width:23%;background:#fff;border-right:1px solid #E2E7EF;padding:8px 6px;flex-shrink:0;overflow:hidden;}
+  .tg-ni{padding:5px 8px;border-radius:6px;font-size:9.5px;color:#5A6981;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tg-ni.on{background:#EAF0F9;color:#2C5DA8;font-weight:700;}
+  .tg-main{flex:1;padding:10px 12px;overflow:hidden;min-width:0;}
+  .tg-card{background:#fff;border:1px solid #E2E7EF;border-radius:8px;padding:8px 10px;margin-bottom:7px;}
+  .tg-h{font-size:10.5px;font-weight:700;color:#1E3A66;margin-bottom:5px;}
+  .tg-row{display:flex;align-items:center;gap:7px;font-size:9.5px;color:#5A6981;padding:5px 7px;
+    border:1px solid #EDF1F6;border-radius:6px;margin-bottom:4px;background:#fff;}
+  .tg-btn{display:inline-block;background:#1E3A66;color:#fff;font-size:9px;border-radius:6px;padding:4px 9px;}
+  .tg-btn.o{background:#fff;color:#2C5DA8;border:1px solid #2C5DA8;}
+  .tg-mut{font-size:9px;color:#94A2B6;line-height:1.6;}
+  /* スポットライト・カーソル・字幕 */
+  .tg-spot{position:absolute;border:2px solid #C39B3F;border-radius:8px;pointer-events:none;
+    box-shadow:0 0 0 9999px rgba(10,18,32,.42);opacity:0;transition:all .5s cubic-bezier(.4,0,.2,1);}
+  .tg-spot.on{opacity:1;}
+  .tg-cur{position:absolute;width:17px;height:17px;pointer-events:none;opacity:0;z-index:5;
+    transition:transform .55s cubic-bezier(.4,0,.2,1),opacity .3s;}
+  .tg-cur.on{opacity:1;}
+  .tg-cur svg{width:17px;height:17px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));}
+  .tg-ping{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:99px;
+    border:2px solid #C39B3F;pointer-events:none;opacity:0;z-index:4;}
+  .tg-ping.go{animation:tgping .55s ease-out;}
+  @keyframes tgping{0%{opacity:.9;transform:scale(.3);}100%{opacity:0;transform:scale(1.5);}}
+  .tg-cap{position:absolute;left:0;right:0;bottom:0;padding:9px 14px 11px;z-index:6;
+    background:linear-gradient(to top,rgba(8,12,20,.88),rgba(8,12,20,0));
+    color:#fff;font-size:12.5px;line-height:1.65;text-align:center;min-height:44px;
+    display:flex;align-items:flex-end;justify-content:center;}
+  .tg-cap span{max-width:92%;}
+  /* コントロールバー */
+  .tg-ctl{display:flex;align-items:center;gap:9px;padding:8px 11px;background:var(--deep);color:#DCE3EE;font-size:11px;}
+  .tg-ctl button{background:transparent;border:none;color:#DCE3EE;font-family:inherit;font-size:12px;
+    cursor:pointer;padding:4px 7px;border-radius:6px;line-height:1;}
+  .tg-ctl button:hover{background:rgba(255,255,255,.12);}
+  .tg-ctl .seek{flex:1;height:5px;background:rgba(255,255,255,.2);border-radius:99px;cursor:pointer;position:relative;min-width:40px;}
+  .tg-ctl .seek > i{display:block;height:100%;background:var(--gold);border-radius:99px;}
+  .tg-ctl .tm{font-variant-numeric:tabular-nums;white-space:nowrap;opacity:.85;}
+  .tg-chips{display:flex;gap:5px;flex-wrap:wrap;padding:8px 11px 10px;background:var(--deep);}
+  .tg-chip{font-size:10px;color:#B9C5D8;background:rgba(255,255,255,.09);border:none;border-radius:99px;
+    padding:4px 9px;cursor:pointer;font-family:inherit;line-height:1.4;text-align:left;}
+  .tg-chip.on{background:var(--gold);color:#0E1B33;font-weight:700;}
+  @media(max-width:600px){ .tg-stage{font-size:8.5px;} .tg-cap{font-size:11px;} }
+  /* 確認テスト */
+  .tq-opt{display:flex;align-items:flex-start;gap:9px;border:1px solid var(--line);border-radius:9px;
+    padding:9px 12px;margin-bottom:6px;cursor:pointer;font-size:13px;transition:border-color .15s,background .15s;}
+  .tq-opt:hover{border-color:var(--blue);background:var(--soft);}
+  .tq-opt.sel{border-color:var(--blue);background:var(--soft);font-weight:600;}
+  .tq-opt.ok{border-color:#27684A;background:rgba(39,104,74,.09);}
+  .tq-opt.ng{border-color:#A9403D;background:rgba(169,64,61,.09);}
 </style>
 </head>
 <body>
@@ -718,6 +795,18 @@
   </div>
 </div>
 
+<!-- ===== 研修プログラム：レッスン再生（Phase64）===== -->
+<div id="tr-modal" class="modal-back hidden" onclick="if(event.target===this)closeLesson()">
+  <div class="modal rep-sheet" style="max-width:820px;">
+    <div class="rep-bar modal-head">
+      <span class="mt" id="tr-mt">レッスン</span>
+      <span style="flex:1;"></span>
+      <button class="modal-close" onclick="closeLesson()" aria-label="閉じる">×</button>
+    </div>
+    <div id="tr-body" class="modal-body"></div>
+  </div>
+</div>
+
 <script>
   const SUPABASE_URL = 'https://yaururnkxjhtiowkpvyu.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_-k-OPNThdG0uElX0h36eug_oGaCNlL4';
@@ -841,7 +930,7 @@
   function navDefs(r){
     if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
     if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
-    return [['sec-flow','ダッシュボード'],['sec-growth','成長ロードマップ'],['sec-sales','営業ツール'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
+    return [['sec-flow','ダッシュボード'],['sec-growth','成長ロードマップ'],['sec-training','研修プログラム'],['sec-sales','営業ツール'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
   function effectiveNav(r){
@@ -888,6 +977,7 @@
     shieldCheck:'<path d="M12 21.5s7.5-3.8 7.5-9.5V5.2L12 2.5 4.5 5.2v6.8c0 5.7 7.5 9.5 7.5 9.5z"/><path d="m9 11.6 2.1 2.1 4-4.3"/>',
     megaphone:'<path d="m3.5 10.2 15-5.2v14l-15-5.2z"/><path d="M11.6 16.2a3 3 0 0 1-5.5-1.2"/><path d="M20.5 9.5v5"/>',
     life:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.8"/><path d="m5.6 5.6 3.7 3.7M14.7 14.7l3.7 3.7M14.7 9.3l3.7-3.7M5.6 18.4l3.7-3.7"/>',
+    play:'<rect x="2.5" y="4" width="19" height="14" rx="2.5"/><path d="m10.5 8.5 4.5 2.5-4.5 2.5z"/><path d="M8 21h8"/>',
     up:'<path d="m6.5 13.5 5.5-5.5 5.5 5.5"/><path d="m6.5 19 5.5-5.5 5.5 5.5"/>',
     pin:'<path d="M12 16.5V22"/><path d="M8.5 3h7l-1 6 2.8 3.2v1.3H6.7v-1.3L9.5 9z"/>',
     checks:'<path d="m3 6.5 1.5 1.5L7.5 5"/><path d="m3 13 1.5 1.5L7.5 11.5"/><path d="m3 19.5 1.5 1.5L7.5 18"/><path d="M11 6.5h10M11 13h10M11 19.5h10"/>',
@@ -928,7 +1018,8 @@
     'sec-cash':'wallet','sec-value':'trend','sec-ai':'cpu','sec-ins':'shieldCheck','sec-ma':'link','sec-market':'market','sec-sec':'sparkle',
     'sec-clients':'building','sec-sales':'clipboard','sec-pdca':'cycle','sec-madeals':'folder','sec-knowledge':'book','sec-sozoku':'calc',
     'sec-kpi':'chart','sec-risk':'alert','sec-fde':'users','sec-cust':'building','sec-exec':'flag',
-    'sec-billing':'card','sec-billpay':'card','sec-audit':'shield','sec-broadcast':'megaphone','sec-support':'life','sec-growth':'up'
+    'sec-billing':'card','sec-billpay':'card','sec-audit':'shield','sec-broadcast':'megaphone','sec-support':'life','sec-growth':'up',
+    'sec-training':'play'
   };
   function niHtml(id,label,drawer){
     var ic=icoSvg(NAV_ICON[id]||'');
@@ -2038,6 +2129,12 @@
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;line-height:1.7;">認定パートナーのレベルと特典です。顧問契約数・HD化（M&A成約）実績に応じてレベルが上がり、外注費率と紹介先への割引が拡大します。実績はあなたの担当データから自動集計しています（正式なレベル認定は運営が行います）。</div>'
           +'<div id="pg-body">読み込み中...</div>'
         +'</div>'
+        +'<div class="panel" id="sec-training">'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="4" width="19" height="14" rx="2.5"/><path d="m10.5 8.5 4.5 2.5-4.5 2.5z"/><path d="M8 21h8"/></svg>研修プログラム</span>'
+            +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadTraining()">↺ 更新</span></div>'
+          +'<div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.7;">認定パートナーとして活動を始めるための研修です。各レッスンを再生し、最後の<b style="color:var(--navy);">理解度チェック</b>に合格すると修了となり、成長ロードマップの <b style="color:var(--navy);">Lv.1 アソシエイト</b> の条件を満たします。進捗は自動で保存され、途中で閉じても続きから再開できます。</div>'
+          +'<div id="tr-body-list">読み込み中...</div>'
+        +'</div>'
         +'<div class="panel" id="sec-clients">'
           +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">顧客管理'
             +'<span style="display:flex;gap:8px;align-items:center;">'
@@ -2279,7 +2376,7 @@
     window.__eff=eff;
     $('app-body').innerHTML=view;
     if(eff==='customer'){ loadDashHero(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
-    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); }
+    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); }
     else { loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); loadAdmInquiries(); loadSupportKB(); }
     startNotifPolling(eff);
     navSpyInit();
@@ -7958,6 +8055,572 @@
     +'<div style="font-size:11px;color:#94A2B6;margin-top:10px;">※ 顧客・パートナー数は登録データ、調達は「経営計画」の資金調達リスト（状況が実行/完了/着金のもの）から自動集計。カードを押すと関連タブに移動します。</div>';
     box.innerHTML=h;
   }
+  // ============================================================
+  // ===== 研修プログラム（Phase64）=====
+  // 実写動画がまだ無いため、レッスンの中身は「自動再生ガイド」（疑似UIをアニメーションで
+  // 操作しながら字幕で解説する、動画の代替）で構成している。
+  // 実写／画面録画が用意できたら、レッスン定義の kind を 'video' にして url を入れるだけで
+  // 差し替わる（YouTube・Vimeo の埋め込みURL、または mp4 の直リンクに対応）。
+  // ============================================================
+
+  // ---- 疑似UI（ステージ）の部品。実画面の縮小再現なので、ダークモードでも色は固定 ----
+  var TG_NAV=[['flow','ダッシュボード'],['growth','成長ロードマップ'],['training','研修プログラム'],
+    ['sales','営業ツール'],['clients','顧客管理'],['pdca','課題PDCA'],['madeals','M&A案件'],
+    ['reports','レポート承認'],['knowledge','ナレッジ'],['sozoku','各種シミュレーター'],['sec','AI秘書']];
+  // on＝選択中のナビキー、main＝右側の本文HTML
+  function tgShell(on, main){
+    var nav=TG_NAV.map(function(x){
+      return '<div class="tg-ni'+(x[0]===on?' on':'')+'" data-t="nav-'+x[0]+'">'+esc(x[1])+'</div>';
+    }).join('');
+    return '<div class="tg-win">'
+      +'<div class="tg-top"><b style="letter-spacing:.06em;">TsuguAI</b><span style="opacity:.6;">パートナーポータル</span></div>'
+      +'<div class="tg-body"><div class="tg-side">'+nav+'</div><div class="tg-main">'+main+'</div></div>'
+    +'</div>';
+  }
+  function tgCard(title, inner, t){
+    return '<div class="tg-card"'+(t?' data-t="'+t+'"':'')+'>'+(title?'<div class="tg-h">'+esc(title)+'</div>':'')+inner+'</div>';
+  }
+  function tgRow(left, right, t){
+    return '<div class="tg-row"'+(t?' data-t="'+t+'"':'')+'><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+left+'</span>'+(right||'')+'</div>';
+  }
+
+  // ---- レッスン定義 ----
+  // kind: 'guide'（自動再生ガイド）/ 'video'（URL埋め込み）/ 'link'（アプリ内の該当画面へ）
+  //       / 'doc'（同梱HTMLを別タブ）/ 'quiz'（理解度チェック）
+  var TRAINING=[
+  { n:1, title:'はじめに（TsuguAIの考え方）', lessons:[
+    { id:'t1-1', title:'TsuguAIとは：キャッシュベース思考', min:3, kind:'guide',
+      desc:'「売るため」ではなく「顧客のキャッシュを増やすため」に動く。この一点が提案のすべての起点になります。',
+      stage:function(p){
+        if(p==='flow'){
+          return tgShell('flow',
+            tgCard('価値の流れ（顧客への提案軸）',
+              '<div style="display:flex;gap:4px;align-items:stretch;">'
+              +['①現状把握','②AI・自動化','③コスト削減','④余力が生まれる','⑤次の投資（M&A）'].map(function(s,i){
+                return '<div data-t="st'+(i+1)+'" style="flex:1;border:1px solid #E2E7EF;border-radius:6px;padding:6px 4px;text-align:center;font-size:8.5px;color:#1E3A66;background:#fff;line-height:1.4;">'+esc(s)+'</div>';
+              }).join('<div style="display:flex;align-items:center;color:#B7C4D6;font-size:9px;">→</div>')
+              +'</div>','flowcard')
+            +tgCard('キャッシュベース思考',
+              '<div class="tg-mut" data-t="cbt">提案の良し悪しは「顧客の現金がいくら増えたか」で測る。<br>商品を売った金額ではなく、残ったキャッシュで評価する。</div>'));
+        }
+        return tgShell('flow',
+          tgCard('よくある提案', '<div class="tg-mut" data-t="bad">「この商品が良いので入りませんか？」<br>→ 手数料は入るが、顧客の現金は減る。次の提案が続かない。</div>','badcard')
+          +tgCard('TsuguAIの提案', '<div class="tg-mut" data-t="good">「いまの固定費のここが重い。ここを削ると年◯万円残ります」<br>→ 顧客の現金が増える。増えた分が次の投資の原資になる。</div>','goodcard'));
+      },
+      scenes:[
+        { t:5, chip:'導入', cap:'このレッスンでは、TsuguAIが大切にしている「キャッシュベース思考」をお伝えします。' },
+        { t:6, chip:'よくある提案', focus:'badcard', cap:'金融や保険の提案でよくあるのが、商品を起点にした会話です。売れても顧客の現金は減ります。' },
+        { t:6, chip:'TsuguAIの提案', focus:'goodcard', cap:'TsuguAIは逆から入ります。まず現金がどこで減っているかを見つけ、そこを減らします。' },
+        { t:5, pane:'flow', chip:'価値の流れ', focus:'flowcard', cap:'この考え方を5つのステップに整理したものが「価値の流れ」です。' },
+        { t:4, pane:'flow', chip:'①現状把握', focus:'st1', click:true, cap:'①現状把握。財務と資金繰りを可視化し、現金が減っている場所を特定します。' },
+        { t:4, pane:'flow', chip:'②AI・自動化', focus:'st2', click:true, cap:'②AI・自動化。人手でやっている作業を減らし、時間と人件費を浮かせます。' },
+        { t:4, pane:'flow', chip:'③コスト削減', focus:'st3', click:true, cap:'③コスト削減。保険・固定費・調達条件を見直し、毎月の流出を止めます。' },
+        { t:4, pane:'flow', chip:'④余力', focus:'st4', click:true, cap:'④余力。ここで初めて、顧客の手元に自由に使えるお金が生まれます。' },
+        { t:5, pane:'flow', chip:'⑤次の投資', focus:'st5', click:true, cap:'⑤次の投資。増えた余力をM&Aや設備に回し、企業価値そのものを上げていきます。' },
+        { t:6, pane:'flow', chip:'まとめ', focus:'cbt', cap:'提案に迷ったら、この問いに戻ってください。「これで顧客の現金は増えるか？」——増えないなら提案しない。それがTsuguAIの基準です。' }
+      ] },
+    { id:'t1-2', title:'パートナーの役割と報酬・ランクの仕組み', min:3, kind:'guide',
+      desc:'何をすればランクが上がり、外注費率がどう変わるのかを確認します。',
+      stage:function(){
+        function lv(n,nm,cond,fee,off,st){
+          return '<div data-t="lv'+n+'" style="flex:1;min-width:0;border:1px solid #E2E7EF;border-radius:7px;padding:7px 5px;text-align:center;background:#fff;">'
+            +'<div style="display:inline-block;background:'+(st==='now'?'#27684A':(st==='next'?'#C39B3F':'#94A2B6'))+';color:#fff;font-size:8px;font-weight:700;border-radius:99px;padding:1px 7px;">Lv.'+n+'</div>'
+            +'<div style="font-size:9.5px;font-weight:700;color:#18202E;margin-top:4px;">'+esc(nm)+'</div>'
+            +'<div style="font-size:8px;color:#94A2B6;margin-top:2px;line-height:1.45;">'+esc(cond)+'</div>'
+            +'<div style="font-size:8px;color:#1E3A66;margin-top:4px;border:1px solid #EDF1F6;border-radius:5px;padding:3px 4px;line-height:1.5;">外注費率 <b>'+fee+'</b><br>紹介先 <b>'+off+'</b></div>'
+          +'</div>';
+        }
+        return tgShell('growth',
+          tgCard('パートナー成長ロードマップ',
+            '<div style="display:flex;gap:4px;align-items:stretch;" data-t="lvrow">'
+            +lv(1,'アソシエイト','研修修了でスタート','個別設定','—','now')
+            +lv(2,'シニア','初の顧問契約','60%','2%OFF','next')
+            +lv(3,'エグゼクティブ','顧問5件＋HD化1件','70%','5%OFF','')
+            +lv(4,'プレミアム','顧問10件＋HD化2件','80%','10%OFF','')
+            +'</div>','lvcard')
+          +tgCard('実績は自動集計されます',
+            tgRow('顧問契約数　＝ 担当顧客として登録されている社数','<span class="tg-btn o">顧客管理</span>','agg1')
+            +tgRow('HD化　＝ 担当顧客のM&A案件がクロージング以降に到達した件数','<span class="tg-btn o">M&A案件</span>','agg2'),'aggcard'));
+      },
+      scenes:[
+        { t:5, chip:'全体像', focus:'lvcard', cap:'パートナーのランクは4段階です。上がるほど外注費率が高くなり、紹介先の顧問料も割引できます。' },
+        { t:6, chip:'Lv.1', focus:'lv1', click:true, cap:'Lv.1 アソシエイトは、この研修を修了した時点からスタートです。いまご覧いただいているレッスンがそれにあたります。' },
+        { t:5, chip:'Lv.2', focus:'lv2', click:true, cap:'Lv.2 シニアは、初めての顧問契約を獲得すると到達します。ここから外注費率60%です。' },
+        { t:6, chip:'Lv.3', focus:'lv3', click:true, cap:'Lv.3 エグゼクティブは顧問契約5件とHD化1件。HD化とは、担当顧客のM&Aが成約まで進んだ状態を指します。' },
+        { t:5, chip:'Lv.4', focus:'lv4', click:true, cap:'Lv.4 プレミアムで外注費率80%、紹介先の顧問料は10%OFFになります。' },
+        { t:7, chip:'自動集計', focus:'aggcard', cap:'これらの実績は、あなたの担当データから自動で集計されます。別途の申請は不要です。ただし正式なレベル認定と外注費率の適用は運営が行います。' },
+        { t:5, chip:'顧問契約数', focus:'agg1', click:true, cap:'顧問契約数は「顧客管理」に登録されている担当顧客の数です。登録漏れがあると実績に反映されません。' },
+        { t:6, chip:'HD化', focus:'agg2', click:true, cap:'HD化は「M&A案件」のステージがクロージング・PMI以降まで進んだ件数です。案件の進捗更新を忘れないでください。' }
+      ] },
+    { id:'t1-3', title:'認定パートナー 禁止行為ガイドライン（必読）', min:8, kind:'link',
+      sec:'sec-knowledge',
+      desc:'保険業法・税理士法・弁護士法などに関わる、してはいけないことの一覧です。ナレッジ画面の赤い枠を開いて最後までお読みください。',
+      note:'内容を読み終えたら、この画面に戻って「読了にする」を押してください。' }
+  ]},
+  { n:2, title:'ポータルの使い方', lessons:[
+    { id:'t2-1', title:'ダッシュボードと「今日やること」', min:3, kind:'guide',
+      desc:'毎朝ここだけ見れば、抜け漏れがなくなるように作られています。',
+      stage:function(){
+        return tgShell('flow',
+          tgCard('今日やること',
+            tgRow('<b style="color:#A9403D;">未読メッセージ</b>　山田製作所　2件','<span class="tg-btn">開く</span>','todo1')
+            +tgRow('<b style="color:#8A6A12;">期日が近い</b>　中村商事　資金繰り表の更新（あと2日）','<span class="tg-btn o">対応</span>','todo2')
+            +tgRow('<b style="color:#5A6981;">接点切れ</b>　佐藤建設　最終接触から45日','<span class="tg-btn o">連絡</span>','todo3'),'todocard')
+          +tgCard('新規開拓の商談に：課題ヒアリング診断',
+            '<div class="tg-mut" style="margin-bottom:5px;">8つの問いかけで潜在ニーズを引き出します。</div>'
+            +'<span class="tg-btn" data-t="salesbtn">▶ 診断をはじめる</span>','salescard'));
+      },
+      scenes:[
+        { t:5, chip:'今日やること', focus:'todocard', cap:'ログインして最初に見るのが、この「今日やること」です。3種類のチェックが自動で走っています。' },
+        { t:6, chip:'返信漏れ', focus:'todo1', click:true, cap:'1つ目は返信漏れ。顧客から届いていて、まだあなたが返していないメッセージが赤で出ます。ここは最優先で消してください。' },
+        { t:5, chip:'期日', focus:'todo2', click:true, cap:'2つ目は期日。資金繰り表の更新や、約束した提出物の期限が近づくと出ます。' },
+        { t:6, chip:'接点切れ', focus:'todo3', click:true, cap:'3つ目は接点切れ。しばらく連絡していない顧客を拾います。解約は、たいていここから静かに始まります。' },
+        { t:5, chip:'営業ツール', focus:'salescard', cap:'その下は営業ツールへの入口です。まだ登録していない見込み客との商談で使います。' },
+        { t:5, chip:'メニュー', focus:'nav-clients', click:true, cap:'左のメニューから各機能に移動します。次のレッスンでは「顧客管理」を見ていきます。' }
+      ] },
+    { id:'t2-2', title:'顧客管理とカルテの書き方', min:4, kind:'guide',
+      desc:'カルテの記録は、あなた自身を守る証跡でもあります。',
+      stage:function(p){
+        if(p==='detail'){
+          return tgShell('clients',
+            tgCard('山田製作所　カルテ',
+              tgRow('意向把握　「借入の返済がきつい。固定費を見直したい」','','k1')
+              +tgRow('提案の根拠　直近3期のPL・資金繰り表より、保険料が売上比4.2%と過大','','k2')
+              +tgRow('説明した内容　解約返戻金の推移と、見直し後の月次キャッシュ差額を提示','','k3')
+              +tgRow('次アクション　5/20 顧問税理士を交えて再面談','','k4'),'kcard'));
+        }
+        return tgShell('clients',
+          tgCard('顧客管理',
+            tgRow('山田製作所　<span style="color:#A9403D;">未読2</span>','<span class="tg-btn o">開く</span>','cl1')
+            +tgRow('中村商事','<span class="tg-btn o">開く</span>','cl2')
+            +tgRow('佐藤建設','<span class="tg-btn o">開く</span>','cl3')
+            +'<div style="margin-top:5px;"><span class="tg-btn" data-t="addbtn">＋ 顧客を追加</span></div>','clcard'));
+      },
+      scenes:[
+        { t:5, chip:'顧客一覧', focus:'clcard', cap:'「顧客管理」には、あなたの担当顧客が並びます。ここに載っている数がそのまま顧問契約数として集計されます。' },
+        { t:7, chip:'顧客を追加', focus:'addbtn', click:true, cap:'新しく担当になったら「＋ 顧客を追加」から、顧客が登録済みのメールアドレスを入力します。顧客側の登録が先に必要な点にご注意ください。' },
+        { t:4, chip:'カルテを開く', focus:'cl1', click:true, cap:'顧客名を押すとカルテが開きます。' },
+        { t:6, pane:'detail', chip:'記録する4点', focus:'kcard', cap:'カルテには、面談のたびに4点を残してください。ここが研修でいちばん大事なところです。' },
+        { t:6, pane:'detail', chip:'①意向把握', focus:'k1', click:true, cap:'ひとつ目、意向把握。顧客が何を望んだのかを、顧客自身の言葉のまま書きます。' },
+        { t:6, pane:'detail', chip:'②提案の根拠', focus:'k2', click:true, cap:'ふたつ目、提案の根拠。なぜその提案に至ったのかを数字で書きます。感想ではなく根拠です。' },
+        { t:6, pane:'detail', chip:'③説明した内容', focus:'k3', click:true, cap:'みっつ目、説明した内容。メリットだけでなく、不利になりうる点を説明したことも書き残します。' },
+        { t:5, pane:'detail', chip:'④次アクション', focus:'k4', click:true, cap:'よっつ目、次アクションと期日。これが「今日やること」の期日チェックに乗ります。' },
+        { t:8, pane:'detail', chip:'まとめ', focus:'kcard', cap:'記録のない提案は禁止行為です。後から「言った・言わない」になったとき、あなたを守るのはこのカルテだけです。面談の当日中に書いてください。' }
+      ] },
+    { id:'t2-3', title:'月次レポートの承認', min:3, kind:'guide',
+      desc:'あなたが承認して初めて、経営者ダッシュボードにレポートが出ます。',
+      stage:function(){
+        return tgShell('reports',
+          tgCard('月次レポートの承認',
+            tgRow('山田製作所　2026年7月分　<span style="color:#8A6A12;">承認待ち</span>','<span class="tg-btn">確認する</span>','rep1')
+            +tgRow('中村商事　2026年7月分　<span style="color:#27684A;">公開済み</span>','<span class="tg-btn o">表示</span>','rep2'),'repcard')
+          +tgCard('下書きの中身',
+            '<div class="tg-mut" data-t="repdraft">売上・利益・資金繰りの推移は自動生成されます。<br>担当パートナーのコメント欄は空欄です。ここを埋めるのがあなたの仕事です。</div>'
+            +'<div style="margin-top:5px;"><span class="tg-btn" data-t="repok">承認して公開</span></div>','draftcard'));
+      },
+      scenes:[
+        { t:6, chip:'承認待ち', focus:'repcard', cap:'毎月、担当顧客ぶんのレポート下書きがここに溜まります。承認待ちがあるとバッジが出ます。' },
+        { t:5, chip:'下書きを開く', focus:'rep1', click:true, cap:'「確認する」を押すと下書きが開きます。' },
+        { t:7, chip:'コメント欄', focus:'repdraft', cap:'数字の部分は自動生成なので、あなたが作る必要はありません。ただしコメント欄は空です。数字が何を意味するのかを、経営者の言葉で書き足してください。' },
+        { t:7, chip:'承認して公開', focus:'repok', click:true, cap:'「承認して公開」を押すと、その月のレポートが経営者ダッシュボードに表示されます。押すまでは顧客側には何も見えません。' },
+        { t:5, chip:'注意', focus:'repcard', cap:'公開済みになったものは後から差し替えられません。数字とコメントを確認してから押してください。' }
+      ] }
+  ]},
+  { n:3, title:'提案の型', lessons:[
+    { id:'t3-1', title:'課題ヒアリング診断の使い方', min:3, kind:'guide',
+      desc:'新規開拓の商談を、売り込みではなく「問いかけ」から始めるための道具です。',
+      stage:function(){
+        return tgShell('sales',
+          tgCard('課題ヒアリング診断',
+            '<div class="tg-mut" style="margin-bottom:6px;" data-t="q">Q3／8　「毎月の資金繰りに、不安を感じることはありますか？」</div>'
+            +tgRow('よくある','','a1')+tgRow('たまにある','','a2')+tgRow('ない','','a3'),'qcard')
+          +tgCard('診断結果（例）',
+            tgRow('資金繰りの見通しが立っていない　→ 資金繰り表の作成から','<span class="tg-btn o">提案</span>','r1')
+            +tgRow('固定費が売上比で重い　→ 保険・調達条件の見直し','<span class="tg-btn o">提案</span>','r2')
+            +'<div style="margin-top:5px;"><span class="tg-btn o" data-t="printbtn">🖨 シートを印刷</span></div>','rcard'));
+      },
+      scenes:[
+        { t:6, chip:'問いかけ', focus:'qcard', cap:'診断は8つの問いかけで構成されています。画面を見せながらでも、印刷した紙でも進められます。' },
+        { t:7, chip:'売り込まない', focus:'q', cap:'大事なのは、こちらから商品の話をしないことです。問いに答えてもらうだけで、顧客は自分の課題を自分の口で言葉にします。' },
+        { t:6, chip:'診断結果', focus:'rcard', cap:'8問終えると、課題と対応する打ち手が結果として並びます。ここが提案の入口です。' },
+        { t:6, chip:'資金繰り', focus:'r1', click:true, cap:'「資金繰りの見通しが立っていない」なら、いきなり商品ではなく資金繰り表の作成から入ります。' },
+        { t:6, chip:'固定費', focus:'r2', click:true, cap:'「固定費が重い」なら、保険や調達条件の見直しへ。前のレッスンのキャッシュベース思考どおりの順番です。' },
+        { t:5, chip:'紙で使う', focus:'printbtn', click:true, cap:'初回訪問で画面を出しづらいときは、シートを印刷して持参してください。紙のほうが警戒されにくい場面もあります。' }
+      ] },
+    { id:'t3-2', title:'各種シミュレーターの使い分け', min:5, kind:'link',
+      sec:'sec-sozoku',
+      desc:'相続・贈与、事業承継・株対策、医療法人の持分、退職金。4つのシミュレーターを実際に開いて、どの場面で使うかを確認してください。',
+      note:'それぞれのシミュレーターを一度開いて試したら、この画面に戻って「読了にする」を押してください。' },
+    { id:'t3-3', title:'M&A紹介ナレッジ（仲介はせず紹介に徹する）', min:10, kind:'doc',
+      file:'tsugu-ma-knowledge.html',
+      desc:'M&Aは「仲介」ではなく「紹介」に徹します。ティーアップの型とチェックリストを、別タブで最後までお読みください。',
+      note:'読み終えたら、この画面に戻って「読了にする」を押してください。' }
+  ]},
+  { n:4, title:'修了確認', lessons:[
+    { id:'t4-1', title:'理解度チェック（全問正解で修了）', min:5, kind:'quiz',
+      desc:'これまでのレッスンの内容から6問です。間違えても何度でも受け直せます。',
+      qs:[
+        { q:'TsuguAIが提案の良し悪しを測る基準はどれですか。', o:['商品の販売手数料の大きさ','顧客の現金がいくら増えたか','提案した商品の件数','契約までにかかった日数'], a:1 },
+        { q:'「価値の流れ」の正しい順番はどれですか。', o:['①現状把握 → ②AI・自動化 → ③コスト削減 → ④余力 → ⑤次の投資','①コスト削減 → ②現状把握 → ③次の投資 → ④余力 → ⑤AI・自動化','①次の投資 → ②余力 → ③コスト削減 → ④AI・自動化 → ⑤現状把握','①AI・自動化 → ②次の投資 → ③現状把握 → ④コスト削減 → ⑤余力'], a:0 },
+        { q:'面談のたびにカルテへ残すべき内容として、正しくないものはどれですか。', o:['顧客の意向（顧客自身の言葉）','提案の根拠となる数字','説明した内容（不利な点を含む）','他社商品の欠点をまとめた比較メモ'], a:3 },
+        { q:'募集人資格を持たないパートナーがしてよいことはどれですか。', o:['特定の保険商品への加入を勧める','保険の乗換を推奨する','シミュレーターで財務を分析し、実行は有資格の運営担当へ取り次ぐ','顧客に代わって解約手続きを進める'], a:2 },
+        { q:'顧客から「うちの相続税はいくらになりますか」と個別具体的に聞かれました。適切な対応はどれですか。', o:['自分で税額を計算して伝える','一般的な制度の説明にとどめ、顧問税理士または提携税理士へ繋ぐ','申告書の下書きを作って渡す','概算なら問題ないので口頭で金額だけ伝える'], a:1 },
+        { q:'月次レポートについて正しいものはどれですか。', o:['自動生成された時点で経営者ダッシュボードに表示される','パートナーが「承認して公開」を押して初めて顧客に表示される','運営が承認するのでパートナーの操作は不要','コメント欄も自動生成されるため編集は不要'], a:1 }
+      ] }
+  ]}
+  ];
+  function trLessons(){ var a=[]; TRAINING.forEach(function(c){ c.lessons.forEach(function(l){ a.push(l); }); }); return a; }
+  function trFind(id){ var f=null; trLessons().forEach(function(l){ if(l.id===id) f=l; }); return f; }
+  function trKindLabel(k){ return {guide:'ガイド',video:'動画',link:'画面で確認',doc:'資料',quiz:'テスト'}[k]||''; }
+
+  // ---- 進捗（localStorage を正、Supabase があれば同期）----
+  var TR_PROG={}, TR_REMOTE=false;
+  function trKey(){ return 'tsugu_training_'+(ME||'guest'); }
+  function trSaveLocal(){ try{ localStorage.setItem(trKey(), JSON.stringify(TR_PROG)); }catch(e){} }
+  async function trLoadProgress(){
+    try{ TR_PROG=JSON.parse(localStorage.getItem(trKey())||'{}')||{}; }catch(e){ TR_PROG={}; }
+    try{
+      var r=await sb.from('training_progress').select('lesson_id,completed_at').eq('user_id',ME);
+      if(r.error){ TR_REMOTE=false; return; }
+      TR_REMOTE=true;
+      (r.data||[]).forEach(function(x){ TR_PROG[x.lesson_id]=x.completed_at||new Date().toISOString(); });
+      trSaveLocal();
+    }catch(e){ TR_REMOTE=false; }
+  }
+  async function trMarkDone(id){
+    if(TR_PROG[id]) return;
+    TR_PROG[id]=new Date().toISOString();
+    trSaveLocal();
+    if(TR_REMOTE){
+      try{ await sb.from('training_progress').upsert({ user_id:ME, lesson_id:id, completed_at:TR_PROG[id] },{onConflict:'user_id,lesson_id'}); }catch(e){}
+    }
+    renderTraining();
+    if($('pg-body')) loadPartnerGrowth();
+  }
+  function trIsComplete(){ return trLessons().every(function(l){ return !!TR_PROG[l.id]; }); }
+
+  async function loadTraining(){
+    var box=$('tr-body-list'); if(!box) return;
+    await trLoadProgress();
+    renderTraining();
+    // 成長ロードマップ側の「研修修了」表示は進捗の読み込み後でないと確定しない
+    if($('pg-body')) loadPartnerGrowth();
+  }
+  function renderTraining(){
+    var box=$('tr-body-list'); if(!box) return;
+    var all=trLessons(), done=all.filter(function(l){ return !!TR_PROG[l.id]; }).length;
+    var pc=all.length?Math.round(done/all.length*100):0;
+    var h='';
+    // 修了バナー
+    if(trIsComplete()){
+      h+='<div style="border:1.5px solid #CFE3D6;background:rgba(39,104,74,.08);border-radius:12px;padding:14px 16px;margin-bottom:14px;">'
+        +'<div style="font-size:14px;font-weight:700;color:#27684A;">研修修了（Lv.1 アソシエイト の条件を満たしました）</div>'
+        +'<div style="font-size:12px;color:var(--muted);line-height:1.7;margin-top:4px;">修了日：'+esc(String(TR_PROG['t4-1']||'').slice(0,10))+'　'
+        +'正式なレベル認定は運営が行います。反映されない場合は<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="goSec(\'sec-support\')">運営サポート</span>へご連絡ください。</div>'
+      +'</div>';
+    }
+    h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">'
+      +'<div style="flex:1;min-width:160px;"><div class="tr-bar"><i style="width:'+pc+'%;"></i></div></div>'
+      +'<div style="font-size:12px;color:var(--muted);white-space:nowrap;">'+done+' / '+all.length+' レッスン（'+pc+'%）</div>'
+    +'</div>';
+    if(!TR_REMOTE){
+      h+='<div style="font-size:11px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:8px 11px;margin-bottom:12px;line-height:1.6;">'
+        +'進捗はこの端末にのみ保存されています。端末をまたいで引き継ぐ・運営が修了を確認できるようにするには、Supabaseで「Phase64」のSQLを実行してください。</div>';
+    }
+    TRAINING.forEach(function(c){
+      var cd=c.lessons.filter(function(l){ return !!TR_PROG[l.id]; }).length;
+      h+='<div class="tr-ch">'
+        +'<div class="tr-chh" onclick="trToggleCh('+c.n+')">'
+          +'<span class="n">'+c.n+'</span><span class="t">'+esc(c.title)+'</span>'
+          +'<span class="s">'+cd+'/'+c.lessons.length+'</span>'
+          +'<span class="s" id="tr-ar-'+c.n+'">▾</span>'
+        +'</div><div class="tr-ls" id="tr-ls-'+c.n+'">';
+      c.lessons.forEach(function(l){
+        var d=!!TR_PROG[l.id];
+        h+='<div class="tr-l'+(d?' done':'')+'" onclick="openLesson(\''+l.id+'\')">'
+          +'<span class="ck">'+(d?'✓':'')+'</span>'
+          +'<span class="tt">'+esc(l.title)+'</span>'
+          +'<span class="tr-kind">'+trKindLabel(l.kind)+'</span>'
+          +'<span class="mt2">約'+l.min+'分</span>'
+        +'</div>';
+      });
+      h+='</div></div>';
+    });
+    box.innerHTML=h;
+  }
+  function trToggleCh(n){
+    var b=$('tr-ls-'+n), a=$('tr-ar-'+n); if(!b) return;
+    var hid=b.style.display==='none';
+    b.style.display=hid?'':'none';
+    if(a) a.textContent=hid?'▾':'▸';
+  }
+
+  // ---- レッスンを開く ----
+  function closeLesson(){
+    tgStop();
+    var m=$('tr-modal'); if(m){ m.classList.add('hidden'); document.body.style.overflow=''; }
+  }
+  function openLesson(id){
+    var L=trFind(id); if(!L) return;
+    tgStop();
+    var mt=$('tr-mt'); if(mt) mt.textContent=L.title;
+    var body=$('tr-body'); if(!body) return;
+    var h='<div style="font-size:12.5px;color:var(--muted);line-height:1.75;margin-bottom:12px;">'+esc(L.desc||'')+'</div>';
+    if(L.kind==='guide'){
+      h+='<div class="tg-wrap">'
+        +'<div class="tg-stage" id="tg-stage">'
+          +'<div id="tg-scr" style="position:absolute;inset:0;"></div>'
+          +'<div class="tg-spot" id="tg-spot"></div>'
+          +'<div class="tg-ping" id="tg-ping"></div>'
+          +'<div class="tg-cur" id="tg-cur"><svg viewBox="0 0 24 24" fill="#fff" stroke="#0E1B33" stroke-width="1.4" stroke-linejoin="round"><path d="M5 3.2 18.6 12l-5.6.9 2.9 5.9-2.4 1.2-2.9-5.9-4.6 3.4z"/></svg></div>'
+          +'<div class="tg-cap" id="tg-cap"><span></span></div>'
+        +'</div>'
+        +'<div class="tg-ctl">'
+          +'<button id="tg-play" onclick="tgToggle()" title="再生／一時停止">▶</button>'
+          +'<button onclick="tgSkip(-1)" title="前のシーン">⏮</button>'
+          +'<button onclick="tgSkip(1)" title="次のシーン">⏭</button>'
+          +'<div class="seek" id="tg-seek" onclick="tgSeek(event)"><i id="tg-seekbar" style="width:0%;"></i></div>'
+          +'<span class="tm" id="tg-time">0:00 / 0:00</span>'
+          +'<button id="tg-speed" onclick="tgSpeed()" title="再生速度">1.0×</button>'
+        +'</div>'
+        +'<div class="tg-chips" id="tg-chips"></div>'
+      +'</div>';
+      h+='<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6;">画面はTsuguAIの実際のUIを再現したものです。実写の解説動画が用意でき次第、このレッスンは動画に差し替わります。</div>';
+      h+=trDoneBtn(L,'最後まで再生すると自動で修了になります。');
+    } else if(L.kind==='video'){
+      h+=trVideoHtml(L)+trDoneBtn(L,'');
+    } else if(L.kind==='link'){
+      h+='<div style="border:1px solid var(--line);border-radius:11px;padding:14px 16px;background:var(--soft);">'
+        +'<button class="btn2" onclick="trGoSec(\''+L.sec+'\')">該当の画面を開く →</button>'
+        +'<div style="font-size:11.5px;color:var(--muted);margin-top:9px;line-height:1.7;">'+esc(L.note||'')+'</div></div>';
+      h+=trDoneBtn(L,'');
+    } else if(L.kind==='doc'){
+      h+='<div style="border:1px solid var(--line);border-radius:11px;padding:14px 16px;background:var(--soft);">'
+        +'<button class="btn2" onclick="openKnowledgePage(\''+L.file+'\')">資料を別タブで開く ↗</button>'
+        +'<div style="font-size:11.5px;color:var(--muted);margin-top:9px;line-height:1.7;">'+esc(L.note||'')+'</div></div>';
+      h+=trDoneBtn(L,'');
+    } else if(L.kind==='quiz'){
+      h+='<div id="tq-box"></div>';
+    }
+    body.innerHTML=h;
+    var m=$('tr-modal'); if(m){ m.classList.remove('hidden'); document.body.style.overflow='hidden'; }
+    try{ m.scrollTop=0; }catch(e){}
+    if(L.kind==='guide') tgInit(L);
+    if(L.kind==='quiz') tqInit(L);
+  }
+  function trGoSec(sec){ closeLesson(); goSec(sec); }
+  function trDoneBtn(L, hint){
+    var d=!!TR_PROG[L.id];
+    return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;padding-top:13px;border-top:1px solid var(--softline);">'
+      +(d ? '<span style="font-size:13px;font-weight:700;color:#27684A;">✓ 完了しました</span>'
+          : '<button class="btn2" onclick="trMarkDone(\''+L.id+'\');openLesson(\''+L.id+'\');">'+(L.kind==='guide'?'完了にする':'読了にする')+'</button>')
+      +'<span style="font-size:11.5px;color:var(--muted);line-height:1.6;">'+esc(hint||'')+'</span>'
+    +'</div>';
+  }
+  // 実写動画に差し替わったときの埋め込み（YouTube／Vimeo／mp4 直リンク）
+  function trVideoHtml(L){
+    var u=L.url||'';
+    if(/\.mp4($|\?)/i.test(u)){
+      return '<video src="'+escA(u)+'" controls playsinline style="width:100%;border-radius:12px;background:#000;" onended="trMarkDone(\''+L.id+'\')"></video>';
+    }
+    return '<div style="position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#000;">'
+      +'<iframe src="'+escA(u)+'" style="position:absolute;inset:0;width:100%;height:100%;border:0;" allow="accelerometer;autoplay;clipboard-write;encrypted-media;picture-in-picture" allowfullscreen></iframe></div>';
+  }
+
+  // ---- 自動再生ガイドのエンジン ----
+  var TG=null;
+  function tgStop(){ if(TG&&TG.raf){ cancelAnimationFrame(TG.raf); TG.raf=0; } if(TG) TG.playing=false; }
+  function tgTotal(L){ var s=0; L.scenes.forEach(function(x){ s+=x.t; }); return s; }
+  function tgFmt(s){ s=Math.max(0,Math.floor(s)); return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2); }
+  function tgInit(L){
+    TG={ L:L, i:-1, t:0, playing:false, speed:1, pane:null, raf:0, last:0, total:tgTotal(L) };
+    var ch=$('tg-chips');
+    if(ch){
+      ch.innerHTML=L.scenes.map(function(s,i){
+        return '<button class="tg-chip" id="tg-chip-'+i+'" onclick="tgGo('+i+')">'+esc(s.chip||String(i+1))+'</button>';
+      }).join('');
+    }
+    tgGo(0);
+    tgPlay();
+  }
+  function tgRenderPane(p){
+    if(!TG) return;
+    var scr=$('tg-scr'); if(!scr) return;
+    TG.pane=p;
+    scr.innerHTML=TG.L.stage(p);
+  }
+  // シーンを表示（再生位置もそのシーンの先頭に合わせる）
+  function tgGo(i){
+    if(!TG) return;
+    if(i<0) i=0;
+    if(i>=TG.L.scenes.length) i=TG.L.scenes.length-1;
+    var s=TG.L.scenes[i];
+    // 直前までのシーンでpaneが決まる（指定のないシーンは前の画面を引き継ぐ）
+    var pane=null;
+    for(var k=0;k<=i;k++){ if(TG.L.scenes[k].pane!=null) pane=TG.L.scenes[k].pane; }
+    if(pane!==TG.pane || $('tg-scr').innerHTML==='') tgRenderPane(pane);
+    TG.i=i; TG.t=0;
+    var cap=$('tg-cap'); if(cap) cap.innerHTML='<span>'+esc(s.cap||'')+'</span>';
+    for(var j=0;j<TG.L.scenes.length;j++){ var c=$('tg-chip-'+j); if(c) c.classList.toggle('on', j===i); }
+    tgFocus(s);
+    tgTick(0);
+  }
+  function tgFocus(s){
+    var st=$('tg-stage'), spot=$('tg-spot'), cur=$('tg-cur'), ping=$('tg-ping');
+    if(!st||!spot||!cur) return;
+    if(!s.focus){ spot.classList.remove('on'); cur.classList.remove('on'); return; }
+    var el=st.querySelector('[data-t="'+s.focus+'"]');
+    if(!el){ spot.classList.remove('on'); cur.classList.remove('on'); return; }
+    var r=el.getBoundingClientRect(), b=st.getBoundingClientRect();
+    var x=r.left-b.left, y=r.top-b.top;
+    spot.style.left=(x-3)+'px'; spot.style.top=(y-3)+'px';
+    spot.style.width=(r.width+6)+'px'; spot.style.height=(r.height+6)+'px';
+    spot.classList.add('on');
+    var cx=x+r.width-Math.min(28,r.width*0.25), cy=y+r.height/2;
+    cur.style.transform='translate('+cx+'px,'+cy+'px)';
+    cur.classList.add('on');
+    if(s.click&&ping){
+      ping.classList.remove('go');
+      ping.style.left=cx+'px'; ping.style.top=cy+'px';
+      setTimeout(function(){ ping.classList.add('go'); },560);
+    }
+  }
+  function tgElapsed(){
+    if(!TG) return 0;
+    var e=0; for(var k=0;k<TG.i;k++) e+=TG.L.scenes[k].t;
+    return e+TG.t;
+  }
+  function tgTick(dt){
+    if(!TG) return;
+    TG.t+=dt;
+    var s=TG.L.scenes[TG.i];
+    if(TG.t>=s.t){
+      if(TG.i>=TG.L.scenes.length-1){
+        TG.t=s.t; tgStop();
+        var pb=$('tg-play'); if(pb) pb.textContent='↺';
+        trMarkDone(TG.L.id);
+        var body=$('tr-body');
+        if(body && !body.querySelector('#tg-fin')){
+          var fin=document.createElement('div');
+          fin.id='tg-fin';
+          fin.style.cssText='margin-top:12px;border:1.5px solid #CFE3D6;background:rgba(39,104,74,.08);border-radius:11px;padding:11px 14px;font-size:13px;color:#27684A;font-weight:700;';
+          fin.textContent='✓ このレッスンを完了しました';
+          body.appendChild(fin);
+        }
+      } else {
+        var over=TG.t-s.t;
+        tgGo(TG.i+1);
+        TG.t=Math.min(over, TG.L.scenes[TG.i].t);
+      }
+    }
+    var e=tgElapsed(), pc=TG.total?Math.min(100,e/TG.total*100):0;
+    var sb2=$('tg-seekbar'); if(sb2) sb2.style.width=pc+'%';
+    var tm=$('tg-time'); if(tm) tm.textContent=tgFmt(e)+' / '+tgFmt(TG.total);
+  }
+  function tgPlay(){
+    if(!TG||TG.playing) return;
+    // 最後まで再生済みなら頭出ししてから再生
+    if(TG.i===TG.L.scenes.length-1 && TG.t>=TG.L.scenes[TG.i].t) tgGo(0);
+    TG.playing=true; TG.last=0;
+    var pb=$('tg-play'); if(pb) pb.textContent='❚❚';
+    var step=function(ts){
+      if(!TG||!TG.playing) return;
+      if(!$('tg-stage')){ tgStop(); return; }
+      if(!TG.last) TG.last=ts;
+      var dt=Math.min(0.25,(ts-TG.last)/1000)*TG.speed;
+      TG.last=ts;
+      tgTick(dt);
+      if(TG&&TG.playing) TG.raf=requestAnimationFrame(step);
+    };
+    TG.raf=requestAnimationFrame(step);
+  }
+  function tgToggle(){
+    if(!TG) return;
+    if(TG.playing){ tgStop(); var pb=$('tg-play'); if(pb) pb.textContent='▶'; }
+    else tgPlay();
+  }
+  function tgSkip(d){
+    if(!TG) return;
+    var was=TG.playing; tgStop();
+    tgGo(TG.i+d);
+    if(was) tgPlay(); else { var pb=$('tg-play'); if(pb) pb.textContent='▶'; }
+  }
+  function tgSpeed(){
+    if(!TG) return;
+    TG.speed = TG.speed===1?1.5:(TG.speed===1.5?2:1);
+    var b=$('tg-speed'); if(b) b.textContent=TG.speed.toFixed(1)+'×';
+  }
+  function tgSeek(ev){
+    if(!TG) return;
+    var el=$('tg-seek'); if(!el) return;
+    var r=el.getBoundingClientRect();
+    var target=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width))*TG.total;
+    var acc=0, idx=0;
+    for(var k=0;k<TG.L.scenes.length;k++){
+      if(target < acc+TG.L.scenes[k].t){ idx=k; break; }
+      acc+=TG.L.scenes[k].t; idx=k;
+    }
+    var was=TG.playing; tgStop();
+    tgGo(idx);
+    TG.t=Math.max(0,Math.min(TG.L.scenes[idx].t-0.01, target-acc));
+    tgTick(0);
+    if(was) tgPlay(); else { var pb=$('tg-play'); if(pb) pb.textContent='▶'; }
+  }
+
+  // ---- 理解度チェック ----
+  var TQ=null;
+  function tqInit(L){ TQ={ L:L, ans:{}, graded:false }; tqRender(); }
+  function tqRender(){
+    var box=$('tq-box'); if(!box||!TQ) return;
+    var L=TQ.L, h='';
+    L.qs.forEach(function(q,qi){
+      h+='<div style="margin-bottom:18px;">'
+        +'<div style="font-size:13.5px;font-weight:700;color:var(--navy);line-height:1.7;margin-bottom:8px;">Q'+(qi+1)+'．'+esc(q.q)+'</div>';
+      q.o.forEach(function(o,oi){
+        var cls='tq-opt';
+        if(TQ.graded){
+          if(oi===q.a) cls+=' ok';
+          else if(TQ.ans[qi]===oi) cls+=' ng';
+        } else if(TQ.ans[qi]===oi) cls+=' sel';
+        h+='<div class="'+cls+'" onclick="tqPick('+qi+','+oi+')">'
+          +'<span style="flex-shrink:0;color:var(--muted);font-weight:700;">'+'ABCD'.charAt(oi)+'</span>'
+          +'<span style="flex:1;line-height:1.65;">'+esc(o)+'</span>'
+          +(TQ.graded&&oi===q.a?'<span style="color:#27684A;font-weight:700;">正解</span>':'')
+        +'</div>';
+      });
+      h+='</div>';
+    });
+    var answered=L.qs.every(function(q,qi){ return TQ.ans[qi]!=null; });
+    if(!TQ.graded){
+      h+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--softline);">'
+        +'<button class="btn2"'+(answered?'':' disabled style="opacity:.45;cursor:default;"')+' onclick="'+(answered?'tqGrade()':'')+'">採点する</button>'
+        +'<span style="font-size:11.5px;color:var(--muted);">全問に回答すると採点できます。</span></div>';
+    } else {
+      var ok=L.qs.filter(function(q,qi){ return TQ.ans[qi]===q.a; }).length;
+      var pass=(ok===L.qs.length);
+      h+='<div style="padding-top:12px;border-top:1px solid var(--softline);">'
+        +'<div style="border:1.5px solid '+(pass?'#CFE3D6':'#E3B9B7')+';background:'+(pass?'rgba(39,104,74,.08)':'rgba(169,64,61,.08)')+';border-radius:11px;padding:13px 15px;">'
+          +'<div style="font-size:14px;font-weight:700;color:'+(pass?'#27684A':'#A9403D')+';">'+ok+' / '+L.qs.length+' 問正解'+(pass?'　合格です':'　不合格')+'</div>'
+          +'<div style="font-size:12px;color:var(--muted);line-height:1.7;margin-top:4px;">'
+          +(pass?'これで研修は修了です。成長ロードマップの Lv.1 アソシエイト の条件を満たしました。'
+                :'緑の枠が正解です。間違えた設問に対応するレッスンをもう一度ご覧のうえ、再挑戦してください。')+'</div>'
+        +'</div>'
+        +'<div style="margin-top:10px;"><button class="btn2" onclick="tqRetry()"'+(pass?' style="background:var(--card);color:var(--blue);border:1.5px solid var(--blue);"':'')+'>もう一度受ける</button></div>'
+      +'</div>';
+    }
+    box.innerHTML=h;
+  }
+  function tqPick(qi,oi){ if(!TQ||TQ.graded) return; TQ.ans[qi]=oi; tqRender(); }
+  function tqGrade(){
+    if(!TQ) return;
+    TQ.graded=true;
+    var ok=TQ.L.qs.filter(function(q,qi){ return TQ.ans[qi]===q.a; }).length;
+    tqRender();
+    if(ok===TQ.L.qs.length) trMarkDone(TQ.L.id);
+    try{ $('tr-modal').scrollTo({top:$('tr-modal').scrollHeight,behavior:'smooth'}); }catch(e){}
+  }
+  function tqRetry(){ if(!TQ) return; TQ.ans={}; TQ.graded=false; tqRender(); try{ $('tr-modal').scrollTop=0; }catch(e){} }
+
   // ---- パートナー成長ロードマップ（認定レベル）----
   var PG_LEVELS=[
     { lv:1, name:'アソシエイト', cond:'研修修了でスタート', need:{cl:0,hd:0}, fee:'個別設定', off:'—' },
@@ -7989,6 +8652,9 @@
         +'<div style="height:5px;background:#E8EDF4;border-radius:99px;margin-top:2px;"><div style="height:5px;border-radius:99px;background:'+(pc>=100?'#27684A':'#2C5DA8')+';width:'+pc+'%;"></div></div>'
       +'</div>';
     }
+    // Lv.1 の条件は研修修了。ロードマップからも進捗が見えるようにする
+    var trAll=trLessons(), trDone=trAll.filter(function(x){ return !!TR_PROG[x.id]; }).length;
+    var trOk=(trDone===trAll.length);
     var ar='<div style="display:flex;align-items:center;color:#B7C4D6;font-size:16px;">→</div>';
     var cards=PG_LEVELS.map(function(L){
       var done=(L.lv<=lv), isCur=(L.lv===lv+1)||(lv===4&&L.lv===4);
@@ -8007,6 +8673,12 @@
       +'</div>';
     }).join(ar);
     var h='<div style="display:flex;align-items:stretch;gap:6px;flex-wrap:wrap;">'+cards+'</div>';
+    // Lv.1 の前提となる研修の進捗
+    h+='<div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid '+(trOk?'#CFE3D6':'var(--line)')+';background:'+(trOk?'rgba(39,104,74,.08)':'var(--soft)')+';border-radius:11px;padding:11px 14px;">'
+      +'<span style="font-size:13px;color:'+(trOk?'#27684A':'var(--ink)')+';font-weight:'+(trOk?'700':'400')+';">'
+      +(trOk?'研修修了（Lv.1 アソシエイト の条件を満たしています）':'研修プログラム　'+trDone+' / '+trAll.length+' レッスン修了')+'</span>'
+      +(trOk?'':'<button class="btn2" style="padding:6px 13px;font-size:12px;" onclick="goSec(\'sec-training\')">続きから受講する →</button>')
+    +'</div>';
     // 次のレベルまでのサマリー
     if(next){
       var needCl=Math.max(0, next.need.cl-cl), needHd=Math.max(0, next.need.hd-hd);
