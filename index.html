@@ -9784,7 +9784,7 @@
       +'<div id="acct-body">読み込み中...</div>'
     +'</div>';
   }
-  var ACCT={ ym:null, rows:{}, busy:{} };
+  var ACCT={ ym:null, rows:{}, busy:{}, dirty:{}, dup:{} };
   async function loadAcct(){
     var box=$('acct-body'); if(!box) return;
     if(!ACCT.ym) ACCT.ym=prevYM();
@@ -9792,9 +9792,14 @@
     ACCT.rows={};
     try{
       var ids=ACCT_FIRMS.map(function(f){ return f.id; });
-      var r=await sb.from('financial_entries').select('customer_id,year_month,revenue,profit,created_at')
+      var r=await sb.from('financial_entries').select('*')
         .in('customer_id',ids).eq('year_month',ACCT.ym);
-      (r.error?[]:(r.data||[])).forEach(function(x){ ACCT.rows[x.customer_id]=x; });
+      // 同月に複数行あると上書き対象が定まらないので、重複も検知して警告に回す
+      ACCT.dup={};
+      (r.error?[]:(r.data||[])).forEach(function(x){
+        if(ACCT.rows[x.customer_id]) ACCT.dup[x.customer_id]=1;
+        ACCT.rows[x.customer_id]=x;
+      });
     }catch(e){}
     renderAcct();
   }
@@ -9814,35 +9819,87 @@
     });
     h+=list.map(function(f){
       var e=ACCT.rows[f.id], has=!!e;
+      var by=(e&&e.source==='accountant')?'先生の入力':(has?'担当パートナーの入力':'');
       return '<div style="border:1px solid '+(has?'#CFE3D6':'var(--line)')+';background:'+(has?'rgba(39,104,74,.05)':'var(--card)')+';border-radius:11px;padding:12px 14px;margin-bottom:8px;">'
+        // 会社名と対象月を必ず同じ行に置く。スクロール中の取り違えを防ぐため
         +'<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:9px;">'
           +'<b style="font-size:13.5px;color:var(--ink);">'+esc(f.name)+'</b>'
+          +'<span class="tag gold" style="font-size:10.5px;">'+esc(ymJp(ACCT.ym))+'分</span>'
           +(has?'<span class="tag green" style="font-size:10px;">入力済み</span>':'<span class="tag red" style="font-size:10px;">未入力</span>')
-          +(has&&e.created_at?'<span style="font-size:10.5px;color:var(--muted);">'+esc(String(e.created_at).slice(0,10))+'</span>':'')
+          +(by?'<span style="font-size:10.5px;color:var(--muted);">'+esc(by)+(e.created_at?'　'+esc(String(e.created_at).slice(0,10)):'')+'</span>':'')
+          +(ACCT.dup[f.id]?'<span class="tag red" style="font-size:10px;">同月のデータが重複しています</span>':'')
         +'</div>'
         +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
-          +'<div><label class="fl">売上（万円）</label><input id="ac-rev-'+f.id+'" type="number" class="inp2" style="width:130px;" value="'+(has&&e.revenue!=null?e.revenue:'')+'" placeholder="例 1200"></div>'
-          +'<div><label class="fl">営業利益（万円）</label><input id="ac-prof-'+f.id+'" type="number" class="inp2" style="width:140px;" value="'+(has&&e.profit!=null?e.profit:'')+'" placeholder="例 180"></div>'
+          +'<div><label class="fl">売上（万円）</label><input id="ac-rev-'+f.id+'" type="number" class="inp2" style="width:130px;" value="'+(has&&e.revenue!=null?e.revenue:'')+'" placeholder="例 1200" oninput="acctEcho(\''+f.id+'\')"></div>'
+          +'<div><label class="fl">営業利益（万円）</label><input id="ac-prof-'+f.id+'" type="number" class="inp2" style="width:140px;" value="'+(has&&e.profit!=null?e.profit:'')+'" placeholder="例 180" oninput="acctEcho(\''+f.id+'\')"></div>'
           +'<button class="btn2" onclick="acctSave(\''+f.id+'\')">'+(has?'更新する':'保存する')+'</button>'
           +'<label class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:9px;padding:8px 12px;cursor:pointer;">試算表を読み取る'
             +'<input type="file" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg" style="display:none;" onchange="acctFile(\''+f.id+'\',this)"></label>'
         +'</div>'
-        +'<div id="ac-msg-'+f.id+'" style="font-size:12px;margin-top:7px;"></div>'
+        +'<div id="ac-echo-'+f.id+'" style="font-size:11.5px;margin-top:7px;line-height:1.8;"></div>'
+        +'<div id="ac-msg-'+f.id+'" style="font-size:12px;margin-top:4px;"></div>'
       +'</div>';
     }).join('');
     h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.85;margin-top:10px;">'
       +'保存すると、担当パートナーに自動で通知が届きます。数字の訂正が必要な場合は、同じ月を上書き保存してください。</div>';
     box.innerHTML=h;
+    ACCT_FIRMS.forEach(function(f){ acctEcho(f.id, true); });
   }
-  function acctSetYM(v){ if(!v) return; ACCT.ym=v; loadAcct(); }
+  // 入力値の検算。単位ミス・列の入れ違い・上書きを、保存前に気づけるようにする
+  function acctCheck(cid){
+    var rv=(($('ac-rev-'+cid)||{}).value), pf=(($('ac-prof-'+cid)||{}).value);
+    var rev=(rv===''?null:Number(rv)), pro=(pf===''?null:Number(pf));
+    var warn=[], err=[];
+    if(rv!==''&&!isFinite(rev)) err.push('売上が数値ではありません');
+    if(pf!==''&&!isFinite(pro)) err.push('営業利益が数値ではありません');
+    if(rev!=null && rev<0) err.push('売上がマイナスになっています');
+    // 万円欄に円をそのまま入れると桁が4つ増える。10億円超は要確認とする
+    if(rev!=null && rev>=100000) warn.push('売上の桁が大きすぎます。<b>円ではなく万円</b>でご入力ください');
+    if(pro!=null && Math.abs(pro)>=100000) warn.push('営業利益の桁が大きすぎます。<b>円ではなく万円</b>でご入力ください');
+    if(rev!=null && pro!=null && rev>0 && pro>rev) warn.push('営業利益が売上を上回っています。<b>列が入れ違っていませんか</b>');
+    var e=ACCT.rows[cid];
+    if(e && e.source!=='accountant') warn.push('担当パートナーが入力した数字を<b>上書き</b>します');
+    if(ACCT.dup[cid]) warn.push('この月のデータが重複しています。担当パートナーにご確認ください');
+    return { rev:rev, pro:pro, warn:warn, err:err, empty:(rv===''&&pf==='') };
+  }
+  function acctEcho(cid, quiet){
+    var box=$('ac-echo-'+cid); if(!box) return;
+    if(!quiet) ACCT.dirty[cid]=1;
+    var c=acctCheck(cid);
+    if(c.empty){ box.innerHTML=''; return; }
+    var nm=(ACCT_FIRMS.filter(function(f){ return f.id===cid; })[0]||{}).name||'';
+    // 円に換算して並べて出す。桁の間違いはこれで自分で気づける
+    function yenOf(v){ return v==null?'—':(v*10000).toLocaleString('ja-JP')+'円'; }
+    var h='<div style="color:var(--muted);">'+esc(nm)+'　'+esc(ymJp(ACCT.ym))+'分　'
+      +'売上 <b style="color:var(--ink);">'+yenOf(c.rev)+'</b>　／　営業利益 <b style="color:var(--ink);">'+yenOf(c.pro)+'</b></div>';
+    c.err.forEach(function(t){ h+='<div style="color:#A9403D;font-weight:700;">✕ '+t+'</div>'; });
+    c.warn.forEach(function(t){ h+='<div style="color:#8A6A12;">⚠ '+t+'</div>'; });
+    box.innerHTML=h;
+  }
+  function acctDirtyCount(){ return Object.keys(ACCT.dirty||{}).filter(function(k){ return ACCT.dirty[k]; }).length; }
+  function acctSetYM(v){
+    if(!v) return;
+    if(acctDirtyCount() && !confirm('保存していない入力があります。対象月を変えると入力内容は消えます。よろしいですか？')){
+      var el=$('acct-ym'); if(el) el.value=ACCT.ym; return;
+    }
+    ACCT.ym=v; ACCT.dirty={}; loadAcct();
+  }
   async function acctSave(cid){
     var msg=$('ac-msg-'+cid);
     function say(t,ok){ if(msg){ msg.style.color=ok?'#27684A':'#A9403D'; msg.textContent=t; } }
-    var rev=(($('ac-rev-'+cid)||{}).value), pro=(($('ac-prof-'+cid)||{}).value);
-    if(rev===''&&pro===''){ say('売上か営業利益のどちらかをご入力ください。'); return; }
+    var c=acctCheck(cid);
+    if(c.empty){ say('売上か営業利益のどちらかをご入力ください。'); return; }
+    if(c.err.length){ say('入力をご確認ください：'+c.err.join('／')); return; }
+    var nm=(ACCT_FIRMS.filter(function(f){ return f.id===cid; })[0]||{}).name||'';
+    function man(v){ return v==null?'—':Number(v).toLocaleString('ja-JP')+'万円'; }
+    // 会社名・対象月・金額を読み上げさせる。行と月の取り違えはここで止まる
+    if(c.warn.length){
+      var w=c.warn.map(function(t){ return '・'+t.replace(/<\/?b>/g,''); }).join('\n');
+      if(!confirm(nm+'　'+ymJp(ACCT.ym)+'分\n売上 '+man(c.rev)+'　営業利益 '+man(c.pro)+'\n\n'+w+'\n\nこの内容で保存しますか？')) return;
+    }
     if(ACCT.busy[cid]) return; ACCT.busy[cid]=1;
     var row={ customer_id:cid, year_month:ACCT.ym,
-      revenue:(rev===''?null:Number(rev)), profit:(pro===''?null:Number(pro)),
+      revenue:c.rev, profit:c.pro,
       memo:'顧問税理士の入力', source:'accountant' };
     var old=ACCT.rows[cid];
     var res;
@@ -9858,6 +9915,7 @@
     }catch(e){ res={error:{message:String(e&&e.message||e)}}; }
     ACCT.busy[cid]=0;
     if(res.error){ say('保存できませんでした：'+res.error.message); return; }
+    ACCT.dirty[cid]=0;
     say('保存しました。担当パートナーに通知されます。', true);
     loadAcct();
   }
@@ -9878,6 +9936,7 @@
       if(!hit) throw new Error('数字を読み取れませんでした');
       if($('ac-rev-'+cid) && hit.revenue!=null) $('ac-rev-'+cid).value=hit.revenue;
       if($('ac-prof-'+cid) && hit.profit!=null) $('ac-prof-'+cid).value=hit.profit;
+      acctEcho(cid);
       say(hit.ym===ACCT.ym ? '読み取りました。内容をご確認のうえ保存してください。'
                            : '「'+esc(hit.ym||'')+'」の数字を読み取りました。対象月と違う場合はご確認ください。', true);
     }catch(e){ say('読み取れませんでした：'+(e&&e.message||e)+'　お手数ですが直接ご入力ください。'); }
