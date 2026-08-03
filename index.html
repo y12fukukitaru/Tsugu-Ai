@@ -959,7 +959,7 @@
   function navDefs(r){
     if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
     if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
-    return [['sec-flow','ダッシュボード'],['sec-growth','成長ロードマップ'],['sec-training','研修プログラム'],['sec-sales','営業ツール'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
+    return [['sec-flow','ダッシュボード'],['sec-growth','成長ロードマップ'],['sec-biz','本業と連携'],['sec-training','研修プログラム'],['sec-sales','営業ツール'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
   function effectiveNav(r){
@@ -1007,6 +1007,7 @@
     megaphone:'<path d="m3.5 10.2 15-5.2v14l-15-5.2z"/><path d="M11.6 16.2a3 3 0 0 1-5.5-1.2"/><path d="M20.5 9.5v5"/>',
     life:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.8"/><path d="m5.6 5.6 3.7 3.7M14.7 14.7l3.7 3.7M14.7 9.3l3.7-3.7M5.6 18.4l3.7-3.7"/>',
     play:'<rect x="2.5" y="4" width="19" height="14" rx="2.5"/><path d="m10.5 8.5 4.5 2.5-4.5 2.5z"/><path d="M8 21h8"/>',
+    brief:'<rect x="2.5" y="7" width="19" height="13" rx="2.5"/><path d="M9 7V5.2A1.7 1.7 0 0 1 10.7 3.5h2.6A1.7 1.7 0 0 1 15 5.2V7"/><path d="M2.5 12.5h19"/>',
     up:'<path d="m6.5 13.5 5.5-5.5 5.5 5.5"/><path d="m6.5 19 5.5-5.5 5.5 5.5"/>',
     pin:'<path d="M12 16.5V22"/><path d="M8.5 3h7l-1 6 2.8 3.2v1.3H6.7v-1.3L9.5 9z"/>',
     checks:'<path d="m3 6.5 1.5 1.5L7.5 5"/><path d="m3 13 1.5 1.5L7.5 11.5"/><path d="m3 19.5 1.5 1.5L7.5 18"/><path d="M11 6.5h10M11 13h10M11 19.5h10"/>',
@@ -1048,7 +1049,7 @@
     'sec-clients':'building','sec-sales':'clipboard','sec-pdca':'cycle','sec-madeals':'folder','sec-knowledge':'book','sec-sozoku':'calc',
     'sec-kpi':'chart','sec-risk':'alert','sec-fde':'users','sec-cust':'building','sec-exec':'flag',
     'sec-billing':'card','sec-billpay':'card','sec-audit':'shield','sec-broadcast':'megaphone','sec-support':'life','sec-growth':'up',
-    'sec-training':'play'
+    'sec-training':'play','sec-biz':'brief'
   };
   function niHtml(id,label,drawer){
     var ic=icoSvg(NAV_ICON[id]||'');
@@ -2025,6 +2026,7 @@
         +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b></div>'
         +'<div style="margin-bottom:12px;"><button id="ct-btn" class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;font-weight:600;" onclick="ctStart(true)"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5.5 3.5-5.5 3.5z"/></svg>使い方ガイド（1分）</button></div>'
         +'<div id="dash-hero">読み込み中...</div>'
+        +'<div id="my-impact"></div>'
         +'<div id="my-partner"></div>'
         +'</div>'
         +'<div id="my-nextmeet"></div>'
@@ -2158,6 +2160,14 @@
         +'<div class="panel" id="sec-growth"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6.5 13.5 5.5-5.5 5.5 5.5"/><path d="m6.5 19 5.5-5.5 5.5 5.5"/></svg>パートナー成長ロードマップ</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadPartnerGrowth()">↺ 更新</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;line-height:1.7;">認定パートナーのレベルと特典です。顧問契約数・HD化（M&A成約）実績に応じてレベルが上がり、外注費率と紹介先への割引が拡大します。実績はあなたの担当データから自動集計しています（正式なレベル認定は運営が行います）。</div>'
           +'<div id="pg-body">読み込み中...</div>'
+        +'</div>'
+        +'<div class="panel" id="sec-biz">'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="7" width="19" height="13" rx="2.5"/><path d="M9 7V5.2A1.7 1.7 0 0 1 10.7 3.5h2.6A1.7 1.7 0 0 1 15 5.2V7"/><path d="M2.5 12.5h19"/></svg>本業と連携</span>'
+            +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadBiz()">↺ 更新</span></div>'
+          +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.8;">'
+            +'TsuguAIは、あなたの本業（保険・不動産・士業・M&Aなど）と<b style="color:var(--navy);">競合しません</b>。顧問として会社の内側に入り、課題を先に見つける立場をつくることで、<b style="color:var(--navy);">本業の案件があなたのところに戻ってくる</b>ようにするための道具です。'
+            +'保有資格を登録すると、その領域は「あなたが実行できる案件」として扱われます。</div>'
+          +'<div id="biz-body">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-training">'
           +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="4" width="19" height="14" rx="2.5"/><path d="m10.5 8.5 4.5 2.5-4.5 2.5z"/><path d="M8 21h8"/></svg>研修プログラム</span>'
@@ -2405,8 +2415,8 @@
 
     window.__eff=eff;
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadDashHero(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
-    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); }
+    if(eff==='customer'){ loadDashHero(); loadMyImpact(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
+    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); }
     else { loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); loadAdmInquiries(); loadSupportKB(); }
     startNotifPolling(eff);
     navSpyInit();
@@ -8671,6 +8681,278 @@
   }
   function tqRetry(){ if(!TQ) return; TQ.ans={}; TQ.graded=false; tqRender(); try{ $('tr-modal').scrollTop=0; }catch(e){} }
 
+  // ===== 累計インパクト（Phase66・経営者ポータル）=====
+  // 顧問契約を続ける理由は「毎月レポートが届くこと」ではなく「現金がいくら増えたか」。
+  // 単月の数字は月次レポートにあるが、積み上がった総額はどこにも出ていなかった。
+  async function loadMyImpact(){
+    var box=$('my-impact'); if(!box) return;
+    var ins=[], mad=[];
+    try{
+      var r=await Promise.all([
+        sb.from('insurance_results').select('summary,created_at').eq('customer_id',ME).order('created_at',{ascending:true}),
+        sb.from('ma_deals').select('savings_annual,created_at,updated_at').eq('customer_id',ME)
+      ]);
+      ins=(r[0].error?[]:(r[0].data||[]));
+      mad=(r[1].error?[]:(r[1].data||[]));
+    }catch(e){ box.innerHTML=''; return; }
+    var insImp=0, first=null;
+    ins.forEach(function(x){
+      var v=Number((x.summary||{}).improve)||0;
+      if(v>insImp) insImp=v;                                  // 保険は最新の最適化案（重複計上しない）
+      if(v>0 && x.created_at && (!first || x.created_at<first)) first=x.created_at;
+    });
+    var maSav=0;
+    mad.forEach(function(d){
+      var v=Number(d.savings_annual)||0; if(!v) return;
+      maSav+=v;                                               // コスト削減は案件ごとに積む
+      var t=d.created_at||d.updated_at;
+      if(t && (!first || t<first)) first=t;
+    });
+    var annual=insImp+maSav;
+    if(!annual){ box.innerHTML=''; return; }                  // 実績が無いうちは何も出さない
+    var months=1;
+    if(first){
+      var el=(Date.now()-Date.parse(first))/(1000*60*60*24*30.44);
+      if(isFinite(el)) months=Math.max(1, Math.round(el));
+    }
+    var cum=Math.round(annual/12*months);
+    box.innerHTML='<div style="border:1.5px solid #CFE3D6;background:rgba(39,104,74,.07);border-radius:12px;padding:14px 16px;margin-top:12px;">'
+      +'<div style="font-size:13.5px;font-weight:700;color:#27684A;margin-bottom:9px;">これまでに増えた現金</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+        +'<div style="flex:1 1 140px;min-width:140px;"><div style="font-size:11px;color:var(--muted);">年間で増える現金</div>'
+          +'<div style="font-size:20px;font-weight:700;color:#27684A;line-height:1.3;">'+annual.toLocaleString()+'<span style="font-size:12px;"> 万円</span></div></div>'
+        +'<div style="flex:1 1 140px;min-width:140px;"><div style="font-size:11px;color:var(--muted);">取り組み開始からの累計</div>'
+          +'<div style="font-size:20px;font-weight:700;color:#27684A;line-height:1.3;">'+cum.toLocaleString()+'<span style="font-size:12px;"> 万円</span></div>'
+          +'<div style="font-size:10px;color:var(--muted);margin-top:2px;">'+months+'ヶ月ぶん（概算）</div></div>'
+        +'<div style="flex:1 1 140px;min-width:140px;"><div style="font-size:11px;color:var(--muted);">このまま10年続けた場合</div>'
+          +'<div style="font-size:20px;font-weight:700;color:var(--navy);line-height:1.3;">'+(annual*10).toLocaleString()+'<span style="font-size:12px;"> 万円</span></div></div>'
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.75;margin-top:9px;">'
+      +'保険の最適化とコスト削減で生まれた金額を、担当パートナーの試算にもとづいて集計した概算です。'
+      +'この金額は一度きりではなく、見直した状態を保っているかぎり毎年続きます。内訳は'
+      +'<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="goSec(\'sec-ins\')">試算結果</span>と'
+      +'<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="goSec(\'sec-reports\')">月次レポート</span>でご確認いただけます。</div>'
+    +'</div>';
+  }
+
+  // ============================================================
+  // ===== 本業と連携（Phase66）=====
+  // 認定パートナーの多くはフルコミッションの営業職（保険・不動産・士業・M&A）で、
+  // 本業の収入源を持っている。プラットフォームがその案件を吸い上げる構造にすると、
+  // 優秀な人ほど離れる。そこで「資格を登録した領域は本人が実行する」を前提に置き、
+  // TsuguAI経由で本業がいくら増えたかを本人に見せる。継続利用の根拠はここにある。
+  // 保存はlocalStorageを正とし、テーブルがあれば同期する（無くても全機能が動く）。
+  // ============================================================
+  var BIZ_FIELDS=[
+    { id:'insurance', n:'保険',            lic:'生命保険募集人・損害保険募集人' },
+    { id:'realestate',n:'不動産',          lic:'宅地建物取引士' },
+    { id:'tax',       n:'税務',            lic:'税理士' },
+    { id:'legal',     n:'法務・登記',      lic:'弁護士・司法書士・行政書士' },
+    { id:'labor',     n:'労務',            lic:'社会保険労務士' },
+    { id:'ma',        n:'M&A・事業承継',   lic:'M&A関連資格・仲介業の登録' },
+    { id:'finance',   n:'資金調達・財務',  lic:'中小企業診断士・FP等' },
+    { id:'it',        n:'IT・自動化',      lic:'（資格要件なし）' }
+  ];
+  var BIZ_STATUS=[['lead','見込み'],['prop','提案中'],['won','成約'],['lost','不成立']];
+  function bizFieldName(id){ var f=null; BIZ_FIELDS.forEach(function(x){ if(x.id===id) f=x; }); return f?f.n:id; }
+  function bizStatusName(s){ var n=s; BIZ_STATUS.forEach(function(x){ if(x[0]===s) n=x[1]; }); return n; }
+
+  var BIZ={ profile:{ main:'', lic:[], area:'' }, deals:[] }, BIZ_REMOTE={p:false,d:false};
+  function bizKey(){ return 'tsugu_biz_'+(ME||'guest'); }
+  function bizSaveLocal(){ try{ localStorage.setItem(bizKey(), JSON.stringify(BIZ)); }catch(e){} }
+  function bizUid(){
+    try{ if(window.crypto&&crypto.randomUUID) return crypto.randomUUID(); }catch(e){}
+    return 'd'+Math.abs(Date.parse(new Date().toISOString())+BIZ.deals.length*7919).toString(36)+BIZ.deals.length;
+  }
+  async function bizLoad(){
+    try{ var o=JSON.parse(localStorage.getItem(bizKey())||'null'); if(o){ BIZ.profile=o.profile||BIZ.profile; BIZ.deals=o.deals||[]; } }catch(e){}
+    try{
+      var p=await sb.from('partner_business').select('*').eq('user_id',ME).maybeSingle();
+      if(!p.error){ BIZ_REMOTE.p=true; if(p.data){ BIZ.profile={ main:p.data.main_field||'', lic:String(p.data.licenses||'').split(',').filter(Boolean), area:p.data.area||'' }; } }
+    }catch(e){}
+    try{
+      var d=await sb.from('partner_deals').select('*').eq('partner_id',ME).order('created_at',{ascending:false});
+      if(!d.error){ BIZ_REMOTE.d=true; if((d.data||[]).length) BIZ.deals=d.data.map(function(x){
+        return { id:x.id, cust:x.customer_name||'', field:x.field||'', title:x.title||'', amount:(x.amount==null?null:Number(x.amount)),
+                 status:x.status||'lead', closed:x.closed_on||'', created:x.created_at||'' };
+      }); }
+    }catch(e){}
+    bizSaveLocal();
+  }
+  async function loadBiz(){
+    if(!$('biz-body')) return;
+    await bizLoad(); renderBiz();
+    // 成長ロードマップの「本業への還元」は、案件の読み込み後でないと確定しない
+    if($('pg-body')) loadPartnerGrowth();
+  }
+
+  function renderBiz(){
+    var box=$('biz-body'); if(!box) return;
+    var P=BIZ.profile, h='';
+    // ---- 1. 本業プロフィール ----
+    h+='<div style="border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px;background:var(--soft);">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;">① あなたの本業</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:11px;">主戦場と保有資格を登録してください。ここに登録した領域は、顧客の課題が当たったときに<b style="color:var(--navy);">あなたが実行する案件</b>として扱われます（運営には取り次ぎません）。</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:11px;">'
+        +'<div><label class="fl">主戦場（本業）</label><select id="biz-main" class="inp2" style="width:190px;">'
+          +'<option value="">選択してください</option>'
+          +BIZ_FIELDS.map(function(f){ return '<option value="'+f.id+'"'+(P.main===f.id?' selected':'')+'>'+esc(f.n)+'</option>'; }).join('')
+        +'</select></div>'
+        +'<div style="flex:1;min-width:180px;"><label class="fl">対応エリア</label><input id="biz-area" class="inp2" style="width:100%;" value="'+escA(P.area||'')+'" placeholder="例：東京・神奈川・千葉"></div>'
+      +'</div>'
+      +'<label class="fl">実行できる領域（保有資格にチェック）</label>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:7px;margin:5px 0 10px;">'
+      +BIZ_FIELDS.map(function(f){
+          var on=P.lic.indexOf(f.id)>=0;
+          return '<button class="sbtn'+(on?' on':'')+'" onclick="bizToggleLic(\''+f.id+'\')" title="'+escA(f.lic)+'">'+(on?'✓ ':'')+esc(f.n)+'</button>';
+        }).join('')
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
+        +'<button class="btn2" onclick="bizSaveProfile()">保存する</button>'
+        +'<span id="biz-msg" style="font-size:12px;"></span>'
+      +'</div>'
+    +'</div>';
+    // ---- 2. あなたが実行できる領域 / 送客する領域 ----
+    if(P.lic.length){
+      var mine=BIZ_FIELDS.filter(function(f){ return P.lic.indexOf(f.id)>=0; });
+      var other=BIZ_FIELDS.filter(function(f){ return P.lic.indexOf(f.id)<0; });
+      h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">'
+        +'<div style="flex:1 1 250px;border:1.5px solid #CFE3D6;background:rgba(39,104,74,.07);border-radius:12px;padding:12px 14px;">'
+          +'<div style="font-size:12.5px;font-weight:700;color:#27684A;margin-bottom:5px;">あなたが実行する領域</div>'
+          +'<div style="font-size:12px;color:var(--ink);line-height:1.8;">'+mine.map(function(f){ return esc(f.n); }).join('・')+'</div>'
+          +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:6px;">顧問先でこの領域の課題が出たら、そのままあなたの本業の案件です。顧問という立場で先に相談を受けられるぶん、外から営業するより早く・確実に決まります。</div>'
+        +'</div>'
+        +'<div style="flex:1 1 250px;border:1px solid var(--line);background:var(--soft);border-radius:12px;padding:12px 14px;">'
+          +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:5px;">専門家につなぐ領域</div>'
+          +'<div style="font-size:12px;color:var(--muted);line-height:1.8;">'+(other.length?other.map(function(f){ return esc(f.n); }).join('・'):'—')+'</div>'
+          +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:6px;">資格が要る領域を無理に扱う必要はありません。つないだ実績も顧客の信頼になり、次の本業案件に返ってきます。判断に迷う場合は<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="goSec(\'sec-support\')">運営サポート</span>へ。</div>'
+        +'</div>'
+      +'</div>';
+    }
+    // ---- 3. 本業案件のパイプライン ----
+    var won=BIZ.deals.filter(function(d){ return d.status==='won'; });
+    var wonAmt=won.reduce(function(a,d){ return a+(Number(d.amount)||0); },0);
+    var open=BIZ.deals.filter(function(d){ return d.status==='lead'||d.status==='prop'; });
+    var openAmt=open.reduce(function(a,d){ return a+(Number(d.amount)||0); },0);
+    h+='<div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px;">'
+      +bizChip('TsuguAI経由の本業成約', wonAmt.toLocaleString()+' 万円', won.length+' 件', '#27684A')
+      +bizChip('進行中の見込み', openAmt.toLocaleString()+' 万円', open.length+' 件', 'var(--navy)')
+      +bizChip('顧問先の数', String((window.__clientCount!=null?window.__clientCount:'—')), '本業案件の母数', 'var(--navy)')
+    +'</div>';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--navy);">② TsuguAI経由で生まれた本業案件</div>'
+      +'<button class="btn2" style="padding:7px 14px;font-size:12px;" onclick="bizToggleForm()">＋ 案件を記録</button>'
+    +'</div>';
+    h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:9px;">顧問先から生まれた本業の案件を記録すると、TsuguAIがあなたの本業にどれだけ効いているかが数字で分かります。ここは<b style="color:var(--navy);">あなただけの記録</b>で、顧客ポータルには表示されません。</div>';
+    h+='<div id="biz-form" class="hidden" style="border:1px dashed var(--line);border-radius:11px;padding:12px 14px;margin-bottom:10px;background:var(--soft);">'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+        +'<div style="flex:1;min-width:170px;"><label class="fl">顧客・相手先</label><input id="bz-cust" class="inp2" style="width:100%;" placeholder="例：山田製作所"></div>'
+        +'<div><label class="fl">分野</label><select id="bz-field" class="inp2" style="width:150px;">'
+          +BIZ_FIELDS.map(function(f){ return '<option value="'+f.id+'"'+(P.main===f.id?' selected':'')+'>'+esc(f.n)+'</option>'; }).join('')
+        +'</select></div>'
+      +'</div>'
+      +'<div style="margin-top:8px;"><label class="fl">内容</label><input id="bz-title" class="inp2" style="width:100%;" placeholder="例：役員退職金準備の見直し（法人契約）"></div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;align-items:flex-end;">'
+        +'<div><label class="fl">見込／成約額（万円）</label><input id="bz-amt" type="number" class="inp2" style="width:150px;" placeholder="例 120"></div>'
+        +'<div><label class="fl">状況</label><select id="bz-status" class="inp2" style="width:130px;">'
+          +BIZ_STATUS.map(function(s){ return '<option value="'+s[0]+'">'+s[1]+'</option>'; }).join('')
+        +'</select></div>'
+        +'<div><label class="fl">成約日（任意）</label><input id="bz-closed" type="date" class="inp2" style="width:160px;"></div>'
+        +'<button class="btn2" onclick="bizAddDeal()">記録する</button>'
+      +'</div>'
+      +'<div id="bz-msg" style="font-size:12px;margin-top:8px;"></div>'
+    +'</div>';
+    if(!BIZ.deals.length){
+      h+='<div style="font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:11px;padding:14px 16px;line-height:1.8;">'
+        +'まだ記録がありません。顧問先との面談で本業の話が出たら、見込みの段階で記録しておくと、あとから「TsuguAIがどれだけ本業に効いたか」が振り返れます。</div>';
+    } else {
+      h+='<div>'+BIZ.deals.map(function(d){
+        var col=(d.status==='won'?'#27684A':(d.status==='lost'?'var(--muted)':'#8F7230'));
+        return '<div style="display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:6px;flex-wrap:wrap;">'
+          +'<span class="tag gold" style="font-size:10px;">'+esc(bizFieldName(d.field))+'</span>'
+          +'<div style="flex:1;min-width:150px;">'
+            +'<div style="font-size:12.5px;color:var(--ink);font-weight:600;">'+esc(d.title||'（無題）')+'</div>'
+            +'<div style="font-size:11px;color:var(--muted);margin-top:1px;">'+esc(d.cust||'—')+(d.closed?'　'+esc(d.closed):'')+'</div>'
+          +'</div>'
+          +'<div style="font-size:13px;font-weight:700;color:'+col+';white-space:nowrap;">'+(d.amount!=null?Number(d.amount).toLocaleString()+' 万円':'—')+'</div>'
+          +'<select class="inp2" style="width:110px;font-size:12px;" onchange="bizSetStatus(\''+d.id+'\',this.value)">'
+            +BIZ_STATUS.map(function(s){ return '<option value="'+s[0]+'"'+(d.status===s[0]?' selected':'')+'>'+s[1]+'</option>'; }).join('')
+          +'</select>'
+          +'<button class="ghost" style="font-size:11px;padding:4px 8px;border:1px solid var(--line);border-radius:7px;" onclick="bizDelDeal(\''+d.id+'\')">削除</button>'
+        +'</div>';
+      }).join('')+'</div>';
+    }
+    if(!BIZ_REMOTE.p || !BIZ_REMOTE.d){
+      h+='<div style="font-size:11px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:8px 11px;margin-top:12px;line-height:1.7;">'
+        +'この内容はいまこの端末にのみ保存されています。端末をまたいで引き継ぐには、Supabaseで「Phase66」のSQLを実行してください（未実行でもすべての機能が使えます）。</div>';
+    }
+    box.innerHTML=h;
+  }
+  function bizChip(label, value, sub, color){
+    return '<div style="flex:1 1 150px;min-width:150px;background:var(--soft);border:1px solid var(--softline);border-radius:11px;padding:10px 14px;">'
+      +'<div style="font-size:11px;color:var(--muted);">'+esc(label)+'</div>'
+      +'<div style="font-size:17px;font-weight:700;color:'+color+';margin-top:2px;line-height:1.3;">'+value+'</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-top:2px;">'+esc(sub)+'</div>'
+    +'</div>';
+  }
+  function bizToggleLic(id){
+    var i=BIZ.profile.lic.indexOf(id);
+    if(i>=0) BIZ.profile.lic.splice(i,1); else BIZ.profile.lic.push(id);
+    bizSaveLocal(); renderBiz();
+  }
+  function bizToggleForm(){ var f=$('biz-form'); if(f) f.classList.toggle('hidden'); }
+  async function bizSaveProfile(){
+    BIZ.profile.main=(($('biz-main')||{}).value)||'';
+    BIZ.profile.area=((($('biz-area')||{}).value)||'').trim();
+    bizSaveLocal();
+    var msg=$('biz-msg');
+    if(BIZ_REMOTE.p){
+      try{
+        var r=await sb.from('partner_business').upsert({ user_id:ME, main_field:BIZ.profile.main||null,
+          licenses:BIZ.profile.lic.join(','), area:BIZ.profile.area||null, updated_at:new Date().toISOString() },{onConflict:'user_id'});
+        if(r.error && msg){ msg.style.color='#A9403D'; msg.textContent='この端末には保存しました（サーバー保存は失敗：'+r.error.message+'）'; renderBiz(); return; }
+      }catch(e){}
+    }
+    if(msg){ msg.style.color='#27684A'; msg.textContent='保存しました。'; }
+    renderBiz();
+    if($('pg-body')) loadPartnerGrowth();
+  }
+  async function bizAddDeal(){
+    var msg=$('bz-msg');
+    var title=((($('bz-title')||{}).value)||'').trim();
+    if(!title){ if(msg){ msg.style.color='#A9403D'; msg.textContent='内容を入力してください。'; } return; }
+    var amt=(($('bz-amt')||{}).value);
+    var d={ id:bizUid(), cust:((($('bz-cust')||{}).value)||'').trim(), field:(($('bz-field')||{}).value)||'',
+            title:title, amount:(amt===''||amt==null?null:Number(amt)), status:(($('bz-status')||{}).value)||'lead',
+            closed:(($('bz-closed')||{}).value)||'', created:new Date().toISOString() };
+    BIZ.deals.unshift(d); bizSaveLocal();
+    if(BIZ_REMOTE.d) bizPush(d);
+    renderBiz();
+    if($('pg-body')) loadPartnerGrowth();
+  }
+  async function bizPush(d){
+    try{
+      await sb.from('partner_deals').upsert({ id:d.id, partner_id:ME, customer_name:d.cust||null, field:d.field||null,
+        title:d.title, amount:d.amount, status:d.status, closed_on:(d.closed||null), created_at:d.created });
+    }catch(e){}
+  }
+  function bizFindDeal(id){ var f=null; BIZ.deals.forEach(function(d){ if(d.id===id) f=d; }); return f; }
+  async function bizSetStatus(id, s){
+    var d=bizFindDeal(id); if(!d) return;
+    d.status=s; bizSaveLocal();
+    if(BIZ_REMOTE.d) bizPush(d);
+    renderBiz();
+    if($('pg-body')) loadPartnerGrowth();
+  }
+  async function bizDelDeal(id){
+    if(!confirm('この記録を削除しますか？')) return;
+    BIZ.deals=BIZ.deals.filter(function(d){ return d.id!==id; });
+    bizSaveLocal();
+    if(BIZ_REMOTE.d){ try{ await sb.from('partner_deals').delete().eq('id',id).eq('partner_id',ME); }catch(e){} }
+    renderBiz();
+    if($('pg-body')) loadPartnerGrowth();
+  }
+
   // ============================================================
   // ===== 使い方ガイド：実画面ツアー（Phase65）=====
   // 研修の自動再生ガイドが「疑似UIを見せる」のに対し、こちらは経営者ご本人の
@@ -8683,6 +8965,9 @@
     { sec:'sec-flow', find:function(){ return $('sec-flow'); },
       t:'経営者ダッシュボードへようこそ',
       b:'ここは、あなたの会社の状態がひと目で分かる画面です。1分ほどで、見かたをご案内します。' },
+    { sec:'sec-flow', find:function(){ var e=$('my-impact'); return (e && e.innerHTML) ? e : null; },
+      t:'これまでに増えた現金',
+      b:'保険の見直しやコスト削減で、実際にいくら現金が増えたかの累計です。単月の数字ではなく、積み上がった総額をここで確認できます。' },
     { sec:'sec-flow', find:function(){ return $('cash-status')||$('sec-status'); },
       t:'資金繰りステータス',
       b:'いま資金がどうなっているかを、信号のように色でお知らせします。ここが赤や黄色になったときは、担当パートナーからもご連絡します。' },
@@ -8767,8 +9052,12 @@
     var s=CT.steps[i];
     if(s.sec && $(s.sec)) showSection(s.sec);
     var el=null; try{ el=s.find(); }catch(e){}
-    if(!ctVisible(el)){          // 直前の描画で消えていたら飛ばす
-      if(i+1<CT.steps.length){ ctGo(i+1); } else { ctEnd(true); }
+    if(!ctVisible(el)){
+      // 開始後の再描画で対象が消えた場合。飛ばすだけだと「2 / 13」の次が「4 / 13」に
+      // なってしまうため、ステップ自体を取り除いて番号を振り直す。
+      CT.steps.splice(i,1);
+      if(!CT.steps.length){ ctEnd(true); return; }
+      ctGo(Math.min(i, CT.steps.length-1));
       return;
     }
     CT.el=el;
@@ -8837,6 +9126,7 @@
         if(!md.error){ (md.data||[]).forEach(function(d){ if((d.stage||0)>=7) hd++; }); }
       }
     }catch(e){}
+    window.__clientCount=cl;   // 「本業と連携」の母数チップで使う
     // 目安レベル判定
     var lv=1;
     PG_LEVELS.forEach(function(L){ if(cl>=L.need.cl && hd>=L.need.hd) lv=Math.max(lv,L.lv); });
@@ -8870,6 +9160,19 @@
       +'</div>';
     }).join(ar);
     var h='<div style="display:flex;align-items:stretch;gap:6px;flex-wrap:wrap;">'+cards+'</div>';
+    // 本業への還元（Phase66）：ランクの数字だけだと「TsuguAIで自分の本業がどうなったか」が見えない
+    var bWon=BIZ.deals.filter(function(d){ return d.status==='won'; });
+    var bAmt=bWon.reduce(function(a,d){ return a+(Number(d.amount)||0); },0);
+    h+='<div style="margin-top:12px;border:1px solid '+(bWon.length?'#CFE3D6':'var(--line)')+';background:'+(bWon.length?'rgba(39,104,74,.07)':'var(--soft)')+';border-radius:11px;padding:12px 14px;">'
+      +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
+        +'<span style="font-size:13px;color:var(--ink);">本業への還元（TsuguAI経由の成約）</span>'
+        +'<b style="font-size:16px;color:'+(bWon.length?'#27684A':'var(--muted)')+';">'+bAmt.toLocaleString()+' 万円</b>'
+        +'<span style="font-size:11.5px;color:var(--muted);">'+bWon.length+' 件</span>'
+        +'<span style="flex:1;"></span>'
+        +'<button class="btn2" style="padding:6px 13px;font-size:12px;" onclick="goSec(\'sec-biz\')">本業と連携 →</button>'
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:6px;">ランクは顧問契約とHD化で上がりますが、あなたの収入の柱は本業のはずです。TsuguAIは顧問という立場をつくることで、その本業案件を先に拾うための道具として設計しています。</div>'
+    +'</div>';
     // Lv.1 の前提となる研修の進捗
     h+='<div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid '+(trOk?'#CFE3D6':'var(--line)')+';background:'+(trOk?'rgba(39,104,74,.08)':'var(--soft)')+';border-radius:11px;padding:11px 14px;">'
       +'<span style="font-size:13px;color:'+(trOk?'#27684A':'var(--ink)')+';font-weight:'+(trOk?'700':'400')+';">'
