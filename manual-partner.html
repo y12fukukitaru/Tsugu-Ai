@@ -64,6 +64,10 @@ ul.dots li b{color:var(--navy);}
 .lv .c{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.6;}
 .lv .f{font-size:12px;color:var(--navy);margin-top:6px;border-top:1px solid var(--softline);padding-top:5px;}
 .lv .f b{font-size:15px;}
+.flow{display:flex;gap:6px;align-items:stretch;}
+.flow div{flex:1;border:1px solid var(--line);border-radius:9px;padding:10px 8px;text-align:center;font-size:12px;line-height:1.6;color:var(--ink);background:#fff;}
+.flow div b{display:block;color:var(--navy);font-size:13px;margin-bottom:3px;}
+.flow span{display:flex;align-items:center;color:#B7C4D6;font-size:15px;}
 .cover{background:linear-gradient(140deg,#0E1B33 0%,#1E3A66 62%,#2C5DA8 100%);color:#fff;display:flex;flex-direction:column;justify-content:center;}
 .cover h1{color:#fff;font-size:50px;margin-bottom:18px;}
 .cover .sub{color:rgba(255,255,255,.82);font-size:16px;}
@@ -87,6 +91,7 @@ ul.dots li b{color:var(--navy);}
   .slide{aspect-ratio:auto;min-height:70vh;padding:26px 20px 42px;}
   h1{font-size:29px;} .cover h1{font-size:33px;} h2{font-size:21px;}
   .g2,.g3,.g4{grid-template-columns:1fr;} .lv{flex-direction:column;} .sub{font-size:13.5px;}
+  .flow{flex-direction:column;} .flow span{display:none;}
 }
 @media print{
   body{background:#fff;} .bar,.toc{display:none!important;} .deck{padding:0;}
@@ -102,7 +107,7 @@ ul.dots li b{color:var(--navy);}
 <section class="slide cover on" data-t="表紙">
   <div class="mark">Tsugu -継-</div>
   <h1>パートナーポータル<br>操作説明書</h1>
-  <p class="sub">認定パートナー向け／本業と併走するための使い方<br>所要 15分</p>
+  <p class="sub">認定パートナー向け／本業と併走するための使い方<br>所要 20分</p>
 </section>
 
 <section class="slide" data-t="TsuguAIの位置づけ">
@@ -137,10 +142,11 @@ ul.dots li b{color:var(--navy);}
   <div class="eyebrow">毎朝ここから</div>
   <h2>ダッシュボードの「今日やること」</h2>
   <p class="sub">3種類のチェックが自動で走っています。ここを空にすることが、日々のいちばんの仕事です。</p>
-  <div class="grid g3">
+  <div class="grid g4">
     <div class="card r"><h3>返信漏れ</h3><p>顧客から届いていて、まだ返していないメッセージ。<b>最優先で消してください。</b></p></div>
     <div class="card w"><h3>期日</h3><p>資金繰り表の更新や、約束した提出物の期限が近いもの。</p></div>
     <div class="card soft"><h3>接点切れ</h3><p>しばらく連絡していない顧客。<b>解約はたいていここから静かに始まります。</b></p></div>
+    <div class="card"><h3>税理士の入力</h3><p>顧問税理士が月次の数字を入れると出ます。<b>そのままレポート作成へ。</b></p></div>
   </div>
   <div class="note" style="margin-top:18px;">その下に<b>「課題ヒアリング診断」</b>への入口があります。まだ登録していない見込み客との商談で使うツールです。</div>
 </section>
@@ -224,6 +230,35 @@ ul.dots li b{color:var(--navy);}
   <div class="note r" style="margin-top:18px;"><b>記録のない提案は禁止行為です。</b>後から「言った・言わない」になったとき、あなたを守るのはこのカルテだけです。<b>面談の当日中</b>に書いてください。</div>
 </section>
 
+<section class="slide" data-t="毎月の数字を取り込む">
+  <div class="eyebrow">月次の起点</div>
+  <h2>試算表を取り込めば、財務力まで自動で出ます</h2>
+  <p class="sub">カルテの「財務」で試算表のファイルを選ぶだけです。CSV・Excel・PDF・画像に対応し、様式が違っても読み取ります。</p>
+  <div class="grid g2">
+    <div class="card"><h3>17項目を自動で読み取り</h3><p>売上・原価・販管費・営業利益・経常利益・減価償却・支払利息と、現預金・売掛金・棚卸資産・買掛金・借入金・純資産など。<br><br><b>円・千円表記は万円に自動換算</b>されます。読み取り後は必ず内容をご確認ください。</p></div>
+    <div class="card g"><h3>そこから出る数字</h3><p><b>財務力</b>：自己資本比率／流動比率／有利子負債月商倍率／<b>債務償還年数</b>／インタレストカバレッジ<br><b>支払サイト</b>：売上債権・棚卸・買入債務の回転日数と<b>CCC</b><br><b>企業価値</b>：EBITDA×3−純有利子負債</p></div>
+  </div>
+  <div class="note" style="margin-top:16px;"><b>債務償還年数は金融機関が必ず見る数字です。</b>10年を超えているかどうかで打ち手が変わります。融資の相談を受けたら、まずここを確認してください。</div>
+  <div class="note" style="margin-top:10px;">読み取れない様式に当たったら、その試算表を運営にお知らせください。<b>科目名のパターンを追加すれば次から通ります。</b>確実なのは会計ソフトのPDF出力です。</div>
+</section>
+
+<section class="slide" data-t="税理士に入力を任せる">
+  <div class="eyebrow">社数を増やすために</div>
+  <h2>顧問税理士に月次入力を任せる</h2>
+  <p class="sub">試算表の入手待ちが、担当できる社数を縛る最大の要因です。顧問税理士に直接入れてもらえば、催促と転送の工程が丸ごと消えます。</p>
+  <div class="flow">
+    <div><b>1</b>顧客が依頼<br>ダッシュボードから先生へメール</div><span>→</span>
+    <div><b>2</b>先生が入力<br>入力画面のみ・1社1分</div><span>→</span>
+    <div><b>3</b>あなたに通知<br>「今日やること」に表示</div><span>→</span>
+    <div><b>4</b>レポート作成<br>承認して顧客へ公開</div>
+  </div>
+  <div class="grid g2" style="margin-top:16px;">
+    <div class="card"><h3>依頼するのは顧客です</h3><p>あなたから先生に頼むと「知らない会社」で終わります。<b>顧問先の社長からの依頼</b>だから受けていただけます。顧客に案内してください。</p></div>
+    <div class="card g"><h3>先生に見えるのは入力画面だけ</h3><p>メッセージ・レポート・経営課題は表示されません。顧客に説明するときの安心材料になります。</p></div>
+  </div>
+  <div class="note" style="margin-top:14px;">先生が入力した数字には出所が記録され、<b>あなたが上書きしようとすると確認が出ます。</b>取り違えを防ぐためです。</div>
+</section>
+
 <section class="slide" data-t="レポート承認">
   <div class="eyebrow">毎月の仕事</div>
   <h2>月次レポートの承認</h2>
@@ -262,7 +297,7 @@ ul.dots li b{color:var(--navy);}
   <div class="grid g3">
     <div class="card"><h3>毎日</h3><p>「今日やること」を開く<br>未読メッセージに返す<br>面談したらその日のうちにカルテを書く</p></div>
     <div class="card"><h3>毎週</h3><p>接点切れの顧客に連絡<br>期日が近い課題を片づける<br>本業案件の状況を更新</p></div>
-    <div class="card"><h3>毎月</h3><p><b>月次レポートを承認</b><br>顧客の登録漏れを確認<br>M&A案件のステージを更新<br>本業の成約を記録</p></div>
+    <div class="card"><h3>毎月</h3><p><b>試算表を取り込む</b>（または税理士の入力を確認）<br><b>月次レポートを承認</b><br>顧客の登録漏れを確認<br>M&A案件のステージを更新<br>本業の成約を記録</p></div>
   </div>
   <div class="note" style="margin-top:20px;">分からないことは<b>AI秘書</b>（業務の相談）か<b>運営サポート</b>（規程・報酬・審査など運営固有の質問）へ。AIで解決しない質問は、そのまま運営への問い合わせに転記できます。</div>
 </section>
