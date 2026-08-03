@@ -858,6 +858,8 @@
   // 経営者本人は両者が一致するが、閲覧メンバーとして招かれた人は SCOPE だけが
   // 会社側を指す。顧客ポータルのデータ取得はすべて SCOPE を使う。
   let SCOPE = null, SCOPE_CO = null;
+  // 招かれ方。null＝自社／'full'＝閲覧メンバー／'finance'＝顧問税理士（数字の入力のみ）
+  let ACCESS = null, ACCT_FIRMS = [];
   var VIEWAS = 'admin';
 
   const $ = function(id){ return document.getElementById(id); };
@@ -1024,6 +1026,8 @@
     return permsOf(ADMIN_ROLE, ADMIN_PERMS).indexOf(secId)>=0;
   }
   function navDefs(r){
+    // 顧問税理士として招かれている場合は、数字の入力だけの画面にする
+    if(r==='customer' && ACCESS==='finance') return [['sec-flow','月次数字の入力']];
     if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
     // 運営は admin_role で見えるメニューを絞る（未設定は owner 扱い）
     if(r==='admin') return adminNavAll().filter(function(it){ return adminCanSee(it[0]); });
@@ -2236,13 +2240,16 @@
     var de=$('dw-email'); if(de) de.textContent=email||'';
     closeDrawer();
     buildNav(eff);
-    var g=$('app-greet'); if(g) g.textContent = (eff==='customer'?'経営者ダッシュボード':(eff==='admin'?'運営コンソール':'パートナーポータル'))+((r==='admin'&&eff!=='admin')?'（プレビュー）':'');
+    var g=$('app-greet'); if(g) g.textContent = (eff==='customer'?(ACCESS==='finance'?'顧問税理士ポータル':'経営者ダッシュボード'):(eff==='admin'?'運営コンソール':'パートナーポータル'))+((r==='admin'&&eff!=='admin')?'（プレビュー）':'');
     var cn=$('sb-co-nm'); if(cn) cn.textContent = (prof.company_name||'—');
     var dcn=$('dw-co-nm'); if(dcn) dcn.textContent = (prof.company_name||'—');
     var dc=$('app-date'); if(dc){ var d=new Date(); dc.textContent=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日'; }
 
     var view='';
-    if(eff==='customer'){
+    if(eff==='customer' && ACCESS==='finance'){
+      view=acctViewHtml(email);
+    }
+    else if(eff==='customer'){
       view=(r==='admin'?adminSwitchHtml('customer'):'')
         +'<div class="panel" id="sec-flow"><span class="pill">顧客ポータル</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">'+esc(prof.company_name||'経営者ダッシュボード')+'</h2>'
@@ -2252,6 +2259,7 @@
         +'<div id="dash-hero">読み込み中...</div>'
         +'<div id="my-impact"></div>'
         +'<div id="my-members"></div>'
+        +'<div id="my-acct"></div>'
         +'<div id="my-partner"></div>'
         +'</div>'
         +'<div id="my-nextmeet"></div>'
@@ -2652,7 +2660,8 @@
 
     window.__eff=eff;
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadDashHero(); loadMyImpact(); loadMembers(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
+    if(eff==='customer' && ACCESS==='finance'){ loadAcct(); }
+    else if(eff==='customer'){ loadDashHero(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
     else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); }
     else {
       // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
@@ -2666,7 +2675,7 @@
     navSpyInit();
     // 経営者の初回ログイン時だけ使い方ガイドを自動で開始する。
     // 各パネルが「読み込み中...」のまま指されないよう、データの取得を少し待つ。
-    if(eff==='customer'){ setTimeout(function(){ if(window.__eff==='customer') ctStart(false); }, 1600); }
+    if(eff==='customer' && ACCESS!=='finance'){ setTimeout(function(){ if(window.__eff==='customer' && ACCESS!=='finance') ctStart(false); }, 1600); }
   }
 
   // ---- finance (customer writes / consultant reads) ----
@@ -3013,6 +3022,20 @@
       var rd=await sb.from('monthly_reports').select('customer_id,report_month').eq('status','draft').in('customer_id',ids);
       if(!rd.error) repDrafts=rd.data||[];
     }
+    // 顧問税理士が入れた数字のうち、まだレポートを作っていない月を拾う（Phase73）
+    var acctFin=[];
+    if(ids.length){
+      try{
+        var af=await sb.from('financial_entries').select('customer_id,year_month,created_at')
+          .eq('source','accountant').in('customer_id',ids);
+        if(!af.error){
+          var repMonths={};
+          var rm=await sb.from('monthly_reports').select('customer_id,report_month').in('customer_id',ids);
+          (rm.error?[]:(rm.data||[])).forEach(function(x){ repMonths[x.customer_id+'|'+x.report_month]=1; });
+          acctFin=(af.data||[]).filter(function(x){ return !repMonths[x.customer_id+'|'+x.year_month]; });
+        }
+      }catch(e){}
+    }
     var pdcaItems=[];
     if(ids.length){
       var pd=await sb.from('pdca_items').select('customer_id,title,due_date,updated_at,status').eq('status','active').in('customer_id',ids);
@@ -3032,7 +3055,7 @@
     }
     var nextMeet={};
     meets.forEach(function(m){ if(!nextMeet[m.customer_id]) nextMeet[m.customer_id]=m; }); // 最も近い1件
-    CL_CACHE={clients:clients,cnt:cnt,lastMsg:lastMsg,unread:unread,funding:funding,pays:pays,repDrafts:repDrafts,maDeals:maDeals,maPulses:maPulses,pdca:pdcaItems,nextMeet:nextMeet};
+    CL_CACHE={clients:clients,cnt:cnt,lastMsg:lastMsg,unread:unread,funding:funding,pays:pays,repDrafts:repDrafts,maDeals:maDeals,maPulses:maPulses,pdca:pdcaItems,nextMeet:nextMeet,acctFin:acctFin};
     var totalUnread=0; clients.forEach(function(c){ totalUnread+=(unread[c.id]||0); });
     UNREAD.total=totalUnread; UNREAD.perClient=unread; applyNotifBadges();
     var sharesN=clients.filter(function(c){ return cnt[c.id]; }).length;
@@ -3097,6 +3120,10 @@
       var d=daysBetween(f.target_date, now); if(d===null) return;
       if(d<0) add(f.customer_id, 95, '<span class="tag red">期日超過：'+esc(f.title)+'（'+(-d)+'日）</span>');
       else if(d<=14) add(f.customer_id, 60+(14-d), '<span class="tag gold">調達期日 あと'+d+'日：'+esc(f.title)+'</span>');
+    });
+    // ③''' 顧問税理士が数字を入れた月（レポート未作成）
+    (CL_CACHE.acctFin||[]).forEach(function(f){
+      add(f.customer_id, 85, '<span class="tag blue">税理士が'+esc(ymJp(f.year_month))+'の数字を入力 → レポート作成</span>');
     });
     // ③' レポート承認待ち
     (CL_CACHE.repDrafts||[]).forEach(function(r){
@@ -9279,20 +9306,28 @@
   // いま見る会社を決める。閲覧メンバーとして招かれている場合はその会社を、
   // そうでなければ自分自身を指す。招かれていても自分が経営者なら自社を優先する。
   async function resolveScope(){
-    SCOPE=ME; SCOPE_CO=null;
+    SCOPE=ME; SCOPE_CO=null; ACCESS=null; ACCT_FIRMS=[];
     if(!ME) return;
     try{
-      var r=await sb.from('company_members').select('customer_id,label').eq('member_id',ME).eq('status','active').limit(1);
+      var r=await sb.from('company_members').select('*').eq('member_id',ME).eq('status','active');
       if(r.error || !(r.data||[]).length) return;
-      var cid=r.data[0].customer_id;
-      if(!cid || cid===ME) return;
+      var rows=(r.data||[]).filter(function(x){ return x.customer_id && x.customer_id!==ME; });
+      if(!rows.length) return;
       // 自分自身が顧客として登録されている（＝自社を持つ）なら、そちらを優先
       var own=await sb.from('financial_entries').select('customer_id').eq('customer_id',ME).limit(1);
       if(!own.error && (own.data||[]).length) return;
-      SCOPE=cid;
-      var co=await sb.from('profiles').select('company_name').eq('id',cid).maybeSingle();
-      SCOPE_CO=(co.error?null:((co.data||{}).company_name||null));
-    }catch(e){ SCOPE=ME; SCOPE_CO=null; }
+      var fin=rows.filter(function(x){ return x.access==='finance'; });
+      var full=rows.filter(function(x){ return x.access!=='finance'; });
+      var pick=full.length?full[0].customer_id:fin[0].customer_id;
+      ACCESS=full.length?'full':'finance';
+      // 顧問税理士は複数の顧問先を担当するので、切り替えられるよう一覧を持つ
+      var ids=(ACCESS==='finance'?fin:full).map(function(x){ return x.customer_id; });
+      var co=await sb.from('profiles').select('id,company_name,contact_name,email').in('id',ids);
+      var nameOf={}; (co.error?[]:(co.data||[])).forEach(function(p){ nameOf[p.id]=p.company_name||p.contact_name||p.email; });
+      ACCT_FIRMS=ids.map(function(id){ return { id:id, name:(nameOf[id]||'（名称未設定）') }; })
+        .sort(function(a,b){ return (a.name||'').localeCompare(b.name||'','ja'); });
+      SCOPE=pick; SCOPE_CO=nameOf[pick]||null;
+    }catch(e){ SCOPE=ME; SCOPE_CO=null; ACCESS=null; ACCT_FIRMS=[]; }
   }
   function scopeBannerHtml(){
     if(!SCOPE || SCOPE===ME) return '';
@@ -9634,6 +9669,219 @@
     if($('rf-cust'))$('rf-cust').value=''; if($('rf-detail'))$('rf-detail').value='';
     if(msg){msg.style.color='#27684A';msg.textContent='運営に依頼しました。お繋ぎ先が決まると、この画面に表示されます。';}
     await refLoad(); renderRefBox();
+  }
+
+  // ---- 経営者：顧問税理士に月次入力を依頼する（Phase73）----
+  // 依頼メールはプラットフォームからではなく社長ご自身のメールソフトから送る。
+  // 差出人が顧問先の社長本人であることが、税理士に受け入れてもらえる条件になる。
+  var ACCT_INV={ rows:[], err:null };
+  async function loadAcctInvite(){
+    var box=$('my-acct'); if(!box) return;
+    ACCT_INV.err=null; ACCT_INV.rows=[];
+    try{
+      var r=await sb.from('company_members').select('*').eq('customer_id',ME).order('created_at',{ascending:true});
+      if(r.error) ACCT_INV.err=r.error.message;
+      else ACCT_INV.rows=(r.data||[]).filter(function(x){ return x.access==='finance' && x.status!=='removed'; });
+    }catch(e){ ACCT_INV.err=String(e&&e.message||e); }
+    renderAcctInvite();
+  }
+  function acctMailBody(co){
+    var url=(location.protocol==='file:')?'https://y12fukukitaru.github.io/Tsugu-Ai/':(location.href.split('#')[0]);
+    return 'いつもお世話になっております。'+(co?co+'の':'')+'【お名前】です。\n\n'
+      +'弊社では経営支援プラットフォーム「TsuguAI」を導入し、月次の数字をもとに資金繰りと経営課題の可視化を行っております。\n'
+      +'つきましては大変恐縮ですが、毎月の試算表の数字（売上・営業利益）を、下記より直接ご入力いただけますでしょうか。\n\n'
+      +'  '+url+'\n\n'
+      +'・上記URLから、このメールアドレスで新規登録（初回のみ）をお願いいたします\n'
+      +'・ログイン後は、弊社名の欄に売上と営業利益をご入力いただくだけです（1社あたり1分程度）\n'
+      +'・試算表のファイル（CSV・Excel・PDF・画像）を選んでいただければ自動で読み取られます\n'
+      +'・先生にご覧いただけるのは数字の入力画面のみで、弊社の他の情報は表示されません\n\n'
+      +'お手数をおかけしますが、何卒よろしくお願いいたします。';
+  }
+  function renderAcctInvite(){
+    var box=$('my-acct'); if(!box) return;
+    if(ACCT_INV.err){ box.innerHTML=''; return; }   // 未整備のときは何も出さない
+    var h='<div style="border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:12px;">'
+      +'<div style="font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:5px;">顧問税理士に月次入力をお願いする</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.85;margin-bottom:10px;">'
+      +'毎月の試算表の数字を、顧問税理士の先生に直接ご入力いただけます。'
+      +'<b style="color:var(--navy);">先生に見えるのは数字の入力画面だけ</b>で、財務の詳細・メッセージ・レポートなど他の情報は表示されません。'
+      +'依頼メールの文面をご用意しますので、<b style="color:var(--navy);">社長ご自身のメールソフトから</b>お送りください。</div>';
+    if(ACCT_INV.rows.length){
+      h+=ACCT_INV.rows.map(function(m){
+        return '<div style="display:flex;align-items:center;gap:10px;border:1px solid var(--softline);border-radius:9px;padding:9px 11px;margin-bottom:6px;flex-wrap:wrap;background:var(--soft);">'
+          +'<div style="flex:1;min-width:150px;">'
+            +'<div style="font-size:12.5px;color:var(--ink);font-weight:600;">'+esc(m.member_email||'')+'</div>'
+            +'<div style="font-size:11px;color:var(--muted);margin-top:1px;">'+esc(m.label||'顧問税理士')
+            +(m.member_id?'　<span style="color:#27684A;">利用中</span>':'　<span style="color:#8A6A12;">登録待ち</span>')+'</div>'
+          +'</div>'
+          +'<button class="ghost" style="font-size:11px;padding:5px 10px;border:1px solid var(--line);border-radius:7px;" onclick="acctMail(\''+escA(m.member_email||'')+'\')">依頼メールを作成</button>'
+          +'<button class="ghost" style="font-size:11px;padding:5px 10px;border:1px solid var(--line);border-radius:7px;" onclick="acctRemove(\''+m.id+'\')">解除</button>'
+        +'</div>';
+      }).join('');
+    }
+    if(ACCT_INV.rows.length<2){
+      h+='<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:'+(ACCT_INV.rows.length?'8px':'0')+';">'
+        +'<div style="flex:1;min-width:190px;"><label class="fl">顧問税理士のメールアドレス</label>'
+          +'<input id="acinv-email" type="email" class="inp2" style="width:100%;" placeholder="sensei@example.com"></div>'
+        +'<div><label class="fl">事務所名（任意）</label><input id="acinv-label" class="inp2" style="width:160px;" placeholder="例：○○税理士事務所"></div>'
+        +'<button class="btn2" onclick="acctInvite()">登録して依頼メールを作成</button>'
+      +'</div>'
+      +'<div id="acinv-msg" style="font-size:12px;margin-top:8px;"></div>';
+    }
+    h+='</div>';
+    box.innerHTML=h;
+  }
+  function acctMail(email){
+    var co=((window.__prof||{}).company_name)||'';
+    var subj='【'+(co||'弊社')+'】月次数字のご入力のお願い（TsuguAI）';
+    var url='mailto:'+encodeURIComponent(email||'')
+      +'?subject='+encodeURIComponent(subj)
+      +'&body='+encodeURIComponent(acctMailBody(co));
+    try{ window.location.href=url; }catch(e){ window.open(url,'_blank'); }
+  }
+  async function acctInvite(){
+    var msg=$('acinv-msg');
+    function ng(t){ if(msg){ msg.style.color='#A9403D'; msg.textContent=t; } }
+    var em=((($('acinv-email')||{}).value)||'').trim().toLowerCase();
+    if(!validEmail(em)) return ng('メールアドレスを正しく入力してください。');
+    if(em===(window.__email||'').toLowerCase()) return ng('ご自身は登録できません。');
+    if(ACCT_INV.rows.some(function(m){ return (m.member_email||'').toLowerCase()===em; })) return ng('すでに登録されています。');
+    var row={ id:uuid4(), customer_id:ME, member_email:em,
+      label:((($('acinv-label')||{}).value)||'').trim()||'顧問税理士',
+      access:'finance', status:'active', created_at:new Date().toISOString() };
+    var r=await sb.from('company_members').insert(row);
+    if(r.error) return ng('登録できませんでした：'+r.error.message+'（Supabaseで「Phase73」のSQLを実行してください）');
+    if(msg){ msg.style.color='#27684A'; msg.textContent='登録しました。メールソフトが開きます。内容をご確認のうえ送信してください。'; }
+    await loadAcctInvite();
+    acctMail(em);
+  }
+  async function acctRemove(id){
+    if(!confirm('この先生の入力権限を解除しますか？')) return;
+    var r=await sb.from('company_members').delete().eq('id',id);
+    if(r.error){ alert('解除できませんでした：'+r.error.message); return; }
+    loadAcctInvite();
+  }
+
+  // ============================================================
+  // ===== 顧問税理士ポータル（Phase73）=====
+  // 顧問先の社長から依頼を受けた税理士が、月次の数字だけを入力する画面。
+  // 担当先が縦に並び、未入力が上に来る。1社ぶん10秒で終わることが要件。
+  // 見えるのはこの画面だけで、顧客の経営情報には一切触れられない。
+  // ============================================================
+  function prevYM(){
+    var d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-1);
+    return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2);
+  }
+  function acctViewHtml(email){
+    return '<div class="panel" id="sec-flow">'
+      +'<span class="pill">顧問税理士</span>'
+      +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">月次数字の入力</h2>'
+      +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b></div>'
+      +'<div style="font-size:12px;color:var(--muted);line-height:1.85;margin-bottom:14px;">'
+        +'顧問先の社長さまからのご依頼にもとづき、毎月の<b style="color:var(--navy);">売上と営業利益</b>をご入力いただく画面です。'
+        +'試算表のファイル（CSV・Excel・PDF・画像）を選んでいただくと自動で読み取ります。'
+        +'<b style="color:var(--navy);">ご覧いただけるのはこの画面のみ</b>で、顧問先の他の情報は表示されません。</div>'
+      +'<div id="acct-body">読み込み中...</div>'
+    +'</div>';
+  }
+  var ACCT={ ym:null, rows:{}, busy:{} };
+  async function loadAcct(){
+    var box=$('acct-body'); if(!box) return;
+    if(!ACCT.ym) ACCT.ym=prevYM();
+    if(!ACCT_FIRMS.length){ box.innerHTML='<div style="font-size:13px;color:var(--muted);line-height:1.9;">担当としてご登録されている顧問先がありません。<br>顧問先の社長さまに、依頼メールの再送をご依頼ください。</div>'; return; }
+    ACCT.rows={};
+    try{
+      var ids=ACCT_FIRMS.map(function(f){ return f.id; });
+      var r=await sb.from('financial_entries').select('customer_id,year_month,revenue,profit,created_at')
+        .in('customer_id',ids).eq('year_month',ACCT.ym);
+      (r.error?[]:(r.data||[])).forEach(function(x){ ACCT.rows[x.customer_id]=x; });
+    }catch(e){}
+    renderAcct();
+  }
+  function renderAcct(){
+    var box=$('acct-body'); if(!box) return;
+    var done=ACCT_FIRMS.filter(function(f){ return ACCT.rows[f.id]; }).length;
+    var h='<div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;">'
+      +'<div><label class="fl">対象月</label><input id="acct-ym" type="month" class="inp2" value="'+escA(ACCT.ym)+'" onchange="acctSetYM(this.value)"></div>'
+      +'<div style="flex:1;min-width:150px;"><div class="tr-bar"><i style="width:'+(ACCT_FIRMS.length?Math.round(done/ACCT_FIRMS.length*100):0)+'%;"></i></div>'
+        +'<div style="font-size:11.5px;color:var(--muted);margin-top:5px;">入力済み '+done+' / '+ACCT_FIRMS.length+' 社</div></div>'
+    +'</div>';
+    // 未入力を先に出す。開いた瞬間に「あと何社」が分かることが要件
+    var list=ACCT_FIRMS.slice().sort(function(a,b){
+      var da=ACCT.rows[a.id]?1:0, db=ACCT.rows[b.id]?1:0;
+      if(da!==db) return da-db;
+      return (a.name||'').localeCompare(b.name||'','ja');
+    });
+    h+=list.map(function(f){
+      var e=ACCT.rows[f.id], has=!!e;
+      return '<div style="border:1px solid '+(has?'#CFE3D6':'var(--line)')+';background:'+(has?'rgba(39,104,74,.05)':'var(--card)')+';border-radius:11px;padding:12px 14px;margin-bottom:8px;">'
+        +'<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:9px;">'
+          +'<b style="font-size:13.5px;color:var(--ink);">'+esc(f.name)+'</b>'
+          +(has?'<span class="tag green" style="font-size:10px;">入力済み</span>':'<span class="tag red" style="font-size:10px;">未入力</span>')
+          +(has&&e.created_at?'<span style="font-size:10.5px;color:var(--muted);">'+esc(String(e.created_at).slice(0,10))+'</span>':'')
+        +'</div>'
+        +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+          +'<div><label class="fl">売上（万円）</label><input id="ac-rev-'+f.id+'" type="number" class="inp2" style="width:130px;" value="'+(has&&e.revenue!=null?e.revenue:'')+'" placeholder="例 1200"></div>'
+          +'<div><label class="fl">営業利益（万円）</label><input id="ac-prof-'+f.id+'" type="number" class="inp2" style="width:140px;" value="'+(has&&e.profit!=null?e.profit:'')+'" placeholder="例 180"></div>'
+          +'<button class="btn2" onclick="acctSave(\''+f.id+'\')">'+(has?'更新する':'保存する')+'</button>'
+          +'<label class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:9px;padding:8px 12px;cursor:pointer;">試算表を読み取る'
+            +'<input type="file" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg" style="display:none;" onchange="acctFile(\''+f.id+'\',this)"></label>'
+        +'</div>'
+        +'<div id="ac-msg-'+f.id+'" style="font-size:12px;margin-top:7px;"></div>'
+      +'</div>';
+    }).join('');
+    h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.85;margin-top:10px;">'
+      +'保存すると、担当パートナーに自動で通知が届きます。数字の訂正が必要な場合は、同じ月を上書き保存してください。</div>';
+    box.innerHTML=h;
+  }
+  function acctSetYM(v){ if(!v) return; ACCT.ym=v; loadAcct(); }
+  async function acctSave(cid){
+    var msg=$('ac-msg-'+cid);
+    function say(t,ok){ if(msg){ msg.style.color=ok?'#27684A':'#A9403D'; msg.textContent=t; } }
+    var rev=(($('ac-rev-'+cid)||{}).value), pro=(($('ac-prof-'+cid)||{}).value);
+    if(rev===''&&pro===''){ say('売上か営業利益のどちらかをご入力ください。'); return; }
+    if(ACCT.busy[cid]) return; ACCT.busy[cid]=1;
+    var row={ customer_id:cid, year_month:ACCT.ym,
+      revenue:(rev===''?null:Number(rev)), profit:(pro===''?null:Number(pro)),
+      memo:'顧問税理士の入力', source:'accountant' };
+    var old=ACCT.rows[cid];
+    var res;
+    try{
+      if(old){
+        res=await sb.from('financial_entries').update(row).eq('customer_id',cid).eq('year_month',ACCT.ym);
+      } else {
+        res=await sb.from('financial_entries').insert(row);
+        if(res.error && /source/.test(res.error.message||'')){   // Phase73未適用でも保存はできるように
+          delete row.source; res=await sb.from('financial_entries').insert(row);
+        }
+      }
+    }catch(e){ res={error:{message:String(e&&e.message||e)}}; }
+    ACCT.busy[cid]=0;
+    if(res.error){ say('保存できませんでした：'+res.error.message); return; }
+    say('保存しました。担当パートナーに通知されます。', true);
+    loadAcct();
+  }
+  // 試算表を読み取って、その月の欄に流し込む（既存の取込処理を流用）
+  async function acctFile(cid, inp){
+    var msg=$('ac-msg-'+cid);
+    function say(t,ok){ if(msg){ msg.style.color=ok?'#27684A':'#A9403D'; msg.textContent=t; } }
+    if(!inp||!inp.files||!inp.files[0]) return;
+    var file=inp.files[0], ext=(file.name.split('.').pop()||'').toLowerCase();
+    say('読み取り中…');
+    try{
+      FIN_IMPORT_ROWS=null;
+      if(ext==='csv'||ext==='xlsx'||ext==='xls') await parseSheet(file);
+      else if(ext==='pdf'||ext==='png'||ext==='jpg'||ext==='jpeg') await parseByAI(file, ext);
+      else throw new Error('対応していない形式です');
+      var rows=FIN_IMPORT_ROWS||[];
+      var hit=rows.filter(function(x){ return x.ym===ACCT.ym; })[0] || rows[rows.length-1];
+      if(!hit) throw new Error('数字を読み取れませんでした');
+      if($('ac-rev-'+cid) && hit.revenue!=null) $('ac-rev-'+cid).value=hit.revenue;
+      if($('ac-prof-'+cid) && hit.profit!=null) $('ac-prof-'+cid).value=hit.profit;
+      say(hit.ym===ACCT.ym ? '読み取りました。内容をご確認のうえ保存してください。'
+                           : '「'+esc(hit.ym||'')+'」の数字を読み取りました。対象月と違う場合はご確認ください。', true);
+    }catch(e){ say('読み取れませんでした：'+(e&&e.message||e)+'　お手数ですが直接ご入力ください。'); }
+    finally{ if(inp) inp.value=''; FIN_IMPORT_ROWS=null; }
   }
 
   // ===== 累計インパクト（Phase66・経営者ポータル）=====
