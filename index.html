@@ -2740,6 +2740,7 @@
 
   // ===== パートナー：顧客管理（一覧・対応状況・未読を統合） =====
   var CL_CACHE={clients:[],cnt:{},lastMsg:{},unread:{}};
+  var SUB_IDS={};   // サブ担当としてついている顧客ID（メイン担当の顧客と見分けるため）
   var CL_FILTER='all';
   function toggleAddClient(){ var d=$('cl-add'); if(d) d.classList.toggle('hidden'); }
   function setClFilter(f,el){ CL_FILTER=f; var bar=$('cl-filterbar'); if(bar){ Array.prototype.forEach.call(bar.querySelectorAll('.sbtn'),function(b){ b.classList.remove('on'); }); } if(el) el.classList.add('on'); renderClientList(); }
@@ -2748,6 +2749,18 @@
     var cl=await sb.from('profiles').select('id,email,company_name,role,stage').eq('consultant_id',ME).eq('role','customer');
     if(cl.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(cl.error.message)+'</div>'; return; }
     var clients=cl.data||[];
+    // 承認済みのサブ担当としてついている顧客を合流させる（Phase68）。
+    // メイン担当の顧客と同じカードで扱い、バッジだけで見分けられるようにする。
+    SUB_IDS={};
+    try{
+      var sa=await sb.from('partner_assignments').select('customer_id').eq('sub_id',ME).eq('status','approved');
+      var subIds=(sa.error?[]:(sa.data||[])).map(function(x){ return x.customer_id; })
+        .filter(function(id){ return id && !clients.some(function(c){ return c.id===id; }); });
+      if(subIds.length){
+        var sp=await sb.from('profiles').select('id,email,company_name,role,stage').in('id',subIds);
+        if(!sp.error){ (sp.data||[]).forEach(function(c){ SUB_IDS[c.id]=1; clients.push(c); }); }
+      }
+    }catch(e){}
     var ai=await sb.from('automation_interests').select('customer_id,category');
     var ins=await sb.from('insurance_results').select('customer_id');
     var ch=await sb.from('chat_messages').select('customer_id,sender_role,created_at,body').order('created_at',{ascending:false}).limit(500);
@@ -3754,7 +3767,8 @@
       var k=CL_CACHE.cnt[c.id]||{auto:0,mna:0,ins:0};
       var un=CL_CACHE.unread[c.id]||0;
       var lm=CL_CACHE.lastMsg[c.id];
-      var tags='<span class="tag gray">ステージ'+(c.stage||1)+'・'+(STAGE_NAMES[c.stage||1]||'')+'</span>';
+      var tags=(SUB_IDS[c.id]?'<span class="tag blue">サブ担当</span>':'')
+        +'<span class="tag gray">ステージ'+(c.stage||1)+'・'+(STAGE_NAMES[c.stage||1]||'')+'</span>';
       if(k.auto) tags+='<span class="tag blue">自動化 '+k.auto+'</span>';
       if(k.mna) tags+='<span class="tag gold">M&A '+k.mna+'</span>';
       if(k.ins) tags+='<span class="tag green">保険 '+k.ins+'</span>';
@@ -8743,6 +8757,19 @@
       return;
     }
     var live=ASG.rows.filter(function(x){ return x.status==='pending'||x.status==='approved'; });
+    // サブ担当としてこの顧客を見ている場合、配分の決定権はメインにあるので閲覧のみにする
+    var asSub=live.some(function(x){ return x.main_id!==ME; });
+    if(asSub){
+      var x=live.filter(function(y){ return y.main_id!==ME; })[0];
+      box.innerHTML='<div style="border:1.5px solid #C9D6EA;background:var(--soft);border-radius:11px;padding:12px 14px;">'
+        +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">あなたはこの顧客の<span style="color:var(--blue);">サブ担当</span>です</div>'
+        +'<div style="font-size:12.5px;color:var(--ink);margin-top:5px;">報酬配分　メイン '+Number(x.main_share)+'%　／　あなた '+Number(x.sub_share)+'%</div>'
+        +'<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-top:5px;">'
+        +'配分の決定と変更はメイン担当が行います。ご相談は'
+        +'<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="goSec(\'sec-support\')">運営サポート</span>までどうぞ。</div>'
+      +'</div>';
+      return;
+    }
     var h='';
     if(live.length){
       h+=live.map(function(x){
