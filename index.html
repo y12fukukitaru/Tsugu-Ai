@@ -988,6 +988,7 @@
     'sec-risk':    ['owner','coo','cto'],
     'sec-fde':     ['owner','coo','cfo','cto'],
     'sec-cust':    ['owner','coo','cfo','cto'],
+    'sec-team':    ['owner'],                    // 権限を配る権限は代表だけに固定する
     'sec-network': ['owner','coo','cto'],
     'sec-exec':    ['owner','cfo','cto'],        // 資金調達・週次・KPI
     'sec-market':  ['owner','coo','cfo','cto'],
@@ -1014,7 +1015,7 @@
     return presetPerms(role);
   }
   function adminNavAll(){
-    return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-network','専門家ネットワーク'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
+    return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-team','運営メンバー'],['sec-network','専門家ネットワーク'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
   }
   function adminRoleName(r){ var n=r; ADMIN_ROLES.forEach(function(x){ if(x[0]===r) n=x[1]; }); return n; }
   function isOwner(){ return ADMIN_ROLE==='owner'; }
@@ -1117,7 +1118,7 @@
     'sec-clients':'building','sec-sales':'clipboard','sec-pdca':'cycle','sec-madeals':'folder','sec-knowledge':'book','sec-sozoku':'calc',
     'sec-kpi':'chart','sec-risk':'alert','sec-fde':'users','sec-cust':'building','sec-exec':'flag',
     'sec-billing':'card','sec-billpay':'card','sec-audit':'shield','sec-broadcast':'megaphone','sec-support':'life','sec-growth':'up',
-    'sec-training':'play','sec-biz':'brief','sec-network':'net'
+    'sec-training':'play','sec-biz':'brief','sec-network':'net','sec-team':'users'
   };
   function niHtml(id,label,drawer){
     var ic=icoSvg(NAV_ICON[id]||'');
@@ -1398,20 +1399,23 @@
         +'<div id="adm-risk">読み込み中...</div></div>'
       +'<div class="panel" id="sec-fde"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">パートナー 一覧・稼働モニタ<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
         +'<input id="adm-fde-search" class="searchbox" style="margin-top:8px;" placeholder="🔍 名前・メールアドレスで検索" oninput="renderAdmFde()">'
-        +'<div id="adm-fde" style="margin-top:10px;">読み込み中...</div>'
-        +'<div class="ph" style="font-size:13px;margin-top:20px;display:flex;align-items:center;justify-content:space-between;">2名体制（サブ担当）の申請'
-          +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmAssign()">↺ 更新</span></div>'
-        +'<div id="adm-asg">読み込み中...</div></div>'
+        +'<div id="adm-fde" style="margin-top:10px;">読み込み中...</div></div>'
       +'<div class="panel" id="sec-cust"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">顧客 一覧・管理<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
         +'<input id="adm-cust-search" class="searchbox" style="margin-top:8px;" placeholder="🔍 会社名・メールアドレスで検索" oninput="renderAdmCust()">'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px;" id="adm-cust-filterbar">'
           +'<button class="sbtn on" data-f="all" onclick="setAdmCustFilter(\'all\',this)">すべて</button>'
           +'<button class="sbtn" data-f="unassigned" onclick="setAdmCustFilter(\'unassigned\',this)">担当未割当</button>'
         +'</div>'
-        +'<div id="adm-cust" style="margin-top:6px;">読み込み中...</div>'
-        +'<div class="ph" style="font-size:13px;margin-top:18px;">アカウントと役割の管理（全アカウント）</div>'
-        +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">登録されている<b>すべてのアカウント</b>の一覧です。役割の変更はここでのみ行えます。役割を誤って変更してしまい顧客一覧・パートナー一覧から消えた場合も、ここで正しい役割に戻せば復旧できます。</div>'
-        +'<div id="adm-roles">読み込み中...</div></div>'
+        +'<div id="adm-cust" style="margin-top:6px;">読み込み中...</div></div>'
+      +'<div class="panel" id="sec-team"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 21v-1.8a3.7 3.7 0 0 0-3.7-3.7H6.2A3.7 3.7 0 0 0 2.5 19.2V21"/><circle cx="8.75" cy="7.5" r="3.7"/><path d="M21.5 21v-1.8a3.7 3.7 0 0 0-2.8-3.6"/><path d="M15.5 4a3.7 3.7 0 0 1 0 7.1"/></svg>運営メンバー</span>'
+        +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin();loadAdmAssign();">↺ 更新</span></div>'
+        +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.8;">アカウントの役割と、運営内の権限を管理します。<b style="color:var(--navy);">このメニューは代表のみに表示されます。</b>権限を渡した相手が、さらに他の人へ権限を配れてしまうのを防ぐためです。</div>'
+        +'<div class="ph" style="font-size:13px;">アカウントと役割の管理（全アカウント）</div>'
+        +'<div style="font-size:11px;color:var(--muted);margin-bottom:6px;line-height:1.7;">登録されている<b>すべてのアカウント</b>の一覧です。役割の変更はここでのみ行えます。役割を誤って変更してしまい顧客一覧・パートナー一覧から消えた場合も、ここで正しい役割に戻せば復旧できます。運営に設定したアカウントは、右の「権限を設定」から見えるメニューを1つずつ調整できます。</div>'
+        +'<div id="adm-roles">読み込み中...</div>'
+        +'<div class="ph" style="font-size:13px;margin-top:22px;display:flex;align-items:center;justify-content:space-between;">2名体制（サブ担当）の申請'
+          +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmAssign()">↺ 更新</span></div>'
+        +'<div id="adm-asg">読み込み中...</div></div>'
       +'<div class="panel" id="sec-network"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="4.5" r="2.5"/><circle cx="4.5" cy="18" r="2.5"/><circle cx="19.5" cy="18" r="2.5"/><path d="M12 7v4M12 11 5.8 15.9M12 11l6.2 4.9"/></svg>専門家ネットワーク</span>'
         +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadNetwork()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.8;">パートナーの本業（保有資格）と顧客の業種を突き合わせ、<b style="color:var(--navy);">誰がどの領域を実行でき、どこが手薄か</b>を把握するための画面です。手薄な領域は提携専門家で埋め、料金の目安を明示したうえでパートナー・顧客にお繋ぎします。</div>'
@@ -1916,39 +1920,37 @@
   function closePerm(){ PERM_EDIT=null; var m=$('perm-modal'); if(m){ m.classList.add('hidden'); document.body.style.overflow=''; } }
   function renderPerm(){
     var box=$('perm-body'); if(!box||!PERM_EDIT) return;
-    var isOwn=(PERM_EDIT.role==='owner');
     var h='<div style="font-size:12px;color:var(--muted);line-height:1.85;margin-bottom:12px;">'
-      +'プリセットを選ぶとチェックがまとめて入ります。そのあと1つずつ調整できます。'
-      +'<b style="color:var(--navy);">代表（全権）にすると、この人も他の人の権限を変更できるようになります。</b></div>';
+      +'プリセットを選ぶとチェックがまとめて入ります。そのあと1つずつ調整できます。</div>';
     h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">'
-      +ADMIN_ROLES.filter(function(x){ return x[0]!=='custom'; }).map(function(x){
+      // 代表（全権）はここから付与できない。権限を配る権限は代表ひとりに固定する
+      +ADMIN_ROLES.filter(function(x){ return x[0]!=='custom' && x[0]!=='owner'; }).map(function(x){
         return '<button class="sbtn'+(PERM_EDIT.role===x[0]?' on':'')+'" onclick="permPreset(\''+x[0]+'\')">'+esc(x[1])+'</button>';
       }).join('')
+      +'<button class="sbtn" onclick="permAll(true)">すべて選択</button>'
+      +'<button class="sbtn" onclick="permAll(false)">すべて解除</button>'
       +(PERM_EDIT.role==='custom'?'<span class="tag gold" style="align-self:center;">個別設定</span>':'')
     +'</div>';
-    if(isOwn){
-      h+='<div style="border:1.5px solid #E3B9B7;background:rgba(169,64,61,.06);border-radius:11px;padding:12px 14px;font-size:12.5px;color:var(--red);line-height:1.9;">'
-        +'<b>代表（全権）です。</b>すべてのメニューに加えて、アカウントの役割変更と、他のメンバーの権限設定ができます。<br>'
-        +'この権限を渡すのは、あなたと同等の立場の方に限ってください。</div>';
-    } else {
-      h+='<div style="border:1px solid var(--line);border-radius:11px;overflow:hidden;">';
-      adminNavAll().forEach(function(it,idx){
-        var on=PERM_EDIT.perms.indexOf(it[0])>=0;
-        var w=PERM_WARN[it[0]];
-        h+='<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 13px;cursor:pointer;'
-          +(idx?'border-top:1px solid var(--softline);':'')+(on?'background:rgba(39,104,74,.05);':'')+'">'
-          +'<input type="checkbox" style="margin-top:3px;width:16px;height:16px;" '+(on?'checked':'')+' onchange="permToggle(\''+it[0]+'\')">'
-          +'<span style="flex:1;min-width:0;">'
-            +'<span style="font-size:13.5px;color:var(--ink);font-weight:'+(on?'600':'400')+';">'+esc(it[1])+'</span>'
-            +(w?'<span style="display:block;font-size:11px;color:'+(on?'#8A6A12':'var(--muted)')+';line-height:1.7;margin-top:1px;">'+esc(w)+'</span>':'')
-          +'</span>'
-        +'</label>';
-      });
-      h+='</div>';
-      h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.85;margin-top:10px;">'
-        +'チェックを外したメニューは表示されず、直接開くこともできません。'
-        +'<b style="color:var(--navy);">アカウントの役割変更と権限設定は、代表（全権）の方のみが行えます。</b></div>';
-    }
+    h+='<div style="border:1px solid var(--line);border-radius:11px;overflow:hidden;">';
+    adminNavAll().forEach(function(it,idx){
+      var on=PERM_EDIT.perms.indexOf(it[0])>=0;
+      var w=PERM_WARN[it[0]];
+      var fixed=(ADMIN_NAV_SCOPE[it[0]]||[]).join(',')==='owner';   // 代表専用の項目は付与できない
+      h+='<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 13px;'
+        +(fixed?'cursor:default;opacity:.55;':'cursor:pointer;')
+        +(idx?'border-top:1px solid var(--softline);':'')+(on&&!fixed?'background:rgba(39,104,74,.05);':'')+'">'
+        +'<input type="checkbox" style="margin-top:3px;width:16px;height:16px;" '+(fixed?'disabled':(on?'checked':''))+' onchange="permToggle(\''+it[0]+'\')">'
+        +'<span style="flex:1;min-width:0;">'
+          +'<span style="font-size:13.5px;color:var(--ink);font-weight:'+(on&&!fixed?'600':'400')+';">'+esc(it[1])+'</span>'
+          +(fixed?'<span style="display:block;font-size:11px;color:var(--red);line-height:1.7;margin-top:1px;">代表のみ。ほかの方には付与できません</span>'
+                 :(w?'<span style="display:block;font-size:11px;color:'+(on?'#8A6A12':'var(--muted)')+';line-height:1.7;margin-top:1px;">'+esc(w)+'</span>':''))
+        +'</span>'
+      +'</label>';
+    });
+    h+='</div>';
+    h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.85;margin-top:10px;">'
+      +'チェックを外したメニューは表示されず、直接開くこともできません。'
+      +'<b style="color:var(--navy);">すべて選択した場合でも、アカウントの役割変更と権限設定は代表のあなたのみが行えます。</b></div>';
     h+='<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--softline);">'
       +'<button class="btn2" onclick="savePerm()">保存する</button>'
       +'<button class="ghost" style="font-size:12.5px;border:1px solid var(--line);border-radius:9px;padding:8px 14px;" onclick="closePerm()">キャンセル</button>'
@@ -1962,8 +1964,18 @@
     PERM_EDIT.perms=permsOf(role, null).slice();
     renderPerm();
   }
+  function permAll(on){
+    if(!PERM_EDIT) return;
+    // 「すべて選択」でも代表専用の項目は付けない
+    PERM_EDIT.perms = on ? adminNavAll().map(function(it){ return it[0]; })
+                              .filter(function(id){ return (ADMIN_NAV_SCOPE[id]||[]).join(',')!=='owner'; })
+                         : [];
+    PERM_EDIT.role='custom';
+    renderPerm();
+  }
   function permToggle(sec){
     if(!PERM_EDIT) return;
+    if((ADMIN_NAV_SCOPE[sec]||[]).join(',')==='owner') return;   // 代表専用は変更不可
     var i=PERM_EDIT.perms.indexOf(sec);
     if(i>=0) PERM_EDIT.perms.splice(i,1); else PERM_EDIT.perms.push(sec);
     // プリセットと一致しなくなったら「個別設定」に切り替える
@@ -1974,12 +1986,13 @@
   async function savePerm(){
     if(!PERM_EDIT) return;
     var msg=$('perm-msg');
-    if(PERM_EDIT.id===ME && PERM_EDIT.role!=='owner'){
-      if(msg){ msg.style.color='#A9403D'; msg.textContent='ご自身の権限は下げられません。'; }
+    if(PERM_EDIT.id===ME){
+      if(msg){ msg.style.color='#A9403D'; msg.textContent='ご自身の権限は変更できません。誤って全権を失うのを防ぐためです。'; }
       return;
     }
-    var isOwn=(PERM_EDIT.role==='owner');
-    var row={ admin_role:PERM_EDIT.role, admin_perms:(isOwn?null:PERM_EDIT.perms.join(',')) };
+    // 代表専用の項目は保存対象から必ず除く
+    var perms=PERM_EDIT.perms.filter(function(id){ return (ADMIN_NAV_SCOPE[id]||[]).join(',')!=='owner'; });
+    var row={ admin_role:(PERM_EDIT.role==='owner'?'custom':PERM_EDIT.role), admin_perms:perms.join(',') };
     var r=await sb.from('profiles').update(row).eq('id',PERM_EDIT.id);
     if(r.error){
       if(msg){ msg.style.color='#A9403D'; msg.textContent='保存できませんでした：'+r.error.message+'（Supabaseで「Phase72」のSQLを実行してください）'; }

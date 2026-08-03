@@ -51,6 +51,7 @@ ul.dots li b{color:var(--navy);}
 .kv th{width:26%;color:var(--navy);font-weight:700;background:var(--soft);}
 .kv td b{color:var(--navy);}
 .kv.num td:last-child{text-align:right;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.kv.tight th,.kv.tight td{padding:6px 11px;font-size:12.5px;line-height:1.65;}
 .pill{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--softline);color:var(--blue);margin-right:5px;}
 .pill.g{background:rgba(39,104,74,.13);color:var(--green);}
 .pill.w{background:rgba(195,155,63,.16);color:#8A6A12;}
@@ -110,18 +111,19 @@ ul.dots li b{color:var(--navy);}
 <section class="slide cover on" data-t="表紙">
   <div class="mark">Tsugu -継-</div>
   <h1>運営コンソール<br>操作説明書</h1>
-  <p class="sub">全機能と、課金・報酬支払いの詳細<br>所要 30分／支払い章は第13〜21ページ</p>
+  <p class="sub">全機能と、課金・報酬支払いの詳細<br>所要 30分／支払い章は目次から「■ 支払い・課金の章」へ</p>
 </section>
 
 <section class="slide" data-t="全体像">
   <div class="eyebrow">はじめに</div>
-  <h2>運営コンソールの11メニュー</h2>
-  <table class="kv">
+  <h2>運営コンソールの12メニュー</h2>
+  <table class="kv tight">
     <tr><th>ダッシュボード</th><td>Tsugu自体の成長ロードマップ（事業計画連動）。顧客・パートナー・調達の実データから現在地を自動表示。</td></tr>
     <tr><th>KPI</th><td>ステージ・ファネル／稼働状況。</td></tr>
     <tr><th>要対応</th><td>顧客リスクの自動検知。優先度順に並びます。</td></tr>
     <tr><th>パートナー</th><td>一覧・稼働モニタ、<b>2名体制（サブ担当）の承認</b>。</td></tr>
-    <tr><th>顧客</th><td>一覧・管理、<b>アカウントの役割変更</b>（ここでのみ可能）。</td></tr>
+    <tr><th>顧客</th><td>一覧・管理。担当未割当での絞り込み。</td></tr>
+    <tr><th>運営メンバー <span class="pill r">代表のみ</span></th><td>アカウントの役割変更、運営内の権限設定、2名体制の承認。<b>このメニューは代表にしか表示されません。</b></td></tr>
     <tr><th>専門家ネットワーク</th><td>領域カバレッジ／顧客の業種分布／提携専門家の名簿／紹介依頼の受信箱。</td></tr>
     <tr><th>経営計画</th><td>資金調達リスト・週次計画・KPI。<b>融資の記録先はここ。</b></td></tr>
     <tr><th>Tsugu投資・融資・M&A</th><td>掲載案件の管理と、パートナーからの掲載申請の審査。</td></tr>
@@ -132,12 +134,28 @@ ul.dots li b{color:var(--navy);}
   <div class="note" style="margin-top:12px;">画面上部の<b>表示モード</b>（運営／パートナー／顧客）で、各ロールの見え方をプレビューできます。動作確認に使ってください。</div>
 </section>
 
+<section class="slide" data-t="運営メンバーの権限">
+  <div class="eyebrow">運営メンバー（代表のみ）</div>
+  <h2>誰に、どこまで開けるか</h2>
+  <p class="sub">運営コンソールは全部入りではありません。役員・委託契約者ごとに、見えるメニューを1つずつ設定できます。</p>
+  <ol class="steps">
+    <li>「運営メンバー」→ <b>アカウントと役割の管理</b>で、対象の方の役割を<b>運営</b>にする</li>
+    <li>同じ行の<b>「権限を設定」</b>を押す<span>運営（admin）の行にだけ表示されます。</span></li>
+    <li>プリセット（COO／CFO／CTO／すべて選択）を当ててから、<b>1つずつ調整</b>する<span>プリセットと差が出た時点で「個別設定」に切り替わります。一覧には「個別設定（7/13）」のように現在の状態が出ます。</span></li>
+  </ol>
+  <div class="grid g2" style="margin-top:6px;">
+    <div class="card w"><h3>開けるときは表示を確認</h3><p>資金調達・全社売上・一斉配信・顧客編集の4項目には、<b>何が見えるようになるか</b>が注記されます。</p></div>
+    <div class="card r"><h3>「運営メンバー」だけは付与できません</h3><p><b>すべて選択を押しても、この項目はグレーのまま</b>です。権限を配る権限を渡すと、その人が自分や他人の権限を自由に変えられてしまうためです。</p></div>
+  </div>
+  <div class="note r" style="margin-top:12px;"><b>メニューを隠すだけでは「見せない」ことになりません。</b>Supabase側のRLS（Phase71／72）を適用して初めて、データそのものが読めなくなります。UIだけの制限は、開発者ツールから回避できます。</div>
+</section>
+
 <section class="slide" data-t="パートナー管理">
   <div class="eyebrow">パートナー</div>
   <h2>一覧・稼働モニタと、2名体制の承認</h2>
   <div class="grid g2">
     <div class="card"><h3>一覧・稼働モニタ</h3><p>登録パートナーの稼働状況を確認します。名前・メールで絞り込めます。<br><br><b>ランク（fde_rank）の設定はここで行います。</b>ランクは外注費率に直結するため、未設定のままにしないでください。</p></div>
-    <div class="card w"><h3>2名体制（サブ担当）の申請</h3><p>メイン担当が申請した体制が届きます。<b>報酬配分はメイン担当が決めています。</b><br><br>承認するとサブ担当がその顧客を閲覧でき、配分が報酬計算に反映されます。回答メモを添えて<b>承認</b>または<b>見送り</b>。</p></div>
+    <div class="card w"><h3>2名体制（サブ担当）の申請 <span class="pill r">運営メンバー</span></h3><p>承認画面は<b>「運営メンバー」メニュー</b>にあります（代表のみ）。<br><br>メイン担当が申請した体制が届きます。<b>報酬配分はメイン担当が決めています。</b>承認するとサブ担当がその顧客を閲覧でき、配分が報酬計算に反映されます。</p></div>
   </div>
   <div class="note" style="margin-top:14px;">サブ担当がまだTsuguAIに登録していない場合は「本人のログイン後に有効化されます」と表示されます。<b>その状態でも承認して構いません。</b>本人が初回ログインした時点で自動的に紐づきます。</div>
   <div class="note r" style="margin-top:10px;"><b>承認の判断材料：</b>申し送りに引き継ぎの意図が書かれているか、配分が極端でないか（例：サブ90%）。実態と合わない配分は、後で報酬トラブルになります。</div>
@@ -148,7 +166,7 @@ ul.dots li b{color:var(--navy);}
   <h2>顧客一覧と、役割の変更</h2>
   <div class="grid g2">
     <div class="card"><h3>顧客 一覧・管理</h3><p>会社名・メールで検索、<b>担当未割当</b>での絞り込みができます。担当未割当の顧客は放置されやすいので、定期的に確認してください。</p></div>
-    <div class="card r"><h3>アカウントと役割の管理</h3><p>登録されている<b>すべてのアカウント</b>の一覧です。<b>役割の変更はここでのみ行えます。</b><br><br>役割を誤って変更して一覧から消えた場合も、ここで正しい役割に戻せば復旧します。</p></div>
+    <div class="card r"><h3>アカウントと役割の管理 <span class="pill r">運営メンバー</span></h3><p>すべてのアカウントの一覧と役割変更は、<b>「運営メンバー」メニュー</b>に移動しました（代表のみ）。<br><br>役割を誤って変更して一覧から消えた場合も、そこで正しい役割に戻せば復旧します。</p></div>
   </div>
   <div class="note" style="margin-top:14px;"><b>顧客の業種</b>は、担当パートナーが顧客カルテの「会社情報（代行入力）」で登録します。専門家ネットワークの業種分布に集計されるので、未設定が多い場合はパートナーに登録を促してください。</div>
 </section>
@@ -361,6 +379,8 @@ ul.dots li b{color:var(--navy);}
     <div class="card r"><h3>手動記録の顧客ひも付けを省略しない</h3><p>配分から漏れます。後から直すより、記録時に選ぶ方が確実です。</p></div>
     <div class="card w"><h3>専門家名簿の料金は必ず最新に</h3><p>顧客に開示される情報です。実際と違うと、パートナーの信用が傷つきます。</p></div>
     <div class="card w"><h3>紹介依頼を溜めない</h3><p>パートナーは顧客に「聞いてみます」と言った状態で待っています。</p></div>
+    <div class="card r"><h3>権限を渡したらRLSも適用する</h3><p>メニューを隠すだけでは防げません。Phase71／72のSQLまで実行して初めて、データが読めなくなります。</p></div>
+    <div class="card w"><h3>退職・契約終了時は権限を落とす</h3><p>「運営メンバー」で役割を戻すか、権限をすべて解除してください。アカウントを残したままにしない。</p></div>
   </div>
   <div class="note r" style="margin-top:14px;"><b>規程の改定予定：</b>「認定パートナー 禁止行為ガイドライン」のうち、<b>有資格のパートナー本人が実行してよいか</b>という論点は現在改定を検討中です。弁護士レビューが完了するまでは現行の定めが適用され、画面上もそれに合わせた表現になっています。レビュー完了後、システム側の表示を一括で切り替えます。</div>
 </section>
