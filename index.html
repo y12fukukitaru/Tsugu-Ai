@@ -1366,7 +1366,7 @@
           +'<button class="sbtn" data-f="all" onclick="setMkbFilter(\'all\',this)">すべて</button>'
         +'</div>'
         +'<div id="market-broker" style="margin-top:4px;">読み込み中...</div></div>'
-      +'<div class="panel" id="sec-billing"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/><path d="M6.5 14.5h3"/></svg>課金・契約管理</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="renderAdmBilling();loadBillingAdminLinks();loadAdmPayEvents();">↺ 再計算</span></div>'
+      +'<div class="panel" id="sec-billing"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/><path d="M6.5 14.5h3"/></svg>課金・契約管理</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="renderAdmBilling();loadBillingAdminLinks();loadAdmPayEvents();loadPayout();">↺ 再計算</span></div>'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 12px;">'
           +'<button class="sbtn on" id="bl-tb-overview" onclick="blShowTab(\'overview\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 21h18"/><path d="M7 21v-8M12 21V5M17 21v-5"/></svg>概要</button>'
           +'<button class="sbtn" id="bl-tb-partners" onclick="blShowTab(\'partners\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 21v-1.8a3.7 3.7 0 0 0-3.7-3.7H6.2A3.7 3.7 0 0 0 2.5 19.2V21"/><circle cx="8.75" cy="7.5" r="3.7"/><path d="M21.5 21v-1.8a3.7 3.7 0 0 0-2.8-3.6"/><path d="M15.5 4a3.7 3.7 0 0 1 0 7.1"/></svg>パートナー別</button>'
@@ -1453,7 +1453,7 @@
         +'<div class="ph" style="font-size:13px;margin-top:2px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 9V7a2 2 0 0 0-2-2H5.5A2.5 2.5 0 0 0 3 7.5v9A2.5 2.5 0 0 0 5.5 19H18a2 2 0 0 0 2-2v-2"/><path d="M21 9v6h-4.5a3 3 0 0 1 0-6z"/></svg>売上・入金履歴（Stripe自動＋手動記録）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmPayEvents()">↺ 更新</span></div>'
         +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">Stripe決済はWebhookで自動記録されます（区分は「顧問料・会費」に計上）。M&A成約フィー・終活/相続・保険手数料など、Stripeを通らない入金は下の「手動記録」から追加してください。両方を合算して「売上目標・実績」タブに反映されます。</div>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">'
-          +'<div><label class="fl">年月</label><select id="bl-pay-month" class="inp2" onchange="loadAdmPayEvents()"></select></div>'
+          +'<div><label class="fl">年月</label><select id="bl-pay-month" class="inp2" onchange="loadAdmPayEvents();loadPayout();"></select></div>'
           +'<div><label class="fl">対象</label><select id="bl-pay-aud" class="inp2" onchange="loadAdmPayEvents()"><option value="all">すべて</option><option value="customer">顧客</option><option value="consultant">パートナー</option></select></div>'
           +'<div><label class="fl">記録種別</label><select id="bl-pay-src" class="inp2" onchange="loadAdmPayEvents()"><option value="all">すべて</option><option value="stripe">Stripe自動</option><option value="manual">手動記録</option></select></div>'
           +'<div><label class="fl">区分</label><select id="bl-pay-cat" class="inp2" onchange="loadAdmPayEvents()"><option value="all">すべて</option><option value="advisory">顧問料・会費</option><option value="ma">M&A成約</option><option value="shukatsu">終活・相続</option><option value="insurance">保険関連</option><option value="other">その他</option></select></div>'
@@ -1470,6 +1470,10 @@
         +'</div>'
         +'<div id="rv-msg" style="font-size:11.5px;margin-bottom:6px;min-height:14px;"></div>'
         +'<div id="bl-payevents" style="margin-top:4px;">読み込み中...</div>'
+        +'<div class="ph" style="font-size:13px;margin-top:22px;display:flex;align-items:center;justify-content:space-between;">パートナー報酬の配分（成約月ベース）'
+          +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadPayout()">↺ 再計算</span></div>'
+        +'<div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.75;">上で選んだ年月に<b style="color:var(--navy);">成約（入金記録）した案件</b>を、顧客の担当パートナーごとに集計し、ランクに応じた外注費率で報酬を算出します。2名体制が承認されている顧客は、メイン担当が決めた配分で分けて表示します。</div>'
+        +'<div id="bl-payout">読み込み中...</div>'
         +'</div>'
         // ---- タブ6：売上目標・実績 ----
         +'<div id="bl-tab-revenue" class="hidden">'
@@ -2433,7 +2437,7 @@
     $('app-body').innerHTML=view;
     if(eff==='customer'){ loadDashHero(); loadMyImpact(); loadMembers(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
     else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); }
-    else { loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); loadAdmInquiries(); loadSupportKB(); loadNetwork(); loadAdmAssign(); }
+    else { loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); loadAdmInquiries(); loadSupportKB(); loadNetwork(); loadAdmAssign(); loadPayout(); }
     startNotifPolling(eff);
     navSpyInit();
     // 経営者の初回ログイン時だけ使い方ガイドを自動で開始する。
@@ -8731,6 +8735,128 @@
   function tqRetry(){ if(!TQ) return; TQ.ans={}; TQ.graded=false; tqRender(); try{ $('tr-modal').scrollTop=0; }catch(e){} }
 
   // ============================================================
+  // ===== パートナー報酬の配分（Phase70）=====
+  // 「その月に成約した案件の報酬を配分で割る」方式。
+  // 売上（revenue_entries の入金日）→ 顧客の担当パートナー → ランクの外注費率
+  // → 2名体制が承認されていればメイン／サブで分割、の順で計算する。
+  // 計算結果は保存せず、そのつど現在の配分とランクで出す（過去の支払いを
+  // 遡って書き換えないよう、確定した支払いは運営側の帳簿で管理する前提）。
+  // ============================================================
+  function rankFeeRate(rankName){
+    var f=null;
+    PG_LEVELS.forEach(function(L){ if(L.name===rankName) f=L.fee; });
+    if(!f) return null;
+    var m=String(f).match(/(\d+)\s*%/);
+    return m ? Number(m[1])/100 : null;   // 「個別設定」は率が決まらないので null
+  }
+  function yen(n){ return Math.round(n).toLocaleString('ja-JP')+' 円'; }
+  async function loadPayout(){
+    var box=$('bl-payout'); if(!box) return;
+    var ym=(($('bl-pay-month')||{}).value)||'';
+    if(!ym){ box.innerHTML='<div style="font-size:12px;color:var(--muted);">年月を選ぶと、その月の配分を計算します。</div>'; return; }
+    var yy=+ym.slice(0,4), mm=+ym.slice(5,7);
+    var to=(mm===12 ? (yy+1)+'-01' : yy+'-'+('0'+(mm+1)).slice(-2))+'-01';
+    var rev=await sb.from('revenue_entries').select('customer_id,category,amount,occurred_on,description')
+      .gte('occurred_on', ym+'-01').lt('occurred_on', to).limit(1000);
+    if(rev.error){ box.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みエラー：'+esc(rev.error.message)+'</div>'; return; }
+    var rows=(rev.data||[]).filter(function(r){ return r.customer_id && Number(r.amount)>0; });
+    // 顧客にひも付いていない入金は配分できない。黙って消すと総額が合わなくなるので必ず出す
+    var unlinked=0, unlinkedN=0;
+    (rev.data||[]).forEach(function(r){ if(!r.customer_id && Number(r.amount)>0){ unlinked+=Number(r.amount); unlinkedN++; } });
+    var unlinkedNote = unlinkedN
+      ? '<div style="font-size:11px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:8px 11px;margin-top:8px;line-height:1.7;">'
+        +'顧客にひも付いていない入金が'+unlinkedN+'件（'+yen(unlinked)+'）あります。誰の担当か決まらないため配分できません。'
+        +'上の「手動記録」で対象顧客を選ぶと、この計算に含まれます。</div>'
+      : '';
+    if(!rows.length){
+      box.innerHTML='<div style="font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:11px;padding:12px 14px;line-height:1.8;">'
+        +'この月には、顧客にひも付いた入金記録がありません。</div>'+unlinkedNote;
+      return;
+    }
+    var custIds=[]; rows.forEach(function(r){ if(custIds.indexOf(r.customer_id)<0) custIds.push(r.customer_id); });
+    var pr=await sb.from('profiles').select('id,company_name,contact_name,email,consultant_id').in('id',custIds);
+    var custs={}; (pr.error?[]:(pr.data||[])).forEach(function(c){ custs[c.id]=c; });
+    var pids=[]; Object.keys(custs).forEach(function(k){ var c=custs[k]; if(c.consultant_id && pids.indexOf(c.consultant_id)<0) pids.push(c.consultant_id); });
+    var partners={};
+    if(pids.length){
+      var pp=await sb.from('profiles').select('id,full_name,email,fde_rank').in('id',pids);
+      (pp.error?[]:(pp.data||[])).forEach(function(p){ partners[p.id]=p; });
+    }
+    var asg={};
+    try{
+      var aa=await sb.from('partner_assignments').select('customer_id,main_id,sub_id,sub_email,main_share,sub_share')
+        .eq('status','approved').in('customer_id',custIds);
+      (aa.error?[]:(aa.data||[])).forEach(function(a){ asg[a.customer_id]=a; });
+    }catch(e){}
+    // パートナー別に積み上げる
+    var acc={}, noPartner=0, noRate=[];
+    function bucket(pid, label){
+      if(!acc[pid]) acc[pid]={ label:label, gross:0, fee:0, main:0, sub:0, subLabel:null, rate:null, rows:[] };
+      return acc[pid];
+    }
+    rows.forEach(function(r){
+      var c=custs[r.customer_id]; if(!c || !c.consultant_id){ noPartner+=Number(r.amount)||0; return; }
+      var p=partners[c.consultant_id]||{};
+      var rate=rankFeeRate(p.fde_rank);
+      var amt=Number(r.amount)||0;
+      var b=bucket(c.consultant_id, p.full_name||p.email||'パートナー');
+      b.rate=rate; b.gross+=amt;
+      if(rate==null){ if(noRate.indexOf(b.label)<0) noRate.push(b.label); }
+      var fee=(rate==null?0:amt*rate);
+      b.fee+=fee;
+      var a=asg[r.customer_id];
+      if(a && a.main_id===c.consultant_id){
+        b.main+=fee*(Number(a.main_share)||0)/100;
+        b.sub +=fee*(Number(a.sub_share)||0)/100;
+        b.subLabel=a.sub_email||'サブ担当';
+      } else { b.main+=fee; }
+      b.rows.push({ cust:(c.company_name||c.contact_name||c.email||''), amt:amt, cat:r.category, on:r.occurred_on,
+                    share:(a&&a.main_id===c.consultant_id)?(Number(a.main_share)+'/'+Number(a.sub_share)):null });
+    });
+    var keys=Object.keys(acc);
+    if(!keys.length){
+      box.innerHTML='<div style="font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:11px;padding:12px 14px;line-height:1.8;">'
+        +'この月の入金記録に、担当パートナーのついた顧客がありません。</div>';
+      return;
+    }
+    var tG=0,tF=0,tM=0,tS=0;
+    keys.forEach(function(k){ var b=acc[k]; tG+=b.gross; tF+=b.fee; tM+=b.main; tS+=b.sub; });
+    var h='<div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:10px;">'
+      +bizChip('対象の入金', yen(tG), keys.length+' 名ぶん', 'var(--navy)')
+      +bizChip('パートナー報酬 合計', yen(tF), '外注費率適用後', '#27684A')
+      +bizChip('うちサブ担当ぶん', yen(tS), '2名体制の配分', '#8F7230')
+    +'</div>';
+    keys.forEach(function(k){
+      var b=acc[k];
+      h+='<div style="border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:7px;">'
+        +'<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">'
+          +'<b style="font-size:13px;color:var(--ink);">'+esc(b.label)+'</b>'
+          +'<span class="tag gray" style="font-size:10px;">外注費率 '+(b.rate==null?'未設定':Math.round(b.rate*100)+'%')+'</span>'
+          +'<span style="flex:1;"></span>'
+          +'<span style="font-size:11.5px;color:var(--muted);">入金 '+yen(b.gross)+'</span>'
+          +'<b style="font-size:13.5px;color:#27684A;">'+yen(b.fee)+'</b>'
+        +'</div>'
+        +(b.sub>0
+          ? '<div style="font-size:12px;color:var(--ink);margin-top:5px;">メイン <b>'+yen(b.main)+'</b>　／　サブ（'+esc(b.subLabel||'')+'） <b style="color:#8F7230;">'+yen(b.sub)+'</b></div>'
+          : '')
+        +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:4px;">'
+          +b.rows.map(function(x){ return esc(x.cust)+' '+yen(x.amt)+(x.share?'（配分 '+x.share+'）':''); }).join('　/　')
+        +'</div>'
+      +'</div>';
+    });
+    if(noRate.length){
+      h+='<div style="font-size:11px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:8px 11px;margin-top:8px;line-height:1.7;">'
+        +esc(noRate.join('・'))+' はランクが未設定か「個別設定」のため、外注費率が確定していません。報酬は0円として計算しています。「パートナー」欄でランクを設定するか、個別に金額をお決めください。</div>';
+    }
+    if(noPartner>0){
+      h+='<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7;">担当パートナーのいない顧客の入金 '+yen(noPartner)+' は配分の対象外です。</div>';
+    }
+    h+=unlinkedNote;
+    h+='<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7;">※ 現在のランクと配分で計算した目安です。支払い確定後にランクや配分を変更すると、この画面の数字も変わります。確定額は運営の帳簿で管理してください。</div>';
+    box.innerHTML=h;
+  }
+
+  // ============================================================
   // ===== 2名体制（Phase68）=====
   // パートナー側：メイン＋サブの2名で顧客を見る。報酬配分はメインが決めて運営に申請する。
   //   いきなり交代せず併走期間をつくることが、引き継ぎで顧客を失わない唯一の方法。
@@ -9094,8 +9220,13 @@
       +'</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">'
         +'<div style="flex:1;min-width:150px;"><label class="fl">対応エリア</label><input id="nx-area" class="inp2" style="width:100%;" placeholder="例：全国（オンライン可）"></div>'
-        +'<div style="flex:1;min-width:200px;"><label class="fl">料金の目安（必須・顧客に開示されます）</label><input id="nx-fee" class="inp2" style="width:100%;" placeholder="例：初回相談 無料／顧問 月3万円〜"></div>'
+        +'<div style="flex:1;min-width:200px;"><label class="fl">通常の料金（必須・顧客に開示されます）</label><input id="nx-fee" class="inp2" style="width:100%;" placeholder="例：初回相談 無料／顧問 月3万円〜"></div>'
       +'</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">'
+        +'<div style="flex:1;min-width:190px;"><label class="fl">運営が受け取る紹介料</label><input id="nx-rfee" class="inp2" style="width:100%;" placeholder="例：初年度報酬の10%"></div>'
+        +'<div style="flex:1;min-width:190px;"><label class="fl">依頼者への還元（TsuguAI経由の価格）</label><input id="nx-disc" class="inp2" style="width:100%;" placeholder="例：顧問 月2.7万円〜（紹介料を全額還元）"></div>'
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:6px;">TsuguAIは紹介料を運営の利益にせず、<b style="color:var(--navy);">依頼者への値引きとして全額お返しします</b>。上の「還元」欄には、値引き後に実際に顧客が支払う金額を入れてください。ここが空だと、パートナー画面には通常料金だけが出ます。</div>'
       +'<div style="margin-top:8px;"><label class="fl">紹介時の注意・得意分野</label><textarea id="nx-note" class="inp2" rows="2" style="width:100%;" placeholder="例：医療法人の持分対策に強い。着手前に必ず見積書を出してもらう運用。"></textarea></div>'
       +'<div style="display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap;">'
         +'<button class="btn2" onclick="netAddExpert()">登録する</button><span id="nx-msg" style="font-size:12px;"></span>'
@@ -9109,7 +9240,9 @@
           +'<span class="tag gold" style="font-size:10px;">'+esc(bizFieldName(e.field))+'</span>'
           +'<div style="flex:1;min-width:170px;">'
             +'<div style="font-size:12.5px;font-weight:700;color:var(--ink);">'+esc(e.name||'')+(e.org?'<span style="font-weight:400;color:var(--muted);">　'+esc(e.org)+'</span>':'')+'</div>'
-            +'<div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.65;">'+esc(e.area||'—')+'　<b style="color:#27684A;">'+esc(e.fee_guide||'料金目安 未設定')+'</b></div>'
+            +'<div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.65;">'+esc(e.area||'—')+'　通常 '+esc(e.fee_guide||'未設定')+'</div>'
+            +(e.client_discount?'<div style="font-size:11.5px;color:#27684A;font-weight:700;margin-top:2px;line-height:1.65;">TsuguAI経由 '+esc(e.client_discount)+'</div>':'')
+            +(e.referral_fee?'<div style="font-size:10.5px;color:var(--muted);margin-top:1px;">紹介料 '+esc(e.referral_fee)+'（依頼者へ還元）</div>':'')
             +(e.note?'<div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.65;">'+esc(e.note)+'</div>':'')
           +'</div>'
           +'<button class="ghost" style="font-size:11px;padding:4px 8px;border:1px solid var(--line);border-radius:7px;" onclick="netToggleExpert(\''+e.id+'\','+(e.active===false)+')">'+(e.active===false?'有効に戻す':'停止')+'</button>'
@@ -9154,10 +9287,18 @@
     if(!fee){ if(msg){msg.style.color='#A9403D';msg.textContent='料金の目安は必須です。目安のない紹介は勧められません。';} return; }
     var row={ id:netUid(), name:name, org:((($('nx-org')||{}).value)||'').trim()||null, field:(($('nx-field')||{}).value)||null,
       area:((($('nx-area')||{}).value)||'').trim()||null, fee_guide:fee, note:((($('nx-note')||{}).value)||'').trim()||null,
+      referral_fee:((($('nx-rfee')||{}).value)||'').trim()||null,
+      client_discount:((($('nx-disc')||{}).value)||'').trim()||null,
       active:true, created_at:new Date().toISOString() };
     var r=await sb.from('experts').insert(row);
+    if(r.error && /referral_fee|client_discount/.test(r.error.message||'')){
+      // 還元用の列がまだ無い環境では、その2つを外して登録する
+      delete row.referral_fee; delete row.client_discount;
+      r=await sb.from('experts').insert(row);
+      if(!r.error && msg){ msg.style.color='#8A6A12'; msg.textContent='登録しました（紹介料・還元は未保存。Supabaseで「Phase70」のSQLを実行してください）'; }
+    }
     if(r.error){ if(msg){msg.style.color='#A9403D';msg.textContent='登録エラー：'+r.error.message+'（Supabaseで「Phase67」のSQLを実行してください）';} return; }
-    ['nx-name','nx-org','nx-area','nx-fee','nx-note'].forEach(function(id){ var e=$(id); if(e) e.value=''; });
+    ['nx-name','nx-org','nx-area','nx-fee','nx-note','nx-rfee','nx-disc'].forEach(function(id){ var e=$(id); if(e) e.value=''; });
     loadNetwork();
   }
   async function netToggleExpert(id, toActive){
@@ -9202,13 +9343,20 @@
     if(!REF.experts.length){
       h+='<div style="font-size:12px;color:var(--muted);line-height:1.8;">運営が審査した提携専門家は、登録され次第ここに表示されます。</div>';
     } else {
-      h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:8px;">運営が審査した提携先です。<b style="color:var(--navy);">料金の目安が先に分かる</b>ので、顧客に費用感を伝えたうえでお繋ぎできます。</div>';
+      h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:8px;">運営が審査した提携先です。'
+        +'<b style="color:var(--navy);">運営が受け取る紹介料は、依頼者への値引きとして全額お返しします。</b>'
+        +'そのぶんTsuguAI経由のほうが安くなるので、顧客に費用感を伝えたうえで安心してお繋ぎできます。</div>';
       h+=REF.experts.map(function(e){
         return '<div style="display:flex;align-items:flex-start;gap:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:6px;flex-wrap:wrap;">'
           +'<span class="tag gold" style="font-size:10px;">'+esc(bizFieldName(e.field))+'</span>'
           +'<div style="flex:1;min-width:170px;">'
             +'<div style="font-size:12.5px;font-weight:700;color:var(--ink);">'+esc(e.name||'')+(e.org?'<span style="font-weight:400;color:var(--muted);">　'+esc(e.org)+'</span>':'')+'</div>'
-            +'<div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.65;">'+esc(e.area||'—')+'　<b style="color:#27684A;">'+esc(e.fee_guide||'')+'</b></div>'
+            +'<div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.65;">'+esc(e.area||'—')+'</div>'
+            +(e.client_discount
+                ? '<div style="font-size:11px;color:var(--muted);margin-top:3px;line-height:1.65;">通常 <span style="text-decoration:line-through;">'+esc(e.fee_guide||'')+'</span></div>'
+                  +'<div style="font-size:12.5px;color:#27684A;font-weight:700;line-height:1.65;">TsuguAI経由 '+esc(e.client_discount)+'</div>'
+                  +'<div style="font-size:10.5px;color:var(--muted);line-height:1.6;">紹介料を全額還元した価格です</div>'
+                : '<div style="font-size:12px;color:#27684A;font-weight:700;margin-top:3px;line-height:1.65;">'+esc(e.fee_guide||'')+'</div>')
             +(e.note?'<div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.65;">'+esc(e.note)+'</div>':'')
           +'</div>'
           +'<button class="btn2" style="padding:6px 12px;font-size:12px;" onclick="refPrefill(\''+e.field+'\')">この領域で依頼</button>'
