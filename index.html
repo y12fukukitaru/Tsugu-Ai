@@ -642,6 +642,28 @@
   .tq-opt.sel{border-color:var(--blue);background:var(--soft);font-weight:600;}
   .tq-opt.ok{border-color:#27684A;background:rgba(39,104,74,.09);}
   .tq-opt.ng{border-color:#A9403D;background:rgba(169,64,61,.09);}
+  /* ===== 使い方ガイド（実画面ツアー・Phase65）===== */
+  /* 研修の自動再生ガイドと同じ見た目（ゴールドの枠＋周囲を暗く）だが、
+     疑似UIではなく実際の画面要素を指すため、座標はビューポート基準で計算する */
+  #ct-layer{position:fixed;inset:0;z-index:60;}
+  #ct-layer.hidden{display:none;}
+  #ct-block{position:absolute;inset:0;}
+  #ct-ring{position:absolute;border:2px solid var(--gold);border-radius:10px;pointer-events:none;
+    box-shadow:0 0 0 9999px rgba(8,13,25,.55);transition:left .35s cubic-bezier(.4,0,.2,1),
+    top .35s cubic-bezier(.4,0,.2,1),width .35s cubic-bezier(.4,0,.2,1),height .35s cubic-bezier(.4,0,.2,1);}
+  #ct-pop{position:absolute;width:310px;max-width:calc(100vw - 24px);background:var(--card);
+    border:1px solid var(--line);border-radius:13px;box-shadow:0 22px 55px rgba(4,9,20,.4);
+    padding:15px 17px 13px;transition:left .35s cubic-bezier(.4,0,.2,1),top .35s cubic-bezier(.4,0,.2,1);}
+  #ct-pop .ct-n{font-size:10.5px;color:var(--muted);letter-spacing:.06em;}
+  #ct-pop .ct-t{font-size:14.5px;font-weight:700;color:var(--navy);margin:3px 0 6px;line-height:1.5;}
+  #ct-pop .ct-b{font-size:12.5px;color:var(--ink);line-height:1.8;}
+  #ct-pop .ct-f{display:flex;align-items:center;gap:7px;margin-top:13px;}
+  #ct-pop .ct-f .sk{font-size:11.5px;color:var(--muted);background:transparent;border:none;
+    cursor:pointer;font-family:inherit;padding:6px 2px;text-decoration:underline;text-underline-offset:2px;}
+  #ct-pop .ct-f .bk{font-size:12px;color:var(--blue);background:var(--card);border:1px solid var(--line);
+    border-radius:8px;padding:7px 13px;cursor:pointer;font-family:inherit;}
+  #ct-pop .ct-f .nx{font-size:12.5px;padding:8px 17px;}
+  @media(max-width:760px){ #ct-pop{width:calc(100vw - 24px);} }
 </style>
 </head>
 <body>
@@ -805,6 +827,13 @@
     </div>
     <div id="tr-body" class="modal-body"></div>
   </div>
+</div>
+
+<!-- ===== 使い方ガイド：実画面ツアー（Phase65）===== -->
+<div id="ct-layer" class="hidden" aria-live="polite">
+  <div id="ct-block"></div>
+  <div id="ct-ring"></div>
+  <div id="ct-pop"></div>
 </div>
 
 <script>
@@ -1994,6 +2023,7 @@
         +'<div class="panel" id="sec-flow"><span class="pill">顧客ポータル</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">'+esc(prof.company_name||'経営者ダッシュボード')+'</h2>'
         +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b></div>'
+        +'<div style="margin-bottom:12px;"><button id="ct-btn" class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;font-weight:600;" onclick="ctStart(true)"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5.5 3.5-5.5 3.5z"/></svg>使い方ガイド（1分）</button></div>'
         +'<div id="dash-hero">読み込み中...</div>'
         +'<div id="my-partner"></div>'
         +'</div>'
@@ -2380,6 +2410,9 @@
     else { loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); loadAdmInquiries(); loadSupportKB(); }
     startNotifPolling(eff);
     navSpyInit();
+    // 経営者の初回ログイン時だけ使い方ガイドを自動で開始する。
+    // 各パネルが「読み込み中...」のまま指されないよう、データの取得を少し待つ。
+    if(eff==='customer'){ setTimeout(function(){ if(window.__eff==='customer') ctStart(false); }, 1600); }
   }
 
   // ---- finance (customer writes / consultant reads) ----
@@ -8637,6 +8670,153 @@
     try{ $('tr-modal').scrollTo({top:$('tr-modal').scrollHeight,behavior:'smooth'}); }catch(e){}
   }
   function tqRetry(){ if(!TQ) return; TQ.ans={}; TQ.graded=false; tqRender(); try{ $('tr-modal').scrollTop=0; }catch(e){} }
+
+  // ============================================================
+  // ===== 使い方ガイド：実画面ツアー（Phase65）=====
+  // 研修の自動再生ガイドが「疑似UIを見せる」のに対し、こちらは経営者ご本人の
+  // 実際の画面をそのまま順に指し示す。UIを変えても説明が古びにくく、
+  // 「どこを押すか」が実物で分かるため、経営者向けにはこちらを採用した。
+  // 対象要素が無い／非表示のステップは自動で飛ばすので、
+  // 契約状況によって出ない画面があっても途中で止まらない。
+  // ============================================================
+  var CT_STEPS=[
+    { sec:'sec-flow', find:function(){ return $('sec-flow'); },
+      t:'経営者ダッシュボードへようこそ',
+      b:'ここは、あなたの会社の状態がひと目で分かる画面です。1分ほどで、見かたをご案内します。' },
+    { sec:'sec-flow', find:function(){ return $('cash-status')||$('sec-status'); },
+      t:'資金繰りステータス',
+      b:'いま資金がどうなっているかを、信号のように色でお知らせします。ここが赤や黄色になったときは、担当パートナーからもご連絡します。' },
+    { sec:'sec-flow', find:function(){ return $('kpi-cards'); },
+      t:'経営サマリー',
+      b:'売上・利益・現預金などの主要な数字です。数値の入力はすべて担当パートナーが代行しますので、あなたは確認するだけで大丈夫です。' },
+    { sec:'sec-flow', find:function(){ return $('todo-list'); },
+      t:'要対応アクション',
+      b:'いま気にかけていただきたいことが並びます。ここが空なら、急ぎの対応はありません。' },
+    { sec:'sec-flow', find:function(){ return $('sec-journey'); },
+      t:'価値の流れ（支援ステップ）',
+      b:'①現状把握 → ②AI・自動化 → ③コスト削減 → ④余力 → ⑤次の投資、という順で伴走します。色が付いているところが、あなたの現在地です。' },
+    { sec:'sec-chat', find:function(){ return $('chat-input')||$('sec-chat'); },
+      t:'メッセージ',
+      b:'ここがいちばん使う場所です。月次の売上なども、表に入力する必要はありません。メッセージで伝えていただければ、あとは担当パートナーが処理します。' },
+    { sec:'sec-reports', find:function(){ return $('my-reports')||$('sec-reports'); },
+      t:'月次レポート',
+      b:'毎月の数字と、担当パートナーのコメントがまとまったレポートです。パートナーが確認・承認したものだけがここに並びます。' },
+    { sec:'sec-mypdca', find:function(){ return $('my-pdca')||$('sec-mypdca'); },
+      t:'経営課題の取り組み',
+      b:'いま一緒に進めている課題の進捗です。追加や変更のご希望は、メッセージでお知らせください。' },
+    { sec:'sec-value', find:function(){ return $('sec-value'); },
+      t:'企業価値の推移',
+      b:'会社の値段が毎月どう動いたかが分かります。将来の承継やM&Aを考えるときの土台になる数字です。' },
+    { sec:'sec-sec', find:function(){ return $('sec-input')||$('sec-sec'); },
+      t:'パートナーAI',
+      b:'夜間や休日など、担当パートナーにすぐ聞けないときの相談相手です。24時間いつでもお使いいただけます。' },
+    { sec:'sec-flow', find:function(){
+        var n=document.querySelector('#app-nav .ni');
+        if(n && n.getBoundingClientRect().width>0) return n.parentNode;
+        var h=$('hbg'); return (h && h.getBoundingClientRect().width>0) ? h : null; },
+      t:'画面の切り替え',
+      b:'各画面へはここから移動します。よく使う項目だけを残す・並べ替えることもできます（設定メニュー）。' },
+    { sec:'sec-flow', find:function(){ return $('ct-btn'); },
+      t:'このガイドはいつでも見返せます',
+      b:'分からなくなったら、このボタンからもう一度ご覧ください。それでも解決しないときは、メッセージで担当パートナーにお尋ねいただくのがいちばん早いです。' }
+  ];
+  var CT=null, CT_KEY='tourV1';
+  function ctVisible(el){
+    if(!el) return false;
+    var r=el.getBoundingClientRect();
+    return !!(r.width>0 && r.height>0 && el.offsetParent!==null);
+  }
+  // 対象がそもそも無いステップだけを落とす。
+  // ここでセクションを切り替えると画面がちらつくため、判定はDOM上の存在だけで行う
+  // （非表示のパネルの中身も要素としては存在する）。表示の有無は ctGo で見る。
+  function ctBuild(){
+    var out=[];
+    CT_STEPS.forEach(function(s){
+      var el=null; try{ el=s.find(); }catch(e){}
+      if(el) out.push(s);
+    });
+    return out;
+  }
+  function ctStart(force){
+    if(CT) return;
+    if(!force){
+      var p=loadPrefs();
+      if(p[CT_KEY]) return;               // 一度見たら自動では出さない
+    }
+    var back=CURRENT_SEC;
+    var steps=ctBuild();
+    if(!steps.length) return;
+    CT={ steps:steps, i:-1, back:back };
+    $('ct-layer').classList.remove('hidden');
+    window.addEventListener('resize', ctReposition);
+    window.addEventListener('scroll', ctReposition, true);
+    document.addEventListener('keydown', ctKey);
+    ctGo(0);
+  }
+  function ctKey(e){
+    if(!CT) return;
+    if(e.key==='Escape'){ ctEnd(); }
+    else if(e.key==='ArrowRight'){ ctGo(CT.i+1); }
+    else if(e.key==='ArrowLeft'){ ctGo(CT.i-1); }
+  }
+  function ctGo(i){
+    if(!CT) return;
+    if(i>=CT.steps.length){ ctEnd(true); return; }
+    if(i<0) i=0;
+    CT.i=i;
+    var s=CT.steps[i];
+    if(s.sec && $(s.sec)) showSection(s.sec);
+    var el=null; try{ el=s.find(); }catch(e){}
+    if(!ctVisible(el)){          // 直前の描画で消えていたら飛ばす
+      if(i+1<CT.steps.length){ ctGo(i+1); } else { ctEnd(true); }
+      return;
+    }
+    CT.el=el;
+    var big=el.getBoundingClientRect().height > window.innerHeight*0.7;
+    try{ el.scrollIntoView({behavior:'smooth', block:big?'start':'center'}); }catch(e){ el.scrollIntoView(); }
+    var last=(i===CT.steps.length-1);
+    $('ct-pop').innerHTML=
+       '<div class="ct-n">'+(i+1)+' / '+CT.steps.length+'</div>'
+      +'<div class="ct-t">'+esc(s.t)+'</div>'
+      +'<div class="ct-b">'+esc(s.b)+'</div>'
+      +'<div class="ct-f">'
+        +'<button class="sk" onclick="ctEnd()">閉じる</button>'
+        +'<span style="flex:1;"></span>'
+        +(i>0?'<button class="bk" onclick="ctGo('+(i-1)+')">戻る</button>':'')
+        +'<button class="btn2 nx" onclick="'+(last?'ctEnd(true)':'ctGo('+(i+1)+')')+'">'+(last?'はじめる':'次へ')+'</button>'
+      +'</div>';
+    // scrollIntoView のアニメーション中も枠が追従するよう、少しの間なぞる
+    ctReposition();
+    var n=0, iv=setInterval(function(){ if(!CT||++n>18){ clearInterval(iv); return; } ctReposition(); },30);
+  }
+  function ctReposition(){
+    if(!CT||!CT.el) return;
+    var r=CT.el.getBoundingClientRect(), pad=6;
+    var ring=$('ct-ring'), pop=$('ct-pop');
+    if(!ring||!pop) return;
+    ring.style.left=(r.left-pad)+'px'; ring.style.top=(r.top-pad)+'px';
+    ring.style.width=(r.width+pad*2)+'px'; ring.style.height=(r.height+pad*2)+'px';
+    var pw=pop.offsetWidth||310, ph=pop.offsetHeight||170;
+    var vw=window.innerWidth, vh=window.innerHeight;
+    var top;
+    if(r.bottom+14+ph<=vh-8) top=r.bottom+14;             // 下に置ける
+    else if(r.top-14-ph>=8) top=r.top-14-ph;              // 上に置ける
+    else top=Math.max(8, vh-ph-8);                        // 収まらないので画面下端
+    var left=Math.min(Math.max(8, r.left+r.width/2-pw/2), vw-pw-8);
+    pop.style.top=top+'px'; pop.style.left=left+'px';
+  }
+  function ctEnd(done){
+    if(!CT) return;
+    var back=CT.back;
+    CT=null;
+    $('ct-layer').classList.add('hidden');
+    window.removeEventListener('resize', ctReposition);
+    window.removeEventListener('scroll', ctReposition, true);
+    document.removeEventListener('keydown', ctKey);
+    try{ var p=loadPrefs(); p[CT_KEY]=new Date().toISOString(); savePrefs(p); }catch(e){}
+    if(back && $(back)) showSection(back);
+    try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(e){ window.scrollTo(0,0); }
+  }
 
   // ---- パートナー成長ロードマップ（認定レベル）----
   var PG_LEVELS=[
