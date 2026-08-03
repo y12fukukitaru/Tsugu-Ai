@@ -958,7 +958,7 @@
   // 役割ごとの全メニュー定義（ラベル付き）。設定で並び順・表示を変えられる
   function navDefs(r){
     if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
-    if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
+    if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-network','専門家ネットワーク'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
     return [['sec-flow','ダッシュボード'],['sec-growth','成長ロードマップ'],['sec-biz','本業と連携'],['sec-training','研修プログラム'],['sec-sales','営業ツール'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
@@ -1008,6 +1008,7 @@
     life:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.8"/><path d="m5.6 5.6 3.7 3.7M14.7 14.7l3.7 3.7M14.7 9.3l3.7-3.7M5.6 18.4l3.7-3.7"/>',
     play:'<rect x="2.5" y="4" width="19" height="14" rx="2.5"/><path d="m10.5 8.5 4.5 2.5-4.5 2.5z"/><path d="M8 21h8"/>',
     brief:'<rect x="2.5" y="7" width="19" height="13" rx="2.5"/><path d="M9 7V5.2A1.7 1.7 0 0 1 10.7 3.5h2.6A1.7 1.7 0 0 1 15 5.2V7"/><path d="M2.5 12.5h19"/>',
+    net:'<circle cx="12" cy="4.5" r="2.5"/><circle cx="4.5" cy="18" r="2.5"/><circle cx="19.5" cy="18" r="2.5"/><path d="M12 7v4M12 11 5.8 15.9M12 11l6.2 4.9"/>',
     up:'<path d="m6.5 13.5 5.5-5.5 5.5 5.5"/><path d="m6.5 19 5.5-5.5 5.5 5.5"/>',
     pin:'<path d="M12 16.5V22"/><path d="M8.5 3h7l-1 6 2.8 3.2v1.3H6.7v-1.3L9.5 9z"/>',
     checks:'<path d="m3 6.5 1.5 1.5L7.5 5"/><path d="m3 13 1.5 1.5L7.5 11.5"/><path d="m3 19.5 1.5 1.5L7.5 18"/><path d="M11 6.5h10M11 13h10M11 19.5h10"/>',
@@ -1049,7 +1050,7 @@
     'sec-clients':'building','sec-sales':'clipboard','sec-pdca':'cycle','sec-madeals':'folder','sec-knowledge':'book','sec-sozoku':'calc',
     'sec-kpi':'chart','sec-risk':'alert','sec-fde':'users','sec-cust':'building','sec-exec':'flag',
     'sec-billing':'card','sec-billpay':'card','sec-audit':'shield','sec-broadcast':'megaphone','sec-support':'life','sec-growth':'up',
-    'sec-training':'play','sec-biz':'brief'
+    'sec-training':'play','sec-biz':'brief','sec-network':'net'
   };
   function niHtml(id,label,drawer){
     var ic=icoSvg(NAV_ICON[id]||'');
@@ -1328,6 +1329,10 @@
         +'<div class="ph" style="font-size:13px;margin-top:18px;">アカウントと役割の管理（全アカウント）</div>'
         +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">登録されている<b>すべてのアカウント</b>の一覧です。役割の変更はここでのみ行えます。役割を誤って変更してしまい顧客一覧・パートナー一覧から消えた場合も、ここで正しい役割に戻せば復旧できます。</div>'
         +'<div id="adm-roles">読み込み中...</div></div>'
+      +'<div class="panel" id="sec-network"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="4.5" r="2.5"/><circle cx="4.5" cy="18" r="2.5"/><circle cx="19.5" cy="18" r="2.5"/><path d="M12 7v4M12 11 5.8 15.9M12 11l6.2 4.9"/></svg>専門家ネットワーク</span>'
+        +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadNetwork()">↺ 更新</span></div>'
+        +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.8;">パートナーの本業（保有資格）と顧客の業種を突き合わせ、<b style="color:var(--navy);">誰がどの領域を実行でき、どこが手薄か</b>を把握するための画面です。手薄な領域は提携専門家で埋め、料金の目安を明示したうえでパートナー・顧客にお繋ぎします。</div>'
+        +'<div id="net-body">読み込み中...</div></div>'
       +'<div class="panel" id="sec-market"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8h14l-3.5-3.5"/><path d="M21 16H7l3.5 3.5"/></svg>Tsugu投資・融資・M&A（全社）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketApps();loadMarketBroker()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">案件の掲載・ステータス変更は<b>運営のみ</b>が行います。パートナーからの掲載申請を審査し、承認すると即時掲載されます。</div>'
         +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:6px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.5 12.5H16l-1.8 2.8H9.8L8 12.5H2.5"/><path d="M5.6 5.1 2.5 12.5V18a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-5.5l-3.1-7.4A2 2 0 0 0 16.6 4H7.4a2 2 0 0 0-1.8 1.1z"/></svg>掲載申請の審査</span><span id="mkapp-count" class="nbadge hidden">0</span></div>'
@@ -2417,7 +2422,7 @@
     $('app-body').innerHTML=view;
     if(eff==='customer'){ loadDashHero(); loadMyImpact(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
     else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); }
-    else { loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); loadAdmInquiries(); loadSupportKB(); }
+    else { loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); loadAdmInquiries(); loadSupportKB(); loadNetwork(); }
     startNotifPolling(eff);
     navSpyInit();
     // 経営者の初回ログイン時だけ使い方ガイドを自動で開始する。
@@ -6620,6 +6625,10 @@
         +'<div style="flex:1;min-width:160px;"><label class="fl">ご担当者名</label><input id="cpi-contact" class="inp2" style="width:100%;" placeholder="例：山田 太郎"></div>'
       +'</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">'
+        +'<div style="flex:1;min-width:220px;"><label class="fl">業種（運営の専門家ネットワークに使います）</label>'
+          +'<select id="cpi-industry" class="inp2" style="width:100%;">'+industryOptions()+'</select></div>'
+      +'</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">'
         +'<div><label class="fl">契約社数</label><input id="cpi-companies" type="number" min="1" class="inp2" style="width:110px;" value="1"></div>'
         +'<label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#5A6981;cursor:pointer;padding-bottom:8px;"><input type="checkbox" id="cpi-hd">HD化（ホールディングス化）を経験済み</label>'
         +'<button class="btn2" onclick="saveClientProfile(\''+custId+'\')">保存</button>'
@@ -6908,10 +6917,11 @@
   }
   async function loadClientProfileFields(custId){
     var c=$('cpi-contact'); if(!c)return;
-    try{ var r=await sb.from('profiles').select('company_name,contact_name,contract_companies,hd_done').eq('id',custId).single();
+    try{ var r=await sb.from('profiles').select('*').eq('id',custId).single();
       if(!r.error&&r.data){ var co=$('cpi-company'); if(co&&!co.value) co.value=r.data.company_name||''; c.value=r.data.contact_name||'';
         var cn=$('cpi-companies'); if(cn) cn.value=(r.data.contract_companies!=null?r.data.contract_companies:1);
         var hd=$('cpi-hd'); if(hd) hd.checked=!!r.data.hd_done;
+        var iv=$('cpi-industry'); if(iv) iv.value=r.data.industry||'';
       }
     }catch(e){}
   }
@@ -6923,7 +6933,14 @@
     var res=await sb.rpc('save_client_profile', { p_customer_id:custId, p_company:(company||null), p_contact:(contact||null), p_companies:companies, p_hd:hd });
     if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='保存エラー：'+res.error.message+'\n（Supabaseで「Phase51」のSQLを実行してください）';} return; }
     if(typeof res.data==='string' && res.data.indexOf('error:')===0){ if(msg){msg.style.color='#A9403D';msg.textContent=res.data.replace('error:','').trim();} return; }
-    if(msg){msg.style.color='#27684A';msg.textContent='保存しました（経営者ポータルの会社情報に反映されます）。';}
+    // 業種は RPC の引数に無いので直接更新する（列が無い環境でも保存全体は失敗させない）
+    var indNote='';
+    var ind=(($('cpi-industry')||{}).value)||'';
+    try{
+      var ir=await sb.from('profiles').update({ industry:(ind||null) }).eq('id',custId);
+      if(ir.error) indNote='　※業種は未保存です（Supabaseで「Phase67」のSQLを実行してください）';
+    }catch(e){ indNote='　※業種は未保存です'; }
+    if(msg){msg.style.color=(indNote?'#8A6A12':'#27684A');msg.textContent='保存しました（経営者ポータルの会社情報に反映されます）。'+indNote;}
     if(CURRENT_CLIENT && CURRENT_CLIENT.id===custId) CURRENT_CLIENT.company=company;
     var mt=$('cl-modal-title'); if(mt) mt.textContent=(company?company+'（'+(CURRENT_CLIENT?CURRENT_CLIENT.email:'')+'）':(CURRENT_CLIENT?CURRENT_CLIENT.email:''));
     if(typeof loadClients==='function') loadClients();
@@ -8681,6 +8698,265 @@
   }
   function tqRetry(){ if(!TQ) return; TQ.ans={}; TQ.graded=false; tqRender(); try{ $('tr-modal').scrollTop=0; }catch(e){} }
 
+  // ============================================================
+  // ===== 専門家ネットワーク（Phase67）=====
+  // 運営が「誰がどの領域を実行できるか（パートナーの保有資格）」と
+  // 「顧客がどの業種か」を突き合わせて、手薄な領域を把握する。
+  // 手薄な領域は提携専門家で埋める。料金の目安を先に見せることが「安価」の担保、
+  // 運営が審査した名簿から選ぶことが「安心」の担保になる。
+  // ============================================================
+  var NET={ partners:[], custs:[], experts:[], refs:[] }, NET_ERR={};
+  async function netFetch(){
+    NET_ERR={};
+    var jobs=[
+      sb.from('partner_business').select('*'),
+      sb.from('profiles').select('id,company_name,industry,role,consultant_id').eq('role','customer'),
+      sb.from('experts').select('*').order('field',{ascending:true}),
+      sb.from('referrals').select('*').order('created_at',{ascending:false})
+    ];
+    var r=await Promise.all(jobs.map(function(p){ return p.then(function(x){return x;},function(e){return {error:e};}); }));
+    NET.partners = r[0].error?(NET_ERR.pb=r[0].error.message,[]):(r[0].data||[]);
+    NET.custs    = r[1].error?(NET_ERR.cu=r[1].error.message,[]):(r[1].data||[]);
+    NET.experts  = r[2].error?(NET_ERR.ex=r[2].error.message,[]):(r[2].data||[]);
+    NET.refs     = r[3].error?(NET_ERR.rf=r[3].error.message,[]):(r[3].data||[]);
+  }
+  async function loadNetwork(){ if(!$('net-body')) return; await netFetch(); renderNetwork(); }
+  function netUid(){
+    try{ if(window.crypto&&crypto.randomUUID) return crypto.randomUUID(); }catch(e){}
+    return 'x'+Math.abs(Date.parse(new Date().toISOString())).toString(36)+Math.round(performance.now());
+  }
+  function netMissBox(msg, phase){
+    return '<div style="font-size:11px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:8px 11px;margin-bottom:10px;line-height:1.7;">'
+      +esc(msg)+'（Supabaseで「'+esc(phase)+'」のSQLを実行してください）</div>';
+  }
+  function renderNetwork(){
+    var box=$('net-body'); if(!box) return;
+    var h='';
+    // ---- ① 領域ごとのカバレッジ ----
+    var byField={}; BIZ_FIELDS.forEach(function(f){ byField[f.id]={ n:0, areas:{} }; });
+    NET.partners.forEach(function(p){
+      String(p.licenses||'').split(',').filter(Boolean).forEach(function(id){
+        if(!byField[id]) byField[id]={n:0,areas:{}};
+        byField[id].n++;
+        if(p.area) byField[id].areas[p.area]=1;
+      });
+    });
+    var expByField={}; NET.experts.forEach(function(e){ if(e.active===false) return; expByField[e.field]=(expByField[e.field]||0)+1; });
+    h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">① 領域ごとの実行体制</div>';
+    if(NET_ERR.pb) h+=netMissBox('パートナーの本業データを取得できませんでした', 'Phase66');
+    h+='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">';
+    BIZ_FIELDS.forEach(function(f){
+      var d=byField[f.id]||{n:0,areas:{}}, ex=expByField[f.id]||0;
+      var total=d.n+ex, thin=(total===0);
+      h+='<div style="flex:1 1 165px;min-width:165px;border:1.5px solid '+(thin?'#E3B9B7':(total>=3?'#CFE3D6':'var(--line)'))+';'
+        +'background:'+(thin?'rgba(169,64,61,.07)':(total>=3?'rgba(39,104,74,.06)':'var(--soft)'))+';border-radius:11px;padding:10px 12px;">'
+        +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">'+esc(f.n)+'</div>'
+        +'<div style="font-size:16px;font-weight:700;color:'+(thin?'#A9403D':(total>=3?'#27684A':'var(--navy)'))+';margin-top:3px;line-height:1.3;">'+total+' 名</div>'
+        +'<div style="font-size:10.5px;color:var(--muted);margin-top:2px;line-height:1.6;">パートナー '+d.n+'／提携 '+ex+'</div>'
+        +(thin?'<div style="font-size:10.5px;color:#A9403D;margin-top:3px;font-weight:700;">対応者なし</div>'
+              :'<div style="font-size:10px;color:var(--muted);margin-top:3px;">'+esc(Object.keys(d.areas).slice(0,2).join('／')||'—')+'</div>')
+      +'</div>';
+    });
+    h+='</div>';
+    // ---- ② 顧客の業種分布 ----
+    h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">② 顧客の業種分布</div>';
+    if(NET_ERR.cu) h+=netMissBox('顧客データを取得できませんでした', 'Phase67');
+    var byInd={}, noInd=0;
+    NET.custs.forEach(function(c){ if(c.industry){ byInd[c.industry]=(byInd[c.industry]||0)+1; } else noInd++; });
+    var inds=Object.keys(byInd).sort(function(a,b){ return byInd[b]-byInd[a]; });
+    if(!inds.length && !noInd){
+      h+='<div style="font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-bottom:16px;">顧客がまだ登録されていません。</div>';
+    } else {
+      h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;">'
+        +inds.map(function(k){ return '<span class="tag gold" style="font-size:11px;">'+esc(k)+' '+byInd[k]+'</span>'; }).join('')
+        +(noInd?'<span class="tag red" style="font-size:11px;">未設定 '+noInd+'</span>':'')
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:16px;">業種は各顧客カルテの「会社情報（代行入力）」でパートナーが登録します。未設定が多いと、業種に強い専門家を当てられません。</div>';
+    }
+    // ---- ③ 提携専門家名簿 ----
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--navy);">③ 提携専門家の名簿</div>'
+      +'<button class="btn2" style="padding:7px 14px;font-size:12px;" onclick="netToggleExpertForm()">＋ 専門家を登録</button>'
+    +'</div>';
+    h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:9px;">ここに登録した専門家は、パートナーの「本業と連携」画面に<b style="color:var(--navy);">料金の目安つき</b>で表示されます。目安を先に出すことが、顧客に安心して勧められる条件です。</div>';
+    if(NET_ERR.ex) h+=netMissBox('提携専門家の名簿を取得できませんでした', 'Phase67');
+    h+='<div id="net-exform" class="hidden" style="border:1px dashed var(--line);border-radius:11px;padding:12px 14px;margin-bottom:10px;background:var(--soft);">'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+        +'<div style="flex:1;min-width:150px;"><label class="fl">氏名・担当者</label><input id="nx-name" class="inp2" style="width:100%;" placeholder="例：佐藤 一郎"></div>'
+        +'<div style="flex:1;min-width:150px;"><label class="fl">事務所・法人名</label><input id="nx-org" class="inp2" style="width:100%;" placeholder="例：佐藤税理士事務所"></div>'
+        +'<div><label class="fl">領域</label><select id="nx-field" class="inp2" style="width:150px;">'
+          +BIZ_FIELDS.map(function(f){ return '<option value="'+f.id+'">'+esc(f.n)+'</option>'; }).join('')+'</select></div>'
+      +'</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">'
+        +'<div style="flex:1;min-width:150px;"><label class="fl">対応エリア</label><input id="nx-area" class="inp2" style="width:100%;" placeholder="例：全国（オンライン可）"></div>'
+        +'<div style="flex:1;min-width:200px;"><label class="fl">料金の目安（必須・顧客に開示されます）</label><input id="nx-fee" class="inp2" style="width:100%;" placeholder="例：初回相談 無料／顧問 月3万円〜"></div>'
+      +'</div>'
+      +'<div style="margin-top:8px;"><label class="fl">紹介時の注意・得意分野</label><textarea id="nx-note" class="inp2" rows="2" style="width:100%;" placeholder="例：医療法人の持分対策に強い。着手前に必ず見積書を出してもらう運用。"></textarea></div>'
+      +'<div style="display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap;">'
+        +'<button class="btn2" onclick="netAddExpert()">登録する</button><span id="nx-msg" style="font-size:12px;"></span>'
+      +'</div>'
+    +'</div>';
+    if(!NET.experts.length){
+      h+='<div style="font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-bottom:16px;line-height:1.8;">まだ登録がありません。上の①で「対応者なし」になっている領域から埋めていくと、パートナーが困る場面を先回りできます。</div>';
+    } else {
+      h+='<div style="margin-bottom:16px;">'+NET.experts.map(function(e){
+        return '<div style="display:flex;align-items:flex-start;gap:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:6px;flex-wrap:wrap;'+(e.active===false?'opacity:.5;':'')+'">'
+          +'<span class="tag gold" style="font-size:10px;">'+esc(bizFieldName(e.field))+'</span>'
+          +'<div style="flex:1;min-width:170px;">'
+            +'<div style="font-size:12.5px;font-weight:700;color:var(--ink);">'+esc(e.name||'')+(e.org?'<span style="font-weight:400;color:var(--muted);">　'+esc(e.org)+'</span>':'')+'</div>'
+            +'<div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.65;">'+esc(e.area||'—')+'　<b style="color:#27684A;">'+esc(e.fee_guide||'料金目安 未設定')+'</b></div>'
+            +(e.note?'<div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.65;">'+esc(e.note)+'</div>':'')
+          +'</div>'
+          +'<button class="ghost" style="font-size:11px;padding:4px 8px;border:1px solid var(--line);border-radius:7px;" onclick="netToggleExpert(\''+e.id+'\','+(e.active===false)+')">'+(e.active===false?'有効に戻す':'停止')+'</button>'
+          +'<button class="ghost" style="font-size:11px;padding:4px 8px;border:1px solid var(--line);border-radius:7px;" onclick="netDelExpert(\''+e.id+'\')">削除</button>'
+        +'</div>';
+      }).join('')+'</div>';
+    }
+    // ---- ④ 紹介依頼 ----
+    h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">④ パートナーからの紹介依頼</div>';
+    if(NET_ERR.rf) h+=netMissBox('紹介依頼を取得できませんでした', 'Phase67');
+    var open=NET.refs.filter(function(x){ return x.status!=='done'; });
+    if(!NET.refs.length){
+      h+='<div style="font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:11px;padding:12px 14px;line-height:1.8;">依頼はまだありません。パートナーが自分の資格外の課題に当たったとき、「本業と連携」画面からここへ依頼が届きます。</div>';
+    } else {
+      h+='<div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">未対応 '+open.length+' 件 ／ 全 '+NET.refs.length+' 件</div>';
+      h+=NET.refs.map(function(x){
+        var done=(x.status==='done');
+        return '<div style="border:1px solid '+(done?'var(--line)':'#C9D6EA')+';background:'+(done?'var(--card)':'var(--soft)')+';border-radius:11px;padding:11px 13px;margin-bottom:7px;">'
+          +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+            +'<span class="tag gold" style="font-size:10px;">'+esc(bizFieldName(x.field))+'</span>'
+            +'<b style="font-size:12.5px;color:var(--ink);">'+esc(x.customer_name||'（相手先未記入）')+'</b>'
+            +'<span style="font-size:10.5px;color:var(--muted);">'+esc(String(x.created_at||'').slice(0,10))+'</span>'
+            +'<span style="flex:1;"></span>'
+            +'<span class="tag '+(done?'gray':'red')+'" style="font-size:10px;">'+(done?'対応済み':'未対応')+'</span>'
+          +'</div>'
+          +'<div style="font-size:12px;color:var(--ink);line-height:1.75;margin-top:5px;">'+esc(x.detail||'')+'</div>'
+          +'<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:8px;">'
+            +'<div style="flex:1;min-width:200px;"><label class="fl">お繋ぎ先・運営メモ</label>'
+              +'<input id="nr-'+x.id+'" class="inp2" style="width:100%;" value="'+escA(x.assigned_note||'')+'" placeholder="例：佐藤税理士事務所へ連絡済み（初回相談 無料）"></div>'
+            +'<button class="btn2" style="padding:7px 13px;font-size:12px;" onclick="netSaveRef(\''+x.id+'\',\''+(done?'open':'done')+'\')">'+(done?'未対応に戻す':'記録して対応済みに')+'</button>'
+          +'</div>'
+        +'</div>';
+      }).join('');
+    }
+    box.innerHTML=h;
+  }
+  function netToggleExpertForm(){ var f=$('net-exform'); if(f) f.classList.toggle('hidden'); }
+  async function netAddExpert(){
+    var msg=$('nx-msg');
+    var name=((($('nx-name')||{}).value)||'').trim(), fee=((($('nx-fee')||{}).value)||'').trim();
+    if(!name){ if(msg){msg.style.color='#A9403D';msg.textContent='氏名を入力してください。';} return; }
+    if(!fee){ if(msg){msg.style.color='#A9403D';msg.textContent='料金の目安は必須です。目安のない紹介は勧められません。';} return; }
+    var row={ id:netUid(), name:name, org:((($('nx-org')||{}).value)||'').trim()||null, field:(($('nx-field')||{}).value)||null,
+      area:((($('nx-area')||{}).value)||'').trim()||null, fee_guide:fee, note:((($('nx-note')||{}).value)||'').trim()||null,
+      active:true, created_at:new Date().toISOString() };
+    var r=await sb.from('experts').insert(row);
+    if(r.error){ if(msg){msg.style.color='#A9403D';msg.textContent='登録エラー：'+r.error.message+'（Supabaseで「Phase67」のSQLを実行してください）';} return; }
+    ['nx-name','nx-org','nx-area','nx-fee','nx-note'].forEach(function(id){ var e=$(id); if(e) e.value=''; });
+    loadNetwork();
+  }
+  async function netToggleExpert(id, toActive){
+    var r=await sb.from('experts').update({active:!!toActive}).eq('id',id);
+    if(r.error){ alert('更新できませんでした：'+r.error.message); return; }
+    loadNetwork();
+  }
+  async function netDelExpert(id){
+    if(!confirm('この専門家を名簿から削除しますか？')) return;
+    var r=await sb.from('experts').delete().eq('id',id);
+    if(r.error){ alert('削除できませんでした：'+r.error.message); return; }
+    loadNetwork();
+  }
+  async function netSaveRef(id, status){
+    var note=((($('nr-'+id)||{}).value)||'').trim();
+    var r=await sb.from('referrals').update({ status:status, assigned_note:(note||null), updated_at:new Date().toISOString() }).eq('id',id);
+    if(r.error){ alert('保存できませんでした：'+r.error.message); return; }
+    loadNetwork();
+  }
+
+  // ---- パートナー側：専門家を探す／紹介を依頼する ----
+  var REF={ experts:[], mine:[], err:null };
+  async function refLoad(){
+    REF.err=null;
+    try{
+      var e=await sb.from('experts').select('*').eq('active',true).order('field',{ascending:true});
+      if(e.error){ REF.err=e.error.message; REF.experts=[]; } else REF.experts=e.data||[];
+    }catch(x){ REF.err=String(x&&x.message||x); REF.experts=[]; }
+    try{
+      var m=await sb.from('referrals').select('*').eq('requester_id',ME).order('created_at',{ascending:false});
+      REF.mine=(m.error?[]:(m.data||[]));
+    }catch(x){ REF.mine=[]; }
+  }
+  function renderRefBox(){
+    var box=$('ref-box'); if(!box) return;
+    var h='';
+    if(REF.err){
+      h+='<div style="font-size:11.5px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:9px 12px;line-height:1.7;">'
+        +'専門家名簿をまだ利用できません。運営がSupabaseで「Phase67」のSQLを実行すると表示されます。</div>';
+      box.innerHTML=h; return;
+    }
+    if(!REF.experts.length){
+      h+='<div style="font-size:12px;color:var(--muted);line-height:1.8;">運営が審査した提携専門家は、登録され次第ここに表示されます。</div>';
+    } else {
+      h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:8px;">運営が審査した提携先です。<b style="color:var(--navy);">料金の目安が先に分かる</b>ので、顧客に費用感を伝えたうえでお繋ぎできます。</div>';
+      h+=REF.experts.map(function(e){
+        return '<div style="display:flex;align-items:flex-start;gap:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:6px;flex-wrap:wrap;">'
+          +'<span class="tag gold" style="font-size:10px;">'+esc(bizFieldName(e.field))+'</span>'
+          +'<div style="flex:1;min-width:170px;">'
+            +'<div style="font-size:12.5px;font-weight:700;color:var(--ink);">'+esc(e.name||'')+(e.org?'<span style="font-weight:400;color:var(--muted);">　'+esc(e.org)+'</span>':'')+'</div>'
+            +'<div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.65;">'+esc(e.area||'—')+'　<b style="color:#27684A;">'+esc(e.fee_guide||'')+'</b></div>'
+            +(e.note?'<div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.65;">'+esc(e.note)+'</div>':'')
+          +'</div>'
+          +'<button class="btn2" style="padding:6px 12px;font-size:12px;" onclick="refPrefill(\''+e.field+'\')">この領域で依頼</button>'
+        +'</div>';
+      }).join('');
+    }
+    // 依頼フォーム
+    h+='<div style="border:1px dashed var(--line);border-radius:11px;padding:12px 14px;margin-top:10px;background:var(--soft);">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:6px;">運営に紹介を依頼する</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+        +'<div style="flex:1;min-width:160px;"><label class="fl">顧客・相手先</label><input id="rf-cust" class="inp2" style="width:100%;" placeholder="例：山田製作所"></div>'
+        +'<div><label class="fl">領域</label><select id="rf-field" class="inp2" style="width:150px;">'
+          +BIZ_FIELDS.map(function(f){ return '<option value="'+f.id+'">'+esc(f.n)+'</option>'; }).join('')+'</select></div>'
+      +'</div>'
+      +'<div style="margin-top:8px;"><label class="fl">相談内容・希望時期</label><textarea id="rf-detail" class="inp2" rows="2" style="width:100%;" placeholder="例：先代からの持分整理について。年内に方針を固めたい。"></textarea></div>'
+      +'<div style="display:flex;gap:10px;align-items:center;margin-top:9px;flex-wrap:wrap;">'
+        +'<button class="btn2" onclick="refSubmit()">依頼する</button><span id="rf-msg" style="font-size:12px;"></span>'
+      +'</div>'
+    +'</div>';
+    if(REF.mine.length){
+      h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin:14px 0 6px;">あなたの依頼</div>'
+        +REF.mine.map(function(x){
+          var done=(x.status==='done');
+          return '<div style="border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:6px;">'
+            +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+              +'<span class="tag gold" style="font-size:10px;">'+esc(bizFieldName(x.field))+'</span>'
+              +'<b style="font-size:12px;color:var(--ink);">'+esc(x.customer_name||'')+'</b>'
+              +'<span style="flex:1;"></span>'
+              +'<span class="tag '+(done?'gray':'red')+'" style="font-size:10px;">'+(done?'お繋ぎ済み':'運営が確認中')+'</span>'
+            +'</div>'
+            +(x.assigned_note?'<div style="font-size:11.5px;color:#27684A;margin-top:4px;line-height:1.7;">運営より：'+esc(x.assigned_note)+'</div>':'')
+          +'</div>';
+        }).join('');
+    }
+    box.innerHTML=h;
+  }
+  function refPrefill(field){
+    var s=$('rf-field'); if(s) s.value=field;
+    var d=$('rf-detail'); if(d){ try{ d.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){} d.focus(); }
+  }
+  async function refSubmit(){
+    var msg=$('rf-msg');
+    var detail=((($('rf-detail')||{}).value)||'').trim();
+    if(!detail){ if(msg){msg.style.color='#A9403D';msg.textContent='相談内容を入力してください。';} return; }
+    var row={ id:netUid(), requester_id:ME, customer_name:((($('rf-cust')||{}).value)||'').trim()||null,
+      field:(($('rf-field')||{}).value)||null, detail:detail, status:'open', created_at:new Date().toISOString() };
+    var r=await sb.from('referrals').insert(row);
+    if(r.error){ if(msg){msg.style.color='#A9403D';msg.textContent='送信できませんでした：'+r.error.message+'（Supabaseで「Phase67」のSQLを実行してください）';} return; }
+    if($('rf-cust'))$('rf-cust').value=''; if($('rf-detail'))$('rf-detail').value='';
+    if(msg){msg.style.color='#27684A';msg.textContent='運営に依頼しました。お繋ぎ先が決まると、この画面に表示されます。';}
+    await refLoad(); renderRefBox();
+  }
+
   // ===== 累計インパクト（Phase66・経営者ポータル）=====
   // 顧問契約を続ける理由は「毎月レポートが届くこと」ではなく「現金がいくら増えたか」。
   // 単月の数字は月次レポートにあるが、積み上がった総額はどこにも出ていなかった。
@@ -8781,7 +9057,7 @@
   }
   async function loadBiz(){
     if(!$('biz-body')) return;
-    await bizLoad(); renderBiz();
+    await bizLoad(); await refLoad(); renderBiz();
     // 成長ロードマップの「本業への還元」は、案件の読み込み後でないと確定しない
     if($('pg-body')) loadPartnerGrowth();
   }
@@ -8882,11 +9158,18 @@
         +'</div>';
       }).join('')+'</div>';
     }
+    // ---- 4. 専門家ネットワーク（資格外の領域をお繋ぎする） ----
+    h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 6px;">③ 専門家にお繋ぎする</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:9px;">'
+      +'資格が要る領域は、運営が審査した提携専門家にお繋ぎできます。料金の目安が先に分かるので、顧客に費用感を伝えたうえで進められます。'
+      +'つないだ案件はあなたの実績にはなりませんが、<b style="color:var(--navy);">「この人に聞けば何とかなる」という信頼</b>が残り、次の本業案件として返ってきます。</div>'
+      +'<div id="ref-box">読み込み中...</div>';
     if(!BIZ_REMOTE.p || !BIZ_REMOTE.d){
       h+='<div style="font-size:11px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:8px 11px;margin-top:12px;line-height:1.7;">'
-        +'この内容はいまこの端末にのみ保存されています。端末をまたいで引き継ぐには、Supabaseで「Phase66」のSQLを実行してください（未実行でもすべての機能が使えます）。</div>';
+        +'本業プロフィールと案件の記録は、いまこの端末にのみ保存されています。端末をまたいで引き継ぐには、Supabaseで「Phase66」のSQLを実行してください（未実行でもすべての機能が使えます）。</div>';
     }
     box.innerHTML=h;
+    renderRefBox();
   }
   function bizChip(label, value, sub, color){
     return '<div style="flex:1 1 150px;min-width:150px;background:var(--soft);border:1px solid var(--softline);border-radius:11px;padding:10px 14px;">'
