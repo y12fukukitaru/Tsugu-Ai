@@ -842,6 +842,10 @@
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true } });
 
   let ME = null, MYROLE = 'customer', CURRENT_CLIENT = null;
+  // ME はログインしている本人のID。SCOPE は「いま見ている会社のID」。
+  // 経営者本人は両者が一致するが、閲覧メンバーとして招かれた人は SCOPE だけが
+  // 会社側を指す。顧客ポータルのデータ取得はすべて SCOPE を使う。
+  let SCOPE = null, SCOPE_CO = null;
   var VIEWAS = 'admin';
 
   const $ = function(id){ return document.getElementById(id); };
@@ -940,6 +944,7 @@
     var prof=await getProfile(session);
     MYROLE=prof.role||'customer';
     await claimLinks(session.user.email);   // メールで指名された枠を本人と結びつける
+    await resolveScope();                   // 閲覧メンバーなら、招かれた会社を見る
     renderApp(prof, session.user.email);
   }
 
@@ -2011,6 +2016,7 @@
   function renderApp(prof, email){
     $('gate').classList.add('hidden');
     $('app').classList.remove('hidden');
+    if(!SCOPE) SCOPE=ME;   // 会社の解決に失敗しても自分自身を見る（データが空になるのを防ぐ）
     var r=prof.role||'customer';
     var eff = (r==='admin') ? (VIEWAS==='fde'?'consultant':(VIEWAS==='customer'?'customer':'admin')) : r;
     window.__prof=prof; window.__email=email||''; window.__role=r;
@@ -2508,7 +2514,7 @@
 
   async function loadMyFinance(){
     var box=$('fin-list'); if(!box)return;
-    var res=await sb.from('financial_entries').select('*').eq('customer_id',ME).order('year_month',{ascending:false});
+    var res=await sb.from('financial_entries').select('*').eq('customer_id',SCOPE).order('year_month',{ascending:false});
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
     box.innerHTML=finTable(res.data, false);
     var k=$('kpi-cards'); if(k) k.innerHTML=kpiCards(res.data);
@@ -2689,7 +2695,7 @@
 
   async function loadMyActions(){
     var box=$('act-list'); if(!box)return;
-    var res=await sb.from('action_items').select('*').eq('customer_id',ME).order('status').order('created_at',{ascending:false});
+    var res=await sb.from('action_items').select('*').eq('customer_id',SCOPE).order('status').order('created_at',{ascending:false});
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
     box.innerHTML=actTable(res.data,'me');
     var td=$('todo-list'); if(td) td.innerHTML=todoCards(res.data);
@@ -3228,7 +3234,7 @@
   // --- 顧客側：閲覧専用 ---
   async function loadMyPdca(){
     var box=$('my-pdca'); if(!box)return;
-    var res=await sb.from('pdca_items').select('*').eq('customer_id',ME).order('updated_at',{ascending:false}).limit(20);
+    var res=await sb.from('pdca_items').select('*').eq('customer_id',SCOPE).order('updated_at',{ascending:false}).limit(20);
     if(res.error){ box.innerHTML=''; return; }
     var rows=(res.data||[]).filter(function(d){ return d.status==='active'; });
     if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">進行中の課題はありません。気になることがあれば、メッセージからご相談ください。</div>'; return; }
@@ -3488,10 +3494,10 @@
   // --- 顧客側：進捗表示とPMI月次チェック ---
   async function loadMyMa(){
     var box=$('my-ma'); if(!box)return;
-    var res=await sb.from('ma_deals').select('*').eq('customer_id',ME).order('created_at',{ascending:false});
+    var res=await sb.from('ma_deals').select('*').eq('customer_id',SCOPE).order('created_at',{ascending:false});
     if(res.error || !(res.data||[]).length){ box.innerHTML=''; return; }
     var ym=thisYM();
-    var pl=await sb.from('pmi_pulses').select('*').eq('customer_id',ME).eq('ym',ym);
+    var pl=await sb.from('pmi_pulses').select('*').eq('customer_id',SCOPE).eq('ym',ym);
     var answered=!pl.error && (pl.data||[]).length>0;
     var h='';
     (res.data||[]).forEach(function(d){
@@ -3528,7 +3534,7 @@
   async function submitPulse(){
     var m=$('pulse-msg');
     var q1=Number((($('pulse-q1')||{}).value)||0), q2=Number((($('pulse-q2')||{}).value)||0), q3=Number((($('pulse-q3')||{}).value)||0);
-    var row={ customer_id:ME, ym:thisYM(), q1:q1, q2:q2, q3:q3, score:q1+q2+q3, comment:((($('pulse-comment')||{}).value||'').trim()||null) };
+    var row={ customer_id:SCOPE, ym:thisYM(), q1:q1, q2:q2, q3:q3, score:q1+q2+q3, comment:((($('pulse-comment')||{}).value||'').trim()||null) };
     var res=await sb.from('pmi_pulses').insert(row);
     if(res.error){ if(m){ m.style.color='#A9403D'; m.textContent='送信エラー：'+res.error.message; } return; }
     if(m){ m.style.color='#27684A'; m.textContent='送信しました。'; }
@@ -3702,7 +3708,7 @@
   // --- 顧客：公開済みレポート一覧 ---
   async function loadMyReports(){
     var box=$('my-reports'); if(!box)return;
-    var res=await sb.from('monthly_reports').select('*').eq('customer_id',ME).eq('status','published').order('report_month',{ascending:false}).limit(12);
+    var res=await sb.from('monthly_reports').select('*').eq('customer_id',SCOPE).eq('status','published').order('report_month',{ascending:false}).limit(12);
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
     var reps=res.data||[];
     if(!reps.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">公開されたレポートはまだありません。担当パートナーの確認後にここへ届きます。</div>'; return; }
@@ -3822,14 +3828,14 @@
   }
   async function loadMyPayments(){
     var box=$('pay-list'); if(!box)return;
-    var res=await sb.from('upcoming_payments').select('*').eq('customer_id',ME).order('due_date',{ascending:true});
+    var res=await sb.from('upcoming_payments').select('*').eq('customer_id',SCOPE).order('due_date',{ascending:true});
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'<br><span style="color:#94A2B6;">（Phase22のSQL未実施の可能性があります）</span></div>'; return; }
     box.innerHTML=payTable(res.data,'me',false);
     loadCashStatus();
   }
   async function loadMyInsurance(){
     var box=$('my-ins'); if(!box)return;
-    var res=await sb.from('insurance_results').select('*').eq('customer_id',ME).order('created_at',{ascending:false});
+    var res=await sb.from('insurance_results').select('*').eq('customer_id',SCOPE).order('created_at',{ascending:false});
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
     if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">共有された試算結果はまだありません。保険や相続・贈与の試算をご希望の場合は「メッセージ」で担当パートナーにお伝えください。</div>'; return; }
     var h=''; res.data.forEach(function(r){ var dt=(r.created_at||'').slice(0,10); h+='<div style="border-left:3px solid #2C5DA8;background:#F8F9FC;border-radius:8px;padding:10px 12px;margin-bottom:6px;"><div style="font-size:11px;color:#94A2B6;margin-bottom:4px;">'+esc(dt)+'</div><div style="font-size:12.5px;color:#18202E;white-space:pre-wrap;line-height:1.7;">'+esc(r.summary||'')+'</div></div>'; });
@@ -4705,7 +4711,7 @@
   // 顧客側：次回面談の表示（アラート付き）
   async function loadMyNextMeeting(){
     var box=$('my-nextmeet'); if(!box)return;
-    var res=await sb.from('meetings_scheduled').select('*').eq('customer_id',ME).eq('status','scheduled').order('meet_at',{ascending:true}).limit(1);
+    var res=await sb.from('meetings_scheduled').select('*').eq('customer_id',SCOPE).eq('status','scheduled').order('meet_at',{ascending:true}).limit(1);
     if(res.error || !(res.data||[]).length){ box.innerHTML=''; return; }
     var m=res.data[0];
     var cd=meetCountdown(m.meet_at);
@@ -4726,7 +4732,7 @@
   // 顧客側：共有された議事録を閲覧
   async function loadMyMeetings(){
     var box=$('my-meetings'); if(!box)return;
-    var res=await sb.from('meeting_notes').select('*').eq('customer_id',ME).eq('shared',true).order('meeting_date',{ascending:false}).limit(20);
+    var res=await sb.from('meeting_notes').select('*').eq('customer_id',SCOPE).eq('shared',true).order('meeting_date',{ascending:false}).limit(20);
     if(res.error || !(res.data||[]).length){ box.innerHTML=''; return; }
     var h='<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a2 2 0 0 1 2.83 2.83L12.5 14.2l-3.6.95.95-3.6z"/></svg>面談記録</div>';
     (res.data||[]).forEach(function(r){
@@ -5102,7 +5108,7 @@
   }
   async function loadOwnFunding(){
     var box=$('own-fund-list'); if(!box)return;
-    var res=await sb.from('funding_roadmap_items').select('*').eq('customer_id',ME).order('created_at',{ascending:false});
+    var res=await sb.from('funding_roadmap_items').select('*').eq('customer_id',SCOPE).order('created_at',{ascending:false});
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">'+esc(res.error.message)+'<br><span style="color:#94A2B6;">（Phase27のSQL未実施の可能性があります）</span></div>'; return; }
     box.innerHTML=fundTable(res.data,'own',true);
   }
@@ -5135,12 +5141,12 @@
     var box=$('dash-hero'); if(!box)return;
     var todayS=new Date().toISOString().slice(0,10);
     var r=await Promise.all([
-      sb.from('financial_entries').select('year_month,revenue,profit').eq('customer_id',ME).order('year_month',{ascending:false}).limit(2),
-      sb.from('cashflow_snapshots').select('*').eq('customer_id',ME).order('created_at',{ascending:false}).limit(1),
-      sb.from('upcoming_payments').select('amount,due_date').eq('customer_id',ME),
-      sb.from('action_items').select('status,due_date').eq('customer_id',ME),
-      sb.from('fde_notes').select('created_at').eq('customer_id',ME).order('created_at',{ascending:false}).limit(1),
-      sb.from('chat_messages').select('sender_role,created_at').eq('customer_id',ME).order('created_at',{ascending:false}).limit(1)
+      sb.from('financial_entries').select('year_month,revenue,profit').eq('customer_id',SCOPE).order('year_month',{ascending:false}).limit(2),
+      sb.from('cashflow_snapshots').select('*').eq('customer_id',SCOPE).order('created_at',{ascending:false}).limit(1),
+      sb.from('upcoming_payments').select('amount,due_date').eq('customer_id',SCOPE),
+      sb.from('action_items').select('status,due_date').eq('customer_id',SCOPE),
+      sb.from('fde_notes').select('created_at').eq('customer_id',SCOPE).order('created_at',{ascending:false}).limit(1),
+      sb.from('chat_messages').select('sender_role,created_at').eq('customer_id',SCOPE).order('created_at',{ascending:false}).limit(1)
     ]);
     var fin=(r[0].data||[]), snap=(r[1].data&&r[1].data[0])||null, pays=(r[2].error?[]:(r[2].data||[]));
     var acts=(r[3].data||[]), note=(r[4].data&&r[4].data[0])||null, lastMsg=(r[5].data&&r[5].data[0])||null;
@@ -5202,9 +5208,9 @@
   // ---- 資金繰りステータス（ダッシュボード）----
   async function loadCashStatus(){
     var box=$('cash-status'); if(!box)return;
-    var snapQ=sb.from('cashflow_snapshots').select('*').eq('customer_id',ME).order('created_at',{ascending:false}).limit(1);
-    var payQ=sb.from('upcoming_payments').select('*').eq('customer_id',ME).order('due_date',{ascending:true});
-    var fundQ=sb.from('funding_roadmap_items').select('*').eq('customer_id',ME).order('created_at',{ascending:false});
+    var snapQ=sb.from('cashflow_snapshots').select('*').eq('customer_id',SCOPE).order('created_at',{ascending:false}).limit(1);
+    var payQ=sb.from('upcoming_payments').select('*').eq('customer_id',SCOPE).order('due_date',{ascending:true});
+    var fundQ=sb.from('funding_roadmap_items').select('*').eq('customer_id',SCOPE).order('created_at',{ascending:false});
     var r=await Promise.all([snapQ,payQ,fundQ]);
     var snapErr=r[0].error, snap=(r[0].data&&r[0].data[0])||null;
     var pays=(r[1].error?[]:(r[1].data||[]));
@@ -5463,7 +5469,7 @@
     if(!ME) return;
     var eff=window.__eff||'customer';
     if(eff==='customer'){
-      var res=await sb.from('chat_messages').select('created_at').eq('customer_id',ME).eq('sender_role','consultant').gt('created_at',getLastRead()).limit(100);
+      var res=await sb.from('chat_messages').select('created_at').eq('customer_id',SCOPE).eq('sender_role','consultant').gt('created_at',getLastRead()).limit(100);
       if(res.error) return;
       var lr=getLastRead();
       UNREAD.total=(res.data||[]).filter(function(m){ return m.created_at>lr; }).length; UNREAD.perClient={};
@@ -5502,7 +5508,7 @@
   }
   async function loadMyChat(){
     var box=$('chat-log'); if(!box)return;
-    var res=await sb.from('chat_messages').select('*').eq('customer_id',ME).order('created_at',{ascending:true}).limit(200);
+    var res=await sb.from('chat_messages').select('*').eq('customer_id',SCOPE).order('created_at',{ascending:true}).limit(200);
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'<br><span style="color:#94A2B6;">（メッセージ機能のSQL設定が未実施の可能性があります）</span></div>'; return; }
     box.innerHTML=chatBubbles(res.data,'customer'); box.scrollTop=box.scrollHeight;
     markRead(); UNREAD.total=0; applyNotifBadges();
@@ -5510,7 +5516,8 @@
   async function sendMyChat(){
     var inp=$('chat-input'); if(!inp)return; var b=inp.value.trim(); if(!b)return;
     var btn=$('chat-send'); if(btn)btn.disabled=true;
-    var res=await sb.from('chat_messages').insert({ customer_id:ME, sender_id:ME, sender_role:'customer', body:b });
+    // customer_id は会社、sender_id は送信した本人（RLSが auth.uid() と突き合わせる）
+    var res=await sb.from('chat_messages').insert({ customer_id:SCOPE, sender_id:ME, sender_role:'customer', body:b });
     if(btn)btn.disabled=false;
     if(res.error){ alert('送信エラー：'+res.error.message); return; }
     inp.value=''; loadMyChat();
@@ -5560,7 +5567,7 @@
   }
   async function loadMyNotes(){
     var box=$('my-notes'); if(!box)return;
-    var res=await sb.from('fde_notes').select('*').eq('customer_id',ME).order('created_at',{ascending:false});
+    var res=await sb.from('fde_notes').select('*').eq('customer_id',SCOPE).order('created_at',{ascending:false});
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
     if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">担当パートナーからの提案はまだありません。</div>'; return; }
     var h='';
@@ -6095,7 +6102,7 @@
   }
   async function loadMyValuation(){
     var box=$('my-value'); if(!box)return;
-    var res=await sb.from('valuation_snapshots').select('*').eq('customer_id',ME).order('ym',{ascending:true}).limit(12);
+    var res=await sb.from('valuation_snapshots').select('*').eq('customer_id',SCOPE).order('ym',{ascending:true}).limit(12);
     if(res.error){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">企業価値の診断データを読み込めませんでした。</div>'; return; }
     var rows=res.data||[];
     if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">まだ診断がありません。担当パートナーが企業価値診断を実施すると、ここに毎月の推移が表示されます。</div>'; return; }
@@ -7136,8 +7143,8 @@
     var areas=Object.keys(aiSelected);
     if(areas.length===0 && !note){ result.innerHTML='<div style="font-size:12px;color:#A9403D;">気になる業務を1つ以上選ぶか、困りごとを入力してください。</div>'; return; }
     var rows=[];
-    areas.forEach(function(a){ rows.push({ customer_id:ME, category:'automation', title:a, detail:(gyo?('業種: '+gyo):''), status:'new' }); });
-    if(note){ rows.push({ customer_id:ME, category:'automation', title:'（困りごと）', detail:note+(gyo?(' ／ 業種: '+gyo):''), status:'new' }); }
+    areas.forEach(function(a){ rows.push({ customer_id:SCOPE, category:'automation', title:a, detail:(gyo?('業種: '+gyo):''), status:'new' }); });
+    if(note){ rows.push({ customer_id:SCOPE, category:'automation', title:'（困りごと）', detail:note+(gyo?(' ／ 業種: '+gyo):''), status:'new' }); }
     var res=await sb.from('automation_interests').insert(rows);
     if(res.error){ result.innerHTML='<div style="font-size:12px;color:#A9403D;">送信エラー：'+esc(res.error.message)+'</div>'; return; }
     result.innerHTML='<div style="font-size:13px;color:#27684A;background:#EBF2ED;border-radius:10px;padding:12px 14px;">✅ '+rows.length+'件のご相談を担当パートナーに送りました。AIで自動化プランを診断のうえ、ご提案します。</div>';
@@ -7146,7 +7153,7 @@
   // 顧客：パートナーから共有された診断提案を閲覧
   async function loadMyAiProps(){
     var box=$('my-ai-props'); if(!box)return;
-    var res=await sb.from('ai_proposals').select('*').eq('customer_id',ME).eq('shared',true).order('created_at',{ascending:false}).limit(10);
+    var res=await sb.from('ai_proposals').select('*').eq('customer_id',SCOPE).eq('shared',true).order('created_at',{ascending:false}).limit(10);
     if(res.error || !(res.data||[]).length){ box.innerHTML=''; return; }
     var h='<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 18h5"/><path d="M10 21h4"/><path d="M8.5 14.5a5.5 5.5 0 1 1 7 0c-.7.6-1 1.4-1 2.2h-5c0-.8-.3-1.6-1-2.2z"/></svg>担当パートナーからの自動化プラン</div>';
     (res.data||[]).forEach(function(p){
@@ -7662,7 +7669,7 @@
     if(!picks.length){ if(msg){ msg.style.color='#A9403D'; msg.textContent='興味のある方向性を1つ以上選んでください。'; } return; }
     var arr=window.__lastMa||[];
     var rows=[];
-    picks.forEach(function(c){ var it=arr[parseInt(c.getAttribute('data-i'),10)]; if(it){ rows.push({ customer_id:ME, category:'mna', title:(it['方向性']||it['戦略']||''), detail:('対象: '+(it['ターゲット像']||it['対象']||'')+' ／ シナジー: '+(it['期待シナジー']||it['期待効果']||'')) }); } });
+    picks.forEach(function(c){ var it=arr[parseInt(c.getAttribute('data-i'),10)]; if(it){ rows.push({ customer_id:SCOPE, category:'mna', title:(it['方向性']||it['戦略']||''), detail:('対象: '+(it['ターゲット像']||it['対象']||'')+' ／ シナジー: '+(it['期待シナジー']||it['期待効果']||'')) }); } });
     if(!rows.length) return;
     var res=await sb.from('automation_interests').insert(rows);
     if(res.error){ if(msg){ msg.style.color='#A9403D'; msg.textContent='共有エラー：'+res.error.message; } return; }
@@ -8821,6 +8828,9 @@
   }
   function renderMembers(){
     var box=$('my-members'); if(!box) return;
+    // 招かれて見ている側には、いまどの会社を見ているかだけを伝える。
+    // メンバーの追加・解除は経営者本人にしかできない。
+    if(SCOPE && SCOPE!==ME){ box.innerHTML=scopeBannerHtml(); return; }
     if(MEMBERS.err){ box.innerHTML=''; return; }   // 未整備のときは何も出さない（顧客を不安にさせない）
     var n=MEMBERS.rows.length, rest=Math.max(0, MEMBER_MAX-n);
     var h='<div style="border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:12px;">'
@@ -8886,6 +8896,33 @@
     var em=String(email).toLowerCase();
     try{ await sb.from('company_members').update({ member_id:ME }).is('member_id',null).ilike('member_email',em); }catch(e){}
     try{ await sb.from('partner_assignments').update({ sub_id:ME }).is('sub_id',null).ilike('sub_email',em); }catch(e){}
+  }
+  // いま見る会社を決める。閲覧メンバーとして招かれている場合はその会社を、
+  // そうでなければ自分自身を指す。招かれていても自分が経営者なら自社を優先する。
+  async function resolveScope(){
+    SCOPE=ME; SCOPE_CO=null;
+    if(!ME) return;
+    try{
+      var r=await sb.from('company_members').select('customer_id,label').eq('member_id',ME).eq('status','active').limit(1);
+      if(r.error || !(r.data||[]).length) return;
+      var cid=r.data[0].customer_id;
+      if(!cid || cid===ME) return;
+      // 自分自身が顧客として登録されている（＝自社を持つ）なら、そちらを優先
+      var own=await sb.from('financial_entries').select('customer_id').eq('customer_id',ME).limit(1);
+      if(!own.error && (own.data||[]).length) return;
+      SCOPE=cid;
+      var co=await sb.from('profiles').select('company_name').eq('id',cid).maybeSingle();
+      SCOPE_CO=(co.error?null:((co.data||{}).company_name||null));
+    }catch(e){ SCOPE=ME; SCOPE_CO=null; }
+  }
+  function scopeBannerHtml(){
+    if(!SCOPE || SCOPE===ME) return '';
+    return '<div style="border:1.5px solid #C9D6EA;background:var(--soft);border-radius:11px;padding:11px 14px;margin-bottom:12px;">'
+      +'<div style="font-size:12.5px;color:var(--navy);font-weight:700;">'+esc(SCOPE_CO||'ご招待いただいた会社')+' の画面をご覧いただいています</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-top:3px;">'
+      +'経営者の方から閲覧メンバーとして登録されています。メッセージの送信や課題の登録もそのまま行えます。'
+      +'メンバーの追加・解除は経営者の方のみ操作できます。</div>'
+    +'</div>';
   }
 
   // ---- 運営：2名体制の申請を承認する ----
@@ -9206,8 +9243,8 @@
     var ins=[], mad=[];
     try{
       var r=await Promise.all([
-        sb.from('insurance_results').select('summary,created_at').eq('customer_id',ME).order('created_at',{ascending:true}),
-        sb.from('ma_deals').select('savings_annual,created_at,updated_at').eq('customer_id',ME)
+        sb.from('insurance_results').select('summary,created_at').eq('customer_id',SCOPE).order('created_at',{ascending:true}),
+        sb.from('ma_deals').select('savings_annual,created_at,updated_at').eq('customer_id',SCOPE)
       ]);
       ins=(r[0].error?[]:(r[0].data||[]));
       mad=(r[1].error?[]:(r[1].data||[]));
@@ -10444,7 +10481,7 @@
   // ---- 顧客側：公開済みの報告書を表示 ----
   async function loadMyObr(){
     var box=$('my-obr'); if(!box) return;
-    var res=await sb.from('onboarding_reports').select('*').eq('customer_id',ME).eq('status','published').maybeSingle();
+    var res=await sb.from('onboarding_reports').select('*').eq('customer_id',SCOPE).eq('status','published').maybeSingle();
     if(res.error || !res.data){ box.innerHTML=''; OBR_MY=null; return; }
     OBR_MY=obrNorm(res.data, ME);
     var pbtn='background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;';
