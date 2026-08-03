@@ -2186,7 +2186,12 @@
             +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadBiz()">↺ 更新</span></div>'
           +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.8;">'
             +'TsuguAIは、あなたの本業（保険・不動産・士業・M&Aなど）と<b style="color:var(--navy);">競合しません</b>。顧問として会社の内側に入り、課題を先に見つける立場をつくることで、<b style="color:var(--navy);">本業の案件があなたのところに戻ってくる</b>ようにするための道具です。'
-            +'保有資格を登録すると、その領域は「あなたが実行できる案件」として扱われます。</div>'
+            +(SELF_EXEC_OK
+                ? '保有資格を登録すると、その領域は「あなたが実行できる案件」として扱われます。'
+                : '保有資格を登録すると、その領域があなたの<b style="color:var(--navy);">得意領域</b>として記録され、案件の芽を見つけやすくなります。'
+                  +'ただし<b style="color:var(--navy);">実行の手順は現行の「認定パートナー 禁止行為ガイドライン」が優先します</b>。'
+                  +'ご自身が有資格の場合の取り扱いは、実行の前に運営へご確認ください。')
+            +'</div>'
           +'<div id="biz-body">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-training">'
@@ -2342,6 +2347,13 @@
                 ['アカウントの共有・貸与','自分のログインID・パスワードを、家族・同僚・顧客を含む第三者に共有・貸与してはいけません。'],
                 ['利益相反・反社会的勢力','自己や親族の利益のために顧客の意思決定を誘導すること、反社会的勢力と関係を持つこと・取引を仲介することは禁止です。']])
               +'<div style="font-size:11px;color:#5A6981;margin-top:6px;">本ガイドラインは弁護士レビューを経て随時更新されます（最終更新：2026年7月）。</div>'
+              +'<div style="font-size:11.5px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:9px 11px;margin-top:8px;line-height:1.8;">'
+                +'<b>【運営からの補足】ご自身が有資格の場合の取り扱いについて</b><br>'
+                +'保険の募集人資格、宅建士、士業の資格などをお持ちの方から、「自分の資格の範囲なら自分で実行してよいか」というご質問をいただきます。'
+                +'この点は現在<b>規程の改定を検討中</b>です。改定までの間は上記の定めが適用されますので、'
+                +'該当する場面では実行の前に必ず<span style="color:#2C5DA8;cursor:pointer;font-weight:600;" onclick="goSec(\'sec-support\')">運営サポート</span>へご相談ください。'
+                +'保有資格は<span style="color:#2C5DA8;cursor:pointer;font-weight:600;" onclick="goSec(\'sec-biz\')">本業と連携</span>からご登録いただけます。'
+              +'</div>'
             +'</div>'
           +'</div>'
           +'<input id="kn-search" class="searchbox" placeholder="🔍 タイトル・業種・内容で検索" oninput="renderKnowledge()">'
@@ -9472,6 +9484,13 @@
   // TsuguAI経由で本業がいくら増えたかを本人に見せる。継続利用の根拠はここにある。
   // 保存はlocalStorageを正とし、テーブルがあれば同期する（無くても全機能が動く）。
   // ============================================================
+  // ★弁護士レビュー後の切替点（公庫の融資後に予定）
+  //   現行の「認定パートナー 禁止行為ガイドライン」は、保険等の実行を
+  //   「必ず有資格の担当者（運営）へ取り次ぐ」と定めている。有資格のパートナー
+  //   本人が実行してよいかは規程の改定事項なので、それが済むまでは false のまま。
+  //   true にすると、本業と連携の文言が「あなたが実行する」前提に切り替わる。
+  //   その際は保険シミュレーターの注記2箇所と研修Q4もあわせて改訂すること。
+  var SELF_EXEC_OK = false;
   var BIZ_FIELDS=[
     { id:'insurance', n:'保険',            lic:'生命保険募集人・損害保険募集人' },
     { id:'realestate',n:'不動産',          lic:'宅地建物取引士' },
@@ -9559,7 +9578,14 @@
     // ---- 1. 本業プロフィール ----
     h+='<div style="border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px;background:var(--soft);">'
       +'<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;">① あなたの本業</div>'
-      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:11px;">主戦場と保有資格を登録してください。ここに登録した領域は、顧客の課題が当たったときに<b style="color:var(--navy);">あなたが実行する案件</b>として扱われます（運営には取り次ぎません）。</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:11px;">主戦場と保有資格を登録してください。'
+        +(SELF_EXEC_OK
+          ? 'ここに登録した領域は、顧客の課題が当たったときに<b style="color:var(--navy);">あなたが実行する案件</b>として扱われます（運営には取り次ぎません）。'
+          : 'ここに登録した領域は、顧客の課題が当たったときに<b style="color:var(--navy);">あなたの案件として最初にお知らせ</b>します。'
+            +'実行の進め方（ご自身で行えるか、有資格者へお繋ぎするか）は、'
+            +'<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="goSec(\'sec-knowledge\')">禁止行為ガイドライン</span>の定めに従い、'
+            +'迷う場合は<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="goSec(\'sec-support\')">運営サポート</span>へご確認ください。')
+      +'</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:11px;">'
         +'<div><label class="fl">主戦場（本業）</label><select id="biz-main" class="inp2" style="width:190px;">'
           +'<option value="">選択してください</option>'
@@ -9567,7 +9593,7 @@
         +'</select></div>'
         +'<div style="flex:1;min-width:180px;"><label class="fl">対応エリア</label><input id="biz-area" class="inp2" style="width:100%;" value="'+escA(P.area||'')+'" placeholder="例：東京・神奈川・千葉"></div>'
       +'</div>'
-      +'<label class="fl">実行できる領域（保有資格にチェック）</label>'
+      +'<label class="fl">'+(SELF_EXEC_OK?'実行できる領域（保有資格にチェック）':'保有資格（お持ちのものにチェック）')+'</label>'
       +'<div style="display:flex;flex-wrap:wrap;gap:7px;margin:5px 0 10px;">'
       +BIZ_FIELDS.map(function(f){
           var on=P.lic.indexOf(f.id)>=0;
@@ -9585,9 +9611,12 @@
       var other=BIZ_FIELDS.filter(function(f){ return P.lic.indexOf(f.id)<0; });
       h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">'
         +'<div style="flex:1 1 250px;border:1.5px solid #CFE3D6;background:rgba(39,104,74,.07);border-radius:12px;padding:12px 14px;">'
-          +'<div style="font-size:12.5px;font-weight:700;color:#27684A;margin-bottom:5px;">あなたが実行する領域</div>'
+          +'<div style="font-size:12.5px;font-weight:700;color:#27684A;margin-bottom:5px;">'+(SELF_EXEC_OK?'あなたが実行する領域':'あなたの得意領域')+'</div>'
           +'<div style="font-size:12px;color:var(--ink);line-height:1.8;">'+mine.map(function(f){ return esc(f.n); }).join('・')+'</div>'
-          +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:6px;">顧問先でこの領域の課題が出たら、そのままあなたの本業の案件です。顧問という立場で先に相談を受けられるぶん、外から営業するより早く・確実に決まります。</div>'
+          +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:6px;">'
+            +'顧問先でこの領域の課題が出たら、それはあなたの本業につながる案件です。顧問という立場で先に相談を受けられるぶん、外から営業するより早く・確実に話が進みます。'
+            +(SELF_EXEC_OK?'':'<br>実行の進め方は禁止行為ガイドラインの定めに従ってください（規程は改定を検討中です）。')
+          +'</div>'
         +'</div>'
         +'<div style="flex:1 1 250px;border:1px solid var(--line);background:var(--soft);border-radius:12px;padding:12px 14px;">'
           +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:5px;">専門家につなぐ領域</div>'
