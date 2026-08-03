@@ -939,6 +939,7 @@
     ME=session.user.id;
     var prof=await getProfile(session);
     MYROLE=prof.role||'customer';
+    await claimLinks(session.user.email);   // メールで指名された枠を本人と結びつける
     renderApp(prof, session.user.email);
   }
 
@@ -1318,7 +1319,10 @@
         +'<div id="adm-risk">読み込み中...</div></div>'
       +'<div class="panel" id="sec-fde"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">パートナー 一覧・稼働モニタ<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
         +'<input id="adm-fde-search" class="searchbox" style="margin-top:8px;" placeholder="🔍 名前・メールアドレスで検索" oninput="renderAdmFde()">'
-        +'<div id="adm-fde" style="margin-top:10px;">読み込み中...</div></div>'
+        +'<div id="adm-fde" style="margin-top:10px;">読み込み中...</div>'
+        +'<div class="ph" style="font-size:13px;margin-top:20px;display:flex;align-items:center;justify-content:space-between;">2名体制（サブ担当）の申請'
+          +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmAssign()">↺ 更新</span></div>'
+        +'<div id="adm-asg">読み込み中...</div></div>'
       +'<div class="panel" id="sec-cust"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">顧客 一覧・管理<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
         +'<input id="adm-cust-search" class="searchbox" style="margin-top:8px;" placeholder="🔍 会社名・メールアドレスで検索" oninput="renderAdmCust()">'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px;" id="adm-cust-filterbar">'
@@ -2032,6 +2036,7 @@
         +'<div style="margin-bottom:12px;"><button id="ct-btn" class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;font-weight:600;" onclick="ctStart(true)"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5.5 3.5-5.5 3.5z"/></svg>使い方ガイド（1分）</button></div>'
         +'<div id="dash-hero">読み込み中...</div>'
         +'<div id="my-impact"></div>'
+        +'<div id="my-members"></div>'
         +'<div id="my-partner"></div>'
         +'</div>'
         +'<div id="my-nextmeet"></div>'
@@ -2420,9 +2425,9 @@
 
     window.__eff=eff;
     $('app-body').innerHTML=view;
-    if(eff==='customer'){ loadDashHero(); loadMyImpact(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
+    if(eff==='customer'){ loadDashHero(); loadMyImpact(); loadMembers(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
     else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); }
-    else { loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); loadAdmInquiries(); loadSupportKB(); loadNetwork(); }
+    else { loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); loadAdmInquiries(); loadSupportKB(); loadNetwork(); loadAdmAssign(); }
     startNotifPolling(eff);
     navSpyInit();
     // 経営者の初回ログイン時だけ使い方ガイドを自動で開始する。
@@ -6635,6 +6640,11 @@
       +'</div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-top:4px;">※ 契約社数・HD化は顧問料の割引（運営の課金管理）に反映されます。</div>'
       +'<div id="cpi-msg" style="font-size:12px;margin-top:6px;"></div>'
+      +'<div style="border-top:1px solid var(--softline);margin-top:16px;padding-top:14px;">'
+        +'<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;">担当体制（2名体制・引き継ぎ）</div>'
+        +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-bottom:10px;">この顧客をサブ担当と2名で見る体制にできます。報酬の配分は<b style="color:var(--navy);">メイン担当のあなたが決めて</b>、運営に申請します。将来の引き継ぎは、いきなり交代するのではなく、サブとして併走してもらう期間をつくるのが確実です。</div>'
+        +'<div id="asg-box">読み込み中...</div>'
+      +'</div>'
       +'<div id="cs-msg" class="cl-cols c64" style="margin-top:18px;">'
       +'<div class="cl-col" style="border:1.5px solid #C9D6EA;background:#F5F9FE;border-radius:12px;padding:14px 15px;">'
         +'<div class="ph" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;"><span>💬 メッセージ（顧客との双方向チャット）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientChat(\''+custId+'\')">↺ 更新</span></div>'
@@ -6912,6 +6922,7 @@
     loadNextMeeting(custId);
     loadDiagHistory(custId);
     loadClientProfileFields(custId);
+    loadAssign(custId);
     loadClientListings(custId);
     loadClientApps(custId);
   }
@@ -8697,6 +8708,239 @@
     try{ $('tr-modal').scrollTo({top:$('tr-modal').scrollHeight,behavior:'smooth'}); }catch(e){}
   }
   function tqRetry(){ if(!TQ) return; TQ.ans={}; TQ.graded=false; tqRender(); try{ $('tr-modal').scrollTop=0; }catch(e){} }
+
+  // ============================================================
+  // ===== 2名体制（Phase68）=====
+  // パートナー側：メイン＋サブの2名で顧客を見る。報酬配分はメインが決めて運営に申請する。
+  //   いきなり交代せず併走期間をつくることが、引き継ぎで顧客を失わない唯一の方法。
+  // 顧客側：経営者＋最大2名が同じ画面を見る。社長が多忙で動けない場合に、
+  //   実務を回せる人が中に入れるほうが導入のハードルが下がる。
+  // どちらもメールで指定し、相手のログイン時に本人と結びつける（claimLinks）。
+  // ============================================================
+  var ASG={ cust:null, rows:[], err:null };
+  async function loadAssign(custId){
+    var box=$('asg-box'); if(!box) return;
+    ASG.cust=custId; ASG.err=null; ASG.rows=[];
+    try{
+      var r=await sb.from('partner_assignments').select('*').eq('customer_id',custId).order('created_at',{ascending:false});
+      if(r.error) ASG.err=r.error.message; else ASG.rows=r.data||[];
+    }catch(e){ ASG.err=String(e&&e.message||e); }
+    renderAssign();
+  }
+  function asgStatusLabel(s){ return {pending:'運営の承認待ち',approved:'承認済み（2名体制）',rejected:'見送り',ended:'終了'}[s]||s; }
+  function renderAssign(){
+    var box=$('asg-box'); if(!box) return;
+    if(ASG.err){
+      box.innerHTML='<div style="font-size:11.5px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:9px 12px;line-height:1.7;">'
+        +'2名体制の機能をまだ利用できません。運営がSupabaseで「Phase68」のSQLを実行すると使えるようになります。</div>';
+      return;
+    }
+    var live=ASG.rows.filter(function(x){ return x.status==='pending'||x.status==='approved'; });
+    var h='';
+    if(live.length){
+      h+=live.map(function(x){
+        var ok=(x.status==='approved');
+        return '<div style="border:1.5px solid '+(ok?'#CFE3D6':'#C9D6EA')+';background:'+(ok?'rgba(39,104,74,.07)':'var(--soft)')+';border-radius:11px;padding:12px 14px;margin-bottom:8px;">'
+          +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+            +'<span class="tag '+(ok?'gray':'red')+'" style="font-size:10px;">'+esc(asgStatusLabel(x.status))+'</span>'
+            +'<b style="font-size:12.5px;color:var(--ink);">サブ担当：'+esc(x.sub_email||'')+'</b>'
+            +(x.sub_id?'':'<span style="font-size:10.5px;color:#8A6A12;">（未登録・相手のログイン後に有効化）</span>')
+          +'</div>'
+          +'<div style="font-size:12.5px;color:var(--ink);margin-top:6px;">報酬配分　メイン <b>'+Number(x.main_share)+'%</b>　／　サブ <b>'+Number(x.sub_share)+'%</b></div>'
+          +(x.reason?'<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-top:4px;">'+esc(x.reason)+'</div>':'')
+          +(x.admin_note?'<div style="font-size:11.5px;color:#27684A;line-height:1.7;margin-top:4px;">運営より：'+esc(x.admin_note)+'</div>':'')
+          +'<div style="margin-top:8px;"><button class="ghost" style="font-size:11px;padding:5px 10px;border:1px solid var(--line);border-radius:7px;" onclick="asgEnd(\''+x.id+'\')">この体制を終了する</button></div>'
+        +'</div>';
+      }).join('');
+    }
+    if(!live.length){
+      h+='<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+        +'<div style="flex:1;min-width:200px;"><label class="fl">サブ担当のメールアドレス</label>'
+          +'<input id="asg-email" type="email" class="inp2" style="width:100%;" placeholder="partner@example.com"></div>'
+        +'<div><label class="fl">メイン（あなた）%</label>'
+          +'<input id="asg-main" type="number" min="0" max="100" class="inp2" style="width:120px;" value="70" oninput="asgSync(\'main\')"></div>'
+        +'<div><label class="fl">サブ %</label>'
+          +'<input id="asg-sub" type="number" min="0" max="100" class="inp2" style="width:110px;" value="30" oninput="asgSync(\'sub\')"></div>'
+      +'</div>'
+      +'<div style="margin-top:8px;"><label class="fl">運営への申し送り（体制の狙い・引き継ぎ時期など）</label>'
+        +'<textarea id="asg-reason" class="inp2" rows="2" style="width:100%;" placeholder="例：来期からの引き継ぎを想定。半年は同行し、面談は2人で入ります。"></textarea></div>'
+      +'<div style="display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap;">'
+        +'<button class="btn2" onclick="asgSubmit()">この配分で運営に申請する</button>'
+        +'<span id="asg-msg" style="font-size:12px;"></span>'
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:8px;">※ 合計が100%になるよう自動で調整されます。承認されるまで配分は適用されません。サブ担当がこの顧客の画面を見られるようになるのも承認後です。</div>';
+    }
+    var past=ASG.rows.filter(function(x){ return x.status==='rejected'||x.status==='ended'; });
+    if(past.length){
+      h+='<div style="font-size:11.5px;color:var(--muted);margin-top:10px;line-height:1.8;">過去の申請：'
+        +past.map(function(x){ return esc(x.sub_email)+'（'+esc(asgStatusLabel(x.status))+'）'; }).join('・')+'</div>';
+    }
+    box.innerHTML=h;
+  }
+  // 片方を触ったらもう片方を100から引いた値にする（合計が必ず100になる）
+  function asgSync(which){
+    var m=$('asg-main'), s=$('asg-sub'); if(!m||!s) return;
+    var v=Number((which==='main'?m:s).value);
+    if(!isFinite(v)) return;
+    v=Math.max(0, Math.min(100, Math.round(v)));
+    if(which==='main'){ m.value=v; s.value=100-v; } else { s.value=v; m.value=100-v; }
+  }
+  async function asgSubmit(){
+    var msg=$('asg-msg');
+    function ng(t){ if(msg){ msg.style.color='#A9403D'; msg.textContent=t; } }
+    var em=((($('asg-email')||{}).value)||'').trim().toLowerCase();
+    if(!validEmail(em)) return ng('サブ担当のメールアドレスを正しく入力してください。');
+    if(em===(window.__email||'').toLowerCase()) return ng('ご自身をサブ担当には指定できません。');
+    var mv=Math.round(Number(($('asg-main')||{}).value)), sv=Math.round(Number(($('asg-sub')||{}).value));
+    if(!isFinite(mv)||!isFinite(sv)||mv<0||sv<0||mv+sv!==100) return ng('報酬配分の合計が100%になるようにしてください。');
+    var row={ id:uuid4(), customer_id:ASG.cust, main_id:ME, sub_email:em, main_share:mv, sub_share:sv,
+      reason:((($('asg-reason')||{}).value)||'').trim()||null, status:'pending', created_at:new Date().toISOString() };
+    var r=await sb.from('partner_assignments').insert(row);
+    if(r.error) return ng('申請できませんでした：'+r.error.message);
+    if(msg){ msg.style.color='#27684A'; msg.textContent='運営に申請しました。承認されるとサブ担当がこの顧客を閲覧できるようになります。'; }
+    loadAssign(ASG.cust);
+  }
+  async function asgEnd(id){
+    if(!confirm('この2名体制を終了しますか？（サブ担当の閲覧と配分が解除されます）')) return;
+    var r=await sb.from('partner_assignments').update({ status:'ended', decided_at:new Date().toISOString() }).eq('id',id);
+    if(r.error){ alert('更新できませんでした：'+r.error.message); return; }
+    loadAssign(ASG.cust);
+  }
+
+  // ---- 顧客：この画面を一緒に見る人（経営者＋最大2名）----
+  var MEMBERS={ rows:[], err:null };
+  var MEMBER_MAX=2;
+  async function loadMembers(){
+    var box=$('my-members'); if(!box) return;
+    MEMBERS.err=null; MEMBERS.rows=[];
+    try{
+      var r=await sb.from('company_members').select('*').eq('customer_id',ME).order('created_at',{ascending:true});
+      if(r.error) MEMBERS.err=r.error.message; else MEMBERS.rows=(r.data||[]).filter(function(x){ return x.status!=='removed'; });
+    }catch(e){ MEMBERS.err=String(e&&e.message||e); }
+    renderMembers();
+  }
+  function renderMembers(){
+    var box=$('my-members'); if(!box) return;
+    if(MEMBERS.err){ box.innerHTML=''; return; }   // 未整備のときは何も出さない（顧客を不安にさせない）
+    var n=MEMBERS.rows.length, rest=Math.max(0, MEMBER_MAX-n);
+    var h='<div style="border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:12px;">'
+      +'<div style="font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:5px;">この画面を一緒に見る人</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-bottom:10px;">'
+      +'社長のほかに<b style="color:var(--navy);">'+MEMBER_MAX+'名まで</b>、同じ画面を見て操作していただけます。専務や経理のご担当者など、日々の数字を扱う方を入れておくと、'
+      +'やり取りが止まりません。追加できるのはTsuguAIに登録済みの方です（未登録の場合は、先に新規登録をお願いしてください）。</div>';
+    if(n){
+      h+=MEMBERS.rows.map(function(m){
+        return '<div style="display:flex;align-items:center;gap:10px;border:1px solid var(--softline);border-radius:9px;padding:9px 11px;margin-bottom:6px;flex-wrap:wrap;background:var(--soft);">'
+          +'<div style="flex:1;min-width:150px;">'
+            +'<div style="font-size:12.5px;color:var(--ink);font-weight:600;">'+esc(m.member_email||'')+'</div>'
+            +'<div style="font-size:11px;color:var(--muted);margin-top:1px;">'+esc(m.label||'メンバー')
+            +(m.member_id?'':'　<span style="color:#8A6A12;">登録待ち</span>')+'</div>'
+          +'</div>'
+          +'<button class="ghost" style="font-size:11px;padding:5px 10px;border:1px solid var(--line);border-radius:7px;" onclick="memRemove(\''+m.id+'\')">解除</button>'
+        +'</div>';
+      }).join('');
+    }
+    if(rest>0){
+      h+='<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:'+(n?'8px':'0')+';">'
+        +'<div style="flex:1;min-width:190px;"><label class="fl">メールアドレス</label>'
+          +'<input id="mem-email" type="email" class="inp2" style="width:100%;" placeholder="senmu@example.com"></div>'
+        +'<div><label class="fl">役割（任意）</label>'
+          +'<input id="mem-label" class="inp2" style="width:150px;" placeholder="例：専務"></div>'
+        +'<button class="btn2" onclick="memAdd()">追加する</button>'
+      +'</div>'
+      +'<div id="mem-msg" style="font-size:12px;margin-top:8px;"></div>'
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:6px;">あと'+rest+'名まで追加できます。追加した方には、財務・資金繰りを含むこの会社の情報がすべて見えます。</div>';
+    } else {
+      h+='<div style="font-size:11px;color:var(--muted);line-height:1.7;">上限の'+MEMBER_MAX+'名です。入れ替える場合は、どなたかを解除してください。</div>';
+    }
+    h+='</div>';
+    box.innerHTML=h;
+  }
+  async function memAdd(){
+    var msg=$('mem-msg');
+    function ng(t){ if(msg){ msg.style.color='#A9403D'; msg.textContent=t; } }
+    var em=((($('mem-email')||{}).value)||'').trim().toLowerCase();
+    if(!validEmail(em)) return ng('メールアドレスを正しく入力してください。');
+    if(em===(window.__email||'').toLowerCase()) return ng('ご自身はすでにご覧いただけます。');
+    if(MEMBERS.rows.some(function(m){ return (m.member_email||'').toLowerCase()===em; })) return ng('すでに追加されている方です。');
+    if(MEMBERS.rows.length>=MEMBER_MAX) return ng('追加できるのは'+MEMBER_MAX+'名までです。');
+    var row={ id:uuid4(), customer_id:ME, member_email:em, label:((($('mem-label')||{}).value)||'').trim()||null,
+      status:'active', created_at:new Date().toISOString() };
+    var r=await sb.from('company_members').insert(row);
+    if(r.error) return ng('追加できませんでした：'+r.error.message);
+    if(msg){ msg.style.color='#27684A'; msg.textContent='追加しました。相手の方が次にログインしたときから、この画面をご覧いただけます。'; }
+    loadMembers();
+  }
+  async function memRemove(id){
+    if(!confirm('この方の閲覧を解除しますか？')) return;
+    var r=await sb.from('company_members').delete().eq('id',id);
+    if(r.error){ alert('解除できませんでした：'+r.error.message); return; }
+    loadMembers();
+  }
+
+  // ---- ログイン時に、メールで指名されている枠を本人と結びつける ----
+  // 指名はメールで行うため、相手が未登録でも申請できる。本人が初めてログインした
+  // タイミングでidを埋めることで、後から登録した人にも自動で権限が回る。
+  async function claimLinks(email){
+    if(!ME || !email) return;
+    var em=String(email).toLowerCase();
+    try{ await sb.from('company_members').update({ member_id:ME }).is('member_id',null).ilike('member_email',em); }catch(e){}
+    try{ await sb.from('partner_assignments').update({ sub_id:ME }).is('sub_id',null).ilike('sub_email',em); }catch(e){}
+  }
+
+  // ---- 運営：2名体制の申請を承認する ----
+  var ADMASG={ rows:[], err:null };
+  async function loadAdmAssign(){
+    var box=$('adm-asg'); if(!box) return;
+    ADMASG.err=null; ADMASG.rows=[];
+    try{
+      var r=await sb.from('partner_assignments').select('*').order('created_at',{ascending:false});
+      if(r.error) ADMASG.err=r.error.message; else ADMASG.rows=r.data||[];
+    }catch(e){ ADMASG.err=String(e&&e.message||e); }
+    renderAdmAssign();
+  }
+  function renderAdmAssign(){
+    var box=$('adm-asg'); if(!box) return;
+    if(ADMASG.err){
+      box.innerHTML=netMissBox('2名体制の申請を取得できませんでした','Phase68'); return;
+    }
+    var pend=ADMASG.rows.filter(function(x){ return x.status==='pending'; });
+    var h='<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:9px;">'
+      +'メイン担当が申請した2名体制です。報酬配分はメインが決めています。承認するとサブ担当がその顧客を閲覧できるようになり、'
+      +'配分が適用されます。<b style="color:var(--navy);">未承認 '+pend.length+' 件</b></div>';
+    if(!ADMASG.rows.length){
+      h+='<div style="font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:11px;padding:12px 14px;">申請はまだありません。</div>';
+      box.innerHTML=h; return;
+    }
+    h+=ADMASG.rows.map(function(x){
+      var pending=(x.status==='pending');
+      return '<div style="border:1px solid '+(pending?'#C9D6EA':'var(--line)')+';background:'+(pending?'var(--soft)':'var(--card)')+';border-radius:11px;padding:11px 13px;margin-bottom:7px;">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+          +'<span class="tag '+(pending?'red':'gray')+'" style="font-size:10px;">'+esc(asgStatusLabel(x.status))+'</span>'
+          +'<b style="font-size:12.5px;color:var(--ink);">サブ：'+esc(x.sub_email||'')+'</b>'
+          +'<span style="font-size:11.5px;color:var(--muted);">メイン '+Number(x.main_share)+'% ／ サブ '+Number(x.sub_share)+'%</span>'
+          +'<span style="flex:1;"></span>'
+          +'<span style="font-size:10.5px;color:var(--muted);">'+esc(String(x.created_at||'').slice(0,10))+'</span>'
+        +'</div>'
+        +(x.reason?'<div style="font-size:12px;color:var(--ink);line-height:1.75;margin-top:5px;">'+esc(x.reason)+'</div>':'')
+        +(x.sub_id?'':'<div style="font-size:11px;color:#8A6A12;margin-top:4px;">サブ担当はまだTsuguAIに登録されていません（本人のログイン後に有効化されます）。</div>')
+        +(pending?'<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:8px;">'
+            +'<div style="flex:1;min-width:190px;"><label class="fl">申請者への回答（任意）</label>'
+              +'<input id="aa-'+x.id+'" class="inp2" style="width:100%;" placeholder="例：この配分で承認します。四半期ごとに見直しましょう。"></div>'
+            +'<button class="btn2" style="padding:7px 13px;font-size:12px;" onclick="admAsgDecide(\''+x.id+'\',\'approved\')">承認</button>'
+            +'<button class="ghost" style="font-size:12px;padding:7px 13px;border:1px solid var(--line);border-radius:8px;" onclick="admAsgDecide(\''+x.id+'\',\'rejected\')">見送り</button>'
+          +'</div>'
+          :(x.admin_note?'<div style="font-size:11.5px;color:#27684A;line-height:1.7;margin-top:4px;">運営メモ：'+esc(x.admin_note)+'</div>':''))
+      +'</div>';
+    }).join('');
+    box.innerHTML=h;
+  }
+  async function admAsgDecide(id, status){
+    var note=((($('aa-'+id)||{}).value)||'').trim();
+    var r=await sb.from('partner_assignments').update({ status:status, admin_note:(note||null), decided_at:new Date().toISOString() }).eq('id',id);
+    if(r.error){ alert('更新できませんでした：'+r.error.message); return; }
+    loadAdmAssign();
+  }
 
   // ============================================================
   // ===== 専門家ネットワーク（Phase67）=====
