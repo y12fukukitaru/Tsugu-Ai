@@ -3014,10 +3014,22 @@
     if(m){ var y=m[1], mo=String(Number(m[2])).padStart(2,'0'); if(Number(m[2])>=1&&Number(m[2])<=12) return y+'-'+mo; }
     return null;
   }
-  function toMan(v){ // 「万円」前提。数値化のみ（円→万円の自動換算はしない＝事故防止）
+  function toMan(v){ // 「万円」前提。数値化のみ（円→万円の自動換算は呼び出し側で行う）
     if(v===null||v===undefined||v==='') return null;
-    var n=Number(String(v).replace(/[,，\s円万]/g,''));
-    return isNaN(n)?null:n;
+    if(typeof v==='number') return isFinite(v)?v:null;
+    var s=String(v).trim();
+    if(!s) return null;
+    // 全角数字・全角記号を半角へ
+    s=s.replace(/[０-９．－]/g,function(c){ return String.fromCharCode(c.charCodeAt(0)-0xFEE0); });
+    // 会計書類のマイナス表記：△1,000 ／ ▲1,000 ／ (1,000) ／ -1,000
+    var neg=false;
+    if(/^[(（].*[)）]$/.test(s)){ neg=true; s=s.slice(1,-1); }
+    if(/^[△▲−–—-]/.test(s)){ neg=true; s=s.replace(/^[△▲−–—-]\s*/,''); }
+    s=s.replace(/[,，\s円万]/g,'');
+    if(s==='') return null;
+    var n=Number(s);
+    if(isNaN(n)) return null;
+    return neg?-n:n;
   }
   async function onFinFile(custId){
     var inp=$('fin-file'); var msg=$('fin-import-msg');
@@ -3037,7 +3049,8 @@
   }
   // 会計ソフトのCSVはShift_JIS出力が多い。文字化けすると勘定科目が一切照合できないので、
   // UTF-8で読んで置換文字が出たらShift_JISで読み直す
-  async function sheetRows(file){
+  // 全シートを返す。BSとPLがシート分けされている試算表があるため
+  async function sheetRowsAll(file){
     var XLSX=await loadSheetJS();
     var buf=await file.arrayBuffer();
     var wb=null;
@@ -3051,8 +3064,9 @@
     } else {
       wb=XLSX.read(buf,{type:'array'});
     }
-    var ws=wb.Sheets[wb.SheetNames[0]];
-    return XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    return (wb.SheetNames||[]).map(function(n){
+      return XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:''});
+    });
   }
   // 試算表は「円」表記が普通。単位を判定して万円に揃える（判定できなければ桁で推定）
   function finUnitScale(rows){
@@ -3065,34 +3079,37 @@
     return null;   // 不明。呼び出し側で桁から推定する
   }
   async function parseSheet(file){
-    var rows=await sheetRows(file);
-    // ① 横持ち（1行＝1ヶ月）：列見出しから各項目の列を拾う
-    var headerRow=-1, ymCol=-1, colOf={};
-    for(var i=0;i<Math.min(rows.length,12);i++){
-      var r=rows[i].map(function(x){ return String(x); });
-      var y=-1, tmp={};
-      r.forEach(function(cell,ci){
-        if(/年月|月度|期間|date|month/i.test(cell) && y<0) y=ci;
-        var k=finFieldKey(cell);
-        if(k && tmp[k]==null) tmp[k]=ci;
-      });
-      if(y>=0 && tmp.revenue!=null){ headerRow=i; ymCol=y; colOf=tmp; break; }
-    }
-    var out=[];
-    if(headerRow>=0){
-      for(var j=headerRow+1;j<rows.length;j++){
-        var rr=rows[j];
-        var ym=normYM(rr[ymCol]);
-        if(!ym) continue;
-        var rec={ ym:ym, memo:'' };
-        FIN_FIELDS.forEach(function(f){ rec[f.k]=(colOf[f.k]!=null)?toMan(rr[colOf[f.k]]):null; });
-        out.push(rec);
+    var sheets=await sheetRowsAll(file);
+    var out=[], rec2={}, hits=0, allRows=[];
+    sheets.forEach(function(rows){ allRows=allRows.concat(rows); });
+    for(var si=0; si<sheets.length; si++){
+      var rows=sheets[si];
+      if(!rows || !rows.length) continue;
+      // ① 横持ち（1行＝1ヶ月）：列見出しから各項目の列を拾う
+      var headerRow=-1, ymCol=-1, colOf={};
+      for(var i=0;i<Math.min(rows.length,12);i++){
+        var r=(rows[i]||[]).map(function(x){ return String(x); });
+        var y=-1, tmp={};
+        r.forEach(function(cell,ci){
+          if(/年月|月度|期間|date|month/i.test(cell) && y<0) y=ci;
+          var k=finFieldKey(cell);
+          if(k && tmp[k]==null) tmp[k]=ci;
+        });
+        if(y>=0 && tmp.revenue!=null){ headerRow=i; ymCol=y; colOf=tmp; break; }
       }
-    }
-    // ② 縦持ち（1行＝1勘定科目）：試算表そのものの形。金額列は最も数値が埋まった列を使う
-    if(!out.length){
-      var rec2={}, hits=0;
-      // 「前月繰越／当月残高」のように金額列が複数あるときは、見出しで当月列を優先する
+      if(headerRow>=0){
+        for(var j=headerRow+1;j<rows.length;j++){
+          var rr=rows[j];
+          var ym=normYM(rr[ymCol]);
+          if(!ym) continue;
+          var rec={ ym:ym, memo:'' };
+          FIN_FIELDS.forEach(function(f){ rec[f.k]=(colOf[f.k]!=null)?toMan(rr[colOf[f.k]]):null; });
+          out.push(rec);
+        }
+        continue;   // このシートは横持ちとして処理済み
+      }
+      // ② 縦持ち（1行＝1勘定科目）：試算表そのものの形。
+      //    BSとPLがシート分けされている場合があるので、シートをまたいで積み上げる
       var amtCol=(function(){
         var score={}, prefer=-1;
         rows.forEach(function(rr){
@@ -3108,11 +3125,15 @@
       })();
       if(amtCol>0){
         rows.forEach(function(rr){
-          var name=String((rr||[])[0]||'');
-          var k=finFieldKey(name);
+          // 科目コードが先頭列にある様式があるため、金額列より手前を科目名として順に見る
+          var k=null;
+          for(var c=0;c<Math.min(amtCol,3) && !k;c++) k=finFieldKey(String((rr||[])[c]||''));
           if(k && rec2[k]==null){ var v=toMan(rr[amtCol]); if(v!=null){ rec2[k]=v; hits++; } }
         });
       }
+    }
+    if(!out.length){
+      var rows=allRows;
       if(hits>=3){
         // 単位を万円に揃える。見出しに単位が無ければ売上高の桁から推定する
         var sc=finUnitScale(rows);
@@ -3131,39 +3152,62 @@
       }
     }
     if(!out.length){
-      // 見出しが見つからない→AIにフォールバックさせるためエラー
-      throw new Error('年月・売上の列を自動認識できませんでした。列見出しに「年月」「売上」「利益」を含めるか、PDF/画像でAI読み取りをお試しください');
+      // 様式が想定と違う場合はAIに読ませる。書式を問わず取り込めるようにするため
+      await parseTextByAI(allRows);
+      return;
     }
     FIN_IMPORT_ROWS=out;
+  }
+  // 表の中身をそのままAIに渡して読み取らせる（CSV/Excelの最終手段）
+  async function parseTextByAI(rows){
+    var lines=[];
+    (rows||[]).slice(0,400).forEach(function(rr){
+      var t=(rr||[]).slice(0,20).map(function(v){ return String(v==null?'':v); }).join('\t').replace(/\t+$/,'');
+      if(t.trim()!=='') lines.push(t);
+    });
+    if(!lines.length) throw new Error('ファイルから中身を読み取れませんでした');
+    var txt=lines.join('\n').slice(0,60000);
+    var arr=await finAskAI([{ type:'text', text:'次は試算表または月次推移表の中身です（タブ区切り）。各項目を抽出してください。\n\n'+txt }]);
+    finSetImportRows(arr, 'AI読み取り');
+  }
+  // AIへの問い合わせ（画像・PDF・テキストで共通）
+  async function finAskAI(content){
+    var keys=FIN_FIELDS.map(function(f){ return '"'+f.k+'"'; }).join(',');
+    var defs=FIN_FIELDS.map(function(f){ return f.k+'='+f.l; }).join('、');
+    var sys='あなたは試算表・決算書を読み取る経理アシスタントです。様式・書式は問わず、月次の財務数値を抽出します。'
+      +'必ず次のJSON配列のみで出力してください（前置き・コードブロックなし）：'
+      +'[{"ym":"YYYY-MM",'+keys.split(',').map(function(k){ return k+':数値'; }).join(',')+'}] '
+      +defs+'。'
+      +'単位は必ず「万円」に統一する（千円・円・百万円表記なら万円へ換算）。'
+      +'△・▲・かっこ書きはマイナスとして扱う。'
+      +'貸借対照表の項目は当月末残高を取る。損益計算書の項目は当月発生額を取る（当月欄が無く累計欄しかない場合のみ累計を使う）。'
+      +'補助科目に分かれている場合は合計値を使う。「前月繰越」ではなく当月の値を取る。'
+      +'複数月ぶんの表なら月ごとに配列要素を分ける。'
+      +'資料に無い項目・読み取れない項目は必ずnullにする。憶測で数値を作らない。'
+      +'年月が判別できない場合は資料の対象期間から推定し、それも不可ならymをnullにする。';
+    var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:[{role:'user',content:content}], model:'claude-sonnet-4-6', max_tokens:2500 } });
+    if(res.error) throw new Error(res.error.message||'AI読み取りに失敗');
+    var txt=''; try{ var d=res.data; txt=(d&&d.content&&d.content.map?d.content.map(function(c){return c.text||'';}).join(''):(d&&d.text)||String(d||'')); }catch(_){ txt=String(res.data||''); }
+    var arr=null; try{ var i1=txt.indexOf('['), i2=txt.lastIndexOf(']'); arr=JSON.parse(txt.slice(i1,i2+1)); }catch(_){ arr=null; }
+    if(!arr||!arr.length) throw new Error('数値を読み取れませんでした。手入力をお願いします');
+    return arr;
+  }
+  function finSetImportRows(arr, memo){
+    FIN_IMPORT_ROWS=(arr||[]).map(function(x){
+      var rec={ ym:normYM(x.ym), memo:memo||'AI読み取り' };
+      FIN_FIELDS.forEach(function(f){ rec[f.k]=toMan(x[f.k]); });
+      return rec;
+    }).filter(function(x){ return x.ym; });
+    if(!FIN_IMPORT_ROWS.length) throw new Error('有効な年月を読み取れませんでした');
   }
   async function parseByAI(file, ext){
     var b64=await new Promise(function(resolve,reject){
       var r=new FileReader(); r.onload=function(){ resolve(String(r.result).split(',')[1]); }; r.onerror=reject; r.readAsDataURL(file);
     });
     var media = ext==='pdf' ? 'application/pdf' : (ext==='png'?'image/png':'image/jpeg');
-    var keys=FIN_FIELDS.map(function(f){ return '"'+f.k+'"'; }).join(',');
-    var defs=FIN_FIELDS.map(function(f){ return f.k+'='+f.l; }).join('、');
-    var sys='あなたは試算表・決算書を読み取る経理アシスタントです。画像/PDFから月次の財務数値を抽出します。'
-      +'必ず次のJSON配列のみで出力してください（前置き・コードブロックなし）：'
-      +'[{"ym":"YYYY-MM",'+keys.split(',').map(function(k){ return k+':数値'; }).join(',')+'}] '
-      +defs+'。'
-      +'単位は必ず「万円」に統一する（千円・円表記なら万円へ換算）。'
-      +'貸借対照表の項目は当月末残高を取る。損益計算書の項目は当月発生額を取る（累計欄しかない場合のみ累計を使い、memoに「累計」と記す）。'
-      +'資料に無い項目・読み取れない項目は必ずnullにする。憶測で数値を作らない。'
-      +'年月が判別できない場合は資料の対象期間から推定し、それも不可ならymをnullにする。';
     var content=[{ type:(ext==='pdf'?'document':'image'), source:{ type:'base64', media_type:media, data:b64 } },
                  { type:'text', text:'この試算表から、損益計算書と貸借対照表の各項目を抽出してください。記載のない項目はnullにしてください。' }];
-    var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:[{role:'user',content:content}], model:'claude-sonnet-4-6', max_tokens:1500 } });
-    if(res.error) throw new Error(res.error.message||'AI読み取りに失敗');
-    var txt=''; try{ var d=res.data; txt=(d&&d.content&&d.content.map?d.content.map(function(c){return c.text||'';}).join(''):(d&&d.text)||String(d||'')); }catch(_){ txt=String(res.data||''); }
-    var arr=null; try{ var i1=txt.indexOf('['), i2=txt.lastIndexOf(']'); arr=JSON.parse(txt.slice(i1,i2+1)); }catch(_){ arr=null; }
-    if(!arr||!arr.length) throw new Error('数値を読み取れませんでした。手入力をお願いします');
-    FIN_IMPORT_ROWS=arr.map(function(x){
-      var rec={ ym:normYM(x.ym), memo:'AI読み取り' };
-      FIN_FIELDS.forEach(function(f){ rec[f.k]=toMan(x[f.k]); });
-      return rec;
-    }).filter(function(x){ return x.ym; });
-    if(!FIN_IMPORT_ROWS.length) throw new Error('有効な年月を読み取れませんでした');
+    finSetImportRows(await finAskAI(content), 'AI読み取り');
   }
   function renderFinPreview(custId){
     var box=$('fin-preview'); if(!box||!FIN_IMPORT_ROWS)return;
