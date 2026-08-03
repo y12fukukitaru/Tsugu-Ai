@@ -929,7 +929,10 @@
 
   async function getProfile(session){
     var uid=session.user.id, email=session.user.email;
-    var q=await sb.from('profiles').select('role,full_name,email,company_name,contact_name').eq('id',uid).maybeSingle();
+    var q=await sb.from('profiles').select('role,full_name,email,company_name,contact_name,admin_role').eq('id',uid).maybeSingle();
+    if(q.error && /admin_role/.test(q.error.message||'')){   // Phase71未適用でも動くように
+      q=await sb.from('profiles').select('role,full_name,email,company_name,contact_name').eq('id',uid).maybeSingle();
+    }
     var prof=q.data;
     if(!prof){
       var up=await sb.from('profiles').upsert({ id:uid, email:email, role:'customer' }).select('role,full_name,email').maybeSingle();
@@ -962,9 +965,39 @@
     document.documentElement.style.setProperty('--fs', String(p.fontScale||1));
   }
   // 役割ごとの全メニュー定義（ラベル付き）。設定で並び順・表示を変えられる
+  // ===== 運営内の権限（Phase71）=====
+  // role='admin' は全部入りだったため、COO/CTO/CFO を増やすと資金調達・全社売上まで
+  // 全員に見えてしまう。profiles.admin_role で運営内をさらに分ける。
+  // 未設定（null）は owner 扱い。既存の運営アカウントの見え方は変わらない。
+  var ADMIN_ROLES=[['owner','代表（全権）'],['coo','COO（現場）'],['cfo','CFO（財務）'],['cto','CTO（技術）']];
+  var ADMIN_NAV_SCOPE={
+    'sec-flow':    ['owner','coo','cfo','cto'],
+    'sec-kpi':     ['owner','coo','cfo','cto'],
+    'sec-risk':    ['owner','coo','cto'],
+    'sec-fde':     ['owner','coo','cfo','cto'],
+    'sec-cust':    ['owner','coo','cfo','cto'],
+    'sec-network': ['owner','coo','cto'],
+    'sec-exec':    ['owner','cfo','cto'],        // 資金調達・週次・KPI
+    'sec-market':  ['owner','coo','cfo','cto'],
+    'sec-billing': ['owner','cfo','cto'],        // MRR・顧問料・報酬配分
+    'sec-audit':   ['owner','coo','cto'],
+    'sec-broadcast':['owner','coo'],
+    'sec-support': ['owner','coo','cto']
+  };
+  var ADMIN_ROLE='owner';
+  function adminNavAll(){
+    return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-network','専門家ネットワーク'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
+  }
+  function adminRoleName(r){ var n=r; ADMIN_ROLES.forEach(function(x){ if(x[0]===r) n=x[1]; }); return n; }
+  function isOwner(){ return ADMIN_ROLE==='owner'; }
+  function adminCanSee(secId){
+    var a=ADMIN_NAV_SCOPE[secId];
+    return !a || a.indexOf(ADMIN_ROLE)>=0;
+  }
   function navDefs(r){
     if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
-    if(r==='admin') return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-network','専門家ネットワーク'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
+    // 運営は admin_role で見えるメニューを絞る（未設定は owner 扱い）
+    if(r==='admin') return adminNavAll().filter(function(it){ return adminCanSee(it[0]); });
     return [['sec-flow','ダッシュボード'],['sec-growth','成長ロードマップ'],['sec-biz','本業と連携'],['sec-training','研修プログラム'],['sec-sales','営業ツール'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
@@ -1083,8 +1116,12 @@
   // ・最初のセクションより前にあるパネル（プレビュー切替バー等）は常時表示
   function showSection(id){
     if(!id) return;
-    var navIds={}; navDefs(currentRole()).forEach(function(it){ navIds[it[0]]=1; });
-    var eff=effectiveNav(currentRole());
+    var role=currentRole();
+    // グルーピングは「権限で絞る前の全メニュー」で行う。絞った一覧で組むと、
+    // 隠したはずのパネル（経営計画など）が直前のセクションに合流して表示されてしまう。
+    var navIds={};
+    (role==='admin' ? adminNavAll() : navDefs(role)).forEach(function(it){ navIds[it[0]]=1; });
+    var eff=effectiveNav(role);
     var first=eff.length?eff[0][0]:null;
     var els=document.querySelectorAll('#app-body .panel');
     var cur=null, grpOf=[], idGrp={};
@@ -1095,6 +1132,8 @@
     });
     var grp = idGrp.hasOwnProperty(id) ? (idGrp[id]||first) : first;
     if(!grp) grp=id;
+    // 権限外のセクションは開かない（URL・保存値からの復元も含めて塞ぐ）
+    if(role==='admin' && !adminCanSee(grp)) grp=first||grp;
     Array.prototype.forEach.call(els,function(el,i){
       var g=grpOf[i];
       el.style.display=(g===null || g===grp)?'':'none';
@@ -1802,13 +1841,44 @@
     var order={admin:0,consultant:1,customer:2};
     rows.sort(function(a,b){ var d=(order[a.role]!==undefined?order[a.role]:9)-(order[b.role]!==undefined?order[b.role]:9); if(d)return d; return (a.email||'').localeCompare(b.email||''); });
     var tagOf=function(r){ return r==='admin'?'<span class="tag gold">運営</span>':(r==='consultant'?'<span class="tag blue">パートナー</span>':(r==='customer'?'<span class="tag green">顧客</span>':'<span class="tag gray">'+esc(r||'未設定')+'</span>')); };
-    box.innerHTML=rows.map(function(u){
+    // 役割の変更と運営内権限の付与は代表のみ。これを開けると、COOが自分を代表に昇格できてしまう
+    if(!isOwner()){
+      box.innerHTML='<div style="font-size:12px;color:var(--muted);background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:11px 13px;line-height:1.85;">'
+        +'アカウントの役割変更は<b style="color:var(--navy);">代表のみ</b>が行えます。追加・変更が必要な場合は代表にご依頼ください。<br>'
+        +'（あなたの権限：<b style="color:var(--navy);">'+esc(adminRoleName(ADMIN_ROLE))+'</b>）</div>';
+      return;
+    }
+    var arName={}; ADMIN_ROLES.forEach(function(x){ arName[x[0]]=x[1]; });
+    box.innerHTML='<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">運営（admin）に設定したアカウントには、さらに<b>運営内の権限</b>を割り当ててください。未設定は代表（全権）として扱われます。</div>'
+      +rows.map(function(u){
+      var isAdm=(u.role==='admin');
       return '<div style="display:flex;align-items:center;gap:8px;padding:8px 2px;border-top:1px solid var(--softline);flex-wrap:wrap;">'
         +'<span style="flex:1;min-width:150px;font-size:12.5px;color:var(--ink);">'+esc(u.company_name||u.contact_name||u.email)+'<span style="font-size:10.5px;color:#94A2B6;"> '+esc(u.email||'')+'</span></span>'
         +tagOf(u.role)
         +'<span style="font-size:11px;color:#5A6981;">役割</span>'+roleSelect(u)
+        +(isAdm
+          ? '<span style="font-size:11px;color:#5A6981;">権限</span>'
+            +'<select class="inp2" style="width:150px;font-size:12px;" onchange="admSetAdminRole(\''+u.id+'\',this.value,this)">'
+            +ADMIN_ROLES.map(function(x){
+                var sel=((u.admin_role||'owner')===x[0])?' selected':'';
+                return '<option value="'+x[0]+'"'+sel+'>'+esc(x[1])+'</option>';
+              }).join('')
+            +'</select>'
+          : '')
       +'</div>';
     }).join('');
+  }
+  async function admSetAdminRole(uid, val, el){
+    if(uid===ME && val!=='owner'){
+      alert('ご自身の権限は下げられません。誤って全権を失うのを防ぐためです。');
+      if(el) el.value='owner'; return;
+    }
+    var r=await sb.from('profiles').update({ admin_role:val }).eq('id',uid);
+    if(r.error){
+      alert('変更できませんでした：'+r.error.message+'\n（Supabaseで「Phase71」のSQLを実行してください）');
+      return;
+    }
+    (ADM_CACHE.all||[]).forEach(function(u){ if(u.id===uid) u.admin_role=val; });
   }
   // ---- G. 課金・契約管理 ----
   function yen(n){ return '¥'+Math.round(n||0).toLocaleString('ja-JP'); }
@@ -2028,6 +2098,9 @@
     $('gate').classList.add('hidden');
     $('app').classList.remove('hidden');
     if(!SCOPE) SCOPE=ME;   // 会社の解決に失敗しても自分自身を見る（データが空になるのを防ぐ）
+    // 運営内の権限。未設定は owner（従来どおり全権）
+    ADMIN_ROLE=(prof && prof.admin_role) ? String(prof.admin_role) : 'owner';
+    if(!ADMIN_NAV_SCOPE['sec-flow'] || ADMIN_ROLES.every(function(x){ return x[0]!==ADMIN_ROLE; })) ADMIN_ROLE='owner';
     var r=prof.role||'customer';
     var eff = (r==='admin') ? (VIEWAS==='fde'?'consultant':(VIEWAS==='customer'?'customer':'admin')) : r;
     window.__prof=prof; window.__email=email||''; window.__role=r;
@@ -2457,7 +2530,14 @@
     $('app-body').innerHTML=view;
     if(eff==='customer'){ loadDashHero(); loadMyImpact(); loadMembers(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
     else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); }
-    else { loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadBillingAdminLinks(); loadExecFunding(); loadExecWeekly(); loadAdmInquiries(); loadSupportKB(); loadNetwork(); loadAdmAssign(); loadPayout(); }
+    else {
+      // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
+      loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadAdmAssign();
+      if(adminCanSee('sec-exec')){ loadExecFunding(); loadExecWeekly(); }
+      if(adminCanSee('sec-billing')){ loadBillingAdminLinks(); loadPayout(); }
+      if(adminCanSee('sec-support')){ loadAdmInquiries(); loadSupportKB(); }
+      if(adminCanSee('sec-network')){ loadNetwork(); }
+    }
     startNotifPolling(eff);
     navSpyInit();
     // 経営者の初回ログイン時だけ使い方ガイドを自動で開始する。
