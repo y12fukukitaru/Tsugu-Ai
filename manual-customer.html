@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>経営者ダッシュボード 操作説明書 | Tsugu -継-</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1E3A66;--blue:#2C5DA8;--gold:#C39B3F;--ink:#18202E;--muted:#5A6981;
+  --line:#E2E7EF;--soft:#F8F9FC;--softline:#EDF1F6;--deep:#0E1B33;--green:#27684A;--red:#A9403D;}
+*{box-sizing:border-box;}
+body{margin:0;background:#0B1220;font-family:'Noto Sans JP',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;}
+.deck{padding:26px 16px 96px;}
+.slide{position:relative;width:100%;max-width:1120px;aspect-ratio:16/9;margin:0 auto 22px;background:#fff;
+  border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.42);padding:44px 54px 54px;overflow:hidden;display:none;}
+.slide.on{display:block;}
+/* .cover の display:flex が .slide の display:none を上書きしてしまうため、
+   表示中でないスライドは明示的に隠す（印刷時は !important の指定が優先される） */
+.slide:not(.on){display:none;}
+.slide::after{content:attr(data-n);position:absolute;right:26px;bottom:18px;font-family:'DM Sans',sans-serif;
+  font-size:12px;color:#B7C4D6;letter-spacing:.08em;}
+.eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.14em;color:var(--gold);margin-bottom:10px;}
+h1{font-size:42px;font-weight:500;color:var(--navy);margin:0 0 14px;line-height:1.35;letter-spacing:.01em;}
+h2{font-size:29px;font-weight:600;color:var(--navy);margin:0 0 8px;line-height:1.4;letter-spacing:.01em;}
+.sub{font-size:15px;color:var(--muted);line-height:1.85;margin:0 0 22px;max-width:78ch;}
+.lead{font-size:17px;color:var(--ink);line-height:1.9;max-width:74ch;}
+.grid{display:grid;gap:14px;}
+.g2{grid-template-columns:1fr 1fr;} .g3{grid-template-columns:repeat(3,1fr);}
+.card{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:#fff;}
+.card.soft{background:var(--soft);}
+.card.g{border-color:#CFE3D6;background:rgba(39,104,74,.06);}
+.card.w{border-color:#EBDDB4;background:rgba(195,155,63,.09);}
+.card h3{font-size:15.5px;font-weight:700;color:var(--navy);margin:0 0 6px;line-height:1.5;}
+.card p{font-size:13.5px;color:var(--muted);line-height:1.85;margin:0;}
+.card p b{color:var(--ink);}
+.steps{counter-reset:s;list-style:none;padding:0;margin:0;}
+.steps li{counter-increment:s;position:relative;padding:0 0 0 44px;margin-bottom:15px;font-size:15px;line-height:1.85;color:var(--ink);}
+.steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:28px;height:28px;border-radius:50%;
+  background:var(--navy);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;}
+.steps li b{color:var(--navy);}
+.steps li span{display:block;font-size:13px;color:var(--muted);line-height:1.8;margin-top:2px;}
+ul.dots{margin:0;padding-left:20px;} ul.dots li{font-size:14.5px;line-height:1.95;color:var(--ink);margin-bottom:4px;}
+ul.dots li b{color:var(--navy);}
+.kv{width:100%;border-collapse:collapse;font-size:14px;}
+.kv th,.kv td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--softline);vertical-align:top;line-height:1.8;}
+.kv th{width:30%;color:var(--navy);font-weight:700;background:var(--soft);}
+.pill{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 11px;border-radius:99px;background:var(--softline);color:var(--blue);margin-right:6px;}
+.pill.g{background:rgba(39,104,74,.13);color:var(--green);}
+.pill.w{background:rgba(195,155,63,.16);color:#8A6A12;}
+.note{border-left:3px solid var(--gold);background:var(--soft);border-radius:0 10px 10px 0;padding:13px 17px;
+  font-size:13.5px;color:var(--muted);line-height:1.9;}
+.note b{color:var(--navy);}
+.big{font-family:'DM Sans',sans-serif;font-size:34px;font-weight:500;color:var(--green);line-height:1.2;}
+.cover{background:linear-gradient(140deg,#0E1B33 0%,#1E3A66 62%,#2C5DA8 100%);color:#fff;display:flex;flex-direction:column;justify-content:center;}
+.cover h1{color:#fff;font-size:50px;margin-bottom:18px;}
+.cover .sub{color:rgba(255,255,255,.82);font-size:17px;}
+.cover .mark{font-family:'DM Sans',sans-serif;font-size:22px;letter-spacing:.14em;color:var(--gold);margin-bottom:26px;}
+.cover::after{color:rgba(255,255,255,.35);}
+.bar{position:fixed;left:0;right:0;bottom:0;height:60px;background:rgba(14,27,51,.94);backdrop-filter:blur(10px);
+  display:flex;align-items:center;gap:10px;padding:0 18px;z-index:20;}
+.bar button{font-family:inherit;font-size:13px;background:rgba(255,255,255,.1);color:#E7ECF4;border:none;
+  border-radius:9px;padding:9px 15px;cursor:pointer;}
+.bar button:hover{background:rgba(255,255,255,.2);}
+.bar .pos{font-family:'DM Sans',sans-serif;color:#B7C4D6;font-size:13px;min-width:74px;text-align:center;}
+.bar .ttl{color:#fff;font-size:13.5px;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.toc{position:fixed;inset:0;background:rgba(8,13,25,.9);z-index:30;display:none;overflow-y:auto;padding:40px 20px 90px;}
+.toc.on{display:block;}
+.toc .in{max-width:820px;margin:0 auto;background:#fff;border-radius:14px;padding:26px 30px;}
+.toc h3{font-size:19px;color:var(--navy);margin:0 0 14px;}
+.toc a{display:block;padding:10px 12px;border-radius:9px;font-size:14.5px;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--softline);}
+.toc a:hover{background:var(--soft);color:var(--blue);}
+.toc a i{font-family:'DM Sans',sans-serif;font-style:normal;color:#B7C4D6;margin-right:12px;}
+@media(max-width:820px){
+  .slide{aspect-ratio:auto;min-height:70vh;padding:28px 22px 44px;}
+  h1{font-size:30px;} .cover h1{font-size:34px;} h2{font-size:22px;}
+  .g2,.g3{grid-template-columns:1fr;} .sub{font-size:14px;} .lead{font-size:15px;}
+}
+@media print{
+  body{background:#fff;} .bar,.toc{display:none!important;} .deck{padding:0;}
+  .slide{display:block!important;box-shadow:none;border-radius:0;margin:0;max-width:none;
+    width:100%;aspect-ratio:auto;height:100vh;page-break-after:always;border:none;}
+  @page{size:A4 landscape;margin:0;}
+}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+<section class="slide cover on" data-t="表紙">
+  <div class="mark">Tsugu -継-</div>
+  <h1>経営者ダッシュボード<br>操作説明書</h1>
+  <p class="sub">数字の入力はいりません。見るところと、伝えるところだけ覚えてください。<br>所要 5分</p>
+</section>
+
+<section class="slide" data-t="この画面でできること">
+  <div class="eyebrow">はじめに</div>
+  <h2>この画面でできること</h2>
+  <p class="sub">TsuguAIは「経営者に入力させない」という考え方で作られています。数値の入力・試算・レポート作成は、担当パートナーとAIが代わりに行います。</p>
+  <div class="grid g3">
+    <div class="card"><h3>見る</h3><p>会社の数字、資金繰りの状態、毎月のレポートを確認します。<b>ここが8割です。</b></p></div>
+    <div class="card"><h3>伝える</h3><p>売上や困りごとを<b>メッセージで送るだけ</b>。表への入力は不要です。</p></div>
+    <div class="card"><h3>相談する</h3><p>担当パートナーが不在の夜間・休日は、パートナーAIが24時間お答えします。</p></div>
+  </div>
+  <div class="note" style="margin-top:18px;"><b>迷ったらメッセージへ。</b>操作が分からないときも、そのままメッセージで聞いていただければ担当パートナーが対応します。</div>
+</section>
+
+<section class="slide" data-t="最初の3つ">
+  <div class="eyebrow">初回</div>
+  <h2>まずはこの3つだけ</h2>
+  <p class="sub">ログインすると、ダッシュボードの先頭に同じ案内が表示されます。</p>
+  <ol class="steps">
+    <li><b>メッセージ</b>で担当パートナーにあいさつと直近の売上を送る<span>「先月の売上は◯◯万円でした」だけで構いません。あとはパートナーが処理します。</span></li>
+    <li><b>AI診断・自動化</b>を試す<span>気になる業務をタップしていくだけで、削減できる時間とコストの目安が出ます。</span></li>
+    <li><b>月次レポート</b>を確認する<span>毎月の数字とパートナーのコメントがここに届きます。</span></li>
+  </ol>
+  <div class="note" style="margin-top:6px;">画面右上または左メニューの<b>「使い方ガイド（1分）</b>」を押すと、実際の画面の上で順番に案内が出ます。何度でもご覧いただけます。</div>
+</section>
+
+<section class="slide" data-t="ダッシュボード">
+  <div class="eyebrow">ダッシュボード</div>
+  <h2>見るところは上から4つ</h2>
+  <table class="kv">
+    <tr><th>これまでに増えた現金</th><td>保険の見直しやコスト削減で実際に増えた金額の<b>累計</b>です。年間額・累計・10年換算が出ます。実績が出るまでは表示されません。</td></tr>
+    <tr><th>資金繰りステータス</th><td>いまの資金の状態を信号のように色でお知らせします。<b>赤や黄色になったときは担当パートナーからも連絡があります。</b></td></tr>
+    <tr><th>経営サマリー</th><td>売上・利益・現預金などの主要な数字。入力はすべてパートナーが代行します。</td></tr>
+    <tr><th>要対応アクション</th><td>いま気にかけていただきたいこと。<b>空なら急ぎの対応はありません。</b></td></tr>
+  </table>
+  <div class="note" style="margin-top:16px;">その下の<b>「価値の流れ」</b>は、①現状把握 → ②AI・自動化 → ③コスト削減 → ④余力 → ⑤次の投資 という支援の順番です。色が付いているところが現在地です。</div>
+</section>
+
+<section class="slide" data-t="増えた現金">
+  <div class="eyebrow">成果の確認</div>
+  <h2>「これまでに増えた現金」の見かた</h2>
+  <div class="grid g3">
+    <div class="card g"><h3>年間で増える現金</h3><p class="big">380万円</p><p style="margin-top:6px;">見直した状態を保っているかぎり<b>毎年続きます</b>。一度きりではありません。</p></div>
+    <div class="card g"><h3>開始からの累計</h3><p class="big">443万円</p><p style="margin-top:6px;">取り組みを始めてから積み上がった概算です。月数に応じて増えます。</p></div>
+    <div class="card"><h3>10年続けた場合</h3><p class="big" style="color:var(--navy);">3,800万円</p><p style="margin-top:6px;">同じ状態を維持した場合の単純計算です。</p></div>
+  </div>
+  <div class="note" style="margin-top:18px;">内訳は<b>「試算結果」</b>と<b>「月次レポート」</b>で確認できます。金額に疑問があれば、そのままメッセージでお尋ねください。</div>
+</section>
+
+<section class="slide" data-t="メッセージ">
+  <div class="eyebrow">いちばん使う機能</div>
+  <h2>メッセージ ― 伝えるだけで済みます</h2>
+  <p class="sub">月次の売上も、表に入力する必要はありません。メッセージで送っていただければ、担当パートナーが数字を登録し、レポートまで作成します。</p>
+  <div class="grid g2">
+    <div class="card g"><h3>こう送ってください</h3><p>「7月の売上は2,400万、利益は180万でした」<br>「税理士から試算表が届いたので送ります」<br>「銀行から借換えの話が来ています」<br>「従業員の残業が増えていて困っています」</p></div>
+    <div class="card soft"><h3>覚えておくこと</h3><p>返信の目安は<b>2〜3営業日以内</b>です。お急ぎのときはお電話などでご連絡ください。<br><br>未読があると画面にバッジが出るので、見落としの心配はありません。</p></div>
+  </div>
+</section>
+
+<section class="slide" data-t="月次レポート">
+  <div class="eyebrow">毎月届くもの</div>
+  <h2>月次レポート</h2>
+  <p class="sub">担当パートナーが毎月の数字とコメントをまとめたものです。<b>パートナーが承認したものだけ</b>がここに表示されます。作成中のものは見えません。</p>
+  <div class="grid g2">
+    <div class="card"><h3>載っている内容</h3><p>売上・利益・資金繰りの推移と、その数字が何を意味するのかについての担当パートナーのコメント。</p></div>
+    <div class="card"><h3>印刷・PDF保存</h3><p>レポートを開くと右上に<b>「印刷」「PDFで保存」</b>があります。金融機関や税理士への説明資料としてお使いいただけます。</p></div>
+  </div>
+  <div class="note" style="margin-top:18px;">レポートが届かない月があれば、<b>データが揃っていない可能性</b>があります。メッセージでお知らせください。</div>
+</section>
+
+<section class="slide" data-t="その他の画面">
+  <div class="eyebrow">左メニュー</div>
+  <h2>そのほかの画面</h2>
+  <table class="kv">
+    <tr><th>経営課題</th><td>担当パートナーと一緒に進めている課題の進捗。追加・変更のご希望はメッセージでどうぞ。</td></tr>
+    <tr><th>財務・資金繰り</th><td>入力はパートナーが行います。ご覧いただくだけで結構です。</td></tr>
+    <tr><th>企業価値</th><td>会社の値段の毎月の推移。将来の承継やM&Aを考えるときの土台になります。</td></tr>
+    <tr><th>AI診断・自動化</th><td>タップしていくだけで、自動化できる業務と削減額の目安が出ます。</td></tr>
+    <tr><th>試算結果</th><td>保険の見直しなど、パートナーが行った試算の共有先です。</td></tr>
+    <tr><th>M&A活用／Tsugu投資・融資・M&A</th><td>利益の活用提案と、プラットフォーム内のマッチング。<b>実行には有資格者が関与します。</b></td></tr>
+    <tr><th>パートナーAI</th><td>24時間いつでも相談できます。夜間・休日の「ちょっと聞きたい」に。</td></tr>
+    <tr><th>お支払い</th><td>ご利用料金のお支払い。決済リンクが表示されます。</td></tr>
+  </table>
+</section>
+
+<section class="slide" data-t="メンバー追加">
+  <div class="eyebrow">複数人で使う</div>
+  <h2>この画面を一緒に見る人</h2>
+  <p class="sub">社長のほかに<b>2名まで</b>、同じ画面を見て操作していただけます。専務や経理のご担当者など、日々の数字を扱う方を入れておくと、やり取りが止まりません。</p>
+  <ol class="steps">
+    <li>ダッシュボードの<b>「この画面を一緒に見る人」</b>を開く</li>
+    <li>その方の<b>メールアドレス</b>と役割（例：専務）を入力して「追加する」<span>まだTsuguAIに登録していない方の場合は、先に新規登録をお願いしてください。登録後、自動で見られるようになります。</span></li>
+    <li>その方がログインすると、御社の画面が表示されます<span>メッセージの送信も、そのまま行えます。</span></li>
+  </ol>
+  <div class="note"><b>ご注意：</b>追加した方には、財務・資金繰りを含む<b>この会社の情報がすべて見えます</b>。追加と解除ができるのは社長（登録者ご本人）だけです。</div>
+</section>
+
+<section class="slide" data-t="困ったときは">
+  <div class="eyebrow">サポート</div>
+  <h2>困ったときは</h2>
+  <div class="grid g3">
+    <div class="card"><h3>操作が分からない</h3><p>ダッシュボードの<b>「使い方ガイド（1分）」</b>をもう一度ご覧ください。実画面で順に案内します。</p></div>
+    <div class="card"><h3>数字が違う気がする</h3><p><b>メッセージ</b>で担当パートナーへ。入力はパートナーが行っているため、そこで修正できます。</p></div>
+    <div class="card"><h3>すぐ聞きたい</h3><p><b>パートナーAI</b>が24時間お答えします。一般的な内容であればその場で解決します。</p></div>
+  </div>
+  <div class="note" style="margin-top:20px;">表示が崩れる・ログインできないなどの不具合は、担当パートナーにお伝えください。運営に引き継ぎます。<br>文字が小さいと感じたら、左下の<b>「設定」</b>から文字サイズを4段階で変更できます。ダークモードもあります。</div>
+</section>
+
+</div>
+
+<nav class="bar">
+  <button onclick="go(-1)">‹ 前へ</button>
+  <button onclick="go(1)">次へ ›</button>
+  <span class="pos" id="pos">1 / 1</span>
+  <span class="ttl" id="ttl"></span>
+  <button onclick="toggleToc()">目次</button>
+  <button onclick="window.print()">印刷 / PDF</button>
+</nav>
+<div class="toc" id="toc" onclick="if(event.target===this)toggleToc()"><div class="in"><h3>目次</h3><div id="toclist"></div></div></div>
+
+<script>
+var S=[].slice.call(document.querySelectorAll('.slide')), i=0;
+S.forEach(function(s,n){ s.setAttribute('data-n', (n+1)+' / '+S.length); });
+function show(n){
+  i=Math.max(0,Math.min(S.length-1,n));
+  S.forEach(function(s,k){ s.classList.toggle('on',k===i); });
+  document.getElementById('pos').textContent=(i+1)+' / '+S.length;
+  document.getElementById('ttl').textContent=S[i].getAttribute('data-t')||'';
+  try{ history.replaceState(null,'','#'+(i+1)); }catch(e){}
+  window.scrollTo({top:0,behavior:'instant'});
+}
+function go(d){ show(i+d); }
+function toggleToc(){ document.getElementById('toc').classList.toggle('on'); }
+document.getElementById('toclist').innerHTML=S.map(function(s,n){
+  return '<a href="#'+(n+1)+'" onclick="show('+n+');toggleToc();return false;"><i>'+String(n+1).padStart(2,'0')+'</i>'+(s.getAttribute('data-t')||'')+'</a>';
+}).join('');
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ') { go(1); e.preventDefault(); }
+  else if(e.key==='ArrowLeft'||e.key==='PageUp') { go(-1); e.preventDefault(); }
+  else if(e.key==='Home') show(0);
+  else if(e.key==='End') show(S.length-1);
+  else if(e.key==='Escape') document.getElementById('toc').classList.remove('on');
+});
+var h=parseInt((location.hash||'').replace('#',''),10);
+show(isFinite(h)&&h>0 ? h-1 : 0);
+</script>
+</body>
+</html>
