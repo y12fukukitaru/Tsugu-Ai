@@ -829,6 +829,18 @@
   </div>
 </div>
 
+<!-- ===== 運営メンバーの権限設定（Phase72・代表のみ）===== -->
+<div id="perm-modal" class="modal-back hidden" onclick="if(event.target===this)closePerm()">
+  <div class="modal rep-sheet" style="max-width:620px;">
+    <div class="rep-bar modal-head">
+      <span class="mt" id="perm-title">権限の設定</span>
+      <span style="flex:1;"></span>
+      <button class="modal-close" onclick="closePerm()" aria-label="閉じる">×</button>
+    </div>
+    <div id="perm-body" class="modal-body"></div>
+  </div>
+</div>
+
 <!-- ===== 使い方ガイド：実画面ツアー（Phase65）===== -->
 <div id="ct-layer" class="hidden" aria-live="polite">
   <div id="ct-block"></div>
@@ -929,8 +941,8 @@
 
   async function getProfile(session){
     var uid=session.user.id, email=session.user.email;
-    var q=await sb.from('profiles').select('role,full_name,email,company_name,contact_name,admin_role').eq('id',uid).maybeSingle();
-    if(q.error && /admin_role/.test(q.error.message||'')){   // Phase71未適用でも動くように
+    var q=await sb.from('profiles').select('role,full_name,email,company_name,contact_name,admin_role,admin_perms').eq('id',uid).maybeSingle();
+    if(q.error && /admin_role|admin_perms/.test(q.error.message||'')){   // Phase71/72未適用でも動くように
       q=await sb.from('profiles').select('role,full_name,email,company_name,contact_name').eq('id',uid).maybeSingle();
     }
     var prof=q.data;
@@ -969,7 +981,7 @@
   // role='admin' は全部入りだったため、COO/CTO/CFO を増やすと資金調達・全社売上まで
   // 全員に見えてしまう。profiles.admin_role で運営内をさらに分ける。
   // 未設定（null）は owner 扱い。既存の運営アカウントの見え方は変わらない。
-  var ADMIN_ROLES=[['owner','代表（全権）'],['coo','COO（現場）'],['cfo','CFO（財務）'],['cto','CTO（技術）']];
+  var ADMIN_ROLES=[['owner','代表（全権）'],['coo','COO（現場）'],['cfo','CFO（財務）'],['cto','CTO（技術）'],['custom','個別設定']];
   var ADMIN_NAV_SCOPE={
     'sec-flow':    ['owner','coo','cfo','cto'],
     'sec-kpi':     ['owner','coo','cfo','cto'],
@@ -984,15 +996,31 @@
     'sec-broadcast':['owner','coo'],
     'sec-support': ['owner','coo','cto']
   };
-  var ADMIN_ROLE='owner';
+  // 代表は、プリセットに縛られず1人ずつメニュー単位で開閉できる（Phase72）。
+  // 実際の判定は admin_perms（カンマ区切りのセクションID）が正。未設定のあいだは
+  // 上のプリセットで代替する（代表が一度保存すると admin_perms が正になる）。
+  var ADMIN_ROLE='owner', ADMIN_PERMS=null;
+  function presetPerms(role){
+    var out=[];
+    adminNavAll().forEach(function(it){
+      var a=ADMIN_NAV_SCOPE[it[0]];
+      if(!a || a.indexOf(role)>=0) out.push(it[0]);
+    });
+    return out;
+  }
+  function permsOf(role, perms){
+    if((role||'owner')==='owner') return adminNavAll().map(function(it){ return it[0]; });
+    if(perms!=null && String(perms).trim()!=='') return String(perms).split(',').filter(Boolean);
+    return presetPerms(role);
+  }
   function adminNavAll(){
     return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-network','専門家ネットワーク'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
   }
   function adminRoleName(r){ var n=r; ADMIN_ROLES.forEach(function(x){ if(x[0]===r) n=x[1]; }); return n; }
   function isOwner(){ return ADMIN_ROLE==='owner'; }
   function adminCanSee(secId){
-    var a=ADMIN_NAV_SCOPE[secId];
-    return !a || a.indexOf(ADMIN_ROLE)>=0;
+    if(isOwner()) return true;
+    return permsOf(ADMIN_ROLE, ADMIN_PERMS).indexOf(secId)>=0;
   }
   function navDefs(r){
     if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
@@ -1857,28 +1885,109 @@
         +tagOf(u.role)
         +'<span style="font-size:11px;color:#5A6981;">役割</span>'+roleSelect(u)
         +(isAdm
-          ? '<span style="font-size:11px;color:#5A6981;">権限</span>'
-            +'<select class="inp2" style="width:150px;font-size:12px;" onchange="admSetAdminRole(\''+u.id+'\',this.value,this)">'
-            +ADMIN_ROLES.map(function(x){
-                var sel=((u.admin_role||'owner')===x[0])?' selected':'';
-                return '<option value="'+x[0]+'"'+sel+'>'+esc(x[1])+'</option>';
-              }).join('')
-            +'</select>'
+          ? '<span style="font-size:11.5px;color:'+((u.admin_role||'owner')==='owner'?'#A9403D':'var(--muted)')+';white-space:nowrap;">'
+              +esc(adminRoleName(u.admin_role||'owner'))
+              +((u.admin_role||'owner')!=='owner'?'（'+permsOf(u.admin_role||'owner', u.admin_perms).length+'/'+adminNavAll().length+'）':'')
+            +'</span>'
+            +'<button class="ghost" style="font-size:11.5px;padding:5px 11px;border:1px solid var(--line);border-radius:8px;white-space:nowrap;" onclick="openPerm(\''+u.id+'\')">権限を設定</button>'
           : '')
       +'</div>';
     }).join('');
   }
-  async function admSetAdminRole(uid, val, el){
-    if(uid===ME && val!=='owner'){
-      alert('ご自身の権限は下げられません。誤って全権を失うのを防ぐためです。');
-      if(el) el.value='owner'; return;
+  // ---- 運営メンバーの権限をメニュー単位で開閉する（代表のみ・Phase72）----
+  var PERM_EDIT=null;
+  // 機微な項目は開けるときに一言そえる。誤って全開にするのを防ぐため
+  var PERM_WARN={
+    'sec-exec':'資金調達・投資家・IPO準備が見えます',
+    'sec-billing':'全社の売上と、各パートナーの報酬額が見えます',
+    'sec-broadcast':'全ユーザーへ一斉送信できます',
+    'sec-cust':'顧客の会社情報を編集できます'
+  };
+  function openPerm(uid){
+    if(!isOwner()) return;
+    var u=(ADM_CACHE.all||[]).filter(function(x){ return x.id===uid; })[0];
+    if(!u) return;
+    PERM_EDIT={ id:uid, role:(u.admin_role||'owner'), perms:permsOf(u.admin_role||'owner', u.admin_perms).slice(),
+                label:(u.company_name||u.contact_name||u.email||'') };
+    var t=$('perm-title'); if(t) t.textContent='権限の設定：'+PERM_EDIT.label;
+    renderPerm();
+    var m=$('perm-modal'); if(m){ m.classList.remove('hidden'); document.body.style.overflow='hidden'; }
+  }
+  function closePerm(){ PERM_EDIT=null; var m=$('perm-modal'); if(m){ m.classList.add('hidden'); document.body.style.overflow=''; } }
+  function renderPerm(){
+    var box=$('perm-body'); if(!box||!PERM_EDIT) return;
+    var isOwn=(PERM_EDIT.role==='owner');
+    var h='<div style="font-size:12px;color:var(--muted);line-height:1.85;margin-bottom:12px;">'
+      +'プリセットを選ぶとチェックがまとめて入ります。そのあと1つずつ調整できます。'
+      +'<b style="color:var(--navy);">代表（全権）にすると、この人も他の人の権限を変更できるようになります。</b></div>';
+    h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">'
+      +ADMIN_ROLES.filter(function(x){ return x[0]!=='custom'; }).map(function(x){
+        return '<button class="sbtn'+(PERM_EDIT.role===x[0]?' on':'')+'" onclick="permPreset(\''+x[0]+'\')">'+esc(x[1])+'</button>';
+      }).join('')
+      +(PERM_EDIT.role==='custom'?'<span class="tag gold" style="align-self:center;">個別設定</span>':'')
+    +'</div>';
+    if(isOwn){
+      h+='<div style="border:1.5px solid #E3B9B7;background:rgba(169,64,61,.06);border-radius:11px;padding:12px 14px;font-size:12.5px;color:var(--red);line-height:1.9;">'
+        +'<b>代表（全権）です。</b>すべてのメニューに加えて、アカウントの役割変更と、他のメンバーの権限設定ができます。<br>'
+        +'この権限を渡すのは、あなたと同等の立場の方に限ってください。</div>';
+    } else {
+      h+='<div style="border:1px solid var(--line);border-radius:11px;overflow:hidden;">';
+      adminNavAll().forEach(function(it,idx){
+        var on=PERM_EDIT.perms.indexOf(it[0])>=0;
+        var w=PERM_WARN[it[0]];
+        h+='<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 13px;cursor:pointer;'
+          +(idx?'border-top:1px solid var(--softline);':'')+(on?'background:rgba(39,104,74,.05);':'')+'">'
+          +'<input type="checkbox" style="margin-top:3px;width:16px;height:16px;" '+(on?'checked':'')+' onchange="permToggle(\''+it[0]+'\')">'
+          +'<span style="flex:1;min-width:0;">'
+            +'<span style="font-size:13.5px;color:var(--ink);font-weight:'+(on?'600':'400')+';">'+esc(it[1])+'</span>'
+            +(w?'<span style="display:block;font-size:11px;color:'+(on?'#8A6A12':'var(--muted)')+';line-height:1.7;margin-top:1px;">'+esc(w)+'</span>':'')
+          +'</span>'
+        +'</label>';
+      });
+      h+='</div>';
+      h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.85;margin-top:10px;">'
+        +'チェックを外したメニューは表示されず、直接開くこともできません。'
+        +'<b style="color:var(--navy);">アカウントの役割変更と権限設定は、代表（全権）の方のみが行えます。</b></div>';
     }
-    var r=await sb.from('profiles').update({ admin_role:val }).eq('id',uid);
-    if(r.error){
-      alert('変更できませんでした：'+r.error.message+'\n（Supabaseで「Phase71」のSQLを実行してください）');
+    h+='<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--softline);">'
+      +'<button class="btn2" onclick="savePerm()">保存する</button>'
+      +'<button class="ghost" style="font-size:12.5px;border:1px solid var(--line);border-radius:9px;padding:8px 14px;" onclick="closePerm()">キャンセル</button>'
+      +'<span id="perm-msg" style="font-size:12px;"></span>'
+    +'</div>';
+    box.innerHTML=h;
+  }
+  function permPreset(role){
+    if(!PERM_EDIT) return;
+    PERM_EDIT.role=role;
+    PERM_EDIT.perms=permsOf(role, null).slice();
+    renderPerm();
+  }
+  function permToggle(sec){
+    if(!PERM_EDIT) return;
+    var i=PERM_EDIT.perms.indexOf(sec);
+    if(i>=0) PERM_EDIT.perms.splice(i,1); else PERM_EDIT.perms.push(sec);
+    // プリセットと一致しなくなったら「個別設定」に切り替える
+    var p=permsOf(PERM_EDIT.role, null).slice().sort().join(',');
+    if(PERM_EDIT.role!=='owner' && p!==PERM_EDIT.perms.slice().sort().join(',')) PERM_EDIT.role='custom';
+    renderPerm();
+  }
+  async function savePerm(){
+    if(!PERM_EDIT) return;
+    var msg=$('perm-msg');
+    if(PERM_EDIT.id===ME && PERM_EDIT.role!=='owner'){
+      if(msg){ msg.style.color='#A9403D'; msg.textContent='ご自身の権限は下げられません。'; }
       return;
     }
-    (ADM_CACHE.all||[]).forEach(function(u){ if(u.id===uid) u.admin_role=val; });
+    var isOwn=(PERM_EDIT.role==='owner');
+    var row={ admin_role:PERM_EDIT.role, admin_perms:(isOwn?null:PERM_EDIT.perms.join(',')) };
+    var r=await sb.from('profiles').update(row).eq('id',PERM_EDIT.id);
+    if(r.error){
+      if(msg){ msg.style.color='#A9403D'; msg.textContent='保存できませんでした：'+r.error.message+'（Supabaseで「Phase72」のSQLを実行してください）'; }
+      return;
+    }
+    (ADM_CACHE.all||[]).forEach(function(u){ if(u.id===PERM_EDIT.id){ u.admin_role=row.admin_role; u.admin_perms=row.admin_perms; } });
+    closePerm();
+    renderAdmRoles();
   }
   // ---- G. 課金・契約管理 ----
   function yen(n){ return '¥'+Math.round(n||0).toLocaleString('ja-JP'); }
@@ -2100,7 +2209,9 @@
     if(!SCOPE) SCOPE=ME;   // 会社の解決に失敗しても自分自身を見る（データが空になるのを防ぐ）
     // 運営内の権限。未設定は owner（従来どおり全権）
     ADMIN_ROLE=(prof && prof.admin_role) ? String(prof.admin_role) : 'owner';
-    if(!ADMIN_NAV_SCOPE['sec-flow'] || ADMIN_ROLES.every(function(x){ return x[0]!==ADMIN_ROLE; })) ADMIN_ROLE='owner';
+    if(ADMIN_ROLES.every(function(x){ return x[0]!==ADMIN_ROLE; })) ADMIN_ROLE='custom';
+    if(!prof || !prof.admin_role) ADMIN_ROLE='owner';
+    ADMIN_PERMS=(prof && prof.admin_perms!=null) ? String(prof.admin_perms) : null;
     var r=prof.role||'customer';
     var eff = (r==='admin') ? (VIEWAS==='fde'?'consultant':(VIEWAS==='customer'?'customer':'admin')) : r;
     window.__prof=prof; window.__email=email||''; window.__role=r;
