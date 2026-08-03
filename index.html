@@ -8721,10 +8721,7 @@
     NET.refs     = r[3].error?(NET_ERR.rf=r[3].error.message,[]):(r[3].data||[]);
   }
   async function loadNetwork(){ if(!$('net-body')) return; await netFetch(); renderNetwork(); }
-  function netUid(){
-    try{ if(window.crypto&&crypto.randomUUID) return crypto.randomUUID(); }catch(e){}
-    return 'x'+Math.abs(Date.parse(new Date().toISOString())).toString(36)+Math.round(performance.now());
-  }
+  function netUid(){ return uuid4(); }
   function netMissBox(msg, phase){
     return '<div style="font-size:11px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:8px 11px;margin-bottom:10px;line-height:1.7;">'
       +esc(msg)+'（Supabaseで「'+esc(phase)+'」のSQLを実行してください）</div>';
@@ -9036,22 +9033,60 @@
   var BIZ={ profile:{ main:'', lic:[], area:'' }, deals:[] }, BIZ_REMOTE={p:false,d:false};
   function bizKey(){ return 'tsugu_biz_'+(ME||'guest'); }
   function bizSaveLocal(){ try{ localStorage.setItem(bizKey(), JSON.stringify(BIZ)); }catch(e){} }
-  function bizUid(){
-    try{ if(window.crypto&&crypto.randomUUID) return crypto.randomUUID(); }catch(e){}
-    return 'd'+Math.abs(Date.parse(new Date().toISOString())+BIZ.deals.length*7919).toString(36)+BIZ.deals.length;
+  // partner_deals.id / experts.id / referrals.id はいずれも uuid 型なので、
+  // crypto.randomUUID が使えない環境（非セキュアコンテキスト・古いSafari）でも
+  // 必ずUUIDの形を返す。任意文字列だと insert が型エラーで落ちる。
+  function uuid4(){
+    try{ if(window.crypto && crypto.randomUUID) return crypto.randomUUID(); }catch(e){}
+    var b=null;
+    try{ if(window.crypto && crypto.getRandomValues){ b=new Uint8Array(16); crypto.getRandomValues(b); } }catch(e){ b=null; }
+    if(!b){ b=new Array(16); for(var i=0;i<16;i++) b[i]=Math.floor(Math.random()*256); }
+    b[6]=(b[6]&0x0f)|0x40; b[8]=(b[8]&0x3f)|0x80;
+    var s=[]; for(var j=0;j<16;j++) s.push(('0'+b[j].toString(16)).slice(-2));
+    return s.slice(0,4).join('')+'-'+s.slice(4,6).join('')+'-'+s.slice(6,8).join('')
+      +'-'+s.slice(8,10).join('')+'-'+s.slice(10,16).join('');
   }
+  function bizUid(){ return uuid4(); }
   async function bizLoad(){
-    try{ var o=JSON.parse(localStorage.getItem(bizKey())||'null'); if(o){ BIZ.profile=o.profile||BIZ.profile; BIZ.deals=o.deals||[]; } }catch(e){}
+    var hadLocal=false, localProfile=null, localDeals=[];
+    try{
+      var o=JSON.parse(localStorage.getItem(bizKey())||'null');
+      if(o){ hadLocal=true; localProfile=o.profile||null; localDeals=o.deals||[];
+        BIZ.profile=o.profile||BIZ.profile; BIZ.deals=localDeals; }
+    }catch(e){}
     try{
       var p=await sb.from('partner_business').select('*').eq('user_id',ME).maybeSingle();
-      if(!p.error){ BIZ_REMOTE.p=true; if(p.data){ BIZ.profile={ main:p.data.main_field||'', lic:String(p.data.licenses||'').split(',').filter(Boolean), area:p.data.area||'' }; } }
+      if(!p.error){
+        BIZ_REMOTE.p=true;
+        if(p.data){ BIZ.profile={ main:p.data.main_field||'', lic:String(p.data.licenses||'').split(',').filter(Boolean), area:p.data.area||'' }; }
+        else if(hadLocal && localProfile && (localProfile.main || (localProfile.lic||[]).length || localProfile.area)){
+          // テーブルが用意される前にこの端末で入力した内容を、初回の読み込みで引き上げる
+          try{ await sb.from('partner_business').upsert({ user_id:ME, main_field:localProfile.main||null,
+            licenses:(localProfile.lic||[]).join(','), area:localProfile.area||null,
+            updated_at:new Date().toISOString() },{onConflict:'user_id'}); }catch(e){}
+        }
+      }
     }catch(e){}
     try{
       var d=await sb.from('partner_deals').select('*').eq('partner_id',ME).order('created_at',{ascending:false});
-      if(!d.error){ BIZ_REMOTE.d=true; if((d.data||[]).length) BIZ.deals=d.data.map(function(x){
-        return { id:x.id, cust:x.customer_name||'', field:x.field||'', title:x.title||'', amount:(x.amount==null?null:Number(x.amount)),
-                 status:x.status||'lead', closed:x.closed_on||'', created:x.created_at||'' };
-      }); }
+      if(!d.error){
+        BIZ_REMOTE.d=true;
+        var rows=d.data||[];
+        if(rows.length){
+          BIZ.deals=rows.map(function(x){
+            return { id:x.id, cust:x.customer_name||'', field:x.field||'', title:x.title||'', amount:(x.amount==null?null:Number(x.amount)),
+                     status:x.status||'lead', closed:x.closed_on||'', created:x.created_at||'' };
+          });
+        } else if(localDeals.length){
+          // 同上。ローカルにしか無い案件をまとめて送る（idが不正な形式のものは振り直す）
+          var mig=localDeals.map(function(x){
+            if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(x.id||''))) x.id=uuid4();
+            return { id:x.id, partner_id:ME, customer_name:x.cust||null, field:x.field||null, title:x.title,
+                     amount:x.amount, status:x.status, closed_on:(x.closed||null), created_at:x.created||new Date().toISOString() };
+          });
+          try{ await sb.from('partner_deals').upsert(mig); }catch(e){}
+        }
+      }
     }catch(e){}
     bizSaveLocal();
   }
