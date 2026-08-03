@@ -2305,6 +2305,7 @@
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;">月次の数値や支払予定は担当パートナーが入力・更新します。数値や資料は「メッセージ」でお送りいただくだけでOKです。修正のご希望もメッセージでどうぞ。</div>'
           +'<div style="font-weight:600;font-size:14px;color:#1E3A66;margin:2px 0 6px;">① 月次財務メモ</div>'
           +'<div id="fin-list" style="margin-top:6px;">読み込み中...</div>'
+          +'<div id="my-finreport"></div>'
           +'<div style="border-top:1px solid #EDF1F6;margin:18px 0 0;"></div>'
           +'<div style="font-weight:600;font-size:14px;color:#1E3A66;margin:14px 0 6px;">② 今後の支払予定</div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:6px;">借入返済・納税・賞与などの予定です。ダッシュボードの「資金繰りステータス」の残高見通しに反映されています。</div>'
@@ -2755,6 +2756,11 @@
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
     box.innerHTML=finTable(res.data, false);
     var k=$('kpi-cards'); if(k) k.innerHTML=kpiCards(res.data);
+    var rp=$('my-finreport');
+    if(rp){
+      var latest=(res.data||[]).slice().sort(function(a,b){ return (a.year_month<b.year_month)?1:-1; })[0];
+      rp.innerHTML=latest?finReportHtml(latest):'';
+    }
   }
 
   async function delFinance(id, scope){
@@ -2768,18 +2774,213 @@
     var fb=$('cl-fin'); if(!fb)return;
     var f=await sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false});
     fb.innerHTML = f.error?('<div style="color:#A9403D;font-size:12px;">'+esc(f.error.message)+'</div>'):finTable(f.data,true,'cl');
+    var rp=$('cl-finreport');
+    if(rp){
+      var latest=(f.error?[]:(f.data||[])).slice().sort(function(a,b){ return (a.year_month<b.year_month)?1:-1; })[0];
+      rp.innerHTML=latest?finReportHtml(latest):'';
+    }
   }
   async function saveFinanceFor(custId){
     var ym=$('cfin-ym').value, rev=$('cfin-rev').value, prof=$('cfin-prof').value, memo=$('cfin-memo').value.trim();
     var msg=$('cfin-msg');
     if(!ym){ if(msg){msg.style.color='#A9403D'; msg.textContent='年月を選んでください';} return; }
     var row={ customer_id:custId, year_month:ym, revenue:(rev===''?null:Number(rev)), profit:(prof===''?null:Number(prof)), memo:(memo||null) };
+    var det=finDetailValues('cfin');
+    Object.keys(det).forEach(function(k){ row[k]=det[k]; });
     var res=await sb.from('financial_entries').insert(row);
+    if(res.error && /column|does not exist/i.test(res.error.message||'')){
+      Object.keys(det).forEach(function(k){ delete row[k]; });   // 詳細列が無い環境
+      res=await sb.from('financial_entries').insert(row);
+    }
     if(res.error){ if(msg){msg.style.color='#A9403D'; msg.textContent='保存エラー：'+res.error.message+'（Phase21のSQL未実施の可能性があります）';} return; }
     $('cfin-ym').value=new Date().toISOString().slice(0,7); $('cfin-rev').value=''; $('cfin-prof').value=''; $('cfin-memo').value='';
+    finDetailClear('cfin');
     if(msg){msg.style.color='#27684A'; msg.textContent='保存しました（顧客の画面にも反映されます）';}
     reloadClientFin(custId);
   }
+  // ============================================================
+  // ===== 財務データモデル（Phase74）=====
+  // 売上・営業利益の2項目では財務力が何も分からないため、試算表に載る項目まで
+  // 保持する。手入力を前提にすると続かないので、取込（CSV/Excel/PDF/画像）を
+  // 主動線に置き、手入力は最後の手段という位置づけにしている。
+  // 単位はすべて万円。既存の revenue / profit はそのまま使う。
+  // ============================================================
+  var FIN_FIELDS=[
+    // 損益計算書
+    { k:'revenue',     l:'売上高',       g:'pl', core:true },
+    { k:'cogs',        l:'売上原価',     g:'pl' },
+    { k:'sga',         l:'販売費及び一般管理費', s:'販管費', g:'pl' },
+    { k:'profit',      l:'営業利益',     g:'pl', core:true },
+    { k:'ord_profit',  l:'経常利益',     g:'pl' },
+    { k:'depreciation',l:'減価償却費',   g:'pl' },
+    { k:'interest',    l:'支払利息',     g:'pl' },
+    // 貸借対照表
+    { k:'total_assets',      l:'総資産',       g:'bs' },
+    { k:'current_assets',    l:'流動資産',     g:'bs' },
+    { k:'cash',              l:'現預金',       g:'bs' },
+    { k:'receivables',       l:'売掛金',       g:'bs' },
+    { k:'inventory',         l:'棚卸資産',     g:'bs' },
+    { k:'current_liabilities',l:'流動負債',    g:'bs' },
+    { k:'payables',          l:'買掛金',       g:'bs' },
+    { k:'short_debt',        l:'短期借入金',   g:'bs' },
+    { k:'long_debt',         l:'長期借入金',   g:'bs' },
+    { k:'equity',            l:'純資産',       g:'bs' }
+  ];
+  // 見出しの照合順。「売上原価」を「売上高」より先に見ないと誤検出する
+  var FIN_MATCH=[
+    ['cogs',        /売上原価|製造原価|^原価/],
+    ['sga',         /販売費.*管理費|販管費|一般管理費/],
+    ['ord_profit',  /経常利益/],
+    ['profit',      /営業利益/],
+    ['revenue',     /売上高|純売上|^売上$|^売上|総収入|売上収益/],
+    ['depreciation',/減価償却/],
+    ['interest',    /支払利息|支払利子/],
+    ['total_assets',/資産合計|総資産|資産の部合計/],
+    ['current_assets',/流動資産/],
+    ['cash',        /現金及び預金|現金預金|現預金|現金・預金/],
+    ['receivables', /売掛金|受取手形|売上債権/],
+    ['inventory',   /棚卸資産|商品|製品|仕掛品|原材料/],
+    ['current_liabilities',/流動負債/],
+    ['payables',    /買掛金|支払手形|仕入債務/],
+    ['short_debt',  /短期借入金|一年内返済|１年内返済/],
+    ['long_debt',   /長期借入金/],
+    ['equity',      /純資産|自己資本|資本合計/]
+  ];
+  function finFieldKey(text){
+    var s=String(text||'');
+    for(var i=0;i<FIN_MATCH.length;i++){ if(FIN_MATCH[i][1].test(s)) return FIN_MATCH[i][0]; }
+    return null;
+  }
+  function finLabel(k){ var f=null; FIN_FIELDS.forEach(function(x){ if(x.k===k) f=x; }); return f?(f.s||f.l):k; }
+  function nOr(v){ return (v==null||v==='')?null:Number(v); }
+
+  // ---- 指標の算出（すべて月次データから。売上等は当月値）----
+  function finMetrics(e){
+    if(!e) return null;
+    var rev=nOr(e.revenue), cogs=nOr(e.cogs), pro=nOr(e.profit), dep=nOr(e.depreciation),
+        inte=nOr(e.interest), ta=nOr(e.total_assets), ca=nOr(e.current_assets), cash=nOr(e.cash),
+        recv=nOr(e.receivables), inv=nOr(e.inventory), cl=nOr(e.current_liabilities),
+        pay=nOr(e.payables), sd=nOr(e.short_debt), ld=nOr(e.long_debt), eq=nOr(e.equity);
+    function div(a,b){ return (a==null||b==null||!b)?null:a/b; }
+    var debt=(sd==null&&ld==null)?null:((sd||0)+(ld||0));
+    var ebitdaM=(pro==null&&dep==null)?null:((pro||0)+(dep||0));   // 月次EBITDA
+    var m={};
+    m.grossRate   = (rev&&cogs!=null) ? (rev-cogs)/rev*100 : null;
+    m.opRate      = div(pro,rev)!=null ? div(pro,rev)*100 : null;
+    m.dsoDays     = div(recv,rev)!=null ? div(recv,rev)*30 : null;   // 売上債権回転日数
+    m.dioDays     = div(inv,cogs)!=null ? div(inv,cogs)*30 : null;   // 棚卸資産回転日数
+    m.dpoDays     = div(pay,cogs)!=null ? div(pay,cogs)*30 : null;   // 買入債務回転日数
+    m.ccc         = (m.dsoDays!=null&&m.dioDays!=null&&m.dpoDays!=null) ? (m.dsoDays+m.dioDays-m.dpoDays) : null;
+    m.equityRate  = div(eq,ta)!=null ? div(eq,ta)*100 : null;
+    m.currentRate = div(ca,cl)!=null ? div(ca,cl)*100 : null;
+    m.debtMonths  = div(debt,rev);                                    // 有利子負債月商倍率
+    m.debtYears   = (debt!=null && ebitdaM!=null && ebitdaM>0) ? debt/(ebitdaM*12) : null; // 債務償還年数
+    m.icr         = (inte!=null && inte>0 && pro!=null) ? pro/inte : null;
+    m.ebitdaY     = ebitdaM!=null ? ebitdaM*12 : null;
+    m.netDebt     = (debt!=null) ? (debt-(cash||0)) : null;
+    m.ev          = (m.ebitdaY!=null) ? (m.ebitdaY*3 - (m.netDebt||0)) : null;   // 目安：EBITDA×3
+    return m;
+  }
+  // 良／普／要注意の3段階。金融機関が見る一般的な水準を目安にしている
+  function finJudge(key, v){
+    if(v==null||!isFinite(v)) return null;
+    var t={ equityRate:[30,10], currentRate:[150,100], debtMonths:[3,6,true],
+            debtYears:[10,20,true], icr:[3,1], opRate:[5,0], ccc:[30,60,true] }[key];
+    if(!t) return null;
+    var rev=!!t[2];
+    if(rev) return v<=t[0]?'good':(v<=t[1]?'mid':'bad');
+    return v>=t[0]?'good':(v>=t[1]?'mid':'bad');
+  }
+  function finFmt(v, unit, dec){
+    if(v==null||!isFinite(v)) return '—';
+    var d=(dec==null?1:dec);
+    return Number(v).toLocaleString('ja-JP',{minimumFractionDigits:d,maximumFractionDigits:d})+(unit||'');
+  }
+  // 財務レポート（顧客・パートナー共通）
+  function finReportHtml(e){
+    if(!e) return '';
+    var m=finMetrics(e); if(!m) return '';
+    var any=['equityRate','currentRate','debtMonths','debtYears','ccc','grossRate'].some(function(k){ return m[k]!=null; });
+    if(!any) return '<div style="font-size:11.5px;color:var(--muted);line-height:1.8;">詳細項目が未入力のため、財務力と支払サイトは算出できません。試算表を取り込むと自動で埋まります。</div>';
+    function box(label, txt, key, v, sub){
+      var j=finJudge(key, v);
+      var col=j==='good'?'#27684A':(j==='bad'?'#A9403D':(j==='mid'?'#8A6A12':'var(--navy)'));
+      return '<div style="flex:1 1 145px;min-width:145px;background:var(--soft);border:1px solid var(--softline);border-radius:10px;padding:9px 12px;">'
+        +'<div style="font-size:10.5px;color:var(--muted);">'+esc(label)+'</div>'
+        +'<div style="font-size:17px;font-weight:700;color:'+col+';line-height:1.35;margin-top:1px;">'+txt+'</div>'
+        +(sub?'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+esc(sub)+'</div>':'')
+      +'</div>';
+    }
+    var h='';
+    h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin:14px 0 6px;">財務力（'+esc(ymJp(e.year_month))+'）</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      +box('自己資本比率', finFmt(m.equityRate,'%'), 'equityRate', m.equityRate, '30%以上が目安')
+      +box('流動比率', finFmt(m.currentRate,'%',0), 'currentRate', m.currentRate, '150%以上が目安')
+      +box('有利子負債 月商倍率', finFmt(m.debtMonths,'倍'), 'debtMonths', m.debtMonths, '3倍以内が目安')
+      +box('債務償還年数', finFmt(m.debtYears,'年'), 'debtYears', m.debtYears, '10年以内が目安')
+      +box('インタレストカバレッジ', finFmt(m.icr,'倍'), 'icr', m.icr, '利息の支払余力')
+      +'</div>';
+    h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin:14px 0 6px;">支払サイト（現金が拘束される日数）</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      +box('売上債権 回転日数', finFmt(m.dsoDays,'日',0), null, m.dsoDays, '入金までの日数')
+      +box('棚卸資産 回転日数', finFmt(m.dioDays,'日',0), null, m.dioDays, '在庫の滞留')
+      +box('買入債務 回転日数', finFmt(m.dpoDays,'日',0), null, m.dpoDays, '支払までの日数')
+      +box('CCC', finFmt(m.ccc,'日',0), 'ccc', m.ccc, '短いほど資金が楽')
+      +'</div>';
+    h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin:14px 0 6px;">収益性・企業価値</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      +box('粗利率', finFmt(m.grossRate,'%'), null, m.grossRate, '')
+      +box('営業利益率', finFmt(m.opRate,'%'), 'opRate', m.opRate, '5%以上が目安')
+      +box('EBITDA（年換算）', finFmt(m.ebitdaY,'万円',0), null, m.ebitdaY, '営業利益＋減価償却')
+      +box('ネット有利子負債', finFmt(m.netDebt,'万円',0), null, m.netDebt, '借入−現預金')
+      +box('企業価値の目安', finFmt(m.ev,'万円',0), null, m.ev, 'EBITDA×3−純有利子負債')
+      +'</div>';
+    h+='<div style="font-size:10.5px;color:var(--muted);line-height:1.8;margin-top:9px;">'
+      +'※ 当月の試算表から機械的に算出した概算です。回転日数は月商・月次原価を30日で割って計算しているため、季節変動の大きい月はぶれます。'
+      +'企業価値はEBITDAの3倍を仮置きした目安で、実際の評価は業種・成長性・取引条件で変わります。</div>';
+    return h;
+  }
+
+  // 詳細項目の手入力欄。取込が使えない場合の最後の手段なので、既定では畳んでおく
+  function finDetailHtml(prefix){
+    function grp(g,title){
+      return '<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin:8px 0 4px;">'+title+'</div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+        +FIN_FIELDS.filter(function(f){ return f.g===g && !f.core; }).map(function(f){
+            return '<div><label class="fl">'+esc(f.s||f.l)+'</label>'
+              +'<input id="'+prefix+'-'+f.k+'" type="number" class="inp2" style="width:118px;" placeholder="万円"></div>';
+          }).join('')
+        +'</div>';
+    }
+    return '<div id="'+prefix+'-detail" class="hidden" style="border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin-top:8px;background:var(--soft);">'
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.75;margin-bottom:4px;">'
+      +'試算表を取り込めば自動で埋まります。取り込めない場合のみ、こちらにご入力ください（空欄のままでも保存できます）。</div>'
+      +grp('pl','損益計算書')+grp('bs','貸借対照表')
+    +'</div>';
+  }
+  function finDetailToggle(prefix){
+    var d=$(prefix+'-detail'); if(!d) return;
+    d.classList.toggle('hidden');
+    var b=$(prefix+'-detail-btn'); if(b) b.textContent=d.classList.contains('hidden')?'＋ 詳細項目を入力':'− 詳細項目を閉じる';
+  }
+  function finDetailValues(prefix){
+    var o={};
+    FIN_FIELDS.forEach(function(f){
+      if(f.core) return;
+      var el=$(prefix+'-'+f.k); if(!el) return;
+      var v=el.value; if(v!=='' && v!=null && isFinite(Number(v))) o[f.k]=Number(v);
+    });
+    return o;
+  }
+  function finDetailFill(prefix, rec){
+    FIN_FIELDS.forEach(function(f){
+      if(f.core) return;
+      var el=$(prefix+'-'+f.k); if(!el) return;
+      el.value=(rec && rec[f.k]!=null)?rec[f.k]:'';
+    });
+  }
+  function finDetailClear(prefix){ finDetailFill(prefix, null); }
+
   // ===== ファイル取り込み＋試算表AI読み取り（Phase 39） =====
   var FIN_IMPORT_ROWS=null;
   function loadSheetJS(){
@@ -2794,7 +2995,21 @@
   }
   function normYM(v){
     if(v===null||v===undefined) return null;
+    function fromDate(d){
+      if(!d || isNaN(d.getTime())) return null;
+      return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    }
+    // 表計算ソフトが日付として解釈すると Date か シリアル値で渡ってくる。
+    // そのまま文字列化すると「46204」→「4620-04」のような誤った年月になる
+    if(v instanceof Date) return fromDate(v);
+    if(typeof v==='number' && v>=20000 && v<=80000){
+      return fromDate(new Date(Date.UTC(1899,11,30)+Math.round(v)*86400000));
+    }
     var s=String(v).trim();
+    if(/^\d{5}(\.\d+)?$/.test(s)){
+      var n=Number(s);
+      if(n>=20000 && n<=80000) return fromDate(new Date(Date.UTC(1899,11,30)+Math.round(n)*86400000));
+    }
     var m=s.match(/(\d{4})\D{0,2}(\d{1,2})/); // 2026-05, 2026/5, 2026年5月
     if(m){ var y=m[1], mo=String(Number(m[2])).padStart(2,'0'); if(Number(m[2])>=1&&Number(m[2])<=12) return y+'-'+mo; }
     return null;
@@ -2820,30 +3035,99 @@
       renderFinPreview(custId);
     }catch(e){ msg.style.color='#A9403D'; msg.textContent='読み取りに失敗：'+e.message; }
   }
-  async function parseSheet(file){
+  // 会計ソフトのCSVはShift_JIS出力が多い。文字化けすると勘定科目が一切照合できないので、
+  // UTF-8で読んで置換文字が出たらShift_JISで読み直す
+  async function sheetRows(file){
     var XLSX=await loadSheetJS();
     var buf=await file.arrayBuffer();
-    var wb=XLSX.read(buf,{type:'array'});
+    var wb=null;
+    if(/\.csv$/i.test(file.name||'')){
+      var txt='';
+      try{ txt=new TextDecoder('utf-8',{fatal:false}).decode(buf); }catch(e){ txt=''; }
+      if(!txt || txt.indexOf('�')>=0){
+        try{ txt=new TextDecoder('shift_jis',{fatal:false}).decode(buf); }catch(e){}
+      }
+      wb=XLSX.read(txt,{type:'string'});
+    } else {
+      wb=XLSX.read(buf,{type:'array'});
+    }
     var ws=wb.Sheets[wb.SheetNames[0]];
-    var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-    // 列見出しを探す（年月/売上/利益っぽい列）
-    var headerRow=-1, col={ym:-1,rev:-1,prof:-1};
-    for(var i=0;i<Math.min(rows.length,10);i++){
+    return XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  }
+  // 試算表は「円」表記が普通。単位を判定して万円に揃える（判定できなければ桁で推定）
+  function finUnitScale(rows){
+    var head='';
+    for(var i=0;i<Math.min(rows.length,15);i++) head+=(rows[i]||[]).join(' ')+' ';
+    if(/単位[^0-9]{0,6}百万円/.test(head)) return 100;
+    if(/単位[^0-9]{0,6}千円/.test(head))   return 0.1;
+    if(/単位[^0-9]{0,6}万円/.test(head))   return 1;
+    if(/単位[^0-9]{0,6}円/.test(head))     return 0.0001;
+    return null;   // 不明。呼び出し側で桁から推定する
+  }
+  async function parseSheet(file){
+    var rows=await sheetRows(file);
+    // ① 横持ち（1行＝1ヶ月）：列見出しから各項目の列を拾う
+    var headerRow=-1, ymCol=-1, colOf={};
+    for(var i=0;i<Math.min(rows.length,12);i++){
       var r=rows[i].map(function(x){ return String(x); });
+      var y=-1, tmp={};
       r.forEach(function(cell,ci){
-        if(/年月|月度|期間|date|month/i.test(cell) && col.ym<0) col.ym=ci;
-        if(/売上|収入|revenue|sales/i.test(cell) && col.rev<0) col.rev=ci;
-        if(/利益|営業利益|profit|income/i.test(cell) && col.prof<0) col.prof=ci;
+        if(/年月|月度|期間|date|month/i.test(cell) && y<0) y=ci;
+        var k=finFieldKey(cell);
+        if(k && tmp[k]==null) tmp[k]=ci;
       });
-      if(col.ym>=0 && col.rev>=0){ headerRow=i; break; }
+      if(y>=0 && tmp.revenue!=null){ headerRow=i; ymCol=y; colOf=tmp; break; }
     }
     var out=[];
     if(headerRow>=0){
       for(var j=headerRow+1;j<rows.length;j++){
         var rr=rows[j];
-        var ym=normYM(rr[col.ym]);
+        var ym=normYM(rr[ymCol]);
         if(!ym) continue;
-        out.push({ ym:ym, revenue:toMan(col.rev>=0?rr[col.rev]:''), profit:toMan(col.prof>=0?rr[col.prof]:''), memo:'' });
+        var rec={ ym:ym, memo:'' };
+        FIN_FIELDS.forEach(function(f){ rec[f.k]=(colOf[f.k]!=null)?toMan(rr[colOf[f.k]]):null; });
+        out.push(rec);
+      }
+    }
+    // ② 縦持ち（1行＝1勘定科目）：試算表そのものの形。金額列は最も数値が埋まった列を使う
+    if(!out.length){
+      var rec2={}, hits=0;
+      // 「前月繰越／当月残高」のように金額列が複数あるときは、見出しで当月列を優先する
+      var amtCol=(function(){
+        var score={}, prefer=-1;
+        rows.forEach(function(rr){
+          (rr||[]).forEach(function(v,ci){
+            if(ci>0 && toMan(v)!=null) score[ci]=(score[ci]||0)+1;
+            if(ci>0 && prefer<0 && /当月|当期|残高|今月/.test(String(v)) && !/前月|前期|繰越/.test(String(v))) prefer=ci;
+          });
+        });
+        if(prefer>0 && score[prefer]) return prefer;
+        var best=-1, bn=0;
+        Object.keys(score).forEach(function(ci){ if(score[ci]>bn){ bn=score[ci]; best=+ci; } });
+        return best;
+      })();
+      if(amtCol>0){
+        rows.forEach(function(rr){
+          var name=String((rr||[])[0]||'');
+          var k=finFieldKey(name);
+          if(k && rec2[k]==null){ var v=toMan(rr[amtCol]); if(v!=null){ rec2[k]=v; hits++; } }
+        });
+      }
+      if(hits>=3){
+        // 単位を万円に揃える。見出しに単位が無ければ売上高の桁から推定する
+        var sc=finUnitScale(rows);
+        if(sc==null){
+          var rv=Math.abs(rec2.revenue!=null?rec2.revenue:(rec2.total_assets||0));
+          sc = rv>=1000000 ? 0.0001 : (rv>=100000 ? 0.1 : 1);   // 円 / 千円 / 万円
+        }
+        if(sc!==1) FIN_FIELDS.forEach(function(f){ if(rec2[f.k]!=null) rec2[f.k]=Math.round(rec2[f.k]*sc); });
+        var ym2=null;
+        for(var q=0;q<Math.min(rows.length,15) && !ym2;q++){
+          (rows[q]||[]).forEach(function(v){ if(!ym2) ym2=normYM(v); });
+        }
+        rec2.ym=ym2||prevYM();
+        rec2.memo='試算表から読み取り'+(sc===0.0001?'（円→万円に換算）':(sc===0.1?'（千円→万円に換算）':(sc===100?'（百万円→万円に換算）':'')));
+        out.push(rec2);
       }
     }
     if(!out.length){
@@ -2857,19 +3141,28 @@
       var r=new FileReader(); r.onload=function(){ resolve(String(r.result).split(',')[1]); }; r.onerror=reject; r.readAsDataURL(file);
     });
     var media = ext==='pdf' ? 'application/pdf' : (ext==='png'?'image/png':'image/jpeg');
+    var keys=FIN_FIELDS.map(function(f){ return '"'+f.k+'"'; }).join(',');
+    var defs=FIN_FIELDS.map(function(f){ return f.k+'='+f.l; }).join('、');
     var sys='あなたは試算表・決算書を読み取る経理アシスタントです。画像/PDFから月次の財務数値を抽出します。'
       +'必ず次のJSON配列のみで出力してください（前置き・コードブロックなし）：'
-      +'[{"ym":"YYYY-MM","revenue":数値,"profit":数値}] '
-      +'revenue=売上高、profit=営業利益。単位は必ず「万円」に統一する（千円・円表記なら万円へ換算）。読み取れない値はnull。年月が判別できる行のみ含める。憶測で数値を作らない。';
+      +'[{"ym":"YYYY-MM",'+keys.split(',').map(function(k){ return k+':数値'; }).join(',')+'}] '
+      +defs+'。'
+      +'単位は必ず「万円」に統一する（千円・円表記なら万円へ換算）。'
+      +'貸借対照表の項目は当月末残高を取る。損益計算書の項目は当月発生額を取る（累計欄しかない場合のみ累計を使い、memoに「累計」と記す）。'
+      +'資料に無い項目・読み取れない項目は必ずnullにする。憶測で数値を作らない。'
+      +'年月が判別できない場合は資料の対象期間から推定し、それも不可ならymをnullにする。';
     var content=[{ type:(ext==='pdf'?'document':'image'), source:{ type:'base64', media_type:media, data:b64 } },
-                 { type:'text', text:'この資料から月次の売上高・営業利益を抽出してください。' }];
+                 { type:'text', text:'この試算表から、損益計算書と貸借対照表の各項目を抽出してください。記載のない項目はnullにしてください。' }];
     var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:[{role:'user',content:content}], model:'claude-sonnet-4-6', max_tokens:1500 } });
     if(res.error) throw new Error(res.error.message||'AI読み取りに失敗');
     var txt=''; try{ var d=res.data; txt=(d&&d.content&&d.content.map?d.content.map(function(c){return c.text||'';}).join(''):(d&&d.text)||String(d||'')); }catch(_){ txt=String(res.data||''); }
     var arr=null; try{ var i1=txt.indexOf('['), i2=txt.lastIndexOf(']'); arr=JSON.parse(txt.slice(i1,i2+1)); }catch(_){ arr=null; }
     if(!arr||!arr.length) throw new Error('数値を読み取れませんでした。手入力をお願いします');
-    FIN_IMPORT_ROWS=arr.map(function(x){ return { ym:normYM(x.ym), revenue:toMan(x.revenue), profit:toMan(x.profit), memo:'AI読み取り' }; })
-      .filter(function(x){ return x.ym; });
+    FIN_IMPORT_ROWS=arr.map(function(x){
+      var rec={ ym:normYM(x.ym), memo:'AI読み取り' };
+      FIN_FIELDS.forEach(function(f){ rec[f.k]=toMan(x[f.k]); });
+      return rec;
+    }).filter(function(x){ return x.ym; });
     if(!FIN_IMPORT_ROWS.length) throw new Error('有効な年月を読み取れませんでした');
   }
   function renderFinPreview(custId){
@@ -2907,8 +3200,18 @@
     var msg=$('fin-commit-msg');
     var valid=FIN_IMPORT_ROWS.filter(function(r){ return /^\d{4}-\d{2}$/.test(r.ym||''); });
     if(!valid.length){ if(msg){ msg.style.color='#A9403D'; msg.textContent='有効な年月の行がありません'; } return; }
-    var payload=valid.map(function(r){ return { customer_id:custId, year_month:r.ym, revenue:r.revenue, profit:r.profit, memo:(r.memo||'ファイル取込') }; });
+    var payload=valid.map(function(r){
+      var row={ customer_id:custId, year_month:r.ym, memo:(r.memo||'ファイル取込') };
+      FIN_FIELDS.forEach(function(f){ if(r[f.k]!=null) row[f.k]=r[f.k]; });
+      return row;
+    });
     var res=await sb.from('financial_entries').insert(payload);
+    if(res.error && /column|does not exist/i.test(res.error.message||'')){
+      // 詳細列がまだ無い環境では、従来の2項目だけで保存する
+      res=await sb.from('financial_entries').insert(valid.map(function(r){
+        return { customer_id:custId, year_month:r.ym, revenue:r.revenue, profit:r.profit, memo:(r.memo||'ファイル取込') };
+      }));
+    }
     if(res.error){ if(msg){ msg.style.color='#A9403D'; msg.textContent='保存エラー：'+res.error.message; } return; }
     if(msg){ msg.style.color='#27684A'; msg.textContent=valid.length+'件を保存しました'; }
     FIN_IMPORT_ROWS=null; var f=$('fin-file'); if(f) f.value='';
@@ -6956,7 +7259,9 @@
         +'<div><label class="fl">営業利益（万円）</label><input id="cfin-prof" type="number" class="inp2" placeholder="例 180"></div>'
         +'<div style="flex:1;min-width:140px;"><label class="fl">メモ</label><input id="cfin-memo" type="text" class="inp2" style="width:100%;" placeholder="補足（任意）"></div>'
         +'<button class="btn2" onclick="saveFinanceFor(\''+custId+'\')">保存</button>'
+        +'<button class="ghost" id="cfin-detail-btn" style="font-size:11.5px;border:1px solid var(--line);border-radius:9px;padding:8px 12px;" onclick="finDetailToggle(\'cfin\')">＋ 詳細項目を入力</button>'
       +'</div>'
+      +finDetailHtml('cfin')
       +'<div id="cfin-msg" style="font-size:12px;margin-top:6px;"></div>'
       +'<div style="border:1px dashed #C9D6EA;border-radius:11px;padding:12px 14px;margin:10px 0;background:#FBFCFE;">'
         +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:4px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>試算表ファイルから一括入力</div>'
@@ -6969,6 +7274,7 @@
       +'<div class="cl-col">'
       +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;">登録済みの月次データ</div>'
       +'<div id="cl-fin" style="margin:4px 0 6px;">読み込み中...</div>'
+      +'<div id="cl-finreport"></div>'
       +'</div>'
       +'</div>'
       +'<div class="ph" id="cs-pay" style="font-size:13px;margin-top:18px;">今後の支払予定（代行入力）</div>'
@@ -9835,7 +10141,9 @@
           +'<button class="btn2" onclick="acctSave(\''+f.id+'\')">'+(has?'更新する':'保存する')+'</button>'
           +'<label class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:9px;padding:8px 12px;cursor:pointer;">試算表を読み取る'
             +'<input type="file" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg" style="display:none;" onchange="acctFile(\''+f.id+'\',this)"></label>'
+          +'<button class="ghost" id="acd'+f.id+'-detail-btn" style="font-size:11.5px;border:1px solid var(--line);border-radius:9px;padding:8px 12px;" onclick="finDetailToggle(\'acd'+f.id+'\')">＋ 詳細項目を入力</button>'
         +'</div>'
+        +finDetailHtml('acd'+f.id)
         +'<div id="ac-echo-'+f.id+'" style="font-size:11.5px;margin-top:7px;line-height:1.8;"></div>'
         +'<div id="ac-msg-'+f.id+'" style="font-size:12px;margin-top:4px;"></div>'
       +'</div>';
@@ -9843,7 +10151,7 @@
     h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.85;margin-top:10px;">'
       +'保存すると、担当パートナーに自動で通知が届きます。数字の訂正が必要な場合は、同じ月を上書き保存してください。</div>';
     box.innerHTML=h;
-    ACCT_FIRMS.forEach(function(f){ acctEcho(f.id, true); });
+    ACCT_FIRMS.forEach(function(f){ finDetailFill('acd'+f.id, ACCT.rows[f.id]); acctEcho(f.id, true); });
   }
   // 入力値の検算。単位ミス・列の入れ違い・上書きを、保存前に気づけるようにする
   function acctCheck(cid){
@@ -9901,6 +10209,8 @@
     var row={ customer_id:cid, year_month:ACCT.ym,
       revenue:c.rev, profit:c.pro,
       memo:'顧問税理士の入力', source:'accountant' };
+    var det=finDetailValues('acd'+cid);
+    Object.keys(det).forEach(function(k){ row[k]=det[k]; });
     var old=ACCT.rows[cid];
     var res;
     try{
@@ -9936,8 +10246,17 @@
       if(!hit) throw new Error('数字を読み取れませんでした');
       if($('ac-rev-'+cid) && hit.revenue!=null) $('ac-rev-'+cid).value=hit.revenue;
       if($('ac-prof-'+cid) && hit.profit!=null) $('ac-prof-'+cid).value=hit.profit;
+      // 詳細項目も読み取れた分だけ流し込み、確認できるよう開いておく
+      var got=0;
+      FIN_FIELDS.forEach(function(f){
+        if(f.core) return;
+        var el=$('acd'+cid+'-'+f.k);
+        if(el && hit[f.k]!=null){ el.value=hit[f.k]; got++; }
+      });
+      if(got){ var d=$('acd'+cid+'-detail'); if(d) d.classList.remove('hidden');
+               var b=$('acd'+cid+'-detail-btn'); if(b) b.textContent='− 詳細項目を閉じる'; }
       acctEcho(cid);
-      say(hit.ym===ACCT.ym ? '読み取りました。内容をご確認のうえ保存してください。'
+      say(hit.ym===ACCT.ym ? ('読み取りました（詳細'+got+'項目）。内容をご確認のうえ保存してください。')
                            : '「'+esc(hit.ym||'')+'」の数字を読み取りました。対象月と違う場合はご確認ください。', true);
     }catch(e){ say('読み取れませんでした：'+(e&&e.message||e)+'　お手数ですが直接ご入力ください。'); }
     finally{ if(inp) inp.value=''; FIN_IMPORT_ROWS=null; }
