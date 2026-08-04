@@ -48,6 +48,7 @@ ul.dots li b{color:var(--navy);}
 .kv{width:100%;border-collapse:collapse;font-size:13.5px;}
 .kv th,.kv td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--softline);vertical-align:top;line-height:1.8;}
 .kv th{width:26%;color:var(--navy);font-weight:700;background:var(--soft);}
+.kv.tight th,.kv.tight td{padding:6px 11px;font-size:12.5px;line-height:1.65;}
 .kv td b{color:var(--navy);}
 .pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--softline);color:var(--blue);margin-right:5px;}
 .pill.g{background:rgba(39,104,74,.13);color:var(--green);}
@@ -124,7 +125,7 @@ ul.dots li b{color:var(--navy);}
 <section class="slide" data-t="画面の全体像">
   <div class="eyebrow">メニュー</div>
   <h2>14の画面と、その役割</h2>
-  <table class="kv">
+  <table class="kv tight">
     <tr><th>ダッシュボード</th><td>毎朝ここだけ見れば抜け漏れが防げます。<b>今日やること</b>が並びます。</td></tr>
     <tr><th>成長ロードマップ</th><td>認定レベル（Lv.1〜4）と外注費率、研修の進捗、本業への還元額。</td></tr>
     <tr><th>本業と連携</th><td>保有資格の登録、本業案件の記録、提携専門家へのお繋ぎ。</td></tr>
@@ -132,9 +133,11 @@ ul.dots li b{color:var(--navy);}
     <tr><th>営業ツール</th><td>課題ヒアリング診断。登録前の見込み客との商談に使います。</td></tr>
     <tr><th>顧客管理</th><td>担当顧客の一覧とカルテ。<b>ここの件数が顧問契約数として集計されます。</b></td></tr>
     <tr><th>課題PDCA／M&A案件</th><td>取り組み中の課題と、M&A案件の進捗管理。</td></tr>
-    <tr><th>レポート承認</th><td>月次レポートの下書きを確認し、承認して顧客に公開します。</td></tr>
+    <tr><th>Tsugu投資・融資・M&A</th><td>プラットフォーム内のマッチング。掲載は運営への申請制です。</td></tr>
     <tr><th>ナレッジ／各種シミュレーター</th><td>事例・Q&A・禁止行為ガイドラインと、相続・承継などの試算ツール。</td></tr>
     <tr><th>AI秘書／運営サポート／お支払い</th><td>業務の相談相手、運営への問い合わせ、プラットフォーム利用料。</td></tr>
+  </table>
+  <div class="note" style="margin-top:12px;"><b>月次レポートの承認は、顧客カルテの中にあります。</b>顧客管理から該当の顧客を開き、左メニューの「月次レポート」へ。その顧客の数字を見ながら承認できます。</div>
   </table>
 </section>
 
@@ -259,15 +262,20 @@ ul.dots li b{color:var(--navy);}
   <div class="note" style="margin-top:14px;">先生が入力した数字には出所が記録され、<b>あなたが上書きしようとすると確認が出ます。</b>取り違えを防ぐためです。</div>
 </section>
 
-<section class="slide" data-t="レポート承認">
+<section class="slide" data-t="レポートの承認">
   <div class="eyebrow">毎月の仕事</div>
-  <h2>月次レポートの承認</h2>
+  <h2>月次レポートを承認して公開する</h2>
+  <p class="sub">承認は<b>顧客カルテの中</b>で行います。顧客管理 → 該当の顧客を開く → 左メニューの<b>「月次レポート」</b>。その顧客の財務データを見ながら承認できます。</p>
   <ol class="steps">
-    <li>「レポート承認」に<b>承認待ち</b>の下書きが溜まります</li>
-    <li>数字は<b>自動生成</b>なので、あなたが作る必要はありません<span>ただしコメント欄は空です。数字が何を意味するのかを、経営者の言葉で書き足してください。</span></li>
-    <li><b>「承認して公開」</b>を押すと、経営者ダッシュボードに表示されます<span>押すまで顧客側には何も見えません。</span></li>
+    <li>承認待ちの下書きを開く<span>数字は自動生成なので、あなたが作る必要はありません。</span></li>
+    <li><b>パートナーコメント</b>を書く<span>数字が何を意味するのかを経営者の言葉で。ここがレポートの価値そのものです。</span></li>
+    <li>必要なら<b>「ひとことを添える」</b>にチェック<span>定型文5種から選べます。レポート冒頭の、数字より先に目に入る位置に出ます。</span></li>
+    <li><b>「承認して公開」</b>を押す<span>押すまで顧客側には何も見えません。</span></li>
   </ol>
-  <div class="note r"><b>公開後は差し替えられません。</b>数字とコメントを確認してから押してください。</div>
+  <div class="grid g2">
+    <div class="card"><h3>印刷・PDF</h3><p>同じ画面から出力できます。PDFはファイルとして保存されるので、金融機関や税理士への提出資料にそのまま使えます。</p></div>
+    <div class="card r"><h3>公開後は差し替え不可</h3><p>確認してから押してください。承認待ちの見落としは「今日やること」が拾います。</p></div>
+  </div>
 </section>
 
 <section class="slide" data-t="研修と営業ツール">
