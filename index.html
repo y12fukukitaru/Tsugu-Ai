@@ -1031,7 +1031,7 @@
     if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
     // 運営は admin_role で見えるメニューを絞る（未設定は owner 扱い）
     if(r==='admin') return adminNavAll().filter(function(it){ return adminCanSee(it[0]); });
-    return [['sec-flow','ダッシュボード'],['sec-growth','成長ロードマップ'],['sec-biz','本業と連携'],['sec-training','研修プログラム'],['sec-sales','営業ツール'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-reports','レポート承認'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
+    return [['sec-flow','ダッシュボード'],['sec-growth','成長ロードマップ'],['sec-biz','本業と連携'],['sec-training','研修プログラム'],['sec-sales','営業ツール'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
   function effectiveNav(r){
@@ -2505,11 +2505,6 @@
           +'</div>'
           +'<div id="market-broker" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-reports">'
-          +'<div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>月次レポートの承認</span></div>'
-          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">月次レポートの下書きです。内容とコメントを確認・編集し、<b style="color:#1E3A66;">「承認して公開」</b>ボタンを押すと、その月のレポートが経営者ダッシュボードに表示されます。承認待ちがあるとここに一覧表示されます。</div>'
-          +'<div id="rep-drafts">読み込み中...</div>'
-        +'</div>'
         +'<div class="panel" id="sec-knowledge">'
           +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 19.2A2.8 2.8 0 0 1 6.8 16.4H20"/><path d="M6.8 3H20v18H6.8A2.8 2.8 0 0 1 4 18.2V5.8A2.8 2.8 0 0 1 6.8 3z"/></svg>ナレッジベース'
             +'</span><span style="display:flex;gap:8px;align-items:center;">'
@@ -2663,7 +2658,7 @@
     $('app-body').innerHTML=view;
     if(eff==='customer' && ACCESS==='finance'){ loadAcct(); }
     else if(eff==='customer'){ loadDashHero(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
-    else if(eff==='consultant'){ loadClients(); loadReportDrafts(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); }
+    else if(eff==='consultant'){ loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); }
     else {
       // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
       loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadAdmAssign();
@@ -4281,34 +4276,91 @@
     if(m){ m.style.color='#27684A'; m.textContent= ok?'公開しました':'差し戻しました'; }
     setTimeout(loadKnowledge, 700);
   }
-  // --- パートナー：承認待ち一覧 ---
-  async function loadReportDrafts(){
-    var box=$('rep-drafts'); if(!box)return;
-    var res=await sb.from('monthly_reports').select('*').eq('status','draft').order('created_at',{ascending:false}).limit(50);
-    if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'<br><span style="color:#94A2B6;">（Phase 32のSQL未実施の可能性があります）</span></div>'; return; }
-    var drafts=res.data||[];
-    if(!drafts.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">承認待ちのレポートはありません。新しい下書きが用意されると、ここに表示されます。</div>'; return; }
-    var ids=drafts.map(function(d){ return d.customer_id; });
-    var pr=await sb.from('profiles').select('id,company_name,email').in('id',ids);
-    var nm={}; (pr.data||[]).forEach(function(x){ nm[x.id]=x.company_name||x.email; });
+  // ===== 顧客カルテ内の月次レポート（Phase76）=====
+  // 承認・保存・印刷を顧客ごとに1か所へ集約する。全顧客の下書きが混在する
+  // 一覧より、その顧客の数字を見ながら承認するほうが動線として自然なため。
+  var CLREP={ cust:null, rows:[] };
+  async function loadClientReports(custId){
+    var box=$('clrep-body'); if(!box) return;
+    CLREP.cust=custId;
+    var r=await sb.from('monthly_reports').select('*').eq('customer_id',custId)
+      .order('report_month',{ascending:false}).limit(24);
+    if(r.error){ box.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みエラー：'+esc(r.error.message)+'</div>'; return; }
+    CLREP.rows=r.data||[];
+    renderClientReports();
+  }
+  function renderClientReports(){
+    var box=$('clrep-body'); if(!box) return;
+    if(!CLREP.rows.length){
+      box.innerHTML='<div style="font-size:12px;color:#94A2B6;line-height:1.8;">この顧客のレポートはまだありません。月次の数字が登録されると下書きが用意されます。</div>';
+      return;
+    }
+    var drafts=CLREP.rows.filter(function(d){ return d.status!=='published'; });
+    var pubs=CLREP.rows.filter(function(d){ return d.status==='published'; });
     var h='';
-    drafts.forEach(function(d){
-      h+='<div class="clcard" style="cursor:default;">'
-        +'<div class="cl-top"><span class="cl-nm">'+esc(nm[d.customer_id]||'顧客')+'</span><span class="tag gold">'+esc(ymJp(d.report_month))+'分・承認待ち</span></div>'
-        +repSummaryHtml(d.summary)
-        +repAnalysisHtml(d.analysis)
-        +'<div style="font-size:11px;color:#5A6981;margin:8px 0 4px;">パートナーコメント（編集できます）</div>'
-        +'<textarea id="repc-'+d.id+'" class="inp2" rows="5" style="width:100%;">'+esc(d.ai_comment||'')+'</textarea>'
-        +repNoteHtml(d)
-        +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;">'
-          +'<button class="btn2" onclick="approveReport(\''+d.id+'\')">承認して公開</button>'
-          +'<button class="ghost" style="font-size:12px;" onclick="saveReportComment(\''+d.id+'\')">下書き保存</button>'
-          +'<span id="repmsg-'+d.id+'" style="font-size:12px;"></span>'
-        +'</div>'
-      +'</div>';
-    });
+    if(drafts.length){
+      h+='<div style="font-size:12px;font-weight:700;color:#A9403D;margin-bottom:6px;">承認待ち '+drafts.length+'件</div>';
+      h+=drafts.map(function(d){
+        return '<div style="border:1.5px solid #C9D6EA;background:var(--soft);border-radius:11px;padding:12px 14px;margin-bottom:9px;">'
+          +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">'
+            +'<b style="font-size:13.5px;color:var(--ink);">'+esc(ymJp(d.report_month))+'分</b>'
+            +'<span class="tag gold" style="font-size:10px;">承認待ち</span>'
+          +'</div>'
+          +repSummaryHtml(d.summary)
+          +repAnalysisHtml(d.analysis)
+          +'<div style="font-size:11px;color:#5A6981;margin:8px 0 4px;">パートナーコメント（編集できます）</div>'
+          +'<textarea id="repc-'+d.id+'" class="inp2" rows="5" style="width:100%;">'+esc(d.ai_comment||'')+'</textarea>'
+          +repNoteHtml(d)
+          +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;">'
+            +'<button class="btn2" onclick="approveReport(\''+d.id+'\')">承認して公開</button>'
+            +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:8px 13px;" onclick="saveReportComment(\''+d.id+'\')">下書き保存</button>'
+            +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:8px 13px;" onclick="clRepOpen(\''+d.id+'\')">印刷・PDF</button>'
+            +'<span id="repmsg-'+d.id+'" style="font-size:12px;"></span>'
+          +'</div>'
+        +'</div>';
+      }).join('');
+    }
+    if(pubs.length){
+      h+='<div style="font-size:12px;font-weight:700;color:var(--navy);margin:'+(drafts.length?'14px':'0')+' 0 6px;">公開済み</div>';
+      h+=pubs.map(function(d){
+        return '<div style="display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:6px;flex-wrap:wrap;">'
+          +'<b style="font-size:12.5px;color:var(--ink);">'+esc(ymJp(d.report_month))+'分</b>'
+          +'<span class="tag green" style="font-size:10px;">公開済み</span>'
+          +(d.partner_note?'<span style="font-size:10.5px;color:#8A6A12;">ひとことあり</span>':'')
+          +'<span style="flex:1;"></span>'
+          +'<span style="font-size:10.5px;color:var(--muted);">'+esc(String(d.published_at||'').slice(0,10))+'</span>'
+          +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:6px 11px;" onclick="clRepOpen(\''+d.id+'\')">印刷・PDF</button>'
+        +'</div>';
+      }).join('');
+    }
     box.innerHTML=h;
   }
+  // 月次レポートを印刷用モーダルで開く。印刷とPDF保存はモーダル上部のボタンを使う
+  function clRepOpen(id){
+    var d=CLREP.rows.filter(function(x){ return String(x.id)===String(id); })[0];
+    if(!d) return;
+    var co=(CURRENT_CLIENT&&CURRENT_CLIENT.company)||'';
+    var body=$('rep-body'); if(!body) return;
+    body.innerHTML='<div class="rep-sec">'
+      +'<div class="rep-h" style="font-size:17px;color:#1E3A66;font-weight:700;">'+esc(co||'月次レポート')+'　'+esc(ymJp(d.report_month))+'分</div>'
+      +'<div class="rep-meta" style="font-size:11px;color:#94A2B6;margin-bottom:10px;">'
+        +(d.status==='published'?('公開日 '+esc(String(d.published_at||'').slice(0,10))):'下書き（未公開）')+'</div>'
+      +(d.partner_note?'<div style="border:1.5px solid #E3D9BE;background:rgba(195,155,63,.09);border-radius:10px;padding:10px 13px;margin-bottom:10px;">'
+          +'<div style="font-size:13px;color:#18202E;line-height:1.85;">'+esc(d.partner_note)+'</div>'
+          +'<div style="font-size:10.5px;color:#8A6A12;margin-top:4px;">担当パートナーより</div></div>':'')
+      +repSummaryHtml(d.summary)
+      +repAnalysisHtml(d.analysis)
+      +'<div style="background:#F8F9FC;border-left:3px solid #2C5DA8;border-radius:0 9px 9px 0;padding:10px 12px;margin-top:10px;">'
+        +'<div style="font-size:10.5px;color:#2C5DA8;font-weight:600;margin-bottom:4px;">担当パートナーからのコメント</div>'
+        +'<div style="font-size:12.5px;color:#1E3A66;line-height:1.8;white-space:pre-wrap;">'+fmtComment(d.ai_comment||'')+'</div>'
+      +'</div>'
+    +'</div>';
+    var m=$('rep-modal');
+    var mt=m&&m.querySelector('.mt');
+    if(mt) mt.textContent='月次レポート_'+(co||'顧客')+'_'+(d.report_month||'');
+    if(m){ m.classList.remove('hidden'); document.body.style.overflow='hidden'; try{ m.scrollTop=0; }catch(e){} }
+  }
+
   // レポート冒頭に添える「ひとこと」。長い所見はコメント欄、短い呼びかけはこちら。
   // 添えるかどうかを選べ、定型文からも選べる（毎月ゼロから書くと続かないため）
   var REP_NOTE_PRESETS=[
@@ -4372,7 +4424,7 @@
       status:'published', published_at:new Date().toISOString() }, m, '公開しました');
     if(res.error){ if(m){ m.style.color='#A9403D'; m.textContent='エラー：'+res.error.message; } return; }
     if(m){ m.style.color='#27684A'; m.textContent='公開しました。顧客の画面に表示されます。'; }
-    setTimeout(loadReportDrafts, 900);
+    setTimeout(function(){ if(CLREP.cust) loadClientReports(CLREP.cust); loadClients(); }, 900);
   }
   // --- 顧客：公開済みレポート一覧 ---
   async function loadMyReports(){
@@ -7119,7 +7171,7 @@
     var side=$('cl-side'); if(!side)return;
     Array.prototype.forEach.call(side.querySelectorAll('.cl-ni'),function(n){ n.classList.toggle('on', n.id==='ni-'+id); });
   }
-  var CL_SPY_IDS=['cs-todo','cs-onboard','cs-report','cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-value','cs-bp','cs-ins','cs-shared'];
+  var CL_SPY_IDS=['cs-todo','cs-onboard','cs-report','cs-mreport','cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-value','cs-bp','cs-ins','cs-shared'];
   var CL_TAB_WRAPS=['ctab-msg','ctab-fin','ctab-tools','ctab-shared'];
   var CL_ACTIVE='cs-todo';
   // カルテ内タブ切替：見出し（cs-*）から次の見出しまでを1つのタブとして表示
@@ -7151,6 +7203,7 @@
     ['cs-todo','pin','やること'],
     ['cs-onboard','checks','導入チェックリスト'],
     ['cs-report','book','導入診断報告書'],
+    ['cs-mreport','doc','月次レポート'],
     ['cs-company','building','会社情報'],
     ['cs-msg','chat','メッセージ・提案'],
     ['cs-shared','inbox','顧客からの共有'],
@@ -7359,6 +7412,9 @@
       +'<div class="ph" id="cs-report" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 19.2A2.8 2.8 0 0 1 6.8 16.4H20"/><path d="M6.8 3H20v18H6.8A2.8 2.8 0 0 1 4 18.2V5.8A2.8 2.8 0 0 1 6.8 3z"/></svg>導入診断報告書</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadObr(\''+custId+'\')">↺ 更新</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">導入フェーズの4つの成果物（①企業価値診断 ②資金繰り現状 ③保険・固定費の棚卸し ④12ヶ月改善ロードマップ）をまとめる、初回報告面談用の報告書です。<b>「公開」にすると顧客ポータルの「月次レポート」欄にも表示されます。</b>印刷（PDF）は報告書全体・4項目の個別どちらも可能です。</div>'
       +'<div id="obr-body">読み込み中...</div>'
+      +'<div class="ph" id="cs-mreport" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>月次レポート</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientReports(\''+custId+'\')">↺ 更新</span></div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">この顧客の月次レポートです。数字は自動生成されるので、コメントとひとことを添えてから<b style="color:#1E3A66;">「承認して公開」</b>を押してください。公開すると経営者ダッシュボードに表示されます。</div>'
+      +'<div id="clrep-body">読み込み中...</div>'
       +'<div class="ph" id="cs-company" style="font-size:13px;">会社情報（代行入力）</div>'
       +head
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">経営者ポータルには確認用に表示されます（顧客側は閲覧のみ）。</div>'
@@ -7541,7 +7597,7 @@
       +'<div style="margin-top:8px;"><label class="fl">現状の業務・使用中のツール（任意）</label><input id="diag-tools" class="inp2" style="width:100%;" placeholder="例：受発注はFAXと手入力、会計は弥生、勤怠は紙タイムカード"></div>'
       +'<label class="fl" style="margin-top:8px;">補足・重点を置きたい点（任意）</label>'
       +'<input id="diag-note" class="inp2" style="width:100%;margin-bottom:8px;" placeholder="顧客の困りごとや、特に診断したい業務など">'
-      +'<button class="btn2 ai-btn" id="diag-run" onclick="runDiag(\''+custId+'\')">AIで詳細診断する</button>'
+      +'<button class="btn2" id="diag-run" onclick="runDiag(\''+custId+'\')">AIで詳細診断する</button>'
       +'<div id="diag-result" style="margin-top:12px;"></div>'
       +'<div class="ph" style="font-size:12.5px;margin-top:16px;display:flex;align-items:center;justify-content:space-between;">この顧客への診断・提案の履歴<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadDiagHistory(\''+custId+'\')">↺ 更新</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">提案・保存した診断結果の一覧です。対応が済んだものは削除して整理できます。</div>'
@@ -7662,6 +7718,7 @@
     loadNextMeeting(custId);
     loadDiagHistory(custId);
     loadClientProfileFields(custId);
+    loadClientReports(custId);
     loadAssign(custId);
     loadClientListings(custId);
     loadClientApps(custId);
