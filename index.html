@@ -773,8 +773,8 @@
       <span class="mt" onclick="modalToTop('rep-modal')" style="cursor:pointer;" title="タップで先頭へ戻る">月次レポート</span>
       <input type="month" id="rep-month" class="inp2" onchange="renderReport()" style="width:auto;">
       <span class="rep-spacer" style="flex:1;"></span>
-      <button class="btn2" onclick="repPrint(false)" title="プリンタで印刷します"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 9V3h11v6"/><path d="M6.5 17.5H5a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2h-1.5"/><rect x="6.5" y="14" width="11" height="7" rx="1"/></svg>印刷</button>
-      <button class="btn2" onclick="repPrint(true)" title="印刷ダイアログで送信先を「PDFで保存」に選ぶとPDFになります" style="background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>PDFで保存</button>
+      <button class="btn2" onclick="repPrint()" title="プリンタで印刷します"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 9V3h11v6"/><path d="M6.5 17.5H5a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2h-1.5"/><rect x="6.5" y="14" width="11" height="7" rx="1"/></svg>印刷</button>
+      <button class="btn2" onclick="repSavePdf('rep-modal')" title="PDFファイルとして端末に保存します" style="background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>PDFで保存</button>
       <button class="modal-close" onclick="closeReport()" aria-label="閉じる">×</button>
     </div>
     <div id="rep-body" class="modal-body">読み込み中...</div>
@@ -787,8 +787,8 @@
     <div class="rep-bar modal-head">
       <span class="mt" onclick="modalToTop('bp-modal')" style="cursor:pointer;" title="タップで先頭へ戻る">事業計画書（ドラフト）</span>
       <span class="rep-spacer" style="flex:1;"></span>
-      <button class="btn2" onclick="repPrint(false)" title="プリンタで印刷します"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 9V3h11v6"/><path d="M6.5 17.5H5a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2h-1.5"/><rect x="6.5" y="14" width="11" height="7" rx="1"/></svg>印刷</button>
-      <button class="btn2" onclick="repPrint(true)" title="印刷ダイアログで送信先を「PDFで保存」に選ぶとPDFになります" style="background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>PDFで保存</button>
+      <button class="btn2" onclick="repPrint()" title="プリンタで印刷します"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.5 9V3h11v6"/><path d="M6.5 17.5H5a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2h-1.5"/><rect x="6.5" y="14" width="11" height="7" rx="1"/></svg>印刷</button>
+      <button class="btn2" onclick="repSavePdf('bp-modal')" title="PDFファイルとして端末に保存します" style="background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>PDFで保存</button>
       <button class="modal-close" onclick="closeBizplan()" aria-label="閉じる">×</button>
     </div>
     <div id="bp-body" class="modal-body">読み込み中...</div>
@@ -4299,6 +4299,7 @@
         +repAnalysisHtml(d.analysis)
         +'<div style="font-size:11px;color:#5A6981;margin:8px 0 4px;">パートナーコメント（編集できます）</div>'
         +'<textarea id="repc-'+d.id+'" class="inp2" rows="5" style="width:100%;">'+esc(d.ai_comment||'')+'</textarea>'
+        +repNoteHtml(d)
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;">'
           +'<button class="btn2" onclick="approveReport(\''+d.id+'\')">承認して公開</button>'
           +'<button class="ghost" style="font-size:12px;" onclick="saveReportComment(\''+d.id+'\')">下書き保存</button>'
@@ -4308,14 +4309,67 @@
     });
     box.innerHTML=h;
   }
+  // レポート冒頭に添える「ひとこと」。長い所見はコメント欄、短い呼びかけはこちら。
+  // 添えるかどうかを選べ、定型文からも選べる（毎月ゼロから書くと続かないため）
+  var REP_NOTE_PRESETS=[
+    '今月も順調に推移しています。引き続き伴走いたします。',
+    '前月からの改善が数字に表れています。この調子で進めましょう。',
+    '資金繰りに動きがありました。次回お会いした際に詳しくご説明します。',
+    '少し気になる点があります。一度お電話でお話しさせてください。',
+    'ご不明な点は、メッセージでいつでもお気軽にお尋ねください。'
+  ];
+  function repNoteHtml(d){
+    var on=!!(d.partner_note && String(d.partner_note).trim());
+    return '<div style="border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin-top:10px;background:var(--soft);">'
+      +'<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--navy);">'
+        +'<input type="checkbox" id="repn-on-'+d.id+'" style="width:16px;height:16px;" '+(on?'checked':'')+' onchange="repNoteToggle(\''+d.id+'\')">'
+        +'ひとことを添える（レポートの冒頭に表示されます）</label>'
+      +'<div id="repn-box-'+d.id+'" class="'+(on?'':'hidden')+'" style="margin-top:8px;">'
+        +'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px;">'
+        +REP_NOTE_PRESETS.map(function(p,i){
+            return '<button class="ai-sug" onclick="repNoteSet(\''+d.id+'\','+i+')">'+esc(p.length>18?p.slice(0,18)+'…':p)+'</button>';
+          }).join('')
+        +'</div>'
+        +'<textarea id="repn-'+d.id+'" class="inp2" rows="2" style="width:100%;" maxlength="120" placeholder="例：今月も順調に推移しています。引き続き伴走いたします。">'+esc(d.partner_note||'')+'</textarea>'
+        +'<div style="font-size:10.5px;color:var(--muted);margin-top:3px;">120文字まで。長い所見は上のコメント欄にお書きください。</div>'
+      +'</div>'
+    +'</div>';
+  }
+  function repNoteToggle(id){
+    var b=$('repn-box-'+id), c=$('repn-on-'+id); if(!b||!c) return;
+    b.classList.toggle('hidden', !c.checked);
+    if(c.checked){ var t=$('repn-'+id); if(t) t.focus(); }
+  }
+  function repNoteSet(id, i){
+    var t=$('repn-'+id); if(!t) return;
+    t.value=REP_NOTE_PRESETS[i]||''; t.focus();
+  }
+  function repNoteValue(id){
+    var c=$('repn-on-'+id), t=$('repn-'+id);
+    if(!c || !c.checked) return null;                 // 添えない選択なら消す
+    var v=t?String(t.value||'').trim():'';
+    return v||null;
+  }
+  async function repUpdate(id, patch, m, okMsg){
+    var res=await sb.from('monthly_reports').update(patch).eq('id',id);
+    if(res.error && /partner_note/.test(res.error.message||'')){
+      var p2={}; Object.keys(patch).forEach(function(k){ if(k!=='partner_note') p2[k]=patch[k]; });
+      res=await sb.from('monthly_reports').update(p2).eq('id',id);
+      if(!res.error && m){ m.style.color='#8A6A12'; m.textContent=okMsg+'（ひとことは未保存。Supabaseで「Phase75」のSQLを実行してください）'; return res; }
+    }
+    return res;
+  }
   async function saveReportComment(id){
     var t=$('repc-'+id), m=$('repmsg-'+id); if(!t)return;
-    var res=await sb.from('monthly_reports').update({ ai_comment:t.value }).eq('id',id);
-    if(m){ if(res.error){ m.style.color='#A9403D'; m.textContent='保存エラー：'+res.error.message; } else { m.style.color='#27684A'; m.textContent='下書きを保存しました'; } }
+    var res=await repUpdate(id, { ai_comment:t.value, partner_note:repNoteValue(id) }, m, '下書きを保存しました');
+    if(m){ if(res.error){ m.style.color='#A9403D'; m.textContent='保存エラー：'+res.error.message; }
+           else if(!m.textContent){ m.style.color='#27684A'; m.textContent='下書きを保存しました'; } }
   }
   async function approveReport(id){
     var t=$('repc-'+id), m=$('repmsg-'+id); if(!t)return;
-    var res=await sb.from('monthly_reports').update({ ai_comment:t.value, status:'published', published_at:new Date().toISOString() }).eq('id',id);
+    if(m) m.textContent='';
+    var res=await repUpdate(id, { ai_comment:t.value, partner_note:repNoteValue(id),
+      status:'published', published_at:new Date().toISOString() }, m, '公開しました');
     if(res.error){ if(m){ m.style.color='#A9403D'; m.textContent='エラー：'+res.error.message; } return; }
     if(m){ m.style.color='#27684A'; m.textContent='公開しました。顧客の画面に表示されます。'; }
     setTimeout(loadReportDrafts, 900);
@@ -4333,6 +4387,10 @@
         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;font-weight:700;color:#18202E;">'+esc(ymJp(d.report_month))+'のレポート</span>'
         +(i===0?'<span class="tag blue">最新</span>':'')
         +'<span style="margin-left:auto;font-size:10.5px;color:#94A2B6;">'+esc((d.published_at||'').slice(0,10))+' 公開</span></div>'
+        +(d.partner_note?'<div style="border:1.5px solid #E3D9BE;background:rgba(195,155,63,.09);border-radius:10px;padding:10px 13px;margin-top:9px;">'
+            +'<div style="font-size:13px;color:#18202E;line-height:1.85;">'+esc(d.partner_note)+'</div>'
+            +'<div style="font-size:10.5px;color:#8A6A12;margin-top:4px;">担当パートナーより</div>'
+          +'</div>':'')
         +repSummaryHtml(d.summary)
         +repAnalysisHtml(d.analysis)
         +'<div style="background:#F8F9FC;border-left:3px solid #2C5DA8;border-radius:0 9px 9px 0;padding:10px 12px;margin-top:8px;">'
@@ -6868,15 +6926,69 @@
     renderReport();
   }
   // 印刷／PDF保存の共通処理（PDFのときは操作を案内）
-  function repPrint(pdf){
-    if(pdf){
-      var t=document.createElement('div');
-      t.textContent='印刷ダイアログで送信先（プリンタ）を「PDFで保存」に選んでください';
-      t.style.cssText='position:fixed;left:50%;top:16px;transform:translateX(-50%);background:#1E3A66;color:#fff;font-size:12.5px;padding:10px 16px;border-radius:10px;z-index:99999;box-shadow:0 6px 20px rgba(0,0,0,.28);max-width:90vw;text-align:center;';
-      document.body.appendChild(t); setTimeout(function(){ t.remove(); },3500);
-      setTimeout(function(){ window.print(); }, 350);
-    } else {
-      window.print();
+  function repPrint(){ window.print(); }
+  function repToast(txt, ms){
+    var t=document.createElement('div');
+    t.textContent=txt;
+    t.style.cssText='position:fixed;left:50%;top:16px;transform:translateX(-50%);background:#1E3A66;color:#fff;font-size:12.5px;padding:10px 16px;border-radius:10px;z-index:99999;box-shadow:0 6px 20px rgba(0,0,0,.28);max-width:90vw;text-align:center;';
+    document.body.appendChild(t);
+    var to=setTimeout(function(){ t.remove(); }, ms||3000);
+    return function(){ clearTimeout(to); t.remove(); };
+  }
+  // PDFは印刷ダイアログ任せにせず、実ファイルとして書き出す。
+  // 印刷ダイアログ経由はスマホで手順が分かりにくく、保存できたか確認しづらいため。
+  function loadPdfLibs(){
+    return new Promise(function(resolve,reject){
+      if(window.html2canvas && window.jspdf) return resolve();
+      var srcs=[];
+      if(!window.html2canvas) srcs.push('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js');
+      if(!window.jspdf) srcs.push('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
+      var left=srcs.length, failed=false;
+      srcs.forEach(function(src){
+        var s=document.createElement('script');
+        s.src=src;
+        s.onload=function(){ if(--left===0 && !failed) resolve(); };
+        s.onerror=function(){ failed=true; reject(new Error('PDF作成ライブラリの読み込みに失敗しました')); };
+        document.head.appendChild(s);
+      });
+    });
+  }
+  function pdfSafeName(s){
+    return String(s||'レポート').replace(/[\\\/:*?"<>|\s]+/g,'_').replace(/_+/g,'_').slice(0,80);
+  }
+  async function repSavePdf(modalId){
+    var modal=$(modalId); if(!modal) return;
+    var host=modal.querySelector('.modal-body');
+    if(!host){ repPrint(); return; }
+    var title=(modal.querySelector('.mt')||{}).textContent||'レポート';
+    var close=repToast('PDFを作成しています…', 60000);
+    try{
+      await loadPdfLibs();
+      var canvas=await html2canvas(host,{ scale:1.6, backgroundColor:'#ffffff', useCORS:true, logging:false,
+        windowWidth:host.scrollWidth, width:host.scrollWidth, height:host.scrollHeight });
+      var jsPDF=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+      var pdf=new jsPDF({ unit:'mm', format:'a4', orientation:'p' });
+      var mm=10, cw=210-mm*2, ph=297-mm*2;
+      var pxPerMM=canvas.width/cw;
+      var pagePx=Math.floor(ph*pxPerMM);
+      var pages=Math.max(1, Math.ceil(canvas.height/pagePx));
+      for(var i=0;i<pages;i++){
+        var y=i*pagePx, h=Math.min(pagePx, canvas.height-y);
+        if(h<=0) break;
+        var c2=document.createElement('canvas');
+        c2.width=canvas.width; c2.height=h;
+        var ctx=c2.getContext('2d');
+        ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,c2.width,c2.height);
+        ctx.drawImage(canvas, 0, y, canvas.width, h, 0, 0, canvas.width, h);
+        if(i>0) pdf.addPage();
+        pdf.addImage(c2.toDataURL('image/jpeg',0.92),'JPEG', mm, mm, cw, h/pxPerMM);
+      }
+      pdf.save(pdfSafeName(title)+'.pdf');
+      close(); repToast('PDFを保存しました', 2500);
+    }catch(e){
+      close();
+      repToast('PDFを作成できませんでした。印刷ダイアログから「PDFに保存」をお選びください', 5000);
+      setTimeout(function(){ window.print(); }, 600);
     }
   }
   // モーダル内を先頭へスクロール（スマホで見出しタップ時）
