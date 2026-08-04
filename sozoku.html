@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>相続・贈与シミュレーター | Tsugu</title>
+  <title>相続・贈与シミュレーター | TsuguAi -継-</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -15,7 +15,7 @@
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:"Noto Sans JP","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;}
-    /* ===== Tsuguヘッダー ===== */
+    /* ===== TsuguAiヘッダー ===== */
     header{padding:0;background:#fff;border-bottom:1px solid var(--line);color:var(--ink);}
     .tsugu-bar{max-width:1400px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
     .tsugu-logo{font-family:"DM Sans",sans-serif;font-size:22px;font-weight:600;color:var(--navy);letter-spacing:.2px;}
@@ -145,7 +145,7 @@
 <body>
   <header>
     <div class="tsugu-bar">
-      <span class="tsugu-logo">Tsugu <b>-継-</b></span>
+      <span class="tsugu-logo">TsuguAi <b>-継-</b></span>
       <span class="tool-title">相続・贈与シミュレーター</span>
       <span class="tool-badge">パートナー専用ツール</span>
       <a class="back-link" href="./index.html">← パートナーポータルへ戻る</a>
@@ -254,8 +254,8 @@
     </section>
 
     <section class="card" style="margin-top:16px" id="tsuguShareCard">
-      <h2>Tsuguで顧客に共有</h2>
-      <div class="sub">上の試算サマリーを、Tsuguアプリの顧客画面「試算結果（パートナーからの共有）」へ送信します。送信前に「再計算」で最新の結果にしてください。</div>
+      <h2>TsuguAiで顧客に共有</h2>
+      <div class="sub">上の試算サマリーを、TsuguAiアプリの顧客画面「試算結果（パートナーからの共有）」へ送信します。送信前に「再計算」で最新の結果にしてください。</div>
       <div class="stack" style="margin-top:12px">
         <div style="min-width:260px;flex:1">
           <label>共有先の顧客</label>
@@ -265,7 +265,7 @@
         <button id="tsuguCopyBtn" type="button" class="ghost">共有用サマリーをコピー</button>
       </div>
       <div class="small" id="tsuguShareStatus" style="margin-top:10px">—</div>
-      <div class="note danger-box" style="margin-top:10px">⚠ 相続情報は最高度の機微情報です。送信前に必ず確認画面で共有先をご確認ください。誤送信時は直後に表示される「取り消す」または Tsuguアプリの顧客詳細から削除できます。</div>
+      <div class="note danger-box" style="margin-top:10px">⚠ 相続情報は最高度の機微情報です。送信前に必ず確認画面で共有先をご確認ください。誤送信時は直後に表示される「取り消す」または TsuguAiアプリの顧客詳細から削除できます。</div>
       <div class="small" style="margin-top:6px;color:var(--soft)">※ 共有されるのはサマリー数値のみです。詳細は「印刷／PDF出力」を面談時にご提示ください。共用PCでは作業後に「初期化」で入力データを消去してください。</div>
     </section>
 
@@ -1684,20 +1684,20 @@
   if(cm) cm.addEventListener('click', function(e){ if(e.target===cm) closeConfirm(); });
   if(copyBtn) copyBtn.addEventListener('click', function(){
     var t=buildSummary();
-    (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject()).then(function(){ setSt('サマリーをコピーしました。Tsuguのメッセージ等に貼り付けできます。', true); }).catch(function(){ window.prompt('以下をコピーしてください', t); });
+    (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject()).then(function(){ setSt('サマリーをコピーしました。TsuguAiのメッセージ等に貼り付けできます。', true); }).catch(function(){ window.prompt('以下をコピーしてください', t); });
   });
-  if(!window.supabase){ setSt('Tsugu連携の読み込みに失敗しました。「コピー」をご利用ください。', false); if(sel) sel.innerHTML='<option value="">—</option>'; if(btn) btn.disabled=true; return; }
+  if(!window.supabase){ setSt('TsuguAi連携の読み込みに失敗しました。「コピー」をご利用ください。', false); if(sel) sel.innerHTML='<option value="">—</option>'; if(btn) btn.disabled=true; return; }
   sb2=window.supabase.createClient(SB_URL, SB_KEY, { auth:{ flowType:'implicit', detectSessionInUrl:false, persistSession:true, autoRefreshToken:true } });
   async function init(){
     try{
       var sres=await sb2.auth.getSession();
       var sess=sres.data&&sres.data.session;
-      if(!sess){ setSt('Tsuguに未ログインです。Tsuguアプリでパートナーとしてログイン後、このページを再読み込みすると共有できます。'); sel.innerHTML='<option value="">（未ログイン）</option>'; btn.disabled=true; return; }
+      if(!sess){ setSt('TsuguAiに未ログインです。TsuguAiアプリでパートナーとしてログイン後、このページを再読み込みすると共有できます。'); sel.innerHTML='<option value="">（未ログイン）</option>'; btn.disabled=true; return; }
       var uid=sess.user.id;
       var cl=await sb2.from('profiles').select('id,email,company_name').eq('consultant_id',uid).eq('role','customer').order('company_name',{ascending:true});
       if(cl.error){ setSt('顧客一覧の取得に失敗：'+cl.error.message, false); sel.innerHTML='<option value="">—</option>'; btn.disabled=true; return; }
       var rows=cl.data||[];
-      if(!rows.length){ setSt('担当顧客がいません。Tsuguアプリで顧客を担当に追加してください。'); sel.innerHTML='<option value="">（担当顧客なし）</option>'; btn.disabled=true; return; }
+      if(!rows.length){ setSt('担当顧客がいません。TsuguAiアプリで顧客を担当に追加してください。'); sel.innerHTML='<option value="">（担当顧客なし）</option>'; btn.disabled=true; return; }
       CLIENTS={};
       var opts='<option value="">— 共有先を選択してください —</option>';
       rows.forEach(function(c){ var nm=(c.company_name&&c.company_name.length)?c.company_name+'（'+c.email+'）':c.email; CLIENTS[c.id]=nm; opts+='<option value="'+c.id+'">'+nm.replace(/</g,'&lt;')+'</option>'; });
@@ -1721,13 +1721,13 @@
     cmSend.disabled=true; cmSend.textContent='送信中...';
     try{
       var sres=await sb2.auth.getSession();
-      if(!(sres.data&&sres.data.session)){ setSt('セッションが切れています。Tsuguで再ログインしてください。', false); closeConfirm(); cmSend.textContent='送信する'; return; }
+      if(!(sres.data&&sres.data.session)){ setSt('セッションが切れています。TsuguAiで再ログインしてください。', false); closeConfirm(); cmSend.textContent='送信する'; return; }
       var res=await sb2.from('insurance_results').insert({ customer_id:cid, summary:cmBody.value }).select('id').single();
       if(res.error){ setSt('共有エラー：'+res.error.message, false); closeConfirm(); cmSend.textContent='送信する'; return; }
       lastSharedId=res.data&&res.data.id;
       var to=CLIENTS[cid]||'';
       sel.value='';
-      setSt('「'+to.replace(/</g,'&lt;')+'」に共有しました。誤送信の場合は <button type="button" class="mini-btn warn" id="tsuguUndoBtn">今すぐ取り消す</button>（Tsuguアプリの顧客詳細からも削除できます）', true);
+      setSt('「'+to.replace(/</g,'&lt;')+'」に共有しました。誤送信の場合は <button type="button" class="mini-btn warn" id="tsuguUndoBtn">今すぐ取り消す</button>（TsuguAiアプリの顧客詳細からも削除できます）', true);
       var ub=document.getElementById('tsuguUndoBtn');
       if(ub) ub.addEventListener('click', async function(){
         if(!lastSharedId){ setSt('取り消し対象がありません。'); return; }
