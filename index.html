@@ -943,8 +943,9 @@
 
   async function getProfile(session){
     var uid=session.user.id, email=session.user.email;
-    var q=await sb.from('profiles').select('role,full_name,email,company_name,contact_name,admin_role,admin_perms').eq('id',uid).maybeSingle();
-    if(q.error && /admin_role|admin_perms/.test(q.error.message||'')){   // Phase71/72未適用でも動くように
+    // 導入90日プログラムの起点に created_at（または onboard_start）が要る
+    var q=await sb.from('profiles').select('*').eq('id',uid).maybeSingle();
+    if(q.error){   // 列構成が想定と違う環境でもログインできるようにする
       q=await sb.from('profiles').select('role,full_name,email,company_name,contact_name').eq('id',uid).maybeSingle();
     }
     var prof=q.data;
@@ -2257,6 +2258,7 @@
         +'<div style="margin-bottom:12px;"><button id="ct-btn" class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;font-weight:600;" onclick="ctStart(true)"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5.5 3.5-5.5 3.5z"/></svg>使い方ガイド（1分）</button>'
           +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;font-weight:600;margin-left:8px;" onclick="openKnowledgePage(\'manual-customer.html\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>操作説明書 ↗</button></div>'
         +'<div id="dash-hero">読み込み中...</div>'
+        +'<div id="my-onboard"></div>'
         +'<div id="my-impact"></div>'
         +'<div id="my-members"></div>'
         +'<div id="my-acct"></div>'
@@ -2657,7 +2659,7 @@
     window.__eff=eff;
     $('app-body').innerHTML=view;
     if(eff==='customer' && ACCESS==='finance'){ loadAcct(); }
-    else if(eff==='customer'){ loadDashHero(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
+    else if(eff==='customer'){ loadDashHero(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
     else if(eff==='consultant'){ loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); }
     else {
       // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
@@ -7408,6 +7410,8 @@
       +'<div id="cl-todo-body">読み込み中...</div>'
       +'<div class="ph" id="cs-onboard" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 6.5 1.5 1.5L7.5 5"/><path d="m3 13 1.5 1.5L7.5 11.5"/><path d="m3 19.5 1.5 1.5L7.5 18"/><path d="M11 6.5h10M11 13h10M11 19.5h10"/></svg>導入チェックリスト（Phase 0）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadOnboard(\''+custId+'\')">↺ 更新</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">導入初期費用に対応する導入作業（資料受領 → データ整備 → 初期診断 → 報告）の進捗管理です。すべて完了すると「導入診断報告書」の4つの成果物が揃います。</div>'
+      +'<div id="cl-onboard90"></div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin:14px 0 6px;line-height:1.6;">以下は運用側の作業チェックリストです（顧客には表示されません）。</div>'
       +'<div id="cl-onboard-body">読み込み中...</div>'
       +'<div class="ph" id="cs-report" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 19.2A2.8 2.8 0 0 1 6.8 16.4H20"/><path d="M6.8 3H20v18H6.8A2.8 2.8 0 0 1 4 18.2V5.8A2.8 2.8 0 0 1 6.8 3z"/></svg>導入診断報告書</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadObr(\''+custId+'\')">↺ 更新</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">導入フェーズの4つの成果物（①企業価値診断 ②資金繰り現状 ③保険・固定費の棚卸し ④12ヶ月改善ロードマップ）をまとめる、初回報告面談用の報告書です。<b>「公開」にすると顧客ポータルの「月次レポート」欄にも表示されます。</b>印刷（PDF）は報告書全体・4項目の個別どちらも可能です。</div>'
@@ -7718,6 +7722,7 @@
     loadNextMeeting(custId);
     loadDiagHistory(custId);
     loadClientProfileFields(custId);
+    loadOnboard90Client(custId);
     loadClientReports(custId);
     loadAssign(custId);
     loadClientListings(custId);
@@ -11379,6 +11384,125 @@
 
   // ===== 導入チェックリスト（Phase 0）＝初期費用に対応する導入作業の標準手順 =====
   // action_items テーブルを「【導入】」プレフィックス付きで利用（SQL追加なし・課題一覧/やることアラートと連動）
+  // ============================================================
+  // ===== 導入90日プログラム（Phase77）=====
+  // 顧客がいちばん解約しやすいのは、成果が出る前の最初の3ヶ月。
+  // 「いつまでに何を受け取れるか」を顧客の画面に約束として出し、
+  // 達成は実データから自動判定する（手動チェックだと約束にならない）。
+  // ============================================================
+  var ONBOARD90=[
+    { key:'visualize', day:30, title:'現状の可視化',
+      lead:'毎月の数字と資金繰りが、画面で見えるようになります',
+      detail:'決算書と試算表をもとに、売上・利益・現預金の推移と資金繰りの見通しを整えます。',
+      hint:'月次データ3ヶ月分と資金繰り診断が入ると達成になります' },
+    { key:'cost', day:60, title:'コスト構造の棚卸し',
+      lead:'保険と固定費の、削減できる金額をお示しします',
+      detail:'加入中の保険と毎月の固定費を洗い出し、見直した場合に増える現金を試算します。',
+      hint:'保険の試算と支払予定の登録が入ると達成になります' },
+    { key:'roadmap', day:90, title:'12ヶ月改善ロードマップ',
+      lead:'1年で現金がいくら増えるか、道筋をお渡しします',
+      detail:'ここまでの診断をまとめた報告書をお渡しし、今後12ヶ月の打ち手と目標額を合意します。',
+      hint:'導入診断報告書を公開すると達成になります' }
+  ];
+  var OB90_WINDOW=150;   // 契約からこの日数を過ぎたら導入期間の表示を終える
+  function ob90Start(prof){
+    var s=(prof&&(prof.onboard_start||prof.created_at))||null;
+    return s?String(s).slice(0,10):null;
+  }
+  function ob90Days(startStr){
+    if(!startStr) return null;
+    var t=Date.parse(startStr+'T00:00:00');
+    if(!isFinite(t)) return null;
+    return Math.floor((Date.now()-t)/86400000);
+  }
+  // 実データから達成を判定する
+  function ob90Judge(d){
+    return {
+      visualize: (d.fin>=3 && d.cash>=1),
+      cost:      (d.ins>=1 && d.pay>=1),
+      roadmap:   (d.obr>=1)
+    };
+  }
+  async function ob90Fetch(cid){
+    var out={ fin:0, cash:0, ins:0, pay:0, obr:0 };
+    try{
+      var r=await Promise.all([
+        sb.from('financial_entries').select('id').eq('customer_id',cid).limit(12),
+        sb.from('cashflow_snapshots').select('id').eq('customer_id',cid).limit(1),
+        sb.from('insurance_results').select('id').eq('customer_id',cid).limit(1),
+        sb.from('upcoming_payments').select('id').eq('customer_id',cid).limit(1),
+        sb.from('onboarding_reports').select('id,status').eq('customer_id',cid).eq('status','published').limit(1)
+      ]);
+      out.fin =(r[0].error?[]:(r[0].data||[])).length;
+      out.cash=(r[1].error?[]:(r[1].data||[])).length;
+      out.ins =(r[2].error?[]:(r[2].data||[])).length;
+      out.pay =(r[3].error?[]:(r[3].data||[])).length;
+      out.obr =(r[4].error?[]:(r[4].data||[])).length;
+    }catch(e){}
+    return out;
+  }
+  // audience: 'customer'（約束として見せる）／'partner'（進捗管理として見せる）
+  function ob90Html(days, judge, audience){
+    var doneN=ONBOARD90.filter(function(m){ return judge[m.key]; }).length;
+    var all=(doneN===ONBOARD90.length);
+    var pct=Math.round(doneN/ONBOARD90.length*100);
+    var h='<div style="border:1.5px solid '+(all?'#CFE3D6':'#C9D6EA')+';background:'+(all?'rgba(39,104,74,.07)':'var(--soft)')+';border-radius:12px;padding:14px 16px;margin-top:12px;">'
+      +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">'
+        +'<b style="font-size:13.5px;color:'+(all?'#27684A':'var(--navy)')+';">'+(all?'導入プログラム 完了':'導入90日プログラム')+'</b>'
+        +(all?'':'<span style="font-size:11.5px;color:var(--muted);">開始から '+days+' 日目</span>')
+        +'<span style="flex:1;"></span>'
+        +'<span style="font-size:11.5px;color:var(--muted);">'+doneN+' / '+ONBOARD90.length+'</span>'
+      +'</div>'
+      +'<div class="tr-bar" style="margin-bottom:10px;"><i style="width:'+pct+'%;'+(all?'background:#27684A;':'')+'"></i></div>';
+    if(all){
+      h+='<div style="font-size:12px;color:var(--muted);line-height:1.85;">3つの成果物をすべてお渡ししました。ここからは月次レポートで改善の進み具合をご確認いただけます。</div>';
+    } else {
+      h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-bottom:10px;">'
+        +(audience==='customer'
+          ? 'ご契約から90日で、次の3つをお渡しします。担当パートナーが準備を進めています。'
+          : 'この顧客に約束している3つの成果物です。<b style="color:var(--navy);">同じ内容が顧客の画面にも表示されています。</b>')
+        +'</div>';
+      h+=ONBOARD90.map(function(m){
+        var ok=judge[m.key];
+        var over=(!ok && days!=null && days>m.day);
+        var col=ok?'#27684A':(over?'#A9403D':'var(--navy)');
+        return '<div style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--softline);">'
+          +'<span style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:'+(ok?'#27684A':(over?'#A9403D':'var(--line)'))+';color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px;">'+(ok?'✓':m.day)+'</span>'
+          +'<div style="flex:1;min-width:0;">'
+            +'<div style="font-size:13px;font-weight:700;color:'+col+';">'+esc(m.title)
+              +'<span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px;">'+(ok?'お渡し済み':(over?'お約束の'+m.day+'日を過ぎています':m.day+'日目まで'))+'</span></div>'
+            +'<div style="font-size:12px;color:var(--ink);line-height:1.75;margin-top:1px;">'+esc(m.lead)+'</div>'
+            +(audience==='partner'&&!ok?'<div style="font-size:10.5px;color:var(--muted);line-height:1.6;margin-top:2px;">'+esc(m.hint)+'</div>':'')
+          +'</div>'
+        +'</div>';
+      }).join('');
+    }
+    h+='</div>';
+    return h;
+  }
+  // 顧客ポータル
+  async function loadOnboard90(){
+    var box=$('my-onboard'); if(!box) return;
+    var prof=window.__prof||{};
+    var start=ob90Start(prof), days=ob90Days(start);
+    if(days==null){ box.innerHTML=''; return; }
+    var d=await ob90Fetch(SCOPE);
+    var judge=ob90Judge(d);
+    var all=ONBOARD90.every(function(m){ return judge[m.key]; });
+    // 導入期間を過ぎた顧客や、完了して日が経った顧客には出さない
+    if(days>OB90_WINDOW || (all && days>OB90_WINDOW/2)){ box.innerHTML=''; return; }
+    box.innerHTML=ob90Html(days, judge, 'customer');
+  }
+  // パートナーのカルテ
+  async function loadOnboard90Client(custId){
+    var box=$('cl-onboard90'); if(!box) return;
+    var prof={};
+    try{ var p=await sb.from('profiles').select('*').eq('id',custId).maybeSingle(); if(!p.error&&p.data) prof=p.data; }catch(e){}
+    var days=ob90Days(ob90Start(prof));
+    var d=await ob90Fetch(custId);
+    box.innerHTML=ob90Html(days==null?0:days, ob90Judge(d), 'partner');
+  }
+
   var ONBOARD_PREFIX='【導入】';
   var ONBOARD_STEPS=[
     ['STEP 1｜資料の受領（1週目）',7,['キックオフ面談（進め方・サービス範囲の説明）','決算書2〜3期分の受領','保険証券・共済契約一覧の受領','借入一覧（返済予定表）の受領']],
