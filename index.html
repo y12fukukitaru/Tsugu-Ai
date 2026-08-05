@@ -4357,6 +4357,7 @@
         +'<div style="font-size:12.5px;color:#1E3A66;line-height:1.8;white-space:pre-wrap;">'+fmtComment(d.ai_comment||'')+'</div>'
       +'</div>'
     +'</div>';
+    repMonthShow(false);
     var m=$('rep-modal');
     var mt=m&&m.querySelector('.mt');
     if(mt) mt.textContent='月次レポート_'+(co||'顧客')+'_'+(d.report_month||'');
@@ -6976,10 +6977,13 @@
     if(!CURRENT_CLIENT)return;
     REP={ id:CURRENT_CLIENT.id, email:CURRENT_CLIENT.email, company:CURRENT_CLIENT.company||'' };
     var mi=$('rep-month'); if(mi && !mi.value) mi.value=new Date().toISOString().slice(0,7);
+    repMonthShow(true);
     var m=$('rep-modal'); if(m){ m.classList.remove('hidden'); document.body.style.overflow='hidden'; }
     renderReport();
   }
   // 印刷／PDF保存の共通処理（PDFのときは操作を案内）
+  // 月選択はレポート作成のときだけ使う。月次レポートや銀行資料では隠す
+  function repMonthShow(on){ var e=$('rep-month'); if(e) e.style.display = on ? '' : 'none'; }
   function repPrint(){ window.print(); }
   function repToast(txt, ms){
     var t=document.createElement('div');
@@ -7173,7 +7177,7 @@
     var side=$('cl-side'); if(!side)return;
     Array.prototype.forEach.call(side.querySelectorAll('.cl-ni'),function(n){ n.classList.toggle('on', n.id==='ni-'+id); });
   }
-  var CL_SPY_IDS=['cs-todo','cs-onboard','cs-report','cs-mreport','cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-value','cs-bp','cs-ins','cs-shared'];
+  var CL_SPY_IDS=['cs-todo','cs-onboard','cs-report','cs-mreport','cs-bank','cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-value','cs-bp','cs-ins','cs-shared'];
   var CL_TAB_WRAPS=['ctab-msg','ctab-fin','ctab-tools','ctab-shared'];
   var CL_ACTIVE='cs-todo';
   // カルテ内タブ切替：見出し（cs-*）から次の見出しまでを1つのタブとして表示
@@ -7215,6 +7219,7 @@
     ['cs-fund','bank','資金調達ロードマップ'],
     ['cs-loan','yen','融資ナビ'],
     ['cs-bp','doc','事業計画書'],
+    ['cs-bank','bank','銀行提出パッケージ'],
     ['cs-market','market','Tsugu投資・融資・M&A'],
     ['cs-mna','link','M&A提案'],
     ['cs-value','trend','企業価値診断'],
@@ -7664,6 +7669,18 @@
       +'<div id="ev-history">読み込み中...</div>'
       +'</div>'
       +'</div>'
+      +'<div class="ph" id="cs-bank" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 21h18"/><path d="M4 10h16"/><path d="M5 10v11M9 10v11M15 10v11M19 10v11"/><path d="m12 3 9 5H3z"/></svg>銀行提出パッケージ</span></div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">登録済みの試算表データから、<b style="color:#1E3A66;">金融機関が実際に見る数字</b>（債務償還年数・自己資本比率・返済原資）を1枚にまとめた提出用資料を作成します。調達希望額を入れると、<b style="color:#1E3A66;">借入後の債務償還年数</b>も試算します。作成後は印刷・PDF保存ができます。</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+        +'<div><label class="fl">調達希望額（万円）</label><input id="bk-amt" type="number" class="inp2" style="width:140px;" placeholder="例 1000"></div>'
+        +'<div><label class="fl">資金使途</label><select id="bk-use" class="inp2" style="width:160px;">'
+          +'<option>運転資金</option><option>設備投資</option><option>借換え</option>'
+          +'<option>補助金つなぎ</option><option>創業・新規事業</option><option>その他</option></select></div>'
+        +'<div><label class="fl">希望返済年数</label><input id="bk-years" type="number" class="inp2" style="width:120px;" value="7" placeholder="例 7"></div>'
+        +'<div style="flex:1;min-width:170px;"><label class="fl">提出先（任意）</label><input id="bk-bank" class="inp2" style="width:100%;" placeholder="例：○○銀行 △△支店"></div>'
+        +'<button class="btn2" onclick="buildBankPack(\''+custId+'\')">パッケージを作成</button>'
+      +'</div>'
+      +'<div id="bk-msg" style="font-size:12px;margin-top:6px;"></div>'
       +'<div class="ph" id="cs-bp" style="font-size:13px;margin-top:18px;">事業計画書の作成（AI）</div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">登録済みの財務データと資金繰りシミュレーターを自動で読み込み、金融機関提出用ドラフトを作成します（印刷／PDF可）。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
@@ -11384,6 +11401,140 @@
 
   // ===== 導入チェックリスト（Phase 0）＝初期費用に対応する導入作業の標準手順 =====
   // action_items テーブルを「【導入】」プレフィックス付きで利用（SQL追加なし・課題一覧/やることアラートと連動）
+  // ============================================================
+  // ===== 銀行提出パッケージ（Phase79）=====
+  // 金融機関が最初に見るのは「返済できるか」の一点。債務償還年数・返済原資・
+  // 自己資本比率を先頭に置き、調達後にその数字がどう動くかまで出す。
+  // 融資が通れば顧問料の何十倍のインパクトになるため、継続理由として最も強い。
+  // ============================================================
+  async function buildBankPack(custId){
+    var msg=$('bk-msg');
+    function say(t,ok){ if(msg){ msg.style.color=ok?'#27684A':'#A9403D'; msg.textContent=t; } }
+    var amt=Number((($('bk-amt')||{}).value)||0)||0;
+    var use=(($('bk-use')||{}).value)||'運転資金';
+    var yrs=Number((($('bk-years')||{}).value)||0)||7;
+    var bank=((($('bk-bank')||{}).value)||'').trim();
+    say('作成中…');
+    var r;
+    try{
+      r=await Promise.all([
+        sb.from('profiles').select('*').eq('id',custId).maybeSingle(),
+        sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false}).limit(13),
+        sb.from('cashflow_snapshots').select('*').eq('customer_id',custId).order('created_at',{ascending:false}).limit(1),
+        sb.from('upcoming_payments').select('*').eq('customer_id',custId).order('due_date',{ascending:true}).limit(20),
+        sb.from('pdca_items').select('*').eq('customer_id',custId).eq('status','active').limit(8),
+        sb.from('insurance_results').select('summary').eq('customer_id',custId).order('created_at',{ascending:false}).limit(1)
+      ]);
+    }catch(e){ say('読み込みに失敗しました：'+(e&&e.message||e)); return; }
+    var prof=(r[0].error?{}:(r[0].data||{}))||{};
+    var fin=(r[1].error?[]:(r[1].data||[]));
+    var snap=(r[2].error?null:((r[2].data||[])[0]||null));
+    var pays=(r[3].error?[]:(r[3].data||[]));
+    var pdca=(r[4].error?[]:(r[4].data||[]));
+    var ins=(r[5].error?null:((r[5].data||[])[0]||null));
+    if(!fin.length){ say('月次の財務データがありません。先に試算表を取り込んでください。'); return; }
+    var cur=fin[0], m=finMetrics(cur)||{};
+    // 返済原資＝営業利益＋減価償却（年換算）。金融機関の見方に合わせる
+    var cfY=(m.ebitdaY!=null)?m.ebitdaY:null;
+    var debt=((nOr(cur.short_debt)||0)+(nOr(cur.long_debt)||0));
+    var debtAfter=debt+amt;
+    var yearsNow=(cfY&&cfY>0)?debt/cfY:null;
+    var yearsAfter=(cfY&&cfY>0)?debtAfter/cfY:null;
+    var annualRepay=(yrs>0)?amt/yrs:null;              // 元金のみの概算
+    var coverage=(cfY&&annualRepay)?cfY/annualRepay:null;
+    function yen(v,d){ return (v==null||!isFinite(v))?'—':Number(v).toLocaleString('ja-JP',{minimumFractionDigits:(d||0),maximumFractionDigits:(d||0)})+'万円'; }
+    function num(v,u,d){ return (v==null||!isFinite(v))?'—':Number(v).toLocaleString('ja-JP',{minimumFractionDigits:(d==null?1:d),maximumFractionDigits:(d==null?1:d)})+(u||''); }
+    function jColor(k,v){ var j=finJudge(k,v); return j==='good'?'#27684A':(j==='bad'?'#A9403D':(j==='mid'?'#8A6A12':'#1E3A66')); }
+    function box(label, val, sub, color){
+      return '<div style="flex:1 1 150px;min-width:150px;border:1px solid #E2E7EF;border-radius:9px;padding:9px 12px;background:#fff;">'
+        +'<div style="font-size:10.5px;color:#94A2B6;">'+esc(label)+'</div>'
+        +'<div style="font-size:17px;font-weight:700;color:'+(color||'#1E3A66')+';line-height:1.35;margin-top:1px;">'+val+'</div>'
+        +(sub?'<div style="font-size:10px;color:#94A2B6;margin-top:1px;">'+esc(sub)+'</div>':'')
+      +'</div>';
+    }
+    var co=prof.company_name||prof.contact_name||'';
+    var today=new Date().toISOString().slice(0,10);
+    var h='<div class="rep-sec">';
+    // 表紙相当
+    h+='<div style="border-bottom:2px solid #1E3A66;padding-bottom:9px;margin-bottom:12px;">'
+      +'<div style="font-size:19px;font-weight:700;color:#1E3A66;">融資ご検討資料</div>'
+      +'<div style="font-size:13px;color:#18202E;margin-top:4px;">'+esc(co)+'　御中</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-top:3px;">'
+        +(bank?esc(bank)+'　／　':'')+'作成日 '+today+'　／　対象月 '+esc(ymJp(cur.year_month))
+        +(prof.industry?'　／　業種 '+esc(prof.industry):'')+'</div>'
+    +'</div>';
+    // ① 返済能力（銀行が最初に見る）
+    h+='<div style="font-size:13px;font-weight:700;color:#1E3A66;margin:0 0 6px;">1. 返済能力</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;">'
+      +box('年間返済原資', yen(cfY), '営業利益＋減価償却', '#27684A')
+      +box('現在の有利子負債', yen(debt), '短期＋長期')
+      +box('債務償還年数（現在）', num(yearsNow,'年'), '10年以内が目安', jColor('debtYears', yearsNow))
+      +(amt>0?box('調達後の債務償還年数', num(yearsAfter,'年'), '本件を含む', jColor('debtYears', yearsAfter)):'')
+      +'</div>';
+    if(amt>0){
+      h+='<div style="background:#F8F9FC;border-left:3px solid #2C5DA8;border-radius:0 8px 8px 0;padding:9px 12px;font-size:12px;line-height:1.9;color:#18202E;margin-bottom:12px;">'
+        +'本申込：<b>'+yen(amt)+'</b>（資金使途：'+esc(use)+'／希望返済期間：'+yrs+'年）<br>'
+        +'年間元金返済額（概算）：<b>'+yen(annualRepay,0)+'</b>　　返済原資に対する倍率：<b style="color:'+((coverage!=null&&coverage>=1.5)?'#27684A':'#8A6A12')+';">'
+        +num(coverage,'倍')+'</b>'
+        +(coverage!=null?('　'+(coverage>=1.5?'（返済原資が年間返済額を十分に上回っています）':'（返済原資に対して返済負担が重めです。期間の延長をご相談ください）')):'')
+      +'</div>';
+    }
+    // ② 財務の健全性
+    h+='<div style="font-size:13px;font-weight:700;color:#1E3A66;margin:0 0 6px;">2. 財務の健全性</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">'
+      +box('自己資本比率', num(m.equityRate,'%'), '30%以上が目安', jColor('equityRate', m.equityRate))
+      +box('流動比率', num(m.currentRate,'%',0), '150%以上が目安', jColor('currentRate', m.currentRate))
+      +box('有利子負債月商倍率', num(m.debtMonths,'倍'), '3倍以内が目安', jColor('debtMonths', m.debtMonths))
+      +box('インタレストカバレッジ', num(m.icr,'倍'), '利息の支払余力', jColor('icr', m.icr))
+      +box('現預金', yen(nOr(cur.cash)), '月商の'+((nOr(cur.cash)!=null&&nOr(cur.revenue))?num(nOr(cur.cash)/nOr(cur.revenue),'ヶ月'):'—'))
+      +'</div>';
+    // ③ 業績推移
+    var hist=fin.slice(0,12).slice().reverse();
+    h+='<div style="font-size:13px;font-weight:700;color:#1E3A66;margin:0 0 6px;">3. 月次業績の推移</div>'
+      +'<div style="overflow-x:auto;margin-bottom:12px;"><table class="ft" style="width:100%;border-collapse:collapse;font-size:11px;">'
+      +'<tr style="background:#F8F9FC;"><th style="padding:4px 7px;text-align:left;">年月</th>'
+      +hist.map(function(x){ return '<th style="padding:4px 7px;text-align:right;white-space:nowrap;">'+esc((x.year_month||'').slice(2).replace('-','/'))+'</th>'; }).join('')+'</tr>'
+      +'<tr><td style="padding:4px 7px;">売上（万円）</td>'
+      +hist.map(function(x){ return '<td style="padding:4px 7px;text-align:right;">'+(x.revenue!=null?Number(x.revenue).toLocaleString():'—')+'</td>'; }).join('')+'</tr>'
+      +'<tr><td style="padding:4px 7px;">営業利益（万円）</td>'
+      +hist.map(function(x){ var v=x.profit; return '<td style="padding:4px 7px;text-align:right;color:'+((v!=null&&v<0)?'#A9403D':'#18202E')+';">'+(v!=null?Number(v).toLocaleString():'—')+'</td>'; }).join('')+'</tr>'
+      +'</table></div>';
+    // ④ 資金繰り
+    h+='<div style="font-size:13px;font-weight:700;color:#1E3A66;margin:0 0 6px;">4. 資金繰りと支払サイト</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">'
+      +box('売上債権 回転日数', num(m.dsoDays,'日',0), '入金までの日数')
+      +box('買入債務 回転日数', num(m.dpoDays,'日',0), '支払までの日数')
+      +box('CCC', num(m.ccc,'日',0), '短いほど資金が楽', jColor('ccc', m.ccc))
+      +(snap?box('資金繰りスコア', String(snap.score||'—')+'点', '自社診断'):'')
+      +'</div>';
+    if(pays.length){
+      var sum=pays.reduce(function(a,p){ return a+(Number(p.amount)||0); },0);
+      h+='<div style="font-size:11.5px;color:#5A6981;line-height:1.8;margin-bottom:12px;">今後の支払予定：'+pays.length+'件・合計 '+yen(sum,0)
+        +'（直近：'+esc(String(pays[0].due_date||'').slice(0,10))+' '+esc(pays[0].title||'')+'）</div>';
+    }
+    // ⑤ 改善の取り組み
+    var acts=[];
+    if(ins && Number((ins.summary||{}).improve)>0) acts.push('保険の見直しにより年間 '+Number(ins.summary.improve).toLocaleString()+'万円のキャッシュ改善を実行中');
+    pdca.forEach(function(d){ if(d.title) acts.push(String(d.title)); });
+    h+='<div style="font-size:13px;font-weight:700;color:#1E3A66;margin:0 0 6px;">5. 収益改善の取り組み</div>';
+    h+= acts.length
+      ? '<ul style="margin:0 0 10px;padding-left:18px;font-size:12px;line-height:1.9;color:#18202E;">'
+        +acts.slice(0,8).map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ul>'
+      : '<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;">現在、登録されている改善施策はありません。</div>';
+    h+='<div style="font-size:10px;color:#94A2B6;border-top:1px solid #EDF1F6;padding-top:8px;margin-top:6px;line-height:1.75;">'
+      +'本資料は '+esc(co)+' の会計データ（'+esc(ymJp(cur.year_month))+'時点）をもとに TsuguAi -継- が自動作成した参考資料です。'
+      +'返済原資は営業利益と減価償却費から算出した簡易値であり、年間元金返済額は元金均等での概算です（金利は含みません）。'
+      +'正式なご判断は決算書・試算表の原本にてお願いいたします。</div>';
+    h+='</div>';
+    var body=$('rep-body'); if(!body){ say('画面を開けませんでした'); return; }
+    body.innerHTML=h;
+    repMonthShow(false);
+    var mo=$('rep-modal'), mt=mo&&mo.querySelector('.mt');
+    if(mt) mt.textContent='融資ご検討資料_'+(co||'顧客')+'_'+today;
+    if(mo){ mo.classList.remove('hidden'); document.body.style.overflow='hidden'; try{ mo.scrollTop=0; }catch(e){} }
+    say('作成しました。印刷またはPDFで保存できます。', true);
+  }
+
   // ============================================================
   // ===== 導入90日プログラム（Phase77）=====
   // 顧客がいちばん解約しやすいのは、成果が出る前の最初の3ヶ月。
