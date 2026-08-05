@@ -993,6 +993,7 @@
     'sec-cust':    ['owner','coo','cfo','cto'],
     'sec-team':    ['owner'],                    // 権限を配る権限は代表だけに固定する
     'sec-network': ['owner','coo','cto'],
+    'sec-subsidy': ['owner','coo','cto'],
     'sec-exec':    ['owner','cfo','cto'],        // 資金調達・週次・KPI
     'sec-market':  ['owner','coo','cfo','cto'],
     'sec-billing': ['owner','cfo','cto'],        // MRR・顧問料・報酬配分
@@ -1018,7 +1019,7 @@
     return presetPerms(role);
   }
   function adminNavAll(){
-    return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-team','運営メンバー'],['sec-network','専門家ネットワーク'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
+    return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-team','運営メンバー'],['sec-network','専門家ネットワーク'],['sec-subsidy','補助金マスタ'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
   }
   function adminRoleName(r){ var n=r; ADMIN_ROLES.forEach(function(x){ if(x[0]===r) n=x[1]; }); return n; }
   function isOwner(){ return ADMIN_ROLE==='owner'; }
@@ -1032,6 +1033,7 @@
     if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
     // 運営は admin_role で見えるメニューを絞る（未設定は owner 扱い）
     if(r==='admin') return adminNavAll().filter(function(it){ return adminCanSee(it[0]); });
+    // 以降はパートナー
     return [['sec-flow','ダッシュボード'],['sec-growth','成長ロードマップ'],['sec-biz','本業と連携'],['sec-training','研修プログラム'],['sec-sales','営業ツール'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
@@ -1082,6 +1084,7 @@
     play:'<rect x="2.5" y="4" width="19" height="14" rx="2.5"/><path d="m10.5 8.5 4.5 2.5-4.5 2.5z"/><path d="M8 21h8"/>',
     brief:'<rect x="2.5" y="7" width="19" height="13" rx="2.5"/><path d="M9 7V5.2A1.7 1.7 0 0 1 10.7 3.5h2.6A1.7 1.7 0 0 1 15 5.2V7"/><path d="M2.5 12.5h19"/>',
     net:'<circle cx="12" cy="4.5" r="2.5"/><circle cx="4.5" cy="18" r="2.5"/><circle cx="19.5" cy="18" r="2.5"/><path d="M12 7v4M12 11 5.8 15.9M12 11l6.2 4.9"/>',
+    gift:'<rect x="3" y="8.5" width="18" height="12.5" rx="2"/><path d="M3 13h18M12 8.5V21"/><path d="M12 8.5S10.5 3 8 3a2.5 2.5 0 0 0 0 5.5zM12 8.5S13.5 3 16 3a2.5 2.5 0 0 1 0 5.5z"/>',
     up:'<path d="m6.5 13.5 5.5-5.5 5.5 5.5"/><path d="m6.5 19 5.5-5.5 5.5 5.5"/>',
     pin:'<path d="M12 16.5V22"/><path d="M8.5 3h7l-1 6 2.8 3.2v1.3H6.7v-1.3L9.5 9z"/>',
     checks:'<path d="m3 6.5 1.5 1.5L7.5 5"/><path d="m3 13 1.5 1.5L7.5 11.5"/><path d="m3 19.5 1.5 1.5L7.5 18"/><path d="M11 6.5h10M11 13h10M11 19.5h10"/>',
@@ -1123,7 +1126,7 @@
     'sec-clients':'building','sec-sales':'clipboard','sec-pdca':'cycle','sec-madeals':'folder','sec-knowledge':'book','sec-sozoku':'calc',
     'sec-kpi':'chart','sec-risk':'alert','sec-fde':'users','sec-cust':'building','sec-exec':'flag',
     'sec-billing':'card','sec-billpay':'card','sec-audit':'shield','sec-broadcast':'megaphone','sec-support':'life','sec-growth':'up',
-    'sec-training':'play','sec-biz':'brief','sec-network':'net','sec-team':'users'
+    'sec-training':'play','sec-biz':'brief','sec-network':'net','sec-team':'users','sec-subsidy':'gift'
   };
   function niHtml(id,label,drawer){
     var ic=icoSvg(NAV_ICON[id]||'');
@@ -1425,6 +1428,11 @@
         +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadNetwork()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.8;">パートナーの本業（保有資格）と顧客の業種を突き合わせ、<b style="color:var(--navy);">誰がどの領域を実行でき、どこが手薄か</b>を把握するための画面です。手薄な領域は提携専門家で埋め、料金の目安を明示したうえでパートナー・顧客にお繋ぎします。</div>'
         +'<div id="net-body">読み込み中...</div></div>'
+      +'<div class="panel" id="sec-subsidy"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="8.5" width="18" height="12.5" rx="2"/><path d="M3 13h18M12 8.5V21"/><path d="M12 8.5S10.5 3 8 3a2.5 2.5 0 0 0 0 5.5zM12 8.5S13.5 3 16 3a2.5 2.5 0 0 1 0 5.5z"/></svg>補助金マスタ</span>'
+        +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadSubsidyAdmin()">↺ 更新</span></div>'
+        +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.8;">ここに登録した制度が、パートナーの顧客カルテ「補助金ナビ」で<b style="color:var(--navy);">顧客の業種・年商・資金使途に照らして自動で候補表示</b>されます。'
+        +'補助金は要件を外すと不採択になるため、<b style="color:var(--navy);">AIに判定させず運営が登録した制度だけ</b>を候補にします。締切と要件は必ず公募要領で最新をご確認ください。</div>'
+        +'<div id="sub-body">読み込み中...</div></div>'
       +'<div class="panel" id="sec-market"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8h14l-3.5-3.5"/><path d="M21 16H7l3.5 3.5"/></svg>Tsugu投資・融資・M&A（全社）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketApps();loadMarketBroker()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">案件の掲載・ステータス変更は<b>運営のみ</b>が行います。パートナーからの掲載申請を審査し、承認すると即時掲載されます。</div>'
         +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:6px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.5 12.5H16l-1.8 2.8H9.8L8 12.5H2.5"/><path d="M5.6 5.1 2.5 12.5V18a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-5.5l-3.1-7.4A2 2 0 0 0 16.6 4H7.4a2 2 0 0 0-1.8 1.1z"/></svg>掲載申請の審査</span><span id="mkapp-count" class="nbadge hidden">0</span></div>'
@@ -2668,6 +2676,7 @@
       if(adminCanSee('sec-billing')){ loadBillingAdminLinks(); loadPayout(); }
       if(adminCanSee('sec-support')){ loadAdmInquiries(); loadSupportKB(); }
       if(adminCanSee('sec-network')){ loadNetwork(); }
+      if(adminCanSee('sec-subsidy')){ loadSubsidyAdmin(); }
     }
     startNotifPolling(eff);
     navSpyInit();
@@ -7177,7 +7186,7 @@
     var side=$('cl-side'); if(!side)return;
     Array.prototype.forEach.call(side.querySelectorAll('.cl-ni'),function(n){ n.classList.toggle('on', n.id==='ni-'+id); });
   }
-  var CL_SPY_IDS=['cs-todo','cs-onboard','cs-report','cs-mreport','cs-bank','cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-value','cs-bp','cs-ins','cs-shared'];
+  var CL_SPY_IDS=['cs-todo','cs-onboard','cs-report','cs-mreport','cs-subsidy','cs-bank','cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-value','cs-bp','cs-ins','cs-shared'];
   var CL_TAB_WRAPS=['ctab-msg','ctab-fin','ctab-tools','ctab-shared'];
   var CL_ACTIVE='cs-todo';
   // カルテ内タブ切替：見出し（cs-*）から次の見出しまでを1つのタブとして表示
@@ -7219,6 +7228,7 @@
     ['cs-fund','bank','資金調達ロードマップ'],
     ['cs-loan','yen','融資ナビ'],
     ['cs-bp','doc','事業計画書'],
+    ['cs-subsidy','gift','補助金ナビ'],
     ['cs-bank','bank','銀行提出パッケージ'],
     ['cs-market','market','Tsugu投資・融資・M&A'],
     ['cs-mna','link','M&A提案'],
@@ -7669,6 +7679,9 @@
       +'<div id="ev-history">読み込み中...</div>'
       +'</div>'
       +'</div>'
+      +'<div class="ph" id="cs-subsidy" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="8.5" width="18" height="12.5" rx="2"/><path d="M3 13h18M12 8.5V21"/><path d="M12 8.5S10.5 3 8 3a2.5 2.5 0 0 0 0 5.5zM12 8.5S13.5 3 16 3a2.5 2.5 0 0 1 0 5.5z"/></svg>補助金ナビ</span></div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">運営が登録した制度に、この顧客の<b style="color:#1E3A66;">業種・年商・資金使途</b>を照らして候補を出します。返済不要のため、融資より先に検討する価値があります。</div>'
+      +'<div id="subn-body">読み込み中...</div>'
       +'<div class="ph" id="cs-bank" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 21h18"/><path d="M4 10h16"/><path d="M5 10v11M9 10v11M15 10v11M19 10v11"/><path d="m12 3 9 5H3z"/></svg>銀行提出パッケージ</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">登録済みの試算表データから、<b style="color:#1E3A66;">金融機関が実際に見る数字</b>（債務償還年数・自己資本比率・返済原資）を1枚にまとめた提出用資料を作成します。調達希望額を入れると、<b style="color:#1E3A66;">借入後の債務償還年数</b>も試算します。作成後は印刷・PDF保存ができます。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
@@ -7740,6 +7753,7 @@
     loadDiagHistory(custId);
     loadClientProfileFields(custId);
     loadOnboard90Client(custId);
+    loadSubsidyNavi(custId);
     loadClientReports(custId);
     loadAssign(custId);
     loadClientListings(custId);
@@ -11401,6 +11415,254 @@
 
   // ===== 導入チェックリスト（Phase 0）＝初期費用に対応する導入作業の標準手順 =====
   // action_items テーブルを「【導入】」プレフィックス付きで利用（SQL追加なし・課題一覧/やることアラートと連動）
+  // ============================================================
+  // ===== 補助金ナビ（Phase80）=====
+  // 補助金は要件を外すと不採択になるため、AIに「該当します」と言わせない。
+  // 運営が登録した制度マスタに、顧客データ（業種・年商・資金使途）を当てる。
+  // 機械で絞るのは4条件だけ。地域や従業員数は表示して人が判断する。
+  // ============================================================
+  var SUBSIDY_PURPOSES=[
+    ['equip','設備投資'],['it','IT導入・DX'],['sales','販路開拓・販促'],
+    ['restructure','新事業・事業再構築'],['hire','雇用・人材育成'],
+    ['startup','創業・第二創業'],['succession','事業承継・M&A']
+  ];
+  function subPurposeName(k){ var n=k; SUBSIDY_PURPOSES.forEach(function(x){ if(x[0]===k) n=x[1]; }); return n; }
+  function subCsv(v){ return String(v||'').split(',').map(function(x){ return x.trim(); }).filter(Boolean); }
+  function subToday(){ return new Date().toISOString().slice(0,10); }
+  // 判定は「除外できる根拠があるものだけ落とす」。情報が無い項目では落とさない
+  function subsidyCheck(s, ctx){
+    if(s.active===false) return null;
+    var why=[], warn=[];
+    if(s.deadline && String(s.deadline).slice(0,10) < subToday()) return null;   // 締切済みは出さない
+    var ps=subCsv(s.purposes);
+    if(ctx.purpose){
+      if(ps.length && ps.indexOf(ctx.purpose)<0) return null;
+      if(ps.length) why.push('資金使途が一致（'+subPurposeName(ctx.purpose)+'）');
+    }
+    var inds=subCsv(s.industries);
+    if(inds.length){
+      if(!ctx.industry) warn.push('対象業種の指定あり（顧客の業種が未登録です）');
+      else if(inds.indexOf(ctx.industry)<0) return null;
+      else why.push('対象業種に該当（'+ctx.industry+'）');
+    }
+    if(s.rev_max!=null && ctx.annualRev!=null){
+      if(Number(ctx.annualRev) > Number(s.rev_max)) return null;
+      why.push('年商が上限内');
+    }
+    if(s.emp_max!=null) warn.push('従業員数の上限あり（'+Number(s.emp_max)+'名以下）');
+    if(s.areas && !/全国/.test(String(s.areas))) warn.push('対象地域：'+s.areas);
+    if(s.deadline){
+      var d=Math.round((Date.parse(String(s.deadline).slice(0,10)+'T00:00:00')-Date.now())/86400000);
+      if(isFinite(d)){ if(d<=30) warn.push('締切まで'+d+'日'); }
+    }
+    return { why:why, warn:warn };
+  }
+
+  // ---- 運営：制度マスタ ----
+  var SUBS={ rows:[], err:null };
+  async function loadSubsidyAdmin(){
+    var box=$('sub-body'); if(!box) return;
+    SUBS.err=null;
+    try{
+      var r=await sb.from('subsidies').select('*').order('deadline',{ascending:true});
+      if(r.error) SUBS.err=r.error.message; else SUBS.rows=r.data||[];
+    }catch(e){ SUBS.err=String(e&&e.message||e); }
+    renderSubsidyAdmin();
+  }
+  function renderSubsidyAdmin(){
+    var box=$('sub-body'); if(!box) return;
+    if(SUBS.err){ box.innerHTML=netMissBox('補助金マスタを取得できませんでした','Phase80'); return; }
+    var h='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">'
+      +'<div style="font-size:12.5px;color:var(--muted);">登録 '+SUBS.rows.length+'件（締切の近い順）</div>'
+      +'<button class="btn2" style="padding:7px 14px;font-size:12px;" onclick="subToggleForm()">＋ 制度を登録</button></div>';
+    h+='<div id="sub-form" class="hidden" style="border:1px dashed var(--line);border-radius:11px;padding:12px 14px;margin-bottom:10px;background:var(--soft);">'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+        +'<div style="flex:1;min-width:200px;"><label class="fl">制度名</label><input id="sb-name" class="inp2" style="width:100%;" placeholder="例：ものづくり補助金（一般型）"></div>'
+        +'<div style="flex:1;min-width:150px;"><label class="fl">実施機関</label><input id="sb-org" class="inp2" style="width:100%;" placeholder="例：中小企業庁"></div>'
+      +'</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">'
+        +'<div><label class="fl">上限額（万円）</label><input id="sb-max" type="number" class="inp2" style="width:130px;" placeholder="例 1250"></div>'
+        +'<div><label class="fl">補助率</label><input id="sb-rate" class="inp2" style="width:120px;" placeholder="例 1/2"></div>'
+        +'<div><label class="fl">締切</label><input id="sb-deadline" type="date" class="inp2" style="width:150px;"></div>'
+        +'<div><label class="fl">年商上限（万円・任意）</label><input id="sb-revmax" type="number" class="inp2" style="width:160px;" placeholder="無ければ空欄"></div>'
+        +'<div><label class="fl">従業員上限（名・任意）</label><input id="sb-empmax" type="number" class="inp2" style="width:160px;" placeholder="無ければ空欄"></div>'
+      +'</div>'
+      +'<div style="margin-top:8px;"><label class="fl">資金使途（該当するものにチェック）</label>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;" id="sb-purposes">'
+        +SUBSIDY_PURPOSES.map(function(p){ return '<label class="sbtn" style="cursor:pointer;"><input type="checkbox" value="'+p[0]+'" style="margin-right:5px;">'+esc(p[1])+'</label>'; }).join('')
+      +'</div></div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">'
+        +'<div style="flex:1;min-width:180px;"><label class="fl">対象地域</label><input id="sb-areas" class="inp2" style="width:100%;" value="全国" placeholder="全国／東京都 など"></div>'
+        +'<div style="flex:2;min-width:220px;"><label class="fl">対象業種（カンマ区切り・空欄は全業種）</label><input id="sb-inds" class="inp2" style="width:100%;" placeholder="例：製造業,建設業"></div>'
+      +'</div>'
+      +'<div style="margin-top:8px;"><label class="fl">主な要件</label><textarea id="sb-req" class="inp2" rows="2" style="width:100%;" placeholder="例：3〜5年で付加価値額+3%/年、給与支給総額+1.5%/年 など"></textarea></div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;align-items:flex-end;">'
+        +'<div style="flex:1;min-width:220px;"><label class="fl">公募要領URL</label><input id="sb-url" class="inp2" style="width:100%;" placeholder="https://"></div>'
+        +'<button class="btn2" onclick="subAdd()">登録する</button><span id="sb-msg" style="font-size:12px;"></span>'
+      +'</div>'
+    +'</div>';
+    if(!SUBS.rows.length){
+      h+='<div style="font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:11px;padding:14px 16px;line-height:1.8;">'
+        +'まだ登録がありません。まずは全国区の主要制度（ものづくり・IT導入・小規模事業者持続化・事業再構築）から登録すると、多くの顧客に当たります。</div>';
+    } else {
+      h+=SUBS.rows.map(function(s){
+        var over=(s.deadline && String(s.deadline).slice(0,10)<subToday());
+        return '<div style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:6px;'+((s.active===false||over)?'opacity:.55;':'')+'">'
+          +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+            +'<b style="font-size:12.5px;color:var(--ink);">'+esc(s.name||'')+'</b>'
+            +(s.org?'<span style="font-size:11px;color:var(--muted);">'+esc(s.org)+'</span>':'')
+            +(over?'<span class="tag red" style="font-size:10px;">締切終了</span>':'')
+            +'<span style="flex:1;"></span>'
+            +'<button class="ghost" style="font-size:11px;padding:4px 8px;border:1px solid var(--line);border-radius:7px;" onclick="subToggle(\''+s.id+'\','+(s.active===false)+')">'+(s.active===false?'有効に戻す':'停止')+'</button>'
+            +'<button class="ghost" style="font-size:11px;padding:4px 8px;border:1px solid var(--line);border-radius:7px;" onclick="subDel(\''+s.id+'\')">削除</button>'
+          +'</div>'
+          +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:3px;">'
+            +'上限 '+(s.max_amount!=null?Number(s.max_amount).toLocaleString()+'万円':'—')+'　補助率 '+esc(s.rate||'—')
+            +'　締切 '+esc(String(s.deadline||'—').slice(0,10))+'　'+esc(s.areas||'')
+            +(subCsv(s.purposes).length?'　／　'+subCsv(s.purposes).map(subPurposeName).join('・'):'')
+            +(s.industries?'　／　'+esc(s.industries):'')
+          +'</div>'
+        +'</div>';
+      }).join('');
+    }
+    box.innerHTML=h;
+  }
+  function subToggleForm(){ var f=$('sub-form'); if(f) f.classList.toggle('hidden'); }
+  async function subAdd(){
+    var msg=$('sb-msg');
+    function ng(t){ if(msg){ msg.style.color='#A9403D'; msg.textContent=t; } }
+    var name=((($('sb-name')||{}).value)||'').trim();
+    if(!name) return ng('制度名を入力してください。');
+    var ps=[].slice.call(document.querySelectorAll('#sb-purposes input:checked')).map(function(x){ return x.value; });
+    if(!ps.length) return ng('資金使途を1つ以上選んでください。候補を絞る条件になります。');
+    function nv(id){ var v=(($(id)||{}).value); return (v===''||v==null)?null:Number(v); }
+    var row={ id:uuid4(), name:name, org:((($('sb-org')||{}).value)||'').trim()||null,
+      max_amount:nv('sb-max'), rate:((($('sb-rate')||{}).value)||'').trim()||null,
+      deadline:((($('sb-deadline')||{}).value)||null)||null,
+      rev_max:nv('sb-revmax'), emp_max:nv('sb-empmax'),
+      purposes:ps.join(','), areas:((($('sb-areas')||{}).value)||'').trim()||null,
+      industries:((($('sb-inds')||{}).value)||'').trim()||null,
+      requirements:((($('sb-req')||{}).value)||'').trim()||null,
+      url:((($('sb-url')||{}).value)||'').trim()||null,
+      active:true, created_at:new Date().toISOString() };
+    var r=await sb.from('subsidies').insert(row);
+    if(r.error) return ng('登録できませんでした：'+r.error.message+'（Supabaseで「Phase80」のSQLを実行してください）');
+    ['sb-name','sb-org','sb-max','sb-rate','sb-deadline','sb-revmax','sb-empmax','sb-inds','sb-req','sb-url'].forEach(function(id){ var e=$(id); if(e) e.value=''; });
+    [].slice.call(document.querySelectorAll('#sb-purposes input:checked')).forEach(function(x){ x.checked=false; });
+    loadSubsidyAdmin();
+  }
+  async function subToggle(id,on){
+    var r=await sb.from('subsidies').update({active:!!on}).eq('id',id);
+    if(r.error){ alert('更新できませんでした：'+r.error.message); return; }
+    loadSubsidyAdmin();
+  }
+  async function subDel(id){
+    if(!confirm('この制度をマスタから削除しますか？')) return;
+    var r=await sb.from('subsidies').delete().eq('id',id);
+    if(r.error){ alert('削除できませんでした：'+r.error.message); return; }
+    loadSubsidyAdmin();
+  }
+
+  // ---- パートナー：顧客カルテの補助金ナビ ----
+  var SUBNAVI={ cust:null, ctx:null, rows:[], err:null };
+  async function loadSubsidyNavi(custId){
+    var box=$('subn-body'); if(!box) return;
+    SUBNAVI.cust=custId; SUBNAVI.err=null; SUBNAVI.rows=[];
+    var ctx={ industry:null, annualRev:null };
+    try{
+      var p=await sb.from('profiles').select('industry').eq('id',custId).maybeSingle();
+      if(!p.error && p.data) ctx.industry=p.data.industry||null;
+      var f=await sb.from('financial_entries').select('revenue').eq('customer_id',custId).order('year_month',{ascending:false}).limit(12);
+      var rows=(f.error?[]:(f.data||[])).filter(function(x){ return x.revenue!=null; });
+      if(rows.length){
+        var avg=rows.reduce(function(a,x){ return a+Number(x.revenue); },0)/rows.length;
+        ctx.annualRev=Math.round(avg*12);   // 月商の平均から年商を概算（万円）
+      }
+    }catch(e){}
+    SUBNAVI.ctx=ctx;
+    try{
+      var r=await sb.from('subsidies').select('*').eq('active',true).order('deadline',{ascending:true});
+      if(r.error) SUBNAVI.err=r.error.message; else SUBNAVI.rows=r.data||[];
+    }catch(e){ SUBNAVI.err=String(e&&e.message||e); }
+    renderSubsidyNavi();
+  }
+  function renderSubsidyNavi(){
+    var box=$('subn-body'); if(!box) return;
+    if(SUBNAVI.err){
+      box.innerHTML='<div style="font-size:11.5px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:9px 12px;line-height:1.7;">'
+        +'補助金マスタをまだ利用できません。運営がSupabaseで「Phase80」のSQLを実行し、制度を登録すると表示されます。</div>';
+      return;
+    }
+    var ctx=SUBNAVI.ctx||{};
+    var purpose=(($('subn-purpose')||{}).value)||'';
+    var h='<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;">'
+      +'<div><label class="fl">資金使途</label><select id="subn-purpose" class="inp2" style="width:190px;" onchange="renderSubsidyNavi()">'
+        +'<option value="">すべて</option>'
+        +SUBSIDY_PURPOSES.map(function(p){ return '<option value="'+p[0]+'"'+(purpose===p[0]?' selected':'')+'>'+esc(p[1])+'</option>'; }).join('')
+      +'</select></div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.7;padding-bottom:8px;">'
+        +'業種：'+(ctx.industry?esc(ctx.industry):'<span style="color:#A9403D;">未登録</span>')
+        +'　／　年商（概算）：'+(ctx.annualRev!=null?Number(ctx.annualRev).toLocaleString()+'万円':'—')
+      +'</div>'
+    +'</div>';
+    if(!ctx.industry){
+      h+='<div style="font-size:11.5px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:8px 11px;margin-bottom:9px;line-height:1.7;">'
+        +'業種が未登録のため、業種を限定する制度は絞り込めていません。「会社情報」で業種を登録すると精度が上がります。</div>';
+    }
+    var hits=[];
+    SUBNAVI.rows.forEach(function(s){
+      var m=subsidyCheck(s, { industry:ctx.industry, annualRev:ctx.annualRev, purpose:purpose });
+      if(m) hits.push({ s:s, m:m });
+    });
+    if(!hits.length){
+      h+='<div style="font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:11px;padding:14px 16px;line-height:1.8;">'
+        +'条件に合う制度が見つかりませんでした。資金使途を変えるか、運営に制度の追加をご相談ください。</div>';
+      box.innerHTML=h; return;
+    }
+    h+='<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">候補 '+hits.length+'件</div>';
+    h+=hits.map(function(x){
+      var s=x.s;
+      return '<div style="border:1px solid #CFE3D6;background:rgba(39,104,74,.05);border-radius:11px;padding:12px 14px;margin-bottom:8px;">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+          +'<b style="font-size:13px;color:var(--ink);">'+esc(s.name||'')+'</b>'
+          +(s.org?'<span style="font-size:11px;color:var(--muted);">'+esc(s.org)+'</span>':'')
+        +'</div>'
+        +'<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink);margin-top:5px;">'
+          +'<span>上限 <b style="color:#27684A;font-size:15px;">'+(s.max_amount!=null?Number(s.max_amount).toLocaleString()+'万円':'—')+'</b></span>'
+          +'<span>補助率 <b>'+esc(s.rate||'—')+'</b></span>'
+          +'<span>締切 <b>'+esc(String(s.deadline||'—').slice(0,10))+'</b></span>'
+        +'</div>'
+        +(x.m.why.length?'<div style="font-size:11px;color:#27684A;line-height:1.7;margin-top:4px;">✓ '+x.m.why.map(esc).join('　✓ ')+'</div>':'')
+        +(x.m.warn.length?'<div style="font-size:11px;color:#8A6A12;line-height:1.7;margin-top:2px;">要確認：'+x.m.warn.map(esc).join('／')+'</div>':'')
+        +(s.requirements?'<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-top:5px;">'+esc(s.requirements)+'</div>':'')
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;">'
+          +(s.url?'<a href="'+escA(s.url)+'" target="_blank" rel="noopener" class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:6px 11px;text-decoration:none;">公募要領を開く ↗</a>':'')
+          +'<button class="btn2" style="font-size:12px;padding:7px 13px;" onclick="subShare(\''+s.id+'\')">この制度を顧客に共有</button>'
+          +'<span id="subn-msg-'+s.id+'" style="font-size:11.5px;"></span>'
+        +'</div>'
+      +'</div>';
+    }).join('');
+    h+='<div style="font-size:10.5px;color:var(--muted);line-height:1.75;margin-top:8px;">'
+      +'※ 運営が登録した制度に、業種・年商・資金使途を照らした候補です。地域要件・従業員数・加点項目までは判定していません。'
+      +'申請前に必ず公募要領で最新の要件と締切をご確認ください。</div>';
+    box.innerHTML=h;
+  }
+  async function subShare(id){
+    var s=SUBNAVI.rows.filter(function(x){ return String(x.id)===String(id); })[0];
+    var msg=$('subn-msg-'+id);
+    if(!s || !SUBNAVI.cust) return;
+    var txt='【補助金のご提案】'+(s.name||'')+'\n'
+      +(s.org?('実施機関：'+s.org+'\n'):'')
+      +'補助上限：'+(s.max_amount!=null?Number(s.max_amount).toLocaleString()+'万円':'—')
+      +'　補助率：'+(s.rate||'—')+'　締切：'+String(s.deadline||'—').slice(0,10)+'\n'
+      +(s.requirements?('主な要件：'+s.requirements+'\n'):'')
+      +(s.url?('公募要領：'+s.url+'\n'):'')
+      +'\n※ 地域要件・従業員数などの詳細要件は個別に確認が必要です。ご関心があればメッセージでお知らせください。';
+    var r=await sb.from('ai_proposals').insert({ customer_id:SUBNAVI.cust, author_id:ME, source:'subsidy', result_text:txt, shared:true });
+    if(r.error){ if(msg){ msg.style.color='#A9403D'; msg.textContent='共有できませんでした：'+r.error.message; } return; }
+    if(msg){ msg.style.color='#27684A'; msg.textContent='顧客の画面に共有しました。'; }
+  }
+
   // ============================================================
   // ===== 銀行提出パッケージ（Phase79）=====
   // 金融機関が最初に見るのは「返済できるか」の一点。債務償還年数・返済原資・
