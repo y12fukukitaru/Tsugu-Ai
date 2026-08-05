@@ -7192,7 +7192,7 @@
     var side=$('cl-side'); if(!side)return;
     Array.prototype.forEach.call(side.querySelectorAll('.cl-ni'),function(n){ n.classList.toggle('on', n.id==='ni-'+id); });
   }
-  var CL_SPY_IDS=['cs-todo','cs-onboard','cs-report','cs-mreport','cs-subsidy','cs-bank','cs-hosho','cs-shindan','cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-value','cs-bp','cs-ins','cs-shared'];
+  var CL_SPY_IDS=['cs-todo','cs-onboard','cs-report','cs-mreport','cs-subsidy','cs-bank','cs-hosho','cs-shindan','cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-pmi','cs-value','cs-bp','cs-ins','cs-shared'];
   var CL_TAB_WRAPS=['ctab-msg','ctab-fin','ctab-tools','ctab-shared'];
   var CL_ACTIVE='cs-todo';
   // カルテ内タブ切替：見出し（cs-*）から次の見出しまでを1つのタブとして表示
@@ -7240,6 +7240,7 @@
     ['cs-shindan','trend','承継準備度スコア'],
     ['cs-market','market','Tsugu投資・融資・M&A'],
     ['cs-mna','link','M&A提案'],
+    ['cs-pmi','checks','PMI補助'],
     ['cs-value','trend','企業価値診断'],
     ['cs-ins','shieldCheck','保険シミュレーター'],
     ['cs-ai','cpu','AI自動化診断'],
@@ -7663,6 +7664,9 @@
         +'<button class="btn2" id="ma2-run" onclick="runMaFor(\''+custId+'\')">AIで提案を作成</button>'
       +'</div>'
       +'<div id="ma2-result" style="margin-top:12px;"></div>'
+      +'<div class="ph" id="cs-pmi" style="font-size:13px;margin-top:18px;"><span class="ph-t">'+icoSvg('checks')+'PMI補助（統合100日チェックリスト）</span></div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">M&A成立後の統合（PMI）を、<b style="color:#1E3A66;">買い手企業自身が進めるための進行管理ツール</b>です。標準チェックリスト（Day 1 → 30日 → 100日）を期限付きの課題として登録し、進み具合を見える化します。当プラットフォームおよびパートナーはPMIの実行を請け負いません。労務・法務・税務など個別の判断が必要な項目は、専門家ネットワークの専門家におつなぎします。</div>'
+      +'<div id="pmi-body">読み込み中...</div>'
       +'<div class="ph" id="cs-value" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 16.5 5.5-5.5 3.5 3.5L21 5"/><path d="M15 5h6v6"/></svg>企業価値診断（EBITDA法・毎月の推移を顧客と共有）</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">診断して保存すると、顧客ダッシュボードの「企業価値」に毎月の推移として表示されます。同じ月に再診断すると上書きされます。※ 簡易試算であり、実際の譲渡価格・買収価格を保証するものではありません。</div>'
       +'<div class="cl-cols">'
@@ -7770,6 +7774,7 @@
     loadSubsidyNavi(custId);
     loadHoshoNavi(custId);
     loadShindan(custId);
+    loadPmi(custId);
     loadClientReports(custId);
     loadAssign(custId);
     loadClientListings(custId);
@@ -12247,6 +12252,127 @@
     if(res.error){ alert('更新エラー：'+res.error.message); }
     if(CURRENT_CLIENT && CURRENT_CLIENT.id){
       loadOnboard(CURRENT_CLIENT.id);
+      if(typeof reloadClientActions==='function'){ try{ reloadClientActions(CURRENT_CLIENT.id); }catch(e){} }
+    }
+  }
+
+  // ============================================================
+  // ===== PMI補助（統合100日チェックリスト・Phase82）=====
+  // M&A成立後の統合（PMI）を買い手企業自身が進めるための進行管理ツール。
+  // 当社はPMIそのものをサービスとして提供しない（実行は請け負わない）。
+  // 標準項目を action_items に【PMI】接頭辞で登録する（導入チェックリストと
+  // 同じパターン・追加SQL不要）。労務・法務等の個別判断は専門家ネットワークへ。
+  // ============================================================
+  var PMI_PREFIX='【PMI】';
+  var PMI_PHASES=[
+    ['Day 1｜引き継ぎ初日', 0, [
+      '従業員説明会（トップ挨拶・雇用条件は当面変わらないことの説明）',
+      '主要取引先・金融機関への挨拶とご連絡',
+      '銀行口座・実印・鍵・各種パスワードなど重要物の引き継ぎ確認',
+      '決裁の暫定ルールを決める（誰が・いくらまで・何を承認するか）'
+    ]],
+    ['〜30日｜安心の確保と現状把握', 30, [
+      'キーパーソン面談（残ってほしい人の不安・要望を聞く）',
+      '月次数字の報告ルールを統一（TsuguAiへの試算表取り込みを開始）',
+      '資金繰りの合流確認（口座残高・支払サイト・借入返済を支払予定に登録）',
+      '売上上位10社の取引条件・契約書の確認',
+      '許認可・保険・リース等の名義変更の洗い出し（手続きは専門家へ）'
+    ]],
+    ['〜100日｜統合と改善', 100, [
+      '就業規則・給与体系の差異整理（統一か併存かの方針決め。実務は社労士へ）',
+      '業務システム・ITの統合方針を決める',
+      '重複コストの見直し（保険・家賃・仕入の一本化）',
+      '統合後12ヶ月計画を成長ロードマップ・課題PDCAへ登録',
+      '経営者保証・借入の引き継ぎ状況の確認（金融機関・専門家と）'
+    ]]
+  ];
+  function pmiStdTitles(){ var a=[]; PMI_PHASES.forEach(function(p){ p[2].forEach(function(t){ a.push(t); }); }); return a; }
+  async function loadPmi(custId){
+    var box=$('pmi-body'); if(!box) return;
+    box.innerHTML='読み込み中...';
+    var res=await sb.from('action_items').select('*').eq('customer_id',custId).order('created_at',{ascending:true});
+    if(res.error){ box.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
+    var items=(res.data||[]).filter(function(a){ return (a.title||'').indexOf(PMI_PREFIX)===0; });
+    if(!items.length){
+      box.innerHTML='<div style="border:1px dashed #C9D6EA;border-radius:12px;padding:14px 16px;">'
+        +'<div style="font-size:13px;font-weight:700;color:#1E3A66;">M&Aが成立したら、統合100日プランをはじめましょう</div>'
+        +'<div style="font-size:12px;color:#5A6981;line-height:1.8;margin-top:6px;">統合初日（Day 1）の日付を入れると、標準'+pmiStdTitles().length+'項目（Day 1 → 30日 → 100日）を期限付きの課題として一括登録します。PMIの失敗の多くは「誰が・いつまでに・何をやるか」が決まっていないことが原因です。まずこのリストで抜け漏れをなくします。</div>'
+        +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px;">'
+          +'<div><label class="fl">統合初日（Day 1）</label><input id="pmi-day1" type="date" class="inp2" style="width:160px;"></div>'
+          +'<button class="btn2" onclick="pmiSeed()">標準チェックリストを作成</button>'
+        +'</div>'
+        +'<div id="pmi-msg" style="font-size:12px;margin-top:6px;"></div>'
+      +'</div>';
+      return;
+    }
+    var byTitle={}; items.forEach(function(a){ byTitle[(a.title||'').slice(PMI_PREFIX.length)]=a; });
+    var std=pmiStdTitles();
+    var done=items.filter(function(a){ return a.status==='done'; }).length, total=items.length;
+    var pct=total?Math.round(done/total*100):0;
+    var d0=new Date(); var todayS=d0.getFullYear()+'-'+String(d0.getMonth()+1).padStart(2,'0')+'-'+String(d0.getDate()).padStart(2,'0');
+    var h='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">'
+      +'<div style="flex:1;height:8px;background:#EDF1F6;border-radius:99px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:'+(pct===100?'#2E7D53':'#2C5DA8')+';border-radius:99px;"></div></div>'
+      +'<b style="font-size:12.5px;color:#1E3A66;white-space:nowrap;">'+done+' / '+total+' 完了</b>'
+    +'</div>';
+    if(total>0 && done===total){
+      h+='<div style="border:2px solid #C39B3F;background:#FDFAF2;border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:12.5px;color:#5C4A17;line-height:1.7;"><b>統合100日プラン完了。</b>ここからは月次レポートと課題PDCAで、統合後の改善を通常運用として回していきましょう。</div>';
+    }
+    function row(a,label){
+      var isDone=a.status==='done';
+      var over=!isDone && a.due_date && a.due_date<todayS;
+      return '<label style="display:flex;gap:8px;align-items:flex-start;padding:5px 2px;cursor:pointer;border-bottom:1px solid #F3F6FA;">'
+        +'<input type="checkbox" '+(isDone?'checked':'')+' onchange="pmiToggle(\''+a.id+'\','+(isDone?1:0)+')" style="margin-top:2px;">'
+        +'<span style="flex:1;font-size:12.5px;line-height:1.5;'+(isDone?'color:#94A2B6;text-decoration:line-through;':'color:#18202E;')+'">'+esc(label)
+        +(a.due_date?'　<span style="font-size:10.5px;color:'+(over?'#A9403D':'#94A2B6')+';">期限 '+esc(a.due_date)+(over?'（超過）':'')+'</span>':'')
+        +'</span>'
+      +'</label>';
+    }
+    PMI_PHASES.forEach(function(p){
+      h+='<div style="font-size:11px;color:#2C5DA8;font-weight:700;letter-spacing:.04em;margin:10px 0 4px;">'+esc(p[0])+'</div>';
+      p[2].forEach(function(t){
+        var a=byTitle[t];
+        if(!a){ h+='<div style="font-size:11.5px;color:#C2CCDA;padding:3px 0 3px 2px;">□ '+esc(t)+'（未登録）</div>'; return; }
+        h+=row(a,t);
+      });
+    });
+    var extra=items.filter(function(a){ return std.indexOf((a.title||'').slice(PMI_PREFIX.length))<0; });
+    if(extra.length){
+      h+='<div style="font-size:11px;color:#2C5DA8;font-weight:700;margin:10px 0 4px;">追加項目</div>';
+      extra.forEach(function(a){ h+=row(a,(a.title||'').slice(PMI_PREFIX.length)); });
+    }
+    h+='<div style="font-size:10.5px;color:#94A2B6;margin-top:8px;line-height:1.6;">※ 各項目は「課題・アクション」にも表示され、期限の変更・削除はそちらで行えます。会社独自の項目は、課題・アクションで先頭に'+PMI_PREFIX+'を付けて登録すると、この一覧に自動で表示されます。</div>';
+    box.innerHTML=h;
+  }
+  async function pmiSeed(){
+    if(!CURRENT_CLIENT || !CURRENT_CLIENT.id){ alert('顧客が選択されていません'); return; }
+    var msg=$('pmi-msg');
+    var day1=($('pmi-day1')||{}).value;
+    if(!day1){ if(msg){ msg.style.color='#A9403D'; msg.textContent='統合初日（Day 1）の日付を入れてください。'; } return; }
+    if(!confirm('統合100日チェックリストの標準'+pmiStdTitles().length+'項目を、期限付きの課題として一括登録します。\n期限は Day 1（'+day1+'）を起点に 30日後・100日後まで自動設定されます。\n（登録済みの項目はスキップされます）\nよろしいですか？')) return;
+    var custId=CURRENT_CLIENT.id;
+    var chk=await sb.from('action_items').select('title').eq('customer_id',custId);
+    if(chk.error){ alert('確認エラー：'+chk.error.message); return; }
+    var have={}; (chk.data||[]).forEach(function(a){ have[a.title]=1; });
+    var base=Date.parse(day1+'T00:00:00');
+    if(!isFinite(base)){ if(msg){ msg.style.color='#A9403D'; msg.textContent='日付の形式が正しくありません。'; } return; }
+    var rows=[];
+    PMI_PHASES.forEach(function(p){
+      var d=new Date(base+p[1]*86400000);
+      var ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      p[2].forEach(function(t){ var full=PMI_PREFIX+t; if(!have[full]) rows.push({ customer_id:custId, title:full, due_date:ds, created_by:ME, status:'open' }); });
+    });
+    if(!rows.length){ alert('標準項目はすべて登録済みです'); loadPmi(custId); return; }
+    var ins=await sb.from('action_items').insert(rows);
+    if(ins.error){ alert('登録エラー：'+ins.error.message); return; }
+    loadPmi(custId);
+    if(typeof reloadClientActions==='function'){ try{ reloadClientActions(custId); }catch(e){} }
+    if(typeof loadClientTodo==='function'){ try{ loadClientTodo(custId); }catch(e){} }
+  }
+  async function pmiToggle(id, wasDone){
+    var res=await sb.from('action_items').update({ status: wasDone? 'open':'done' }).eq('id',id);
+    if(res.error){ alert('更新エラー：'+res.error.message); }
+    if(CURRENT_CLIENT && CURRENT_CLIENT.id){
+      loadPmi(CURRENT_CLIENT.id);
       if(typeof reloadClientActions==='function'){ try{ reloadClientActions(CURRENT_CLIENT.id); }catch(e){} }
     }
   }
