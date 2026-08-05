@@ -2559,7 +2559,8 @@
                 ['誹謗中傷','他の保険会社・商品・専門家・他のパートナーを誹謗中傷して自らの提案を有利にしてはいけません。']])
               +knRuleGrp('③ 専門家の独占業務（士業の領域）',[
                 ['個別の税務相談・税務書類の作成','個別具体的な税額計算・節税指導・申告書類の作成は税理士の独占業務です（税理士法52条）。一般的な制度の情報提供に留め、顧問税理士または提携税理士へ繋いでください。'],
-                ['法律事務・登記・許認可','法的紛争の代理・和解あっせん（弁護士法72条）、登記書類の作成（司法書士）、官公署提出書類の作成（行政書士）等を報酬を得て行ってはいけません。該当する相談は専門家へ引き継ぎます。']])
+                ['法律事務・登記・許認可','法的紛争の代理・和解あっせん（弁護士法72条）、登記書類の作成（司法書士）、官公署提出書類の作成（行政書士）等を報酬を得て行ってはいけません。該当する相談は専門家へ引き継ぎます。'],
+                ['補助金・助成金の申請代行','補助金・助成金の申請書類の作成・提出の代行は、報酬を得て行うと行政書士等の独占業務にあたります。本プラットフォームの補助金ナビは制度のご案内（情報提供）までとし、申請支援が必要な場合は専門家ネットワークの専門家へおつなぎしてください。採択の見込みを保証する表現も禁止です。']])
               +knRuleGrp('④ 金銭・情報・利益相反に関する禁止行為',[
                 ['金銭の直接授受','顧客から顧問料・手数料等の現金を直接受け取ること、正規ルート（Stripe・当社請求）外での報酬受領、顧客との個人的な金銭貸借・立替は禁止です。'],
                 ['顧客情報の目的外利用','カルテ・財務データ・面談内容を、担当業務以外の目的で利用すること、第三者への提供、私的な端末・クラウドへの保存、SNS等への掲載（匿名加工を含め無承認のもの）は禁止です。'],
@@ -2585,7 +2586,7 @@
           +'<div id="kn-list" style="margin-top:6px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-sozoku"><div class="ph">相続・贈与・事業承継シミュレーター</div>'
-          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:14px;line-height:1.7;">目的に合わせて4つのシミュレーターをご利用ください。結果は印刷／PDFで顧客への提示・専門家への引き継ぎ資料になります。</div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:14px;line-height:1.7;">目的に合わせてシミュレーターをご利用ください。結果は印刷／PDFで顧客への提示・専門家への引き継ぎ資料になります。</div>'
           +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
             +'<div style="border:1px solid #E5EEF8;border-radius:11px;padding:13px 15px;background:#fff;display:flex;flex-direction:column;">'
               +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4.5" y="3" width="15" height="18" rx="2.5"/><path d="M8 7.5h8"/><path d="M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg>相続・贈与シミュレーター</div>'
@@ -2606,6 +2607,11 @@
               +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="7" width="19" height="13" rx="2"/><path d="M8.5 7V5.5A2 2 0 0 1 10.5 3.5h3a2 2 0 0 1 2 2V7"/><path d="M2.5 12.5h19"/></svg>役員退職金シミュレーター</div>'
               +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.65;flex:1;">功績倍率法による適正額の目安、退職所得課税（控除・2分の1・分離課税）を通した手取り額、法人側の損金効果までを一度に試算。保険による原資準備・持分対策との連動設計に。</div>'
               +'<button class="btn2" style="width:100%;background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;" onclick="openKnowledgePage(\'tsugu-retirement.html\')">退職金シミュレーターを開く ↗</button>'
+            +'</div>'
+            +'<div style="border:1px solid #E5EEF8;border-radius:11px;padding:13px 15px;background:#fff;display:flex;flex-direction:column;">'
+              +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>価格転嫁シミュレーター</div>'
+              +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.65;flex:1;">「何%の値上げで、月々いくら現金が残るか」「何%のお客様が離れたら効果が消えるか」を即答。値上げ分はコストが増えないため、ほぼそのまま利益になります。価格交渉・値付け相談の入口に。</div>'
+              +'<button class="btn2" style="width:100%;" onclick="openPriceSim()">価格転嫁シミュレーターを開く</button>'
             +'</div>'
           +'</div>'
         +'</div>'
@@ -7186,7 +7192,7 @@
     var side=$('cl-side'); if(!side)return;
     Array.prototype.forEach.call(side.querySelectorAll('.cl-ni'),function(n){ n.classList.toggle('on', n.id==='ni-'+id); });
   }
-  var CL_SPY_IDS=['cs-todo','cs-onboard','cs-report','cs-mreport','cs-subsidy','cs-bank','cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-value','cs-bp','cs-ins','cs-shared'];
+  var CL_SPY_IDS=['cs-todo','cs-onboard','cs-report','cs-mreport','cs-subsidy','cs-bank','cs-hosho','cs-shindan','cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-value','cs-bp','cs-ins','cs-shared'];
   var CL_TAB_WRAPS=['ctab-msg','ctab-fin','ctab-tools','ctab-shared'];
   var CL_ACTIVE='cs-todo';
   // カルテ内タブ切替：見出し（cs-*）から次の見出しまでを1つのタブとして表示
@@ -7230,6 +7236,8 @@
     ['cs-bp','doc','事業計画書'],
     ['cs-subsidy','gift','補助金ナビ'],
     ['cs-bank','bank','銀行提出パッケージ'],
+    ['cs-hosho','shieldCheck','経営者保証ナビ'],
+    ['cs-shindan','trend','承継準備度スコア'],
     ['cs-market','market','Tsugu投資・融資・M&A'],
     ['cs-mna','link','M&A提案'],
     ['cs-value','trend','企業価値診断'],
@@ -7680,7 +7688,7 @@
       +'</div>'
       +'</div>'
       +'<div class="ph" id="cs-subsidy" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="8.5" width="18" height="12.5" rx="2"/><path d="M3 13h18M12 8.5V21"/><path d="M12 8.5S10.5 3 8 3a2.5 2.5 0 0 0 0 5.5zM12 8.5S13.5 3 16 3a2.5 2.5 0 0 1 0 5.5z"/></svg>補助金ナビ</span></div>'
-      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">運営が登録した制度に、この顧客の<b style="color:#1E3A66;">業種・年商・資金使途</b>を照らして候補を出します。返済不要のため、融資より先に検討する価値があります。</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">運営が登録した制度に、この顧客の<b style="color:#1E3A66;">業種・年商・資金使途</b>を照らして候補を出します。返済不要のため、融資より先に検討する価値があります。ここでの役割は<b style="color:#1E3A66;">制度のご案内（情報提供）まで</b>です。申請書類の作成・提出の代行は行わず、申請支援が必要な場合は専門家ネットワークの専門家におつなぎします。</div>'
       +'<div id="subn-body">読み込み中...</div>'
       +'<div class="ph" id="cs-bank" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 21h18"/><path d="M4 10h16"/><path d="M5 10v11M9 10v11M15 10v11M19 10v11"/><path d="m12 3 9 5H3z"/></svg>銀行提出パッケージ</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">登録済みの試算表データから、<b style="color:#1E3A66;">金融機関が実際に見る数字</b>（債務償還年数・自己資本比率・返済原資）を1枚にまとめた提出用資料を作成します。調達希望額を入れると、<b style="color:#1E3A66;">借入後の債務償還年数</b>も試算します。作成後は印刷・PDF保存ができます。</div>'
@@ -7694,6 +7702,12 @@
         +'<button class="btn2" onclick="buildBankPack(\''+custId+'\')">パッケージを作成</button>'
       +'</div>'
       +'<div id="bk-msg" style="font-size:12px;margin-top:6px;"></div>'
+      +'<div class="ph" id="cs-hosho" style="font-size:13px;margin-top:18px;"><span class="ph-t">'+icoSvg('shieldCheck')+'経営者保証ナビ</span></div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">個人保証（経営者保証）が残ったままでは、承継もM&Aも前に進みません。登録済みの試算表データを<b style="color:#1E3A66;">「経営者保証に関するガイドライン」の3要件</b>に照らして現在地を整理します。解除・不要化の可否は金融機関の判断のため、ここでは<b style="color:#1E3A66;">相談の準備</b>までを整えます。</div>'
+      +'<div id="hosho-body">読み込み中...</div>'
+      +'<div class="ph" id="cs-shindan" style="font-size:13px;margin-top:18px;"><span class="ph-t">'+icoSvg('trend')+'承継準備度スコア（事業承継健診）</span></div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">「いつでも継げる会社か」を、財務データの自動評価とチェックリストでスコア化します。<b style="color:#1E3A66;">点数を上げること自体が磨き上げ＝企業価値の向上</b>につながります。承継の予定がまだなくても、経営改善の羅針盤としてお使いください。</div>'
+      +'<div id="shindan-body">読み込み中...</div>'
       +'<div class="ph" id="cs-bp" style="font-size:13px;margin-top:18px;">事業計画書の作成（AI）</div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">登録済みの財務データと資金繰りシミュレーターを自動で読み込み、金融機関提出用ドラフトを作成します（印刷／PDF可）。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
@@ -7754,6 +7768,8 @@
     loadClientProfileFields(custId);
     loadOnboard90Client(custId);
     loadSubsidyNavi(custId);
+    loadHoshoNavi(custId);
+    loadShindan(custId);
     loadClientReports(custId);
     loadAssign(custId);
     loadClientListings(custId);
@@ -9169,6 +9185,7 @@
         { q:'面談のたびにカルテへ残すべき内容として、正しくないものはどれですか。', o:['顧客の意向（顧客自身の言葉）','提案の根拠となる数字','説明した内容（不利な点を含む）','他社商品の欠点をまとめた比較メモ'], a:3 },
         { q:'募集人資格を持たないパートナーがしてよいことはどれですか。', o:['特定の保険商品への加入を勧める','保険の乗換を推奨する','シミュレーターで財務を分析し、実行は有資格の運営担当へ取り次ぐ','顧客に代わって解約手続きを進める'], a:2 },
         { q:'顧客から「うちの相続税はいくらになりますか」と個別具体的に聞かれました。適切な対応はどれですか。', o:['自分で税額を計算して伝える','一般的な制度の説明にとどめ、顧問税理士または提携税理士へ繋ぐ','申告書の下書きを作って渡す','概算なら問題ないので口頭で金額だけ伝える'], a:1 },
+        { q:'顧客が補助金に興味を示しました。パートナーとして適切な対応はどれですか。', o:['申請書類を作成して提出まで代行する','「この制度なら採択されます」と見込みを保証して勧める','補助金ナビで制度の情報を共有し、申請支援が必要なら専門家ネットワークの専門家へつなぐ','締切が近いので顧客のIDを借りて電子申請する'], a:2 },
         { q:'月次レポートについて正しいものはどれですか。', o:['自動生成された時点で経営者ダッシュボードに表示される','パートナーが「承認して公開」を押して初めて顧客に表示される','運営が承認するのでパートナーの操作は不要','コメント欄も自動生成されるため編集は不要'], a:1 }
       ] }
   ]}
@@ -10579,6 +10596,12 @@
   //   本人が実行してよいかは規程の改定事項なので、それが済むまでは false のまま。
   //   true にすると、本業と連携の文言が「あなたが実行する」前提に切り替わる。
   //   その際は保険シミュレーターの注記2箇所と研修Q4もあわせて改訂すること。
+  //
+  //   ★同じ弁護士レビューで扱う規約整備の議題（返金・解約トラブルの芽を先に摘む）：
+  //   1. 成果非保証条項 — 業績の改善・融資の可否・補助金の採択を保証しない旨を利用規約に明記
+  //   2. 返金の限定 — 返金は「成果物の未提供」の場合に限る旨（画面表示は成果物ベースに統一済み）
+  //   3. 「90日成果物保証（必要資料の受領後90日で3成果物を渡せなければ翌月無料）」の導入可否
+  //      → 導入する場合は規約に条件（資料受領日の起算・対象成果物の定義）を定めてから、UIに載せる
   var SELF_EXEC_OK = false;
   var BIZ_FIELDS=[
     { id:'insurance', n:'保険',            lic:'生命保険募集人・損害保険募集人' },
@@ -11786,6 +11809,7 @@
     h+='<div style="font-size:10px;color:#94A2B6;border-top:1px solid #EDF1F6;padding-top:8px;margin-top:6px;line-height:1.75;">'
       +'本資料は '+esc(co)+' の会計データ（'+esc(ymJp(cur.year_month))+'時点）をもとに TsuguAi -継- が自動作成した参考資料です。'
       +'返済原資は営業利益と減価償却費から算出した簡易値であり、年間元金返済額は元金均等での概算です（金利は含みません）。'
+      +'融資の可否・条件は各金融機関の審査によって決まるものであり、本資料はその結果を保証するものではありません。'
       +'正式なご判断は決算書・試算表の原本にてお願いいたします。</div>';
     h+='</div>';
     var body=$('rep-body'); if(!body){ say('画面を開けませんでした'); return; }
@@ -11798,24 +11822,232 @@
   }
 
   // ============================================================
+  // ===== 経営者保証ナビ（Phase81）=====
+  // 「経営者保証に関するガイドライン」の3要件に登録済みの試算表データを
+  // 当てて、金融機関・専門家へ相談する準備を整える。解除・不要化の可否は
+  // 金融機関の判断なので、本画面は判定を断言しない（ティーアップに徹する）。
+  // ============================================================
+  async function loadHoshoNavi(custId){
+    var box=$('hosho-body'); if(!box) return;
+    var fin=[];
+    try{
+      var r=await sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false}).limit(12);
+      if(!r.error) fin=r.data||[];
+    }catch(e){}
+    if(!fin.length){ box.innerHTML='<div style="font-size:11.5px;color:#94A2B6;">試算表データが未登録のため整理できません。「月次財務メモ」から試算表を取り込むと自動で表示されます。</div>'; return; }
+    var m=finMetrics(fin[0])||{};
+    function mark(j){ return j==='good'?'<b style="color:#27684A;">○</b>':(j==='bad'?'<b style="color:#A9403D;">×</b>':(j==='mid'?'<b style="color:#8A6A12;">△</b>':'<span style="color:#94A2B6;">—</span>')); }
+    function row(label, j, txt){ return '<div style="display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:1.8;">'+mark(j)+'<div><b style="color:#18202E;">'+esc(label)+'</b>　<span style="color:#5A6981;">'+esc(txt)+'</span></div></div>'; }
+    function card(no,title,body,sub){
+      return '<div style="border:1px solid #E2E7EF;border-radius:11px;padding:12px 14px;background:#fff;flex:1 1 240px;min-width:240px;">'
+        +'<div style="font-size:12.5px;font-weight:700;color:#1E3A66;margin-bottom:3px;">要件'+no+'｜'+esc(title)+'</div>'
+        +(sub?'<div style="font-size:10.5px;color:#94A2B6;margin-bottom:7px;line-height:1.6;">'+esc(sub)+'</div>':'')
+        +body+'</div>';
+    }
+    var ebOk=(m.ebitdaY!=null)?(m.ebitdaY>0?'good':'bad'):null;
+    var c1='<div style="font-size:11.5px;color:#5A6981;line-height:1.9;">金融機関との対話で確認されるポイントです。<br>'
+      +'・事業用の資産（不動産・車両など）が法人名義になっている<br>'
+      +'・役員貸付金・仮払金が残っていない<br>'
+      +'・役員報酬・経費の使い方が社内ルールに基づいている</div>';
+    var c2=row('自己資本比率', finJudge('equityRate',m.equityRate), finFmt(m.equityRate,'%')+'（30%以上が目安）')
+      +row('債務償還年数', finJudge('debtYears',m.debtYears), finFmt(m.debtYears,'年')+'（10年以内が目安）')
+      +row('返済原資（EBITDA・年換算）', ebOk, finFmt(m.ebitdaY,'万円',0)+'（黒字であること）');
+    var c3=(fin.length>=3)
+      ? row('月次試算表の継続共有', 'good', 'TsuguAiに'+fin.length+'ヶ月分の月次データが登録されています')
+      : row('月次試算表の継続共有', 'mid', '登録は'+fin.length+'ヶ月分。3ヶ月以上続くと対話の材料になります');
+    box.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+      +card(1,'法人と経営者の分離', c1, '資産とお金の流れが法人と個人で分かれているか')
+      +card(2,'財務基盤の強化', c2, '法人の返済力だけで借入をまかなえるか')
+      +card(3,'適時適切な情報開示', c3, '金融機関に経営状況を継続して開示できているか')
+      +'</div>'
+      +'<div style="font-size:10.5px;color:#94A2B6;margin-top:8px;line-height:1.75;">※ 経営者保証の解除・不要化の可否は各金融機関の判断です。本画面は「経営者保証に関するガイドライン」に沿って相談の準備を整理するためのもので、結果を保証するものではありません。相談の際は<b>銀行提出パッケージ</b>を併せてお持ちください。専門的な支援が必要な場合は専門家ネットワークへおつなぎします。</div>';
+  }
+
+  // ============================================================
+  // ===== 承継準備度スコア（Phase81）=====
+  // 「継」の中核機能。財務データの自動評価＋パートナーのチェックで
+  // 承継準備度をスコア化し、磨き上げの打ち手とM&A・ロードマップに接続する。
+  // チェックの回答は succession_checks（Phase81 SQL）に保存する。
+  // ============================================================
+  var SHINDAN_CHECKS=[
+    ['deputy','経営者が1ヶ月不在でも現場が回る体制がある（右腕・番頭がいる）'],
+    ['manual','主要業務の手順が文書化・マニュアル化されている'],
+    ['sales_dep','売上が特定の1〜2社に偏っていない（依存度おおむね5割未満）'],
+    ['successor','承継の方向性（親族・社員・第三者）について経営者と話せている'],
+    ['shares','株主が整理されている（分散・名義株・所在不明株主がない）'],
+    ['will','経営者の万一に備えた定め（遺言・株式の行き先）がある'],
+    ['contracts','主要な契約書・許認可・免許が整理されている'],
+    ['offbalance','簿外債務・個人的な保証・係争がない'],
+    ['guarantee','経営者保証の解除に向けた相談を始めている']
+  ];
+  var SHINDAN={ cust:null, ans:{}, fin:[] };
+  function shindanAutoItems(){
+    var m=SHINDAN.fin.length?(finMetrics(SHINDAN.fin[0])||{}):{};
+    var months=SHINDAN.fin.length;
+    return [
+      { l:'自己資本比率', j:finJudge('equityRate',m.equityRate), v:finFmt(m.equityRate,'%'), fix:'利益の内部留保を積み、自己資本比率を高める' },
+      { l:'債務償還年数', j:finJudge('debtYears',m.debtYears), v:finFmt(m.debtYears,'年'), fix:'借入の圧縮・収益改善で債務償還年数を10年以内へ' },
+      { l:'営業利益率', j:finJudge('opRate',m.opRate), v:finFmt(m.opRate,'%'), fix:'価格とコスト構造を見直し、営業利益率を高める' },
+      { l:'経営の見える化（月次データ）', j:(months>=3?'good':(months>=1?'mid':'bad')), v:months+'ヶ月分', fix:'試算表の取り込みを続け、月次の見える化を定着させる' }
+    ];
+  }
+  function shindanScore(){
+    var auto=shindanAutoItems();
+    var aPts=0; auto.forEach(function(a){ aPts+=(a.j==='good'?2:(a.j==='mid'?1:0)); });
+    var cN=0; SHINDAN_CHECKS.forEach(function(c){ if(SHINDAN.ans[c[0]]) cN++; });
+    var total=auto.length*2 + SHINDAN_CHECKS.length*2;
+    return { score:Math.round((aPts+cN*2)/total*100), auto:auto, cN:cN };
+  }
+  function renderShindan(){
+    var box=$('shindan-body'); if(!box) return;
+    var s=shindanScore();
+    var tier=(s.score>=75)?['#27684A','承継の準備が進んでいます']
+      :(s.score>=45)?['#8A6A12','基礎は整いつつあります']
+      :['#A9403D','これから整えていく段階です'];
+    function mark(j){ return j==='good'?'<b style="color:#27684A;">○</b>':(j==='bad'?'<b style="color:#A9403D;">×</b>':(j==='mid'?'<b style="color:#8A6A12;">△</b>':'<span style="color:#94A2B6;">—</span>')); }
+    // 次の一手：自動評価の弱点 → 未チェック項目 の順で最大4つ
+    var todo=[];
+    s.auto.forEach(function(a){ if(a.j&&a.j!=='good') todo.push(a.fix); });
+    SHINDAN_CHECKS.forEach(function(c){ if(!SHINDAN.ans[c[0]]) todo.push(c[1]); });
+    todo=todo.slice(0,4);
+    var h='<div class="cl-cols"><div class="cl-col">'
+      +'<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">'
+        +'<span style="font-size:30px;font-weight:700;color:'+tier[0]+';">'+s.score+'<span style="font-size:14px;">点</span></span>'
+        +'<b style="font-size:12.5px;color:'+tier[0]+';">'+tier[1]+'</b>'
+      +'</div>'
+      +'<div class="tr-bar" style="margin:6px 0 12px;"><i style="width:'+s.score+'%;background:'+tier[0]+';"></i></div>'
+      +'<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">財務データからの自動評価</div>'
+      +s.auto.map(function(a){ return '<div style="display:flex;gap:8px;font-size:12px;line-height:1.8;">'+mark(a.j)+'<div><b style="color:#18202E;">'+esc(a.l)+'</b>　<span style="color:#5A6981;">'+esc(a.v)+'</span></div></div>'; }).join('')
+      +(todo.length?('<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin:12px 0 4px;">スコアを上げる次の一手</div>'
+        +'<ul style="margin:0;padding-left:18px;font-size:12px;line-height:1.9;color:#18202E;">'+todo.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ul>'):'')
+      +'</div><div class="cl-col">'
+      +'<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">チェックリスト（面談で確認して記録）</div>'
+      +SHINDAN_CHECKS.map(function(c){
+        return '<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:1.7;padding:4px 0;cursor:pointer;">'
+          +'<input type="checkbox" '+(SHINDAN.ans[c[0]]?'checked':'')+' onchange="shindanTick(\''+c[0]+'\',this.checked)" style="margin-top:3px;">'
+          +'<span>'+esc(c[1])+'</span></label>';
+      }).join('')
+      +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;">'
+        +'<button class="btn2" style="padding:7px 16px;font-size:12px;" onclick="shindanSave()">スコアを保存</button>'
+        +'<span id="shindan-msg" style="font-size:11.5px;"></span>'
+      +'</div>'
+      +'</div></div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;">'
+        +'<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:6px 12px;font-size:11.5px;" onclick="openKnowledgePage(\'tsugu-succession-form.html\')">事業承継・株対策シミュレーターへ ↗</button>'
+        +'<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:6px 12px;font-size:11.5px;" onclick="shindanGoMna()">M&A提案の検討へ</button>'
+      +'</div>'
+      +'<div style="font-size:10.5px;color:#94A2B6;margin-top:8px;line-height:1.75;">※ スコアは準備状況を整理するための目安であり、承継やM&Aの成立・企業価値を保証するものではありません。株式・税務・法務の個別具体的な判断は、専門家ネットワークの専門家におつなぎします。</div>';
+    box.innerHTML=h;
+  }
+  function shindanTick(k,on){ SHINDAN.ans[k]=!!on; renderShindan(); }
+  function shindanGoMna(){ var t=$('cs-mna'); if(t){ try{ t.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){} } }
+  async function shindanSave(){
+    var msg=$('shindan-msg'); if(msg){ msg.style.color='var(--muted)'; msg.textContent='保存中...'; }
+    var payload={ customer_id:SHINDAN.cust, answers:JSON.stringify(SHINDAN.ans), updated_at:new Date().toISOString() };
+    var r=await sb.from('succession_checks').upsert(payload, {onConflict:'customer_id'});
+    if(r.error){ if(msg){ msg.style.color='#A9403D'; msg.textContent='保存できませんでした：'+r.error.message+'（Supabaseで「Phase81」のSQLを実行してください）'; } return; }
+    if(msg){ msg.style.color='#27684A'; msg.textContent='保存しました。次回開いたときも引き継がれます。'; }
+  }
+  async function loadShindan(custId){
+    var box=$('shindan-body'); if(!box) return;
+    SHINDAN={ cust:custId, ans:{}, fin:[] };
+    try{
+      var r=await Promise.all([
+        sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false}).limit(12),
+        sb.from('succession_checks').select('answers').eq('customer_id',custId).maybeSingle()
+      ]);
+      if(!r[0].error) SHINDAN.fin=r[0].data||[];
+      if(!r[1].error && r[1].data && r[1].data.answers){ try{ SHINDAN.ans=JSON.parse(r[1].data.answers)||{}; }catch(e){} }
+    }catch(e){}
+    renderShindan();
+  }
+
+  // ============================================================
+  // ===== 価格転嫁シミュレーター =====
+  // 値上げ率と客数減少の想定から、粗利と現金への影響を試算する。
+  // 値上げの利益増が離脱で消える「限界の離脱率」も示し、価格交渉の入口にする。
+  // ============================================================
+  function openPriceSim(){
+    if(!$('price-modal')){
+      var d=document.createElement('div');
+      d.id='price-modal'; d.className='modal-back hidden';
+      d.onclick=function(ev){ if(ev.target===d) closePriceSim(); };
+      d.innerHTML='<div class="modal" style="max-width:680px;">'
+        +'<div class="modal-head"><span class="mt">価格転嫁シミュレーター</span><span style="flex:1;"></span><button class="modal-close" onclick="closePriceSim()" aria-label="閉じる">×</button></div>'
+        +'<div class="modal-body">'
+        +'<div style="font-size:11.5px;color:#94A2B6;line-height:1.75;margin-bottom:12px;">値上げはコストが増えないため、<b style="color:#1E3A66;">上げた分がほぼそのまま利益</b>になります。「何%の値上げで月々いくら現金が残るか」「何%のお客様が離れたら効果が消えるか」を確認できます。</div>'
+        +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+          +'<div><label class="fl">月商（万円）</label><input id="ps-rev" type="number" class="inp2" style="width:120px;" value="1000" oninput="priceSimCalc()"></div>'
+          +'<div><label class="fl">変動費率（%）</label><input id="ps-vc" type="number" class="inp2" style="width:110px;" value="60" oninput="priceSimCalc()"></div>'
+          +'<div><label class="fl">値上げ率（%）</label><input id="ps-up" type="number" class="inp2" style="width:110px;" value="5" oninput="priceSimCalc()"></div>'
+          +'<div><label class="fl">想定する客数減（%）</label><input id="ps-drop" type="number" class="inp2" style="width:140px;" value="0" oninput="priceSimCalc()"></div>'
+        +'</div>'
+        +'<div style="font-size:10px;color:#94A2B6;margin-top:4px;">変動費率＝仕入・材料など売上に比例して増減する費用の割合。粗利率が40%なら変動費率は60%です。</div>'
+        +'<div id="ps-result" style="margin-top:12px;"></div>'
+        +'<div style="font-size:10.5px;color:#94A2B6;margin-top:10px;line-height:1.75;">※ 概算の試算です。実際の顧客の反応は業種・契約・競合状況により異なります。原価上昇など根拠を添えた交渉が基本です（国も「パートナーシップ構築宣言」等で適正な価格転嫁を後押ししています）。値付けの詳細な検討は担当パートナー・専門家にご相談ください。</div>'
+        +'</div></div>';
+      document.body.appendChild(d);
+    }
+    $('price-modal').classList.remove('hidden');
+    priceSimCalc();
+  }
+  function closePriceSim(){ var d=$('price-modal'); if(d) d.classList.add('hidden'); }
+  function priceSimCalc(){
+    var box=$('ps-result'); if(!box) return;
+    var rev=Number(($('ps-rev')||{}).value)||0;
+    var v=Math.min(95,Math.max(0,Number(($('ps-vc')||{}).value)||0))/100;
+    var p=Math.max(0,Number(($('ps-up')||{}).value)||0)/100;
+    var q=Math.min(100,Math.max(0,Number(($('ps-drop')||{}).value)||0))/100;
+    if(!rev){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">月商を入力してください。</div>'; return; }
+    // 値上げ後の月間粗利＝月商×(1−離脱)×(1＋値上げ−変動費率)。変動費は数量に比例して減る
+    var gpNow=rev*(1-v);
+    var gpAfter=rev*(1-q)*((1+p)-v);
+    var dM=gpAfter-gpNow, dY=dM*12;
+    var qStar=((1+p-v)>0 && p>0) ? p/(1+p-v)*100 : null;
+    function yen(x){ return Number(Math.round(x)).toLocaleString('ja-JP')+'万円'; }
+    function cell(label, val, sub, color){
+      return '<div style="flex:1 1 140px;min-width:140px;border:1px solid #E2E7EF;border-radius:9px;padding:9px 12px;background:#fff;">'
+        +'<div style="font-size:10.5px;color:#94A2B6;">'+esc(label)+'</div>'
+        +'<div style="font-size:17px;font-weight:700;color:'+(color||'#1E3A66')+';line-height:1.35;margin-top:1px;">'+val+'</div>'
+        +(sub?'<div style="font-size:10px;color:#94A2B6;margin-top:1px;">'+esc(sub)+'</div>':'')
+      +'</div>';
+    }
+    var col=dM>=0?'#27684A':'#A9403D';
+    box.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      +cell('現在の月間粗利', yen(gpNow), '月商×（1−変動費率）')
+      +cell('値上げ後の月間粗利', yen(gpAfter), '客数減 '+Math.round(q*100)+'% を織り込み', col)
+      +cell('差額（月）', (dM>=0?'+':'')+yen(dM), '', col)
+      +cell('差額（年）', (dY>=0?'+':'')+yen(dY), '12ヶ月換算', col)
+      +(qStar!=null?cell('限界の離脱率', finFmt(qStar,'%'), 'これを超えて客数が減ると逆効果', '#8A6A12'):'')
+      +'</div>'
+      +(qStar!=null?'<div style="font-size:11.5px;color:#18202E;line-height:1.8;margin-top:8px;">'+Math.round(p*100)+'%の値上げなら、客数が<b style="color:#8A6A12;">'+finFmt(qStar,'%')+'</b>減るまでは利益が増えます。中小企業の実感として、丁寧に説明した数%の値上げでこの水準まで離脱することはまれです。</div>':'');
+  }
+
+  // ============================================================
   // ===== 導入90日プログラム（Phase77）=====
   // 顧客がいちばん解約しやすいのは、成果が出る前の最初の3ヶ月。
-  // 「いつまでに何を受け取れるか」を顧客の画面に約束として出し、
-  // 達成は実データから自動判定する（手動チェックだと約束にならない）。
+  // 「いつまでに何を受け取れるか」を顧客の画面に成果物として出し、
+  // 達成は実データから自動判定する（手動チェックだと形骸化する）。
+  // 保守上の原則：約束するのは「成果物（こちらの行動）」であって
+  // 「業績（結果）」ではない。削減額・現金増を保証する表現は使わない。
+  // また、資料未提供の遅れをパートナーの不履行に見せない（waitで区別）。
   // ============================================================
   var ONBOARD90=[
     { key:'visualize', day:30, title:'現状の可視化',
       lead:'毎月の数字と資金繰りが、画面で見えるようになります',
       detail:'決算書と試算表をもとに、売上・利益・現預金の推移と資金繰りの見通しを整えます。',
-      hint:'月次データ3ヶ月分と資金繰り診断が入ると達成になります' },
+      hint:'月次データ3ヶ月分と資金繰り診断が入ると達成になります',
+      wait:'試算表（直近3ヶ月分）のご提供をお待ちしています' },
     { key:'cost', day:60, title:'コスト構造の棚卸し',
-      lead:'保険と固定費の、削減できる金額をお示しします',
-      detail:'加入中の保険と毎月の固定費を洗い出し、見直した場合に増える現金を試算します。',
-      hint:'保険の試算と支払予定の登録が入ると達成になります' },
+      lead:'保険と固定費の見直し余地を試算してお示しします',
+      detail:'加入中の保険と毎月の固定費を洗い出し、見直した場合の資金への影響を試算します。',
+      hint:'保険の試算と支払予定の登録が入ると達成になります',
+      wait:'保険証券・固定費のわかる資料のご提供をお待ちしています' },
     { key:'roadmap', day:90, title:'12ヶ月改善ロードマップ',
-      lead:'1年で現金がいくら増えるか、道筋をお渡しします',
-      detail:'ここまでの診断をまとめた報告書をお渡しし、今後12ヶ月の打ち手と目標額を合意します。',
-      hint:'導入診断報告書を公開すると達成になります' }
+      lead:'現金を増やすための12ヶ月の道筋をお渡しします',
+      detail:'ここまでの診断をまとめた報告書をお渡しし、今後12ヶ月の打ち手と目標を合意します。',
+      hint:'導入診断報告書を公開すると達成になります',
+      wait:'前の2つの成果物が揃うと作成に入ります' }
   ];
   var OB90_WINDOW=150;   // 契約からこの日数を過ぎたら導入期間の表示を終える
   function ob90Start(prof){
@@ -11836,6 +12068,16 @@
       roadmap:   (d.obr>=1)
     };
   }
+  // 「顧客からの資料待ち」かどうか。待ちの間は期限超過（赤）を出さない。
+  // 資料未提供の遅れがパートナーの不履行に見えると、返金・解約の根拠にされてしまうため。
+  function ob90Waits(judge, d){
+    var noMat=(d.fin===0);   // 試算表が1件もない＝資料をまだお預かりしていない
+    return {
+      visualize: noMat,
+      cost:      noMat,
+      roadmap:   (!judge.visualize || !judge.cost)
+    };
+  }
   async function ob90Fetch(cid){
     var out={ fin:0, cash:0, ins:0, pay:0, obr:0 };
     try{
@@ -11854,8 +12096,9 @@
     }catch(e){}
     return out;
   }
-  // audience: 'customer'（約束として見せる）／'partner'（進捗管理として見せる）
-  function ob90Html(days, judge, audience){
+  // audience: 'customer'（お渡し予定として見せる）／'partner'（進捗管理として見せる）
+  function ob90Html(days, judge, audience, waits){
+    waits=waits||{};
     var doneN=ONBOARD90.filter(function(m){ return judge[m.key]; }).length;
     var all=(doneN===ONBOARD90.length);
     var pct=Math.round(doneN/ONBOARD90.length*100);
@@ -11872,19 +12115,21 @@
     } else {
       h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-bottom:10px;">'
         +(audience==='customer'
-          ? 'ご契約から90日で、次の3つをお渡しします。担当パートナーが準備を進めています。'
-          : 'この顧客に約束している3つの成果物です。<b style="color:var(--navy);">同じ内容が顧客の画面にも表示されています。</b>')
+          ? '必要な資料（試算表・保険証券など）をお預かりしてから、<b style="color:var(--navy);">90日を目安</b>に次の3つをお渡しします。担当パートナーが準備を進めています。'
+          : 'この顧客にお渡し予定の3つの成果物です。<b style="color:var(--navy);">同じ内容が顧客の画面にも表示されています。</b>資料が未提供の項目は「ご提供待ち」と表示され、期限超過にはなりません。')
         +'</div>';
       h+=ONBOARD90.map(function(m){
         var ok=judge[m.key];
-        var over=(!ok && days!=null && days>m.day);
-        var col=ok?'#27684A':(over?'#A9403D':'var(--navy)');
+        var wait=(!ok && !!waits[m.key]);
+        var over=(!ok && !wait && days!=null && days>m.day);
+        var col=ok?'#27684A':(over?'#A9403D':(wait?'#8A6A12':'var(--navy)'));
         return '<div style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--softline);">'
-          +'<span style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:'+(ok?'#27684A':(over?'#A9403D':'var(--line)'))+';color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px;">'+(ok?'✓':m.day)+'</span>'
+          +'<span style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:'+(ok?'#27684A':(over?'#A9403D':(wait?'#C39B3F':'var(--line)')))+';color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px;">'+(ok?'✓':m.day)+'</span>'
           +'<div style="flex:1;min-width:0;">'
             +'<div style="font-size:13px;font-weight:700;color:'+col+';">'+esc(m.title)
-              +'<span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px;">'+(ok?'お渡し済み':(over?'お約束の'+m.day+'日を過ぎています':m.day+'日目まで'))+'</span></div>'
+              +'<span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px;">'+(ok?'お渡し済み':(over?'お渡し予定の'+m.day+'日を過ぎています':(wait?'ご提供待ち':m.day+'日目まで')))+'</span></div>'
             +'<div style="font-size:12px;color:var(--ink);line-height:1.75;margin-top:1px;">'+esc(m.lead)+'</div>'
+            +(wait?'<div style="font-size:10.5px;color:#8A6A12;line-height:1.6;margin-top:2px;">'+esc(m.wait||'資料のご提供をお待ちしています')+'</div>':'')
             +(audience==='partner'&&!ok?'<div style="font-size:10.5px;color:var(--muted);line-height:1.6;margin-top:2px;">'+esc(m.hint)+'</div>':'')
           +'</div>'
         +'</div>';
@@ -11904,7 +12149,7 @@
     var all=ONBOARD90.every(function(m){ return judge[m.key]; });
     // 導入期間を過ぎた顧客や、完了して日が経った顧客には出さない
     if(days>OB90_WINDOW || (all && days>OB90_WINDOW/2)){ box.innerHTML=''; return; }
-    box.innerHTML=ob90Html(days, judge, 'customer');
+    box.innerHTML=ob90Html(days, judge, 'customer', ob90Waits(judge, d));
   }
   // パートナーのカルテ
   async function loadOnboard90Client(custId){
@@ -11913,7 +12158,8 @@
     try{ var p=await sb.from('profiles').select('*').eq('id',custId).maybeSingle(); if(!p.error&&p.data) prof=p.data; }catch(e){}
     var days=ob90Days(ob90Start(prof));
     var d=await ob90Fetch(custId);
-    box.innerHTML=ob90Html(days==null?0:days, ob90Judge(d), 'partner');
+    var judge=ob90Judge(d);
+    box.innerHTML=ob90Html(days==null?0:days, judge, 'partner', ob90Waits(judge, d));
   }
 
   var ONBOARD_PREFIX='【導入】';
