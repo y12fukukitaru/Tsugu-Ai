@@ -8357,7 +8357,16 @@
     renderAgentInsights();
   }
   function agentInsightBody(t){
-    return esc(t||'').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');
+    // 太字と箇条書きに対応。万一 #・---・> などの記号が混ざっても綺麗に表示する
+    return String(t||'').split('\n').map(function(line){
+      var l=esc(line).trim();
+      if(/^(-{3,}|\*{3,})$/.test(l)) return '<span style="display:block;border-top:1px solid var(--softline);margin:8px 0;"></span>';
+      l=l.replace(/^&gt;\s*/,'');
+      var h=l.match(/^#{1,4}\s*(.+)$/);
+      if(h) l='<b style="color:var(--navy);">'+h[1]+'</b>';
+      l=l.replace(/^-\s+/,'・').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
+      return l;
+    }).join('<br>').replace(/(<br>){3,}/g,'<br><br>');
   }
   function agentInsightsHtml(){
     if(!AGENT_INSIGHTS.length) return '';
