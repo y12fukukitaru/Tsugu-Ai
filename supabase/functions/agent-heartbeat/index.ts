@@ -114,8 +114,115 @@ async function runHeartbeat(sb: any) {
     }
   }
 
-  console.log(`heartbeat done: partners=${byPartner.size} generated=${generated}`);
-  return { partners: byPartner.size, generated };
+  // 48時間以内に面談がある顧客には、深掘りの「面談準備ブリーフ」を届ける
+  const briefed = await prepareMeetingBriefs(sb, byPartner);
+
+  console.log(`heartbeat done: partners=${byPartner.size} generated=${generated} meeting_briefs=${briefed}`);
+  return { partners: byPartner.size, generated, meeting_briefs: briefed };
+}
+
+// ---- 面談前ブリーフ：前日〜当日の面談に向けて、その顧客の全体像を1枚に ----
+async function prepareMeetingBriefs(sb: any, byPartner: Map<string, Set<string>>): Promise<number> {
+  // 顧客 → 担当パートナーの逆引き
+  const partnersOf = new Map<string, Set<string>>();
+  for (const [pid, custs] of byPartner) {
+    for (const cid of custs) {
+      if (!partnersOf.has(cid)) partnersOf.set(cid, new Set());
+      partnersOf.get(cid)!.add(pid);
+    }
+  }
+  const customerIds = [...partnersOf.keys()];
+  if (!customerIds.length) return 0;
+
+  const { data: meetings } = await sb
+    .from("meetings_scheduled")
+    .select("customer_id, meet_at, place")
+    .eq("status", "scheduled")
+    .in("customer_id", customerIds)
+    .gte("meet_at", now().toISOString())
+    .lte("meet_at", daysAhead(2));
+
+  let briefed = 0;
+  for (const m of (meetings ?? []).slice(0, 10)) { // 1回の実行で最大10件（コスト上限）
+    for (const partnerId of partnersOf.get(m.customer_id) ?? []) {
+      // 同じ顧客への準備ブリーフは1.5日以内に1回まで（毎朝の重複を防ぐ）
+      const { data: dup } = await sb
+        .from("agent_insights")
+        .select("id")
+        .eq("user_id", partnerId)
+        .eq("customer_id", m.customer_id)
+        .eq("kind", "meeting_prep")
+        .gte("created_at", daysAgo(1.5))
+        .limit(1);
+      if (dup?.length) continue;
+
+      const ctx = await collectCustomerContext(sb, m.customer_id);
+      const brief = await composeMeetingBrief(ctx, m);
+      if (!brief) continue;
+
+      const { error: insErr } = await sb.from("agent_insights").insert({
+        user_id: partnerId,
+        customer_id: m.customer_id,
+        kind: "meeting_prep",
+        title: brief.title,
+        body: brief.body,
+        reason: `${fmtDate(m.meet_at)}に面談予定のため、直近の数字・課題・前回記録から自動生成`,
+        priority: 1,
+      });
+      if (!insErr) {
+        briefed++;
+        await deliver(sb, partnerId, brief);
+      }
+    }
+  }
+  return briefed;
+}
+
+// 顧客1社の「今」をテーブル横断で集める（面談準備の材料）
+async function collectCustomerContext(sb: any, customerId: string) {
+  const [prof, fin, cash, pdca, note] = await Promise.all([
+    sb.from("profiles").select("company_name, stage").eq("id", customerId).maybeSingle(),
+    sb.from("financial_entries").select("year_month, revenue, profit, memo").eq("customer_id", customerId).order("year_month", { ascending: false }).limit(3),
+    sb.from("cashflow_snapshots").select("cash, monthly_in, monthly_out, monthly_repay, score, created_at").eq("customer_id", customerId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    sb.from("pdca_items").select("title, due_date, status").eq("customer_id", customerId).neq("status", "done").order("due_date", { ascending: true }).limit(6),
+    sb.from("meeting_notes").select("meeting_date, title, summary, todos").eq("customer_id", customerId).order("meeting_date", { ascending: false }).limit(1).maybeSingle(),
+  ]);
+  return {
+    company: prof?.data?.company_name ?? "（社名未設定）",
+    stage: prof?.data?.stage ?? null,
+    finance: fin?.data ?? [],
+    cashflow: cash?.data ?? null,
+    openIssues: pdca?.data ?? [],
+    lastMeeting: note?.data ?? null,
+  };
+}
+
+async function composeMeetingBrief(ctx: any, meeting: { meet_at: string; place?: string }): Promise<{ title: string; body: string } | null> {
+  const sys =
+    "あなたは中小企業支援プラットフォーム「TsuguAi」のAIエージェント「継ナビくん」です。" +
+    "認定パートナーが顧客との面談に自信を持って臨めるよう、面談準備ブリーフを1枚にまとめます。" +
+    "構成: ①会社の今（数字の要点を2〜3行。データがあれば前月比・傾向に言及）②前回からの宿題・未完了課題（確認すべきもの）③今回話すべきテーマ3つ（理由つき）④想定される質問と答えの方向性1〜2個⑤冒頭の一言（そのまま使える台詞）。" +
+    "データが無い項目は無理に埋めず飛ばす。断定しすぎない。数字はデータにあるものだけ使い、創作しない。" +
+    '出力は次のJSONのみ: {"title":"◯◯社 面談準備（M/D）の形式","body":"本文(Markdown可・900字以内)"}';
+  const usr =
+    `面談: ${fmtDate(meeting.meet_at)} ${meeting.place ? "＠" + meeting.place : ""}\n` +
+    `会社: ${ctx.company}\n` +
+    `直近の試算表(新しい順): ${JSON.stringify(ctx.finance)}\n` +
+    `資金繰り最新: ${JSON.stringify(ctx.cashflow)}\n` +
+    `未完了の課題: ${JSON.stringify(ctx.openIssues)}\n` +
+    `前回の面談記録: ${JSON.stringify(ctx.lastMeeting)}`;
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01" },
+    body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1600, system: sys, messages: [{ role: "user", content: usr }] }),
+  });
+  if (!res.ok) { console.error("meeting brief api failed:", res.status); return null; }
+  const data = await res.json();
+  const text = data?.content?.[0]?.text ?? "";
+  try {
+    const mt = text.match(/\{[\s\S]*\}/);
+    return mt ? JSON.parse(mt[0]) : null;
+  } catch { return null; }
 }
 
 // ---- Phase 2: ブリーフをメールとスマホ通知でも届ける ----
