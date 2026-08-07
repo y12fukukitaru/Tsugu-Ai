@@ -394,7 +394,13 @@ async function successionRadar(sb: any, byPartner: Map<string, Set<string>>): Pr
 }
 
 // Claude呼び出しの共通部（JSON応答を期待するもの）
+// 書式ルールを全生成に共通で適用する：配信先（メール・LINE・アプリ内）の
+// 表示は太字と箇条書きのみ対応のため、重いMarkdownは使わせない。
+const STYLE_RULE =
+  " 本文の書式ルール: 使ってよいのは太字(**文字**)と箇条書き(行頭の「- 」)と改行のみ。" +
+  "見出し記号(#)、罫線(---)、引用(>)、表、コードブロックは使わない。絵文字は控えめに。";
 async function callClaudeJson(sys: string, usr: string, maxTokens: number): Promise<{ title: string; body: string } | null> {
+  sys = sys + STYLE_RULE;
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01" },
@@ -570,15 +576,27 @@ async function deliver(sb: any, partnerId: string, brief: { title: string; body:
 }
 
 function excerpt(t: string, n: number) {
-  const plain = (t || "").replace(/\*\*/g, "").replace(/\n+/g, " ").trim();
+  const plain = (t || "")
+    .replace(/^#{1,4}\s*/gm, "").replace(/^>\s*/gm, "").replace(/^(-{3,}|\*{3,})$/gm, "")
+    .replace(/\*\*/g, "").replace(/\n+/g, "\n").trim();
   return plain.length > n ? plain.slice(0, n) + "…" : plain;
 }
 
 function emailHtml(brief: { title: string; body: string }) {
+  // 万一Markdown記号が混ざっても崩れないよう、表示側でも綺麗に変換する
   const body = (brief.body || "")
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
-    .replace(/\n/g, "<br>");
+    .split("\n")
+    .map((line) => {
+      let l = line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").trim();
+      if (/^(-{3,}|\*{3,})$/.test(l)) return '<div style="border-top:1px solid #E2E7EF;margin:10px 0;"></div>';
+      l = l.replace(/^&gt;\s*/, "");                    // 引用記号は外す
+      const heading = /^#{1,4}\s*(.+)$/.exec(l);
+      if (heading) l = `<b style="color:#1E3A66;">${heading[1]}</b>`;
+      l = l.replace(/^-\s+/, "・").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+      return l;
+    })
+    .join("<br>")
+    .replace(/(<br>){3,}/g, "<br><br>");
   return `<div style="font-family:'Hiragino Sans','Noto Sans JP',sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#18202E;">
     <div style="font-size:13px;color:#C39B3F;font-weight:bold;">✦ 継ナビくんからの提案（今日の一手）</div>
     <h2 style="font-size:17px;color:#1E3A66;margin:8px 0 14px;">${brief.title}</h2>
