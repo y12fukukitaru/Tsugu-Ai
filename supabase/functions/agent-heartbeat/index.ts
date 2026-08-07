@@ -123,8 +123,145 @@ async function runHeartbeat(sb: any) {
   // 毎週月曜は「承継シグナル・レーダー」：承継の窓が開いた顧客を検知
   const radar = await successionRadar(sb, byPartner);
 
-  console.log(`heartbeat done: partners=${byPartner.size} generated=${generated} meeting_briefs=${briefed} mentored=${mentored} succession=${radar}`);
-  return { partners: byPartner.size, generated, meeting_briefs: briefed, mentored, succession: radar };
+  // 月初（1〜7日）は月次レポートの所見・ひとことの草案を先回りで用意
+  const drafts = await reportDrafts(sb, byPartner);
+
+  // 毎週水曜は「M&Aクロスマッチング」：パートナー間の売り×買いを突合
+  const matches = await maCrossMatch(sb, byPartner);
+
+  console.log(`heartbeat done: partners=${byPartner.size} generated=${generated} meeting_briefs=${briefed} mentored=${mentored} succession=${radar} report_drafts=${drafts} ma_matches=${matches}`);
+  return { partners: byPartner.size, generated, meeting_briefs: briefed, mentored, succession: radar, report_drafts: drafts, ma_matches: matches };
+}
+
+// ---- 月次レポート先回りドラフト（月初1〜7日）----
+// 先月の数字からコメント（所見）と冒頭のひとことの草案を作り、パートナーに届ける。
+// monthly_reportsには書き込まず、承認フロー（下書き→人が仕上げて承認）は壊さない。
+async function reportDrafts(sb: any, byPartner: Map<string, Set<string>>): Promise<number> {
+  const jstNow = new Date(Date.now() + 9 * 3600 * 1000);
+  if (jstNow.getUTCDate() > 7) return 0; // 月初のみ
+  const prev = new Date(jstNow); prev.setUTCDate(1); prev.setUTCDate(0);
+  const prevMonth = prev.toISOString().slice(0, 7);
+
+  let drafted = 0;
+  for (const [partnerId, customerSet] of byPartner) {
+    for (const cid of customerSet) {
+      if (drafted >= 15) return drafted; // 1回の実行で最大15件（コスト上限）
+
+      // 同じ顧客の草案は月に1回まで
+      const { data: dup } = await sb
+        .from("agent_insights")
+        .select("id")
+        .eq("user_id", partnerId)
+        .eq("customer_id", cid)
+        .eq("kind", "report_draft")
+        .gte("created_at", daysAgo(25))
+        .limit(1);
+      if (dup?.length) continue;
+
+      // 先月を含む直近3ヶ月の数字。先月分が無い顧客はスキップ（草案の材料がない）
+      const { data: fin } = await sb
+        .from("financial_entries")
+        .select("year_month, revenue, profit, memo")
+        .eq("customer_id", cid)
+        .order("year_month", { ascending: false })
+        .limit(3);
+      if (!fin?.length || fin[0].year_month !== prevMonth) continue;
+
+      const { data: prof } = await sb.from("profiles").select("company_name").eq("id", cid).maybeSingle();
+      const company = prof?.company_name || "（社名未設定）";
+
+      const sys =
+        "あなたは中小企業支援プラットフォーム「TsuguAi」のAIエージェント「継ナビくん」です。" +
+        "パートナーが顧客に届ける月次レポートの草案（コメント欄に貼る「所見」と、冒頭の「ひとこと」）を用意します。" +
+        "所見: 150〜250字。数字の動きと着眼点、来月に向けた一歩。データにある数字だけを使い、創作しない。" +
+        "ひとこと: 120字以内。顧客への短い呼びかけ。" +
+        "口調は誠実で温かく、パートナーがそのまま使える完成度に。" +
+        '出力は次のJSONのみ: {"title":"◯◯社 ' + prevMonth + ' レポート草案 の形式","body":"**所見（コメント欄へ）**\\n…\\n\\n**ひとこと（冒頭へ）**\\n…"}';
+      const usr = `会社: ${company}\n対象月: ${prevMonth}\n直近の試算表(新しい順): ${JSON.stringify(fin)}`;
+      const brief = await callClaudeJson(sys, usr, 1000);
+      if (!brief) continue;
+
+      const { error: insErr } = await sb.from("agent_insights").insert({
+        user_id: partnerId,
+        customer_id: cid,
+        kind: "report_draft",
+        title: brief.title,
+        body: brief.body,
+        reason: `${prevMonth}の試算表が登録済みのため、月次レポートの草案を先回りで用意`,
+        priority: 2,
+      });
+      if (!insErr) drafted++;
+    }
+  }
+  return drafted;
+}
+
+// ---- M&Aクロスマッチング（毎週水曜）----
+// 各パートナーのM&A案件と、Tsugu市場のオープン掲載（M&A）・他パートナーの案件を
+// 匿名化した条件（種別・業種・金額）だけで突合し、有望な組み合わせを双方に知らせる。
+async function maCrossMatch(sb: any, byPartner: Map<string, Set<string>>): Promise<number> {
+  const jstDay = new Date(Date.now() + 9 * 3600 * 1000).getUTCDay();
+  if (jstDay !== 3) return 0; // 水曜のみ
+
+  const [{ data: deals }, { data: listings }] = await Promise.all([
+    sb.from("ma_deals").select("id, customer_id, deal_type, stage, expected_price, target_date").order("updated_at", { ascending: false }).limit(50),
+    sb.from("market_listings").select("id, side, kind, title, industry, amount").eq("status", "open").eq("kind", "mna").limit(50),
+  ]);
+  if (!deals?.length) return 0;
+
+  // 顧客 → 担当パートナー
+  const partnersOf = new Map<string, Set<string>>();
+  for (const [pid, custs] of byPartner) for (const cid of custs) {
+    if (!partnersOf.has(cid)) partnersOf.set(cid, new Set());
+    partnersOf.get(cid)!.add(pid);
+  }
+
+  let notified = 0;
+  for (const [partnerId, customerSet] of byPartner) {
+    const mine = (deals ?? []).filter((d: any) => customerSet.has(d.customer_id));
+    if (!mine.length) continue;
+
+    const { data: dup } = await sb
+      .from("agent_insights")
+      .select("id")
+      .eq("user_id", partnerId)
+      .eq("kind", "ma_match")
+      .gte("created_at", daysAgo(5))
+      .limit(1);
+    if (dup?.length) continue;
+
+    // 突合対象: 市場のオープン掲載 + 他パートナーの案件（匿名化: 種別・金額のみ）
+    const others = (deals ?? [])
+      .filter((d: any) => !customerSet.has(d.customer_id))
+      .map((d: any) => ({ 種別: d.deal_type, 金額目安: d.expected_price, 出所: "他パートナー案件" }));
+    const market = (listings ?? []).map((l: any) => ({ 種別: l.side === "raise" ? "譲渡（売り）" : "譲受（買い）", 業種: l.industry, 金額: l.amount, 表題: l.title, 出所: "Tsugu市場" }));
+    if (!others.length && !market.length) continue;
+
+    const sys =
+      "あなたは中小企業支援プラットフォーム「TsuguAi」のAIエージェント「継ナビくん」です。" +
+      "週に一度の「M&Aクロスマッチング」として、パートナーの担当案件と、プラットフォーム内の他の案件・掲載との有望な組み合わせを探します。" +
+      "判断基準: 譲渡と譲受の向きが噛み合う・金額帯が近い（±50%目安）・業種の親和性。無理にマッチを作らない。有望なものが無ければ candidates を空配列に。" +
+      "個社が特定できる情報は書かない。次の一歩は「M&A案件画面から運営に照会」を案内する。" +
+      '出力は次のJSONのみ: {"title":"見出し(20字以内)","body":"本文(Markdown可・400字以内。有望な組み合わせと理由、無ければその旨)","candidates":["組み合わせの短い説明", ...]}';
+    const usr = `担当案件: ${JSON.stringify(mine.map((d: any) => ({ 種別: d.deal_type, 進捗stage: d.stage, 金額目安: d.expected_price, 目標日: d.target_date })))}\n` +
+      `突合対象: ${JSON.stringify([...market, ...others].slice(0, 40))}`;
+    const brief: any = await callClaudeJson(sys, usr, 1000);
+    if (!brief || !Array.isArray(brief.candidates) || !brief.candidates.length) continue; // マッチ無しなら通知しない
+
+    const { error: insErr } = await sb.from("agent_insights").insert({
+      user_id: partnerId,
+      kind: "ma_match",
+      title: brief.title,
+      body: brief.body,
+      reason: `担当${mine.length}案件 × 市場掲載${market.length}件・他案件${others.length}件を突合`,
+      priority: 2,
+    });
+    if (!insErr) {
+      notified++;
+      await deliver(sb, partnerId, brief);
+    }
+  }
+  return notified;
 }
 
 // ---- 新人パートナー指南モード：「経験」をプラットフォームが供給する ----
