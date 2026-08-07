@@ -32,20 +32,31 @@ Deno.serve(async (req) => {
   }
   const sb = createClient(SUPABASE_URL, SERVICE_KEY);
 
-  // 承認済みの担当割当から「パートナー → 顧客リスト」を組み立てる
-  const { data: asg, error: asgErr } = await sb
+  // 「パートナー → 顧客リスト」を組み立てる。
+  // 本体の紐付けは profiles.consultant_id（運営が顧客管理で割り当てる担当）。
+  // partner_assignments は2名体制（サブ担当）の承認分を追加で拾う。
+  const byPartner = new Map<string, Set<string>>();
+  const add = (pid: string | null, cid: string | null) => {
+    if (!pid || !cid) return;
+    if (!byPartner.has(pid)) byPartner.set(pid, new Set());
+    byPartner.get(pid)!.add(cid);
+  };
+
+  const { data: profs, error: profErr } = await sb
+    .from("profiles")
+    .select("id, consultant_id")
+    .eq("role", "customer")
+    .not("consultant_id", "is", null);
+  if (profErr) return json({ error: profErr.message }, 500);
+  for (const p of profs ?? []) add(p.consultant_id, p.id);
+
+  const { data: asg } = await sb
     .from("partner_assignments")
     .select("customer_id, main_id, sub_id")
     .eq("status", "approved");
-  if (asgErr) return json({ error: asgErr.message }, 500);
-
-  const byPartner = new Map<string, Set<string>>();
   for (const a of asg ?? []) {
-    for (const pid of [a.main_id, a.sub_id]) {
-      if (!pid) continue;
-      if (!byPartner.has(pid)) byPartner.set(pid, new Set());
-      byPartner.get(pid)!.add(a.customer_id);
-    }
+    add(a.main_id, a.customer_id);
+    add(a.sub_id, a.customer_id);
   }
 
   let generated = 0;
