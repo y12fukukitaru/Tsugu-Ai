@@ -171,13 +171,70 @@ async function collectSignals(sb: any, customerIds: string[]): Promise<Signal[]>
     }
   }
 
+  // 5) 先月分の月次レポートが未作成・下書きのまま
+  {
+    const prev = new Date();
+    prev.setDate(1);
+    prev.setDate(0); // 先月末
+    const prevMonth = prev.toISOString().slice(0, 7);
+    const { data } = await sb
+      .from("monthly_reports")
+      .select("customer_id, report_month, status")
+      .in("customer_id", customerIds)
+      .eq("report_month", prevMonth);
+    const done = new Set((data ?? []).filter((r: any) => r.status === "published").map((r: any) => r.customer_id));
+    const draft = new Set((data ?? []).filter((r: any) => r.status === "draft").map((r: any) => r.customer_id));
+    for (const id of customerIds) {
+      if (draft.has(id)) {
+        signals.push({ customer: nm(id), kind: "report_draft", fact: `${nm(id)}の${prevMonth}月次レポートが下書きのまま`, priority: 2 });
+      } else if (!done.has(id)) {
+        signals.push({ customer: nm(id), kind: "report_draft", fact: `${nm(id)}の${prevMonth}月次レポートが未作成`, priority: 3 });
+      }
+    }
+  }
+
+  // 6) 締切30日以内の補助金（全顧客共通のレーダー情報）
+  {
+    const { data } = await sb
+      .from("subsidies")
+      .select("name, deadline")
+      .eq("active", true)
+      .gte("deadline", now().toISOString().slice(0, 10))
+      .lte("deadline", daysAhead(30).slice(0, 10))
+      .order("deadline", { ascending: true })
+      .limit(3);
+    for (const s of data ?? []) {
+      signals.push({ customer: "全顧客", kind: "subsidy", fact: `補助金「${s.name}」の締切が${s.deadline}に迫っている（該当顧客がいないか確認）`, priority: 3 });
+    }
+  }
+
+  // 7) 資金繰りスコアの悪化（最新スナップショットが40点以下）
+  {
+    const { data } = await sb
+      .from("cashflow_snapshots")
+      .select("customer_id, score, created_at")
+      .in("customer_id", customerIds)
+      .gte("created_at", daysAgo(90))
+      .order("created_at", { ascending: false });
+    const seen = new Set<string>();
+    for (const c of data ?? []) {
+      if (seen.has(c.customer_id)) continue;
+      seen.add(c.customer_id);
+      if (typeof c.score === "number" && c.score <= 40) {
+        signals.push({ customer: nm(c.customer_id), kind: "cashflow", fact: `${nm(c.customer_id)}の資金繰りスコアが${c.score}点と低い`, priority: 1 });
+      }
+    }
+  }
+
+  signals.sort((a, b) => a.priority - b.priority);
   return signals.slice(0, 12); // ブリーフは絞る。多すぎる提案は読まれない
 }
 
 // ---- Claudeでブリーフに編集（優先順位付けと「最初の一言」まで） ----
 async function composeBrief(signals: Signal[]): Promise<{ title: string; body: string } | null> {
   const sys =
-    "あなたは中小企業支援プラットフォーム「TsuguAi」の、認定パートナーを支えるAIエージェントです。" +
+    "あなたは中小企業支援プラットフォーム「TsuguAi」の、認定パートナーを支えるAIエージェント「継ナビくん」です。" +
+    "親しみやすく、頼れる相棒として振る舞います（ただし馴れ馴れしくしない）。" +
     "毎朝、担当顧客の状況シグナルから「今日の一手」ブリーフを作ります。" +
     "ルール: 最重要の3件までに絞る。各件は必ず①顧客名②なぜ今日か（根拠）③最初の一言（そのまま送れる短い文面案）の3点で書く。" +
     "断定しすぎない。押し付けない。敬意のある簡潔な日本語。" +

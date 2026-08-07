@@ -8354,8 +8354,8 @@
   function agentInsightsHtml(){
     if(!AGENT_INSIGHTS.length) return '';
     var h='<div style="border:1px solid var(--gold);background:rgba(195,155,63,.07);border-radius:11px;padding:13px 15px;margin-bottom:14px;">'
-      +'<div style="font-size:13px;font-weight:700;color:var(--navy);">✦ AIからの提案（今日の一手）</div>'
-      +'<div style="font-size:11px;color:var(--muted);margin:2px 0 4px;">担当顧客の状況から、AIが毎朝まとめています。</div>';
+      +'<div style="font-size:13px;font-weight:700;color:var(--navy);">✦ 継ナビくんからの提案（今日の一手）</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin:2px 0 4px;">担当顧客の状況から、継ナビくんが毎朝まとめています。</div>';
     AGENT_INSIGHTS.forEach(function(x){
       h+='<div style="border-top:1px solid var(--softline);padding:10px 0 6px;">'
         +'<div style="font-size:13px;font-weight:600;color:var(--ink);">'+esc(x.title||'')+'</div>'
