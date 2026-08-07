@@ -117,8 +117,158 @@ async function runHeartbeat(sb: any) {
   // 48時間以内に面談がある顧客には、深掘りの「面談準備ブリーフ」を届ける
   const briefed = await prepareMeetingBriefs(sb, byPartner);
 
-  console.log(`heartbeat done: partners=${byPartner.size} generated=${generated} meeting_briefs=${briefed}`);
-  return { partners: byPartner.size, generated, meeting_briefs: briefed };
+  // 新人パートナーには「指南モード」で次の一歩を先回り提示（3日に1回まで）
+  const mentored = await mentorNewPartners(sb, byPartner);
+
+  // 毎週月曜は「承継シグナル・レーダー」：承継の窓が開いた顧客を検知
+  const radar = await successionRadar(sb, byPartner);
+
+  console.log(`heartbeat done: partners=${byPartner.size} generated=${generated} meeting_briefs=${briefed} mentored=${mentored} succession=${radar}`);
+  return { partners: byPartner.size, generated, meeting_briefs: briefed, mentored, succession: radar };
+}
+
+// ---- 新人パートナー指南モード：「経験」をプラットフォームが供給する ----
+// 対象: 担当顧客が0社、または研修が未修了のパートナー。
+// 研修進捗と現状から「今週の一歩」を具体的に示す。頻度は3日に1回まで。
+const TOTAL_LESSONS = 10; // 研修プログラムは全4章10レッスン（manual-partner.htmlと同期）
+async function mentorNewPartners(sb: any, byPartner: Map<string, Set<string>>): Promise<number> {
+  const { data: consultants } = await sb.from("profiles").select("id, contact_name, company_name").eq("role", "consultant");
+  if (!consultants?.length) return 0;
+
+  const ids = consultants.map((c: any) => c.id);
+  const { data: prog } = await sb.from("training_progress").select("user_id, lesson_id").in("user_id", ids);
+  const doneOf = new Map<string, number>();
+  for (const t of prog ?? []) doneOf.set(t.user_id, (doneOf.get(t.user_id) ?? 0) + 1);
+
+  let mentored = 0;
+  for (const c of consultants.slice(0, 20)) { // 1回の実行で最大20名（コスト上限）
+    const clients = byPartner.get(c.id)?.size ?? 0;
+    const done = doneOf.get(c.id) ?? 0;
+    const isNewbie = clients === 0 || done < TOTAL_LESSONS;
+    if (!isNewbie) continue;
+
+    const { data: dup } = await sb
+      .from("agent_insights")
+      .select("id")
+      .eq("user_id", c.id)
+      .eq("kind", "mentor")
+      .gte("created_at", daysAgo(3))
+      .limit(1);
+    if (dup?.length) continue;
+
+    const brief = await composeMentorBrief({ name: c.contact_name || c.company_name || "", clients, done });
+    if (!brief) continue;
+
+    const { error: insErr } = await sb.from("agent_insights").insert({
+      user_id: c.id,
+      kind: "mentor",
+      title: brief.title,
+      body: brief.body,
+      reason: `研修${done}/${TOTAL_LESSONS}レッスン修了・担当顧客${clients}社のため、次の一歩を提案`,
+      priority: 3,
+    });
+    if (!insErr) {
+      mentored++;
+      await deliver(sb, c.id, brief);
+    }
+  }
+  return mentored;
+}
+
+async function composeMentorBrief(p: { name: string; clients: number; done: number }): Promise<{ title: string; body: string } | null> {
+  const sys =
+    "あなたは中小企業支援プラットフォーム「TsuguAi」のAIエージェント「継ナビくん」です。" +
+    "今は指南モード：経験の浅い認定パートナーの先輩役として、次の一歩を具体的に示します。" +
+    "TsuguAiでの立ち上がりの標準ルート: ①研修プログラム（全4章10レッスン）修了 → ②営業ツール「課題ヒアリング診断」で見込み客と商談 → ③顧客を登録し担当に → ④初回面談（前日に面談準備ブリーフが届く）→ ⑤導入90日プログラムで成果物を約束 → ⑥毎月の試算表取り込みと月次レポート承認。" +
+    "書き方: ①いまの到達点をひとこと承認 ②今週の一歩（1〜3個。画面名・機能名つきで具体的に）③励ましをひとこと。教科書口調にせず、隣の先輩のように。250字以内。" +
+    '出力は次のJSONのみ: {"title":"見出し(20字以内)","body":"本文(Markdown可)"}';
+  const usr = `パートナー: ${p.name || "（新規）"}\n研修の修了: ${p.done}/${TOTAL_LESSONS}レッスン\n担当顧客: ${p.clients}社`;
+  return await callClaudeJson(sys, usr, 800);
+}
+
+// ---- 承継シグナル・レーダー（毎週月曜）：承継の窓が開いた顧客を検知 ----
+async function successionRadar(sb: any, byPartner: Map<string, Set<string>>): Promise<number> {
+  const jstDay = new Date(Date.now() + 9 * 3600 * 1000).getUTCDay();
+  if (jstDay !== 1) return 0; // 月曜のみ
+
+  let count = 0;
+  for (const [partnerId, customerSet] of byPartner) {
+    const customerIds = [...customerSet];
+
+    const { data: dup } = await sb
+      .from("agent_insights")
+      .select("id")
+      .eq("user_id", partnerId)
+      .eq("kind", "succession")
+      .gte("created_at", daysAgo(5))
+      .limit(1);
+    if (dup?.length) continue;
+
+    // 社名
+    const names = new Map<string, string>();
+    {
+      const { data } = await sb.from("profiles").select("id, company_name").in("id", customerIds);
+      for (const p of data ?? []) names.set(p.id, p.company_name || "（社名未設定）");
+    }
+    // 承継チェックの実施状況
+    const { data: checks } = await sb.from("succession_checks").select("customer_id, updated_at").in("customer_id", customerIds);
+    const checkOf = new Map<string, string>();
+    for (const s of checks ?? []) checkOf.set(s.customer_id, s.updated_at);
+    // 株価評価の最終実施
+    const { data: vals } = await sb.from("valuation_snapshots").select("customer_id, created_at").in("customer_id", customerIds).order("created_at", { ascending: false });
+    const valOf = new Map<string, string>();
+    for (const v of vals ?? []) if (!valOf.has(v.customer_id)) valOf.set(v.customer_id, v.created_at);
+
+    const findings: string[] = [];
+    for (const cid of customerIds) {
+      const nm = names.get(cid) ?? "担当顧客";
+      const chk = checkOf.get(cid);
+      const val = valOf.get(cid);
+      if (!chk) findings.push(`${nm}: 承継準備チェックが未実施`);
+      else if (new Date(chk).getTime() < Date.now() - 365 * DAY) findings.push(`${nm}: 承継チェックが1年以上更新されていない`);
+      if (!val) findings.push(`${nm}: 株価（自社株評価）のシミュレーションが未実施`);
+      else if (new Date(val).getTime() < Date.now() - 180 * DAY) findings.push(`${nm}: 株価評価が半年以上前。決算をまたいでいれば再評価を`);
+    }
+    if (!findings.length) continue;
+
+    const sys =
+      "あなたは中小企業支援プラットフォーム「TsuguAi」のAIエージェント「継ナビくん」です。" +
+      "週に一度の「承継シグナル・レーダー」として、事業承継の準備が手つかず・停滞している顧客をパートナーに知らせます。" +
+      "書き方: 検出結果を顧客ごとに整理し、それぞれ「最初の声のかけ方」を一言添える。使える道具（承継準備チェック、事業承継・株対策シミュレーター、退職金シミュレーター）への誘導を含める。押し付けない。500字以内。" +
+      '出力は次のJSONのみ: {"title":"見出し(20字以内)","body":"本文(Markdown可)"}';
+    const brief = await callClaudeJson(sys, "今週の検出:\n" + findings.slice(0, 10).map((f) => "- " + f).join("\n"), 1000);
+    if (!brief) continue;
+
+    const { error: insErr } = await sb.from("agent_insights").insert({
+      user_id: partnerId,
+      kind: "succession",
+      title: brief.title,
+      body: brief.body,
+      reason: findings.slice(0, 6).join(" / "),
+      priority: 3,
+    });
+    if (!insErr) {
+      count++;
+      await deliver(sb, partnerId, brief);
+    }
+  }
+  return count;
+}
+
+// Claude呼び出しの共通部（JSON応答を期待するもの）
+async function callClaudeJson(sys: string, usr: string, maxTokens: number): Promise<{ title: string; body: string } | null> {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01" },
+    body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: maxTokens, system: sys, messages: [{ role: "user", content: usr }] }),
+  });
+  if (!res.ok) { console.error("claude api failed:", res.status); return null; }
+  const data = await res.json();
+  const text = data?.content?.[0]?.text ?? "";
+  try {
+    const m = text.match(/\{[\s\S]*\}/);
+    return m ? JSON.parse(m[0]) : null;
+  } catch { return null; }
 }
 
 // ---- 面談前ブリーフ：前日〜当日の面談に向けて、その顧客の全体像を1枚に ----
@@ -211,18 +361,7 @@ async function composeMeetingBrief(ctx: any, meeting: { meet_at: string; place?:
     `資金繰り最新: ${JSON.stringify(ctx.cashflow)}\n` +
     `未完了の課題: ${JSON.stringify(ctx.openIssues)}\n` +
     `前回の面談記録: ${JSON.stringify(ctx.lastMeeting)}`;
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "content-type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1600, system: sys, messages: [{ role: "user", content: usr }] }),
-  });
-  if (!res.ok) { console.error("meeting brief api failed:", res.status); return null; }
-  const data = await res.json();
-  const text = data?.content?.[0]?.text ?? "";
-  try {
-    const mt = text.match(/\{[\s\S]*\}/);
-    return mt ? JSON.parse(mt[0]) : null;
-  } catch { return null; }
+  return await callClaudeJson(sys, usr, 1600);
 }
 
 // ---- Phase 2: ブリーフをメールとスマホ通知でも届ける ----
@@ -448,29 +587,7 @@ async function composeBrief(signals: Signal[]): Promise<{ title: string; body: s
     "ルール: 最重要の3件までに絞る。各件は必ず①顧客名②なぜ今日か（根拠）③最初の一言（そのまま送れる短い文面案）の3点で書く。" +
     "断定しすぎない。押し付けない。敬意のある簡潔な日本語。" +
     '出力は次のJSONのみ: {"title":"見出し(20字以内)","body":"本文(Markdown可・600字以内)"}';
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": ANTHROPIC_KEY,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1200,
-      system: sys,
-      messages: [{ role: "user", content: "今朝のシグナル:\n" + signals.map((s) => `- [優先${s.priority}] ${s.fact}`).join("\n") }],
-    }),
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  const text = data?.content?.[0]?.text ?? "";
-  try {
-    const m = text.match(/\{[\s\S]*\}/);
-    return m ? JSON.parse(m[0]) : null;
-  } catch {
-    return null;
-  }
+  return await callClaudeJson(sys, "今朝のシグナル:\n" + signals.map((s) => `- [優先${s.priority}] ${s.fact}`).join("\n"), 1200);
 }
 
 function fmtDate(iso: string) {
