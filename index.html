@@ -2623,6 +2623,7 @@
         +'</div>'
         +'<div class="panel" id="sec-sec"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 1.8 4.9 4.9 1.8-4.9 1.8L12 16.9l-1.8-4.9L5.3 10.2l4.9-1.8z"/><path d="m18.5 15.5.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>AI秘書（業務の相談相手）</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">分野を選ばずに相談できます。提案資料の文面づくり、面談準備、決算書の見方、税務・労務・資金調達・M&amp;Aの論点整理まで、そのままの言葉でどうぞ。</div>'
+          +'<div id="agent-insights-box"></div>'
           + secModesHtml()
           +'<div id="sec-log" class="ai-panelbox" style="max-height:300px;overflow:auto;padding:12px;margin-bottom:10px;"><div style="font-size:12px;color:#94A2B6;">例：「医療法人オーナー向けの初回面談の流れを整理して」</div></div>'
           +'<div style="display:flex;gap:8px;align-items:flex-end;">'
@@ -2674,7 +2675,7 @@
     $('app-body').innerHTML=view;
     if(eff==='customer' && ACCESS==='finance'){ loadAcct(); }
     else if(eff==='customer'){ loadDashHero(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
-    else if(eff==='consultant'){ loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); }
+    else if(eff==='consultant'){ loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); loadAgentInsights(); }
     else {
       // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
       loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadAdmAssign();
@@ -6119,6 +6120,8 @@
 
     var totalToDo=unreadIds.length+todoCount; // 対応が必要な「顧客」の総数感
     var h='';
+    // AIからの提案（agent_insights）。未読・対応事項ゼロの日でも先頭に出す
+    try{ h+=agentInsightsHtml(); }catch(e){}
 
     // ヘッダー：まず「今どれだけ対応が必要か」を一言で
     if(!totalUnread && !todoCount){
@@ -8330,6 +8333,52 @@
     if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='共有エラー：'+res.error.message;} return; }
     if(msg){msg.style.color='#27684A';msg.textContent='顧客の「担当パートナーからの提案」に共有しました。';}
     if(typeof loadClientNotes==='function' && custId) loadClientNotes(custId);
+  }
+
+  // ===== AIからの提案（プロアクティブAIエージェント / agent_insights） =====
+  // 毎朝サーバー側の agent-heartbeat が生成した「今日の一手」を表示する。
+  // テーブル未作成・Edge Function未デプロイの環境では静かに何も出さない（既存画面に影響させない）。
+  var AGENT_INSIGHTS=[];
+  async function loadAgentInsights(){
+    AGENT_INSIGHTS=[];
+    try{
+      var since=new Date(Date.now()-7*86400000).toISOString();
+      var res=await sb.from('agent_insights').select('*').eq('user_id',ME).in('status',['unread','read']).gte('created_at',since).order('created_at',{ascending:false}).limit(10);
+      if(!res.error && res.data) AGENT_INSIGHTS=res.data;
+    }catch(e){}
+    renderAgentInsights();
+  }
+  function agentInsightBody(t){
+    return esc(t||'').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');
+  }
+  function agentInsightsHtml(){
+    if(!AGENT_INSIGHTS.length) return '';
+    var h='<div style="border:1px solid var(--gold);background:rgba(195,155,63,.07);border-radius:11px;padding:13px 15px;margin-bottom:14px;">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--navy);">✦ 継ナビくんからの提案（今日の一手）</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin:2px 0 4px;">担当顧客の状況から、継ナビくんが毎朝まとめています。</div>';
+    AGENT_INSIGHTS.forEach(function(x){
+      h+='<div style="border-top:1px solid var(--softline);padding:10px 0 6px;">'
+        +'<div style="font-size:13px;font-weight:600;color:var(--ink);">'+esc(x.title||'')+'</div>'
+        +'<div style="font-size:12.5px;color:var(--ink);line-height:1.75;margin:6px 0;">'+agentInsightBody(x.body)+'</div>'
+        +(x.reason?'<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">検出根拠: '+esc(x.reason)+'</div>':'')
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+          +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:7px;padding:4px 10px;" onclick="agentInsightMark(\''+x.id+'\',\'useful\')">👍 役に立った</button>'
+          +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:7px;padding:4px 10px;" onclick="agentInsightMark(\''+x.id+'\',\'not_needed\')">不要（表示しない）</button>'
+        +'</div>'
+      +'</div>';
+    });
+    h+='</div>';
+    return h;
+  }
+  function renderAgentInsights(){
+    var box=$('agent-insights-box'); if(box) box.innerHTML=agentInsightsHtml();
+  }
+  async function agentInsightMark(id,fb){
+    // 「役に立った/不要」はブリーフ生成の学習材料として保存する（設計書のフィードバックループ）
+    try{ await sb.from('agent_insights').update({feedback:fb,status:fb==='useful'?'done':'dismissed'}).eq('id',id); }catch(e){}
+    AGENT_INSIGHTS=AGENT_INSIGHTS.filter(function(x){ return x.id!==id; });
+    renderAgentInsights();
+    try{ renderNotifCenter(); }catch(e){}
   }
 
   // ---- AI秘書チャット ----
