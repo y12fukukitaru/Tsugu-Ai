@@ -32,6 +32,18 @@ Deno.serve(async (req) => {
   }
   const sb = createClient(SUPABASE_URL, SERVICE_KEY);
 
+  // 巡回＋ブリーフ生成は数十秒かかることがあり、pg_net（SQLからの呼び出し）は
+  // 長く待てないため、即座に受領応答を返して本処理はバックグラウンドで続行する。
+  const job = runHeartbeat(sb).catch((e) => console.error("heartbeat failed:", e));
+  const rt = (globalThis as any).EdgeRuntime;
+  if (rt?.waitUntil) {
+    rt.waitUntil(job);
+    return json({ accepted: true, note: "処理継続中。結果は agent_insights を確認" }, 202);
+  }
+  return json(await job);
+});
+
+async function runHeartbeat(sb: any) {
   // 「パートナー → 顧客リスト」を組み立てる。
   // 本体の紐付けは profiles.consultant_id（運営が顧客管理で割り当てる担当）。
   // partner_assignments は2名体制（サブ担当）の承認分を追加で拾う。
@@ -47,7 +59,7 @@ Deno.serve(async (req) => {
     .select("id, consultant_id")
     .eq("role", "customer")
     .not("consultant_id", "is", null);
-  if (profErr) return json({ error: profErr.message }, 500);
+  if (profErr) throw new Error(profErr.message);
   for (const p of profs ?? []) add(p.consultant_id, p.id);
 
   const { data: asg } = await sb
@@ -90,8 +102,9 @@ Deno.serve(async (req) => {
     if (!insErr) generated++;
   }
 
-  return json({ partners: byPartner.size, generated });
-});
+  console.log(`heartbeat done: partners=${byPartner.size} generated=${generated}`);
+  return { partners: byPartner.size, generated };
+}
 
 // ---- ルールベースのシグナル抽出（既存テーブルのみ使用） ----
 async function collectSignals(sb: any, customerIds: string[]): Promise<Signal[]> {
@@ -282,3 +295,4 @@ function fmtDate(iso: string) {
 function json(obj: unknown, status = 200) {
   return new Response(JSON.stringify(obj), { status, headers: { "content-type": "application/json" } });
 }
+
