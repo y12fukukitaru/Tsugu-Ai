@@ -92,7 +92,7 @@ AIは忘れません。これはプロアクティブAIでしか実現できな�
   - iPhoneはiOS 16.4以降で、ホーム画面に追加したアプリからのみ購読可能
 - どちらも**未設定なら自動でスキップ**される（アプリ内表示だけでも動く）
 
-### Phase 3【保留】：LINE連携 ← Web Pushで代替済み、将来の拡張枠
+### Phase 3【実装済み】：LINE連携
 
 パートナー向けの通知はPhase 2のプッシュ通知で十分カバーできるため、LINEは急ぎません。
 LINEが本領を発揮するのは「顧客（経営者）側への配信」と「LINE上でAI秘書と会話する」段階です。
@@ -101,6 +101,11 @@ LINE Messaging APIは審査が軽く（Googleの機密スコープ審査より�
 公式アカウントは無料枠（月200通〜）から始められます。
 「TsuguAi公式LINEを友だち追加 → パートナーIDを紐付け → 毎朝ブリーフが届く、返信すればAI秘書がそのまま応答」
 という体験は、このセグメントでは事実上の独自機能になります。
+
+> 実装メモ: 紐付けは「アプリで6桁コード発行（10分有効）→ 公式LINEのトークに送信」方式
+> （line_link_codes / line_links）。Webhookは Edge Function `line-webhook`（署名検証つき）が受け、
+> 「解除」で紐付け解除。配信は agent-heartbeat の deliver() が LINE_CHANNEL_ACCESS_TOKEN 設定時に
+> Messaging APIのpushで送る。LINE上でのAI秘書応答は次の拡張枠。
 
 ### Phase 4：Google連携（ご質問への回答）
 
