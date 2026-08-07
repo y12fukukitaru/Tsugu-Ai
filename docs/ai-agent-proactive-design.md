@@ -106,7 +106,16 @@ LINE Messaging APIは審査が軽く（Googleの機密スコープ審査より�
 
 **できます。** ただし優先順位と審査コストを踏まえた順番があります。
 
-#### 4-1. Google Calendar（最初にやるべき・審査が軽い）
+#### 4-0. 【実装済み】第1弾：ICS購読フィード（審査・OAuth・追加設定すべて不要）
+
+- パートナーごとに秘密のフィードURL（`calendar_feed_tokens`）を発行し、
+  Google/Apple/Outlookカレンダーに「URLで追加」してもらう方式
+- 担当顧客との面談予定（過去30日〜今後180日、60分前リマインダー付き）が自動表示される
+- Edge Function `calendar-feed` が配信。AI秘書の「📅 面談予定をGoogleカレンダーに表示」から設定
+- 注意: 購読カレンダーの更新間隔はGoogle側の仕様で数時間〜1日程度
+- URLが漏れた場合は `calendar_feed_tokens` の行を削除して再発行
+
+#### 4-1. Google Calendar API連携（第2弾・OAuth・審査が軽い）
 
 - Supabase AuthはGoogleログインを標準サポートしており、スコープに `calendar.events` を追加して
   `provider_token` / `provider_refresh_token` を保存すれば、Edge FunctionからCalendar APIを呼べます

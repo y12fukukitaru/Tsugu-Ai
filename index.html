@@ -2625,7 +2625,11 @@
         +'<div class="panel" id="sec-sec"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 1.8 4.9 4.9 1.8-4.9 1.8L12 16.9l-1.8-4.9L5.3 10.2l4.9-1.8z"/><path d="m18.5 15.5.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>AI秘書（業務の相談相手）</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">分野を選ばずに相談できます。提案資料の文面づくり、面談準備、決算書の見方、税務・労務・資金調達・M&amp;Aの論点整理まで、そのままの言葉でどうぞ。</div>'
           +'<div id="agent-insights-box"></div>'
-          +'<div style="margin:0 0 10px;"><button id="push-btn" class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:5px 12px;" onclick="enablePush()">🔔 継ナビくんの通知をこの端末で受け取る</button></div>'
+          +'<div style="margin:0 0 10px;display:flex;gap:8px;flex-wrap:wrap;">'
+            +'<button id="push-btn" class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:5px 12px;" onclick="enablePush()">🔔 継ナビくんの通知をこの端末で受け取る</button>'
+            +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:5px 12px;" onclick="calendarFeedSetup()">📅 面談予定をGoogleカレンダーに表示</button>'
+          +'</div>'
+          +'<div id="calfeed-box"></div>'
           + secModesHtml()
           +'<div id="sec-log" class="ai-panelbox" style="max-height:300px;overflow:auto;padding:12px;margin-bottom:10px;"><div style="font-size:12px;color:#94A2B6;">例：「医療法人オーナー向けの初回面談の流れを整理して」</div></div>'
           +'<div style="display:flex;gap:8px;align-items:flex-end;">'
@@ -8416,6 +8420,42 @@
       if(r.error){ alert('登録できませんでした：'+r.error.message+'（Supabaseで継ナビくんPhase2のSQLを実行してください）'); return; }
       say('✅ この端末で毎朝の通知を受け取ります', true);
     }catch(e){ alert('設定に失敗しました：'+(e&&e.message||e)); }
+  }
+
+  // ===== Googleカレンダー連携（第1弾：ICS購読フィード） =====
+  // 秘密のフィードURLを発行し、Google/Apple/Outlookのカレンダーに
+  // 「URLで追加」してもらうと、担当顧客との面談予定が自動表示される。
+  async function calendarFeedSetup(){
+    var box=$('calfeed-box'); if(!box) return;
+    box.innerHTML='<div style="font-size:12px;color:var(--muted);padding:6px 0;">準備中…</div>';
+    try{
+      var r=await sb.from('calendar_feed_tokens').select('token').eq('user_id',ME).maybeSingle();
+      if(r.error){ box.innerHTML='<div style="font-size:12px;color:#A9403D;padding:6px 0;">カレンダー連携が未設定です。運営にお問い合わせください（カレンダー連携のSQL未実行）。</div>'; return; }
+      var tok=r.data&&r.data.token;
+      if(!tok){
+        var ins=await sb.from('calendar_feed_tokens').insert({user_id:ME}).select('token').single();
+        if(ins.error){ box.innerHTML='<div style="font-size:12px;color:#A9403D;padding:6px 0;">発行できませんでした：'+esc(ins.error.message)+'</div>'; return; }
+        tok=ins.data.token;
+      }
+      var url='https://yaururnkxjhtiowkpvyu.supabase.co/functions/v1/calendar-feed?t='+tok;
+      box.innerHTML='<div style="border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px;background:var(--soft);">'
+        +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:6px;">📅 あなた専用のカレンダーURL</div>'
+        +'<div style="display:flex;gap:6px;align-items:center;">'
+          +'<input id="calfeed-url" class="inp2" readonly value="'+esc(url)+'" style="flex:1;width:auto;font-size:11px;" onclick="this.select()">'
+          +'<button class="btn2" style="font-size:11.5px;padding:8px 12px;flex-shrink:0;" onclick="calendarFeedCopy()">コピー</button>'
+        +'</div>'
+        +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:8px;">'
+          +'<b>Googleカレンダーでの登録：</b>パソコンで <a href="https://calendar.google.com/calendar/u/0/r/settings/addbyurl" target="_blank" rel="noopener">カレンダー設定 → URLで追加</a> を開き、上のURLを貼り付けて「カレンダーを追加」。'
+          +'以後、担当顧客との面談予定（60分前リマインダー付き）が自動で表示されます。反映まで数時間かかることがあります。'
+          +'<br>このURLはあなた専用です。他の人に共有しないでください。'
+        +'</div>'
+      +'</div>';
+    }catch(e){ box.innerHTML='<div style="font-size:12px;color:#A9403D;padding:6px 0;">エラーが発生しました。</div>'; }
+  }
+  function calendarFeedCopy(){
+    var inp=$('calfeed-url'); if(!inp) return;
+    inp.select();
+    try{ navigator.clipboard.writeText(inp.value); }catch(e){ try{ document.execCommand('copy'); }catch(e2){} }
   }
 
   // ---- AI秘書チャット ----
