@@ -1,0 +1,16 @@
+{
+  "name": "TsuguAi -継-",
+  "short_name": "TsuguAi",
+  "description": "AIと人で、会社の未来を継ぐ。伴走型経営支援プラットフォーム",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0E1B33",
+  "theme_color": "#0E1B33",
+  "lang": "ja",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

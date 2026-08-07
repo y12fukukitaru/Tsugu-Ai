@@ -13,11 +13,20 @@
 //   （ANTHROPIC_API_KEY は ai-proxy と共用の既存Secret）
 // =============================================================
 import { createClient } from "npm:@supabase/supabase-js@2";
+import webpush from "npm:web-push@3.6.7";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 const CRON_SECRET = Deno.env.get("CRON_SECRET")!;
+
+// ---- Phase 2: 配信チャネル（未設定のチャネルは自動的にスキップされる） ----
+const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";                 // メール配信（Resend）
+const MAIL_FROM = Deno.env.get("MAIL_FROM") ?? "TsuguAi 継ナビくん <onboarding@resend.dev>";
+const APP_URL = Deno.env.get("APP_URL") ?? "https://y12fukukitaru.github.io/Tsugu-Ai/";
+const VAPID_PUBLIC = Deno.env.get("VAPID_PUBLIC_KEY") ?? "";             // プッシュ通知（Web Push）
+const VAPID_PRIVATE = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
+const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") ?? "mailto:no-reply@example.com";
 
 const DAY = 86400000;
 const now = () => new Date();
@@ -99,11 +108,80 @@ async function runHeartbeat(sb: any) {
       reason: signals.map((s) => s.fact).join(" / "),
       priority: Math.min(...signals.map((s) => s.priority)),
     });
-    if (!insErr) generated++;
+    if (!insErr) {
+      generated++;
+      await deliver(sb, partnerId, brief); // メール・プッシュで届ける（アプリ外への働きかけ）
+    }
   }
 
   console.log(`heartbeat done: partners=${byPartner.size} generated=${generated}`);
   return { partners: byPartner.size, generated };
+}
+
+// ---- Phase 2: ブリーフをメールとスマホ通知でも届ける ----
+// 配信失敗でブリーフ生成自体を失敗させないよう、すべて握りつぶしてログに残すだけにする。
+async function deliver(sb: any, partnerId: string, brief: { title: string; body: string }) {
+  // メール（Resend）
+  if (RESEND_KEY) {
+    try {
+      const { data: prof } = await sb.from("profiles").select("email").eq("id", partnerId).maybeSingle();
+      if (prof?.email) {
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${RESEND_KEY}`, "content-type": "application/json" },
+          body: JSON.stringify({
+            from: MAIL_FROM,
+            to: [prof.email],
+            subject: `【継ナビくん】${brief.title}`,
+            html: emailHtml(brief),
+          }),
+        });
+        if (!res.ok) console.error("email send failed:", res.status, await res.text());
+      }
+    } catch (e) { console.error("email failed:", e); }
+  }
+  // プッシュ通知（Web Push）
+  if (VAPID_PUBLIC && VAPID_PRIVATE) {
+    try {
+      webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
+      const { data: subs } = await sb.from("push_subscriptions").select("id, subscription").eq("user_id", partnerId);
+      for (const s of subs ?? []) {
+        try {
+          await webpush.sendNotification(s.subscription, JSON.stringify({
+            title: `継ナビくん｜${brief.title}`,
+            body: excerpt(brief.body, 120),
+            url: APP_URL,
+          }));
+        } catch (e: any) {
+          // 端末側で購読が解除された購読は掃除する
+          if (e?.statusCode === 404 || e?.statusCode === 410) {
+            await sb.from("push_subscriptions").delete().eq("id", s.id);
+          } else {
+            console.error("push send failed:", e?.statusCode ?? e);
+          }
+        }
+      }
+    } catch (e) { console.error("push failed:", e); }
+  }
+}
+
+function excerpt(t: string, n: number) {
+  const plain = (t || "").replace(/\*\*/g, "").replace(/\n+/g, " ").trim();
+  return plain.length > n ? plain.slice(0, n) + "…" : plain;
+}
+
+function emailHtml(brief: { title: string; body: string }) {
+  const body = (brief.body || "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+    .replace(/\n/g, "<br>");
+  return `<div style="font-family:'Hiragino Sans','Noto Sans JP',sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#18202E;">
+    <div style="font-size:13px;color:#C39B3F;font-weight:bold;">✦ 継ナビくんからの提案（今日の一手）</div>
+    <h2 style="font-size:17px;color:#1E3A66;margin:8px 0 14px;">${brief.title}</h2>
+    <div style="font-size:14px;line-height:1.9;background:#F8F9FC;border:1px solid #E2E7EF;border-radius:10px;padding:16px 18px;">${body}</div>
+    <div style="margin:18px 0;"><a href="${APP_URL}" style="display:inline-block;background:#1E3A66;color:#fff;text-decoration:none;font-size:13px;font-weight:bold;padding:11px 22px;border-radius:9px;">TsuguAiを開いて対応する →</a></div>
+    <div style="font-size:11px;color:#5A6981;line-height:1.7;">このメールは TsuguAi -継- の継ナビくんが、担当顧客の状況をもとに毎朝自動でお送りしています。</div>
+  </div>`;
 }
 
 // ---- ルールベースのシグナル抽出（既存テーブルのみ使用） ----
