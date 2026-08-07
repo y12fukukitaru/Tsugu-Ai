@@ -27,6 +27,7 @@ const APP_URL = Deno.env.get("APP_URL") ?? "https://y12fukukitaru.github.io/Tsug
 const VAPID_PUBLIC = Deno.env.get("VAPID_PUBLIC_KEY") ?? "";             // プッシュ通知（Web Push）
 const VAPID_PRIVATE = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
 const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") ?? "mailto:no-reply@example.com";
+const LINE_TOKEN = Deno.env.get("LINE_CHANNEL_ACCESS_TOKEN") ?? "";      // LINE配信（Messaging API）
 
 const DAY = 86400000;
 const now = () => new Date();
@@ -545,6 +546,26 @@ async function deliver(sb: any, partnerId: string, brief: { title: string; body:
         }
       }
     } catch (e) { console.error("push failed:", e); }
+  }
+  // LINE（Messaging API）
+  if (LINE_TOKEN) {
+    try {
+      const { data: link } = await sb.from("line_links").select("line_user_id").eq("user_id", partnerId).maybeSingle();
+      if (link?.line_user_id) {
+        const res = await fetch("https://api.line.me/v2/bot/message/push", {
+          method: "POST",
+          headers: { "content-type": "application/json", Authorization: `Bearer ${LINE_TOKEN}` },
+          body: JSON.stringify({
+            to: link.line_user_id,
+            messages: [{
+              type: "text",
+              text: `✦ ${brief.title}\n\n${excerpt(brief.body, 400)}\n\nアプリで詳しく → ${APP_URL}`,
+            }],
+          }),
+        });
+        if (!res.ok) console.error("line push failed:", res.status, await res.text());
+      }
+    } catch (e) { console.error("line failed:", e); }
   }
 }
 
