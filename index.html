@@ -1031,11 +1031,11 @@
   function navDefs(r){
     // 顧問税理士として招かれている場合は、数字の入力だけの画面にする
     if(r==='customer' && ACCESS==='finance') return [['sec-flow','月次数字の入力']];
-    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','パートナーAI']];
+    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','継ナビくん']];
     // 運営は admin_role で見えるメニューを絞る（未設定は owner 扱い）
     if(r==='admin') return adminNavAll().filter(function(it){ return adminCanSee(it[0]); });
     // 以降はパートナー
-    return [['sec-flow','ダッシュボード'],['sec-growth','成長ロードマップ'],['sec-biz','本業と連携'],['sec-training','研修プログラム'],['sec-sales','営業ツール'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','AI秘書'],['sec-support','運営サポート']];
+    return [['sec-flow','ダッシュボード'],['sec-growth','成長ロードマップ'],['sec-biz','本業と連携'],['sec-training','研修プログラム'],['sec-sales','営業ツール'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','継ナビくん'],['sec-support','運営サポート']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
   function effectiveNav(r){
@@ -1242,7 +1242,7 @@
         +'<button class="ghost" style="font-size:14px;padding:3px 7px;'+(isTop?'opacity:.3;pointer-events:none;':'')+'" onclick="toggleNavHidden(\''+id+'\')" aria-label="表示切替">'+(hidden?'🚫':'👁')+'</button>'
       +'</div>';
     });
-    h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 4px;">AI秘書の会話履歴</div>';
+    h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 4px;">継ナビくんの会話履歴</div>';
     h+='<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;">タブを切り替えても会話は残ります。下の期間を過ぎた会話は自動で消去されます（この端末・ログイン中の方のみ）。</div>';
     var rd=aisecRetentionDays();
     h+='<div style="display:flex;gap:6px;flex-wrap:wrap;">'
@@ -2363,7 +2363,7 @@
           +'</div>'
           +'<div id="market-open" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-sec"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 1.8 4.9 4.9 1.8-4.9 1.8L12 16.9l-1.8-4.9L5.3 10.2l4.9-1.8z"/><path d="m18.5 15.5.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>パートナーAI（24時間いつでも相談）</span></div>'
+        +'<div class="panel" id="sec-sec"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 1.8 4.9 4.9 1.8-4.9 1.8L12 16.9l-1.8-4.9L5.3 10.2l4.9-1.8z"/><path d="m18.5 15.5.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>継ナビくん（経営の相談相手・24時間いつでも）</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">担当パートナーへのメッセージとは別に、AIに24時間いつでも相談できます。分野を選ぶ必要はありません。資金繰り・税務・労務・採用・値上げ・資金調達・事業承継／M&amp;Aまで、経営のことなら何でもそのままお尋ねください。</div>'
           + secModesHtml()
           +'<div id="sec-log" class="ai-panelbox" style="max-height:300px;overflow:auto;padding:12px;margin-bottom:10px;"><div style="font-size:12px;color:#94A2B6;">例：「来期の経営計画づくりの進め方を相談したい」「取引先へのお礼メールを作って」</div></div>'
@@ -2622,7 +2622,7 @@
           +'<div class="ph" style="font-size:13px;margin-top:16px;">お支払い履歴</div>'
           +'<div id="billpay-history" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-sec"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 1.8 4.9 4.9 1.8-4.9 1.8L12 16.9l-1.8-4.9L5.3 10.2l4.9-1.8z"/><path d="m18.5 15.5.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>AI秘書（業務の相談相手）</span></div>'
+        +'<div class="panel" id="sec-sec"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 1.8 4.9 4.9 1.8-4.9 1.8L12 16.9l-1.8-4.9L5.3 10.2l4.9-1.8z"/><path d="m18.5 15.5.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>継ナビくん（業務の相談相手）</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">分野を選ばずに相談できます。提案資料の文面づくり、面談準備、決算書の見方、税務・労務・資金調達・M&amp;Aの論点整理まで、そのままの言葉でどうぞ。</div>'
           +'<div id="agent-insights-box"></div>'
           +'<div style="margin:0 0 10px;display:flex;gap:8px;flex-wrap:wrap;">'
@@ -6985,7 +6985,7 @@
   function openClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.remove('hidden'); document.body.style.overflow='hidden'; if(typeof clMenuClose==='function') clMenuClose(); }
   function closeClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.add('hidden'); document.body.style.overflow=''; if(typeof clMenuClose==='function') clMenuClose(); }
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var m=$('cl-modal'); if(m && !m.classList.contains('hidden')) closeClientModal(); var r=$('rep-modal'); if(r && !r.classList.contains('hidden')) closeReport(); var b=$('bp-modal'); if(b && !b.classList.contains('hidden')) closeBizplan(); } });
-  // Enterキーで送信（ログイン系フォーム／AI秘書）
+  // Enterキーで送信（ログイン系フォーム／継ナビくん）
   document.addEventListener('keydown',function(e){
     if(e.key!=='Enter') return;
     var t=e.target; if(!t||!t.id) return;
@@ -8498,13 +8498,13 @@
     }catch(e){ box.innerHTML='<div style="font-size:12px;color:#A9403D;padding:6px 0;">エラーが発生しました。</div>'; }
   }
 
-  // ---- AI秘書チャット ----
+  // ---- 継ナビくんチャット ----
   var SEC_MSGS=[];
   // 分野の切り替えは廃止し、経営全般をひとつの相談窓口として扱う。
   // 旧6分野（経営／税務／労務／マーケ／資金調達／M&A）の守備範囲と、
   // 各分野にあった「専門家の確認を促す」注意書きはこの1本に統合している（省略しないこと）。
   var SEC_SYS=[
-    'あなたは日本の中小企業の経営者を支える、有能な経営アドバイザー兼秘書です。',
+    'あなたは経営支援プラットフォーム「TsuguAi -継-」のAIエージェント「継ナビくん」です。日本の中小企業の経営者と認定パートナーを支える、有能な経営アドバイザー兼相談相手として振る舞います。名前を聞かれたら「継ナビくん」と名乗ります。親しみやすく、しかし馴れ馴れしくない敬語で応じます。',
     '経営全般（意思決定・計画づくり・段取り・文章作成・壁打ち）に加えて、税務、労務・人事、マーケティング、資金調達、M&A・事業承継まで、分野を問わず一つの窓口として相談に応じます。',
     '回答は日本語で、簡潔かつ実務的に。抽象論ではなく「次に何をするか」が分かる形で示します。',
     '前提が足りず答えが大きく変わる場合は、決めつけずに要点を1〜2個だけ質問し直します。',
@@ -8527,8 +8527,8 @@
       '値上げを検討している。進め方は？'
     ];
   }
-  // ===== AI秘書：会話の永続化（localStorage・モード別）＋保存期間 =====
-  // パートナーポータルの「AI秘書」と顧客ダッシュボードの「パートナーAI」は同じコードを共用しているため、
+  // ===== 継ナビくん：会話の永続化（localStorage・モード別）＋保存期間 =====
+  // パートナー側・顧客側の「継ナビくん」チャットは同じコードを共用しているため、
   // 保存キーにポータル種別（consultant / customer / admin）を含めて会話を完全に分離する。
   // currentRole() は運営の表示切替（VIEWAS）も考慮して現在のポータルを返す既存関数。
   function aisecPortal(){ try{ return (typeof currentRole==='function')?currentRole():((window.__role)||'customer'); }catch(e){ return (window.__role)||'customer'; } }
@@ -9157,7 +9157,7 @@
   // ---- 疑似UI（ステージ）の部品。実画面の縮小再現なので、ダークモードでも色は固定 ----
   var TG_NAV=[['flow','ダッシュボード'],['growth','成長ロードマップ'],['training','研修プログラム'],
     ['sales','営業ツール'],['clients','顧客管理'],['pdca','課題PDCA'],['madeals','M&A案件'],
-    ['reports','レポート承認'],['knowledge','ナレッジ'],['sozoku','各種シミュレーター'],['sec','AI秘書']];
+    ['reports','レポート承認'],['knowledge','ナレッジ'],['sozoku','各種シミュレーター'],['sec','継ナビくん']];
   // on＝選択中のナビキー、main＝右側の本文HTML
   function tgShell(on, main){
     var nav=TG_NAV.map(function(x){
@@ -11079,7 +11079,7 @@
       t:'企業価値の推移',
       b:'会社の値段が毎月どう動いたかが分かります。将来の承継やM&Aを考えるときの土台になる数字です。' },
     { sec:'sec-sec', find:function(){ return $('sec-input')||$('sec-sec'); },
-      t:'パートナーAI',
+      t:'継ナビくん',
       b:'夜間や休日など、担当パートナーにすぐ聞けないときの相談相手です。24時間いつでもお使いいただけます。' },
     { sec:'sec-flow', find:function(){
         var n=document.querySelector('#app-nav .ni');
@@ -11347,7 +11347,7 @@
       hint:'この質問は沈黙が生まれやすい。急かさず待つ。「孤独です」という言葉が出たら最大の共感ポイント。',
       sol:'専任パートナー＋AIによる伴走',
       solDesc:'御社担当の認定パートナーにメッセージでいつでも相談できます。24時間使えるAI相談も備え、「ひとりで抱える経営」から卒業できます。',
-      feat:'メッセージ・パートナーAI' },
+      feat:'メッセージ・継ナビくん' },
     { cat:'数字の振り返り', ic:'📄',
       q:'自社の数字を「月に一度、誰かと一緒に」振り返る時間はありますか？',
       sub:'試算表は届く。でも“読む時間”と“解説してくれる人”がなければ、数字は経営に活きません。',
