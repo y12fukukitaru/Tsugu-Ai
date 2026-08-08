@@ -130,8 +130,111 @@ async function runHeartbeat(sb: any) {
   // 毎週水曜は「M&Aクロスマッチング」：パートナー間の売り×買いを突合
   const matches = await maCrossMatch(sb, byPartner);
 
-  console.log(`heartbeat done: partners=${byPartner.size} generated=${generated} meeting_briefs=${briefed} mentored=${mentored} succession=${radar} report_drafts=${drafts} ma_matches=${matches}`);
-  return { partners: byPartner.size, generated, meeting_briefs: briefed, mentored, succession: radar, report_drafts: drafts, ma_matches: matches };
+  // 経営者にも毎朝の一手を届ける（担当パートナーがいる顧客のみ）
+  const custBriefs = await customerBriefs(sb);
+
+  // 毎週金曜は「今週のナレッジ便り」：パートナー間の知見をAIが編集して共有
+  const digest = await knowledgeDigest(sb);
+
+  console.log(`heartbeat done: partners=${byPartner.size} generated=${generated} meeting_briefs=${briefed} mentored=${mentored} succession=${radar} report_drafts=${drafts} ma_matches=${matches} customer_briefs=${custBriefs} knowledge_digest=${digest}`);
+  return { partners: byPartner.size, generated, meeting_briefs: briefed, mentored, succession: radar, report_drafts: drafts, ma_matches: matches, customer_briefs: custBriefs, knowledge_digest: digest };
+}
+
+// ---- 経営者向け 毎朝の一手 ----
+// 経営者自身のデータ（試算表・課題・面談・レポート）から、今日やるとよいことを1〜2個だけ。
+// パートナー向けと違い、負担にならない軽さを最優先にする。
+async function customerBriefs(sb: any): Promise<number> {
+  const { data: custs } = await sb
+    .from("profiles")
+    .select("id, company_name")
+    .eq("role", "customer")
+    .not("consultant_id", "is", null)
+    .limit(30); // 1回の実行で最大30社（コスト上限）
+  if (!custs?.length) return 0;
+
+  const jstNow = new Date(Date.now() + 9 * 3600 * 1000);
+  const prev = new Date(jstNow); prev.setUTCDate(1); prev.setUTCDate(0);
+  const prevMonth = prev.toISOString().slice(0, 7);
+  const today = new Date().toISOString().slice(0, 10);
+
+  let made = 0;
+  for (const c of custs) {
+    const { data: dup } = await sb
+      .from("agent_insights").select("id")
+      .eq("user_id", c.id).eq("kind", "daily_brief")
+      .gte("created_at", daysAgo(0.8)).limit(1);
+    if (dup?.length) continue;
+
+    const signals: string[] = [];
+    const { data: fin } = await sb.from("financial_entries").select("id").eq("customer_id", c.id).eq("year_month", prevMonth).limit(1);
+    if (!fin?.length) signals.push(`先月(${prevMonth})の試算表が未入力`);
+    const { data: pd } = await sb.from("pdca_items").select("title, due_date").eq("customer_id", c.id).neq("status", "done").lt("due_date", today).limit(3);
+    for (const p of pd ?? []) signals.push(`課題「${p.title}」が期日超過`);
+    const { data: mt } = await sb.from("meetings_scheduled").select("meet_at").eq("customer_id", c.id).eq("status", "scheduled")
+      .gte("meet_at", now().toISOString()).lte("meet_at", daysAhead(3)).limit(1);
+    if (mt?.length) signals.push(`${fmtDate(mt[0].meet_at)}にパートナーとの面談予定`);
+    const { data: rp } = await sb.from("monthly_reports").select("report_month").eq("customer_id", c.id).eq("status", "published")
+      .gte("published_at", daysAgo(7)).limit(1);
+    if (rp?.length) signals.push(`新しい月次レポート(${rp[0].report_month})が届いている`);
+    if (!signals.length) continue;
+
+    const sys =
+      "あなたは経営支援プラットフォーム「TsuguAi」のAIエージェント「継ナビくん」です。" +
+      "経営者ご本人に向けた、朝のひとことを作ります。" +
+      "ルール: お願いは1〜2個まで。忙しい経営者の負担にならない軽さで、労いから入る。" +
+      "面談準備や数字の入力はアプリのどの画面でやるかを一言添える。判断に迷う内容は担当パートナーへの相談を促す。" +
+      '出力は次のJSONのみ: {"title":"見出し(20字以内)","body":"本文(Markdown可・250字以内)"}';
+    const brief = await callClaudeJson(sys, `会社: ${c.company_name || ""}\n今朝の状況:\n` + signals.map((s) => "- " + s).join("\n"), 700);
+    if (!brief) continue;
+
+    const { error: insErr } = await sb.from("agent_insights").insert({
+      user_id: c.id, kind: "daily_brief",
+      title: brief.title, body: brief.body,
+      reason: signals.join(" / "), priority: 2,
+    });
+    if (!insErr) { made++; await deliver(sb, c.id, brief); }
+  }
+  return made;
+}
+
+// ---- 今週のナレッジ便り（毎週金曜）：パートナー間の知見共有をAIが編集 ----
+async function knowledgeDigest(sb: any): Promise<number> {
+  const jstDay = new Date(Date.now() + 9 * 3600 * 1000).getUTCDay();
+  if (jstDay !== 5) return 0; // 金曜のみ
+
+  const { data: items } = await sb
+    .from("knowledge_items")
+    .select("title, industry, theme, c1, c2, c3")
+    .eq("status", "approved")
+    .gte("created_at", daysAgo(7))
+    .limit(10);
+  if (!items?.length) return 0; // 新着がない週は送らない
+
+  const sys =
+    "あなたは経営支援プラットフォーム「TsuguAi」のAIエージェント「継ナビくん」です。" +
+    "週に一度、全パートナーから今週投稿・承認されたナレッジ（実例）を紹介する「今週のナレッジ便り」を作ります。" +
+    "書き方: 各実例を1〜2行で「何がうまくいったか・自分の顧客にどう活かせるか」の観点で紹介。" +
+    "最後に「あなたの実例もナレッジ画面からぜひ投稿を」と一言添える。400字以内。" +
+    '出力は次のJSONのみ: {"title":"見出し(20字以内)","body":"本文(Markdown可)"}';
+  const brief = await callClaudeJson(sys, "今週の新着ナレッジ:\n" + JSON.stringify(items), 900);
+  if (!brief) return 0;
+
+  const { data: cons } = await sb.from("profiles").select("id").eq("role", "consultant").limit(30);
+  let sent = 0;
+  for (const p of cons ?? []) {
+    const { data: dup } = await sb
+      .from("agent_insights").select("id")
+      .eq("user_id", p.id).eq("kind", "knowledge_digest")
+      .gte("created_at", daysAgo(5)).limit(1);
+    if (dup?.length) continue;
+    const { error: insErr } = await sb.from("agent_insights").insert({
+      user_id: p.id, kind: "knowledge_digest",
+      title: brief.title, body: brief.body,
+      reason: `今週承認されたナレッジ${items.length}件をAIが編集`, priority: 3,
+    });
+    if (!insErr) { sent++; await deliver(sb, p.id, brief); }
+  }
+  return sent;
 }
 
 // ---- 月次レポート先回りドラフト（月初1〜7日）----

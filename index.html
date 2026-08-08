@@ -537,6 +537,12 @@
   .knv-tabs button.on{color:#CFAD62;border-bottom-color:#cfa860;}
   .knv-tbadge{min-width:17px;height:17px;border-radius:99px;background:#A9403D;color:#fff;font-size:10.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;}
   .knv-body{flex:1;overflow-y:auto;padding:12px;background:var(--bg);}
+  /* 通知の内訳サマリー：何が何件あるかを開いた瞬間に見せる */
+  .knv-summary{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--line);flex-shrink:0;}
+  .knv-summary button{font-family:inherit;font-size:11px;font-weight:600;border-radius:99px;padding:4px 11px;cursor:pointer;border:1px solid var(--line);background:var(--soft);color:var(--muted);}
+  .knv-summary button b{color:#A9403D;}
+  .knv-summary button.gold{border-color:#EBDDB4;background:rgba(195,155,63,.09);color:#8A6A12;}
+  .knv-summary button.gold b{color:#8A6A12;}
   .knv-foot{padding:10px 12px;border-top:1px solid var(--line);background:var(--card);flex-shrink:0;}
   .knv-foot .ai-sugrow{margin-bottom:8px;max-height:56px;overflow:hidden;}
   body.dark .knv-panel{background:var(--card);}
@@ -847,6 +853,7 @@
     <button id="knv-tab-chat" class="on" onclick="knvShowTab('chat')">相談</button>
     <button id="knv-tab-notif" onclick="knvShowTab('notif')">お知らせ<span id="knv-tbadge" class="knv-tbadge hidden">0</span></button>
   </div>
+  <div id="knv-summary" class="knv-summary hidden"></div>
   <div id="knv-body" class="knv-body">
     <div id="knv-insights"></div>
     <div id="knv-log"></div>
@@ -1219,6 +1226,7 @@
   // ・最初のセクションより前にあるパネル（プレビュー切替バー等）は常時表示
   function showSection(id){
     if(!id) return;
+    window.__CUR_SEC=id; // 継ナビくんの文脈ヘルプ用：いまどの画面を開いているか
     var role=currentRole();
     // グルーピングは「権限で絞る前の全メニュー」で行う。絞った一覧で組むと、
     // 隠したはずのパネル（経営計画など）が直前のセクションに合流して表示されてしまう。
@@ -2747,7 +2755,7 @@
     window.__eff=eff;
     $('app-body').innerHTML=view;
     if(eff==='customer' && ACCESS==='finance'){ loadAcct(); }
-    else if(eff==='customer'){ loadDashHero(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); knvInit(); }
+    else if(eff==='customer'){ loadDashHero(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); loadAgentInsights(); knvInit(); }
     else if(eff==='consultant'){ loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); loadAgentInsights(); knvInit(); }
     else {
       // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
@@ -6109,11 +6117,11 @@
   function applyNotifBadges(){
     var n=UNREAD.total||0;
     // 「対応が必要な件数」（未読＋今日やること）は右下の継ナビくんのバッジに集約する
-    var bellNum=n;
+    var bellNum=n, todoCount=0;
     if((window.__eff||'')==='consultant'){
-      try{ bellNum=Math.max(Object.keys(buildTodos()).length, n); }catch(e){ bellNum=n; }
+      try{ todoCount=Object.keys(buildTodos()).length; bellNum=Math.max(todoCount, n); }catch(e){ bellNum=n; }
     }
-    window.__KNV_BELL=bellNum;
+    window.__KNV_BELL=bellNum; window.__KNV_UNREAD=n; window.__KNV_TODO=todoCount;
     if(typeof knvBadgesRender==='function') knvBadgesRender();
     var nv=$('nav-unread'); if(nv){ nv.textContent=n>99?'99+':n; nv.classList.toggle('hidden', !n); }
     var nvd=$('nav-unread-d'); if(nvd){ nvd.textContent=n>99?'99+':n; nvd.classList.toggle('hidden', !n); }
@@ -8621,6 +8629,41 @@
       +'ダッシュボード=全体の入口／メッセージ=担当パートナーとのやり取り／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料など／財務・資金繰り=試算表の入力と資金繰りシミュレーター／企業価値=会社の値段の推移／AI診断・自動化=業務の自動化診断／試算結果=各種シミュレーションの保存結果／M&A活用=利益のM&A活用の提案／Tsugu投資・融資・M&A=マッチング掲載／継ナビくん=この画面(24時間いつでも相談)。'
       +'操作の詳細は操作説明書(ダッシュボードのリンク)から。困ったら担当パートナーへのメッセージも使えます。';
   }
+  // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
+  function knvCtxNote(){
+    try{
+      var id=window.__CUR_SEC; if(!id) return '';
+      var defs=(typeof navDefs==='function')?navDefs(currentRole()):[];
+      for(var i=0;i<defs.length;i++){ if(defs[i][0]===id) return ' ユーザーがいま開いている画面は「'+defs[i][1]+'」です。「この画面」「ここ」と言われたらその画面を指します。'; }
+    }catch(e){}
+    return '';
+  }
+  // ナレッジRAG（軽量版）：承認済みナレッジから質問に関連する実例を探して文脈に添える
+  var KN_RAG=null;
+  async function knRagFetch(){
+    if(KN_RAG) return KN_RAG;
+    try{
+      var r=await sb.from('knowledge_items').select('title,industry,theme,c1,c2,c3').eq('status','approved').order('created_at',{ascending:false}).limit(100);
+      KN_RAG=(r.error||!r.data)?[]:r.data;
+    }catch(e){ KN_RAG=[]; }
+    return KN_RAG;
+  }
+  function knRagContext(q, items){
+    if(!items||!items.length) return '';
+    var terms=String(q||'').toLowerCase().split(/[\s、。，・？！?!（）()「」]+/).filter(function(w){ return w.length>=2; });
+    if(!terms.length) return '';
+    var scored=items.map(function(it){
+      var hay=((it.title||'')+' '+(it.industry||'')+' '+(it.theme||'')+' '+(it.c1||'')+' '+(it.c2||'')+' '+(it.c3||'')).toLowerCase();
+      var s=0; terms.forEach(function(w){ if(hay.indexOf(w)>=0) s++; });
+      return { it:it, s:s };
+    }).filter(function(x){ return x.s>0; }).sort(function(a,b){ return b.s-a.s; }).slice(0,3);
+    if(!scored.length) return '';
+    var t=scored.map(function(x){
+      var it=x.it;
+      return '・「'+(it.title||'')+'」（'+(it.industry||'業種情報なし')+'）: '+[it.c1,it.c2,it.c3].filter(Boolean).join(' → ').slice(0,220);
+    }).join('\n');
+    return '\n【社内ナレッジ（全パートナーの承認済み実例）】以下が質問に関連する可能性があります。本当に役立つ場合のみ「ナレッジに◯◯という実例があります。詳しくはナレッジ画面で」と出典タイトル付きで紹介してください。無関係なら触れないでください:\n'+t;
+  }
   // 相談の入口（分野切替ではなく、入力欄に文章を入れるだけの「例文」）
   function secSuggests(){
     if(aisecPortal()==='consultant') return [
@@ -8714,6 +8757,8 @@
     fab.classList.toggle('hidden', !!open);
     if(open){
       renderSecLog(); renderAgentInsights();
+      // お知らせに用があって開いた人を迷わせない：未読・期日があるときはお知らせタブから
+      knvShowTab((window.__KNV_BELL||0)>0?'notif':'chat');
       var box=$('knv-log'); if(box) box.scrollTop=box.scrollHeight;
       var inp=$('knv-input'); if(inp) setTimeout(function(){ inp.focus(); },50);
     }
@@ -8756,6 +8801,19 @@
     if(b){ b.textContent=total>9?'9+':total; b.classList.toggle('hidden', !total); }
     var tb=$('knv-tbadge');
     if(tb){ tb.textContent=bell>9?'9+':bell; tb.classList.toggle('hidden', !bell); }
+    knvSummaryRender();
+  }
+  // 内訳サマリー：📩未読・📌期日・✦提案が何件かを、タブの下に常時表示
+  function knvSummaryRender(){
+    var box=$('knv-summary'); if(!box) return;
+    var un=window.__KNV_UNREAD||0, todo=window.__KNV_TODO||0;
+    var ins=(typeof AGENT_INSIGHTS!=='undefined'&&AGENT_INSIGHTS)?AGENT_INSIGHTS.length:0;
+    if(!un && !todo && !ins){ box.classList.add('hidden'); return; }
+    var h='';
+    if(un)   h+='<button onclick="knvShowTab(\'notif\')">📩 未読 <b>'+un+'</b>件</button>';
+    if(todo) h+='<button onclick="knvShowTab(\'notif\')">📌 期日・対応 <b>'+todo+'</b>件</button>';
+    if(ins)  h+='<button class="gold" onclick="knvShowTab(\'chat\')">✦ 継ナビくんの提案 <b>'+ins+'</b>件</button>';
+    box.innerHTML=h; box.classList.remove('hidden');
   }
   // 各画面のヘッダーに「継ナビくんに聞く」チップを差し込む（画面ごとの質問例つき）
   var KNV_HELP={
@@ -8892,7 +8950,9 @@
     SEC_MSGS.push({role:'user',content:t,ts:Date.now()}); inp.value='';
     SEC_MSGS.push({role:'assistant',content:'（考え中…）'}); renderSecLog();
     var btn=$(src+'-send'); if(btn)btn.disabled=true;
-    var sys=SEC_SYS+secUsageGuide();
+    var rag='';
+    if(aisecPortal()==='consultant'){ try{ rag=knRagContext(t, await knRagFetch()); }catch(e){} }
+    var sys=SEC_SYS+secUsageGuide()+knvCtxNote()+rag;
     var msgs=SEC_MSGS.filter(function(m){return m.content!=='（考え中…）';}).map(function(m){return {role:m.role,content:m.content};});
     try{
       var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:msgs, model:model, max_tokens:1400 } });
