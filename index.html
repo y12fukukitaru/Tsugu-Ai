@@ -532,6 +532,10 @@
   .knv-head{background:#0E1B33;padding:11px 13px;display:flex;gap:10px;align-items:center;flex-shrink:0;}
   .knv-close{margin-left:auto;flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;font-size:19px;cursor:pointer;line-height:1;font-family:inherit;}
   .knv-close:hover{background:rgba(255,255,255,.12);}
+  .knv-tabs{display:flex;background:#0E1B33;padding:0 12px;gap:4px;flex-shrink:0;}
+  .knv-tabs button{font-family:inherit;font-size:12.5px;font-weight:600;color:#8FA3C4;background:transparent;border:none;border-bottom:2px solid transparent;padding:8px 12px 9px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+  .knv-tabs button.on{color:#CFAD62;border-bottom-color:#cfa860;}
+  .knv-tbadge{min-width:17px;height:17px;border-radius:99px;background:#A9403D;color:#fff;font-size:10.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;}
   .knv-body{flex:1;overflow-y:auto;padding:12px;background:var(--bg);}
   .knv-foot{padding:10px 12px;border-top:1px solid var(--line);background:var(--card);flex-shrink:0;}
   .knv-foot .ai-sugrow{margin-bottom:8px;max-height:56px;overflow:hidden;}
@@ -770,7 +774,7 @@
     <div class="sb-foot"><span id="app-email" class="sb-email"></span><button class="sb-out" onclick="openSettings()" style="margin-bottom:6px;">⚙️ 設定</button><button class="sb-out" onclick="signOut()">ログアウト</button></div>
   </aside>
   <main class="main2">
-    <div class="topbar2"><div id="app-greet" class="greet">ダッシュボード</div><div id="app-date" class="datechip"></div><button id="bell" class="bellbtn hidden" onclick="bellGo()" title="通知（要対応）" aria-label="通知（要対応）">🔔<span id="bell-n" class="nbadge hidden">0</span></button><button id="hbg" class="hbg" onclick="openDrawer()" aria-label="メニューを開く"><span class="b"></span><span class="b"></span><span class="b"></span></button></div>
+    <div class="topbar2"><div id="app-greet" class="greet">ダッシュボード</div><div id="app-date" class="datechip"></div><button id="hbg" class="hbg" onclick="openDrawer()" aria-label="メニューを開く"><span class="b"></span><span class="b"></span><span class="b"></span></button></div>
     <div class="wrap" id="app-body"></div>
   </main>
 </div>
@@ -839,10 +843,15 @@
     </div>
     <button class="knv-close" onclick="knvToggle(false)" aria-label="閉じる">×</button>
   </div>
+  <div class="knv-tabs">
+    <button id="knv-tab-chat" class="on" onclick="knvShowTab('chat')">相談</button>
+    <button id="knv-tab-notif" onclick="knvShowTab('notif')">お知らせ<span id="knv-tbadge" class="knv-tbadge hidden">0</span></button>
+  </div>
   <div id="knv-body" class="knv-body">
     <div id="knv-insights"></div>
     <div id="knv-log"></div>
   </div>
+  <div id="knv-notif" class="knv-body hidden"></div>
   <div class="knv-foot">
     <div id="knv-sugs" class="ai-sugrow" style="margin-bottom:8px;"></div>
     <div style="display:flex;gap:8px;align-items:flex-end;">
@@ -6099,16 +6108,13 @@
   function markRead(custId){ try{ localStorage.setItem(lastReadKey(custId), new Date().toISOString()); }catch(e){} }
   function applyNotifBadges(){
     var n=UNREAD.total||0;
-    var bn=$('bell-n');
-    if(bn){
-      // パートナーのベルは「対応が必要な顧客数」（未読＋今日やること）を表示し、開いた中身と一致させる
-      var bellNum=n;
-      if((window.__eff||'')==='consultant'){
-        try{ bellNum=Math.max(Object.keys(buildTodos()).length, n); }catch(e){ bellNum=n; }
-      }
-      bn.textContent=bellNum>99?'99+':bellNum;
-      bn.classList.toggle('hidden', !bellNum);
+    // 「対応が必要な件数」（未読＋今日やること）は右下の継ナビくんのバッジに集約する
+    var bellNum=n;
+    if((window.__eff||'')==='consultant'){
+      try{ bellNum=Math.max(Object.keys(buildTodos()).length, n); }catch(e){ bellNum=n; }
     }
+    window.__KNV_BELL=bellNum;
+    if(typeof knvBadgesRender==='function') knvBadgesRender();
     var nv=$('nav-unread'); if(nv){ nv.textContent=n>99?'99+':n; nv.classList.toggle('hidden', !n); }
     var nvd=$('nav-unread-d'); if(nvd){ nvd.textContent=n>99?'99+':n; nvd.classList.toggle('hidden', !n); }
     var nvt=$('nav-unread-t'); if(nvt){ nvt.textContent=n>99?'99+':n; nvt.classList.toggle('hidden', !n); }
@@ -6119,12 +6125,8 @@
     });
     document.title=(n?('('+n+') '):'')+BASE_TITLE;
   }
-  function bellGo(){
-    var eff=window.__eff||'customer';
-    if(eff==='consultant'){ openNotif(); return; }
-    // 顧客はメッセージへ直行（やり取り相手は1人なので内訳は不要）
-    if(eff==='customer') goSec('sec-chat');
-  }
+  // 通知は右下の継ナビくん（お知らせタブ）に集約した。旧ベルの導線が残っていた場合もそちらへ
+  function bellGo(){ knvToggle(true); knvShowTab('notif'); }
   function closeNotif(){ var m=$('notif-modal'); if(m){ m.classList.add('hidden'); document.body.style.overflow=''; } }
   async function openNotif(){
     // 先にモーダルを開き、読込中表示を出す（ベルを押した直後に何も起きないように）
@@ -6162,7 +6164,29 @@
     return '内容を確認して対応しましょう';
   }
   function renderNotifCenter(){
-    var box=$('notif-body'); if(!box)return;
+    // 出力先：継ナビくんパネルの「お知らせ」タブ（旧・通知センターのモーダルが残っていればそちらにも）
+    var targets=['knv-notif','notif-body'].map(function(id){ return $(id); }).filter(Boolean);
+    if(!targets.length) return;
+    function write(html){ targets.forEach(function(b){ b.innerHTML=html; }); }
+    // 経営者側：やり取り相手は担当パートナー1人なので、未読の案内だけをシンプルに
+    if((window.__eff||'customer')!=='consultant'){
+      var un=UNREAD.total||0;
+      var ch;
+      if(!un){
+        ch='<div style="display:flex;gap:9px;align-items:flex-start;background:#EBF2ED;border-radius:11px;padding:13px 15px;">'
+          +'<span class="tsg-face" style="width:28px;height:28px;">'+tsgNaviSvg()+'</span>'
+          +'<div style="min-width:0;"><div class="tsg-name">継ナビくん</div>'
+          +'<div style="font-size:13.5px;color:#27684A;line-height:1.7;">✅ 新しいお知らせはありません。すべて順調です🌱</div></div></div>';
+      }else{
+        ch='<div style="display:flex;gap:9px;align-items:flex-start;background:var(--soft);border-radius:11px;padding:13px 15px;">'
+          +'<span class="tsg-face" style="width:28px;height:28px;">'+tsgNaviSvg()+'</span>'
+          +'<div style="min-width:0;"><div class="tsg-name">継ナビくん</div>'
+          +'<div style="font-size:13.5px;color:var(--ink);line-height:1.7;">担当パートナーから<b style="color:#A9403D;">未読メッセージが'+un+'件</b>届いています。</div>'
+          +'<button class="btn2" style="font-size:12px;padding:7px 14px;margin-top:8px;" onclick="knvToggle(false);goSec(\'sec-chat\')">メッセージを開いて返信 →</button></div></div>';
+      }
+      write(ch); return;
+    }
+    var box=targets[0];
     var byId={}; (CL_CACHE.clients||[]).forEach(function(c){ byId[c.id]=c; });
     var per=UNREAD.perClient||{};
     // 未読メッセージ（顧客名が取れないものもフォールバック表示）
@@ -6194,7 +6218,7 @@
         +'<div style="min-width:0;"><div class="tsg-name">継ナビくん</div>'
         +'<div style="font-size:13.5px;color:#27684A;line-height:1.7;">✅ いま対応が必要な項目はありません。すべて順調です🌱</div></div>'
       +'</div>';
-      box.innerHTML=h; return;
+      write(h); return;
     }
     h+='<div style="display:flex;gap:9px;align-items:flex-start;background:var(--soft);border-radius:11px;padding:12px 14px;margin-bottom:14px;">'
       +'<span class="tsg-face" style="width:28px;height:28px;">'+tsgNaviSvg()+'</span>'
@@ -6245,14 +6269,14 @@
       if(todoCount>todoTop.length){
         h+='<div style="font-size:11.5px;color:var(--muted);margin:6px 2px;">ほか '+(todoCount-todoTop.length)+'件あります。</div>';
       }
-      h+='<button class="ghost" style="font-size:12px;margin-top:6px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;" onclick="closeNotif();goSec(\'sec-todo\');">「今日やること」一覧をすべて見る →</button>';
+      h+='<button class="ghost" style="font-size:12px;margin-top:6px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;" onclick="closeNotif();knvToggle(false);goSec(\'sec-todo\');">「今日やること」一覧をすべて見る →</button>';
     } else {
       h+='<div style="font-size:12px;color:#27684A;background:#EBF2ED;border-radius:9px;padding:9px 12px;">期日・対応が必要な事項はありません。</div>';
     }
-    box.innerHTML=h;
+    write(h);
   }
   function notifOpenClient(id, focusMsg){
-    closeNotif();
+    closeNotif(); if(typeof knvToggle==='function') knvToggle(false);
     var c=(CL_CACHE.clients||[]).find(function(x){ return x.id===id; });
     if(c && typeof viewClient==='function'){
       viewClient(c.id, c.email, c.company_name||'');
@@ -8455,9 +8479,8 @@
   function renderAgentInsights(){
     var h=agentInsightsHtml();
     ['agent-insights-box','knv-insights'].forEach(function(id){ var box=$(id); if(box) box.innerHTML=h; });
-    // 右下の継ナビくんボタンに未確認の提案数を表示
-    var b=$('knv-badge');
-    if(b){ var n=AGENT_INSIGHTS.length; b.textContent=n>9?'9+':n; b.classList.toggle('hidden', !n); }
+    // 右下の継ナビくんボタンのバッジを更新（お知らせ件数＋今日の一手）
+    if(typeof knvBadgesRender==='function') knvBadgesRender();
   }
   async function agentInsightMark(id,fb){
     // 「役に立った/不要」はブリーフ生成の学習材料として保存する（設計書のフィードバックループ）
@@ -8591,7 +8614,7 @@
       return common
         +'【パートナーポータルの画面ガイド】'
         +'ダッシュボード=毎朝の「今日やること」／成長ロードマップ=認定レベル(Lv.1〜4)と外注費率・研修進捗／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介／研修プログラム=全4章10レッスン／営業ツール=課題ヒアリング診断(見込み客との商談用)／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugu投資・融資・M&A=プラットフォーム内マッチング(掲載は運営への申請制)／ナレッジ=事例・Q&Aの検索と投稿(投稿は承認後に公開)／各種シミュレーター=事業承継・株対策/医療法人持分/退職金／お支払い=プラットフォーム利用料／継ナビくん=この画面(毎朝の「今日の一手」・LINE/Googleカレンダー/スマホ通知の設定ボタンあり)／運営サポート=規程・報酬・審査などの問い合わせ。'
-        +'操作説明書はナレッジ画面から開けます。毎朝の提案(今日の一手)は通知センター🔔にも表示されます。';
+        +'操作説明書はナレッジ画面から開けます。毎朝の提案(今日の一手)と、未読メッセージ・期日などのお知らせは、右下の継ナビくんボタン(相談/お知らせタブ)に集約されています。';
     }
     return common
       +'【経営者ダッシュボードの画面ガイド】'
@@ -8697,9 +8720,42 @@
   }
   // 質問文を入れた状態で継ナビくんの窓口を開く（各画面の「継ナビくんに聞く」から）
   function knvAsk(q){
-    knvToggle(true);
+    knvToggle(true); knvShowTab('chat');
     var inp=$('knv-input');
     if(inp && q){ inp.value=q; try{ inp.setSelectionRange(q.length,q.length); }catch(e){} }
+  }
+  // パネル内タブ：相談（チャット）／お知らせ（旧・通知センター）
+  function knvShowTab(t){
+    var chat=(t!=='notif');
+    var tc=$('knv-tab-chat'), tn=$('knv-tab-notif');
+    if(tc) tc.classList.toggle('on', chat);
+    if(tn) tn.classList.toggle('on', !chat);
+    var body=$('knv-body'), notif=$('knv-notif'), foot=document.querySelector('.knv-foot');
+    if(body) body.classList.toggle('hidden', !chat);
+    if(notif) notif.classList.toggle('hidden', chat);
+    if(foot) foot.classList.toggle('hidden', !chat);
+    if(!chat) knvLoadNotif();
+  }
+  async function knvLoadNotif(){
+    var box=$('knv-notif'); if(!box) return;
+    box.innerHTML='<div style="font-size:12.5px;color:var(--muted);padding:18px 4px;text-align:center;">読み込み中…</div>';
+    try{
+      if((window.__eff||'')==='consultant' && (!CL_CACHE.clients || !CL_CACHE.clients.length) && typeof loadClients==='function'){
+        await loadClients();
+      }
+      await refreshNotifs();
+    }catch(e){}
+    renderNotifCenter();
+  }
+  // 右下ボタンとお知らせタブのバッジ（未読・対応事項＋今日の一手の合計）
+  function knvBadgesRender(){
+    var bell=window.__KNV_BELL||0;
+    var ins=(typeof AGENT_INSIGHTS!=='undefined'&&AGENT_INSIGHTS)?AGENT_INSIGHTS.length:0;
+    var total=bell+ins;
+    var b=$('knv-badge');
+    if(b){ b.textContent=total>9?'9+':total; b.classList.toggle('hidden', !total); }
+    var tb=$('knv-tbadge');
+    if(tb){ tb.textContent=bell>9?'9+':bell; tb.classList.toggle('hidden', !bell); }
   }
   // 各画面のヘッダーに「継ナビくんに聞く」チップを差し込む（画面ごとの質問例つき）
   var KNV_HELP={
