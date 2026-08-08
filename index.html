@@ -1465,13 +1465,7 @@
       +'<div class="panel"><span class="pill" style="background:#F7EFDC;color:#C39B3F;">運営コンソール</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">運営管理</h2>'
         +'<div class="kv">ログイン中：<b>'+esc(email)+'</b>　役割：<b>運営</b></div>'
-        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px;">'
-          +'<span style="font-size:12.5px;font-weight:700;color:var(--navy);"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>操作説明書：</span>'
-          +'<button class="btn2" style="font-size:12px;padding:8px 18px;" onclick="openManual(\'manual-admin.html\')">運営</button>'
-          +'<button class="btn2" style="font-size:12px;padding:8px 18px;" onclick="openManual(\'manual-partner.html\')">パートナー</button>'
-          +'<button class="btn2" style="font-size:12px;padding:8px 18px;" onclick="openManual(\'manual-customer.html\')">顧客</button>'
-        +'</div>'
-        +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:7px;">課金・報酬支払いの詳細（MRR試算・顧問料の割引・決済リンク・入金記録・パートナー報酬の配分・月次の締め）まで収録。印刷／PDF保存に対応しています。</div>'
+        +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:10px;">操作説明書（運営・パートナー・顧客）は、右下の継ナビくん「サポート」タブから開けます。</div>'
       +'</div>'
       +'<div class="panel" id="sec-flow"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6.5 13.5 5.5-5.5 5.5 5.5"/><path d="m6.5 19 5.5-5.5 5.5 5.5"/></svg>成長ロードマップ（事業計画連動）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmRoadmap()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;">TsuguAi自体の成長ステージです。顧客・パートナー・調達の登録データから自動で現在地と進捗を表示します。目標の詳細は「経営計画」で管理します。</div>'
@@ -2343,7 +2337,7 @@
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">'+esc(prof.company_name||'経営者ダッシュボード')+'</h2>'
         +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b></div>'
         +'<div style="margin-bottom:12px;"><button id="ct-btn" class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;font-weight:600;" onclick="ctStart(true)"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5.5 3.5-5.5 3.5z"/></svg>使い方ガイド（1分）</button>'
-          +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;font-weight:600;margin-left:8px;" onclick="openManual(\'manual-customer.html\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>操作説明書</button></div>'
+          +'</div>'
         +'<div id="dash-hero">読み込み中...</div>'
         +'<div id="my-onboard"></div>'
         +'<div id="my-impact"></div>'
@@ -2448,7 +2442,6 @@
         +'<div class="panel" id="sec-flow"><span class="pill" style="background:#EAF0F9;color:#2C5DA8;">パートナーポータル</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">パートナーポータル</h2>'
         +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b>'+(prof.fde_rank?'　ランク：<b>'+esc(prof.fde_rank)+'</b>':'')+'</div>'
-        +'<div style="margin-bottom:10px;"><button class="btn2" style="font-size:12px;padding:7px 16px;" onclick="openManual(\'manual-partner.html\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>操作説明書</button></div>'
         +'<div id="fde-hero" style="display:flex;gap:8px;flex-wrap:wrap;">読み込み中...</div></div>'
         +'<div id="my-annc"></div>'
         +'<div class="panel" id="sec-todo">'
@@ -6198,7 +6191,8 @@
         ch='<div style="display:flex;gap:9px;align-items:flex-start;background:#EBF2ED;border-radius:11px;padding:13px 15px;">'
           +'<span class="tsg-face" style="width:28px;height:28px;">'+tsgNaviSvg()+'</span>'
           +'<div style="min-width:0;"><div class="tsg-name">継ナビくん</div>'
-          +'<div style="font-size:13.5px;color:#27684A;line-height:1.7;">✅ 新しいお知らせはありません。すべて順調です🌱</div></div></div>';
+          +'<div style="font-size:13.5px;color:#27684A;line-height:1.7;">✅ 新しいお知らせはありません。すべて順調です🌱</div>'
+          +'<button class="btn2" style="font-size:12px;padding:7px 14px;margin-top:8px;" onclick="knvToggle(false);goSec(\'sec-chat\')">✉️ 担当パートナーとメッセージ →</button></div></div>';
       }else{
         ch='<div style="display:flex;gap:9px;align-items:flex-start;background:var(--soft);border-radius:11px;padding:13px 15px;">'
           +'<span class="tsg-face" style="width:28px;height:28px;">'+tsgNaviSvg()+'</span>'
@@ -6273,6 +6267,21 @@
       });
     } else {
       h+='<div style="font-size:12px;color:#27684A;background:#EBF2ED;border-radius:9px;padding:9px 12px;margin-bottom:10px;">返信待ちのメッセージはありません。</div>';
+    }
+    // こちらから送る動線：未読が無くても、顧客を選んでメッセージを開ける
+    var clAll=(CL_CACHE.clients||[]).slice();
+    if(clAll.length){
+      clAll.sort(function(a,b){ return (per[b.id]||0)-(per[a.id]||0); });
+      h+='<div style="font-size:12px;font-weight:700;color:var(--navy);margin:2px 0 6px;">✉️ メッセージを送る（顧客を選択）</div>';
+      clAll.slice(0,8).forEach(function(c){
+        var un0=per[c.id]||0;
+        h+='<div onclick="notifOpenClient(\''+c.id+'\',true)" style="display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:9px;padding:8px 12px;margin-bottom:6px;cursor:pointer;background:var(--card);">'
+          +'<span style="flex:1;font-size:12.5px;color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(c.company_name||c.email)+'</span>'
+          +(un0?'<span class="tag red" style="font-size:10px;">未読 '+un0+'</span>':'')
+          +'<span style="font-size:11px;font-weight:700;color:var(--blue);white-space:nowrap;">開く →</span>'
+        +'</div>';
+      });
+      if(clAll.length>8) h+='<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">ほか'+(clAll.length-8)+'社は顧客管理から開けます。</div>';
     }
 
     // ② 期日・対応事項（今日やること）
@@ -8641,12 +8650,12 @@
       return common
         +'【パートナーポータルの画面ガイド】'
         +'ダッシュボード=毎朝の「今日やること」／成長ロードマップ=認定レベル(Lv.1〜4)と外注費率・研修進捗／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介／研修プログラム=全4章10レッスン／営業ツール=課題ヒアリング診断(見込み客との商談用)／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugu投資・融資・M&A=プラットフォーム内マッチング(掲載は運営への申請制)／ナレッジ=事例・Q&Aの検索と投稿(投稿は承認後に公開)／各種シミュレーター=事業承継・株対策/医療法人持分/退職金／お支払い=プラットフォーム利用料。継ナビくんは画面右下のボタンに常駐し、パネルは4タブ: 相談(このチャット)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ)。'
-        +'操作説明書は右下パネルの「サポート」タブやポータルトップから開けます。毎朝の「今日の一手」とお知らせは右下ボタンのバッジに届きます。';
+        +'操作説明書は右下パネルの「サポート」タブから開けます。毎朝の「今日の一手」とお知らせは右下ボタンのバッジに届きます。';
     }
     return common
       +'【経営者ダッシュボードの画面ガイド】'
       +'ダッシュボード=全体の入口／メッセージ=担当パートナーとのやり取り／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料など／財務・資金繰り=試算表の入力と資金繰りシミュレーター／企業価値=会社の値段の推移／AI診断・自動化=業務の自動化診断／試算結果=各種シミュレーションの保存結果／M&A活用=利益のM&A活用の提案／Tsugu投資・融資・M&A=マッチング掲載。継ナビくんは画面右下のボタンに常駐: 相談(24時間)／お知らせ／連携(スマホ通知・LINE)／サポート(操作説明書・担当パートナーへの連絡)。'
-      +'操作の詳細は操作説明書(ダッシュボードのリンク)から。困ったら担当パートナーへのメッセージも使えます。';
+      +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
   function knvCtxNote(){
