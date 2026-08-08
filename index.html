@@ -838,6 +838,11 @@
   </div>
 </div>
 
+<!-- 操作説明書ビューア：別タブを開かず、プラットフォーム内で閲覧する -->
+<div id="manual-modal" class="hidden" style="position:fixed;inset:0;z-index:80;background:#0B1220;">
+  <iframe id="manual-frame" style="width:100%;height:100%;border:none;display:block;" title="操作説明書"></iframe>
+</div>
+
 <!-- 継ナビくん：右下フローティング窓口（ログイン後に knvInit() で表示） -->
 <div id="knv-fab" class="knv-fab hidden" onclick="knvToggle(true)" title="継ナビくんに相談" aria-label="継ナビくんに相談"><span id="knv-badge" class="knv-badge hidden">0</span></div>
 <div id="knv-panel" class="knv-panel hidden" role="dialog" aria-label="継ナビくん">
@@ -1462,9 +1467,9 @@
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">運営管理</h2>'
         +'<div class="kv">ログイン中：<b>'+esc(email)+'</b>　役割：<b>運営</b></div>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">'
-          +'<button class="btn2" style="font-size:12.5px;" onclick="openKnowledgePage(\'manual-admin.html\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>運営コンソール 操作説明書 ↗</button>'
-          +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:8px 13px;" onclick="openKnowledgePage(\'manual-partner.html\')">パートナー向け ↗</button>'
-          +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:8px 13px;" onclick="openKnowledgePage(\'manual-customer.html\')">顧客向け ↗</button>'
+          +'<button class="btn2" style="font-size:12.5px;" onclick="openManual(\'manual-admin.html\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>運営コンソール 操作説明書</button>'
+          +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:8px 13px;" onclick="openManual(\'manual-partner.html\')">パートナー向け</button>'
+          +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:8px 13px;" onclick="openManual(\'manual-customer.html\')">顧客向け</button>'
         +'</div>'
         +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:7px;">課金・報酬支払いの詳細（MRR試算・顧問料の割引・決済リンク・入金記録・パートナー報酬の配分・月次の締め）まで収録。印刷／PDF保存に対応しています。</div>'
       +'</div>'
@@ -2338,7 +2343,7 @@
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">'+esc(prof.company_name||'経営者ダッシュボード')+'</h2>'
         +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b></div>'
         +'<div style="margin-bottom:12px;"><button id="ct-btn" class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;font-weight:600;" onclick="ctStart(true)"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5.5 3.5-5.5 3.5z"/></svg>使い方ガイド（1分）</button>'
-          +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;font-weight:600;margin-left:8px;" onclick="openKnowledgePage(\'manual-customer.html\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>操作説明書 ↗</button></div>'
+          +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;font-weight:600;margin-left:8px;" onclick="openManual(\'manual-customer.html\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>操作説明書</button></div>'
         +'<div id="dash-hero">読み込み中...</div>'
         +'<div id="my-onboard"></div>'
         +'<div id="my-impact"></div>'
@@ -4701,6 +4706,20 @@
     if(location.protocol==='file:'){ window.open('https://y12fukukitaru.github.io/Tsugu-Ai/'+page,'_blank'); }
     else { window.open('./'+page,'_blank'); }
   }
+  // 操作説明書はプラットフォーム内のビューア（iframe）で開く。別タブは開かない
+  function openManual(page){
+    var m=$('manual-modal'), f=$('manual-frame');
+    if(!m||!f){ openKnowledgePage(page); return; }
+    f.src='./'+page; m.classList.remove('hidden'); document.body.style.overflow='hidden';
+  }
+  function closeManual(){
+    var m=$('manual-modal'), f=$('manual-frame');
+    if(m) m.classList.add('hidden');
+    if(f) f.src='about:blank';
+    document.body.style.overflow='';
+  }
+  // 説明書内の「プラットフォームに戻る」ボタンからの合図で閉じる
+  window.addEventListener('message',function(e){ if(e&&e.data&&e.data.tsugu==='closeManual') closeManual(); });
   // ===== 課金 Phase1：Stripe決済リンク＋入金履歴 =====
   async function loadBillingPay(aud){
     var box=$('billpay-links'); if(!box) return;
@@ -5045,7 +5064,7 @@
             +(k.badge?' <span class="tag red" style="font-size:10px;vertical-align:middle;">'+esc(k.badge)+'</span>':'')+'</div>'
           +(k.desc?'<div style="font-size:11px;color:#94A2B6;line-height:1.55;margin-top:2px;">'+esc(k.desc)+'</div>':'')
         +'</div>'
-        +'<button class="btn2" style="padding:7px 13px;font-size:12px;white-space:nowrap;" onclick="openKnowledgePage(\''+k.file+'\')">開く ↗</button>'
+        +'<button class="btn2" style="padding:7px 13px;font-size:12px;white-space:nowrap;" onclick="'+(k.file.indexOf('manual-')===0?'openManual':'openKnowledgePage')+'(\''+k.file+'\')">開く'+(k.file.indexOf('manual-')===0?'':' ↗')+'</button>'
       +'</div>';
     });
     h+='</div>';
@@ -8854,7 +8873,8 @@
         d.innerHTML='<span class="tsg-face">'+tsgNaviSvg()+'</span>'
           +'<div style="min-width:0;">研修おつかれさまです🌱 つまずいたら、その場で聞いてください。'
           +'<b>「このレッスンの内容を実務でどう使う？」</b>のような質問も歓迎です。'
-          +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:3px 10px;margin-left:8px;" onclick="knvAsk(\'いま研修プログラムを受けています。質問があります：\')">継ナビくんに質問する</button></div>';
+          +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:3px 10px;margin-left:8px;" onclick="knvAsk(\'いま研修プログラムを受けています。質問があります：\')">継ナビくんに質問する</button>'
+          +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:3px 10px;margin-left:6px;" onclick="openManual(\'manual-partner.html\')">📖 操作説明書を見る</button></div>';
         ph.insertAdjacentElement('afterend', d);
       }
     }
