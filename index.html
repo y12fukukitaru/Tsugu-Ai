@@ -530,7 +530,9 @@
   .knv-badge{position:absolute;top:-4px;right:-4px;min-width:19px;height:19px;border-radius:99px;background:#A9403D;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #fff;}
   .knv-panel{position:fixed;right:14px;bottom:14px;z-index:71;width:min(400px,calc(100vw - 20px));height:min(620px,calc(100vh - 80px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(6,12,24,.45);display:flex;flex-direction:column;overflow:hidden;}
   .knv-head{background:#0E1B33;padding:11px 13px;display:flex;gap:10px;align-items:center;flex-shrink:0;}
-  .knv-close{margin-left:auto;flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;font-size:19px;cursor:pointer;line-height:1;font-family:inherit;}
+  .knv-close{margin-left:auto;flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;font-size:18px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;}
+  /* ×印のズレ防止：閉じるボタンは常にflexで中央揃え */
+  .modal-close{display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;}
   .knv-close:hover{background:rgba(255,255,255,.12);}
   .knv-tabs{display:flex;background:#0E1B33;padding:0 12px;gap:4px;flex-shrink:0;}
   .knv-tabs button{font-family:inherit;font-size:12.5px;font-weight:600;color:#8FA3C4;background:transparent;border:none;border-bottom:2px solid transparent;padding:8px 12px 9px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
@@ -547,13 +549,7 @@
   .knv-foot .ai-sugrow{margin-bottom:8px;max-height:56px;overflow:hidden;}
   body.dark .knv-panel{background:var(--card);}
   @media(max-width:600px){ .knv-panel{right:8px;bottom:8px;width:calc(100vw - 16px);height:calc(100vh - 60px);} }
-  /* 各画面ヘッダーの「継ナビくんに聞く」チップと、研修などの案内バナー */
-  .knv-help{display:inline-flex;align-items:center;gap:6px;vertical-align:middle;margin-left:10px;margin-right:auto;font-size:11px;font-weight:600;color:#8A6A12;background:rgba(195,155,63,.09);border:1px solid #EBDDB4;border-radius:99px;padding:3px 11px 3px 4px;cursor:pointer;font-family:inherit;transition:background .15s;flex:0 0 auto;}
-  @media(max-width:640px){ .knv-help span:last-child{display:none;} .knv-help{padding:3px 4px;} }
-  .knv-help:hover{background:rgba(195,155,63,.18);}
-  .knv-help .fc{display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;border-radius:7px;background:#0e2038;}
-  .knv-help .fc svg{width:15px;height:15px;display:block;}
-  body.dark .knv-help{color:#CFAD62;border-color:#3a3524;}
+  /* 研修などの継ナビくん案内バナー */
   .knv-banner{display:flex;gap:9px;align-items:flex-start;border:1px solid #EBDDB4;background:rgba(195,155,63,.07);border-radius:11px;padding:11px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.75;color:var(--ink);}
   .knv-banner .tsg-face{width:26px;height:26px;border-radius:8px;}
   .knv-banner .tsg-face svg{width:18px;height:18px;}
@@ -6838,6 +6834,9 @@
   async function loadClientTodo(custId){
     var box=$('cl-todo-body'); if(!box) return;
     var now=new Date(), ym=thisYM(), monthStart=ym+'-01';
+    // 実務は「当月に前月分を入力・作成」するため、前月分でもチェックが入るようにする
+    var pd=new Date(now.getFullYear(), now.getMonth()-1, 1);
+    var pym=pd.getFullYear()+'-'+('0'+(pd.getMonth()+1)).slice(-2);
     var rows=[], done={fin:false, meet:false, note:false, rep:false}, meetInfo=null;
     var sig={msgOk:true, pdcaOk:true, dueOk:true, hasMa7:false, pmiDone:false, cash90:false, ins90:false, ai90:false};
     function within(dstr,days){ if(!dstr) return false; return (now - new Date(dstr))/(24*3600*1000) <= days; }
@@ -6845,9 +6844,9 @@
       var rs=await Promise.all([
         sb.from('chat_messages').select('sender_role,created_at').eq('customer_id',custId).order('created_at',{ascending:false}).limit(100),
         sb.from('meetings_scheduled').select('meet_at').eq('customer_id',custId).eq('status','scheduled').order('meet_at',{ascending:true}).limit(1),
-        sb.from('financial_entries').select('id').eq('customer_id',custId).eq('year_month',ym).limit(1),
+        sb.from('financial_entries').select('id').eq('customer_id',custId).in('year_month',[ym,pym]).limit(1),
         sb.from('meeting_notes').select('id').eq('customer_id',custId).gte('meeting_date',monthStart).limit(1),
-        sb.from('monthly_reports').select('id').eq('customer_id',custId).eq('report_month',ym).limit(1),
+        sb.from('monthly_reports').select('id').eq('customer_id',custId).in('report_month',[ym,pym]).limit(1),
         sb.from('upcoming_payments').select('title,due_date').eq('customer_id',custId),
         sb.from('funding_roadmap_items').select('title,target_date,status').eq('customer_id',custId),
         sb.from('pdca_items').select('title,due_date,updated_at').eq('customer_id',custId).eq('status','active'),
@@ -6913,7 +6912,9 @@
         }
       });
       // --- 今月の定型チェック ---
-      done.fin=!!d(2).length; done.note=!!d(3).length; done.rep=!!d(4).length; done.meet=!!mt;
+      // 次回面談は「未来の予定」があるときだけ済み扱い（過去日の予定放置ではチェックしない）
+      done.fin=!!d(2).length; done.note=!!d(3).length; done.rep=!!d(4).length;
+      done.meet=!!(mt && mt.meet_at && new Date(mt.meet_at)>=now);
       sig.cash90=!!(d(10)[0]&&within(d(10)[0].created_at,90));
       sig.ins90=!!(d(11)[0]&&within(d(11)[0].created_at,90));
       sig.ai90=!!(d(12)[0]&&within(d(12)[0].created_at,90));
@@ -8836,40 +8837,9 @@
     if(ins)  h+='<button class="gold" onclick="knvShowTab(\'chat\')">✦ 継ナビくんの提案 <b>'+ins+'</b>件</button>';
     box.innerHTML=h; box.classList.remove('hidden');
   }
-  // 各画面のヘッダーに「継ナビくんに聞く」チップを差し込む（画面ごとの質問例つき）
-  var KNV_HELP={
-    'sec-training':'研修プログラムについて質問したい',
-    'sec-sales':'課題ヒアリング診断の使い方を教えて',
-    'sec-clients':'顧客管理・カルテの使い方を教えて',
-    'sec-pdca':'課題PDCAの進め方を相談したい',
-    'sec-madeals':'M&A案件の進め方を相談したい',
-    'sec-knowledge':'ナレッジの探し方・投稿の仕方を教えて',
-    'sec-sozoku':'どのシミュレーターを使えばいいか相談したい',
-    'sec-biz':'本業との連携のやり方を教えて',
-    'sec-growth':'認定レベルの上げ方を相談したい',
-    'sec-market':'Tsugu市場への掲載方法を教えて',
-    'sec-cash':'試算表の入力方法を教えて',
-    'sec-reports':'月次レポートの見方を教えて',
-    'sec-mypdca':'経営課題の進め方を相談したい',
-    'sec-ai':'AI診断の使い方を教えて',
-    'sec-ma':'利益のM&A活用について相談したい',
-    'sec-value':'企業価値の見方を教えて'
-  };
+  // 画面ごとのチップは廃止（継ナビくんは常に右下にいるため、導線を一本化）
   function knvDecorate(){
-    Object.keys(KNV_HELP).forEach(function(id){
-      var sec=$(id); if(!sec) return;
-      var ph=sec.querySelector('.ph'); if(!ph || ph.querySelector('.knv-help')) return;
-      var b=document.createElement('button');
-      b.className='knv-help'; b.type='button'; b.title='継ナビくんに聞く';
-      b.innerHTML='<span class="fc">'+tsgNaviSvg()+'</span><span>継ナビくんに聞く</span>';
-      (function(q){ b.onclick=function(){ knvAsk(q); }; })(KNV_HELP[id]);
-      // タイトルの直後に置く（見出し右端の「更新」「追加」ボタンとは重ねない）
-      var t=ph.querySelector('.ph-t');
-      if(t){ t.parentNode.insertBefore(b, t.nextSibling); }
-      else if(ph.firstElementChild){ ph.insertBefore(b, ph.firstElementChild); }
-      else { ph.appendChild(b); }
-    });
-    // 研修プログラムには応援バナーも添える（新人の入口のため手厚く）
+    // 研修プログラムには応援バナーを添える（新人の入口のため手厚く）
     var tr=$('sec-training');
     if(tr && !tr.querySelector('.knv-banner')){
       var ph=tr.querySelector('.ph');
