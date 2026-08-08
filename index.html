@@ -868,6 +868,13 @@
   <div id="knv-setup" class="knv-body hidden"></div>
   <div id="knv-support" class="knv-body hidden"></div>
   <div class="knv-foot">
+    <div id="knv-search" class="hidden" style="margin-bottom:8px;">
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input id="knv-search-in" class="inp2" style="flex:1;font-size:12px;padding:7px 10px;" placeholder="🔍 相談履歴を検索（例：値上げ）" oninput="knvSearchRun()">
+        <button class="ghost" style="font-size:11px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;white-space:nowrap;" onclick="clearSecLog()" title="会話履歴を消去">🗑 履歴消去</button>
+        <button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:6px 9px;" onclick="knvSearchToggle()" aria-label="検索を閉じる">✕</button>
+      </div>
+    </div>
     <div id="knv-guide" class="hidden" style="background:#FDFAF1;border:1px solid #EAD9AC;border-radius:10px;padding:9px 11px;margin-bottom:8px;max-height:210px;overflow:auto;"></div>
     <div id="knv-sugs" class="ai-sugrow" style="margin-bottom:8px;"></div>
     <div style="display:flex;gap:8px;align-items:flex-end;">
@@ -6356,9 +6363,12 @@
       var mine=(m.sender_role===myRole);
       var who=mine?'':(m.sender_role==='customer'?'顧客':'パートナー');
       var dt=(m.created_at||'').replace('T',' ').slice(5,16);
+      var att=m.attachment_path
+        ? '<div'+(m.body?' style="margin-top:6px;"':'')+'><a onclick="knvAttOpen(\''+escA(m.attachment_path)+'\')" style="cursor:pointer;font-size:12.5px;font-weight:600;text-decoration:underline;color:'+(mine?'#fff':'#2C5DA8')+';">📎 '+esc(m.attachment_name||'添付ファイル')+'</a></div>'
+        : '';
       h+='<div style="display:flex;flex-direction:column;align-items:'+(mine?'flex-end':'flex-start')+';margin-bottom:8px;">'
         +'<div style="font-size:10px;color:#94A2B6;margin-bottom:2px;">'+(who?esc(who)+'　':'')+esc(dt)+'</div>'
-        +'<div style="max-width:82%;padding:9px 12px;border-radius:12px;font-size:13px;line-height:1.6;white-space:pre-wrap;'+(mine?'background:#2C5DA8;color:#fff;':'background:#fff;border:1px solid #E2E7EF;color:#18202E;')+'">'+esc(m.body)+'</div>'
+        +'<div style="max-width:82%;padding:9px 12px;border-radius:12px;font-size:13px;line-height:1.6;white-space:pre-wrap;'+(mine?'background:#2C5DA8;color:#fff;':'background:#fff;border:1px solid #E2E7EF;color:#18202E;')+'">'+esc(m.body||'')+att+'</div>'
       +'</div>';
     });
     return h;
@@ -8434,20 +8444,28 @@
       return l;
     }).join('<br>').replace(/(<br>){3,}/g,'<br><br>');
   }
+  // 未読の提案の数（バッジ・サマリーは未読だけを数える。既読は7日間、薄い表示で読み返せる）
+  function agentInsightsUnread(){
+    return (AGENT_INSIGHTS||[]).filter(function(x){ return x.status==='unread'; }).length;
+  }
   function agentInsightsHtml(){
     if(!AGENT_INSIGHTS.length) return '';
+    var un=agentInsightsUnread();
     var h='<div style="border:1px solid var(--gold);background:rgba(195,155,63,.07);border-radius:11px;padding:13px 15px;margin-bottom:14px;">'
       +'<div style="display:flex;gap:8px;align-items:center;">'
         +'<span class="tsg-face" style="width:26px;height:26px;border-radius:8px;">'+tsgNaviSvg()+'</span>'
-        +'<div style="min-width:0;"><div style="font-size:13px;font-weight:700;color:var(--navy);">✦ 継ナビくんからの提案（今日の一手）</div>'
+        +'<div style="min-width:0;flex:1;"><div style="font-size:13px;font-weight:700;color:var(--navy);">✦ 継ナビくんからの提案（今日の一手）'+(un?' <span class="knv-tbadge" style="position:static;border:none;vertical-align:1px;">'+un+'</span>':'')+'</div>'
         +'<div style="font-size:11px;color:var(--muted);">担当顧客の状況から、継ナビくんが毎朝まとめています。</div></div>'
+        +(un>1?'<button class="ghost" style="font-size:10.5px;border:1px solid var(--line);border-radius:7px;padding:3px 8px;white-space:nowrap;" onclick="agentInsightReadAll()">すべて既読</button>':'')
       +'</div>';
     AGENT_INSIGHTS.forEach(function(x){
-      h+='<div style="border-top:1px solid var(--softline);padding:10px 0 6px;">'
-        +'<div style="font-size:13px;font-weight:600;color:var(--ink);">'+esc(x.title||'')+'</div>'
+      var read=(x.status!=='unread');
+      h+='<div style="border-top:1px solid var(--softline);padding:10px 0 6px;'+(read?'opacity:.62;':'')+'">'
+        +'<div style="font-size:13px;font-weight:600;color:var(--ink);">'+(read?'':'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#C39B3F;margin-right:6px;vertical-align:2px;"></span>')+esc(x.title||'')+(read?' <span style="font-size:10px;color:var(--muted);font-weight:400;">既読</span>':'')+'</div>'
         +'<div style="font-size:12.5px;color:var(--ink);line-height:1.75;margin:6px 0;">'+agentInsightBody(x.body)+'</div>'
         +(x.reason?'<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">検出根拠: '+esc(x.reason)+'</div>':'')
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+          +(read?'':'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:7px;padding:4px 10px;" onclick="agentInsightRead(\''+x.id+'\')">✓ 既読にする</button>')
           +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:7px;padding:4px 10px;" onclick="agentInsightMark(\''+x.id+'\',\'useful\')">👍 役に立った</button>'
           +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:7px;padding:4px 10px;" onclick="agentInsightMark(\''+x.id+'\',\'not_needed\')">不要（表示しない）</button>'
         +'</div>'
@@ -8466,6 +8484,21 @@
     // 「役に立った/不要」はブリーフ生成の学習材料として保存する（設計書のフィードバックループ）
     try{ await sb.from('agent_insights').update({feedback:fb,status:fb==='useful'?'done':'dismissed'}).eq('id',id); }catch(e){}
     AGENT_INSIGHTS=AGENT_INSIGHTS.filter(function(x){ return x.id!==id; });
+    renderAgentInsights();
+    try{ renderNotifCenter(); }catch(e){}
+  }
+  // 既読管理：既読にしても7日間は薄い表示で読み返せる（削除ではない）
+  async function agentInsightRead(id){
+    try{ await sb.from('agent_insights').update({status:'read'}).eq('id',id).eq('status','unread'); }catch(e){}
+    AGENT_INSIGHTS.forEach(function(x){ if(x.id===id && x.status==='unread') x.status='read'; });
+    renderAgentInsights();
+    try{ renderNotifCenter(); }catch(e){}
+  }
+  async function agentInsightReadAll(){
+    var ids=AGENT_INSIGHTS.filter(function(x){ return x.status==='unread'; }).map(function(x){ return x.id; });
+    if(!ids.length) return;
+    try{ await sb.from('agent_insights').update({status:'read'}).in('id',ids); }catch(e){}
+    AGENT_INSIGHTS.forEach(function(x){ if(x.status==='unread') x.status='read'; });
     renderAgentInsights();
     try{ renderNotifCenter(); }catch(e){}
   }
@@ -8593,12 +8626,12 @@
     if(aisecPortal()==='consultant'){
       return common
         +'【パートナーポータルの画面ガイド】'
-        +'ダッシュボード=毎朝の「今日やること」／成長ロードマップ=認定レベル(Lv.1〜4)と外注費率・研修進捗／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介／研修プログラム=全4章10レッスン／営業ツール=課題ヒアリング診断(見込み客との商談用)／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugu投資・融資・M&A=プラットフォーム内マッチング(掲載は運営への申請制)／ナレッジ=事例・Q&Aの検索と投稿(投稿は承認後に公開)／各種シミュレーター=事業承継・株対策/医療法人持分/退職金／お支払い=プラットフォーム利用料。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(このチャット)／メッセージ(顧客との送受信はここで完結)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ)。'
+        +'ダッシュボード=毎朝の「今日やること」／成長ロードマップ=認定レベル(Lv.1〜4)と外注費率・研修進捗／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介／研修プログラム=全4章10レッスン／営業ツール=課題ヒアリング診断(見込み客との商談用)／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugu投資・融資・M&A=プラットフォーム内マッチング(掲載は運営への申請制)／ナレッジ=事例・Q&Aの検索と投稿(投稿は承認後に公開)／各種シミュレーター=事業承継・株対策/医療法人持分/退職金／お支払い=プラットフォーム利用料。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき)／メッセージ(顧客との送受信・ファイル添付はここで完結)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ)。'
         +'操作説明書は右下パネルの「サポート」タブから開けます。毎朝の「今日の一手」とお知らせは右下ボタンのバッジに届きます。';
     }
     return common
       +'【経営者ダッシュボードの画面ガイド】'
-      +'ダッシュボード=全体の入口／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料など／財務・資金繰り=試算表の入力と資金繰りシミュレーター／企業価値=会社の値段の推移／AI診断・自動化=業務の自動化診断／試算結果=各種シミュレーションの保存結果／M&A活用=利益のM&A活用の提案／Tsugu投資・融資・M&A=マッチング掲載。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間)／メッセージ(担当パートナーとの送受信はここで完結)／お知らせ／連携(スマホ通知・LINE)／サポート(操作説明書)。'
+      +'ダッシュボード=全体の入口／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料など／財務・資金繰り=試算表の入力と資金繰りシミュレーター／企業価値=会社の値段の推移／AI診断・自動化=業務の自動化診断／試算結果=各種シミュレーションの保存結果／M&A活用=利益のM&A活用の提案／Tsugu投資・融資・M&A=マッチング掲載。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE)／サポート(操作説明書)。'
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
@@ -8660,7 +8693,8 @@
     var sugs=$('knv-sugs'); if(!sugs) return;
     var fu=(SEC_FU&&SEC_FU.length)?SEC_FU:null;
     var chips=fu||secSuggests().slice(0,2).concat(['TsuguAiの使い方を知りたい']);
-    var h='<button class="ai-sug" style="border-color:#cfa860;color:#8A6A12;background:#FDFAF1;" onclick="knvGuideToggle()">🧭 質問ガイド</button>';
+    var h='<button class="ai-sug" style="border-color:#cfa860;color:#8A6A12;background:#FDFAF1;" onclick="knvGuideToggle()">🧭 質問ガイド</button>'
+      +'<button class="ai-sug" onclick="knvSearchToggle()" title="相談履歴を検索">🔍 履歴</button>';
     h+=chips.map(function(s){ return '<button class="ai-sug" onclick="secAsk(this,\'knv\')" data-q="'+escA(s)+'">'+(fu?'🔍 ':'')+esc(s)+'</button>'; }).join('');
     sugs.innerHTML=h;
   }
@@ -8810,6 +8844,8 @@
     if(head && !head.querySelector('svg')) head.innerHTML=tsgNaviSvg();
     SEC_FU=[]; knvSugsRender();
     var g=$('knv-guide'); if(g){ g.classList.add('hidden'); g.innerHTML=''; }
+    SEC_QUERY=''; var sIn=$('knv-search-in'); if(sIn) sIn.value='';
+    var sBar=$('knv-search'); if(sBar) sBar.classList.add('hidden');
     // ロール切替（運営のプレビュー含む）でタブ内容が前のロールのまま残らないよう、毎回作り直す
     ['knv-setup','knv-support','knv-notif','knv-msg'].forEach(function(id){
       var b=$(id); if(b){ b.removeAttribute('data-ready'); b.innerHTML=''; }
@@ -8904,11 +8940,13 @@
         +'<span class="ghost" style="font-size:11px;cursor:pointer;" onclick="knvMsgLoad()">↺ 更新</span>'
       +'</div>'
       +'<div id="knv-msg-log" style="height:300px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:12px;background:#FBFCFE;margin-bottom:8px;">読み込み中...</div>'
-      +'<div style="display:flex;gap:8px;align-items:flex-end;">'
+      +'<div style="display:flex;gap:6px;align-items:flex-end;">'
+        +'<button class="ghost" id="knv-msg-att" title="ファイルを添付（10MBまで）" style="flex:0 0 auto;font-size:15px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;line-height:1;" onclick="$(\'knv-msg-file\').click()">📎</button>'
+        +'<input type="file" id="knv-msg-file" class="hidden" accept="image/*,.pdf,.xlsx,.xls,.csv,.docx,.doc,.pptx,.txt" onchange="knvMsgAttach(this)">'
         +'<textarea id="knv-msg-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="メッセージを入力（Enterで送信／Shift+Enterで改行）"></textarea>'
         +'<button class="btn2" id="knv-msg-send" onclick="knvMsgSend()">送信</button>'
       +'</div>'
-      +'<div style="font-size:10.5px;color:var(--muted);margin-top:6px;line-height:1.6;">'+note+'</div>';
+      +'<div id="knv-msg-note" style="font-size:10.5px;color:var(--muted);margin-top:6px;line-height:1.6;">'+note+'</div>';
     if(eff==='customer') knvMsgTitle();
     knvMsgLoad();
     var p=$('knv-panel'), inp=$('knv-msg-input');
@@ -8980,6 +9018,44 @@
     if(res.error){ alert('送信エラー：'+res.error.message); return; }
     inp.value=''; knvMsgLoad();
     if(isCon && typeof loadFollowups==='function') try{ loadFollowups(); }catch(e){}
+  }
+  // ファイル添付：選択→ストレージにアップロード→添付メッセージとして送信
+  async function knvMsgAttach(fileInp){
+    var f=fileInp && fileInp.files && fileInp.files[0];
+    fileInp.value='';
+    if(!f) return;
+    if(f.size>10*1024*1024){ alert('ファイルが大きすぎます（10MBまで）。'); return; }
+    var eff=window.__eff||'customer';
+    var isCon=(eff==='consultant');
+    var cid=isCon?KNV_MSG_CID:(typeof SCOPE!=='undefined'?SCOPE:null);
+    if(!cid) return;
+    if(!confirm('「'+f.name+'」を送信しますか？')) return;
+    var note=$('knv-msg-note'), noteOld=note?note.textContent:'';
+    var ab=$('knv-msg-att'), sb2=$('knv-msg-send');
+    if(ab)ab.disabled=true; if(sb2)sb2.disabled=true;
+    if(note){ note.textContent='📎 アップロード中…（'+f.name+'）'; }
+    try{
+      // パスは推測不能に（顧客ID/時刻_乱数.拡張子）。表示用の元ファイル名は列に持つ
+      var ext=(f.name.indexOf('.')>=0)?f.name.split('.').pop().replace(/[^A-Za-z0-9]/g,'').slice(0,8):'bin';
+      var path=cid+'/'+Date.now()+'_'+Math.random().toString(36).slice(2,10)+'.'+(ext||'bin');
+      var up=await sb.storage.from('chat-attach').upload(path, f, { upsert:false, contentType:f.type||'application/octet-stream' });
+      if(up.error) throw new Error(up.error.message+'（添付機能のSQL設定が未実施の可能性があります）');
+      var res=await sb.from('chat_messages').insert({ customer_id:cid, sender_id:ME, sender_role:isCon?'consultant':'customer', body:'', attachment_path:path, attachment_name:f.name });
+      if(res.error) throw new Error(res.error.message);
+      knvMsgLoad();
+      if(isCon && typeof loadFollowups==='function') try{ loadFollowups(); }catch(e){}
+    }catch(e){ alert('添付の送信に失敗しました：'+String((e&&e.message)||e)); }
+    if(ab)ab.disabled=false; if(sb2)sb2.disabled=false;
+    if(note){ note.textContent=noteOld; }
+  }
+  // 添付を開く：署名付きURL（10分有効）を発行して別タブで表示
+  async function knvAttOpen(p){
+    try{
+      var r=await sb.storage.from('chat-attach').createSignedUrl(p, 600);
+      var u=r && r.data && r.data.signedUrl;
+      if(!u) throw new Error((r&&r.error&&r.error.message)||'URLを発行できませんでした');
+      window.open(u,'_blank');
+    }catch(e){ alert('ファイルを開けませんでした：'+String((e&&e.message)||e)); }
   }
   // パネル内で使う共通の行カード（アイコン＋タイトル＋説明＋→）。連携・サポートで共用し、
   // 今後タブや項目が増えても同じ見た目で並べられる
@@ -9065,7 +9141,7 @@
   // 右下ボタンとお知らせタブのバッジ（未読・対応事項＋今日の一手の合計）
   function knvBadgesRender(){
     var bell=window.__KNV_BELL||0;
-    var ins=(typeof AGENT_INSIGHTS!=='undefined'&&AGENT_INSIGHTS)?AGENT_INSIGHTS.length:0;
+    var ins=(typeof agentInsightsUnread==='function')?agentInsightsUnread():0;
     var total=bell+ins;
     var b=$('knv-badge');
     if(b){ b.textContent=total>9?'9+':total; b.classList.toggle('hidden', !total); }
@@ -9077,7 +9153,7 @@
   function knvSummaryRender(){
     var box=$('knv-summary'); if(!box) return;
     var un=window.__KNV_UNREAD||0, todo=window.__KNV_TODO||0;
-    var ins=(typeof AGENT_INSIGHTS!=='undefined'&&AGENT_INSIGHTS)?AGENT_INSIGHTS.length:0;
+    var ins=(typeof agentInsightsUnread==='function')?agentInsightsUnread():0;
     if(!un && !todo && !ins){ box.classList.add('hidden'); return; }
     var h='', isAdmin=((window.__eff||'')==='admin');
     if(un)   h+='<button onclick="knvShowTab(\'notif\')">📩 未読 <b>'+un+'</b>件</button>';
@@ -9088,7 +9164,74 @@
     box.innerHTML=h; box.classList.remove('hidden');
   }
   // 画面内の継ナビくん要素（チップ・バナー）は廃止。継ナビくんは右下に一本化。
-  function clearSecLog(){ if(!confirm('この会話履歴を消去します。よろしいですか？')) return; SEC_MSGS=[]; try{ localStorage.removeItem(aisecKey()); }catch(e){} renderSecLog(); }
+  function clearSecLog(){ if(!confirm('この会話履歴を消去します。よろしいですか？')) return; SEC_MSGS=[]; try{ localStorage.removeItem(aisecKey()); }catch(e){} SEC_QUERY=''; var si=$('knv-search-in'); if(si) si.value=''; renderSecLog(); }
+  // ===== 相談履歴の検索（ローカル保存の会話から探す。通信なし） =====
+  var SEC_QUERY='';
+  function knvSearchToggle(){
+    var bar=$('knv-search'); if(!bar) return;
+    var opening=bar.classList.contains('hidden');
+    bar.classList.toggle('hidden', !opening);
+    var inp=$('knv-search-in');
+    if(opening){ if(inp) setTimeout(function(){ try{ inp.focus(); }catch(e){} },50); }
+    else { SEC_QUERY=''; if(inp) inp.value=''; renderSecLog(); }
+  }
+  function knvSearchRun(){
+    var inp=$('knv-search-in');
+    SEC_QUERY=(inp?inp.value:'').trim();
+    renderSecLog();
+  }
+  // 検索語をハイライト（エスケープ済みテキストに対して <mark> を挿す）
+  function knvHl(text,q){
+    var e=esc(text||'');
+    if(!q) return e;
+    var eq=esc(q);
+    return e.split(eq).join('<mark style="background:#F3E3B3;color:inherit;border-radius:3px;padding:0 1px;">'+eq+'</mark>');
+  }
+  function renderSecSearch(){
+    var q=SEC_QUERY;
+    var hits=[];
+    SEC_MSGS.forEach(function(m,mi){
+      if(m.content==='（考え中…）') return;
+      if(String(m.content||'').indexOf(q)>=0) hits.push({m:m,mi:mi});
+    });
+    var h='<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">🔍 「<b style="color:var(--navy);">'+esc(q)+'</b>」の検索結果：<b style="color:var(--navy);">'+hits.length+'</b>件'
+      +'<span class="ghost" style="font-size:11px;margin-left:8px;cursor:pointer;text-decoration:underline;" onclick="knvSearchToggle()">検索を終了</span></div>';
+    if(!hits.length){
+      h+='<div style="font-size:12.5px;color:var(--muted);background:var(--soft);border-radius:10px;padding:12px 14px;">見つかりませんでした。別の言葉でお試しください。</div>';
+    }
+    hits.forEach(function(x){
+      var me=(x.m.role==='user');
+      var c=String(x.m.content||'');
+      // 長文はヒット位置の前後だけを抜粋する
+      var pos=c.indexOf(q), ex=c;
+      if(c.length>240){
+        var st=Math.max(0,pos-80), en=Math.min(c.length,pos+q.length+140);
+        ex=(st>0?'…':'')+c.slice(st,en)+(en<c.length?'…':'');
+      }
+      var when=x.m.ts?new Date(x.m.ts).toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'}):'';
+      h+='<div onclick="knvSearchJump('+x.mi+')" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer;background:var(--card);">'
+        +'<div style="font-size:10.5px;color:'+(me?'#5A6981':'#8A6A12')+';font-weight:700;margin-bottom:3px;">'+(me?'🙋 あなた':'🌱 継ナビくん')+(when?'<span style="font-weight:400;color:var(--muted);margin-left:6px;">'+when+'</span>':'')+'<span style="float:right;font-weight:400;color:var(--muted);font-size:10px;">会話で表示 →</span></div>'
+        +'<div style="font-size:12px;color:var(--ink);line-height:1.7;white-space:pre-wrap;">'+knvHl(ex,q)+'</div>'
+      +'</div>';
+    });
+    ['sec-log','knv-log'].forEach(function(id){
+      var box=$(id); if(!box) return;
+      box.innerHTML=h; box.scrollTop=0;
+    });
+  }
+  function knvSearchJump(mi){
+    SEC_QUERY=''; var inp=$('knv-search-in'); if(inp) inp.value='';
+    var bar=$('knv-search'); if(bar) bar.classList.add('hidden');
+    renderSecLog();
+    setTimeout(function(){
+      var el=document.querySelector('#knv-log [data-mi="'+mi+'"]');
+      if(el){
+        try{ el.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){ el.scrollIntoView(); }
+        el.style.transition='background .3s'; el.style.background='rgba(195,155,63,.18)'; el.style.borderRadius='10px';
+        setTimeout(function(){ el.style.background='transparent'; },1600);
+      }
+    },80);
+  }
   // 分野チップは廃止。代わりに「例文を入力欄に入れるだけ」のきっかけを置く（会話は1本のまま）
   function secModesHtml(){
     var chips=secSuggests().map(function(s){
@@ -9123,6 +9266,8 @@
   function tsgLoad(hint){ return '<div class="tsg-load">'+tsgSpin(false)+'<div class="hint"><b style="color:#8A6A12;">考え中…</b>'+(hint?'<br>'+esc(hint):'')+'</div></div>'; }
   function tsgThinking(){ return '<span style="display:inline-flex;align-items:center;gap:8px;">'+tsgSpin(true)+'<span style="font-size:12px;color:#94A2B6;">考え中…</span></span>'; }
   function renderSecLog(){
+    // 検索モード：ローカル保存の会話履歴からヒットした発言だけを表示する
+    if(SEC_QUERY){ renderSecSearch(); return; }
     var h;
     if(!SEC_MSGS.length){
       h='<div style="display:flex;gap:8px;align-items:flex-start;">'
@@ -9132,16 +9277,16 @@
         +'</div></div>';
     }else{
       h='';
-      SEC_MSGS.forEach(function(m){
+      SEC_MSGS.forEach(function(m,mi){
         var me=m.role==='user';
         var thinking=(m.content==='（考え中…）');
         var inner=thinking?tsgThinking():(me?esc(m.content):mdLite(m.content));
         if(me){
-          h+='<div style="display:flex;justify-content:flex-end;margin-bottom:10px;"><div class="ai-bubble-me">'+inner+'</div></div>';
+          h+='<div data-mi="'+mi+'" style="display:flex;justify-content:flex-end;margin-bottom:10px;"><div class="ai-bubble-me">'+inner+'</div></div>';
         }else{
           // 継ナビくんの発言：顔チップ＋名前ラベル＋吹き出し
           var tag=m.model?' <span style="font-weight:400;color:#94A2B6;letter-spacing:0;">'+esc(m.model)+'</span>':'';
-          h+='<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:10px;">'
+          h+='<div data-mi="'+mi+'" style="display:flex;gap:8px;align-items:flex-start;margin-bottom:10px;">'
             +'<span class="tsg-face">'+tsgNaviSvg()+'</span>'
             +'<div style="min-width:0;max-width:86%;"><div class="tsg-name">継ナビくん'+tag+'</div>'
             +'<div class="ai-bubble">'+inner+'</div>'
