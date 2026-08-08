@@ -548,7 +548,7 @@
   body.dark .knv-panel{background:var(--card);}
   @media(max-width:600px){ .knv-panel{right:8px;bottom:8px;width:calc(100vw - 16px);height:calc(100vh - 60px);} }
   /* 各画面ヘッダーの「継ナビくんに聞く」チップと、研修などの案内バナー */
-  .knv-help{position:absolute;right:0;top:-3px;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#8A6A12;background:rgba(195,155,63,.09);border:1px solid #EBDDB4;border-radius:99px;padding:3px 11px 3px 4px;cursor:pointer;font-family:inherit;transition:background .15s;}
+  .knv-help{display:inline-flex;align-items:center;gap:6px;vertical-align:middle;margin-left:10px;margin-right:auto;font-size:11px;font-weight:600;color:#8A6A12;background:rgba(195,155,63,.09);border:1px solid #EBDDB4;border-radius:99px;padding:3px 11px 3px 4px;cursor:pointer;font-family:inherit;transition:background .15s;flex:0 0 auto;}
   @media(max-width:640px){ .knv-help span:last-child{display:none;} .knv-help{padding:3px 4px;} }
   .knv-help:hover{background:rgba(195,155,63,.18);}
   .knv-help .fc{display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;border-radius:7px;background:#0e2038;}
@@ -1466,10 +1466,11 @@
       +'<div class="panel"><span class="pill" style="background:#F7EFDC;color:#C39B3F;">運営コンソール</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">運営管理</h2>'
         +'<div class="kv">ログイン中：<b>'+esc(email)+'</b>　役割：<b>運営</b></div>'
-        +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">'
-          +'<button class="btn2" style="font-size:12.5px;" onclick="openManual(\'manual-admin.html\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>運営コンソール 操作説明書</button>'
-          +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:8px 13px;" onclick="openManual(\'manual-partner.html\')">パートナー向け</button>'
-          +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:8px 13px;" onclick="openManual(\'manual-customer.html\')">顧客向け</button>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px;">'
+          +'<span style="font-size:12.5px;font-weight:700;color:var(--navy);"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>操作説明書：</span>'
+          +'<button class="btn2" style="font-size:12px;padding:8px 18px;" onclick="openManual(\'manual-admin.html\')">運営</button>'
+          +'<button class="btn2" style="font-size:12px;padding:8px 18px;" onclick="openManual(\'manual-partner.html\')">パートナー</button>'
+          +'<button class="btn2" style="font-size:12px;padding:8px 18px;" onclick="openManual(\'manual-customer.html\')">顧客</button>'
         +'</div>'
         +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:7px;">課金・報酬支払いの詳細（MRR試算・顧問料の割引・決済リンク・入金記録・パートナー報酬の配分・月次の締め）まで収録。印刷／PDF保存に対応しています。</div>'
       +'</div>'
@@ -2455,6 +2456,7 @@
         +'<div class="panel" id="sec-flow"><span class="pill" style="background:#EAF0F9;color:#2C5DA8;">パートナーポータル</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">パートナーポータル</h2>'
         +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b>'+(prof.fde_rank?'　ランク：<b>'+esc(prof.fde_rank)+'</b>':'')+'</div>'
+        +'<div style="margin-bottom:10px;"><button class="btn2" style="font-size:12px;padding:7px 16px;" onclick="openManual(\'manual-partner.html\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>操作説明書</button></div>'
         +'<div id="fde-hero" style="display:flex;gap:8px;flex-wrap:wrap;">読み込み中...</div></div>'
         +'<div id="my-annc"></div>'
         +'<div class="panel" id="sec-todo">'
@@ -8861,7 +8863,11 @@
       b.className='knv-help'; b.type='button'; b.title='継ナビくんに聞く';
       b.innerHTML='<span class="fc">'+tsgNaviSvg()+'</span><span>継ナビくんに聞く</span>';
       (function(q){ b.onclick=function(){ knvAsk(q); }; })(KNV_HELP[id]);
-      ph.appendChild(b);
+      // タイトルの直後に置く（見出し右端の「更新」「追加」ボタンとは重ねない）
+      var t=ph.querySelector('.ph-t');
+      if(t){ t.parentNode.insertBefore(b, t.nextSibling); }
+      else if(ph.firstElementChild){ ph.insertBefore(b, ph.firstElementChild); }
+      else { ph.appendChild(b); }
     });
     // 研修プログラムには応援バナーも添える（新人の入口のため手厚く）
     var tr=$('sec-training');
