@@ -523,6 +523,20 @@
   body.dark .ai-bubble{background:#141924;border-color:#2A3345;border-left-color:#cfa860;color:#ECEEF2;}
   body.dark .ai-bubble strong{color:#CFAD62;}
   body.dark .ai-bubble-me{background:#16233c;border-color:#2A3345;}
+  /* ===== 継ナビくん：右下フローティング窓口 ===== */
+  .knv-fab{position:fixed;right:18px;bottom:18px;z-index:70;width:56px;height:56px;border-radius:50%;background:#0e2038;border:2px solid #cfa860;box-shadow:0 10px 30px rgba(6,12,24,.45);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s;}
+  .knv-fab:hover{transform:scale(1.07);}
+  .knv-fab svg{width:36px;height:36px;display:block;}
+  .knv-badge{position:absolute;top:-4px;right:-4px;min-width:19px;height:19px;border-radius:99px;background:#A9403D;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #fff;}
+  .knv-panel{position:fixed;right:14px;bottom:14px;z-index:71;width:min(400px,calc(100vw - 20px));height:min(620px,calc(100vh - 80px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(6,12,24,.45);display:flex;flex-direction:column;overflow:hidden;}
+  .knv-head{background:#0E1B33;padding:11px 13px;display:flex;gap:10px;align-items:center;flex-shrink:0;}
+  .knv-close{margin-left:auto;flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;font-size:19px;cursor:pointer;line-height:1;font-family:inherit;}
+  .knv-close:hover{background:rgba(255,255,255,.12);}
+  .knv-body{flex:1;overflow-y:auto;padding:12px;background:var(--bg);}
+  .knv-foot{padding:10px 12px;border-top:1px solid var(--line);background:var(--card);flex-shrink:0;}
+  .knv-foot .ai-sugrow{margin-bottom:8px;max-height:56px;overflow:hidden;}
+  body.dark .knv-panel{background:var(--card);}
+  @media(max-width:600px){ .knv-panel{right:8px;bottom:8px;width:calc(100vw - 16px);height:calc(100vh - 60px);} }
   /* 継ナビくんの顔チップと名前ラベル（チャットの発言者表示） */
   .tsg-face{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:9px;background:#0e2038;flex:0 0 auto;margin-top:2px;}
   .tsg-face svg{width:20px;height:20px;display:block;}
@@ -801,6 +815,30 @@
       <button class="modal-close" onclick="closeBizplan()" aria-label="閉じる">×</button>
     </div>
     <div id="bp-body" class="modal-body">読み込み中...</div>
+  </div>
+</div>
+
+<!-- 継ナビくん：右下フローティング窓口（ログイン後に knvInit() で表示） -->
+<div id="knv-fab" class="knv-fab hidden" onclick="knvToggle(true)" title="継ナビくんに相談" aria-label="継ナビくんに相談"><span id="knv-badge" class="knv-badge hidden">0</span></div>
+<div id="knv-panel" class="knv-panel hidden" role="dialog" aria-label="継ナビくん">
+  <div class="knv-head">
+    <span class="tsg-face" style="background:transparent;border:1.5px solid #cfa860;border-radius:10px;"></span>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:14px;font-weight:700;color:#fff;letter-spacing:.02em;">継ナビくん</div>
+      <div style="font-size:10.5px;color:#CFAD62;">困ったときは、いつでもどうぞ</div>
+    </div>
+    <button class="knv-close" onclick="knvToggle(false)" aria-label="閉じる">×</button>
+  </div>
+  <div id="knv-body" class="knv-body">
+    <div id="knv-insights"></div>
+    <div id="knv-log"></div>
+  </div>
+  <div class="knv-foot">
+    <div id="knv-sugs" class="ai-sugrow" style="margin-bottom:8px;"></div>
+    <div style="display:flex;gap:8px;align-items:flex-end;">
+      <textarea id="knv-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="相談・使い方の質問など、なんでもどうぞ"></textarea>
+      <button class="btn2" id="knv-send" onclick="secretarySend('knv')">送信</button>
+    </div>
   </div>
 </div>
 
@@ -2690,8 +2728,8 @@
     window.__eff=eff;
     $('app-body').innerHTML=view;
     if(eff==='customer' && ACCESS==='finance'){ loadAcct(); }
-    else if(eff==='customer'){ loadDashHero(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); }
-    else if(eff==='consultant'){ loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); loadAgentInsights(); }
+    else if(eff==='customer'){ loadDashHero(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); knvInit(); }
+    else if(eff==='consultant'){ loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); loadAgentInsights(); knvInit(); }
     else {
       // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
       loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadAdmAssign();
@@ -6998,6 +7036,7 @@
     if(e.key!=='Enter') return;
     var t=e.target; if(!t||!t.id) return;
     if(t.id==='sec-input'){ if(!e.shiftKey){ e.preventDefault(); secretarySend(); } return; }
+    if(t.id==='knv-input'){ if(!e.shiftKey){ e.preventDefault(); secretarySend('knv'); } return; }
     if(t.id==='sup-input'){ if(!e.shiftKey){ e.preventDefault(); supportSend(); } return; }
     if(t.id==='chat-input'){ if(!e.shiftKey){ e.preventDefault(); sendMyChat(); } return; }
     if(t.id==='cchat-input'){ if(!e.shiftKey){ e.preventDefault(); if(CURRENT_CLIENT) sendClientChat(CURRENT_CLIENT.id); } return; }
@@ -8396,7 +8435,11 @@
     return h;
   }
   function renderAgentInsights(){
-    var box=$('agent-insights-box'); if(box) box.innerHTML=agentInsightsHtml();
+    var h=agentInsightsHtml();
+    ['agent-insights-box','knv-insights'].forEach(function(id){ var box=$(id); if(box) box.innerHTML=h; });
+    // 右下の継ナビくんボタンに未確認の提案数を表示
+    var b=$('knv-badge');
+    if(b){ var n=AGENT_INSIGHTS.length; b.textContent=n>9?'9+':n; b.classList.toggle('hidden', !n); }
   }
   async function agentInsightMark(id,fb){
     // 「役に立った/不要」はブリーフ生成の学習材料として保存する（設計書のフィードバックループ）
@@ -8521,6 +8564,22 @@
     '次の分野は必ず専門家の確認を促してください：税額・申告の具体的判断は税理士、就業規則や社会保険の個別判断は社労士、融資の可否や条件は金融機関、M&Aの実行は専門家の関与を前提とします。',
     '不確実なことを、確からしく語らないでください。'
   ].join('');
+  // ===== 使い方ナビ：継ナビくんはTsuguAiの案内役でもある =====
+  // 画面の場所・操作を聞かれたら、メニュー名を挙げて手順を短く案内できるよう、
+  // ログイン中のロールに応じた画面ガイドをシステム指示に添える。
+  function secUsageGuide(){
+    var common='あなたはTsuguAiプラットフォームの案内役でもあります。画面の場所や使い方を聞かれたら、下の画面ガイドをもとにメニュー名を挙げて手順を短く案内し、詳しくは操作説明書のページを勧めます。ガイドにない機能は推測で説明せず「運営サポートへ」と案内します。';
+    if(aisecPortal()==='consultant'){
+      return common
+        +'【パートナーポータルの画面ガイド】'
+        +'ダッシュボード=毎朝の「今日やること」／成長ロードマップ=認定レベル(Lv.1〜4)と外注費率・研修進捗／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介／研修プログラム=全4章10レッスン／営業ツール=課題ヒアリング診断(見込み客との商談用)／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugu投資・融資・M&A=プラットフォーム内マッチング(掲載は運営への申請制)／ナレッジ=事例・Q&Aの検索と投稿(投稿は承認後に公開)／各種シミュレーター=事業承継・株対策/医療法人持分/退職金／お支払い=プラットフォーム利用料／継ナビくん=この画面(毎朝の「今日の一手」・LINE/Googleカレンダー/スマホ通知の設定ボタンあり)／運営サポート=規程・報酬・審査などの問い合わせ。'
+        +'操作説明書はナレッジ画面から開けます。毎朝の提案(今日の一手)は通知センター🔔にも表示されます。';
+    }
+    return common
+      +'【経営者ダッシュボードの画面ガイド】'
+      +'ダッシュボード=全体の入口／メッセージ=担当パートナーとのやり取り／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料など／財務・資金繰り=試算表の入力と資金繰りシミュレーター／企業価値=会社の値段の推移／AI診断・自動化=業務の自動化診断／試算結果=各種シミュレーションの保存結果／M&A活用=利益のM&A活用の提案／Tsugu投資・融資・M&A=マッチング掲載／継ナビくん=この画面(24時間いつでも相談)。'
+      +'操作の詳細は操作説明書(ダッシュボードのリンク)から。困ったら担当パートナーへのメッセージも使えます。';
+  }
   // 相談の入口（分野切替ではなく、入力欄に文章を入れるだけの「例文」）
   function secSuggests(){
     if(aisecPortal()==='consultant') return [
@@ -8590,6 +8649,33 @@
     try{ var pre='tsugu_aisec_'+((typeof ME!=='undefined'&&ME)?ME:'guest')+'_'; for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i); if(k&&k.indexOf(pre)===0) aisecPruneKey(k); } }catch(e){}
   }
   function restoreSecLog(){ try{ SEC_MSGS=aisecLoad(); }catch(e){ SEC_MSGS=[]; } renderSecLog(); }
+
+  // ===== 継ナビくん：右下フローティング窓口 =====
+  // どの画面にいても右下から継ナビくんに相談できる。会話はタブ内の画面と共有。
+  function knvInit(){
+    var fab=$('knv-fab'); if(!fab) return;
+    if(!fab.querySelector('svg')) fab.insertAdjacentHTML('beforeend', tsgNaviSvg());
+    var head=document.querySelector('#knv-panel .tsg-face');
+    if(head && !head.querySelector('svg')) head.innerHTML=tsgNaviSvg();
+    var sugs=$('knv-sugs');
+    if(sugs){
+      var chips=secSuggests().slice(0,2).concat(['TsuguAiの使い方を知りたい']);
+      sugs.innerHTML=chips.map(function(s){ return '<button class="ai-sug" onclick="secAsk(this,\'knv\')" data-q="'+escA(s)+'">'+esc(s)+'</button>'; }).join('');
+    }
+    fab.classList.remove('hidden');
+    renderSecLog();
+  }
+  function knvToggle(open){
+    var p=$('knv-panel'), fab=$('knv-fab');
+    if(!p||!fab) return;
+    p.classList.toggle('hidden', !open);
+    fab.classList.toggle('hidden', !!open);
+    if(open){
+      renderSecLog(); renderAgentInsights();
+      var box=$('knv-log'); if(box) box.scrollTop=box.scrollHeight;
+      var inp=$('knv-input'); if(inp) setTimeout(function(){ inp.focus(); },50);
+    }
+  }
   function clearSecLog(){ if(!confirm('この会話履歴を消去します。よろしいですか？')) return; SEC_MSGS=[]; try{ localStorage.removeItem(aisecKey()); }catch(e){} renderSecLog(); }
   // 分野チップは廃止。代わりに「例文を入力欄に入れるだけ」のきっかけを置く（会話は1本のまま）
   function secModesHtml(){
@@ -8601,9 +8687,9 @@
       +'<button class="ghost" id="sec-clear" style="font-size:11px;padding:4px 9px;border:1px solid var(--line);border-radius:7px;" onclick="clearSecLog()" title="会話履歴を消去"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3.5 6h17"/><path d="M8.5 6V4.5A1.5 1.5 0 0 1 10 3h4a1.5 1.5 0 0 1 1.5 1.5V6"/><path d="M18.5 6v13a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2V6"/><path d="M10 11v5M14 11v5"/></svg>履歴消去</button></div>';
   }
   // 例文は「送信」ではなく「入力欄に入れる」。そのまま送っても、書き換えてから送ってもよい。
-  function secAsk(el){
+  function secAsk(el,src){
     var q=el&&el.getAttribute('data-q'); if(!q) return;
-    var inp=$('sec-input'); if(!inp) return;
+    var inp=$((src||'sec')+'-input'); if(!inp) return;
     inp.value=q; inp.focus();
     try{ inp.setSelectionRange(q.length,q.length); }catch(e){}
   }
@@ -8625,33 +8711,37 @@
   function tsgLoad(hint){ return '<div class="tsg-load">'+tsgSpin(false)+'<div class="hint"><b style="color:#8A6A12;">考え中…</b>'+(hint?'<br>'+esc(hint):'')+'</div></div>'; }
   function tsgThinking(){ return '<span style="display:inline-flex;align-items:center;gap:8px;">'+tsgSpin(true)+'<span style="font-size:12px;color:#94A2B6;">考え中…</span></span>'; }
   function renderSecLog(){
-    var box=$('sec-log'); if(!box)return;
+    var h;
     if(!SEC_MSGS.length){
-      box.innerHTML='<div style="display:flex;gap:8px;align-items:flex-start;">'
+      h='<div style="display:flex;gap:8px;align-items:flex-start;">'
         +'<span class="tsg-face">'+tsgNaviSvg()+'</span>'
         +'<div style="min-width:0;"><div class="tsg-name">継ナビくん</div>'
-        +'<div class="ai-bubble">こんにちは、継ナビくんです🌱<br>経営のことなら分野を問わずご相談ください。資金繰り・税務・労務・採用・値上げ・資金調達・事業承継／M&amp;A まで、そのままの言葉でどうぞ。</div>'
+        +'<div class="ai-bubble">こんにちは、継ナビくんです🌱<br>経営の相談も、TsuguAiの使い方も、なんでもどうぞ。資金繰り・税務・労務・採用・値上げ・資金調達・事業承継／M&amp;A まで、そのままの言葉でご相談ください。</div>'
         +'</div></div>';
-      return;
+    }else{
+      h='';
+      SEC_MSGS.forEach(function(m){
+        var me=m.role==='user';
+        var thinking=(m.content==='（考え中…）');
+        var inner=thinking?tsgThinking():(me?esc(m.content):mdLite(m.content));
+        if(me){
+          h+='<div style="display:flex;justify-content:flex-end;margin-bottom:10px;"><div class="ai-bubble-me">'+inner+'</div></div>';
+        }else{
+          // 継ナビくんの発言：顔チップ＋名前ラベル＋吹き出し
+          var tag=m.model?' <span style="font-weight:400;color:#94A2B6;letter-spacing:0;">'+esc(m.model)+'</span>':'';
+          h+='<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:10px;">'
+            +'<span class="tsg-face">'+tsgNaviSvg()+'</span>'
+            +'<div style="min-width:0;max-width:86%;"><div class="tsg-name">継ナビくん'+tag+'</div>'
+            +'<div class="ai-bubble">'+inner+'</div>'
+            +'</div></div>';
+        }
+      });
     }
-    var h='';
-    SEC_MSGS.forEach(function(m){
-      var me=m.role==='user';
-      var thinking=(m.content==='（考え中…）');
-      var inner=thinking?tsgThinking():(me?esc(m.content):mdLite(m.content));
-      if(me){
-        h+='<div style="display:flex;justify-content:flex-end;margin-bottom:10px;"><div class="ai-bubble-me">'+inner+'</div></div>';
-      }else{
-        // 継ナビくんの発言：顔チップ＋名前ラベル＋吹き出し
-        var tag=m.model?' <span style="font-weight:400;color:#94A2B6;letter-spacing:0;">'+esc(m.model)+'</span>':'';
-        h+='<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:10px;">'
-          +'<span class="tsg-face">'+tsgNaviSvg()+'</span>'
-          +'<div style="min-width:0;max-width:86%;"><div class="tsg-name">継ナビくん'+tag+'</div>'
-          +'<div class="ai-bubble">'+inner+'</div>'
-          +'</div></div>';
-      }
+    // タブ内の画面と右下のフローティング窓口は同じ会話を共有する
+    ['sec-log','knv-log'].forEach(function(id){
+      var box=$(id); if(!box) return;
+      box.innerHTML=h; box.scrollTop=box.scrollHeight;
     });
-    box.innerHTML=h; box.scrollTop=box.scrollHeight;
   }
   // ===== モデルの使い分け =====
   // 分野チップを廃したので、どの分野かではなく「その質問が判断を要するか」で選ぶ。
@@ -8667,16 +8757,17 @@
     var clerical = SEC_CLERICAL.test(t) && !SEC_JUDGEMENT.test(t) && t.length<=120;
     return clerical ? 'claude-sonnet-4-6' : 'claude-opus-4-8';
   }
-  async function secretarySend(){
-    var inp=$('sec-input'); if(!inp)return;
+  async function secretarySend(src){
+    src=src||'sec';
+    var inp=$(src+'-input'); if(!inp)return;
     var t=inp.value.trim(); if(!t)return;
     var turns=SEC_MSGS.filter(function(m){ return m.role==='user'; }).length;
     var model=pickModel(t, turns);
     var label=(model.indexOf('opus')>=0)?'じっくり考えて回答':'すばやく回答';
     SEC_MSGS.push({role:'user',content:t,ts:Date.now()}); inp.value='';
     SEC_MSGS.push({role:'assistant',content:'（考え中…）'}); renderSecLog();
-    var btn=$('sec-send'); if(btn)btn.disabled=true;
-    var sys=SEC_SYS;
+    var btn=$(src+'-send'); if(btn)btn.disabled=true;
+    var sys=SEC_SYS+secUsageGuide();
     var msgs=SEC_MSGS.filter(function(m){return m.content!=='（考え中…）';}).map(function(m){return {role:m.role,content:m.content};});
     try{
       var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:msgs, model:model, max_tokens:1400 } });
