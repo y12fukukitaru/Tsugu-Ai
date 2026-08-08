@@ -85,6 +85,46 @@ ul.dots li b{color:var(--navy);}
   @page{size:A4 landscape;margin:0;}
 }
 </style>
+
+<style>
+/* ===== 読みやすさ改善：スライドを縦スクロールの文書として全表示 ===== */
+.slide{display:block!important;aspect-ratio:auto;min-height:0;height:auto;padding:34px 44px 40px;margin:0 auto 18px;}
+.slide::after{display:none;}
+.bar{display:none!important;}
+.toc{display:none!important;}
+.deck{padding:66px 14px 50px;}
+h1{font-size:34px;}
+h2{font-size:24px;margin-bottom:10px;}
+.sub{font-size:15px;line-height:1.9;}
+.card h3{font-size:16px;}
+.card p{font-size:14px;line-height:1.9;}
+.kv{font-size:14.5px;}
+.kv.tight th,.kv.tight td{font-size:14px;padding:9px 12px;line-height:1.8;}
+.steps li{font-size:15px;}
+.steps li span{font-size:13.5px;}
+ul.dots li{font-size:14.5px;}
+.note{font-size:14px;line-height:1.95;}
+.lv .c{font-size:12.5px;}
+.lv .t{font-size:14.5px;}
+.flow div{font-size:13px;}
+.pill{font-size:12px;}
+.cover{min-height:0;padding:46px 44px;}
+.cover h1{font-size:38px;}
+.cover .sub{font-size:15.5px;}
+/* 上部固定バー：プラットフォームに戻る（別ページは開かない） */
+.mnv-top{position:fixed;top:0;left:0;right:0;z-index:60;background:rgba(14,27,51,.96);backdrop-filter:blur(8px);display:flex;align-items:center;gap:10px;padding:10px 14px;}
+.mnv-top .t{color:#fff;font-size:13.5px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mnv-top button{font-family:inherit;font-size:13px;font-weight:700;background:#C39B3F;color:#0E1B33;border:none;border-radius:9px;padding:9px 16px;cursor:pointer;}
+.mnv-top button:hover{opacity:.9;}
+/* 目次（ページ内ジャンプ） */
+.mnv-toc{max-width:1120px;margin:0 auto 18px;background:#fff;border-radius:14px;padding:18px 22px;}
+.mnv-toc b{display:block;font-size:14.5px;color:#1E3A66;margin-bottom:9px;}
+.mnv-toc a{display:inline-block;font-size:13px;color:#2C5DA8;text-decoration:none;background:#F8F9FC;border:1px solid #E2E7EF;border-radius:99px;padding:6px 13px;margin:0 6px 7px 0;}
+.mnv-toc a:hover{border-color:#2C5DA8;}
+.slide{scroll-margin-top:64px;}
+@media(max-width:820px){ .slide{padding:24px 18px 30px;} h1{font-size:27px;} h2{font-size:20px;} .cover h1{font-size:30px;} }
+@media print{ .mnv-top,.mnv-toc{display:none!important;} .slide{margin:0;} }
+</style>
 </head>
 <body>
 <div class="deck" id="deck">
@@ -267,6 +307,31 @@ document.addEventListener('keydown',function(e){
 });
 var h=parseInt((location.hash||'').replace('#',''),10);
 show(isFinite(h)&&h>0 ? h-1 : 0);
+</script>
+
+<script>
+/* 読みやすさ改善：戻るバーと目次（新しいページは開かない） */
+(function(){
+  var bar=document.createElement('div'); bar.className='mnv-top';
+  bar.innerHTML='<span class="t">'+(document.title||'操作説明書')+'</span><button type="button" id="mnv-back">プラットフォームに戻る ✕</button>';
+  document.body.appendChild(bar);
+  document.getElementById('mnv-back').onclick=function(){
+    if(window.self!==window.top){ try{ parent.postMessage({tsugu:'closeManual'},'*'); return; }catch(e){} }
+    if(history.length>1) history.back(); else location.href='./index.html';
+  };
+  var slides=document.querySelectorAll('.slide'); var links='';
+  Array.prototype.forEach.call(slides,function(s,i){
+    s.id=s.id||('mnv-s'+i);
+    var t=s.getAttribute('data-t')||'';
+    if(t&&t!=='表紙') links+='<a href="#'+s.id+'">'+t+'</a>';
+  });
+  if(links){
+    var toc=document.createElement('div'); toc.className='mnv-toc';
+    toc.innerHTML='<b>目次（タップで移動）</b>'+links;
+    var first=document.querySelector('.slide');
+    if(first&&first.parentNode) first.parentNode.insertBefore(toc, first.nextSibling);
+  }
+})();
 </script>
 </body>
 </html>
