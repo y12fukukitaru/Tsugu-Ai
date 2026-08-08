@@ -528,16 +528,21 @@
   .knv-fab:hover{transform:scale(1.07);}
   .knv-fab svg{width:36px;height:36px;display:block;}
   .knv-badge{position:absolute;top:-4px;right:-4px;min-width:19px;height:19px;border-radius:99px;background:#A9403D;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #fff;}
-  .knv-panel{position:fixed;right:14px;bottom:14px;z-index:71;width:min(400px,calc(100vw - 20px));height:min(620px,calc(100vh - 80px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(6,12,24,.45);display:flex;flex-direction:column;overflow:hidden;}
+  .knv-panel{position:fixed;right:14px;bottom:14px;z-index:71;width:min(400px,calc(100vw - 20px));height:min(620px,calc(100vh - 80px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(6,12,24,.45);display:flex;flex-direction:column;overflow:hidden;animation:knvPop .16s ease;}
+  @keyframes knvPop{from{opacity:0;transform:translateY(10px) scale(.98);}to{opacity:1;transform:none;}}
   .knv-head{background:#0E1B33;padding:11px 13px;display:flex;gap:10px;align-items:center;flex-shrink:0;}
   .knv-close{margin-left:auto;flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;font-size:18px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;}
   /* ×印のズレ防止：閉じるボタンは常にflexで中央揃え */
   .modal-close{display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;}
   .knv-close:hover{background:rgba(255,255,255,.12);}
-  .knv-tabs{display:flex;background:#0E1B33;padding:0 12px;gap:4px;flex-shrink:0;}
-  .knv-tabs button{font-family:inherit;font-size:12px;font-weight:600;color:#8FA3C4;background:transparent;border:none;border-bottom:2px solid transparent;padding:8px 8px 9px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+  /* タブは「アイコン＋ラベル」の等幅ボタン。将来タブが増えても等分で収まり、タップ領域も広い */
+  .knv-tabs{display:flex;background:#0E1B33;padding:0 6px;gap:0;flex-shrink:0;}
+  .knv-tabs button{position:relative;flex:1;min-width:0;font-family:inherit;font-size:10px;font-weight:600;letter-spacing:.02em;color:#8FA3C4;background:transparent;border:none;border-bottom:2px solid transparent;padding:6px 2px 7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap;}
+  .knv-tabs button .ki{font-size:15px;line-height:1.15;}
   .knv-tabs button.on{color:#CFAD62;border-bottom-color:#cfa860;}
-  .knv-tbadge{min-width:17px;height:17px;border-radius:99px;background:#A9403D;color:#fff;font-size:10.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;}
+  .knv-tabs button:hover{color:#C6D2E6;}
+  .knv-tabs button.on:hover{color:#CFAD62;}
+  .knv-tbadge{position:absolute;top:1px;left:calc(50% + 6px);min-width:15px;height:15px;border-radius:99px;background:#A9403D;color:#fff;font-size:9.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;border:1.5px solid #0E1B33;}
   .knv-body{flex:1;overflow-y:auto;padding:12px;background:var(--bg);}
   /* 通知の内訳サマリー：何が何件あるかを開いた瞬間に見せる */
   .knv-summary{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--line);flex-shrink:0;}
@@ -847,11 +852,11 @@
     <button class="knv-close" onclick="knvToggle(false)" aria-label="閉じる">×</button>
   </div>
   <div class="knv-tabs">
-    <button id="knv-tab-chat" class="on" onclick="knvShowTab('chat')">相談</button>
-    <button id="knv-tab-msg" onclick="knvShowTab('msg')">メッセージ<span id="knv-mbadge" class="knv-tbadge hidden">0</span></button>
-    <button id="knv-tab-notif" onclick="knvShowTab('notif')">お知らせ<span id="knv-tbadge" class="knv-tbadge hidden">0</span></button>
-    <button id="knv-tab-setup" onclick="knvShowTab('setup')">連携</button>
-    <button id="knv-tab-support" onclick="knvShowTab('support')">サポート</button>
+    <button id="knv-tab-chat" class="on" onclick="knvShowTab('chat')"><span class="ki">💬</span>相談</button>
+    <button id="knv-tab-msg" onclick="knvShowTab('msg')"><span class="ki">✉️</span>メッセージ<span id="knv-mbadge" class="knv-tbadge hidden">0</span></button>
+    <button id="knv-tab-notif" onclick="knvShowTab('notif')"><span class="ki">🔔</span>お知らせ<span id="knv-tbadge" class="knv-tbadge hidden">0</span></button>
+    <button id="knv-tab-setup" onclick="knvShowTab('setup')"><span class="ki">🔗</span>連携</button>
+    <button id="knv-tab-support" onclick="knvShowTab('support')"><span class="ki">📖</span>サポート</button>
   </div>
   <div id="knv-summary" class="knv-summary hidden"></div>
   <div id="knv-body" class="knv-body">
@@ -1107,7 +1112,7 @@
   function navDefs(r){
     // 顧問税理士として招かれている場合は、数字の入力だけの画面にする
     if(r==='customer' && ACCESS==='finance') return [['sec-flow','月次数字の入力']];
-    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-chat','メッセージ'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','継ナビくん']];
+    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','継ナビくん']];
     // 運営は admin_role で見えるメニューを絞る（未設定は owner 扱い）
     if(r==='admin') return adminNavAll().filter(function(it){ return adminCanSee(it[0]); });
     // 以降はパートナー
@@ -1116,7 +1121,8 @@
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
   // 継ナビくん（sec-sec）と運営サポート（sec-support）は右下のパネルに集約したため
   // メニューには出さない。navDefsには残す（パネルのグルーピングとgoSecでの表示に必要）。
-  var KNV_ABSORBED=['sec-sec','sec-support','sec-chat'];
+  // メッセージ（旧sec-chat）はセクション自体を廃止し、右下パネルの「メッセージ」タブに統合した
+  var KNV_ABSORBED=['sec-sec','sec-support'];
   function effectiveNav(r){
     var all=navDefs(r).filter(function(it){ return KNV_ABSORBED.indexOf(it[0])<0; });
     var p=loadPrefs();
@@ -2361,15 +2367,6 @@
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;">AIと自動化でコストを下げ、生まれた余力を次の投資（M&A）へ。あなたの現在地はパートナーが面談ごとに更新します。</div>'
           + stepperHtml(prof.stage||1)
         +'</div>'
-        +'<div class="panel" id="sec-chat"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">担当パートナーとのメッセージ <span id="chat-unread" class="nbadge hidden">0</span><span class="ghost" style="font-size:11px;font-weight:400;margin-left:auto;" onclick="loadMyChat()">↺ 更新</span></div>'
-          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">数値の報告・質問・相談など、何でもお送りください。月次の売上などはメッセージで伝えるだけでOK（入力はパートナーが代行します）。</div>'
-          +'<div id="chat-log" style="max-height:320px;overflow:auto;border:1px solid #EDF1F6;border-radius:10px;padding:12px;margin-bottom:10px;background:#FBFCFE;">読み込み中...</div>'
-          +'<div style="display:flex;gap:8px;align-items:flex-end;">'
-            +'<textarea id="chat-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="メッセージを入力（Enterで送信／Shift+Enterで改行）"></textarea>'
-            +'<button class="btn2" id="chat-send" onclick="sendMyChat()">送信</button>'
-          +'</div>'
-          +'<div style="font-size:11px;color:#94A2B6;margin-top:6px;line-height:1.6;">※ 返信には少しお時間をいただく場合があります（目安：2〜3営業日以内）。お急ぎの場合はお電話等でご連絡ください。</div>'
-        +'</div>'
         +'<div class="panel"><div class="ph">担当パートナーからの提案</div><div id="my-notes" style="margin-top:4px;">読み込み中...</div></div>'
         +'<div class="panel" id="sec-reports"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>月次レポート</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMyReports()">↺ 更新</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:8px;">担当パートナーが毎月の数字とコメントをまとめたレポートです。</div>'
@@ -2737,7 +2734,7 @@
     window.__eff=eff;
     $('app-body').innerHTML=view;
     if(eff==='customer' && ACCESS==='finance'){ loadAcct(); }
-    else if(eff==='customer'){ loadDashHero(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyChat(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); loadAgentInsights(); knvInit(); }
+    else if(eff==='customer'){ loadDashHero(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); loadAgentInsights(); knvInit(); }
     else if(eff==='consultant'){ loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); loadAgentInsights(); knvInit(); }
     else {
       // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
@@ -6123,7 +6120,6 @@
     var nv=$('nav-unread'); if(nv){ nv.textContent=n>99?'99+':n; nv.classList.toggle('hidden', !n); }
     var nvd=$('nav-unread-d'); if(nvd){ nvd.textContent=n>99?'99+':n; nvd.classList.toggle('hidden', !n); }
     var nvt=$('nav-unread-t'); if(nvt){ nvt.textContent=n>99?'99+':n; nvt.classList.toggle('hidden', !n); }
-    var pb=$('chat-unread'); if(pb){ pb.textContent=n>99?'99+':n; pb.classList.toggle('hidden', !n); }
     var mb=$('knv-mbadge'); if(mb){ mb.textContent=n>9?'9+':n; mb.classList.toggle('hidden', !n); }
     Object.keys(UNREAD.perClient||{}).forEach(function(id){
       var e=$('clb-'+id); if(!e)return; var c=UNREAD.perClient[id]||0;
@@ -6200,7 +6196,7 @@
           +'<span class="tsg-face" style="width:28px;height:28px;">'+tsgNaviSvg()+'</span>'
           +'<div style="min-width:0;"><div class="tsg-name">継ナビくん</div>'
           +'<div style="font-size:13.5px;color:#27684A;line-height:1.7;">✅ 新しいお知らせはありません。すべて順調です🌱</div>'
-          +'<button class="btn2" style="font-size:12px;padding:7px 14px;margin-top:8px;" onclick="knvShowTab(\'msg\')">✉️ 担当パートナーとメッセージ →</button></div></div>';
+          +'<div style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:6px;">担当パートナーへの連絡は「メッセージ」タブからどうぞ。</div></div></div>';
       }else{
         ch='<div style="display:flex;gap:9px;align-items:flex-start;background:var(--soft);border-radius:11px;padding:13px 15px;">'
           +'<span class="tsg-face" style="width:28px;height:28px;">'+tsgNaviSvg()+'</span>'
@@ -6367,22 +6363,7 @@
     });
     return h;
   }
-  async function loadMyChat(){
-    var box=$('chat-log'); if(!box)return;
-    var res=await sb.from('chat_messages').select('*').eq('customer_id',SCOPE).order('created_at',{ascending:true}).limit(200);
-    if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'<br><span style="color:#94A2B6;">（メッセージ機能のSQL設定が未実施の可能性があります）</span></div>'; return; }
-    box.innerHTML=chatBubbles(res.data,'customer'); box.scrollTop=box.scrollHeight;
-    markRead(); UNREAD.total=0; applyNotifBadges();
-  }
-  async function sendMyChat(){
-    var inp=$('chat-input'); if(!inp)return; var b=inp.value.trim(); if(!b)return;
-    var btn=$('chat-send'); if(btn)btn.disabled=true;
-    // customer_id は会社、sender_id は送信した本人（RLSが auth.uid() と突き合わせる）
-    var res=await sb.from('chat_messages').insert({ customer_id:SCOPE, sender_id:ME, sender_role:'customer', body:b });
-    if(btn)btn.disabled=false;
-    if(res.error){ alert('送信エラー：'+res.error.message); return; }
-    inp.value=''; loadMyChat();
-  }
+  // 経営者⇔パートナーのチャットUIも右下の継ナビくん「メッセージ」タブに一本化した（knvMsgLoad/knvMsgSend）
   // パートナー⇔顧客のチャットUIは右下の継ナビくん「メッセージ」タブに一本化した（knvMsgLoad/knvMsgSend）
 
   // 担当パートナーの表示（ダッシュボード）
@@ -7083,7 +7064,6 @@
     if(t.id==='sec-input'){ if(!e.shiftKey){ e.preventDefault(); secretarySend(); } return; }
     if(t.id==='knv-input'){ if(!e.shiftKey){ e.preventDefault(); secretarySend('knv'); } return; }
     if(t.id==='sup-input'){ if(!e.shiftKey){ e.preventDefault(); supportSend(); } return; }
-    if(t.id==='chat-input'){ if(!e.shiftKey){ e.preventDefault(); sendMyChat(); } return; }
     if(t.id==='knv-msg-input'){ if(!e.shiftKey){ e.preventDefault(); knvMsgSend(); } return; }
     var map={ 'login-email':doLogin, 'login-pw':doLogin, 'signup-email':doSignup, 'signup-pw':doSignup, 'signup-pw2':doSignup, 'reset-email':doReset, 'rec-pw':doUpdatePassword, 'rec-pw2':doUpdatePassword };
     if(map[t.id]){ e.preventDefault(); map[t.id](); }
@@ -8834,11 +8814,9 @@
     ['knv-setup','knv-support','knv-notif','knv-msg'].forEach(function(id){
       var b=$(id); if(b){ b.removeAttribute('data-ready'); b.innerHTML=''; }
     });
-    KNV_MSG_CID=null; KNV_MSG_CNAME='';
+    KNV_MSG_CID=null; KNV_MSG_CNAME=''; window.__KNV_PARTNER='';
     // メッセージタブはパートナー・経営者のみ（運営は対象外）
     var mt=$('knv-tab-msg'); if(mt) mt.classList.toggle('hidden', (window.__eff||'')==='admin');
-    // 経営者：メッセージ画面をこの時点でパネルへ移設しておく（メニューからは撤去済みのため）
-    if((window.__eff||'')==='customer') knvRenderMsg();
     knvShowTab('chat');
     fab.classList.remove('hidden');
     renderSecLog();
@@ -8872,7 +8850,10 @@
     var inp=$('knv-input');
     if(inp && q){ inp.value=q; try{ inp.setSelectionRange(q.length,q.length); }catch(e){} }
   }
-  // パネル内タブ：相談／お知らせ／連携（通知・カレンダー・LINE）／サポート（説明書・運営）
+  // パネル内タブ：相談／メッセージ／お知らせ／連携／サポート。
+  // 【タブを増やすときの手順】①knv-tabsにボタン（.ki アイコン＋短いラベル）と、knv-bodyの並びに
+  // 中身のdivを追加 ②下のtabsマップに キー:'div-id' を追加 ③必要ならレンダー関数を呼ぶ行を追加。
+  // タブは等幅で自動的に収まる。ロール限定タブは knvInit で hidden を切り替える（例:メッセージ）。
   function knvShowTab(t){
     var tabs={chat:'knv-body', msg:'knv-msg', notif:'knv-notif', setup:'knv-setup', support:'knv-support'};
     if(!tabs[t]) t='chat';
@@ -8902,35 +8883,24 @@
     if(p.classList.contains('hidden')) knvToggle(true);
     knvShowTab('msg');
   }
+  // スレッド画面はパートナー・経営者で共通の1つのUI（重複UIを持たない）。
+  // パートナー＝顧客一覧→スレッド、経営者＝担当パートナーとのスレッド直行。
   function knvRenderMsg(){
     var box=$('knv-msg'); if(!box) return;
     var eff=window.__eff||'customer';
-    if(eff==='customer'){
-      // 既存のメッセージ画面（読み込み・送信・未読処理ごと）をパネル内へ物理的に移設する
-      if(!box.getAttribute('data-ready')){
-        box.innerHTML='<div id="knv-msg-host"></div>';
-        var sp=$('sec-chat'), host=$('knv-msg-host');
-        if(sp && host){
-          sp.classList.remove('hidden');
-          sp.style.display='block'; sp.style.border='none'; sp.style.boxShadow='none';
-          sp.style.padding='0'; sp.style.margin='0'; sp.style.background='transparent';
-          host.appendChild(sp);
-        }else if(host){
-          host.innerHTML='<div style="font-size:12px;color:var(--muted);">メッセージは現在ご利用いただけません。</div>';
-        }
-        box.setAttribute('data-ready','1');
-      }
-      loadMyChat();
-      var p=$('knv-panel'), inp=$('chat-input');
-      if(p && !p.classList.contains('hidden') && inp) setTimeout(function(){ try{ inp.focus(); }catch(e){} },60);
-      return;
+    if(eff!=='customer' && eff!=='consultant'){ box.innerHTML='<div style="font-size:12px;color:var(--muted);padding:10px 2px;">メッセージ機能はパートナー・経営者向けです。</div>'; return; }
+    if(eff==='consultant' && !KNV_MSG_CID){ knvMsgClientList(); return; }
+    var head, note;
+    if(eff==='consultant'){
+      head='<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:5px 10px;white-space:nowrap;" onclick="knvMsgBack()">← 顧客一覧</button>'
+        +'<div style="flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(KNV_MSG_CNAME||'顧客')+'</div>';
+      note='送信すると、顧客の継ナビくん「メッセージ」タブに届きます。';
+    }else{
+      head='<div style="flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="knv-msg-title">担当パートナーとのメッセージ</div>';
+      note='数値の報告・質問・相談など、何でもどうぞ。月次の売上も送るだけでOK（入力はパートナーが代行）。返信の目安は2〜3営業日以内です。';
     }
-    if(eff!=='consultant'){ box.innerHTML='<div style="font-size:12px;color:var(--muted);padding:10px 2px;">メッセージ機能はパートナー・経営者向けです。</div>'; return; }
-    if(!KNV_MSG_CID){ knvMsgClientList(); return; }
     box.innerHTML=
-      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
-        +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:5px 10px;white-space:nowrap;" onclick="knvMsgBack()">← 顧客一覧</button>'
-        +'<div style="flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(KNV_MSG_CNAME||'顧客')+'</div>'
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'+head
         +'<span class="ghost" style="font-size:11px;cursor:pointer;" onclick="knvMsgLoad()">↺ 更新</span>'
       +'</div>'
       +'<div id="knv-msg-log" style="height:300px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:12px;background:#FBFCFE;margin-bottom:8px;">読み込み中...</div>'
@@ -8938,8 +8908,22 @@
         +'<textarea id="knv-msg-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="メッセージを入力（Enterで送信／Shift+Enterで改行）"></textarea>'
         +'<button class="btn2" id="knv-msg-send" onclick="knvMsgSend()">送信</button>'
       +'</div>'
-      +'<div style="font-size:10.5px;color:var(--muted);margin-top:6px;line-height:1.6;">送信すると、顧客の継ナビくん「メッセージ」タブに届きます。</div>';
+      +'<div style="font-size:10.5px;color:var(--muted);margin-top:6px;line-height:1.6;">'+note+'</div>';
+    if(eff==='customer') knvMsgTitle();
     knvMsgLoad();
+    var p=$('knv-panel'), inp=$('knv-msg-input');
+    if(p && !p.classList.contains('hidden') && inp) setTimeout(function(){ try{ inp.focus(); }catch(e){} },60);
+  }
+  // 経営者：担当パートナー名が取れたらスレッドの見出しに出す
+  async function knvMsgTitle(){
+    try{
+      if(!window.__KNV_PARTNER){
+        var r=await sb.rpc('get_my_partner');
+        if(!r.error && r.data && r.data.length) window.__KNV_PARTNER=r.data[0].partner_name||'';
+      }
+      var t=$('knv-msg-title');
+      if(t && window.__KNV_PARTNER) t.textContent='担当：'+window.__KNV_PARTNER+' 様とのメッセージ';
+    }catch(e){}
   }
   async function knvMsgClientList(){
     var box=$('knv-msg'); if(!box) return;
@@ -8966,38 +8950,57 @@
   function knvMsgBack(){ KNV_MSG_CID=null; KNV_MSG_CNAME=''; knvRenderMsg(); }
   async function knvMsgLoad(){
     var box=$('knv-msg-log');
-    var cid=KNV_MSG_CID;
+    var eff=window.__eff||'customer';
+    var isCon=(eff==='consultant');
+    var cid=isCon?KNV_MSG_CID:(typeof SCOPE!=='undefined'?SCOPE:null);
     if(!box || !cid) return;
     var res=await sb.from('chat_messages').select('*').eq('customer_id',cid).order('created_at',{ascending:true}).limit(200);
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
-    box.innerHTML=chatBubbles(res.data,'consultant'); box.scrollTop=box.scrollHeight;
-    markRead(cid);
-    if(UNREAD.perClient && UNREAD.perClient[cid]){ UNREAD.total=Math.max(0,(UNREAD.total||0)-UNREAD.perClient[cid]); UNREAD.perClient[cid]=0; if(typeof CL_CACHE!=='undefined'&&CL_CACHE.unread) CL_CACHE.unread[cid]=0; }
+    box.innerHTML=chatBubbles(res.data, isCon?'consultant':'customer'); box.scrollTop=box.scrollHeight;
+    if(isCon){
+      markRead(cid);
+      if(UNREAD.perClient && UNREAD.perClient[cid]){ UNREAD.total=Math.max(0,(UNREAD.total||0)-UNREAD.perClient[cid]); UNREAD.perClient[cid]=0; if(typeof CL_CACHE!=='undefined'&&CL_CACHE.unread) CL_CACHE.unread[cid]=0; }
+      if(typeof renderTodos==='function') try{ renderTodos(); }catch(e){}
+      if(typeof applyClKarteBadges==='function') try{ applyClKarteBadges(cid); }catch(e){}
+    }else{
+      markRead(); UNREAD.total=0;
+    }
     applyNotifBadges();
-    if(typeof renderTodos==='function') try{ renderTodos(); }catch(e){}
-    if(typeof applyClKarteBadges==='function') try{ applyClKarteBadges(cid); }catch(e){}
   }
   async function knvMsgSend(){
     var inp=$('knv-msg-input'); if(!inp) return; var b=inp.value.trim(); if(!b) return;
-    var cid=KNV_MSG_CID; if(!cid) return;
+    var eff=window.__eff||'customer';
+    var isCon=(eff==='consultant');
+    var cid=isCon?KNV_MSG_CID:(typeof SCOPE!=='undefined'?SCOPE:null);
+    if(!cid) return;
     var btn=$('knv-msg-send'); if(btn) btn.disabled=true;
-    var res=await sb.from('chat_messages').insert({ customer_id:cid, sender_id:ME, sender_role:'consultant', body:b });
+    // customer_id は会社、sender_id は送信した本人（RLSが auth.uid() と突き合わせる）
+    var res=await sb.from('chat_messages').insert({ customer_id:cid, sender_id:ME, sender_role:isCon?'consultant':'customer', body:b });
     if(btn) btn.disabled=false;
     if(res.error){ alert('送信エラー：'+res.error.message); return; }
     inp.value=''; knvMsgLoad();
-    if(typeof loadFollowups==='function') try{ loadFollowups(); }catch(e){}
+    if(isCon && typeof loadFollowups==='function') try{ loadFollowups(); }catch(e){}
+  }
+  // パネル内で使う共通の行カード（アイコン＋タイトル＋説明＋→）。連携・サポートで共用し、
+  // 今後タブや項目が増えても同じ見た目で並べられる
+  function knvRow(icon,title,desc,onclick,titleId){
+    return '<div onclick="'+onclick+'" style="display:flex;gap:11px;align-items:center;border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:8px;cursor:pointer;background:var(--card);">'
+      +'<span style="font-size:18px;flex:0 0 auto;line-height:1;">'+icon+'</span>'
+      +'<div style="flex:1;min-width:0;"><div'+(titleId?(' id="'+titleId+'"'):'')+' style="font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.4;">'+title+'</div>'
+      +(desc?'<div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:2px;">'+desc+'</div>':'')
+      +'</div>'
+      +'<span style="color:var(--muted);font-size:14px;flex:0 0 auto;">›</span>'
+    +'</div>';
   }
   // 連携タブ：スマホ通知・Googleカレンダー・LINE（旧・継ナビくん画面から移設）
   function knvRenderSetup(){
     var box=$('knv-setup'); if(!box || box.getAttribute('data-ready')) return;
     var isConsultant=(window.__eff||'')==='consultant';
-    var h='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">通知・外部連携</div>'
+    var h='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">🔗 通知・外部連携</div>'
       +'<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">毎朝の継ナビくんのブリーフを、アプリの外でも受け取れます。</div>'
-      +'<div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start;">'
-        +'<button id="push-btn" class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;" onclick="enablePush()">🔔 スマホ通知をこの端末で受け取る</button>'
-        +(isConsultant?'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;" onclick="calendarFeedSetup()">📅 面談予定をGoogleカレンダーに表示</button>':'')
-        +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;" onclick="lineLinkSetup()">💬 LINEで通知を受け取る</button>'
-      +'</div>'
+      +knvRow('🔔','スマホ通知をこの端末で受け取る','ブラウザのプッシュ通知。iPhoneは先に「ホーム画面に追加」','enablePush()','push-btn')
+      +(isConsultant?knvRow('📅','面談予定をGoogleカレンダーに表示','専用URLを登録すると、面談予定がリマインダー付きで自動表示','calendarFeedSetup()'):'')
+      +knvRow('💬','LINEで通知を受け取る','6桁コードを継ナビくんの公式LINEに送るだけで連携完了','lineLinkSetup()')
       +'<div id="calfeed-box" style="margin-top:10px;"></div>'
       +'<div id="linelink-box"></div>';
     box.innerHTML=h; box.setAttribute('data-ready','1');
@@ -9009,22 +9012,20 @@
   function knvRenderSupport(){
     var box=$('knv-support'); if(!box || box.getAttribute('data-ready')) return;
     var eff=window.__eff||'customer';
-    var h='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">📖 操作説明書</div>'
-      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">';
+    var h='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">📖 操作説明書</div>';
     if(eff==='consultant'){
-      h+='<button class="btn2" style="font-size:12px;padding:8px 16px;" onclick="openManual(\'manual-partner.html\')">パートナー向け説明書を開く</button>';
+      h+=knvRow('📖','パートナー向け説明書','画面の使い方・日々の業務の流れを1本のドキュメントで','openManual(\'manual-partner.html\')');
     }else if(eff==='customer'){
-      h+='<button class="btn2" style="font-size:12px;padding:8px 16px;" onclick="openManual(\'manual-customer.html\')">操作説明書を開く</button>';
+      h+=knvRow('📖','操作説明書を開く','各画面でできること・メッセージの使い方など','openManual(\'manual-customer.html\')');
     }else{
-      h+='<button class="btn2" style="font-size:12px;padding:8px 14px;" onclick="openManual(\'manual-admin.html\')">運営</button>'
-        +'<button class="btn2" style="font-size:12px;padding:8px 14px;" onclick="openManual(\'manual-partner.html\')">パートナー</button>'
-        +'<button class="btn2" style="font-size:12px;padding:8px 14px;" onclick="openManual(\'manual-customer.html\')">顧客</button>';
+      h+=knvRow('🗂️','運営向け説明書','コンソールの全機能・月次の運営業務','openManual(\'manual-admin.html\')')
+        +knvRow('🤝','パートナー向け説明書','パートナーに案内するときの確認用','openManual(\'manual-partner.html\')')
+        +knvRow('🏢','顧客向け説明書','経営者に案内するときの確認用','openManual(\'manual-customer.html\')');
     }
-    h+='</div>';
+    h+='<div style="height:8px;"></div>';
     if(eff==='customer'){
       h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">🛟 困ったときは</div>'
-        +'<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:8px;">操作の質問は「相談」タブで継ナビくんへ。個別のご事情は「メッセージ」タブから担当パートナーへどうぞ。</div>'
-        +'<button class="btn2" style="font-size:12px;padding:8px 16px;" onclick="knvShowTab(\'msg\')">担当パートナーにメッセージ →</button>';
+        +'<div style="font-size:11.5px;color:var(--muted);line-height:1.7;">操作の質問は「相談」タブで継ナビくんへ。個別のご事情は「メッセージ」タブから担当パートナーへどうぞ。</div>';
       box.innerHTML=h;
     }else if(eff==='consultant'){
       // 運営サポート画面（AI即答・問い合わせ・履歴・FAQ）をパネルの中へ取り込み、
@@ -9042,8 +9043,7 @@
     }else{
       // 運営：パートナーからの問い合わせ受信箱へ（回答作業は広いコンソール画面で行う）
       h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">🛟 パートナーからの問い合わせ</div>'
-        +'<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:8px;">未対応の件数はお知らせタブとバッジに表示されます。回答は受信箱から。</div>'
-        +'<button class="btn2" style="font-size:12px;padding:8px 16px;" onclick="knvToggle(false);goSec(\'sec-support\')">受信箱を開く →</button>';
+        +knvRow('📥','受信箱を開く','未対応の件数はお知らせタブとバッジに表示。回答はコンソールの広い画面で','knvToggle(false);goSec(\'sec-support\')');
       box.innerHTML=h;
     }
     box.setAttribute('data-ready','1');
