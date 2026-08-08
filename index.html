@@ -469,13 +469,13 @@
   /* ===== AI関連の共通デザイン：紺(#0e2038)×ゴールド(#cfa860) ===== */
   /* 見た目専用のクラス群。既存セレクタは書き換えず、AI画面にのみ付与して使う。 */
   @keyframes tsg-rot{to{transform:rotate(360deg);}}
-  /* ローディング：紺の角丸ボックス内で、ゴールドの弧（円周の一部が欠けたリング）だけが回転し、中央の「継」は静止する */
+  /* ローディング：紺の角丸ボックス内で、静止した継ナビくんの周りをゴールドの弧（円周の一部が欠けたリング）が回転する */
   .tsg-spin{position:relative;display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:16px;background:#0e2038;flex:0 0 auto;}
-  .tsg-spin::before{content:'';position:absolute;inset:8px;border-radius:50%;border:2.5px solid #cfa860;border-right-color:transparent;animation:tsg-rot .9s linear infinite;}
-  .tsg-spin .k{font-family:'Shippori Mincho','Hiragino Mincho ProN','Yu Mincho','Noto Serif CJK JP',serif;font-size:21px;font-weight:700;color:#cfa860;line-height:1;}
-  .tsg-spin.sm{width:26px;height:26px;border-radius:8px;}
-  .tsg-spin.sm::before{inset:4px;border-width:1.8px;}
-  .tsg-spin.sm .k{font-size:11px;}
+  .tsg-spin::before{content:'';position:absolute;inset:3px;border-radius:50%;border:2.5px solid #cfa860;border-right-color:transparent;animation:tsg-rot .9s linear infinite;}
+  .tsg-spin svg{width:38px;height:38px;display:block;}
+  .tsg-spin.sm{width:30px;height:30px;border-radius:9px;}
+  .tsg-spin.sm::before{inset:2px;border-width:1.8px;}
+  .tsg-spin.sm svg{width:19px;height:19px;}
   body.dark .tsg-spin{background:#16233c;}
   /* ローディングの外枠（結果欄に出す大きめの表示） */
   .tsg-load{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;border:1px solid #D8E0EC;border-radius:12px;background:#FAFBFD;padding:22px 18px;}
@@ -8599,11 +8599,22 @@
     try{ inp.setSelectionRange(q.length,q.length); }catch(e){}
   }
   // ===== AI共通：ローディング表示（見た目のみ。会話データ・送受信処理には一切関与しない）=====
-  // 紺の角丸ボックスの中でゴールドの弧だけが回転し、中央の「継」は静止する
-  function tsgSpin(sm){ return '<span class="tsg-spin'+(sm?' sm':'')+'" aria-hidden="true"><span class="k">継</span></span>'; }
-  // 回転するリングのみ。時間のかかる処理では hint に所要時間の目安だけを渡す
-  function tsgLoad(hint){ return '<div class="tsg-load">'+tsgSpin(false)+(hint?'<div class="hint">'+esc(hint)+'</div>':'')+'</div>'; }
-  function tsgThinking(){ return tsgSpin(true); }
+  // 紺の角丸ボックスの中で、静止した継ナビくんの周りをゴールドの輪が回る
+  function tsgNaviSvg(){
+    return '<svg viewBox="0 -4 64 64" aria-hidden="true" focusable="false">'
+      +'<path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/>'
+      +'<rect x="9.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/>'
+      +'<rect x="49.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/>'
+      +'<rect x="14" y="23" width="36" height="30" rx="10" fill="#fff" stroke="#cfa860" stroke-width="1.6"/>'
+      +'<circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/>'
+      +'<circle cx="20.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><circle cx="43.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/>'
+      +'<path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/>'
+      +'</svg>';
+  }
+  function tsgSpin(sm){ return '<span class="tsg-spin'+(sm?' sm':'')+'" aria-hidden="true">'+tsgNaviSvg()+'</span>'; }
+  // 輪が回っている間は必ず「考え中…」を添える。時間のかかる処理では hint に所要時間の目安だけを渡す
+  function tsgLoad(hint){ return '<div class="tsg-load">'+tsgSpin(false)+'<div class="hint"><b style="color:#8A6A12;">考え中…</b>'+(hint?'<br>'+esc(hint):'')+'</div></div>'; }
+  function tsgThinking(){ return '<span style="display:inline-flex;align-items:center;gap:8px;">'+tsgSpin(true)+'<span style="font-size:12px;color:#94A2B6;">考え中…</span></span>'; }
   function renderSecLog(){
     var box=$('sec-log'); if(!box)return;
     if(!SEC_MSGS.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;line-height:1.8;">経営のことなら分野を問わず相談できます。<br>資金繰り・税務・労務・採用・値上げ・資金調達・事業承継／M&amp;A まで、そのままの言葉でどうぞ。</div>'; return; }
