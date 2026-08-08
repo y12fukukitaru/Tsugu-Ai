@@ -2747,6 +2747,7 @@
       if(adminCanSee('sec-support')){ loadAdmInquiries(); loadSupportKB(); }
       if(adminCanSee('sec-network')){ loadNetwork(); }
       if(adminCanSee('sec-subsidy')){ loadSubsidyAdmin(); }
+      knvInit();
     }
     startNotifPolling(eff);
     navSpyInit();
@@ -6172,6 +6173,23 @@
     var targets=['knv-notif','notif-body'].map(function(id){ return $(id); }).filter(Boolean);
     if(!targets.length) return;
     function write(html){ targets.forEach(function(b){ b.innerHTML=html; }); }
+    // 運営：パートナーからの未対応問い合わせを案内
+    if((window.__eff||'')==='admin'){
+      var na=window.__KNV_BELL||0, ah;
+      if(!na){
+        ah='<div style="display:flex;gap:9px;align-items:flex-start;background:#EBF2ED;border-radius:11px;padding:13px 15px;">'
+          +'<span class="tsg-face" style="width:28px;height:28px;">'+tsgNaviSvg()+'</span>'
+          +'<div style="min-width:0;"><div class="tsg-name">継ナビくん</div>'
+          +'<div style="font-size:13.5px;color:#27684A;line-height:1.7;">✅ 未対応の問い合わせはありません。すべて順調です🌱</div></div></div>';
+      }else{
+        ah='<div style="display:flex;gap:9px;align-items:flex-start;background:var(--soft);border-radius:11px;padding:13px 15px;">'
+          +'<span class="tsg-face" style="width:28px;height:28px;">'+tsgNaviSvg()+'</span>'
+          +'<div style="min-width:0;"><div class="tsg-name">継ナビくん</div>'
+          +'<div style="font-size:13.5px;color:var(--ink);line-height:1.7;">パートナーから<b style="color:#A9403D;">未対応の問い合わせが'+na+'件</b>届いています。</div>'
+          +'<button class="btn2" style="font-size:12px;padding:7px 14px;margin-top:8px;" onclick="knvToggle(false);goSec(\'sec-support\')">受信箱を開いて回答 →</button></div></div>';
+      }
+      write(ah); return;
+    }
     // 経営者側：やり取り相手は担当パートナー1人なので、未読の案内だけをシンプルに
     if((window.__eff||'customer')!=='consultant'){
       var un=UNREAD.total||0;
@@ -8747,8 +8765,23 @@
       var chips=secSuggests().slice(0,2).concat(['TsuguAiの使い方を知りたい']);
       sugs.innerHTML=chips.map(function(s){ return '<button class="ai-sug" onclick="secAsk(this,\'knv\')" data-q="'+escA(s)+'">'+esc(s)+'</button>'; }).join('');
     }
+    // ロール切替（運営のプレビュー含む）でタブ内容が前のロールのまま残らないよう、毎回作り直す
+    ['knv-setup','knv-support','knv-notif'].forEach(function(id){
+      var b=$(id); if(b){ b.removeAttribute('data-ready'); b.innerHTML=''; }
+    });
+    knvShowTab('chat');
     fab.classList.remove('hidden');
     renderSecLog();
+    if((window.__eff||'')==='admin') knvAdminBadge();
+  }
+  // 運営：未対応の問い合わせ件数をバッジに反映
+  async function knvAdminBadge(){
+    try{
+      var r=await sb.from('support_inquiries').select('id').eq('status','open');
+      window.__KNV_BELL=(r.error||!r.data)?0:r.data.length;
+      window.__KNV_UNREAD=0; window.__KNV_TODO=window.__KNV_BELL;
+      knvBadgesRender();
+    }catch(e){}
   }
   function knvToggle(open){
     var p=$('knv-panel'), fab=$('knv-fab');
@@ -8798,7 +8831,10 @@
       +'<div id="linelink-box"></div>';
     box.innerHTML=h; box.setAttribute('data-ready','1');
   }
-  // サポートタブ：操作説明書＋運営サポートへの入口（旧・運営サポートタブから集約）
+  // サポートタブ：ロール別に最適化
+  //  経営者   … 顧客向け説明書＋担当パートナーへの導線
+  //  パートナー… パートナー向け説明書＋運営サポート（AI即答・問い合わせ・履歴）をパネル内に取り込み
+  //  運営     … 説明書3種＋パートナーからの問い合わせ受信箱をパネル内に取り込み
   function knvRenderSupport(){
     var box=$('knv-support'); if(!box || box.getAttribute('data-ready')) return;
     var eff=window.__eff||'customer';
@@ -8814,25 +8850,44 @@
         +'<button class="btn2" style="font-size:12px;padding:8px 14px;" onclick="openManual(\'manual-customer.html\')">顧客</button>';
     }
     h+='</div>';
-    if(eff==='consultant'){
-      h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">🛟 運営サポート</div>'
-        +'<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:8px;">規程・報酬・審査など運営の確認が必要な質問は、サポートナレッジ（FAQ）とお問い合わせから。</div>'
-        +'<button class="btn2" style="font-size:12px;padding:8px 16px;" onclick="knvToggle(false);goSec(\'sec-support\')">FAQ・お問い合わせを開く →</button>';
-    }else if(eff==='customer'){
+    if(eff==='customer'){
       h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">🛟 困ったときは</div>'
         +'<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:8px;">操作の質問は「相談」タブで継ナビくんへ。個別のご事情は担当パートナーにメッセージでどうぞ。</div>'
         +'<button class="btn2" style="font-size:12px;padding:8px 16px;" onclick="knvToggle(false);goSec(\'sec-chat\')">担当パートナーにメッセージ →</button>';
+      box.innerHTML=h;
+    }else if(eff==='consultant'){
+      // 運営サポート画面（AI即答・問い合わせ・履歴・FAQ）をパネルの中へ取り込み、
+      // 画面遷移なしで完結させる（パートナーのメニューからは撤去済みのため移動して問題ない）
+      box.innerHTML=h+'<div id="knv-support-host"></div>';
+      var sp=$('sec-support'), host=$('knv-support-host');
+      if(sp && host){
+        sp.classList.remove('hidden');
+        sp.style.display='block'; sp.style.border='none'; sp.style.boxShadow='none';
+        sp.style.padding='0'; sp.style.margin='0'; sp.style.background='transparent';
+        host.appendChild(sp);
+      }else if(host){
+        host.innerHTML='<div style="font-size:12px;color:var(--muted);">運営サポートは現在ご利用いただけません。</div>';
+      }
+    }else{
+      // 運営：パートナーからの問い合わせ受信箱へ（回答作業は広いコンソール画面で行う）
+      h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">🛟 パートナーからの問い合わせ</div>'
+        +'<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:8px;">未対応の件数はお知らせタブとバッジに表示されます。回答は受信箱から。</div>'
+        +'<button class="btn2" style="font-size:12px;padding:8px 16px;" onclick="knvToggle(false);goSec(\'sec-support\')">受信箱を開く →</button>';
+      box.innerHTML=h;
     }
-    box.innerHTML=h; box.setAttribute('data-ready','1');
+    box.setAttribute('data-ready','1');
   }
   async function knvLoadNotif(){
     var box=$('knv-notif'); if(!box) return;
     box.innerHTML='<div style="font-size:12.5px;color:var(--muted);padding:18px 4px;text-align:center;">読み込み中…</div>';
     try{
-      if((window.__eff||'')==='consultant' && (!CL_CACHE.clients || !CL_CACHE.clients.length) && typeof loadClients==='function'){
-        await loadClients();
+      if((window.__eff||'')==='admin'){ await knvAdminBadge(); }
+      else{
+        if((window.__eff||'')==='consultant' && (!CL_CACHE.clients || !CL_CACHE.clients.length) && typeof loadClients==='function'){
+          await loadClients();
+        }
+        await refreshNotifs();
       }
-      await refreshNotifs();
     }catch(e){}
     renderNotifCenter();
   }
@@ -8853,9 +8908,11 @@
     var un=window.__KNV_UNREAD||0, todo=window.__KNV_TODO||0;
     var ins=(typeof AGENT_INSIGHTS!=='undefined'&&AGENT_INSIGHTS)?AGENT_INSIGHTS.length:0;
     if(!un && !todo && !ins){ box.classList.add('hidden'); return; }
-    var h='';
+    var h='', isAdmin=((window.__eff||'')==='admin');
     if(un)   h+='<button onclick="knvShowTab(\'notif\')">📩 未読 <b>'+un+'</b>件</button>';
-    if(todo) h+='<button onclick="knvShowTab(\'notif\')">📌 期日・対応 <b>'+todo+'</b>件</button>';
+    if(todo) h+=isAdmin
+      ? '<button onclick="knvToggle(false);goSec(\'sec-support\')">🛟 未対応の問い合わせ <b>'+todo+'</b>件</button>'
+      : '<button onclick="knvShowTab(\'notif\')">📌 期日・対応 <b>'+todo+'</b>件</button>';
     if(ins)  h+='<button class="gold" onclick="knvShowTab(\'chat\')">✦ 継ナビくんの提案 <b>'+ins+'</b>件</button>';
     box.innerHTML=h; box.classList.remove('hidden');
   }
