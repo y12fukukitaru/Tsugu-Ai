@@ -516,10 +516,18 @@
   .ai-band .rt:hover{color:#cfa860;}
   @media(max-width:640px){ .ai-band{padding:10px 13px;} .ai-band .tt{font-size:14px;} }
   /* 吹き出し：AI回答＝白地＋紺の左ボーダー＋ゴールドの上ヘアライン／ユーザー発言＝紺ベタ */
-  .ai-bubble{max-width:86%;padding:11px 14px;border-radius:12px;font-size:13px;line-height:1.6;background:#fff;border:1px solid #E2E7EF;border-left:4px solid #0e2038;box-shadow:inset 0 2px 0 #cfa860;color:#18202E;}
-  .ai-bubble-me{max-width:86%;padding:11px 14px;border-radius:12px;font-size:13px;line-height:1.6;background:#0e2038;color:#fff;white-space:pre-wrap;border:1px solid #0e2038;}
+  .ai-bubble{max-width:100%;padding:11px 14px;border-radius:4px 14px 14px 14px;font-size:13.5px;line-height:1.8;background:#fff;border:1px solid #EBDDB4;border-left:4px solid #0e2038;box-shadow:inset 0 2px 0 #cfa860;color:#18202E;}
+  .ai-bubble strong{color:#0e2038;}
+  .ai-bubble ul li::marker,.ai-bubble ol li::marker{color:#8A6A12;font-weight:700;}
+  .ai-bubble-me{max-width:86%;padding:11px 14px;border-radius:14px 4px 14px 14px;font-size:13.5px;line-height:1.8;background:#0e2038;color:#fff;white-space:pre-wrap;border:1px solid #0e2038;}
   body.dark .ai-bubble{background:#141924;border-color:#2A3345;border-left-color:#cfa860;color:#ECEEF2;}
+  body.dark .ai-bubble strong{color:#CFAD62;}
   body.dark .ai-bubble-me{background:#16233c;border-color:#2A3345;}
+  /* 継ナビくんの顔チップと名前ラベル（チャットの発言者表示） */
+  .tsg-face{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:9px;background:#0e2038;flex:0 0 auto;margin-top:2px;}
+  .tsg-face svg{width:20px;height:20px;display:block;}
+  .tsg-name{font-size:10.5px;font-weight:700;color:#8A6A12;letter-spacing:.05em;margin-bottom:3px;}
+  body.dark .tsg-name{color:#CFAD62;}
   /* AIログ枠 */
   .ai-panelbox{border:1px solid #D8E0EC;border-radius:10px;background:#FAFBFD;}
   body.dark .ai-panelbox{background:#16233c;border-color:#2A3345;}
@@ -8505,6 +8513,7 @@
   // 各分野にあった「専門家の確認を促す」注意書きはこの1本に統合している（省略しないこと）。
   var SEC_SYS=[
     'あなたは経営支援プラットフォーム「TsuguAi -継-」のAIエージェント「継ナビくん」です。日本の中小企業の経営者と認定パートナーを支える、有能な経営アドバイザー兼相談相手として振る舞います。名前を聞かれたら「継ナビくん」と名乗ります。親しみやすく、しかし馴れ馴れしくない敬語で応じます。',
+    '書き方: 冒頭でひとこと相談を受け止めてから本題へ。短い段落と箇条書き中心で、要点は**太字**にします。絵文字は1回答に1〜3個まで（🌱💡📌✅など落ち着いたもの。多用しない）。長い回答では小見出し（# 見出し）で区切り、最後に「次の一歩」をひとつ添えます。',
     '経営全般（意思決定・計画づくり・段取り・文章作成・壁打ち）に加えて、税務、労務・人事、マーケティング、資金調達、M&A・事業承継まで、分野を問わず一つの窓口として相談に応じます。',
     '回答は日本語で、簡潔かつ実務的に。抽象論ではなく「次に何をするか」が分かる形で示します。',
     '前提が足りず答えが大きく変わる場合は、決めつけずに要点を1〜2個だけ質問し直します。',
@@ -8617,14 +8626,30 @@
   function tsgThinking(){ return '<span style="display:inline-flex;align-items:center;gap:8px;">'+tsgSpin(true)+'<span style="font-size:12px;color:#94A2B6;">考え中…</span></span>'; }
   function renderSecLog(){
     var box=$('sec-log'); if(!box)return;
-    if(!SEC_MSGS.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;line-height:1.8;">経営のことなら分野を問わず相談できます。<br>資金繰り・税務・労務・採用・値上げ・資金調達・事業承継／M&amp;A まで、そのままの言葉でどうぞ。</div>'; return; }
+    if(!SEC_MSGS.length){
+      box.innerHTML='<div style="display:flex;gap:8px;align-items:flex-start;">'
+        +'<span class="tsg-face">'+tsgNaviSvg()+'</span>'
+        +'<div style="min-width:0;"><div class="tsg-name">継ナビくん</div>'
+        +'<div class="ai-bubble">こんにちは、継ナビくんです🌱<br>経営のことなら分野を問わずご相談ください。資金繰り・税務・労務・採用・値上げ・資金調達・事業承継／M&amp;A まで、そのままの言葉でどうぞ。</div>'
+        +'</div></div>';
+      return;
+    }
     var h='';
     SEC_MSGS.forEach(function(m){
       var me=m.role==='user';
-      var tag=(!me && m.model)?'<div style="font-size:10px;color:#94A2B6;margin-bottom:2px;">'+esc(m.model)+'</div>':'';
       var thinking=(m.content==='（考え中…）');
       var inner=thinking?tsgThinking():(me?esc(m.content):mdLite(m.content));
-      h+='<div style="display:flex;flex-direction:column;align-items:'+(me?'flex-end':'flex-start')+';margin-bottom:8px;">'+tag+'<div class="'+(me?'ai-bubble-me':'ai-bubble')+'">'+inner+'</div></div>';
+      if(me){
+        h+='<div style="display:flex;justify-content:flex-end;margin-bottom:10px;"><div class="ai-bubble-me">'+inner+'</div></div>';
+      }else{
+        // 継ナビくんの発言：顔チップ＋名前ラベル＋吹き出し
+        var tag=m.model?' <span style="font-weight:400;color:#94A2B6;letter-spacing:0;">'+esc(m.model)+'</span>':'';
+        h+='<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:10px;">'
+          +'<span class="tsg-face">'+tsgNaviSvg()+'</span>'
+          +'<div style="min-width:0;max-width:86%;"><div class="tsg-name">継ナビくん'+tag+'</div>'
+          +'<div class="ai-bubble">'+inner+'</div>'
+          +'</div></div>';
+      }
     });
     box.innerHTML=h; box.scrollTop=box.scrollHeight;
   }
