@@ -854,6 +854,7 @@
   <div class="knv-tabs">
     <button id="knv-tab-chat" class="on" onclick="knvShowTab('chat')"><span class="ki">💬</span>相談</button>
     <button id="knv-tab-msg" onclick="knvShowTab('msg')"><span class="ki">✉️</span>メッセージ<span id="knv-mbadge" class="knv-tbadge hidden">0</span></button>
+    <button id="knv-tab-kn" class="hidden" onclick="knvShowTab('kn')"><span class="ki">📚</span>ナレッジ</button>
     <button id="knv-tab-notif" onclick="knvShowTab('notif')"><span class="ki">🔔</span>お知らせ<span id="knv-tbadge" class="knv-tbadge hidden">0</span></button>
     <button id="knv-tab-setup" onclick="knvShowTab('setup')"><span class="ki">🔗</span>連携</button>
     <button id="knv-tab-support" onclick="knvShowTab('support')"><span class="ki">📖</span>サポート</button>
@@ -864,6 +865,7 @@
     <div id="knv-log"></div>
   </div>
   <div id="knv-msg" class="knv-body hidden"></div>
+  <div id="knv-kn" class="knv-body hidden"></div>
   <div id="knv-notif" class="knv-body hidden"></div>
   <div id="knv-setup" class="knv-body hidden"></div>
   <div id="knv-support" class="knv-body hidden"></div>
@@ -1119,17 +1121,18 @@
   function navDefs(r){
     // 顧問税理士として招かれている場合は、数字の入力だけの画面にする
     if(r==='customer' && ACCESS==='finance') return [['sec-flow','月次数字の入力']];
-    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値'],['sec-ai','AI診断・自動化'],['sec-ins','試算結果'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','継ナビくん']];
+    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値・試算結果'],['sec-ai','AI診断・自動化'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','継ナビくん']];
     // 運営は admin_role で見えるメニューを絞る（未設定は owner 扱い）
     if(r==='admin') return adminNavAll().filter(function(it){ return adminCanSee(it[0]); });
     // 以降はパートナー
-    return [['sec-flow','ダッシュボード'],['sec-growth','成長ロードマップ'],['sec-biz','本業と連携'],['sec-training','研修プログラム'],['sec-sales','営業ツール'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','継ナビくん'],['sec-support','運営サポート']];
+    return [['sec-flow','ダッシュボード'],['sec-growth','成長・研修'],['sec-biz','本業と連携'],['sec-sales','営業ツール'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','継ナビくん'],['sec-support','運営サポート']];
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
   // 継ナビくん（sec-sec）と運営サポート（sec-support）は右下のパネルに集約したため
   // メニューには出さない。navDefsには残す（パネルのグルーピングとgoSecでの表示に必要）。
-  // メッセージ（旧sec-chat）はセクション自体を廃止し、右下パネルの「メッセージ」タブに統合した
-  var KNV_ABSORBED=['sec-sec','sec-support'];
+  // メッセージ（旧sec-chat）はセクション自体を廃止し、右下パネルの「メッセージ」タブに統合した。
+  // ナレッジ（sec-knowledge）もパネルの「ナレッジ」タブへ移設（navDefsには残す：グルーピングとgoSecのため）
+  var KNV_ABSORBED=['sec-sec','sec-support','sec-knowledge'];
   function effectiveNav(r){
     var all=navDefs(r).filter(function(it){ return KNV_ABSORBED.indexOf(it[0])<0; });
     var p=loadPrefs();
@@ -1468,6 +1471,8 @@
   function goSec(id,el){
     // 経営者のメッセージは継ナビくんのパネル内に集約した。旧導線が残っていてもそちらへ
     if(id==='sec-chat' && (window.__eff||'customer')==='customer'){ if(typeof knvOpenMsg==='function'){ knvOpenMsg(); return; } }
+    // パートナーのナレッジも継ナビくんの「ナレッジ」タブへ
+    if(id==='sec-knowledge' && (window.__eff||'')==='consultant'){ if(typeof knvOpenKn==='function'){ knvOpenKn(); return; } }
     showSection(id);
   }
 
@@ -2408,7 +2413,7 @@
           +'<div style="font-weight:600;font-size:14px;color:#1E3A66;margin:14px 0 6px;">③ 資金繰りシミュレーター</div>'
           +'<div style="font-size:12px;color:#94A2B6;">担当パートナーが実施します。結果はダッシュボードの「資金繰りステータス」に表示されます。<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;margin-left:6px;" onclick="goSec(\'sec-status\')">ステータスを見る →</button></div>'
         +'</div>'
-        +'<div class="panel" id="sec-ai"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="5" width="14" height="14" rx="2.5"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9.5 2v3M14.5 2v3M9.5 19v3M14.5 19v3M2 9.5h3M2 14.5h3M19 9.5h3M19 14.5h3"/></svg>AI活用・自動化のご相談</span></div>'
+        +'<div class="panel" id="sec-ai"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="5" width="14" height="14" rx="2.5"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9.5 2v3M14.5 2v3M9.5 19v3M14.5 19v3M2 9.5h3M2 14.5h3M19 9.5h3M19 14.5h3"/></svg>AI診断・自動化</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">「こんな業務を楽にできたら」という気になることを選んで送るだけ。担当パートナーがAIで具体的な自動化プランを診断し、結果をこちらにご提案・フィードバックします。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
             +'<div style="flex:1;min-width:200px;"><label class="fl">業種・事業内容（任意）</label><input id="ai-gyo" class="inp2" style="width:100%;" placeholder="例：金属加工業、調剤薬局 など"></div>'
@@ -2421,13 +2426,37 @@
           +'<div id="ai-result" style="margin-top:14px;"></div>'
           +'<div id="my-ai-props" style="margin-top:14px;"></div>'
         +'</div>'
-        +'<div class="panel" id="sec-ins"><div class="ph">試算結果（パートナーからの共有）</div>'
-          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">保険（事業保障・損害保険・養老保険）や相続・贈与などの試算は担当パートナーが行い、ここに共有されます。試算のご希望や前提条件の変更は「メッセージ」でお伝えください。</div>'
-          +'<div id="my-ins" style="margin-top:4px;">読み込み中...</div>'
-        +'</div>'
         +'<div class="panel" id="sec-value"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 16.5 5.5-5.5 3.5 3.5L21 5"/><path d="M15 5h6v6"/></svg>企業価値（毎月の推移）</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">担当パートナーがEBITDA法で診断した、あなたの会社の推定企業価値です。利益（EBITDA）の改善と借入の圧縮が、そのまま会社の価値を押し上げます。※ 簡易試算であり、実際の譲渡・買収価格を保証するものではありません。</div>'
           +'<div id="my-value">読み込み中...</div>'
+        +'</div>'
+        +'<div class="panel"><div class="ph"><span class="ph-t">🔁 承継シミュレーション（買う・売る）</span></div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">TsuguAi-継-の中枢機能です。「会社を買う」「会社を譲る」——まだ先の話でも、あなたの会社の数字で<b style="color:#1E3A66;">未知の選択肢を体験</b>できます。かかる時間は30秒。何度でも無料です。</div>'
+          +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">'
+            +'<button class="sbtn on" id="sim-tab-buy" onclick="tsimMode(\'buy\')">🏢 買う側を体験</button>'
+            +'<button class="sbtn" id="sim-tab-sell" onclick="tsimMode(\'sell\')">🌱 譲る側を体験</button>'
+          +'</div>'
+          +'<div id="sim-buy">'
+            +'<div style="font-size:12px;color:#5A6981;margin-bottom:8px;line-height:1.7;">気になる会社（同業・取引先・近隣など）の規模感を入れると、<b>「その会社を買ったら、うちのキャッシュはどう動くか」</b>を継ナビくんが試算します。</div>'
+            +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+              +'<div><label class="fl">相手の業種</label><input id="simb-gyo" class="inp2" placeholder="例：運送業"></div>'
+              +'<div><label class="fl">相手の年商（万円）</label><input id="simb-rev" type="number" class="inp2" placeholder="例 8000"></div>'
+              +'<div><label class="fl">相手の営業利益（万円）</label><input id="simb-prof" type="number" class="inp2" placeholder="例 600"></div>'
+              +'<div><label class="fl">想定価格（万円・任意）</label><input id="simb-price" type="number" class="inp2" placeholder="空欄なら目安を提案"></div>'
+            +'</div>'
+            +'<button class="btn2 ai-btn" style="margin-top:10px;" id="simb-go" onclick="tsimBuy()">この会社を買ったら？を試算する</button>'
+          +'</div>'
+          +'<div id="sim-sell" class="hidden">'
+            +'<div style="font-size:12px;color:#5A6981;margin-bottom:8px;line-height:1.7;">あなたの月次データと企業価値診断から、<b>「いま譲るならの目安」と「2年磨き上げたらどう変わるか」</b>を継ナビくんが試算します。売る予定がなくても、会社の現在地を知る健康診断としてどうぞ。</div>'
+            +'<button class="btn2 ai-btn" id="sims-go" onclick="tsimSell()">いま譲るなら？ 2年磨けば？を試算する</button>'
+          +'</div>'
+          +'<div id="sim-out" style="margin-top:12px;"></div>'
+          +'<div class="ai-note">※ AIによる簡易シミュレーションであり、実際の価格・実行可否を保証するものではありません。本格的に検討したくなったら、担当パートナーと専門家（運営がおつなぎします）が伴走します。</div>'
+          +'<button class="ghost" style="font-size:12px;border:1px solid #E2E7EF;border-radius:8px;padding:7px 12px;margin-top:8px;" onclick="knvOpenMsg()">✉️ この結果を担当パートナーに相談する</button>'
+        +'</div>'
+        +'<div class="panel" id="sec-ins"><div class="ph">試算結果（パートナーからの共有）</div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">保険（事業保障・損害保険・養老保険）や相続・贈与などの試算は担当パートナーが行い、ここに共有されます。試算のご希望や前提条件の変更は「メッセージ」でお伝えください。</div>'
+          +'<div id="my-ins" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-ma"><div class="ph">利益のM&A活用 提案</div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">利益や余剰資金をM&A（会社・事業の買収）で活かす方向性を、担当パートナーがAIで検討し、ここにご提案します。ご関心・ご希望は「メッセージ」でお知らせください。</div>'
@@ -2478,9 +2507,15 @@
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;">①現状把握 → ②AI・自動化 → ③コスト削減 → ④余力 → ⑤次の投資（M&A）の流れで支援します。</div>'
           + stepperHtml()
         +'</div>'
-        +'<div class="panel" id="sec-growth"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6.5 13.5 5.5-5.5 5.5 5.5"/><path d="m6.5 19 5.5-5.5 5.5 5.5"/></svg>パートナー成長ロードマップ</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadPartnerGrowth()">↺ 更新</span></div>'
+        +'<div class="panel" id="sec-growth"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6.5 13.5 5.5-5.5 5.5 5.5"/><path d="m6.5 19 5.5-5.5 5.5 5.5"/></svg>成長ロードマップ・研修</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadPartnerGrowth()">↺ 更新</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;line-height:1.7;">認定パートナーのレベルと特典です。顧問契約数・HD化（M&A成約）実績に応じてレベルが上がり、外注費率と紹介先への割引が拡大します。実績はあなたの担当データから自動集計しています（正式なレベル認定は運営が行います）。</div>'
           +'<div id="pg-body">読み込み中...</div>'
+        +'</div>'
+        +'<div class="panel" id="sec-training">'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="4" width="19" height="14" rx="2.5"/><path d="m10.5 8.5 4.5 2.5-4.5 2.5z"/><path d="M8 21h8"/></svg>研修プログラム</span>'
+            +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadTraining()">↺ 更新</span></div>'
+          +'<div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.7;">認定パートナーとして活動を始めるための研修です。各レッスンを再生し、最後の<b style="color:var(--navy);">理解度チェック</b>に合格すると修了となり、成長ロードマップの <b style="color:var(--navy);">Lv.1 アソシエイト</b> の条件を満たします。進捗は自動で保存され、途中で閉じても続きから再開できます。</div>'
+          +'<div id="tr-body-list">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-biz">'
           +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="7" width="19" height="13" rx="2.5"/><path d="M9 7V5.2A1.7 1.7 0 0 1 10.7 3.5h2.6A1.7 1.7 0 0 1 15 5.2V7"/><path d="M2.5 12.5h19"/></svg>本業と連携</span>'
@@ -2494,12 +2529,6 @@
                   +'ご自身が有資格の場合の取り扱いは、実行の前に運営へご確認ください。')
             +'</div>'
           +'<div id="biz-body">読み込み中...</div>'
-        +'</div>'
-        +'<div class="panel" id="sec-training">'
-          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="4" width="19" height="14" rx="2.5"/><path d="m10.5 8.5 4.5 2.5-4.5 2.5z"/><path d="M8 21h8"/></svg>研修プログラム</span>'
-            +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadTraining()">↺ 更新</span></div>'
-          +'<div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.7;">認定パートナーとして活動を始めるための研修です。各レッスンを再生し、最後の<b style="color:var(--navy);">理解度チェック</b>に合格すると修了となり、成長ロードマップの <b style="color:var(--navy);">Lv.1 アソシエイト</b> の条件を満たします。進捗は自動で保存され、途中で閉じても続きから再開できます。</div>'
-          +'<div id="tr-body-list">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-clients">'
           +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">顧客管理'
@@ -2566,6 +2595,21 @@
             +'<button class="btn2" style="padding:7px 14px;font-size:12px;" onclick="toggleMaForm()">＋ 案件を追加</button>'
             +'</span></div>'
           +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:8px;">検討からPMI（統合）までの進捗・チェックリスト・PMI月次チェックをここで一元管理します。</div>'
+          +'<div style="border:1.5px solid #EBDDB4;background:#FDFAF1;border-radius:12px;padding:13px 15px;margin-bottom:12px;">'
+            +'<div style="font-size:13px;font-weight:700;color:#8A6A12;margin-bottom:6px;">🧭 M&A伴走ガイド — M&Aが初めてでも、顧客を支えられます</div>'
+            +'<div style="font-size:12px;color:#5A6981;line-height:1.9;">'
+              +'あなたの役割は<b style="color:#1E3A66;">仲介や実行ではなく、水先案内人</b>です。経営者がM&Aで止まる壁は4つだけ——'
+              +'<b>①情報</b>（案件が見えない・相場が分からない）／<b>②判断</b>（買っていい会社か・いくらが妥当か）／<b>③資金</b>（お金をどう用意するか）／<b>④統合</b>（買った後どうするか）。'
+              +'面談では、目の前の経営者が<b style="color:#1E3A66;">どの壁で止まっているか</b>を聞き分けるだけで十分です。'
+              +'<br>②の判断は、顧客ダッシュボードの<b style="color:#1E3A66;">「承継シミュレーション（買う・売る）」</b>を一緒に開いて数字で体験してもらうのが最短です。'
+              +'契約・価格交渉・法務税務は<b style="color:#1E3A66;">専門家＋運営が引き継ぎます</b>——あなたが大きな責任を負う必要はありません。'
+            +'</div>'
+            +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">'
+              +'<button class="ghost" style="font-size:12px;border:1px solid #EBDDB4;border-radius:8px;padding:6px 12px;" onclick="knvAsk(\'顧客にM&A（買う・売る）の話を初めて切り出したい。相手は◯◯業で、状況は◯◯。自然な切り出し方と会話の流れを教えて\')">💬 切り出し方を継ナビくんに聞く</button>'
+              +'<button class="ghost" style="font-size:12px;border:1px solid #EBDDB4;border-radius:8px;padding:6px 12px;" onclick="knvAsk(\'M&Aの4つの壁（情報・判断・資金・統合）のうち、顧客が◯◯で止まっている。次の一手を教えて\')">🧱 壁の突破法を聞く</button>'
+              +'<button class="ghost" style="font-size:12px;border:1px solid #EBDDB4;border-radius:8px;padding:6px 12px;" onclick="knvAsk(\'M&A案件を専門家・運営に引き継ぐタイミングと、引き継ぎ前に整理しておくべき情報を教えて\')">🤝 引き継ぎ時期を聞く</button>'
+            +'</div>'
+          +'</div>'
           +'<div id="ma-form" class="hidden" style="border:1px dashed #C9D6EA;border-radius:11px;padding:12px 14px;margin:8px 0;background:#FBFCFE;">'
             +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
               +'<div style="flex:1;min-width:180px;"><label class="fl">顧客</label><select id="ma-cust" class="inp2" style="width:100%;"></select></div>'
@@ -6939,6 +6983,69 @@
       +'<text x="'+(w-pr)+'" y="'+(h-6)+'" font-size="11" fill="#94A2B6" text-anchor="end">'+last+'</text>'
       +'</svg>';
   }
+  // ===== 承継シミュレーション（買う・売る）：TsuguAi-継- の中枢機能 =====
+  // M&Aの4つの障壁のうち「判断の障壁」を下げる。決算の数字から
+  // 「この会社を買ったらキャッシュはこう動く」「いま譲るならこの目安」を体験させる。
+  function tsimMode(m){
+    var tb=$('sim-tab-buy'), ts=$('sim-tab-sell');
+    if(tb) tb.classList.toggle('on', m==='buy');
+    if(ts) ts.classList.toggle('on', m==='sell');
+    var b=$('sim-buy'), sl=$('sim-sell');
+    if(b) b.classList.toggle('hidden', m!=='buy');
+    if(sl) sl.classList.toggle('hidden', m!=='sell');
+    var o=$('sim-out'); if(o) o.innerHTML='';
+  }
+  async function tsimFin(){
+    try{
+      var r=await sb.from('financial_entries').select('year_month,revenue,profit').eq('customer_id',SCOPE).order('year_month',{ascending:false}).limit(6);
+      return r.error?[]:(r.data||[]);
+    }catch(e){ return []; }
+  }
+  function tsimFinText(fin){
+    if(!fin.length) return '（月次データ未登録）';
+    return fin.map(function(f){ return f.year_month+': 売上'+(f.revenue!=null?f.revenue+'万円':'-')+'・営業利益'+(f.profit!=null?f.profit+'万円':'-'); }).join(' ／ ');
+  }
+  var TSIM_SYS='あなたは経営支援プラットフォーム「TsuguAi -継-」のAIエージェント「継ナビくん」です。中小企業の経営者に、M&A・事業承継の「判断の目安」を分かりやすく示します。'
+    +'ルール：専門用語は避けるか一言で解説する。数字は概算であることを明示し、断定しない。年買法（営業利益×2〜5年＋時価純資産）など簡易な考え方を使い、計算の根拠を短く示す。'
+    +'書き方：小見出しと箇条書き中心、重要な数字は**太字**。記号の#や---や>は使わない。全体で600字程度。最後に「次の一歩」を1行。実行には専門家の関与が必要である旨を必ず一言添える。';
+  async function tsimBuy(){
+    var out=$('sim-out'); if(!out) return;
+    var gyo=($('simb-gyo')||{}).value||'', rev=($('simb-rev')||{}).value||'', prof=($('simb-prof')||{}).value||'', price=($('simb-price')||{}).value||'';
+    if(!rev && !prof){ out.innerHTML='<div style="font-size:12px;color:#A9403D;">相手の年商か営業利益の、どちらかだけでも入れてください（概算でOKです）。</div>'; return; }
+    var btn=$('simb-go'); if(btn) btn.disabled=true;
+    out.innerHTML=tsgLoad('30秒ほどかかります');
+    try{
+      var fin=await tsimFin();
+      var usr='【自社の直近の月次業績】'+tsimFinText(fin)
+        +'\n【買収を検討したい相手】業種:'+(gyo||'不明')+'／年商:'+(rev?rev+'万円':'不明')+'／営業利益:'+(prof?prof+'万円':'不明')+'／想定価格:'+(price?price+'万円':'未定（目安を提案してほしい）')
+        +'\nこの会社を買った場合について、(1)価格の目安（年買法の考え方で幅を示す） (2)買った後の自社キャッシュの動き（借入で買う場合の年間返済の目安と、相手の利益でまかなえるか） (3)買う前に確認すべきポイント3つ (4)注意すべきリスク2つ を教えてください。';
+      var res=await sb.functions.invoke('ai-proxy',{ body:{ system:TSIM_SYS, messages:[{role:'user',content:usr}], model:'claude-opus-4-8', max_tokens:1600 } });
+      if(res.error||(res.data&&res.data.ok===false)) throw new Error((res.error&&res.error.message)||(res.data&&res.data.error)||'試算に失敗しました');
+      out.innerHTML='<div class="ai-out">'+mdLite((res.data&&res.data.text)||'(応答なし)')+'</div>';
+    }catch(e){ out.innerHTML='<div style="font-size:12px;color:#A9403D;">試算に失敗しました：'+esc(String((e&&e.message)||e))+'</div>'; }
+    if(btn) btn.disabled=false;
+  }
+  async function tsimSell(){
+    var out=$('sim-out'); if(!out) return;
+    var btn=$('sims-go'); if(btn) btn.disabled=true;
+    out.innerHTML=tsgLoad('30秒ほどかかります');
+    try{
+      var fin=await tsimFin();
+      var val=null;
+      try{
+        var vr=await sb.from('valuation_snapshots').select('ym,equity_value,ebitda').eq('customer_id',SCOPE).order('ym',{ascending:false}).limit(1);
+        if(!vr.error && vr.data && vr.data.length) val=vr.data[0];
+      }catch(e2){}
+      if(!fin.length && !val){ out.innerHTML='<div style="font-size:12px;color:#94A2B6;">まだ月次データ・企業価値診断がありません。まずは「メッセージ」から直近の売上・利益を担当パートナーにお送りください（入力は代行します）。</div>'; if(btn)btn.disabled=false; return; }
+      var usr='【自社の直近の月次業績】'+tsimFinText(fin)
+        +(val?'\n【直近の企業価値診断】'+val.ym+'時点の推定企業価値 '+Number(val.equity_value||0).toLocaleString('ja-JP')+'万円':'')
+        +'\n会社を譲る（売る）ことについて、(1)いま譲る場合の価格の目安（幅で） (2)2年かけて磨き上げた場合に目安がどう変わるか（利益改善・借入圧縮などの前提つきで） (3)価値を上げる磨き上げポイント3つ（この会社の数字に即して） (4)「まだ売らないほうがよい」場合の判断基準 を教えてください。売る予定がない経営者にも役立つ「会社の健康診断」として書いてください。';
+      var res=await sb.functions.invoke('ai-proxy',{ body:{ system:TSIM_SYS, messages:[{role:'user',content:usr}], model:'claude-opus-4-8', max_tokens:1600 } });
+      if(res.error||(res.data&&res.data.ok===false)) throw new Error((res.error&&res.error.message)||(res.data&&res.data.error)||'試算に失敗しました');
+      out.innerHTML='<div class="ai-out">'+mdLite((res.data&&res.data.text)||'(応答なし)')+'</div>';
+    }catch(e){ out.innerHTML='<div style="font-size:12px;color:#A9403D;">試算に失敗しました：'+esc(String((e&&e.message)||e))+'</div>'; }
+    if(btn) btn.disabled=false;
+  }
   async function loadMyValuation(){
     var box=$('my-value'); if(!box)return;
     var res=await sb.from('valuation_snapshots').select('*').eq('customer_id',SCOPE).order('ym',{ascending:true}).limit(12);
@@ -8626,12 +8733,12 @@
     if(aisecPortal()==='consultant'){
       return common
         +'【パートナーポータルの画面ガイド】'
-        +'ダッシュボード=毎朝の「今日やること」／成長ロードマップ=認定レベル(Lv.1〜4)と外注費率・研修進捗／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介／研修プログラム=全4章10レッスン／営業ツール=課題ヒアリング診断(見込み客との商談用)／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugu投資・融資・M&A=プラットフォーム内マッチング(掲載は運営への申請制)／ナレッジ=事例・Q&Aの検索と投稿(投稿は承認後に公開)／各種シミュレーター=事業承継・株対策/医療法人持分/退職金／お支払い=プラットフォーム利用料。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき)／メッセージ(顧客との送受信・ファイル添付はここで完結)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ)。'
+        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全4章10レッスン)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介／営業ツール=課題ヒアリング診断(見込み客との商談用)／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugu投資・融資・M&A=プラットフォーム内マッチング(掲載は運営への申請制)／各種シミュレーター=事業承継・株対策/医療法人持分/退職金／お支払い=プラットフォーム利用料。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ)。'
         +'操作説明書は右下パネルの「サポート」タブから開けます。毎朝の「今日の一手」とお知らせは右下ボタンのバッジに届きます。';
     }
     return common
       +'【経営者ダッシュボードの画面ガイド】'
-      +'ダッシュボード=全体の入口／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料など／財務・資金繰り=試算表の入力と資金繰りシミュレーター／企業価値=会社の値段の推移／AI診断・自動化=業務の自動化診断／試算結果=各種シミュレーションの保存結果／M&A活用=利益のM&A活用の提案／Tsugu投資・融資・M&A=マッチング掲載。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE)／サポート(操作説明書)。'
+      +'ダッシュボード=全体の入口／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料など／財務・資金繰り=試算表の入力と資金繰りシミュレーター／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI診断・自動化=業務の自動化診断／M&A活用=利益のM&A活用の提案／Tsugu投資・融資・M&A=マッチング掲載。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE)／サポート(操作説明書)。'
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
@@ -8667,7 +8774,7 @@
       var it=x.it;
       return '・「'+(it.title||'')+'」（'+(it.industry||'業種情報なし')+'）: '+[it.c1,it.c2,it.c3].filter(Boolean).join(' → ').slice(0,220);
     }).join('\n');
-    return '\n【社内ナレッジ（全パートナーの承認済み実例）】以下が質問に関連する可能性があります。本当に役立つ場合のみ「ナレッジに◯◯という実例があります。詳しくはナレッジ画面で」と出典タイトル付きで紹介してください。無関係なら触れないでください:\n'+t;
+    return '\n【社内ナレッジ（全パートナーの承認済み実例）】以下が質問に関連する可能性があります。本当に役立つ場合のみ「ナレッジに◯◯という実例があります。詳しくは継ナビくんの「ナレッジ」タブで」と出典タイトル付きで紹介してください。無関係なら触れないでください:\n'+t;
   }
   // 相談の入口（分野切替ではなく、入力欄に文章を入れるだけの「例文」）
   function secSuggests(){
@@ -8729,6 +8836,7 @@
         ['提案の壁打ち','「◯◯」という提案を考えています。相手の状況は◯◯です。提案の切り口と、想定される反論への備えを壁打ちしてください。'],
         ['決算書からの課題抽出','決算書を預かりました。売上◯◯万円・営業利益◯◯万円・借入◯◯万円です。経営課題を洗い出す観点を教えてください。']]},
       {t:'🏢 承継・M&A実務', subs:[
+        ['顧客への切り出し方','顧客にM&A（買う・売る）の話を初めて切り出します。相手は◯◯業・状況は◯◯です。自然な切り出し方と会話の流れを組み立ててください。'],
         ['承継スキームの整理','顧客の事業承継を検討中です。後継者は◯◯（親族／従業員／第三者）、株式の状況は◯◯です。取りうるスキームと進め方を整理してください。'],
         ['M&A案件の進め方','M&A案件がステージ「◯◯」にあります。次に進めるための確認事項と、つまずきやすい点を教えてください。']]},
       {t:'📚 研修・スキル', subs:[
@@ -8847,12 +8955,13 @@
     SEC_QUERY=''; var sIn=$('knv-search-in'); if(sIn) sIn.value='';
     var sBar=$('knv-search'); if(sBar) sBar.classList.add('hidden');
     // ロール切替（運営のプレビュー含む）でタブ内容が前のロールのまま残らないよう、毎回作り直す
-    ['knv-setup','knv-support','knv-notif','knv-msg'].forEach(function(id){
+    ['knv-setup','knv-support','knv-notif','knv-msg','knv-kn'].forEach(function(id){
       var b=$(id); if(b){ b.removeAttribute('data-ready'); b.innerHTML=''; }
     });
     KNV_MSG_CID=null; KNV_MSG_CNAME=''; window.__KNV_PARTNER='';
-    // メッセージタブはパートナー・経営者のみ（運営は対象外）
+    // メッセージタブはパートナー・経営者のみ（運営は対象外）。ナレッジタブはパートナーのみ
     var mt=$('knv-tab-msg'); if(mt) mt.classList.toggle('hidden', (window.__eff||'')==='admin');
+    var kt=$('knv-tab-kn'); if(kt) kt.classList.toggle('hidden', (window.__eff||'')!=='consultant');
     knvShowTab('chat');
     fab.classList.remove('hidden');
     renderSecLog();
@@ -8891,9 +9000,10 @@
   // 中身のdivを追加 ②下のtabsマップに キー:'div-id' を追加 ③必要ならレンダー関数を呼ぶ行を追加。
   // タブは等幅で自動的に収まる。ロール限定タブは knvInit で hidden を切り替える（例:メッセージ）。
   function knvShowTab(t){
-    var tabs={chat:'knv-body', msg:'knv-msg', notif:'knv-notif', setup:'knv-setup', support:'knv-support'};
+    var tabs={chat:'knv-body', msg:'knv-msg', kn:'knv-kn', notif:'knv-notif', setup:'knv-setup', support:'knv-support'};
     if(!tabs[t]) t='chat';
     if(t==='msg' && (window.__eff||'')==='admin') t='chat';
+    if(t==='kn' && (window.__eff||'')!=='consultant') t='chat';
     Object.keys(tabs).forEach(function(k){
       var btn=$('knv-tab-'+k); if(btn) btn.classList.toggle('on', k===t);
       var body=$(tabs[k]); if(body) body.classList.toggle('hidden', k!==t);
@@ -8901,9 +9011,32 @@
     var foot=document.querySelector('.knv-foot');
     if(foot) foot.classList.toggle('hidden', t!=='chat');
     if(t==='msg') knvRenderMsg();
+    if(t==='kn') knvRenderKn();
     if(t==='notif') knvLoadNotif();
     if(t==='setup') knvRenderSetup();
     if(t==='support') knvRenderSupport();
+  }
+  // ナレッジタブ：パートナーのナレッジ画面（検索・投稿・一覧）をパネル内へ物理的に移設する。
+  // 相談タブのRAG（会話に実例を添える）と合わせて、知恵は継ナビくんに集約する
+  function knvRenderKn(){
+    var box=$('knv-kn'); if(!box) return;
+    if(box.getAttribute('data-ready')) return;
+    box.innerHTML='<div id="knv-kn-host"></div>';
+    var sp=$('sec-knowledge'), host=$('knv-kn-host');
+    if(sp && host){
+      sp.classList.remove('hidden');
+      sp.style.display='block'; sp.style.border='none'; sp.style.boxShadow='none';
+      sp.style.padding='0'; sp.style.margin='0'; sp.style.background='transparent';
+      host.appendChild(sp);
+    }else if(host){
+      host.innerHTML='<div style="font-size:12px;color:var(--muted);">ナレッジは現在ご利用いただけません。</div>';
+    }
+    box.setAttribute('data-ready','1');
+  }
+  function knvOpenKn(){
+    var p=$('knv-panel'); if(!p) return;
+    if(p.classList.contains('hidden')) knvToggle(true);
+    knvShowTab('kn');
   }
   // ===== メッセージタブ：パートナー⇔顧客の送受信をパネル内で完結させる =====
   var KNV_MSG_CID=null, KNV_MSG_CNAME='';
@@ -9941,7 +10074,7 @@
       ] },
     { id:'t1-3', title:'認定パートナー 禁止行為ガイドライン（必読）', min:8, kind:'link',
       sec:'sec-knowledge',
-      desc:'保険業法・税理士法・弁護士法などに関わる、してはいけないことの一覧です。ナレッジ画面の赤い枠を開いて最後までお読みください。',
+      desc:'保険業法・税理士法・弁護士法などに関わる、してはいけないことの一覧です。右下の継ナビくん「ナレッジ」タブの赤い枠を開いて最後までお読みください。',
       note:'内容を読み終えたら、この画面に戻って「読了にする」を押してください。' }
   ]},
   { n:2, title:'ポータルの使い方', lessons:[
