@@ -1136,19 +1136,23 @@
   var ADMIN_ROLE='owner', ADMIN_PERMS=null;
   function presetPerms(role){
     var out=[];
-    adminNavAll().forEach(function(it){
+    adminPermAll().forEach(function(it){
       var a=ADMIN_NAV_SCOPE[it[0]];
       if(!a || a.indexOf(role)>=0) out.push(it[0]);
     });
     return out;
   }
   function permsOf(role, perms){
-    if((role||'owner')==='owner') return adminNavAll().map(function(it){ return it[0]; });
+    if((role||'owner')==='owner') return adminPermAll().map(function(it){ return it[0]; });
     if(perms!=null && String(perms).trim()!=='') return String(perms).split(',').filter(Boolean);
     return presetPerms(role);
   }
   function adminNavAll(){
-    return [['sec-flow','ダッシュボード'],['sec-kpi','KPI'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-team','運営メンバー'],['sec-network','専門家ネットワーク'],['sec-subsidy','補助金マスタ'],['sec-exec','経営計画'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
+    return [['sec-flow','ダッシュボード'],['sec-kpi','KPI・経営計画'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-team','運営メンバー'],['sec-network','専門家ネットワーク'],['sec-subsidy','補助金マスタ'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
+  }
+  // 権限管理の対象一覧：メニューからは消えたが個別権限は残す項目（経営計画=KPIタブ内に統合）も含める
+  function adminPermAll(){
+    return adminNavAll().concat([['sec-exec','経営計画（社内・KPIタブ内）']]);
   }
   function adminRoleName(r){ var n=r; ADMIN_ROLES.forEach(function(x){ if(x[0]===r) n=x[1]; }); return n; }
   function isOwner(){ return ADMIN_ROLE==='owner'; }
@@ -1538,6 +1542,50 @@
       +'<div class="panel" id="sec-kpi"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 21h18"/><path d="M7 21v-8M12 21V5M17 21v-5"/></svg>KPI（ステージ・ファネル／稼働）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">①現状把握→②自動化→③M&Aへの到達状況と、直近の稼働を可視化します。</div>'
         +'<div id="adm-kpi">読み込み中...</div></div>'
+      // 経営計画はKPIタブ内に統合（閲覧は sec-exec 権限を持つ運営メンバーのみ）
+      +(adminCanSee('sec-exec') ? (''
+      +'<div class="panel" id="sec-exec"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 21V3.5"/><path d="M4.5 4.5h12l-2 4 2 4h-12"/></svg>経営計画（社内）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadExecFunding();loadExecWeekly();loadExecKpi();">↺ 更新</span></div>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 12px;">'
+          +'<button class="sbtn on" id="ex-tb-fund" onclick="exShowTab(\'fund\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 9V7a2 2 0 0 0-2-2H5.5A2.5 2.5 0 0 0 3 7.5v9A2.5 2.5 0 0 0 5.5 19H18a2 2 0 0 0 2-2v-2"/><path d="M21 9v6h-4.5a3 3 0 0 1 0-6z"/></svg>資金調達ロードマップ</button>'
+          +'<button class="sbtn" id="ex-tb-week" onclick="exShowTab(\'week\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/></svg>週次行動計画（13週）</button>'
+          +'<button class="sbtn" id="ex-tb-kpi" onclick="exShowTab(\'kpi\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 16.5 5.5-5.5 3.5 3.5L21 5"/><path d="M15 5h6v6"/></svg>KPIトラッキング</button>'
+        +'</div>'
+        +'<div id="ex-tab-fund">'
+        +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">自社（福來）の調達計画をフェーズ別に管理します。ステータスはその場で変更でき、自動保存されます。</div>'
+        +'<div id="ex-fund-sum" style="margin-bottom:10px;"></div>'
+        +'<div id="ex-fund-list">読み込み中...</div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;background:var(--soft);border-radius:10px;padding:10px 12px;margin-top:10px;">'
+          +'<div><label class="fl">フェーズ</label><select id="exf-phase" class="inp2"><option>Phase 1</option><option>Phase 2</option><option>Phase 3</option></select></div>'
+          +'<div style="min-width:110px;"><label class="fl">時期</label><input id="exf-period" class="inp2" style="width:110px;" placeholder="例：Y1 事業化"></div>'
+          +'<div style="flex:1;min-width:180px;"><label class="fl">調達手段</label><input id="exf-method" class="inp2" style="width:100%;" placeholder="例：信用保証協会付き融資"></div>'
+          +'<div><label class="fl">区分</label><select id="exf-cat" class="inp2"><option>自己資金</option><option>融資</option><option>資本性ローン</option><option>補助金</option><option>エクイティ</option><option>デット</option><option>その他</option></select></div>'
+          +'<div><label class="fl">金額（百万円）</label><input id="exf-amt" type="number" class="inp2" style="width:110px;" placeholder="例 20"></div>'
+          +'<div style="flex:1;min-width:160px;"><label class="fl">主な使途</label><input id="exf-usage" class="inp2" style="width:100%;"></div>'
+          +'<button class="btn2" onclick="addExecFundItem()">追加</button>'
+        +'</div>'
+        +'<div id="exf-msg" style="font-size:11.5px;margin-top:6px;min-height:14px;"></div>'
+        +'</div>'
+        +'<div id="ex-tab-week" class="hidden">'
+        +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">週次行動計画書（13週スプリント）と連動。今週の週はゴールドの枠で表示されます。ステータス・進捗・振り返りを更新して運用してください。</div>'
+        +'<div id="ex-week-sum" style="margin-bottom:10px;"></div>'
+        +'<div id="ex-week-list">読み込み中...</div>'
+        +'</div>'
+        +'<div id="ex-tab-kpi" class="hidden">'
+        +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px;">'
+          +'<div style="font-size:12px;color:#94A2B6;flex:1;min-width:220px;">月次の計画（計）と実績（実）を管理します。実績を入力すると自動保存され、計画以上なら緑・未達なら赤で表示されます。今月の列はゴールドで強調されます。</div>'
+          +'<button class="sbtn" onclick="exKpiFyShift(-1)">◀</button>'
+          +'<b id="ex-kpi-fy" style="color:var(--navy);font-size:13px;"></b>'
+          +'<button class="sbtn" onclick="exKpiFyShift(1)">▶</button>'
+        +'</div>'
+        +'<div id="ex-kpi-grid" style="overflow-x:auto;">読み込み中...</div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;background:var(--soft);border-radius:10px;padding:10px 12px;margin-top:10px;">'
+          +'<div style="flex:1;min-width:220px;"><label class="fl">指標名</label><input id="exk-name" class="inp2" style="width:100%;" placeholder="例：月次売上MRR（万円）"></div>'
+          +'<button class="btn2" onclick="addExecKpi()">指標を追加</button>'
+        +'</div>'
+        +'<div id="exk-msg" style="font-size:11.5px;margin-top:6px;min-height:14px;"></div>'
+        +'</div>'
+      +'</div>'
+      ) : '')
       +'<div class="panel" id="sec-risk"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m10.3 3.9-8.1 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.1l-8-14a2 2 0 0 0-3.4 0z"/><path d="M12 9.5v4"/><path d="M12 17h.01"/></svg>要対応アラート（顧客リスク検知）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">資金繰りスコア低下・接触切れ・ステージ停滞・担当未割当を自動で抽出します。担当パートナーへの指示にお使いください。</div>'
         +'<div id="adm-risk">読み込み中...</div></div>'
@@ -1763,47 +1811,6 @@
             +'<div style="margin-top:10px;"><button class="btn2" onclick="admSaveKB()">保存する</button><button class="ghost" style="margin-left:8px;font-size:12px;border:1px solid var(--line);border-radius:8px;padding:6px 12px;" onclick="admResetKBForm()">クリア</button><span id="kb-msg" style="font-size:12px;margin-left:8px;"></span></div>'
           +'</div>'
           +'<div id="kb-list" style="margin-top:10px;">読み込み中...</div>'
-        +'</div>'
-      +'</div>'
-      +'<div class="panel" id="sec-exec"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 21V3.5"/><path d="M4.5 4.5h12l-2 4 2 4h-12"/></svg>経営計画（社内）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadExecFunding();loadExecWeekly();loadExecKpi();">↺ 更新</span></div>'
-        +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 12px;">'
-          +'<button class="sbtn on" id="ex-tb-fund" onclick="exShowTab(\'fund\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 9V7a2 2 0 0 0-2-2H5.5A2.5 2.5 0 0 0 3 7.5v9A2.5 2.5 0 0 0 5.5 19H18a2 2 0 0 0 2-2v-2"/><path d="M21 9v6h-4.5a3 3 0 0 1 0-6z"/></svg>資金調達ロードマップ</button>'
-          +'<button class="sbtn" id="ex-tb-week" onclick="exShowTab(\'week\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18"/><path d="M8 3v4M16 3v4"/></svg>週次行動計画（13週）</button>'
-          +'<button class="sbtn" id="ex-tb-kpi" onclick="exShowTab(\'kpi\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 16.5 5.5-5.5 3.5 3.5L21 5"/><path d="M15 5h6v6"/></svg>KPIトラッキング</button>'
-        +'</div>'
-        +'<div id="ex-tab-fund">'
-        +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">自社（福來）の調達計画をフェーズ別に管理します。ステータスはその場で変更でき、自動保存されます。</div>'
-        +'<div id="ex-fund-sum" style="margin-bottom:10px;"></div>'
-        +'<div id="ex-fund-list">読み込み中...</div>'
-        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;background:var(--soft);border-radius:10px;padding:10px 12px;margin-top:10px;">'
-          +'<div><label class="fl">フェーズ</label><select id="exf-phase" class="inp2"><option>Phase 1</option><option>Phase 2</option><option>Phase 3</option></select></div>'
-          +'<div style="min-width:110px;"><label class="fl">時期</label><input id="exf-period" class="inp2" style="width:110px;" placeholder="例：Y1 事業化"></div>'
-          +'<div style="flex:1;min-width:180px;"><label class="fl">調達手段</label><input id="exf-method" class="inp2" style="width:100%;" placeholder="例：信用保証協会付き融資"></div>'
-          +'<div><label class="fl">区分</label><select id="exf-cat" class="inp2"><option>自己資金</option><option>融資</option><option>資本性ローン</option><option>補助金</option><option>エクイティ</option><option>デット</option><option>その他</option></select></div>'
-          +'<div><label class="fl">金額（百万円）</label><input id="exf-amt" type="number" class="inp2" style="width:110px;" placeholder="例 20"></div>'
-          +'<div style="flex:1;min-width:160px;"><label class="fl">主な使途</label><input id="exf-usage" class="inp2" style="width:100%;"></div>'
-          +'<button class="btn2" onclick="addExecFundItem()">追加</button>'
-        +'</div>'
-        +'<div id="exf-msg" style="font-size:11.5px;margin-top:6px;min-height:14px;"></div>'
-        +'</div>'
-        +'<div id="ex-tab-week" class="hidden">'
-        +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">週次行動計画書（13週スプリント）と連動。今週の週はゴールドの枠で表示されます。ステータス・進捗・振り返りを更新して運用してください。</div>'
-        +'<div id="ex-week-sum" style="margin-bottom:10px;"></div>'
-        +'<div id="ex-week-list">読み込み中...</div>'
-        +'</div>'
-        +'<div id="ex-tab-kpi" class="hidden">'
-        +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px;">'
-          +'<div style="font-size:12px;color:#94A2B6;flex:1;min-width:220px;">月次の計画（計）と実績（実）を管理します。実績を入力すると自動保存され、計画以上なら緑・未達なら赤で表示されます。今月の列はゴールドで強調されます。</div>'
-          +'<button class="sbtn" onclick="exKpiFyShift(-1)">◀</button>'
-          +'<b id="ex-kpi-fy" style="color:var(--navy);font-size:13px;"></b>'
-          +'<button class="sbtn" onclick="exKpiFyShift(1)">▶</button>'
-        +'</div>'
-        +'<div id="ex-kpi-grid" style="overflow-x:auto;">読み込み中...</div>'
-        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;background:var(--soft);border-radius:10px;padding:10px 12px;margin-top:10px;">'
-          +'<div style="flex:1;min-width:220px;"><label class="fl">指標名</label><input id="exk-name" class="inp2" style="width:100%;" placeholder="例：月次売上MRR（万円）"></div>'
-          +'<button class="btn2" onclick="addExecKpi()">指標を追加</button>'
-        +'</div>'
-        +'<div id="exk-msg" style="font-size:11.5px;margin-top:6px;min-height:14px;"></div>'
         +'</div>'
       +'</div>'
       ;
@@ -2040,7 +2047,7 @@
         +(isAdm
           ? '<span style="font-size:11.5px;color:'+((u.admin_role||'owner')==='owner'?'#A9403D':'var(--muted)')+';white-space:nowrap;">'
               +esc(adminRoleName(u.admin_role||'owner'))
-              +((u.admin_role||'owner')!=='owner'?'（'+permsOf(u.admin_role||'owner', u.admin_perms).length+'/'+adminNavAll().length+'）':'')
+              +((u.admin_role||'owner')!=='owner'?'（'+permsOf(u.admin_role||'owner', u.admin_perms).length+'/'+adminPermAll().length+'）':'')
             +'</span>'
             +'<button class="ghost" style="font-size:11.5px;padding:5px 11px;border:1px solid var(--line);border-radius:8px;white-space:nowrap;" onclick="openPerm(\''+u.id+'\')">権限を設定</button>'
           : '')
@@ -2081,7 +2088,7 @@
       +(PERM_EDIT.role==='custom'?'<span class="tag gold" style="align-self:center;">個別設定</span>':'')
     +'</div>';
     h+='<div style="border:1px solid var(--line);border-radius:11px;overflow:hidden;">';
-    adminNavAll().forEach(function(it,idx){
+    adminPermAll().forEach(function(it,idx){
       var on=PERM_EDIT.perms.indexOf(it[0])>=0;
       var w=PERM_WARN[it[0]];
       var fixed=(ADMIN_NAV_SCOPE[it[0]]||[]).join(',')==='owner';   // 代表専用の項目は付与できない
@@ -2116,7 +2123,7 @@
   function permAll(on){
     if(!PERM_EDIT) return;
     // 「すべて選択」でも代表専用の項目は付けない
-    PERM_EDIT.perms = on ? adminNavAll().map(function(it){ return it[0]; })
+    PERM_EDIT.perms = on ? adminPermAll().map(function(it){ return it[0]; })
                               .filter(function(id){ return (ADMIN_NAV_SCOPE[id]||[]).join(',')!=='owner'; })
                          : [];
     PERM_EDIT.role='custom';
