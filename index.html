@@ -544,8 +544,13 @@
   .knv-fab:hover{transform:scale(1.07);}
   .knv-fab svg{width:36px;height:36px;display:block;}
   .knv-badge{position:absolute;top:-4px;right:-4px;min-width:19px;height:19px;border-radius:99px;background:#A9403D;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #fff;}
-  .knv-panel{position:fixed;right:14px;bottom:14px;z-index:71;width:min(400px,calc(100vw - 20px));height:min(620px,calc(100vh - 80px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(6,12,24,.45);display:flex;flex-direction:column;overflow:hidden;animation:knvPop .16s ease;}
+  /* PC版は余裕のある大きさで表示し、ヘッダーの⤢でさらに拡大できる */
+  .knv-panel{position:fixed;right:14px;bottom:14px;z-index:71;width:min(520px,calc(100vw - 24px));height:min(760px,calc(100vh - 60px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(6,12,24,.45);display:flex;flex-direction:column;overflow:hidden;animation:knvPop .16s ease;}
+  .knv-panel.max{width:min(920px,calc(100vw - 28px));height:calc(100vh - 24px);bottom:12px;}
   @keyframes knvPop{from{opacity:0;transform:translateY(10px) scale(.98);}to{opacity:1;transform:none;}}
+  .knv-max{flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;}
+  .knv-max:hover{background:rgba(255,255,255,.12);}
+  @media(max-width:600px){ .knv-max{display:none;} }
   .knv-head{background:#0E1B33;padding:11px 13px;display:flex;gap:10px;align-items:center;flex-shrink:0;}
   .knv-close{margin-left:auto;flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;font-size:18px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;}
   /* ×印のズレ防止：閉じるボタンは常にflexで中央揃え */
@@ -881,6 +886,7 @@
       <div style="font-size:14px;font-weight:700;color:#fff;letter-spacing:.02em;">継ナビくん</div>
       <div style="font-size:10.5px;color:#CFAD62;">困ったときは、いつでもどうぞ</div>
     </div>
+    <button class="knv-max" id="knv-max-btn" onclick="knvMaxToggle()" title="拡大表示" aria-label="拡大表示">⤢</button>
     <button class="knv-close" onclick="knvToggle(false)" aria-label="閉じる">×</button>
   </div>
   <div class="knv-tabs">
@@ -9332,6 +9338,7 @@
     var mt=$('knv-tab-msg'); if(mt) mt.classList.toggle('hidden', (window.__eff||'')==='admin');
     var kt=$('knv-tab-kn'); if(kt) kt.classList.toggle('hidden', (window.__eff||'')!=='consultant');
     knvShowTab('chat');
+    knvMaxRestore();
     fab.classList.remove('hidden');
     renderSecLog();
     if((window.__eff||'')==='admin') knvAdminBadge();
@@ -9343,6 +9350,21 @@
       window.__KNV_BELL=(r.error||!r.data)?0:r.data.length;
       window.__KNV_UNREAD=0; window.__KNV_TODO=window.__KNV_BELL;
       knvBadgesRender();
+    }catch(e){}
+  }
+  // PC版の拡大表示（⤢/⤡）。選んだ大きさは次回以降も記憶する
+  function knvMaxToggle(){
+    var p=$('knv-panel'); if(!p) return;
+    var on=!p.classList.contains('max');
+    p.classList.toggle('max', on);
+    var b=$('knv-max-btn'); if(b){ b.textContent=on?'⤡':'⤢'; b.title=on?'元の大きさに戻す':'拡大表示'; }
+    try{ localStorage.setItem('tsugu_knv_max', on?'1':''); }catch(e){}
+  }
+  function knvMaxRestore(){
+    try{
+      if(!localStorage.getItem('tsugu_knv_max')) return;
+      var p=$('knv-panel'); if(p) p.classList.add('max');
+      var b=$('knv-max-btn'); if(b){ b.textContent='⤡'; b.title='元の大きさに戻す'; }
     }catch(e){}
   }
   function knvToggle(open){
