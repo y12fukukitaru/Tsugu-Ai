@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Phase 35（PMI年間対応・経営課題PDCA） -->
 <title>TsuguAi -継- | AIと人で、会社の未来を継ぐ</title>
-<meta name="description" content="TsuguAi（ツグエーアイ）は、AIと人の伴走で資金繰り改善・業務の自動化・資金調達から事業承継/M&Aまでを支援する経営プラットフォームです。">
+<meta name="description" content="TsuguAi -継-（ツグエーアイ）は、事業承継・M&Aを中枢に据えた経営プラットフォーム。「この会社を買ったら？」「いま譲るなら？」をAIが30秒で試算し、認定パートナーと専門家が実行まで伴走。資金繰り改善・業務の自動化もひとつの場所で。">
 
 <!-- OGP（LINE・SNSでのリンクプレビュー） -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="TsuguAi -継-">
 <meta property="og:title" content="TsuguAi -継- | AIと人で、会社の未来を継ぐ">
-<meta property="og:description" content="資金繰り改善・AI自動化・資金調達・事業承継/M&Aまでを一つの場所で。AIと人による伴走型経営支援プラットフォーム。">
+<meta property="og:description" content="会社を、継ぐ。買う。譲る。その一歩手前から、AIと人で。承継・M&Aの「情報・判断・資金・統合」の壁を下げる経営プラットフォーム。">
 <meta property="og:url" content="https://y12fukukitaru.github.io/Tsugu-Ai/">
 <meta property="og:image" content="https://y12fukukitaru.github.io/Tsugu-Ai/ogp.png">
 <meta property="og:image:width" content="1200">
@@ -19,7 +19,7 @@
 <meta property="og:locale" content="ja_JP">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="TsuguAi -継- | AIと人で、会社の未来を継ぐ">
-<meta name="twitter:description" content="資金繰り改善・AI自動化・資金調達・事業承継/M&Aまでを一つの場所で。">
+<meta name="twitter:description" content="会社を、継ぐ。買う。譲る。承継・M&Aの壁をAIと人で下げる経営プラットフォーム。">
 <meta name="twitter:image" content="https://y12fukukitaru.github.io/Tsugu-Ai/ogp.png">
 
 <meta name="theme-color" content="#0E1B33">
@@ -55,6 +55,22 @@
   a:hover{color:var(--navy);}
   .gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:auto;padding:24px;
     background:radial-gradient(1000px 600px at 84% -10%,rgba(195,155,63,.16),transparent 55%),radial-gradient(860px 520px at -8% 112%,rgba(44,93,168,.28),transparent 60%),#0E1B33;}
+  /* ログイン前のLP（承継を中枢に据えた訴求） */
+  .gatewrap{display:flex;gap:44px;align-items:center;justify-content:center;max-width:1080px;width:100%;margin:auto;flex-wrap:wrap;}
+  .lp{flex:1 1 470px;max-width:560px;color:#E7ECF4;padding:8px 2px;}
+  .lp .lp-eyebrow{font-size:12px;font-weight:700;letter-spacing:.16em;color:#CFAD62;margin-bottom:14px;}
+  .lp h1{font-size:34px;font-weight:600;line-height:1.5;color:#fff;margin:0 0 14px;letter-spacing:.01em;}
+  .lp h1 b{color:#CFAD62;font-weight:600;}
+  .lp .lp-sub{font-size:14px;line-height:2;color:rgba(231,236,244,.82);margin:0 0 20px;}
+  .lp .lp-pts{display:flex;flex-direction:column;gap:9px;margin-bottom:20px;}
+  .lp .lp-pt{display:flex;gap:10px;align-items:flex-start;background:rgba(255,255,255,.05);border:1px solid rgba(207,173,98,.28);border-radius:11px;padding:11px 14px;}
+  .lp .lp-pt .i{font-size:17px;line-height:1.3;flex:0 0 auto;}
+  .lp .lp-pt .t{font-size:13px;line-height:1.75;color:rgba(231,236,244,.92);}
+  .lp .lp-pt .t b{color:#fff;}
+  .lp .lp-links{display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
+  .lp .lp-links a{font-size:12.5px;color:#CFAD62;text-decoration:underline;text-underline-offset:3px;cursor:pointer;}
+  .lp .lp-note{font-size:10.5px;color:rgba(231,236,244,.5);margin-top:14px;line-height:1.7;}
+  @media(max-width:960px){ .gatewrap{gap:22px;} .lp{max-width:430px;} .lp h1{font-size:25px;} .gate{align-items:flex-start;} }
   .card{background:#fff;border-radius:16px;box-shadow:0 32px 80px rgba(6,12,24,.5);max-width:430px;width:100%;padding:38px 34px;max-height:94vh;overflow:auto;}
   .brand{display:inline-flex;align-items:center;gap:10px;}
   .logo{width:38px;height:38px;border-radius:10px;background:var(--deep);display:flex;align-items:center;justify-content:center;}
@@ -708,8 +724,23 @@
 </head>
 <body>
 
-<!-- ===== AUTH GATE ===== -->
+<!-- ===== AUTH GATE（ログイン前はLPを兼ねる：承継を中枢に据えた訴求） ===== -->
 <div id="gate" class="gate">
+ <div class="gatewrap">
+  <div class="lp">
+    <div class="lp-eyebrow">事業承継・M&A × AI ｜ TSUGU AI -継-</div>
+    <h1>会社を、<b>継ぐ</b>。<b>買う</b>。<b>譲る</b>。<br>その一歩手前から、AIと人で。</h1>
+    <div class="lp-sub">中小企業のM&A・承継が進まない理由は4つ——情報・判断・資金・統合の壁。TsuguAiは、日々の資金繰り改善から「会社を買う・譲る」の判断まで、認定パートナーとAIエージェント「継ナビくん」がひとつの場所で伴走し、その壁を下げます。</div>
+    <div class="lp-pts">
+      <div class="lp-pt"><span class="i">🏢</span><span class="t"><b>「この会社を買ったら？」を30秒で試算。</b>気になる会社の規模を入れるだけで、価格の目安と自社キャッシュへの影響をAIが提示——買収判断のインフラです。</span></div>
+      <div class="lp-pt"><span class="i">🌱</span><span class="t"><b>「いま譲るなら？ 2年磨けば？」の健康診断。</b>売る予定がなくても、会社の値段と磨き上げの道筋が毎月見えます。</span></div>
+      <div class="lp-pt"><span class="i">🤝</span><span class="t"><b>実行は専門家＋運営が伴走。</b>顧問の認定パートナーが水先案内人となり、契約・法務税務は専門家が引き継ぐ安心の建て付けです。</span></div>
+    </div>
+    <div class="lp-links">
+      <a href="recruit-partner.html" target="_blank" rel="noopener">🤝 認定パートナー募集のご案内 →</a>
+    </div>
+    <div class="lp-note">※ シミュレーションはAIによる簡易試算であり、実際の価格・実行可否を保証するものではありません。M&A・承継の実行には専門家の関与が必要です。</div>
+  </div>
   <div class="card">
     <div style="text-align:center;">
       <div class="brand">
@@ -763,6 +794,7 @@
 
     <div class="note">通信は暗号化されています。パスワードは大文字・小文字・数字を含む8文字以上で設定してください。ログインでお困りの場合は、担当パートナーまたは運営までご連絡ください。</div>
   </div>
+ </div>
 </div>
 
 <!-- ===== APP ===== -->
@@ -2444,6 +2476,14 @@
               +'<div><label class="fl">相手の営業利益（万円）</label><input id="simb-prof" type="number" class="inp2" placeholder="例 600"></div>'
               +'<div><label class="fl">想定価格（万円・任意）</label><input id="simb-price" type="number" class="inp2" placeholder="空欄なら目安を提案"></div>'
             +'</div>'
+            +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;">'
+              +'<input type="file" id="simb-doc" class="hidden" accept=".pdf,image/png,image/jpeg,image/webp" onchange="tsimDocPick(this)">'
+              +'<button class="ghost" style="font-size:12px;border:1px dashed #C9D6EA;border-radius:9px;padding:7px 12px;" onclick="$(\'simb-doc\').click()">📄 相手の決算書を添付（任意・精度UP）</button>'
+              +'<span id="simb-doc-name" class="hidden" style="font-size:11.5px;color:#27684A;background:#EBF2ED;border-radius:8px;padding:5px 10px;">'
+                +'<span id="simb-doc-label"></span> <span style="cursor:pointer;font-weight:700;margin-left:4px;" onclick="tsimDocClear()">✕</span>'
+              +'</span>'
+            +'</div>'
+            +'<div style="font-size:10.5px;color:#94A2B6;margin-top:4px;line-height:1.6;">決算書（PDF・写真）を添付すると、AIが売上・利益・借入などを読み取って試算に反映します（8MBまで・外部保存はされません）。</div>'
             +'<button class="btn2 ai-btn" style="margin-top:10px;" id="simb-go" onclick="tsimBuy()">この会社を買ったら？を試算する</button>'
           +'</div>'
           +'<div id="sim-sell" class="hidden">'
@@ -2560,6 +2600,18 @@
             +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="salesRestart()">↺ 最初から</span>'
             +'</span></div>'
           +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">お客様に画面をお見せしながら使う商談ツールです。「こんな問題を抱えていませんか？」という8つの問いかけで潜在ニーズを引き出し、最後は<b style="color:#8F7230;">「この問題を、このプラットフォームで解決できるとしたら？」</b>というクロージングにつながります。</div>'
+          +'<div style="border:1.5px solid #EBDDB4;background:#FDFAF1;border-radius:12px;padding:13px 15px;margin-bottom:12px;">'
+            +'<div style="font-size:13px;font-weight:700;color:#8A6A12;margin-bottom:6px;">⏱ デモ商談の進め方 — 15分の台本</div>'
+            +'<div style="font-size:12px;color:#5A6981;line-height:1.9;">'
+              +'<b style="color:#1E3A66;">最初の5分：</b>下の課題ヒアリング診断で「どこで困っているか」を聞き分ける（承継・M&Aは4つの壁——情報・判断・資金・統合——のどれで止まっているかに注目）。'
+              +'<br><b style="color:#1E3A66;">次の5分：</b>顧客ダッシュボードの<b>承継シミュレーション</b>を一緒に開き、「この会社を買ったら？」または「いま譲るなら？」を目の前で試算。<b>数字が出た瞬間が、未知の世界の入口</b>です。'
+              +'<br><b style="color:#1E3A66;">最後の5分：</b>「来月は御社の実際の数字で見ましょう」と宿題（試算表・決算書）を決めて次回アポへ。クロージングは診断ツールの最終画面が導きます。'
+            +'</div>'
+            +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">'
+              +'<button class="ghost" style="font-size:12px;border:1px solid #EBDDB4;border-radius:8px;padding:6px 12px;" onclick="knvAsk(\'デモ商談の練習相手になって。私がパートナー役、あなたが◯◯業の経営者役。承継の話を切り出すところから15分の商談を再現して、最後にフィードバックをください\')">🎭 継ナビくんと商談練習</button>'
+              +'<button class="ghost" style="font-size:12px;border:1px solid #EBDDB4;border-radius:8px;padding:6px 12px;" onclick="knvAsk(\'明日のデモ商談の準備。相手は◯◯業・年商◯◯万円・社長は◯◯歳。刺さりそうな承継の切り口と、シミュレーションに入れる数字の例を教えて\')">📝 明日の商談の準備を頼む</button>'
+            +'</div>'
+          +'</div>'
           +'<div id="sales-stage">'+salesIntroHtml()+'</div>'
         +'</div>'
         +'<div class="panel" id="sec-pdca">'
@@ -6036,9 +6088,9 @@
       h+='<div style="border:1px solid #E2E7EF;border-radius:12px;padding:14px 16px;background:#F8F9FC;">'
         +'<div style="font-size:14px;font-weight:700;color:#1E3A66;margin-bottom:8px;">ようこそ。まずはこの3つだけ</div>'
         +'<div style="font-size:13px;color:#18202E;line-height:2;">'
-        +'① <a onclick="goSec(\'sec-chat\')" style="color:#2C5DA8;cursor:pointer;font-weight:600;">メッセージ</a> で担当パートナーにあいさつ・直近の売上を送る<br>'
-        +'② <a onclick="goSec(\'sec-ai\')" style="color:#2C5DA8;cursor:pointer;font-weight:600;">AI自動化診断</a> を試す（タップするだけ）<br>'
-        +'③ <a onclick="goSec(\'sec-reports\')" style="color:#2C5DA8;cursor:pointer;font-weight:600;">月次レポート</a> を確認（毎月の数字とコメントはここに届きます）'
+        +'① <a onclick="goSec(\'sec-value\')" style="color:#2C5DA8;cursor:pointer;font-weight:600;">承継シミュレーション</a> を体験（「この会社を買ったら？」「いま譲るなら？」を30秒で試算）<br>'
+        +'② <a onclick="goSec(\'sec-chat\')" style="color:#2C5DA8;cursor:pointer;font-weight:600;">メッセージ</a> で担当パートナーにあいさつ・直近の売上を送る<br>'
+        +'③ <a onclick="goSec(\'sec-ai\')" style="color:#2C5DA8;cursor:pointer;font-weight:600;">AI自動化診断</a> を試す（タップするだけ）'
         +'</div></div>';
       box.innerHTML=h; return;
     }
@@ -7008,21 +7060,53 @@
   var TSIM_SYS='あなたは経営支援プラットフォーム「TsuguAi -継-」のAIエージェント「継ナビくん」です。中小企業の経営者に、M&A・事業承継の「判断の目安」を分かりやすく示します。'
     +'ルール：専門用語は避けるか一言で解説する。数字は概算であることを明示し、断定しない。年買法（営業利益×2〜5年＋時価純資産）など簡易な考え方を使い、計算の根拠を短く示す。'
     +'書き方：小見出しと箇条書き中心、重要な数字は**太字**。記号の#や---や>は使わない。全体で600字程度。最後に「次の一歩」を1行。実行には専門家の関与が必要である旨を必ず一言添える。';
+  // 相手の決算書（PDF/画像）を任意添付：AIが数字を読み取って買収判断の精度を上げる
+  var TSIM_DOC=null;
+  function tsimDocPick(inp){
+    var f=inp && inp.files && inp.files[0];
+    inp.value='';
+    if(!f) return;
+    if(f.size>8*1024*1024){ alert('ファイルが大きすぎます（8MBまで）。'); return; }
+    var mt=f.type||'';
+    if(['application/pdf','image/png','image/jpeg','image/webp'].indexOf(mt)<0){ alert('PDFまたは画像（PNG/JPEG/WebP）を選んでください。'); return; }
+    var rd=new FileReader();
+    rd.onload=function(){
+      var b64=String(rd.result||'').split(',')[1]||'';
+      if(!b64){ alert('ファイルを読み込めませんでした。'); return; }
+      TSIM_DOC={ media_type:mt, data:b64, name:f.name };
+      var tag=$('simb-doc-name'), lb=$('simb-doc-label');
+      if(lb) lb.textContent='📄 '+f.name;
+      if(tag) tag.classList.remove('hidden');
+    };
+    rd.readAsDataURL(f);
+  }
+  function tsimDocClear(){
+    TSIM_DOC=null;
+    var tag=$('simb-doc-name'); if(tag) tag.classList.add('hidden');
+  }
   async function tsimBuy(){
     var out=$('sim-out'); if(!out) return;
     var gyo=($('simb-gyo')||{}).value||'', rev=($('simb-rev')||{}).value||'', prof=($('simb-prof')||{}).value||'', price=($('simb-price')||{}).value||'';
-    if(!rev && !prof){ out.innerHTML='<div style="font-size:12px;color:#A9403D;">相手の年商か営業利益の、どちらかだけでも入れてください（概算でOKです）。</div>'; return; }
+    if(!rev && !prof && !TSIM_DOC){ out.innerHTML='<div style="font-size:12px;color:#A9403D;">相手の年商か営業利益（どちらかだけでOK）を入れるか、決算書を添付してください。</div>'; return; }
     var btn=$('simb-go'); if(btn) btn.disabled=true;
-    out.innerHTML=tsgLoad('30秒ほどかかります');
+    out.innerHTML=tsgLoad(TSIM_DOC?'決算書を読み込んでいます。1分ほどかかります':'30秒ほどかかります');
     try{
       var fin=await tsimFin();
       var usr='【自社の直近の月次業績】'+tsimFinText(fin)
         +'\n【買収を検討したい相手】業種:'+(gyo||'不明')+'／年商:'+(rev?rev+'万円':'不明')+'／営業利益:'+(prof?prof+'万円':'不明')+'／想定価格:'+(price?price+'万円':'未定（目安を提案してほしい）')
         +'\nこの会社を買った場合について、(1)価格の目安（年買法の考え方で幅を示す） (2)買った後の自社キャッシュの動き（借入で買う場合の年間返済の目安と、相手の利益でまかなえるか） (3)買う前に確認すべきポイント3つ (4)注意すべきリスク2つ を教えてください。';
-      var res=await sb.functions.invoke('ai-proxy',{ body:{ system:TSIM_SYS, messages:[{role:'user',content:usr}], model:'claude-opus-4-8', max_tokens:1600 } });
+      var content=usr;
+      if(TSIM_DOC){
+        content=[
+          { type:(TSIM_DOC.media_type==='application/pdf')?'document':'image',
+            source:{ type:'base64', media_type:TSIM_DOC.media_type, data:TSIM_DOC.data } },
+          { type:'text', text: usr+'\n\n添付ファイルは買収を検討している相手の決算書です。まず読み取れた主要数値（売上・利益・借入・純資産など）を短く一覧し、入力欄の数字より決算書の数字を優先して試算してください。' }
+        ];
+      }
+      var res=await sb.functions.invoke('ai-proxy',{ body:{ system:TSIM_SYS, messages:[{role:'user',content:content}], model:'claude-opus-4-8', max_tokens:TSIM_DOC?2200:1600 } });
       if(res.error||(res.data&&res.data.ok===false)) throw new Error((res.error&&res.error.message)||(res.data&&res.data.error)||'試算に失敗しました');
       out.innerHTML='<div class="ai-out">'+mdLite((res.data&&res.data.text)||'(応答なし)')+'</div>';
-    }catch(e){ out.innerHTML='<div style="font-size:12px;color:#A9403D;">試算に失敗しました：'+esc(String((e&&e.message)||e))+'</div>'; }
+    }catch(e){ out.innerHTML='<div style="font-size:12px;color:#A9403D;">試算に失敗しました：'+esc(String((e&&e.message)||e))+(TSIM_DOC?'<br><span style="color:#94A2B6;">（決算書添付でエラーになる場合は、ai-proxy を同梱の最新ソースで再デプロイしてください）</span>':'')+'</div>'; }
     if(btn) btn.disabled=false;
   }
   async function tsimSell(){
@@ -11905,8 +11989,8 @@
       t:'経営課題の取り組み',
       b:'いま一緒に進めている課題の進捗です。追加や変更のご希望は、メッセージでお知らせください。' },
     { sec:'sec-value', find:function(){ return $('sec-value'); },
-      t:'企業価値の推移',
-      b:'会社の値段が毎月どう動いたかが分かります。将来の承継やM&Aを考えるときの土台になる数字です。' },
+      t:'企業価値・承継シミュレーション',
+      b:'会社の値段の毎月の推移に加えて、「この会社を買ったら？」「いま譲るなら？」を30秒で試せる承継シミュレーションがあります。まだ先の話でも、未来の選択肢を数字で体験できます。' },
     { sec:'sec-flow', find:function(){ return $('knv-fab'); },
       t:'継ナビくん（右下にいつでも）',
       b:'画面右下の継ナビくんは、24時間いつでも使える相談相手です。お知らせの確認や、LINE・スマホ通知の設定もここからできます。' },
