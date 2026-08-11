@@ -1604,32 +1604,32 @@
         +'</div>'
         // ---- タブ1：概要（MRRサマリー・料率設定・M&Aフィー） ----
         +'<div id="bl-tab-overview">'
-        +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">登録済みのパートナー・顧客から月次の売上（MRR）を自動試算します。料率は下で調整できます（試算用・保存はされません）。</div>'
+        +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">登録済みのパートナー・顧客から月次の売上（MRR）を自動試算します。料率・割引は下で調整でき、<b style="color:#27684A;">変更は自動保存されて運営メンバー全員のコンソールに反映</b>されます。<span id="bl-rates-note" style="color:#27684A;"></span></div>'
         +'<div id="bl-summary" style="margin-bottom:12px;">読み込み中...</div>'
         +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;background:var(--soft);border-radius:10px;padding:10px 12px;">'
-          +'<div><label class="fl">パートナー基本（円/月）</label><input id="bl-pbase" type="number" class="inp2" style="width:120px;" value="3000" oninput="renderAdmBilling()"></div>'
-          +'<div><label class="fl">顧問先1社あたり加算（円/月）</label><input id="bl-pclient" type="number" class="inp2" style="width:140px;" value="2000" oninput="renderAdmBilling()"></div>'
-          +'<div><label class="fl">顧問料（円/月）</label><input id="bl-adv" type="number" class="inp2" style="width:120px;" value="50000" oninput="renderAdmBilling()"></div>'
-          +'<div><label class="fl">運営直接担当（円/月・一律）</label><input id="bl-direct" type="number" class="inp2" style="width:120px;" value="30000" oninput="renderAdmBilling()"></div>'
-          +'<div><label class="fl">初期登録料（円・初回）</label><input id="bl-init" type="number" class="inp2" style="width:130px;" value="100000" oninput="renderAdmBilling()"></div>'
+          +'<div><label class="fl">パートナー基本（円/月）</label><input id="bl-pbase" type="number" class="inp2" style="width:120px;" value="3000" oninput="renderAdmBilling();blRatesSave()"></div>'
+          +'<div><label class="fl">顧問先1社あたり加算（円/月）</label><input id="bl-pclient" type="number" class="inp2" style="width:140px;" value="2000" oninput="renderAdmBilling();blRatesSave()"></div>'
+          +'<div><label class="fl">顧問料（円/月）</label><input id="bl-adv" type="number" class="inp2" style="width:120px;" value="50000" oninput="renderAdmBilling();blRatesSave()"></div>'
+          +'<div><label class="fl">運営直接担当（円/月・一律）</label><input id="bl-direct" type="number" class="inp2" style="width:120px;" value="30000" oninput="renderAdmBilling();blRatesSave()"></div>'
+          +'<div><label class="fl">初期登録料（円・初回）</label><input id="bl-init" type="number" class="inp2" style="width:130px;" value="100000" oninput="renderAdmBilling();blRatesSave()"></div>'
         +'</div>'
         +'<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
           +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">顧問料の割引設定（％・運用しながら調整可）</div>'
           +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;">契約社数による割引＋HD化ボーナス＋担当パートナーの階層付与を合算して、各顧客の顧問料に適用します。上位ランクは条件未達の場合、条件を満たす下位の率を付与します。</div>'
           +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
-            +'<div><label class="fl">契約2〜4社</label><input id="bl-vol1" type="number" class="inp2" style="width:74px;" value="3" oninput="renderAdmBilling()"></div>'
-            +'<div><label class="fl">契約5社〜</label><input id="bl-vol2" type="number" class="inp2" style="width:74px;" value="5" oninput="renderAdmBilling()"></div>'
-            +'<div><label class="fl">HD化ボーナス</label><input id="bl-hd" type="number" class="inp2" style="width:74px;" value="5" oninput="renderAdmBilling()"></div>'
+            +'<div><label class="fl">契約2〜4社</label><input id="bl-vol1" type="number" class="inp2" style="width:74px;" value="3" oninput="renderAdmBilling();blRatesSave()"></div>'
+            +'<div><label class="fl">契約5社〜</label><input id="bl-vol2" type="number" class="inp2" style="width:74px;" value="5" oninput="renderAdmBilling();blRatesSave()"></div>'
+            +'<div><label class="fl">HD化ボーナス</label><input id="bl-hd" type="number" class="inp2" style="width:74px;" value="5" oninput="renderAdmBilling();blRatesSave()"></div>'
             +'<div style="width:1px;height:34px;background:var(--softline);margin:0 2px;"></div>'
-            +'<div><label class="fl">シニア付与</label><input id="bl-snr" type="number" class="inp2" style="width:74px;" value="2" oninput="renderAdmBilling()"></div>'
-            +'<div><label class="fl">エグゼ付与</label><input id="bl-exe" type="number" class="inp2" style="width:74px;" value="5" oninput="renderAdmBilling()"></div>'
-            +'<div><label class="fl">条件:顧問先</label><input id="bl-exeC" type="number" class="inp2" style="width:64px;" value="5" oninput="renderAdmBilling()"></div>'
-            +'<div><label class="fl">条件:HD化</label><input id="bl-exeH" type="number" class="inp2" style="width:64px;" value="1" oninput="renderAdmBilling()"></div>'
-            +'<div><label class="fl">プレミアム付与</label><input id="bl-prem" type="number" class="inp2" style="width:74px;" value="10" oninput="renderAdmBilling()"></div>'
-            +'<div><label class="fl">条件:顧問先</label><input id="bl-premC" type="number" class="inp2" style="width:64px;" value="10" oninput="renderAdmBilling()"></div>'
-            +'<div><label class="fl">条件:HD化</label><input id="bl-premH" type="number" class="inp2" style="width:64px;" value="2" oninput="renderAdmBilling()"></div>'
+            +'<div><label class="fl">シニア付与</label><input id="bl-snr" type="number" class="inp2" style="width:74px;" value="2" oninput="renderAdmBilling();blRatesSave()"></div>'
+            +'<div><label class="fl">エグゼ付与</label><input id="bl-exe" type="number" class="inp2" style="width:74px;" value="5" oninput="renderAdmBilling();blRatesSave()"></div>'
+            +'<div><label class="fl">条件:顧問先</label><input id="bl-exeC" type="number" class="inp2" style="width:64px;" value="5" oninput="renderAdmBilling();blRatesSave()"></div>'
+            +'<div><label class="fl">条件:HD化</label><input id="bl-exeH" type="number" class="inp2" style="width:64px;" value="1" oninput="renderAdmBilling();blRatesSave()"></div>'
+            +'<div><label class="fl">プレミアム付与</label><input id="bl-prem" type="number" class="inp2" style="width:74px;" value="10" oninput="renderAdmBilling();blRatesSave()"></div>'
+            +'<div><label class="fl">条件:顧問先</label><input id="bl-premC" type="number" class="inp2" style="width:64px;" value="10" oninput="renderAdmBilling();blRatesSave()"></div>'
+            +'<div><label class="fl">条件:HD化</label><input id="bl-premH" type="number" class="inp2" style="width:64px;" value="2" oninput="renderAdmBilling();blRatesSave()"></div>'
             +'<div style="width:1px;height:34px;background:var(--softline);margin:0 2px;"></div>'
-            +'<div><label class="fl">割引上限（合算）</label><input id="bl-cap" type="number" class="inp2" style="width:84px;" value="10" oninput="renderAdmBilling()"></div>'
+            +'<div><label class="fl">割引上限（合算）</label><input id="bl-cap" type="number" class="inp2" style="width:84px;" value="10" oninput="renderAdmBilling();blRatesSave()"></div>'
           +'</div>'
         +'</div>'
         +'<div class="ph" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 14.5 14.5 9.5"/><path d="M11 6.5 12.4 5a4.2 4.2 0 0 1 6 6L17 12.4"/><path d="M13 17.5 11.6 19a4.2 4.2 0 0 1-6-6L7 11.6"/></svg>M&A仲介フィーシミュレーター（レーマン方式）</span></div>'
@@ -1643,7 +1643,7 @@
         +'<div id="bl-tab-partners" class="hidden">'
         +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">'
           +'<div class="ph" style="font-size:13px;margin:0;flex:1;">パートナー別 月額内訳</div>'
-          +'<input id="bl-p-search" class="inp2" style="width:200px;" placeholder="🔍 名前で絞り込み" oninput="renderAdmBilling()">'
+          +'<input id="bl-p-search" class="inp2" style="width:200px;" placeholder="🔍 名前で絞り込み" oninput="renderAdmBilling();blRatesSave()">'
         +'</div>'
         +'<div id="bl-detail" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
@@ -1651,7 +1651,7 @@
         +'<div id="bl-tab-customers" class="hidden">'
         +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">'
           +'<div class="ph" style="font-size:13px;margin:0;flex:1;">顧客別 顧問料（割引適用後）</div>'
-          +'<input id="bl-c-search" class="inp2" style="width:200px;" placeholder="🔍 会社名で絞り込み" oninput="renderAdmBilling()">'
+          +'<input id="bl-c-search" class="inp2" style="width:200px;" placeholder="🔍 会社名で絞り込み" oninput="renderAdmBilling();blRatesSave()">'
         +'</div>'
         +'<div id="bl-cust" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
@@ -1859,7 +1859,7 @@
     renderAdmRoles();
     loadAnnouncements();
     loadAdmAudit();
-    renderAdmBilling();
+    await blRatesLoad(); renderAdmBilling();
   }
   function daysSince(iso){ if(!iso) return 9999; var d=(Date.now()-new Date(iso).getTime())/86400000; return isFinite(d)?d:9999; }
   // ---- A. KPI（ステージ・ファネル／稼働） ----
@@ -2172,6 +2172,30 @@
       if(tp>0){ pct+=tp; parts.push({t:(pi.rank||'P')+'付与',p:tp}); }
     }
     return {pct:pct, parts:parts};
+  }
+  // ---- 料率・割引設定の保存（app_settings）：運営全員のコンソールで同じ値を使う ----
+  var BL_RATE_IDS=['bl-pbase','bl-pclient','bl-adv','bl-direct','bl-init','bl-vol1','bl-vol2','bl-hd','bl-snr','bl-exe','bl-exeC','bl-exeH','bl-prem','bl-premC','bl-premH','bl-cap'];
+  var BL_RATES_OK=false, BL_SAVE_T=null;
+  function blRatesNote(t){ var el=$('bl-rates-note'); if(el) el.textContent=t?('　'+t):''; }
+  async function blRatesLoad(){
+    try{
+      var r=await sb.from('app_settings').select('value').eq('key','billing_rates').maybeSingle();
+      if(r.error){ blRatesNote('（保存機能のSQL設定が未実施のため、現在は画面上の試算のみです）'); return; }
+      BL_RATES_OK=true;
+      var v=(r.data&&r.data.value)||{};
+      BL_RATE_IDS.forEach(function(id){ var el=$(id); if(el && v[id]!=null && v[id]!=='') el.value=v[id]; });
+    }catch(e){}
+  }
+  function blRatesSave(){
+    if(!BL_RATES_OK) return;
+    if(BL_SAVE_T) clearTimeout(BL_SAVE_T);
+    BL_SAVE_T=setTimeout(async function(){
+      var v={}; BL_RATE_IDS.forEach(function(id){ var el=$(id); if(el) v[id]=el.value; });
+      try{
+        var r=await sb.from('app_settings').upsert({ key:'billing_rates', value:v, updated_at:new Date().toISOString() });
+        blRatesNote(r.error?('保存に失敗しました：'+r.error.message):'✓ 保存しました');
+      }catch(e){ blRatesNote('保存に失敗しました'); }
+    }, 800);
   }
   function renderAdmBilling(){
     var box=$('bl-summary'); if(!box)return;
