@@ -2429,8 +2429,18 @@
         +'<div class="panel" id="sec-billpay"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/><path d="M6.5 14.5h3"/></svg>お支払い</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">顧問料等のお支払いはこちらから。決済は国際的な決済基盤Stripeの安全なページで行われ、カード情報が当社のサーバーに保存されることはありません。</div>'
           +'<div id="billpay-links">読み込み中...</div>'
-          +'<div class="ph" style="font-size:13px;margin-top:16px;">お支払い履歴</div>'
+          +'<div class="ph" style="font-size:13px;margin-top:16px;">お支払い履歴（カード決済）</div>'
           +'<div id="billpay-history" style="margin-top:4px;">読み込み中...</div>'
+          +'<div style="border-top:1px solid #EDF1F6;margin:18px 0 0;"></div>'
+          +'<div class="ph" style="font-size:13px;margin-top:14px;">📄 お支払いの記録（運営が受領した明細）</div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">運営（株式会社福來）に届いたお支払いの記録です。お振込などカード決済以外のお支払いもこちらに反映されます。<b style="color:#1E3A66;">きちんとお支払いいただけていることの確認</b>にお使いください。印刷・CSV保存もできます。</div>'
+          +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">'
+            +'<div><label class="fl">対象年</label><select id="cst-year" class="inp2" style="width:120px;"></select></div>'
+            +'<button class="btn2" style="font-size:12px;padding:8px 14px;" onclick="cstRender()">表示</button>'
+            +'<button class="ghost" style="font-size:12px;border:1px solid #E2E7EF;border-radius:8px;padding:7px 12px;" onclick="cstPrint()">🖨 印刷</button>'
+            +'<button class="ghost" style="font-size:12px;border:1px solid #E2E7EF;border-radius:8px;padding:7px 12px;" onclick="cstCsv()">⬇ CSV保存</button>'
+          +'</div>'
+          +'<div id="cst-out" style="margin-top:4px;"></div>'
         +'</div>'
         +'<div class="panel" id="sec-cash"><div class="ph">財務・資金繰り（担当パートナーが入力します）</div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;">月次の数値や支払予定は担当パートナーが入力・更新します。数値や資料は「メッセージ」でお送りいただくだけでOKです。修正のご希望もメッセージでどうぞ。</div>'
@@ -2791,8 +2801,26 @@
         +'<div class="panel" id="sec-billpay"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/><path d="M6.5 14.5h3"/></svg>お支払い（プラットフォーム利用料）</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">月額利用料（基本料＋顧問先数に応じた加算）のお支払いはこちらから。決済はStripeの安全なページで行われ、カード情報が当社のサーバーに保存されることはありません。</div>'
           +'<div id="billpay-links">読み込み中...</div>'
-          +'<div class="ph" style="font-size:13px;margin-top:16px;">お支払い履歴</div>'
+          +'<div class="ph" style="font-size:13px;margin-top:16px;">お支払い履歴（カード決済）</div>'
           +'<div id="billpay-history" style="margin-top:4px;">読み込み中...</div>'
+          +'<div style="border-top:1px solid #EDF1F6;margin:18px 0 0;"></div>'
+          +'<div class="ph" style="font-size:13px;margin-top:14px;">💰 運営からの外注費（報酬明細）</div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">担当顧客の入金と認定ランクの外注費率から計算した、あなたへの支払明細です。<b style="color:#1E3A66;">月次明細</b>と<b style="color:#1E3A66;">確定申告用の年間明細</b>を、印刷（PDF保存）・CSV（電子申告の集計用）で出力できます。</div>'
+          +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">'
+            +'<div><label class="fl">月次明細（対象月）</label><input id="po-month" type="month" class="inp2"></div>'
+            +'<button class="btn2" style="font-size:12px;padding:8px 14px;" onclick="poRenderMonth()">表示</button>'
+            +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;" onclick="poPrint(\'month\')">🖨 支払明細書を印刷</button>'
+            +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;" onclick="poCsv(\'month\')">⬇ CSV保存</button>'
+          +'</div>'
+          +'<div id="po-month-out" style="margin-bottom:14px;"></div>'
+          +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">'
+            +'<div><label class="fl">年間明細（確定申告用・対象年）</label><select id="po-year" class="inp2" style="width:120px;"></select></div>'
+            +'<button class="btn2" style="font-size:12px;padding:8px 14px;" onclick="poRenderYear()">表示</button>'
+            +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;" onclick="poPrint(\'year\')">🖨 年間明細書を印刷</button>'
+            +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;" onclick="poCsv(\'year\')">⬇ CSV保存</button>'
+          +'</div>'
+          +'<div id="po-year-out"></div>'
+          +'<div style="font-size:11px;color:#94A2B6;margin-top:8px;line-height:1.7;">※ 本明細は現在の認定ランク・2名体制の配分に基づく<b>計算値（目安）</b>です。実際の振込額と異なる場合は運営にお問い合わせください。源泉徴収・消費税の取り扱いは、パートナー契約の定めによります。</div>'
         +'</div>'
         +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.8"/><path d="m5.6 5.6 3.7 3.7M14.7 14.7l3.7 3.7M14.7 9.3l3.7-3.7M5.6 18.4l3.7-3.7"/></svg>運営サポート'
           +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadSupportKnowledge();loadMyInquiries()">↺ 更新</span></div>'
@@ -4827,6 +4855,7 @@
     loadMyPayEvents();
   }
   async function loadMyPayEvents(){
+    try{ poInitDefaults(); }catch(e){}
     var box=$('billpay-history'); if(!box) return;
     var res=await sb.from('payment_events').select('created_at,event_type,amount,description').order('created_at',{ascending:false}).limit(12);
     if(res.error||!res.data||!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">お支払いが完了すると、ここに履歴が表示されます。</div>'; return; }
@@ -4836,6 +4865,262 @@
         +'<span>'+ds+'　'+esc(p.description||p.event_type||'お支払い')+'</span>'
         +'<b style="color:var(--navy);">'+(p.amount!=null?('¥'+Number(p.amount).toLocaleString()):'')+'</b></div>';
     }).join('');
+  }
+  // ===== 支払明細 =====
+  // パートナー：運営からの外注費（月次明細＋確定申告用の年間明細）。
+  //   計算は運営の配分計算（loadPayout）と同じ式をパートナー本人の視点で行う：
+  //   メイン担当＝自分のランクの外注費率、2名体制は承認済み配分、サブ担当＝メインのランクの率×サブ配分。
+  // 顧客：運営が受領した入金の記録（支払われていることの確認用）。
+  // どちらも印刷（PDF保存）とCSV（電子申告の集計用）に対応。
+  var PO_CACHE={month:null, year:null}, CST_CACHE=null;
+  function poInitDefaults(){
+    var pm=$('po-month');
+    if(pm && !pm.value){
+      var d=new Date(); d.setMonth(d.getMonth()-1);
+      pm.value=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2);
+    }
+    var nowY=new Date().getFullYear();
+    ['po-year','cst-year'].forEach(function(id){
+      var sel=$(id); if(!sel || sel.options.length) return;
+      for(var y=nowY; y>=nowY-4; y--){ var o=document.createElement('option'); o.value=y; o.textContent=y+'年'; sel.appendChild(o); }
+    });
+  }
+  async function poFetch(fromS, toS){
+    var mains=await sb.from('profiles').select('id,company_name,contact_name,email').eq('consultant_id',ME);
+    var mainCusts={}; (mains.error?[]:(mains.data||[])).forEach(function(c){ mainCusts[c.id]=c; });
+    var asgs=[];
+    try{
+      var ar=await sb.from('partner_assignments').select('customer_id,main_id,sub_id,main_share,sub_share').eq('status','approved').or('main_id.eq.'+ME+',sub_id.eq.'+ME);
+      asgs=ar.error?[]:(ar.data||[]);
+    }catch(e){}
+    var asgBy={}; asgs.forEach(function(a){ asgBy[a.customer_id]=a; });
+    var custIds=Object.keys(mainCusts);
+    asgs.forEach(function(a){ if(a.sub_id===ME && custIds.indexOf(a.customer_id)<0) custIds.push(a.customer_id); });
+    if(!custIds.length) return { rows:[] };
+    var names={}; Object.keys(mainCusts).forEach(function(k){ var c=mainCusts[k]; names[k]=c.company_name||c.contact_name||c.email||''; });
+    var missing=custIds.filter(function(id){ return !names[id]; });
+    if(missing.length){
+      try{
+        var nr=await sb.from('profiles').select('id,company_name,contact_name,email').in('id',missing);
+        (nr.error?[]:(nr.data||[])).forEach(function(c){ names[c.id]=c.company_name||c.contact_name||c.email||''; });
+      }catch(e){}
+    }
+    // サブとして入る顧客の率は、メイン担当のランクで決まる
+    var mainRate={};
+    var mainIds=[]; asgs.forEach(function(a){ if(a.sub_id===ME && a.main_id && mainIds.indexOf(a.main_id)<0) mainIds.push(a.main_id); });
+    if(mainIds.length){
+      try{
+        var pr=await sb.from('profiles').select('id,fde_rank').in('id',mainIds);
+        (pr.error?[]:(pr.data||[])).forEach(function(p){ mainRate[p.id]=rankFeeRate(p.fde_rank); });
+      }catch(e){}
+    }
+    var myRate=rankFeeRate((window.__prof||{}).fde_rank);
+    var rv=await sb.from('revenue_entries').select('customer_id,category,amount,occurred_on,description')
+      .in('customer_id',custIds).gte('occurred_on',fromS).lt('occurred_on',toS)
+      .order('occurred_on',{ascending:true}).limit(2000);
+    if(rv.error) throw new Error(rv.error.message+'（支払明細のSQL設定が未実施の可能性があります）');
+    var rows=[];
+    (rv.data||[]).forEach(function(r){
+      var amt=Number(r.amount)||0; if(amt<=0) return;
+      var a=asgBy[r.customer_id];
+      var isMain=!!mainCusts[r.customer_id];
+      var role, share, rate;
+      if(isMain){
+        rate=myRate;
+        if(a && a.main_id===ME){ role='メイン'; share=Number(a.main_share)||0; }
+        else { role='メイン'; share=100; }
+      }else if(a && a.sub_id===ME){
+        role='サブ'; share=Number(a.sub_share)||0;
+        rate=(a.main_id && mainRate[a.main_id]!=null)?mainRate[a.main_id]:null;
+      }else{ return; }
+      var fee=(rate==null)?null:amt*rate*share/100;
+      rows.push({ on:r.occurred_on, cust:names[r.customer_id]||'', cat:r.category||'', desc:r.description||'',
+                  amt:amt, rate:rate, role:role, share:share, fee:fee });
+    });
+    return { rows:rows };
+  }
+  function poTableHtml(rows){
+    if(!rows.length) return '<div style="font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:11px 13px;">この期間には、担当顧客の入金記録がありません。</div>';
+    var ta=0, tf=0, unk=false;
+    rows.forEach(function(r){ ta+=r.amt; if(r.fee==null) unk=true; else tf+=r.fee; });
+    var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:560px;">'
+      +'<tr style="background:var(--soft);color:var(--navy);"><th style="text-align:left;padding:7px 9px;">日付</th><th style="text-align:left;padding:7px 9px;">顧客</th><th style="text-align:left;padding:7px 9px;">区分</th><th style="text-align:right;padding:7px 9px;">入金額</th><th style="text-align:right;padding:7px 9px;">率</th><th style="text-align:right;padding:7px 9px;">配分</th><th style="text-align:right;padding:7px 9px;">支払額（目安）</th></tr>';
+    rows.forEach(function(r){
+      h+='<tr style="border-bottom:1px solid var(--softline);">'
+        +'<td style="padding:6px 9px;white-space:nowrap;">'+esc(r.on||'')+'</td>'
+        +'<td style="padding:6px 9px;">'+esc(r.cust)+(r.role==='サブ'?' <span class="tag gold" style="font-size:9px;">サブ</span>':'')+'</td>'
+        +'<td style="padding:6px 9px;">'+esc(r.cat)+'</td>'
+        +'<td style="padding:6px 9px;text-align:right;white-space:nowrap;">'+yen(r.amt)+'</td>'
+        +'<td style="padding:6px 9px;text-align:right;">'+(r.rate==null?'未確定':Math.round(r.rate*100)+'%')+'</td>'
+        +'<td style="padding:6px 9px;text-align:right;">'+r.share+'%</td>'
+        +'<td style="padding:6px 9px;text-align:right;white-space:nowrap;font-weight:700;color:#27684A;">'+(r.fee==null?'—':yen(r.fee))+'</td>'
+      +'</tr>';
+    });
+    h+='<tr><td colspan="3" style="padding:8px 9px;font-weight:700;color:var(--navy);">合計</td>'
+      +'<td style="padding:8px 9px;text-align:right;font-weight:700;">'+yen(ta)+'</td><td></td><td></td>'
+      +'<td style="padding:8px 9px;text-align:right;font-weight:700;color:#27684A;">'+yen(tf)+'</td></tr>'
+      +'</table></div>';
+    if(unk) h+='<div style="font-size:11px;color:#8A6A12;margin-top:6px;">「未確定」はランク未設定・個別設定のため率が決まっていない明細です。運営にご確認ください。</div>';
+    return h;
+  }
+  async function poRenderMonth(){
+    var out=$('po-month-out'); if(!out) return;
+    var ym=($('po-month')||{}).value;
+    if(!ym){ out.innerHTML='<div style="font-size:12px;color:var(--muted);">対象月を選んでください。</div>'; return; }
+    out.innerHTML='<div style="font-size:12px;color:var(--muted);">計算中…</div>';
+    try{
+      var yy=+ym.slice(0,4), mm=+ym.slice(5,7);
+      var toS=(mm===12?(yy+1)+'-01':yy+'-'+('0'+(mm+1)).slice(-2))+'-01';
+      var d=await poFetch(ym+'-01', toS);
+      PO_CACHE.month={ label:yy+'年'+mm+'月', rows:d.rows };
+      out.innerHTML=poTableHtml(d.rows);
+    }catch(e){ out.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みに失敗しました：'+esc(String((e&&e.message)||e))+'</div>'; }
+  }
+  async function poRenderYear(){
+    var out=$('po-year-out'); if(!out) return;
+    var y=+(($('po-year')||{}).value||0);
+    if(!y){ out.innerHTML='<div style="font-size:12px;color:var(--muted);">対象年を選んでください。</div>'; return; }
+    out.innerHTML='<div style="font-size:12px;color:var(--muted);">計算中…</div>';
+    try{
+      var d=await poFetch(y+'-01-01', (y+1)+'-01-01');
+      var byM={}; d.rows.forEach(function(r){
+        var m=(r.on||'').slice(0,7); if(!byM[m]) byM[m]={amt:0,fee:0,unk:false};
+        byM[m].amt+=r.amt; if(r.fee==null) byM[m].unk=true; else byM[m].fee+=r.fee;
+      });
+      PO_CACHE.year={ label:y+'年', rows:d.rows, months:byM };
+      var ta=0, tf=0;
+      var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:380px;">'
+        +'<tr style="background:var(--soft);color:var(--navy);"><th style="text-align:left;padding:7px 9px;">月</th><th style="text-align:right;padding:7px 9px;">対象入金 合計</th><th style="text-align:right;padding:7px 9px;">支払額 合計（目安）</th></tr>';
+      for(var m=1;m<=12;m++){
+        var k=y+'-'+('0'+m).slice(-2), b=byM[k];
+        h+='<tr style="border-bottom:1px solid var(--softline);"><td style="padding:6px 9px;">'+m+'月</td>'
+          +'<td style="padding:6px 9px;text-align:right;">'+(b?yen(b.amt):'—')+'</td>'
+          +'<td style="padding:6px 9px;text-align:right;font-weight:700;color:#27684A;">'+(b?yen(b.fee)+(b.unk?' ※':''):'—')+'</td></tr>';
+        if(b){ ta+=b.amt; tf+=b.fee; }
+      }
+      h+='<tr><td style="padding:8px 9px;font-weight:700;color:var(--navy);">'+y+'年 合計</td>'
+        +'<td style="padding:8px 9px;text-align:right;font-weight:700;">'+yen(ta)+'</td>'
+        +'<td style="padding:8px 9px;text-align:right;font-weight:700;color:#27684A;">'+yen(tf)+'</td></tr>'
+        +'</table></div>';
+      out.innerHTML=h;
+    }catch(e){ out.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みに失敗しました：'+esc(String((e&&e.message)||e))+'</div>'; }
+  }
+  // 印刷用の帳票（新しいウィンドウに整形して出し、印刷ダイアログを開く）
+  function poDocOpen(title, partyLabel, partyName, period, bodyHtml, note){
+    var w=window.open('','_blank','width=800,height=900');
+    if(!w){ alert('ポップアップがブロックされました。ブラウザの設定で許可してください。'); return; }
+    var today=new Date(); var ds=today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
+    w.document.write('<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>'+esc(title)+'</title>'
+      +'<style>body{font-family:"Noto Sans JP","Hiragino Sans",sans-serif;color:#18202E;margin:34px;font-size:12.5px;}'
+      +'h1{font-size:20px;color:#1E3A66;border-bottom:2.5px solid #1E3A66;padding-bottom:8px;margin:0 0 16px;}'
+      +'.meta{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:16px;line-height:1.9;}'
+      +'table{width:100%;border-collapse:collapse;font-size:12px;}th,td{border:1px solid #C9D6EA;padding:6px 9px;}'
+      +'th{background:#F0F4FA;color:#1E3A66;text-align:left;}td.r,th.r{text-align:right;}'
+      +'.note{font-size:10.5px;color:#5A6981;line-height:1.8;margin-top:14px;border-top:1px solid #E2E7EF;padding-top:10px;}'
+      +'@page{size:A4;margin:14mm;}</style></head><body>'
+      +'<h1>'+esc(title)+'</h1>'
+      +'<div class="meta"><div><b>'+esc(partyLabel)+'：</b>'+esc(partyName)+'<br><b>対象期間：</b>'+esc(period)+'</div>'
+      +'<div style="text-align:right;">発行日：'+ds+'<br>発行：株式会社福來（TsuguAi -継- 運営）</div></div>'
+      +bodyHtml
+      +'<div class="note">'+note+'</div>'
+      +'</body></html>');
+    w.document.close();
+    setTimeout(function(){ try{ w.print(); }catch(e){} }, 400);
+  }
+  function poPrint(kind){
+    var c=PO_CACHE[kind];
+    if(!c || !c.rows){ alert('先に「表示」を押して明細を表示してください。'); return; }
+    var me=(window.__prof||{});
+    var pname=me.full_name||me.contact_name||window.__email||'';
+    var note='※ 本明細は、認定ランクに基づく外注費率と2名体制の配分から計算した金額（目安）です。実際の振込額と異なる場合は運営にお問い合わせください。源泉徴収・消費税の取り扱いは、パートナー契約の定めによります。';
+    if(kind==='month'){
+      var h='<table><tr><th>日付</th><th>顧客</th><th>区分</th><th class="r">入金額</th><th class="r">率</th><th class="r">配分</th><th class="r">支払額（目安）</th></tr>';
+      var ta=0,tf=0;
+      c.rows.forEach(function(r){ ta+=r.amt; if(r.fee!=null) tf+=r.fee;
+        h+='<tr><td>'+esc(r.on||'')+'</td><td>'+esc(r.cust)+(r.role==='サブ'?'（サブ）':'')+'</td><td>'+esc(r.cat)+'</td>'
+          +'<td class="r">'+yen(r.amt)+'</td><td class="r">'+(r.rate==null?'未確定':Math.round(r.rate*100)+'%')+'</td>'
+          +'<td class="r">'+r.share+'%</td><td class="r">'+(r.fee==null?'—':yen(r.fee))+'</td></tr>'; });
+      h+='<tr><th colspan="3">合計</th><th class="r">'+yen(ta)+'</th><th></th><th></th><th class="r">'+yen(tf)+'</th></tr></table>';
+      poDocOpen('外注費 支払明細書', '支払先', pname+' 様', c.label, h, note);
+    }else{
+      var y=parseInt(c.label,10);
+      var h2='<table><tr><th>月</th><th class="r">対象入金 合計</th><th class="r">支払額 合計（目安）</th></tr>';
+      var ta2=0,tf2=0;
+      for(var m=1;m<=12;m++){
+        var b=(c.months||{})[y+'-'+('0'+m).slice(-2)];
+        h2+='<tr><td>'+m+'月</td><td class="r">'+(b?yen(b.amt):'—')+'</td><td class="r">'+(b?yen(b.fee):'—')+'</td></tr>';
+        if(b){ ta2+=b.amt; tf2+=b.fee; }
+      }
+      h2+='<tr><th>'+y+'年 合計</th><th class="r">'+yen(ta2)+'</th><th class="r">'+yen(tf2)+'</th></tr></table>';
+      poDocOpen('外注費 年間支払明細書（確定申告用資料）', '支払先', pname+' 様', c.label+'（1月〜12月）', h2, note);
+    }
+  }
+  function csvDl(fname, lines){
+    var csv=lines.map(function(row){
+      return row.map(function(v){ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }).join(',');
+    }).join('\r\n');
+    var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=fname;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{ URL.revokeObjectURL(a.href); a.remove(); }catch(e){} },500);
+  }
+  function poCsv(kind){
+    var c=PO_CACHE[kind];
+    if(!c || !c.rows){ alert('先に「表示」を押して明細を表示してください。'); return; }
+    var lines=[['日付','顧客','担当区分','区分','摘要','入金額(円)','適用率','配分(%)','支払額(円・目安)']];
+    c.rows.forEach(function(r){
+      lines.push([r.on||'', r.cust, r.role, r.cat, r.desc, r.amt,
+        (r.rate==null?'未確定':Math.round(r.rate*100)+'%'), r.share, (r.fee==null?'':Math.round(r.fee))]);
+    });
+    csvDl('TsuguAi_外注費明細_'+c.label.replace(/[年月]/g,function(s){return s==='年'?'-':'';}).replace(/-$/,'')+'.csv', lines);
+  }
+  // ---- 顧客側：運営が受領した入金の記録 ----
+  async function cstRender(){
+    var out=$('cst-out'); if(!out) return;
+    var y=+(($('cst-year')||{}).value||0);
+    if(!y){ out.innerHTML='<div style="font-size:12px;color:#94A2B6;">対象年を選んでください。</div>'; return; }
+    out.innerHTML='<div style="font-size:12px;color:#94A2B6;">読み込み中…</div>';
+    try{
+      var rv=await sb.from('revenue_entries').select('category,amount,occurred_on,description')
+        .eq('customer_id',SCOPE).gte('occurred_on',y+'-01-01').lt('occurred_on',(y+1)+'-01-01')
+        .order('occurred_on',{ascending:true}).limit(2000);
+      if(rv.error) throw new Error(rv.error.message+'（明細の閲覧設定（SQL）が未実施の可能性があります）');
+      var rows=(rv.data||[]).filter(function(r){ return Number(r.amount)>0; });
+      CST_CACHE={ label:y+'年', rows:rows };
+      if(!rows.length){ out.innerHTML='<div style="font-size:12px;color:#94A2B6;border:1px solid #EDF1F6;border-radius:10px;padding:11px 13px;">'+y+'年の入金記録はまだありません。お支払い直後は反映まで数日かかることがあります。</div>'; return; }
+      var t=0;
+      var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:380px;">'
+        +'<tr style="background:#F8F9FC;color:#1E3A66;"><th style="text-align:left;padding:7px 9px;">日付</th><th style="text-align:left;padding:7px 9px;">内容</th><th style="text-align:right;padding:7px 9px;">金額</th></tr>';
+      rows.forEach(function(r){
+        t+=Number(r.amount)||0;
+        h+='<tr style="border-bottom:1px solid #EDF1F6;"><td style="padding:6px 9px;white-space:nowrap;">'+esc(r.occurred_on||'')+'</td>'
+          +'<td style="padding:6px 9px;">'+esc([r.category,r.description].filter(Boolean).join('：')||'お支払い')+'</td>'
+          +'<td style="padding:6px 9px;text-align:right;white-space:nowrap;font-weight:700;color:#1E3A66;">'+yen(r.amount)+'</td></tr>';
+      });
+      h+='<tr><td colspan="2" style="padding:8px 9px;font-weight:700;color:#1E3A66;">'+y+'年 合計（運営受領分）</td>'
+        +'<td style="padding:8px 9px;text-align:right;font-weight:700;color:#27684A;">'+yen(t)+'</td></tr></table></div>'
+        +'<div style="font-size:11px;color:#94A2B6;margin-top:6px;line-height:1.7;">✅ ここに記載の金額は、運営が受領を確認したお支払いです。記録に相違がある場合は、担当パートナーまたは運営までお知らせください。</div>';
+      out.innerHTML=h;
+    }catch(e){ out.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みに失敗しました：'+esc(String((e&&e.message)||e))+'</div>'; }
+  }
+  function cstPrint(){
+    if(!CST_CACHE || !CST_CACHE.rows || !CST_CACHE.rows.length){ alert('先に「表示」を押して明細を表示してください。'); return; }
+    var me=(window.__prof||{});
+    var pname=(SCOPE!==ME && typeof SCOPE_CO!=='undefined' && SCOPE_CO)?SCOPE_CO:(me.company_name||me.contact_name||window.__email||'');
+    var t=0;
+    var h='<table><tr><th>日付</th><th>内容</th><th class="r">金額</th></tr>';
+    CST_CACHE.rows.forEach(function(r){ t+=Number(r.amount)||0;
+      h+='<tr><td>'+esc(r.occurred_on||'')+'</td><td>'+esc([r.category,r.description].filter(Boolean).join('：')||'お支払い')+'</td><td class="r">'+yen(r.amount)+'</td></tr>'; });
+    h+='<tr><th colspan="2">'+esc(CST_CACHE.label)+' 合計</th><th class="r">'+yen(t)+'</th></tr></table>';
+    poDocOpen('お支払い明細（運営受領記録）', '宛先', pname+' 御中', CST_CACHE.label+'（1月〜12月）', h,
+      '※ 本書は、運営が受領を確認したお支払いの記録であり、税務上の領収書・請求書に代わるものではありません。記録に相違がある場合は運営までお知らせください。');
+  }
+  function cstCsv(){
+    if(!CST_CACHE || !CST_CACHE.rows || !CST_CACHE.rows.length){ alert('先に「表示」を押して明細を表示してください。'); return; }
+    var lines=[['日付','区分','摘要','金額(円)']];
+    CST_CACHE.rows.forEach(function(r){ lines.push([r.occurred_on||'', r.category||'', r.description||'', Math.round(Number(r.amount)||0)]); });
+    csvDl('TsuguAi_お支払い明細_'+CST_CACHE.label+'.csv', lines);
   }
   // ---- 運営：決済リンク管理＋入金履歴 ----
   var BL_CUSTS=[]; var BL_LINK_AUD='all'; var BL_ROLES=null;
@@ -8817,12 +9102,12 @@
     if(aisecPortal()==='consultant'){
       return common
         +'【パートナーポータルの画面ガイド】'
-        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全4章10レッスン)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介／営業ツール=課題ヒアリング診断(見込み客との商談用)／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugu投資・融資・M&A=プラットフォーム内マッチング(掲載は運営への申請制)／各種シミュレーター=事業承継・株対策/医療法人持分/退職金／お支払い=プラットフォーム利用料。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ)。'
+        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全4章10レッスン)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介／営業ツール=課題ヒアリング診断(見込み客との商談用)／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugu投資・融資・M&A=プラットフォーム内マッチング(掲載は運営への申請制)／各種シミュレーター=事業承継・株対策/医療法人持分/退職金／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ)。'
         +'操作説明書は右下パネルの「サポート」タブから開けます。毎朝の「今日の一手」とお知らせは右下ボタンのバッジに届きます。';
     }
     return common
       +'【経営者ダッシュボードの画面ガイド】'
-      +'ダッシュボード=全体の入口／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料など／財務・資金繰り=試算表の入力と資金繰りシミュレーター／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI診断・自動化=業務の自動化診断／M&A活用=利益のM&A活用の提案／Tsugu投資・融資・M&A=マッチング掲載。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE)／サポート(操作説明書)。'
+      +'ダッシュボード=全体の入口／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=試算表の入力と資金繰りシミュレーター／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI診断・自動化=業務の自動化診断／M&A活用=利益のM&A活用の提案／Tsugu投資・融資・M&A=マッチング掲載。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE)／サポート(操作説明書)。'
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
