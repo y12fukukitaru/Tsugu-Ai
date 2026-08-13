@@ -9654,6 +9654,17 @@
         +knvRow('🏢','顧客向け説明書','経営者に案内するときの確認用','openManual(\'manual-customer.html\')');
     }
     h+='<div style="height:8px;"></div>';
+    // 商談用のプロダクト説明スライド（ニード喚起→解決の順で構成。→キー/クリックで進む・印刷可）
+    if(eff==='consultant'){
+      h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">🎤 商談用スライド（お客様に見せる）</div>'
+        +knvRow('🎤','顧客候補向け プロダクト説明','「社長、会社の値段をご存知ですか」——3つの問いかけで始まる15分の商談スライド。→キーで進み、そのまま画面共有・印刷もOK','openManual(\'pitch-customer.html\')')
+        +'<div style="height:8px;"></div>';
+    }else if(eff==='admin'){
+      h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">🎤 商談用スライド（説明会・面談で見せる）</div>'
+        +knvRow('🤝','パートナー候補向け プロダクト説明','「顧問先に承継という未来を売れる人へ」——収入の波・一度きりの関係への問いかけから始まる説明スライド','openManual(\'pitch-partner.html\')')
+        +knvRow('🏢','顧客候補向け プロダクト説明','パートナーが経営者に見せる商談スライド。内容確認・研修用に','openManual(\'pitch-customer.html\')')
+        +'<div style="height:8px;"></div>';
+    }
     if(eff==='customer'){
       h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">🛟 困ったときは</div>'
         +'<div style="font-size:11.5px;color:var(--muted);line-height:1.7;">操作の質問は「相談」タブで継ナビくんへ。個別のご事情は「メッセージ」タブから担当パートナーへどうぞ。</div>';
