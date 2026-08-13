@@ -17,6 +17,8 @@ body{margin:0;background:#0B1220;font-family:'Noto Sans JP',sans-serif;color:var
 .slide{position:relative;width:100%;max-width:1080px;aspect-ratio:16/9;margin:0 auto;background:#fff;
   border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.42);padding:44px 54px;overflow:hidden;display:none;}
 .slide.on{display:block;}
+/* .cover の display:flex が .slide の display:none を上書きするため、非表示スライドを明示的に隠す */
+.slide:not(.on){display:none!important;}
 .slide::after{content:attr(data-n);position:absolute;right:24px;bottom:14px;font-family:'DM Sans',sans-serif;font-size:12px;color:#B7C4D6;}
 .eyebrow{font-size:12px;font-weight:700;letter-spacing:.15em;color:var(--gold);margin-bottom:12px;}
 h1{font-size:44px;font-weight:600;color:var(--navy);margin:0 0 16px;line-height:1.45;}
@@ -44,7 +46,8 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
 .walls div{flex:1;border:1.5px solid #EBDDB4;background:#FDFAF1;border-radius:12px;padding:16px 12px;text-align:center;}
 .walls .w-t{font-size:16px;font-weight:700;color:#8A6A12;}
 .walls .w-c{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.7;}
-.cover{background:linear-gradient(140deg,#0E1B33 0%,#1E3A66 62%,#2C5DA8 100%);color:#fff;display:flex;flex-direction:column;justify-content:center;}
+.cover.on{display:flex!important;flex-direction:column;justify-content:center;}
+.cover{background:linear-gradient(140deg,#0E1B33 0%,#1E3A66 62%,#2C5DA8 100%);color:#fff;}
 .cover h1{color:#fff;font-size:48px;}
 .cover .sub{color:rgba(255,255,255,.85);font-size:17px;}
 .cover .mark{font-family:'DM Sans',sans-serif;font-size:21px;letter-spacing:.14em;color:var(--gold);margin-bottom:24px;}
@@ -65,7 +68,7 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
 }
 @media print{
   body{background:#fff;} .bar,#backbtn{display:none!important;} .deck{padding:0;}
-  .slide{display:block!important;box-shadow:none;border-radius:0;margin:0;max-width:none;width:100%;aspect-ratio:auto;height:100vh;page-break-after:always;}
+  .slide,.slide:not(.on){display:block!important;box-shadow:none;border-radius:0;margin:0;max-width:none;width:100%;aspect-ratio:auto;height:100vh;page-break-after:always;}
   @page{size:A4 landscape;margin:0;}
 }
 </style>
@@ -76,13 +79,41 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
 
 <section class="slide cover on" data-t="表紙">
   <div class="mark">TSUGU AI -継-</div>
-  <h1>顧問先に、<span style="color:#CFAD62;">承継という未来</span>を<br>提案できる人になる。</h1>
-  <p class="sub">保険・不動産・士業・コンサル——お客様と信頼関係を築いてきたあなたへ。その信頼を「一度きりの成約」で終わらせず、毎月のストック収入と、M&A成功報酬につなげる仕組みのご紹介です。</p>
+  <h1>これは、<span style="color:#CFAD62;">仕事の紹介</span>ではなく<br><span style="color:#CFAD62;">挑戦への招待</span>です。</h1>
+  <p class="sub">保険・不動産・士業・コンサル——お客様と信頼を築いてきたあなたへ。私たちがなぜこの事業を始めたのか、どんな社会をつくろうとしているのか。まずその話から聞いてください。</p>
+</section>
+
+<section class="slide" data-t="創業の理由①">
+  <div class="eyebrow">WHY — なぜ、この事業を始めたのか</div>
+  <h2>19年間、経営者の隣で見てきた<br>「ふたつの理不尽」があります。</h2>
+  <div class="grid g2" style="margin-top:18px;">
+    <div class="card r"><h3>ひとつめ：消えていく会社</h3><p>業績も技術も申し分ないのに、<b>後継者がいないという理由だけで</b>選択肢を失っていく会社。廃業とともに、雇用も技術も、社長の人生の証も消えていく——保険の仕事で経営者の隣にいた19年間、それを何度も見てきました。</p></div>
+    <div class="card r"><h3>ふたつめ：疲弊していく営業のプロ</h3><p>お客様に誠実に向き合う力のある営業ほど、<b>フルコミッションの波</b>に消耗していく。成約の月と、ゼロの月。信頼を積み上げても、収入は積み上がらない——私自身が生きてきた世界です。</p></div>
+  </div>
+  <div class="note" style="margin-top:18px;">この2つを、<b>1つの仕組みで解決できないか</b>。それがTsuguAi -継- の出発点です。</div>
+</section>
+
+<section class="slide" data-t="創業の理由②">
+  <div class="eyebrow">OUR ANSWER — たどり着いた答え</div>
+  <h2>経営者には「未来の選択肢」を。<br>営業のプロには「安定収入」を。</h2>
+  <p class="sub" style="margin-top:16px;">経営者には、会社を<b>継ぐ・買う・譲る</b>という未来の選択肢を、AIの力で誰でも判断できる形にして届ける。そしてその隣に立つあなたには、<b>「フルコミッション営業に安定収入を」</b>——顧問として毎月伴走するストック収入と、承継成約の成功報酬という二段構えの報酬を。</p>
+  <p class="sub">M&Aアドバイザーとしての登録も、保険19年の知見も、すべてこの仕組みに注ぎ込みました。私たちにとって<b>初めてのビジネスモデルへの挑戦</b>です。完成品を売るのではなく、<b>一緒に育ててくれる最初の仲間</b>を探しています。</p>
+</section>
+
+<section class="slide" data-t="目指す社会">
+  <div class="eyebrow">VISION — 目指す社会</div>
+  <h2>会社を「継ぐ・買う・譲る」が、<br>当たり前の選択肢になる社会へ。</h2>
+  <div class="grid g3" style="margin-top:18px;">
+    <div class="card g"><h3>残す</h3><p>廃業で失われるはずだった雇用・技術・のれんが、<b>次の担い手に引き継がれる</b>社会。</p></div>
+    <div class="card g"><h3>支える</h3><p>どの地域の経営者の隣にも、<b>AIと人の伴走者</b>がいる社会。その伴走者が、あなたです。</p></div>
+    <div class="card g"><h3>報われる</h3><p>誠実に信頼を積み上げる営業のプロが、<b>積み上げた分だけ報われる</b>働き方。</p></div>
+  </div>
+  <div class="note" style="margin-top:18px;">運営会社の社名「<b>福來（ふくらい）</b>」は、関わるすべての人に福が來るように、という願いです。経営者にも、あなたにも、その先の従業員にも。</div>
 </section>
 
 <section class="slide" data-t="3つの問い">
-  <div class="eyebrow">まず、3つだけお尋ねします</div>
-  <h2>ひとつでも思い当たれば、続きをご覧ください</h2>
+  <div class="eyebrow">あなたに、3つだけお尋ねします</div>
+  <h2>ひとつでも思い当たれば、この挑戦はあなた向きです</h2>
   <div style="display:flex;flex-direction:column;gap:14px;margin-top:22px;">
     <div class="q"><span class="n">1</span>収入がフルコミッション型で、月によって大きく波がありませんか？</div>
     <div class="q"><span class="n">2</span>お客様との関係が、成約のたびに「一度きり」で終わっていませんか？</div>
@@ -98,7 +129,7 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
     <div class="card"><h3>案件は増えている</h3><p>スモールM&Aの案件情報はネットに載る時代に。足りないのは案件ではなく、<b>経営者の隣で判断を支える人</b>です。</p></div>
     <div class="card w"><h3>伴走者が足りない</h3><p>大手仲介は小規模案件を扱いません。<b>月次で伴走しながら承継まで導く存在</b>は、ほぼ空白地帯です。</p></div>
   </div>
-  <div class="note" style="margin-top:16px;"><b>この空白を埋めるのが、TsuguAi -継- の認定パートナーです。</b></div>
+  <div class="note" style="margin-top:16px;"><b>この空白を埋めるのが、TsuguAi -継- の認定パートナー。社会の課題と、あなたの収入が、同じ方向を向いています。</b></div>
 </section>
 
 <section class="slide" data-t="プロダクト">
@@ -124,9 +155,9 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
 
 <section class="slide" data-t="収入">
   <div class="eyebrow">収入モデル</div>
-  <h2>ストック＋成功報酬の二段構え</h2>
+  <h2>「フルコミッションに安定収入を」を、形にしました</h2>
   <div class="grid g2" style="margin-top:14px;">
-    <div class="card"><h3>💼 毎月の顧問料ストック</h3><p>担当顧客の顧問料から、認定レベルに応じた<b>外注費率（〜80%）</b>があなたに。顧客が増えるほど積み上がり、<b>フルコミッションの波をならします</b>。支払明細は確定申告用に画面から出力できます。</p></div>
+    <div class="card"><h3>💼 毎月の顧問料ストック</h3><p>担当顧客の顧問料から、認定レベルに応じた<b>外注費率（〜80%）</b>があなたに。顧客が増えるほど積み上がり、<b>収入の波をならします</b>。支払明細は確定申告用に画面から出力できます。</p></div>
     <div class="card w"><h3>🤝 M&A成功報酬の可能性</h3><p>担当顧客の承継が成約（HD化）すれば、<b>成功報酬の配分</b>とレベル昇格。1件の成約はストック収入とは<b>桁が違います</b>。</p></div>
   </div>
   <div class="note" style="margin-top:16px;">さらに、あなたの<b>本業と競合しません</b>。顧問として会社の内側に入ることで、保険・不動産・士業の案件が<b>あなたに戻ってくる</b>設計です。ランクが上がると顧問先の顧問料も割引され、顧客への提案材料になります。</div>
@@ -143,7 +174,7 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
   </div>
 </section>
 
-<section class="slide" data-t="1週間の流れ">
+<section class="slide" data-t="実際の動き方">
   <div class="eyebrow">実際の動き方</div>
   <h2>毎朝5分、AIが「今日やること」を教えてくれます</h2>
   <div class="grid g3" style="margin-top:14px;">
@@ -154,14 +185,14 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
 </section>
 
 <section class="slide" data-t="始め方">
-  <div class="eyebrow">始め方</div>
-  <h2 style="margin-top:24px;">3ステップで、来月から始められます</h2>
-  <div style="display:flex;flex-direction:column;gap:14px;margin-top:22px;">
+  <div class="eyebrow">挑戦への招待</div>
+  <h2 style="margin-top:20px;">最初の仲間として、<br>一緒にこの仕組みを育ててください</h2>
+  <div style="display:flex;flex-direction:column;gap:13px;margin-top:20px;">
     <div class="q"><span class="n">1</span>登録して、研修プログラム（全4章10レッスン）を受講 → Lv.1認定</div>
     <div class="q"><span class="n">2</span>既存のお客様・人脈から、最初の顧問先を1社つくる</div>
     <div class="q"><span class="n">3</span>月次で伴走しながら、承継を日常の話題に</div>
   </div>
-  <div class="note" style="margin-top:22px;"><b>まずは、あなた自身がプロダクトを体験してください。</b>この場で承継シミュレーションと継ナビくんをお見せします。詳しい条件は配布資料「認定パートナー募集のご案内」をご覧ください。</div>
+  <div class="note" style="margin-top:20px;"><b>まずは、あなた自身がプロダクトを体験してください。</b>この場で承継シミュレーションと継ナビくんをお見せします。あなたの声が、そのままこのプラットフォームの次の機能になります。詳しい条件は配布資料「認定パートナー募集のご案内」をご覧ください。</div>
 </section>
 
 </div>

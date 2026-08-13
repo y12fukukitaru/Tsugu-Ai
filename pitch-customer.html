@@ -17,6 +17,8 @@ body{margin:0;background:#0B1220;font-family:'Noto Sans JP',sans-serif;color:var
 .slide{position:relative;width:100%;max-width:1080px;aspect-ratio:16/9;margin:0 auto;background:#fff;
   border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.42);padding:44px 54px;overflow:hidden;display:none;}
 .slide.on{display:block;}
+/* .cover の display:flex が .slide の display:none を上書きするため、非表示スライドを明示的に隠す */
+.slide:not(.on){display:none!important;}
 .slide::after{content:attr(data-n);position:absolute;right:24px;bottom:14px;font-family:'DM Sans',sans-serif;font-size:12px;color:#B7C4D6;}
 .eyebrow{font-size:12px;font-weight:700;letter-spacing:.15em;color:var(--gold);margin-bottom:12px;}
 h1{font-size:44px;font-weight:600;color:var(--navy);margin:0 0 16px;line-height:1.45;}
@@ -44,7 +46,8 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
 .walls div{flex:1;border:1.5px solid #EBDDB4;background:#FDFAF1;border-radius:12px;padding:16px 12px;text-align:center;}
 .walls .w-t{font-size:16px;font-weight:700;color:#8A6A12;}
 .walls .w-c{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.7;}
-.cover{background:linear-gradient(140deg,#0E1B33 0%,#1E3A66 62%,#2C5DA8 100%);color:#fff;display:flex;flex-direction:column;justify-content:center;}
+.cover.on{display:flex!important;flex-direction:column;justify-content:center;}
+.cover{background:linear-gradient(140deg,#0E1B33 0%,#1E3A66 62%,#2C5DA8 100%);color:#fff;}
 .cover h1{color:#fff;font-size:48px;}
 .cover .sub{color:rgba(255,255,255,.85);font-size:17px;}
 .cover .mark{font-family:'DM Sans',sans-serif;font-size:21px;letter-spacing:.14em;color:var(--gold);margin-bottom:24px;}
@@ -65,7 +68,7 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
 }
 @media print{
   body{background:#fff;} .bar,#backbtn{display:none!important;} .deck{padding:0;}
-  .slide{display:block!important;box-shadow:none;border-radius:0;margin:0;max-width:none;width:100%;aspect-ratio:auto;height:100vh;page-break-after:always;}
+  .slide,.slide:not(.on){display:block!important;box-shadow:none;border-radius:0;margin:0;max-width:none;width:100%;aspect-ratio:auto;height:100vh;page-break-after:always;}
   @page{size:A4 landscape;margin:0;}
 }
 </style>
@@ -76,12 +79,30 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
 
 <section class="slide cover on" data-t="表紙">
   <div class="mark">TSUGU AI -継-</div>
-  <h1>社長、会社の<span style="color:#CFAD62;">値段</span>を<br>ご存知ですか。</h1>
-  <p class="sub">毎日の経営に追われていると、いちばん大きな資産——「会社そのもの」の価値を、誰も教えてくれません。今日は15分だけ、御社の未来の選択肢を広げるお話をさせてください。</p>
+  <h1>社長の会社の20年、30年を、<br><span style="color:#CFAD62;">次へつなぐ</span>お話です。</h1>
+  <p class="sub">今日は商品を売り込みに来たのではありません。私たちがなぜこの事業を始めたのか、そして御社の未来の選択肢がどれだけ広がるか——15分だけ、お付き合いください。</p>
+</section>
+
+<section class="slide" data-t="なぜ始めたのか">
+  <div class="eyebrow">WHY — なぜ、この事業を始めたのか</div>
+  <h2>「まだ先の話」が「もう遅い」に変わる瞬間を、<br>何度も見てきました。</h2>
+  <p class="sub" style="margin-top:16px;">私たちは19年間、保険の仕事で経営者の隣にいました。数字の前に、社長の人生の話を聞く仕事です。その中で繰り返し見てきたのは——業績も技術も申し分ないのに、<b>後継者がいないという理由だけで</b>、静かに選択肢を失っていく会社でした。</p>
+  <p class="sub">会社が消えるとき、失われるのは売上ではありません。<b>従業員の暮らし、取引先との信頼、積み上げた技術、そして社長の人生そのもの</b>です。それを「仕方ない」で終わらせない仕組みをつくりたい。TsuguAi -継- は、その一心から生まれました。</p>
+</section>
+
+<section class="slide" data-t="目指す社会">
+  <div class="eyebrow">VISION — 目指す社会</div>
+  <h2>会社を「継ぐ・買う・譲る」が、<br>当たり前の選択肢になる社会へ。</h2>
+  <div class="grid g3" style="margin-top:18px;">
+    <div class="card g"><h3>残す</h3><p>廃業で失われるはずだった雇用・技術・のれんが、<b>次の担い手に引き継がれる</b>。</p></div>
+    <div class="card g"><h3>広げる</h3><p>会社を買うことが大企業の特権ではなく、<b>地域の中小企業の成長の一手</b>になる。</p></div>
+    <div class="card g"><h3>寄り添う</h3><p>どの経営者の隣にも、<b>AIと人の伴走者</b>がいる。ひとりで悩まなくていい。</p></div>
+  </div>
+  <div class="note" style="margin-top:18px;">運営会社の社名「<b>福來（ふくらい）</b>」には、関わるすべての人に福が來るように、という願いを込めています。この事業は私たちにとっても<b>初めての挑戦</b>です。だからこそ、一社一社と誠実に向き合います。</div>
 </section>
 
 <section class="slide" data-t="3つの問い">
-  <div class="eyebrow">まず、3つだけお尋ねします</div>
+  <div class="eyebrow">ここで、3つだけお尋ねします</div>
   <h2>ひとつでも「いいえ」があれば、続きをご覧ください</h2>
   <div style="display:flex;flex-direction:column;gap:14px;margin-top:22px;">
     <div class="q"><span class="n">1</span>ご自身の会社の「いまの値段」を、数字でご存知ですか？</div>
@@ -110,7 +131,7 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
     <div><div class="w-t">③ 資金の壁</div><div class="w-c">お金をどう<br>用意するか</div></div>
     <div><div class="w-t">④ 統合の壁</div><div class="w-c">買った後・譲った後<br>どうなるか</div></div>
   </div>
-  <div class="note" style="margin-top:18px;">特に大きいのが<b>②判断の壁</b>。仲介会社の案件リストを見ても、「これは買いか」を自分で判断できる経営者はほとんどいません。<b>この壁を下げるために生まれたのが、TsuguAi -継- です。</b></div>
+  <div class="note" style="margin-top:18px;">特に大きいのが<b>②判断の壁</b>。仲介会社の案件リストを見ても、「これは買いか」を自分で判断できる経営者はほとんどいません。<b>この壁を下げるために、TsuguAi -継- をつくりました。</b></div>
 </section>
 
 <section class="slide" data-t="答え①シミュレーション">
@@ -157,9 +178,9 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
 
 <section class="slide" data-t="次の一歩">
   <div class="eyebrow">次の一歩</div>
-  <h2 style="margin-top:30px;">いまこの場で、御社の数字で<br>「いま譲るなら？」を見てみませんか。</h2>
-  <p class="big" style="margin-top:26px;">所要<b>30秒</b>。無料。売る必要はありません。<br>まず、<b>知る</b>ことから始めましょう。</p>
-  <div class="note" style="margin-top:30px;">ご登録・初期設定は担当パートナーがすべて代行します。数字の入力も不要——月次の売上をメッセージで送るだけです。</div>
+  <h2 style="margin-top:26px;">いまこの場で、御社の数字で<br>「いま譲るなら？」を見てみませんか。</h2>
+  <p class="big" style="margin-top:24px;">所要<b>30秒</b>。無料。売る必要はありません。<br>まず、<b>知る</b>ことから始めましょう。</p>
+  <div class="note" style="margin-top:26px;">御社の20年、30年を次へつなぐ準備は、今日から始められます。ご登録・初期設定は担当パートナーがすべて代行し、数字の入力も不要——月次の売上をメッセージで送るだけです。</div>
 </section>
 
 </div>
