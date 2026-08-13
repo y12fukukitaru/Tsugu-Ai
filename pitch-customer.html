@@ -17,38 +17,35 @@ body{margin:0;background:#0B1220;font-family:'Noto Sans JP',sans-serif;color:var
 .slide{position:relative;width:100%;max-width:1080px;aspect-ratio:16/9;margin:0 auto;background:#fff;
   border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.42);padding:44px 54px;overflow:hidden;display:none;}
 .slide.on{display:block;}
-/* .cover の display:flex が .slide の display:none を上書きするため、非表示スライドを明示的に隠す */
 .slide:not(.on){display:none!important;}
 .slide::after{content:attr(data-n);position:absolute;right:24px;bottom:14px;font-family:'DM Sans',sans-serif;font-size:12px;color:#B7C4D6;}
 .eyebrow{font-size:12px;font-weight:700;letter-spacing:.15em;color:var(--gold);margin-bottom:12px;}
 h1{font-size:44px;font-weight:600;color:var(--navy);margin:0 0 16px;line-height:1.45;}
 h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:1.45;}
-.sub{font-size:16px;color:var(--muted);line-height:2;margin:0 0 20px;max-width:78ch;}
+.sub{font-size:16px;color:var(--muted);line-height:2;margin:0 0 18px;max-width:78ch;}
 .sub b{color:var(--navy);}
 .grid{display:grid;gap:14px;}
 .g2{grid-template-columns:1fr 1fr;} .g3{grid-template-columns:repeat(3,1fr);}
-.card{border:1px solid var(--line);border-radius:13px;padding:18px 20px;background:#fff;}
+.card{border:1px solid var(--line);border-radius:13px;padding:18px 20px;background:#fff;text-align:center;}
 .card.soft{background:var(--soft);}
 .card.g{border-color:#CFE3D6;background:rgba(39,104,74,.06);}
 .card.w{border-color:#EBDDB4;background:rgba(195,155,63,.09);}
 .card.r{border-color:#E3B9B7;background:rgba(169,64,61,.06);}
 .card h3{font-size:17px;font-weight:700;color:var(--navy);margin:0 0 8px;line-height:1.5;}
 .card.r h3{color:var(--red);}
-.card p{font-size:14px;color:var(--muted);line-height:1.9;margin:0;}
+.card p{font-size:13.5px;color:var(--muted);line-height:1.85;margin:0;text-align:left;}
 .card p b{color:var(--ink);}
-.q{border:1.5px solid var(--line);border-radius:14px;padding:20px 24px;font-size:20px;font-weight:600;color:var(--ink);line-height:1.7;display:flex;gap:14px;align-items:center;}
+.q{border:1.5px solid var(--line);border-radius:14px;padding:18px 24px;font-size:20px;font-weight:600;color:var(--ink);line-height:1.7;display:flex;gap:14px;align-items:center;}
 .q .n{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--navy);color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;}
-.note{border-left:3px solid var(--gold);background:var(--soft);border-radius:0 10px 10px 0;padding:14px 18px;font-size:14px;color:var(--muted);line-height:2;}
+.note{border-left:3px solid var(--gold);background:var(--soft);border-radius:0 10px 10px 0;padding:13px 18px;font-size:13.5px;color:var(--muted);line-height:1.95;}
 .note b{color:var(--navy);}
-.note.r{border-left-color:var(--red);background:rgba(169,64,61,.05);}
-.note.r b{color:var(--red);}
 .walls{display:flex;gap:10px;}
-.walls div{flex:1;border:1.5px solid #EBDDB4;background:#FDFAF1;border-radius:12px;padding:16px 12px;text-align:center;}
+.walls div.wl{flex:1;border:1.5px solid #EBDDB4;background:#FDFAF1;border-radius:12px;padding:14px 10px;text-align:center;}
 .walls .w-t{font-size:16px;font-weight:700;color:#8A6A12;}
-.walls .w-c{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.7;}
+.walls .w-c{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.65;}
 .cover.on{display:flex!important;flex-direction:column;justify-content:center;}
 .cover{background:linear-gradient(140deg,#0E1B33 0%,#1E3A66 62%,#2C5DA8 100%);color:#fff;}
-.cover h1{color:#fff;font-size:48px;}
+.cover h1{color:#fff;font-size:46px;}
 .cover .sub{color:rgba(255,255,255,.85);font-size:17px;}
 .cover .mark{font-family:'DM Sans',sans-serif;font-size:21px;letter-spacing:.14em;color:var(--gold);margin-bottom:24px;}
 .cover::after{color:rgba(255,255,255,.35);}
@@ -60,9 +57,27 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
 .bar .pos{font-family:'DM Sans',sans-serif;color:#B7C4D6;font-size:13px;min-width:66px;text-align:center;}
 .bar .ttl{color:#fff;font-size:13px;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #backbtn{position:fixed;top:12px;right:14px;z-index:30;font-family:inherit;font-size:12.5px;background:rgba(14,27,51,.85);color:#fff;border:1px solid rgba(207,173,98,.5);border-radius:9px;padding:8px 14px;cursor:pointer;display:none;}
+
+/* ===== ピクトグラム（イラスト） ===== */
+.cico{display:flex;justify-content:center;margin-bottom:10px;}
+.cico svg{width:54px;height:54px;color:var(--navy);}
+.card.r .cico svg{color:var(--red);}
+.card.g .cico svg{color:var(--green);}
+.card.w .cico svg{color:#8A6A12;}
+.walls .cico{margin-bottom:6px;}
+.walls .cico svg{width:44px;height:44px;color:#8A6A12;}
+.duo{display:flex;gap:34px;align-items:center;margin-top:14px;}
+.duo .txt{flex:1;min-width:0;}
+.duo .art{flex:0 0 190px;color:var(--navy);opacity:.9;}
+.duo .art svg{width:100%;height:auto;}
+.hero-art{position:absolute;right:46px;top:50%;transform:translateY(-50%);width:250px;color:rgba(207,173,98,.85);}
+.hero-art svg{width:100%;height:auto;}
+.cover .hx{position:relative;z-index:1;max-width:640px;}
+@media(max-width:820px){ .hero-art{display:none;} .duo{flex-direction:column;} .duo .art{flex:0 0 auto;width:150px;} }
+
 @media(max-width:820px){
   .slide{aspect-ratio:auto;min-height:72vh;padding:26px 20px 44px;}
-  h1{font-size:29px;} .cover h1{font-size:31px;} h2{font-size:22px;}
+  h1{font-size:29px;} .cover h1{font-size:30px;} h2{font-size:22px;}
   .g2,.g3{grid-template-columns:1fr;} .walls{flex-direction:column;}
   .q{font-size:16px;} .big{font-size:20px;}
 }
@@ -78,109 +93,119 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
 <div class="deck">
 
 <section class="slide cover on" data-t="表紙">
+  <div class="hero-art"><svg viewBox="0 0 64 56" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 46h52"/><path d="M10 46V26q22-14 44 0v20"/><path d="M20 46V33M32 46V30M44 46V33"/><circle cx="32" cy="18" r="3" stroke="#C39B3F"/></svg></div>
+  <div class="hx">
   <div class="mark">TSUGU AI -継-</div>
-  <h1>社長の会社の20年、30年を、<br><span style="color:#CFAD62;">次へつなぐ</span>お話です。</h1>
-  <p class="sub">今日は商品を売り込みに来たのではありません。私たちがなぜこの事業を始めたのか、そして御社の未来の選択肢がどれだけ広がるか——15分だけ、お付き合いください。</p>
+  <h1>会社の20年、30年を、<br><span style="color:#CFAD62;">次へつなぐ</span>お話です。</h1>
+  <p class="sub">売り込みではありません。御社の未来の選択肢が広がる話を、15分だけ。</p>
+  </div>
 </section>
 
 <section class="slide" data-t="なぜ始めたのか">
   <div class="eyebrow">WHY — なぜ、この事業を始めたのか</div>
   <h2>「まだ先の話」が「もう遅い」に変わる瞬間を、<br>何度も見てきました。</h2>
-  <p class="sub" style="margin-top:16px;">私たちは19年間、保険の仕事で経営者の隣にいました。数字の前に、社長の人生の話を聞く仕事です。その中で繰り返し見てきたのは——業績も技術も申し分ないのに、<b>後継者がいないという理由だけで</b>、静かに選択肢を失っていく会社でした。</p>
-  <p class="sub">会社が消えるとき、失われるのは売上ではありません。<b>従業員の暮らし、取引先との信頼、積み上げた技術、そして社長の人生そのもの</b>です。それを「仕方ない」で終わらせない仕組みをつくりたい。TsuguAi -継- は、その一心から生まれました。</p>
+  <div class="duo">
+    <div class="txt">
+      <p class="sub">19年間、保険の仕事で経営者の隣にいました。そこで見てきたのは——業績も技術もあるのに、<b>後継者がいないという理由だけで</b>選択肢を失っていく会社です。</p>
+      <p class="sub">会社が消えるとき失われるのは、<b>従業員の暮らし、取引先との信頼、積み上げた技術</b>。それを「仕方ない」で終わらせないために、TsuguAi -継- をつくりました。</p>
+    </div>
+    <div class="art"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="10" y="14" width="26" height="40" rx="3"/><path d="M17 24h4M25 24h4M17 33h4M25 33h4M17 42h4"/><path d="M6 54h34"/><path stroke-dasharray="4 5" d="M44 54V22a3 3 0 0 1 3-3h8"/></svg></div>
+  </div>
 </section>
 
 <section class="slide" data-t="目指す社会">
   <div class="eyebrow">VISION — 目指す社会</div>
   <h2>会社を「継ぐ・買う・譲る」が、<br>当たり前の選択肢になる社会へ。</h2>
   <div class="grid g3" style="margin-top:18px;">
-    <div class="card g"><h3>残す</h3><p>廃業で失われるはずだった雇用・技術・のれんが、<b>次の担い手に引き継がれる</b>。</p></div>
-    <div class="card g"><h3>広げる</h3><p>会社を買うことが大企業の特権ではなく、<b>地域の中小企業の成長の一手</b>になる。</p></div>
-    <div class="card g"><h3>寄り添う</h3><p>どの経営者の隣にも、<b>AIと人の伴走者</b>がいる。ひとりで悩まなくていい。</p></div>
+    <div class="card g"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 44h20l-3 12H25z"/><path d="M32 44V28"/><path stroke="#C39B3F" d="M32 30c0-9-6-14-14-14 0 9 6 14 14 14z"/><path d="M32 24c0-7 5-11 12-11 0 7-5 11-12 11z"/></svg></div><h3>残す</h3><p>雇用・技術・のれんが、<b>次の担い手に引き継がれる</b>。</p></div>
+    <div class="card g"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 12v40h44"/><path stroke="#C39B3F" d="m16 44 11-12 8 6 14-16"/><path stroke="#C39B3F" d="M42 22h7v7"/></svg></div><h3>広げる</h3><p>会社を買うことが、<b>中小企業の成長の一手</b>になる。</p></div>
+    <div class="card g"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="20" cy="16" r="6.5"/><path d="M7 46c0-9 6-14 13-14s13 5 13 14"/><rect x="38" y="26" width="20" height="16" rx="5.5"/><circle cx="44.5" cy="33" r="1.8" fill="currentColor" stroke="none"/><circle cx="51.5" cy="33" r="1.8" fill="currentColor" stroke="none"/><path stroke="#C39B3F" d="M48 14l1.3 3.7 3.7 1.3-3.7 1.3L48 24l-1.3-3.7L43 19l3.7-1.3z"/><path d="M48 46v0"/></svg></div><h3>寄り添う</h3><p>どの経営者の隣にも、<b>AIと人の伴走者</b>がいる。</p></div>
   </div>
-  <div class="note" style="margin-top:18px;">運営会社の社名「<b>福來（ふくきたる）</b>」には、関わるすべての人に福が來るように、という願いを込めています。この事業は私たちにとっても<b>初めての挑戦</b>です。だからこそ、一社一社と誠実に向き合います。</div>
+  <div class="note" style="margin-top:18px;">社名「<b>福來（ふくきたる）</b>」は、関わるすべての人に福が來るように、という願い。私たちにとっても<b>初めての挑戦</b>です。だからこそ、一社一社と誠実に向き合います。</div>
 </section>
 
 <section class="slide" data-t="3つの問い">
-  <div class="eyebrow">ここで、3つだけお尋ねします</div>
-  <h2>ひとつでも「いいえ」があれば、続きをご覧ください</h2>
+  <div class="eyebrow">3つだけ、お尋ねします</div>
+  <h2>ひとつでも「いいえ」があれば、続きをどうぞ</h2>
   <div style="display:flex;flex-direction:column;gap:14px;margin-top:22px;">
-    <div class="q"><span class="n">1</span>ご自身の会社の「いまの値段」を、数字でご存知ですか？</div>
+    <div class="q"><span class="n">1</span>ご自身の会社の「いまの値段」を、ご存知ですか？</div>
     <div class="q"><span class="n">2</span>5年後、この会社を誰が経営しているか、決まっていますか？</div>
-    <div class="q"><span class="n">3</span>同業の会社を「買う」という選択肢を、検討したことはありますか？</div>
+    <div class="q"><span class="n">3</span>同業の会社を「買う」ことを、考えたことはありますか？</div>
   </div>
 </section>
 
 <section class="slide" data-t="先送りのコスト">
-  <div class="eyebrow">なぜ、いま考えるのか</div>
-  <h2>承継は、決断を先送りするほど選択肢が減ります</h2>
-  <div class="grid g3" style="margin-top:14px;">
-    <div class="card r"><h3>時間の問題</h3><p>後継者の育成もM&Aも、準備には<b>数年単位</b>かかります。「そろそろ考えるか」と思ったときには、選べる道が減っています。</p></div>
-    <div class="card r"><h3>価値の問題</h3><p>会社の値段は<b>業績と共に動きます</b>。利益が出ているうち、社長が元気なうちが、いちばん高く評価されるときです。</p></div>
-    <div class="card r"><h3>周りの問題</h3><p>もし廃業になれば、従業員の雇用、取引先との関係、積み上げた技術——<b>お金に換えられないもの</b>まで失われます。</p></div>
+  <div class="eyebrow">なぜ、いまなのか</div>
+  <h2>先送りするほど、選択肢は減っていきます</h2>
+  <div class="grid g3" style="margin-top:16px;">
+    <div class="card r"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="32" cy="32" r="21"/><path d="M32 19v13"/><path stroke="#C39B3F" d="M32 32l9 6"/></svg></div><h3>時間</h3><p>承継の準備は<b>数年単位</b>。気づいたときには、選べる道が減っています。</p></div>
+    <div class="card r"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 12v40h44"/><path stroke="#C39B3F" d="m16 44 11-12 8 6 14-16"/><path stroke="#C39B3F" d="M42 22h7v7"/></svg></div><h3>価値</h3><p>会社の値段は業績と共に動く。<b>利益が出ている今</b>が、いちばん高いとき。</p></div>
+    <div class="card r"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="32" cy="17" r="8"/><path d="M13 52c0-11 8.5-18 19-18s19 7 19 18"/></svg></div><h3>周りの人</h3><p>廃業すれば、雇用も取引先も技術も、<b>お金に換えられないもの</b>まで失われる。</p></div>
   </div>
-  <div class="note" style="margin-top:18px;"><b>逆もあります。</b>いま、後継者不在の会社が売りに出る時代。買う側に回れば、<b>人材・技術・販路を一度に手に入れる</b>チャンスでもあります。</div>
+  <div class="note" style="margin-top:16px;"><b>逆もあります。</b>買う側に回れば、人材・技術・販路を一度に手に入れるチャンスの時代です。</div>
 </section>
 
 <section class="slide" data-t="4つの壁">
   <div class="eyebrow">でも、進まない理由</div>
-  <h2>経営者が止まる壁は、4つだけです</h2>
+  <h2>経営者が止まる壁は、4つだけ</h2>
   <div class="walls" style="margin-top:18px;">
-    <div><div class="w-t">① 情報の壁</div><div class="w-c">案件が見えない<br>相場が分からない</div></div>
-    <div><div class="w-t">② 判断の壁</div><div class="w-c">買っていい会社か<br>いくらが妥当か</div></div>
-    <div><div class="w-t">③ 資金の壁</div><div class="w-c">お金をどう<br>用意するか</div></div>
-    <div><div class="w-t">④ 統合の壁</div><div class="w-c">買った後・譲った後<br>どうなるか</div></div>
+    <div class="wl"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="27" cy="27" r="15"/><path d="m38 38 14 14"/><text x="22.5" y="33" font-size="16" font-weight="700" fill="#C39B3F" stroke="none" font-family="inherit">¥</text></svg></div><div class="w-t">① 情報</div><div class="w-c">相場が<br>分からない</div></div>
+    <div class="wl"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="10" y="16" width="44" height="34"/><path d="M10 27h44M10 39h44"/><path d="M26 16v11M42 16v11M18 27v12M34 27v12M50 27v12M26 39v11M42 39v11"/></svg></div><div class="w-t">② 判断</div><div class="w-c">買っていい会社か<br>分からない</div></div>
+    <div class="wl"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="26" cy="44" rx="15" ry="6"/><path d="M11 44v-9c0-3.3 6.7-6 15-6s15 2.7 15 6v9"/><path d="M11 35v-9c0-3.3 6.7-6 15-6s15 2.7 15 6v9"/><circle cx="47" cy="43" r="9" stroke="#C39B3F"/><text x="43.5" y="48" font-size="13" font-weight="700" fill="#C39B3F" stroke="none" font-family="inherit">¥</text></svg></div><div class="w-t">③ 資金</div><div class="w-c">お金をどう<br>用意するか</div></div>
+    <div class="wl"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="32" r="8"/><circle cx="51" cy="32" r="8"/><path stroke="#C39B3F" d="M25 32h13"/><path stroke="#C39B3F" d="m34 26 6 6-6 6"/></svg></div><div class="w-t">④ 統合</div><div class="w-c">その後どうなるか<br>想像できない</div></div>
   </div>
-  <div class="note" style="margin-top:18px;">特に大きいのが<b>②判断の壁</b>。仲介会社の案件リストを見ても、「これは買いか」を自分で判断できる経営者はほとんどいません。<b>この壁を下げるために、TsuguAi -継- をつくりました。</b></div>
+  <div class="note" style="margin-top:18px;">いちばん大きいのは<b>②判断の壁</b>。この壁を下げるために、TsuguAi -継- は生まれました。</div>
 </section>
 
 <section class="slide" data-t="答え①シミュレーション">
   <div class="eyebrow">TsuguAiの答え ①</div>
   <h2>「この会社を買ったら？」を、30秒で。</h2>
-  <p class="sub">気になる会社（同業・取引先・近隣）の規模を入れるだけで、AIが<b>価格の目安と、御社のキャッシュがどう動くか</b>を試算します。決算書を読み込ませれば、さらに具体的な買収判断まで。</p>
-  <div class="grid g2">
-    <div class="card g"><h3>🏢 買う側の体験</h3><p>「年商8,000万・利益600万の同業を買ったら？」——価格の目安、借入で買う場合の返済、確認すべきポイントまで<b>その場で</b>出ます。</p></div>
-    <div class="card g"><h3>🌱 譲る側の体験</h3><p>「いま譲るならいくら？ 2年磨き上げたら？」——売る予定がなくても、<b>会社の健康診断</b>として毎月使えます。</p></div>
+  <div class="grid g2" style="margin-top:16px;">
+    <div class="card g"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="16" y="10" width="32" height="44" rx="3"/><path d="M24 20h4M36 20h4M24 30h4M36 30h4M24 40h4M36 40h4"/><path d="M28 54v-8h8v8"/><path d="M10 54h44"/></svg></div><h3>🏢 買う側を体験</h3><p>相手の規模を入れるだけで、<b>価格の目安と御社のキャッシュの動き</b>をAIが試算。決算書を読み込ませれば、買収判断まで。</p></div>
+    <div class="card g"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 30 30 10h22v22L32 52z"/><circle cx="44" cy="18" r="3"/><text x="26" y="40" font-size="17" font-weight="700" fill="#C39B3F" stroke="none" font-family="inherit">¥</text></svg></div><h3>🌱 譲る側を体験</h3><p>「いま譲るなら？ 2年磨けば？」——売る予定がなくても、<b>会社の健康診断</b>として毎月使えます。</p></div>
   </div>
-  <div class="note" style="margin-top:16px;"><b>このあと実際に、御社の数字でお見せできます（無料・30秒）。</b>※ AIによる簡易試算であり、実際の価格を保証するものではありません。</div>
+  <div class="note" style="margin-top:16px;"><b>このあと、御社の数字で実際にお見せできます（無料・30秒）。</b>※ AIの簡易試算であり実際の価格を保証するものではありません。</div>
 </section>
 
 <section class="slide" data-t="答え②毎月の伴走">
   <div class="eyebrow">TsuguAiの答え ②</div>
-  <h2>数字は「送るだけ」。あとは毎月、勝手に見える化。</h2>
-  <div class="grid g3" style="margin-top:14px;">
-    <div class="card"><h3>📊 資金繰り・企業価値</h3><p>試算表を送るだけで、資金繰りの信号と<b>会社の値段の推移</b>が毎月更新。面倒な入力は担当パートナーが代行します。</p></div>
-    <div class="card"><h3>📄 月次レポート</h3><p>毎月の数字と「それが何を意味するか」を、担当パートナーがレポートに。<b>銀行への説明資料</b>にもそのまま使えます。</p></div>
-    <div class="card"><h3>✅ 経営課題の伴走</h3><p>資金繰り改善・コスト削減・業務のAI自動化まで、課題を一緒に決めて<b>毎月進捗を追いかけます</b>。</p></div>
+  <h2>数字は「送るだけ」。毎月、勝手に見える化。</h2>
+  <div class="grid g3" style="margin-top:16px;">
+    <div class="card"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 12v40h44"/><path stroke="#C39B3F" d="m16 44 11-12 8 6 14-16"/><path stroke="#C39B3F" d="M42 22h7v7"/></svg></div><h3>資金繰り・企業価値</h3><p>試算表を送るだけで、<b>会社の値段の推移</b>まで毎月更新。入力は担当パートナーが代行。</p></div>
+    <div class="card"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8h20l10 10v38H18z"/><path d="M38 8v10h10"/><path d="M25 30h14M25 38h14"/><path stroke="#C39B3F" d="M25 46h8"/></svg></div><h3>月次レポート</h3><p>数字と「その意味」をレポートに。<b>銀行への説明資料</b>にもそのまま使えます。</p></div>
+    <div class="card"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="10" y="14" width="44" height="38" rx="4"/><path d="M10 25h44"/><path d="M22 9v9M42 9v9"/><circle cx="22" cy="35" r="2" fill="currentColor" stroke="none"/><circle cx="32" cy="35" r="2" fill="currentColor" stroke="none"/><circle cx="42" cy="35" r="2" fill="#C39B3F" stroke="none"/><circle cx="22" cy="44" r="2" fill="currentColor" stroke="none"/></svg></div><h3>経営課題の伴走</h3><p>資金繰り改善・コスト削減・AI自動化まで、<b>毎月一緒に</b>進めます。</p></div>
   </div>
-  <div class="note" style="margin-top:16px;">承継は「いつかの話」ではなく、<b>毎月の経営改善の延長線</b>にあります。磨き上げた分だけ、会社の値段が上がっていくのが見えます。</div>
 </section>
 
 <section class="slide" data-t="答え③AI×人">
   <div class="eyebrow">TsuguAiの答え ③</div>
-  <h2>夜中の「ちょっと聞きたい」はAIに。<br>大事な決断は、人に。</h2>
-  <div class="grid g2" style="margin-top:14px;">
-    <div class="card"><h3>🌱 継ナビくん（24時間AI）</h3><p>資金繰り・税務・労務・値上げ・承継まで、<b>いつでも何度でも</b>相談できるAIエージェント。毎朝「今日の一手」も届きます。</p></div>
-    <div class="card"><h3>🤝 担当パートナー＋専門家</h3><p>月次で伴走する担当パートナーがつき、M&Aの実行段階では<b>税理士・弁護士など専門家と運営</b>が引き継ぎます。</p></div>
+  <h2>夜中の「ちょっと」はAIに。大事な決断は、人に。</h2>
+  <div class="grid g2" style="margin-top:16px;">
+    <div class="card"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="16" y="24" width="32" height="26" rx="8"/><circle cx="26" cy="35" r="2.5" fill="currentColor" stroke="none"/><circle cx="38" cy="35" r="2.5" fill="currentColor" stroke="none"/><path d="M27 43q5 4 10 0"/><path stroke="#C39B3F" d="M32 10l1.8 5.2L39 17l-5.2 1.8L32 24l-1.8-5.2L25 17l5.2-1.8z"/><path d="M10 34v8M54 34v8"/></svg></div><h3>継ナビくん（24時間AI）</h3><p>資金繰りから承継まで<b>いつでも何度でも</b>相談。毎朝「今日の一手」も届きます。</p></div>
+    <div class="card"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M32 8l20 7v15c0 13-8.5 20-20 26C20.5 50 12 43 12 30V15z"/><path stroke="#C39B3F" d="m23 31 7 7 12-13"/></svg></div><h3>担当パートナー＋専門家</h3><p>月次で伴走する担当がつき、実行段階は<b>専門家と運営</b>が引き継ぎます。データは会社ごとに分離され、秘密は守られます。</p></div>
   </div>
-  <div class="note" style="margin-top:16px;"><b>秘密は守られます。</b>御社のデータは会社ごとに分離され、担当パートナーと御社だけが見られます。シミュレーションを試しても、どこかに情報が出ることはありません。</div>
 </section>
 
 <section class="slide" data-t="料金">
   <div class="eyebrow">料金</div>
-  <h2>顧問料に、これがぜんぶ含まれます</h2>
-  <div class="grid g2" style="margin-top:14px;">
-    <div class="card soft"><h3>含まれるもの</h3><p>✔ 承継シミュレーション（何度でも）<br>✔ 資金繰り・企業価値の毎月の見える化<br>✔ 月次レポート・経営課題の伴走<br>✔ 継ナビくん（24時間AI相談）<br>✔ 業務のAI自動化診断<br>✔ M&A・投資・融資のマッチング掲載</p></div>
-    <div class="card w"><h3>割引制度</h3><p>✔ 複数社でのご契約：2〜4社 <b>3%</b>／5社〜 <b>5%</b><br>✔ M&A成約（HD化）：<b>5%</b><br>✔ 担当パートナーの認定ランク：最大 <b>10%</b><br><br>合算で<b>最大10%OFF</b>。詳しい金額は担当パートナーにお尋ねください。</p></div>
+  <h2>顧問料に、ぜんぶ含まれます</h2>
+  <div class="grid g2" style="margin-top:16px;">
+    <div class="card soft"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8h20l10 10v38H18z"/><path d="M38 8v10h10"/><path d="M25 30h14M25 38h14"/><path stroke="#C39B3F" d="M25 46h8"/></svg></div><h3>含まれるもの</h3><p>✔ 承継シミュレーション（何度でも）<br>✔ 資金繰り・企業価値の見える化<br>✔ 月次レポート・課題の伴走<br>✔ 継ナビくん（24時間AI）<br>✔ AI自動化診断・マッチング掲載</p></div>
+    <div class="card w"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 30 30 10h22v22L32 52z"/><circle cx="44" cy="18" r="3"/><text x="26" y="40" font-size="17" font-weight="700" fill="#C39B3F" stroke="none" font-family="inherit">¥</text></svg></div><h3>割引制度</h3><p>✔ 複数社契約：2〜4社 <b>3%</b>／5社〜 <b>5%</b><br>✔ M&A成約（HD化）：<b>5%</b><br>✔ 担当パートナーのランク：最大 <b>10%</b><br>→ 合算で<b>最大10%OFF</b></p></div>
   </div>
-  <div class="note" style="margin-top:16px;">払う理由は「相談相手がいるから」ではありません。<b>「買収判断のインフラと、会社の値段を上げる伴走」を持つ</b>ためです。</div>
+  <div class="note" style="margin-top:16px;">払う理由は「相談相手」ではなく、<b>買収判断のインフラと、会社の値段を上げる伴走</b>を持つためです。</div>
 </section>
 
 <section class="slide" data-t="次の一歩">
   <div class="eyebrow">次の一歩</div>
-  <h2 style="margin-top:26px;">いまこの場で、御社の数字で<br>「いま譲るなら？」を見てみませんか。</h2>
-  <p class="big" style="margin-top:24px;">所要<b>30秒</b>。無料。売る必要はありません。<br>まず、<b>知る</b>ことから始めましょう。</p>
-  <div class="note" style="margin-top:26px;">御社の20年、30年を次へつなぐ準備は、今日から始められます。ご登録・初期設定は担当パートナーがすべて代行し、数字の入力も不要——月次の売上をメッセージで送るだけです。</div>
+  <div class="duo" style="margin-top:24px;">
+    <div class="txt">
+      <h2>いまこの場で、御社の数字で<br>「いま譲るなら？」を見てみませんか。</h2>
+      <p class="big" style="margin-top:20px;">所要<b>30秒</b>。無料。売る必要はありません。<br>まず、<b>知る</b>ことから。</p>
+      <p class="sub" style="margin-top:16px;">登録も入力も、担当パートナーがすべて代行します。</p>
+    </div>
+    <div class="art" style="color:#C39B3F;"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="32" r="8"/><circle cx="51" cy="32" r="8"/><path stroke="#C39B3F" d="M25 32h13"/><path stroke="#C39B3F" d="m34 26 6 6-6 6"/></svg></div>
+  </div>
 </section>
 
 </div>

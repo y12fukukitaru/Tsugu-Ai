@@ -55,22 +55,7 @@
   a:hover{color:var(--navy);}
   .gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:auto;padding:24px;
     background:radial-gradient(1000px 600px at 84% -10%,rgba(195,155,63,.16),transparent 55%),radial-gradient(860px 520px at -8% 112%,rgba(44,93,168,.28),transparent 60%),#0E1B33;}
-  /* ログイン前のLP（承継を中枢に据えた訴求） */
-  .gatewrap{display:flex;gap:44px;align-items:center;justify-content:center;max-width:1080px;width:100%;margin:auto;flex-wrap:wrap;}
-  .lp{flex:1 1 470px;max-width:560px;color:#E7ECF4;padding:8px 2px;}
-  .lp .lp-eyebrow{font-size:12px;font-weight:700;letter-spacing:.16em;color:#CFAD62;margin-bottom:14px;}
-  .lp h1{font-size:34px;font-weight:600;line-height:1.5;color:#fff;margin:0 0 14px;letter-spacing:.01em;}
-  .lp h1 b{color:#CFAD62;font-weight:600;}
-  .lp .lp-sub{font-size:14px;line-height:2;color:rgba(231,236,244,.82);margin:0 0 20px;}
-  .lp .lp-pts{display:flex;flex-direction:column;gap:9px;margin-bottom:20px;}
-  .lp .lp-pt{display:flex;gap:10px;align-items:flex-start;background:rgba(255,255,255,.05);border:1px solid rgba(207,173,98,.28);border-radius:11px;padding:11px 14px;}
-  .lp .lp-pt .i{font-size:17px;line-height:1.3;flex:0 0 auto;}
-  .lp .lp-pt .t{font-size:13px;line-height:1.75;color:rgba(231,236,244,.92);}
-  .lp .lp-pt .t b{color:#fff;}
-  .lp .lp-links{display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
-  .lp .lp-links a{font-size:12.5px;color:#CFAD62;text-decoration:underline;text-underline-offset:3px;cursor:pointer;}
-  .lp .lp-note{font-size:10.5px;color:rgba(231,236,244,.5);margin-top:14px;line-height:1.7;}
-  @media(max-width:960px){ .gatewrap{gap:22px;} .lp{max-width:430px;} .lp h1{font-size:25px;} .gate{align-items:flex-start;} }
+  .gatewrap{display:flex;justify-content:center;width:100%;}
   .card{background:#fff;border-radius:16px;box-shadow:0 32px 80px rgba(6,12,24,.5);max-width:430px;width:100%;padding:38px 34px;max-height:94vh;overflow:auto;}
   .brand{display:inline-flex;align-items:center;gap:10px;}
   .logo{width:38px;height:38px;border-radius:10px;background:var(--deep);display:flex;align-items:center;justify-content:center;}
@@ -729,23 +714,9 @@
 </head>
 <body>
 
-<!-- ===== AUTH GATE（ログイン前はLPを兼ねる：承継を中枢に据えた訴求） ===== -->
+<!-- ===== AUTH GATE（ログイン専用のシンプルな画面） ===== -->
 <div id="gate" class="gate">
  <div class="gatewrap">
-  <div class="lp">
-    <div class="lp-eyebrow">事業承継・M&A × AI ｜ TSUGU AI -継-</div>
-    <h1>会社を、<b>継ぐ</b>。<b>買う</b>。<b>譲る</b>。<br>その一歩手前から、AIと人で。</h1>
-    <div class="lp-sub">中小企業のM&A・承継が進まない理由は4つ——情報・判断・資金・統合の壁。TsuguAiは、日々の資金繰り改善から「会社を買う・譲る」の判断まで、認定パートナーとAIエージェント「継ナビくん」がひとつの場所で伴走し、その壁を下げます。</div>
-    <div class="lp-pts">
-      <div class="lp-pt"><span class="i">🏢</span><span class="t"><b>「この会社を買ったら？」を30秒で試算。</b>気になる会社の規模を入れるだけで、価格の目安と自社キャッシュへの影響をAIが提示——買収判断のインフラです。</span></div>
-      <div class="lp-pt"><span class="i">🌱</span><span class="t"><b>「いま譲るなら？ 2年磨けば？」の健康診断。</b>売る予定がなくても、会社の値段と磨き上げの道筋が毎月見えます。</span></div>
-      <div class="lp-pt"><span class="i">🤝</span><span class="t"><b>実行は専門家＋運営が伴走。</b>顧問の認定パートナーが水先案内人となり、契約・法務税務は専門家が引き継ぐ安心の建て付けです。</span></div>
-    </div>
-    <div class="lp-links">
-      <a href="recruit-partner.html" target="_blank" rel="noopener">🤝 認定パートナー募集のご案内 →</a>
-    </div>
-    <div class="lp-note">※ シミュレーションはAIによる簡易試算であり、実際の価格・実行可否を保証するものではありません。M&A・承継の実行には専門家の関与が必要です。</div>
-  </div>
   <div class="card">
     <div style="text-align:center;">
       <div class="brand">
@@ -797,7 +768,7 @@
       <div id="msg-recovery" class="msg"></div>
     </div>
 
-    <div class="note">通信は暗号化されています。パスワードは大文字・小文字・数字を含む8文字以上で設定してください。ログインでお困りの場合は、担当パートナーまたは運営までご連絡ください。</div>
+    <div class="note">通信は暗号化されています。お困りの場合は担当パートナーまたは運営まで。</div>
   </div>
  </div>
 </div>
