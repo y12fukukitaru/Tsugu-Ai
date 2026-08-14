@@ -73,6 +73,26 @@ ul.dots li b{color:var(--navy);}
 .toc a{display:block;padding:10px 12px;border-radius:9px;font-size:14.5px;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--softline);}
 .toc a:hover{background:var(--soft);color:var(--blue);}
 .toc a i{font-family:'DM Sans',sans-serif;font-style:normal;color:#B7C4D6;margin-right:12px;}
+
+/* ===== 継ナビくん（丸窓 + 吹き出し） ===== */
+.tsg-mado{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;
+  background:#0E2038;border:2px solid var(--gold);box-shadow:0 6px 20px rgba(14,32,56,.22);flex:0 0 auto;}
+.tsg-mado.xl{width:112px;height:112px;} .tsg-mado.xl svg{width:76px;height:76px;}
+.tsg-mado.lg{width:80px;height:80px;} .tsg-mado.lg svg{width:54px;height:54px;}
+.tsg-mado.md{width:56px;height:56px;} .tsg-mado.md svg{width:38px;height:38px;}
+.tsg-mado.sm{width:42px;height:42px;} .tsg-mado.sm svg{width:29px;height:29px;}
+.tsg-say{display:flex;gap:13px;align-items:flex-start;margin-top:18px;}
+.tsg-say .bb{position:relative;flex:1;min-width:0;background:#FFFDF7;border:1px solid #EBDDB4;
+  border-radius:4px 14px 14px 14px;padding:13px 17px;font-size:13.5px;line-height:1.9;color:var(--ink);
+  box-shadow:inset 0 2px 0 var(--gold);}
+.tsg-say .bb b{color:var(--navy);}
+.tsg-say .bb .who{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;color:#8A6A12;margin-bottom:3px;}
+.cover .tsg-mado{align-self:flex-start;border-color:var(--gold);background:rgba(255,255,255,.06);
+  animation:tsg-float 3.6s ease-in-out infinite;}
+@keyframes tsg-float{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
+@media(prefers-reduced-motion:reduce){.cover .tsg-mado{animation:none;}}
+@media(max-width:820px){.tsg-mado.xl{width:82px;height:82px;} .tsg-mado.xl svg{width:56px;height:56px;}}
+
 @media(max-width:820px){
   .slide{aspect-ratio:auto;min-height:70vh;padding:28px 22px 44px;}
   h1{font-size:30px;} .cover h1{font-size:34px;} h2{font-size:22px;}
@@ -130,6 +150,7 @@ ul.dots li{font-size:14.5px;}
 <div class="deck" id="deck">
 
 <section class="slide cover on" data-t="表紙">
+  <span class="tsg-mado xl cover-navi" style="margin-bottom:22px;"><svg viewBox="0 -4 64 64" aria-hidden="true" focusable="false"><path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/><rect x="9.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="49.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="14" y="23" width="36" height="30" rx="10" fill="#fff" stroke="#cfa860" stroke-width="1.6"/><circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/><circle cx="20.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><circle cx="43.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/></svg></span>
   <div class="mark">TsuguAi -継-</div>
   <h1>経営者ダッシュボード<br>操作説明書</h1>
   <p class="sub">数字の入力はいりません。見るところと、伝えるところだけ覚えてください。<br>所要 5分</p>
@@ -144,7 +165,7 @@ ul.dots li{font-size:14.5px;}
     <div class="card"><h3>伝える</h3><p>売上や困りごとを<b>メッセージで送るだけ</b>。表への入力は不要です。</p></div>
     <div class="card"><h3>相談する</h3><p>担当パートナーが不在の夜間・休日は、AIの<b>継ナビくん</b>が24時間お答えします。</p></div>
   </div>
-  <div class="note" style="margin-top:18px;"><b>迷ったらメッセージへ。</b>操作が分からないときも、そのままメッセージで聞いていただければ担当パートナーが対応します。</div>
+  <div class="tsg-say"><span class="tsg-mado sm"><svg viewBox="0 -4 64 64" aria-hidden="true" focusable="false"><path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/><rect x="9.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="49.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="14" y="23" width="36" height="30" rx="10" fill="#fff" stroke="#cfa860" stroke-width="1.6"/><circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/><circle cx="20.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><circle cx="43.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/></svg></span><div class="bb"><span class="who">継ナビくん</span>はじめまして、<b>継ナビくん</b>です🌱　画面右下にいつもいます。<b>操作が分からないときも、そのまま聞いてください。</b>私で分からないことは、担当パートナーにおつなぎします。</div></div>
 </section>
 
 <section class="slide" data-t="最初の3つ">
@@ -200,8 +221,9 @@ ul.dots li{font-size:14.5px;}
   <p class="sub">担当パートナーとのメッセージは、画面右下の<b>継ナビくんの「メッセージ」タブ</b>で送受信します。月次の売上も、表に入力する必要はありません。メッセージで送っていただければ、担当パートナーが数字を登録し、レポートまで作成します。</p>
   <div class="grid g2">
     <div class="card g"><h3>こう送ってください</h3><p>「7月の売上は2,400万、利益は180万でした」<br>「税理士から試算表が届いたので送ります」<br>「銀行から借換えの話が来ています」<br>「従業員の残業が増えていて困っています」</p></div>
-    <div class="card soft"><h3>覚えておくこと</h3><p>右下の継ナビくんは<b>どの画面からでも</b>開けます。返信の目安は<b>2〜3営業日以内</b>です。お急ぎのときはお電話などでご連絡ください。<br><br>未読があると右下のボタンにバッジが出るので、見落としの心配はありません。</p></div>
+    <div class="card soft"><h3>覚えておくこと</h3><p>右下の継ナビくんは<b>どの画面からでも</b>開けます。返信の目安は<b>2〜3営業日以内</b>です。お急ぎのときはお電話などでご連絡ください。</p></div>
   </div>
+  <div class="tsg-say"><span class="tsg-mado sm"><svg viewBox="0 -4 64 64" aria-hidden="true" focusable="false"><path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/><rect x="9.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="49.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="14" y="23" width="36" height="30" rx="10" fill="#fff" stroke="#cfa860" stroke-width="1.6"/><circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/><circle cx="20.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><circle cx="43.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/></svg></span><div class="bb"><span class="who">継ナビくん</span>メッセージは<b>私の中で完結</b>します。未読があると右下のボタンにバッジを出すので、見落としの心配はありません。</div></div>
 </section>
 
 <section class="slide" data-t="月次レポート">
