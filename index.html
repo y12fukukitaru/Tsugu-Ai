@@ -70,6 +70,8 @@
     /* 麻の葉（あさのは）：まっすぐ育つ麻にあやかる、成長と魔除けの文様。
        ログイン画面と同じ設えを、ポータルの地にもそのまま通す */
     --wa-asanoha:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='84' viewBox='0 0 48 84'%3E%3Cg fill='none' stroke='%23C39B3F' stroke-opacity='.10' stroke-width='1'%3E%3Cpath d='M24 0v84M0 21l24 14 24-14M0 63l24-14 24 14M0 21v42M48 21v42M24 0 0 21M24 0l24 21M24 84 0 63M24 84l24-21'/%3E%3C/g%3E%3C/svg%3E");
+    /* 白い紙に直接刷る用（ログインのカードなど）。いちばん薄く */
+    --wa-asanoha-paper:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='84' viewBox='0 0 48 84'%3E%3Cg fill='none' stroke='%23C39B3F' stroke-opacity='.055' stroke-width='1'%3E%3Cpath d='M24 0v84M0 21l24 14 24-14M0 63l24-14 24 14M0 21v42M48 21v42M24 0 0 21M24 0l24 21M24 84 0 63M24 84l24-21'/%3E%3C/g%3E%3C/svg%3E");
     /* 生成りの淡い地に敷く用。濃い地より一段薄く */
     --wa-asanoha-soft:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='84' viewBox='0 0 48 84'%3E%3Cg fill='none' stroke='%23C39B3F' stroke-opacity='.075' stroke-width='1'%3E%3Cpath d='M24 0v84M0 21l24 14 24-14M0 63l24-14 24 14M0 21v42M48 21v42M24 0 0 21M24 0l24 21M24 84 0 63M24 84l24-21'/%3E%3C/g%3E%3C/svg%3E");
   }
@@ -92,10 +94,13 @@
   .tsg-bow .tsg-body{transform-box:fill-box;transform-origin:center bottom;animation:tsg-bow 1.1s ease .25s both;}
   @keyframes tsg-bow{0%{transform:rotate(0) translateY(0);}30%{transform:rotate(0) translateY(3px) scaleY(.96);}55%{transform:rotate(0) translateY(0);}100%{transform:rotate(0) translateY(0);}}
   /* 地：生成りの紙。文様は極薄で「ある」と気づかないくらいに */
-  body{background-color:var(--washi);background-image:var(--wa-asanoha-soft);background-attachment:fixed;}
+  body{background-color:var(--washi);background-image:var(--wa-asanoha-soft);}
   body.dark{background-color:var(--bg);background-image:none;}
   /* パネルは紙。金の細罫を上端に一本だけ通し、格を示す */
   .panel{position:relative;}
+  /* 紙をわずかに透かし、地の麻の葉をそのまま通す。文様を刷り重ねないので
+     模様がずれたり二重に見えたりしない（濃い地では白が沈むので明るい側だけ） */
+  body:not(.dark) .panel{background-color:rgba(255,255,255,.88);}
   .panel::after{content:'';position:absolute;left:0;right:0;top:0;height:2px;border-radius:12px 12px 0 0;
     background:linear-gradient(90deg,rgba(195,155,63,.55),rgba(195,155,63,.06) 62%,transparent);pointer-events:none;}
   /* 見出しの金の罫は、画面が現れるときに上から下へ引かれる */
@@ -127,7 +132,7 @@
   .gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:auto;padding:24px;
     background:var(--wa-asanoha),radial-gradient(1000px 600px at 84% -10%,rgba(195,155,63,.16),transparent 55%),radial-gradient(860px 520px at -8% 112%,rgba(44,93,168,.28),transparent 60%),#0E1B33;}
   /* 出迎えの継ナビくん：カードの内側、名乗りの上に据える */
-  .gate .card{position:relative;}
+  .gate .card{position:relative;background-image:var(--wa-asanoha-paper);}
   .gate-navi{display:block;margin:0 auto 16px;animation:tsg-greet 3.8s ease-in-out .9s infinite;}
   @keyframes tsg-greet{0%,88%,100%{transform:translateY(0);}92%{transform:translateY(-5px);}96%{transform:translateY(0);}}
   @media(prefers-reduced-motion:reduce){.gate-navi{animation:none;}}
@@ -627,6 +632,17 @@
   body.dark .ai-bubble strong{color:#CFAD62;}
   body.dark .ai-bubble-me{background:#16233c;border-color:#2A3345;}
   /* ===== 継ナビくん：右下フローティング窓口 ===== */
+  /* 新しい版が出ているときに出す帯。GitHub Pages は HTML を最大10分キャッシュするため、
+     開いたままの画面や再訪問では古い版が動き続けることがある */
+  .upd-bar{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));
+    z-index:90;display:flex;align-items:center;gap:10px;width:calc(100% - 24px);max-width:560px;
+    padding:10px 10px 10px 16px;background:#0E1B33;color:#fff;border:1px solid rgba(195,155,63,.55);
+    border-radius:12px;font-size:12.5px;line-height:1.6;box-shadow:0 14px 38px rgba(6,12,24,.45);}
+  .upd-bar .t{flex:1;min-width:0;}
+  .upd-bar .t b{color:#E4C87A;}
+  .upd-bar button{font-family:inherit;font-size:12.5px;font-weight:700;border:none;border-radius:8px;
+    padding:7px 15px;background:#C39B3F;color:#0E1B33;cursor:pointer;white-space:nowrap;}
+  .upd-bar .x{background:none;color:rgba(255,255,255,.6);font-weight:400;padding:7px 6px;font-size:15px;}
   .knv-fab{position:fixed;right:18px;bottom:18px;z-index:70;width:72px;height:72px;border-radius:50%;background:#0e2038;border:2.5px solid #cfa860;box-shadow:0 10px 30px rgba(6,12,24,.45);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;animation:knv-float 3.6s ease-in-out infinite;}
   .knv-fab:hover{transform:scale(1.1) translateY(-2px);box-shadow:0 16px 38px rgba(6,12,24,.5);}
   .knv-fab:active{transform:scale(.94);}
@@ -1022,6 +1038,7 @@
 </div>
 
 <!-- 継ナビくん：右下フローティング窓口（ログイン後に knvInit() で表示） -->
+<div id="upd-bar" class="upd-bar hidden"><span class="t"><b>新しい版があります。</b>更新すると最新になります。</span><button onclick="appReload()">更新する</button><button class="x" onclick="appUpdDismiss()" aria-label="閉じる">×</button></div>
 <div id="knv-fab" class="knv-fab hidden" onclick="knvToggle(true)" title="継ナビくんに相談" aria-label="継ナビくんに相談"><span id="knv-badge" class="knv-badge hidden">0</span></div>
 <div id="knv-panel" class="knv-panel hidden" role="dialog" aria-label="継ナビくん">
   <div class="knv-head">
@@ -1141,6 +1158,30 @@
   function setMsg(which, txt, ok){ var e=$('msg-'+which); if(!e)return; e.textContent=txt||''; e.style.color=ok?'#27684A':'#A9403D'; }
   function esc(s){ s=(s==null?'':String(s)); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function escA(s){ return esc(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+  // ===== 版の確認 =====
+  //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
+  //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
+  //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
+  var APP_BUILD='20260815-1';
+  var UPD_SEEN=false;
+  function appReload(){ location.reload(); }
+  function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
+  async function appVerCheck(){
+    if(UPD_SEEN) return;
+    try{
+      var r=await fetch('./version.json?t='+Date.now(), { cache:'no-store' });
+      if(!r.ok) return;
+      var d=await r.json();
+      if(!d || !d.build || d.build===APP_BUILD) return;
+      UPD_SEEN=true;
+      var b=$('upd-bar'); if(b) b.classList.remove('hidden');
+    }catch(e){}   // 圏外・オフラインのときは何も言わない
+  }
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState==='visible') appVerCheck();
+  });
+  setInterval(appVerCheck, 10*60*1000);
 
   var PANELS=['login','signup','reset','recovery'];
   function showTab(which){
@@ -1641,6 +1682,8 @@
       +'</div>';
       h+='<div id="set-invoice-msg" style="font-size:11.5px;margin-top:6px;min-height:16px;"></div>';
     }
+    h+='<div style="font-size:11px;color:#94A2B6;margin-top:18px;padding-top:12px;border-top:1px solid var(--softline);">'
+      +'この画面の版：'+esc(APP_BUILD)+'　<a onclick="appReload()" style="color:var(--blue);cursor:pointer;">最新に更新する</a></div>';
     h+='<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">'
       +'<button class="ghost" style="font-size:12px;" onclick="resetSettings()">初期設定に戻す</button>'
       +'<span style="flex:1;"></span>'
@@ -14713,6 +14756,7 @@
   }
 
   (async function init(){
+    appVerCheck();
     tsgFill('gate-navi'); tsgFill('onb-navi');   // 出迎えの継ナビくんは通信を待たずに描く
     if(RECOVERING){ showRecovery(); return; }
     var s=await sb.auth.getSession();
