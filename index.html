@@ -544,9 +544,27 @@
   @keyframes knv-hop{0%,100%{transform:translateY(0) scale(1);}18%{transform:translateY(-14px) scale(1.06,.94);}36%{transform:translateY(0) scale(.96,1.04);}52%{transform:translateY(-6px) scale(1.02,.98);}70%{transform:translateY(0) scale(1);}}
   .knv-badge{position:absolute;top:-4px;right:-4px;min-width:19px;height:19px;border-radius:99px;background:#A9403D;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #fff;}
   /* PC版は余裕のある大きさで表示し、ヘッダーの⤢でさらに拡大できる */
-  .knv-panel{position:fixed;right:14px;bottom:14px;z-index:71;width:min(520px,calc(100vw - 24px));height:min(760px,calc(100vh - 60px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(6,12,24,.45);display:flex;flex-direction:column;overflow:hidden;animation:knvPop .16s ease;}
+  .knv-panel{position:fixed;right:14px;bottom:14px;z-index:71;width:min(520px,calc(100vw - 24px));height:min(760px,calc(100vh - 60px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(6,12,24,.45);display:flex;flex-direction:column;overflow:hidden;
+    transform-origin:calc(100% - 22px) calc(100% + 8px);animation:knvOpen .34s cubic-bezier(.34,1.42,.5,1);}
   .knv-panel.max{width:min(920px,calc(100vw - 28px));height:calc(100vh - 24px);bottom:12px;}
-  @keyframes knvPop{from{opacity:0;transform:translateY(10px) scale(.98);}to{opacity:1;transform:none;}}
+  /* 開く：右下の継ナビくんの位置からふわっと膨らんで出てくる */
+  @keyframes knvOpen{
+    0%{opacity:0;transform:scale(.28) translateY(24px);}
+    55%{opacity:1;transform:scale(1.03) translateY(-4px);}
+    100%{opacity:1;transform:scale(1) translateY(0);}
+  }
+  /* 閉じる：継ナビくんの手元へすっと吸い込まれる（閉じ切ってから hidden にする） */
+  .knv-panel.closing{animation:knvClose .24s cubic-bezier(.4,0,.7,.4) forwards;pointer-events:none;}
+  @keyframes knvClose{
+    0%{opacity:1;transform:scale(1) translateY(0);}
+    100%{opacity:0;transform:scale(.26) translateY(26px);}
+  }
+  /* パネルから戻ってきた継ナビくんは、ぽんっと現れて一礼するように弾む */
+  .knv-fab.back{animation:knv-back .5s cubic-bezier(.34,1.56,.64,1);}
+  @keyframes knv-back{0%{transform:scale(.4) translateY(10px);opacity:.2;}60%{transform:scale(1.12) translateY(-4px);opacity:1;}100%{transform:scale(1) translateY(0);opacity:1;}}
+  /* 呼ばれた継ナビくんは、パネルへ吸い込まれるように小さくなって消える */
+  .knv-fab.leaving{animation:knv-leave .2s ease-in forwards;}
+  @keyframes knv-leave{0%{transform:scale(1);opacity:1;}100%{transform:scale(.45) translateY(6px);opacity:0;}}
   .knv-max{flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;}
   .knv-max:hover{background:rgba(255,255,255,.12);}
   @media(max-width:600px){ .knv-max{display:none;} }
@@ -592,7 +610,8 @@
   @keyframes tsg-tilt{0%,100%{transform:rotate(0);}30%{transform:rotate(-7deg);}65%{transform:rotate(5deg);}}
   /* 端末の「視差効果を減らす」設定を尊重する */
   @media(prefers-reduced-motion:reduce){
-    .knv-fab,.knv-fab.hop,.tsg-svg .tsg-eye,.tsg-svg .tsg-star,.tsg-svg .tsg-ear{animation:none!important;}
+    .knv-fab,.knv-fab.hop,.knv-fab.back,.knv-fab.leaving,.tsg-svg .tsg-eye,.tsg-svg .tsg-star,.tsg-svg .tsg-ear{animation:none!important;}
+    .knv-panel,.knv-panel.closing{animation:none!important;}
   }
   .tsg-name{font-size:10.5px;font-weight:700;color:#8A6A12;letter-spacing:.05em;margin-bottom:3px;}
   body.dark .tsg-name{color:#CFAD62;}
@@ -9523,17 +9542,44 @@
       var b=$('knv-max-btn'); if(b){ b.textContent='⤡'; b.title='元の大きさに戻す'; }
     }catch(e){}
   }
+  // 開閉には「継ナビくんが飛び出す／手元に戻る」動きを添える。
+  // 閉じるときは、アニメーションが終わってから hidden にする（途中で消えると味気ないため）
+  var KNV_CLOSE_T=null;
   function knvToggle(open){
     var p=$('knv-panel'), fab=$('knv-fab');
     if(!p||!fab) return;
-    p.classList.toggle('hidden', !open);
-    fab.classList.toggle('hidden', !!open);
+    if(KNV_CLOSE_T){ clearTimeout(KNV_CLOSE_T); KNV_CLOSE_T=null; }
     if(open){
+      // 継ナビくんはパネルへ吸い込まれるように消え、入れ替わりでパネルが膨らむ
+      fab.classList.remove('back','hop');
+      fab.classList.add('leaving');
+      setTimeout(function(){ fab.classList.add('hidden'); fab.classList.remove('leaving'); }, 180);
+      p.classList.remove('closing');
+      p.classList.remove('hidden');
+      void p.offsetWidth;   // 開くアニメーションを毎回頭から再生する
       renderSecLog(); renderAgentInsights();
       // お知らせに用があって開いた人を迷わせない：未読・期日があるときはお知らせタブから
       knvShowTab((window.__KNV_BELL||0)>0?'notif':'chat');
       var box=$('knv-log'); if(box) box.scrollTop=box.scrollHeight;
-      var inp=$('knv-input'); if(inp) setTimeout(function(){ inp.focus(); },50);
+      var inp=$('knv-input'); if(inp) setTimeout(function(){ inp.focus(); },320);
+      return;
+    }
+    // 閉じる：パネルが縮んで消えたあと、継ナビくんがぽんっと戻ってくる
+    var wasOpen=!p.classList.contains('hidden');
+    if(wasOpen){
+      p.classList.add('closing');
+      KNV_CLOSE_T=setTimeout(function(){
+        p.classList.add('hidden'); p.classList.remove('closing'); KNV_CLOSE_T=null;
+      }, 230);
+    }
+    fab.classList.remove('leaving');
+    fab.classList.remove('hidden');
+    // 開いていたときだけ「戻ってきた」動きを見せる（元から閉じているときは静かに）
+    if(wasOpen){
+      fab.classList.remove('back');
+      void fab.offsetWidth;
+      fab.classList.add('back');
+      setTimeout(function(){ fab.classList.remove('back'); }, 520);
     }
   }
   // 質問文を入れた状態で継ナビくんの窓口を開く
