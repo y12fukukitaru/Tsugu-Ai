@@ -29,7 +29,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="https://y12fukukitaru.github.io/Tsugu-Ai/apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Shippori+Mincho:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Shippori+Mincho:wght@500;600;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{--navy:#1E3A66;--blue:#2C5DA8;--sky:#5B84C4;--gold:#C39B3F;--ink:#18202E;--muted:#5A6981;--line:#E2E7EF;--bg:#F5F7FA;--card:#fff;--panel:#fff;--soft:#F8F9FC;--softline:#EDF1F6;--deep:#0E1B33;}
@@ -51,6 +51,20 @@
   /* 横スクロールの抑止は body 側のみ（html に overflow を付けると iOS で上部タップのスクロール復帰が無効化されるため） */
   body{overflow-x:clip;}
   body{margin:0;font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:var(--bg);max-width:100vw;-webkit-font-smoothing:antialiased;}
+  /* ===== 書体の役割分担（継ナビくんの世界観）=====
+       見出し   … 明朝（承継＝受け継ぐ重み・格式）
+       本文/数値 … ゴシック（判断材料は読みやすさ最優先）
+       継ナビくんの声 … 丸ゴシック（親しみ・キャラクターの語り口）    */
+  :root{
+    --f-head:'Shippori Mincho','Hiragino Mincho ProN','Yu Mincho','Noto Serif JP',serif;
+    --f-body:'Noto Sans JP',sans-serif;
+    --f-navi:'Zen Maru Gothic','Noto Sans JP',sans-serif;
+  }
+  .ph,.greet,.rep-bar .mt{font-family:var(--f-head);}
+  #app-body h2,.panel h2{font-family:var(--f-head);letter-spacing:.03em;}
+  /* 継ナビくんが語る場所は、文字までやわらかく */
+  .ai-bubble,.tsg-name,.knv-head,.tsg-load .hint,.ai-sug{font-family:var(--f-navi);}
+  .knv-head div{font-family:var(--f-navi);}
   a{color:var(--blue);}
   a:hover{color:var(--navy);}
   .gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:auto;padding:24px;
@@ -521,7 +535,7 @@
   /* 見出し帯：TSUGU AI -継- のヘッダー帯と同トーン */
   .ai-band{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(135deg,#0a1526 0%,#132b4c 100%);border-radius:10px;padding:11px 16px;margin:0 0 10px;}
   .ai-band .lb{font-size:9.5px;letter-spacing:.3em;color:#cfa860;font-weight:700;line-height:1.4;}
-  .ai-band .tt{font-family:'Shippori Mincho','Hiragino Mincho ProN','Yu Mincho','Noto Serif CJK JP',serif;font-size:15.5px;font-weight:700;color:#fff;letter-spacing:.06em;line-height:1.4;}
+  .ai-band .tt{font-family:var(--f-head);font-size:15.5px;font-weight:700;color:#fff;letter-spacing:.06em;line-height:1.4;}
   .ai-band .rt{margin-left:auto;font-size:11px;color:#a9c7ee;font-weight:400;cursor:pointer;}
   .ai-band .rt:hover{color:#cfa860;}
   @media(max-width:640px){ .ai-band{padding:10px 13px;} .ai-band .tt{font-size:14px;} }
