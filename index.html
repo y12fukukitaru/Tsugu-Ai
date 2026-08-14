@@ -782,6 +782,34 @@
  </div>
 </div>
 
+<!-- ===== はじめの設定（初回ログイン時のみ） ===== -->
+<div id="onb" class="gate hidden">
+ <div class="gatewrap">
+  <div class="card">
+    <div style="text-align:center;">
+      <div class="brand">
+        <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div>
+        <div class="name">TsuguAi</div>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.8;">ようこそ。はじめに、少しだけ教えてください。</div>
+    </div>
+    <div class="tabs" style="margin:20px 0 18px;">
+      <div id="onb-tab-customer" class="tab on" onclick="onbPick('customer')">経営者として使う</div>
+      <div id="onb-tab-consultant" class="tab" onclick="onbPick('consultant')">認定パートナー</div>
+    </div>
+    <div class="field"><label>お名前</label><input id="onb-name" class="inp" type="text" placeholder="継 太郎"></div>
+    <div class="field"><label id="onb-co-label">会社名</label><input id="onb-co" class="inp" type="text" placeholder="株式会社◯◯"></div>
+    <div id="onb-code-wrap" class="hidden">
+      <div class="field"><label>登録コード</label><input id="onb-code" class="inp" type="text" placeholder="運営からお伝えしたコード" autocapitalize="characters"></div>
+      <div class="hint">※ 認定パートナーとしてお使いいただくには、運営からお渡しする登録コードが必要です。お手元にない場合は運営までご連絡ください。</div>
+    </div>
+    <button class="btn" id="onb-go" onclick="onbSubmit()" style="margin-top:16px;">はじめる</button>
+    <div id="onb-msg" class="msg"></div>
+    <div class="link" onclick="onbSkip()">あとで設定する（経営者として始める）</div>
+  </div>
+ </div>
+</div>
+
 <!-- ===== APP ===== -->
 <div id="app" class="hidden">
   <aside class="sb">
@@ -1072,7 +1100,86 @@
     MYROLE=prof.role||'customer';
     await claimLinks(session.user.email);   // メールで指名された枠を本人と結びつける
     await resolveScope();                   // 閲覧メンバーなら、招かれた会社を見る
+    // 初回ログイン（お名前・会社名が未設定）は、先に「はじめの設定」を出す。
+    // ここでパートナーは登録コードを入れて、その場でパートナーとして使い始められる。
+    if(needsOnboard(prof)){ showOnboard(prof, session.user.email); return; }
     renderApp(prof, session.user.email);
+  }
+  // ===== はじめの設定（初回ログイン）=====
+  // 運営が権限を切り替えるまで何もできない状態を作らないための入口。
+  //   経営者   … 会社名・お名前を入れるだけで、そのまま使い始められる
+  //   パートナー… 運営から渡された登録コードを入れると、その場で役割が切り替わる
+  var ONB_PROF=null, ONB_EMAIL='';
+  function needsOnboard(prof){
+    if(!prof) return false;
+    if(prof.role==='admin') return false;
+    if(prof.onboarded===true) return false;
+    // 会社名も担当者名も無い＝まだ何も設定していない人
+    return !(prof.company_name || prof.contact_name || prof.full_name);
+  }
+  function showOnboard(prof, email){
+    ONB_PROF=prof||{}; ONB_EMAIL=email||'';
+    $('gate').classList.add('hidden');
+    $('app').classList.add('hidden');
+    var w=$('onb'); if(!w) { renderApp(prof, email); return; }
+    w.classList.remove('hidden');
+    onbPick('customer');
+  }
+  function onbPick(kind){
+    ONB_KIND=kind;
+    ['customer','consultant'].forEach(function(k){
+      var b=$('onb-tab-'+k); if(b) b.classList.toggle('on', k===kind);
+    });
+    var cw=$('onb-code-wrap'); if(cw) cw.classList.toggle('hidden', kind!=='consultant');
+    var cl=$('onb-co-label'); if(cl) cl.textContent=(kind==='consultant'?'屋号・会社名（任意）':'会社名');
+    var m=$('onb-msg'); if(m) m.textContent='';
+  }
+  var ONB_KIND='customer';
+  async function onbSubmit(){
+    var name=($('onb-name')||{}).value||'', co=($('onb-co')||{}).value||'', code=($('onb-code')||{}).value||'';
+    var msg=$('onb-msg');
+    function say(t,ok){ if(msg){ msg.textContent=t; msg.style.color=ok?'#27684A':'#A9403D'; } }
+    if(!name.trim()){ say('お名前を入力してください'); return; }
+    if(ONB_KIND==='customer' && !co.trim()){ say('会社名を入力してください'); return; }
+    if(ONB_KIND==='consultant' && !code.trim()){ say('運営から受け取った登録コードを入力してください'); return; }
+    var btn=$('onb-go'); if(btn) btn.disabled=true;
+    say('設定中です…', true);
+    var newRole=null;
+    try{
+      if(ONB_KIND==='consultant'){
+        var r=await sb.rpc('redeem_signup_code', { p_code: code.trim() });
+        var d=r.data||{};
+        if(r.error){ say('コードを確認できませんでした：'+r.error.message+'（登録コードのSQL設定が未実施の可能性があります）'); if(btn)btn.disabled=false; return; }
+        if(!d.ok){ say(d.error||'コードが正しくありません'); if(btn)btn.disabled=false; return; }
+        newRole=d.role||'consultant';
+      }
+      var patch={ id:ME, email:ONB_EMAIL, contact_name:name.trim(), onboarded:true };
+      if(co.trim()) patch.company_name=co.trim();
+      if(ONB_KIND==='consultant') patch.full_name=name.trim();
+      var up=await sb.from('profiles').update(patch).eq('id',ME);
+      if(up.error){
+        // onboarded 列が無い環境でも進めるようにする
+        delete patch.onboarded;
+        await sb.from('profiles').update(patch).eq('id',ME);
+      }
+    }catch(e){ say('設定に失敗しました：'+String((e&&e.message)||e)); if(btn)btn.disabled=false; return; }
+    // 反映後のプロフィールで通常画面へ
+    try{
+      var q=await sb.from('profiles').select('*').eq('id',ME).maybeSingle();
+      var prof=(q&&q.data)||ONB_PROF;
+      if(newRole) prof.role=newRole;
+      MYROLE=prof.role||'customer';
+      var w=$('onb'); if(w) w.classList.add('hidden');
+      await resolveScope();
+      renderApp(prof, ONB_EMAIL);
+    }catch(e){ location.reload(); }
+  }
+  // 「あとで設定する」：経営者としてすぐ使い始める（設定は後からでも変えられる）
+  async function onbSkip(){
+    try{ await sb.from('profiles').update({ onboarded:true }).eq('id',ME); }catch(e){}
+    var w=$('onb'); if(w) w.classList.add('hidden');
+    var prof=ONB_PROF||{role:'customer'};
+    renderApp(prof, ONB_EMAIL);
   }
 
   function roleLabel(r){ return r==='consultant'?'パートナー':(r==='admin'?'運営':'顧客'); }
@@ -1589,6 +1696,17 @@
         +'<div class="ph" style="font-size:13px;">アカウントと役割の管理（全アカウント）</div>'
         +'<div style="font-size:11px;color:var(--muted);margin-bottom:6px;line-height:1.7;">登録されている<b>すべてのアカウント</b>の一覧です。役割の変更はここでのみ行えます。役割を誤って変更してしまい顧客一覧・パートナー一覧から消えた場合も、ここで正しい役割に戻せば復旧できます。運営に設定したアカウントは、右の「権限を設定」から見えるメニューを1つずつ調整できます。</div>'
         +'<div id="adm-roles">読み込み中...</div>'
+        +'<div class="ph" style="font-size:13px;margin-top:22px;display:flex;align-items:center;justify-content:space-between;">🎫 登録コード（納品時にお渡しするコード）'
+          +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadSignupCodes()">↺ 更新</span></div>'
+        +'<div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;line-height:1.8;">パートナーには、このコードをお渡しください。新規登録して最初にログインした画面で「認定パートナー」を選び、このコードを入力すると<b style="color:var(--navy);">その場でパートナーとして使い始められます</b>（運営での権限変更は不要）。経営者はコード不要で、登録後すぐに使えます。</div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;background:var(--soft);border-radius:10px;padding:10px 12px;margin-bottom:10px;">'
+          +'<div><label class="fl">コード</label><input id="sc-code" class="inp2" style="width:180px;" placeholder="例：TSUGU-PARTNER-2026"></div>'
+          +'<div><label class="fl">役割</label><select id="sc-role" class="inp2"><option value="consultant">パートナー</option><option value="customer">顧客</option></select></div>'
+          +'<div><label class="fl">使用上限</label><input id="sc-max" type="number" class="inp2" style="width:100px;" value="100"></div>'
+          +'<div style="flex:1;min-width:150px;"><label class="fl">メモ（任意）</label><input id="sc-label" class="inp2" style="width:100%;" placeholder="例：9月説明会用"></div>'
+          +'<button class="btn2" onclick="addSignupCode()">発行</button>'
+        +'</div>'
+        +'<div id="adm-codes">読み込み中...</div>'
         +'<div class="ph" style="font-size:13px;margin-top:22px;display:flex;align-items:center;justify-content:space-between;">2名体制（サブ担当）の申請'
           +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmAssign()">↺ 更新</span></div>'
         +'<div id="adm-asg">読み込み中...</div></div>'
@@ -2891,6 +3009,7 @@
     else {
       // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
       loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadAdmAssign();
+      if(adminCanSee('sec-team')) loadSignupCodes();
       if(adminCanSee('sec-exec')){ loadExecFunding(); loadExecWeekly(); }
       if(adminCanSee('sec-billing')){ loadBillingAdminLinks(); loadPayout(); }
       if(adminCanSee('sec-support')){ loadAdmInquiries(); loadSupportKB(); }
@@ -11330,6 +11449,50 @@
 
   // ---- 運営：2名体制の申請を承認する ----
   var ADMASG={ rows:[], err:null };
+  // ---- 運営：登録コードの発行・停止（納品時にパートナーへ渡すコード）----
+  async function loadSignupCodes(){
+    var box=$('adm-codes'); if(!box) return;
+    var r=await sb.from('signup_codes').select('*').order('created_at',{ascending:false}).limit(50);
+    if(r.error){
+      box.innerHTML='<div style="font-size:12px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:9px 12px;line-height:1.7;">登録コード機能はまだ有効になっていません（SQL未実行）。<code>supabase/migrations/20260814150000_signup_codes.sql</code> を実行すると使えるようになります。</div>';
+      return;
+    }
+    var rows=r.data||[];
+    if(!rows.length){ box.innerHTML='<div style="font-size:12px;color:var(--muted);">コードがまだありません。上の欄から発行してください。</div>'; return; }
+    box.innerHTML=rows.map(function(c){
+      var left=Math.max(0,(c.max_uses||0)-(c.used_count||0));
+      return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--softline);flex-wrap:wrap;">'
+        +'<b style="font-size:13.5px;color:var(--navy);font-family:\'DM Sans\',monospace;letter-spacing:.04em;">'+esc(c.code)+'</b>'
+        +'<span class="tag '+(c.role==='consultant'?'blue':'gray')+'">'+(c.role==='consultant'?'パートナー':'顧客')+'</span>'
+        +(c.active?'<span class="tag green">有効</span>':'<span class="tag gray">停止中</span>')
+        +'<span style="font-size:11.5px;color:var(--muted);">使用 '+(c.used_count||0)+' / '+(c.max_uses||0)+'（残り'+left+'）</span>'
+        +(c.label?'<span style="font-size:11.5px;color:var(--muted);">'+esc(c.label)+'</span>':'')
+        +'<span style="flex:1;"></span>'
+        +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:5px 11px;" onclick="copySignupCode(\''+escA(c.code)+'\')">コピー</button>'
+        +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:5px 11px;" onclick="toggleSignupCode(\''+escA(c.code)+'\','+(c.active?'false':'true')+')">'+(c.active?'停止':'再開')+'</button>'
+      +'</div>';
+    }).join('');
+  }
+  function copySignupCode(code){
+    try{ navigator.clipboard.writeText(code); alert('コードをコピーしました：'+code); }
+    catch(e){ prompt('このコードをお渡しください', code); }
+  }
+  async function addSignupCode(){
+    var code=(($('sc-code')||{}).value||'').trim().toUpperCase();
+    if(!code){ alert('コードを入力してください'); return; }
+    var role=(($('sc-role')||{}).value||'consultant');
+    var max=Number((($('sc-max')||{}).value)||100)||100;
+    var label=(($('sc-label')||{}).value||'').trim();
+    var r=await sb.from('signup_codes').insert({ code:code, role:role, max_uses:max, label:label||null });
+    if(r.error){ alert('発行に失敗しました：'+r.error.message); return; }
+    var f=$('sc-code'); if(f) f.value=''; var l=$('sc-label'); if(l) l.value='';
+    loadSignupCodes();
+  }
+  async function toggleSignupCode(code, on){
+    var r=await sb.from('signup_codes').update({ active:on }).eq('code',code);
+    if(r.error){ alert('変更に失敗しました：'+r.error.message); return; }
+    loadSignupCodes();
+  }
   async function loadAdmAssign(){
     var box=$('adm-asg'); if(!box) return;
     ADMASG.err=null; ADMASG.rows=[];
