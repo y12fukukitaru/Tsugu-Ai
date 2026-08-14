@@ -1292,6 +1292,8 @@
     if(role==='admin' && !adminCanSee(grp)) grp=first||grp;
     Array.prototype.forEach.call(els,function(el,i){
       var g=grpOf[i];
+      // 表示モードの切替バーはダッシュボード（メニュー先頭）でのみ表示する
+      if(el.classList.contains('vaswitch')){ el.style.display=(grp===first)?'':'none'; return; }
       el.style.display=(g===null || g===grp)?'':'none';
     });
     CURRENT_SEC=grp;
@@ -1501,7 +1503,8 @@
   var VIEWAS_NOTE=1; // 運営の表示モードは VIEWAS で管理
   function setAdminView(m){ VIEWAS=m; renderApp(window.__prof, window.__email); }
   function adminSwitchHtml(active){
-    return '<div class="panel" style="padding:12px 16px;"><div class="viewas-row" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="font-size:12px;color:var(--muted);">表示モード</span>'
+    // 表示モードの切替バーはダッシュボードでのみ出す（showSectionが .vaswitch を制御）
+    return '<div class="panel vaswitch" style="padding:12px 16px;"><div class="viewas-row" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="font-size:12px;color:var(--muted);">表示モード</span>'
       +'<div class="vaseg" role="group" aria-label="表示モード">'
       +'<button class="'+(active==='admin'?'on':'')+'" onclick="setAdminView(\'admin\')">運営</button>'
       +'<button class="'+(active==='fde'?'on':'')+'" onclick="setAdminView(\'fde\')">パートナー</button>'
