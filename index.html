@@ -71,6 +71,8 @@
     --wa-seigaiha:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='42' viewBox='0 0 60 30'%3E%3Cg fill='none' stroke='%23C39B3F' stroke-opacity='.075' stroke-width='1'%3E%3Cpath d='M0 30a15 15 0 0 1 30 0a15 15 0 0 1 30 0'/%3E%3Cpath d='M0 22a15 15 0 0 1 30 0a15 15 0 0 1 30 0'/%3E%3Cpath d='M0 14a15 15 0 0 1 30 0a15 15 0 0 1 30 0'/%3E%3C/g%3E%3C/svg%3E");
     /* 麻の葉（あさのは）：まっすぐ育つ麻にあやかる、成長と魔除けの文様 */
     --wa-asanoha:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='84' viewBox='0 0 48 84'%3E%3Cg fill='none' stroke='%23C39B3F' stroke-opacity='.10' stroke-width='1'%3E%3Cpath d='M24 0v84M0 21l24 14 24-14M0 63l24-14 24 14M0 21v42M48 21v42M24 0 0 21M24 0l24 21M24 84 0 63M24 84l24-21'/%3E%3C/g%3E%3C/svg%3E");
+    /* 濃い地（左の帳）用：同じ青海波を、沈まない濃さで */
+    --wa-seigaiha-dark:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='42' viewBox='0 0 60 30'%3E%3Cg fill='none' stroke='%23C39B3F' stroke-opacity='.10' stroke-width='1'%3E%3Cpath d='M0 30a15 15 0 0 1 30 0a15 15 0 0 1 30 0'/%3E%3Cpath d='M0 22a15 15 0 0 1 30 0a15 15 0 0 1 30 0'/%3E%3Cpath d='M0 14a15 15 0 0 1 30 0a15 15 0 0 1 30 0'/%3E%3C/g%3E%3C/svg%3E");
   }
   /* 継ナビくんの登場口：まる窓（円窓）に納めて和の設え に */
   .tsg-mado{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;
@@ -107,7 +109,7 @@
   #app-body .panel:nth-of-type(n+4){animation-delay:.14s;}
   @keyframes wa-rise{from{opacity:0;transform:translateY(9px);}to{opacity:1;transform:none;}}
   /* 左の帳（とばり）にも青海波を薄く重ねる */
-  .sb{background-image:var(--wa-seigaiha);background-blend-mode:soft-light;}
+  .sb.sb,.drawer.drawer{background-image:var(--wa-seigaiha-dark);}
   @media(prefers-reduced-motion:reduce){
     .ph::before,#app-body .panel{animation:none!important;}
   }
@@ -355,6 +357,7 @@
   .logo-ico{width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;}
   .logo-ico svg{width:17px;height:17px;fill:#fff;}
   .logo-nm{font-family:'DM Sans','Noto Sans JP',sans-serif;font-size:22px;font-weight:500;letter-spacing:.03em;}
+  .logo-tsg{font-family:var(--f-head);font-size:.72em;font-weight:400;color:var(--gold);letter-spacing:.04em;margin-left:.28em;vertical-align:.06em;white-space:nowrap;}
   .logo-tg{font-size:10px;color:rgba(255,255,255,.45);margin-top:7px;line-height:1.5;letter-spacing:.04em;}
   .sb-co{padding:10px 18px 15px;border-bottom:1px solid rgba(255,255,255,.07);}
   .co-nm{font-size:13px;font-weight:600;}
@@ -848,7 +851,7 @@
     <div style="text-align:center;">
       <div class="brand">
         <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div>
-        <div class="name">TsuguAi</div>
+        <div class="name">TsuguAi<span class="logo-tsg">-継-</span></div>
       </div>
       <div style="font-family:var(--f-head);font-size:12.5px;color:#8A6A12;margin-top:6px;letter-spacing:.06em;">AIと人で、会社の未来を継ぐ。</div>
     </div>
@@ -908,7 +911,7 @@
     <div style="text-align:center;">
       <div class="brand">
         <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div>
-        <div class="name">TsuguAi</div>
+        <div class="name">TsuguAi<span class="logo-tsg">-継-</span></div>
       </div>
       <div style="font-family:var(--f-navi);font-size:13px;color:var(--muted);margin-top:8px;line-height:1.9;">ようこそ。継ナビくんです🌱<br>はじめに、少しだけ教えてください。</div>
     </div>
@@ -933,7 +936,7 @@
 <div id="app" class="hidden">
   <aside class="sb">
     <div class="sb-logo">
-      <div class="logo-row"><div class="logo-ico"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div><span class="logo-nm">TsuguAi</span></div>
+      <div class="logo-row"><div class="logo-ico"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div><span class="logo-nm">TsuguAi<span class="logo-tsg">-継-</span></span></div>
       <div class="logo-tg">AIと人による伴走型経営支援</div>
     </div>
     <div class="sb-co"><div id="sb-co-nm" class="co-nm">—</div><span id="app-role" class="plan-pill"></span></div>
@@ -950,7 +953,7 @@
 <div id="drawer-back" class="drawer-back hidden" onclick="closeDrawer()"></div>
 <aside id="drawer" class="drawer" aria-hidden="true">
   <div class="drawer-head">
-    <div class="logo-row"><div class="logo-ico"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div><span class="logo-nm" style="font-size:20px;">TsuguAi</span></div>
+    <div class="logo-row"><div class="logo-ico"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div><span class="logo-nm" style="font-size:20px;">TsuguAi<span class="logo-tsg">-継-</span></span></div>
     <button class="drawer-close" onclick="closeDrawer()" aria-label="閉じる">×</button>
   </div>
   <div class="drawer-co"><div id="dw-co-nm" class="co-nm">—</div><span id="dw-role" class="plan-pill"></span></div>
