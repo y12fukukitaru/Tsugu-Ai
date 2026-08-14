@@ -55,6 +55,62 @@
        見出し   … 明朝（承継＝受け継ぐ重み・格式）
        本文/数値 … ゴシック（判断材料は読みやすさ最優先）
        継ナビくんの声 … 丸ゴシック（親しみ・キャラクターの語り口）    */
+  /* ===== 和モダンのデザイン言語 =====
+     「継ぐ」を扱うプロダクトにふさわしい格式を、色・紋様・余白・所作で表す。
+       生成り（きなり）の地 … 紙の温かみ
+       青海波・麻の葉      … 日本の吉祥文様を“気づかれない濃度”で敷く
+       金の罫              … 見出しの格を示す一本
+       所作                … 画面が切り替わるとき、静かに立ち上がる       */
+  :root{
+    --washi:#FAF8F3;          /* 生成り（地） */
+    --washi-line:#EDE7DA;     /* 生成りの罫 */
+    --kin:#C39B3F;            /* 金 */
+    --kin-light:rgba(195,155,63,.16);
+    --sumi:#1A2030;           /* 墨 */
+    /* 青海波（せいがいは）：波が重なり続く＝繁栄と永続の願い */
+    --wa-seigaiha:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='42' viewBox='0 0 60 30'%3E%3Cg fill='none' stroke='%23C39B3F' stroke-opacity='.075' stroke-width='1'%3E%3Cpath d='M0 30a15 15 0 0 1 30 0a15 15 0 0 1 30 0'/%3E%3Cpath d='M0 22a15 15 0 0 1 30 0a15 15 0 0 1 30 0'/%3E%3Cpath d='M0 14a15 15 0 0 1 30 0a15 15 0 0 1 30 0'/%3E%3C/g%3E%3C/svg%3E");
+    /* 麻の葉（あさのは）：まっすぐ育つ麻にあやかる、成長と魔除けの文様 */
+    --wa-asanoha:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='84' viewBox='0 0 48 84'%3E%3Cg fill='none' stroke='%23C39B3F' stroke-opacity='.10' stroke-width='1'%3E%3Cpath d='M24 0v84M0 21l24 14 24-14M0 63l24-14 24 14M0 21v42M48 21v42M24 0 0 21M24 0l24 21M24 84 0 63M24 84l24-21'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  /* 継ナビくんの登場口：まる窓（円窓）に納めて和の設え に */
+  .tsg-mado{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;
+    background:#0e2038;border:2px solid var(--kin);box-shadow:0 6px 20px rgba(14,32,56,.22);flex:0 0 auto;}
+  .tsg-mado svg{display:block;}
+  .tsg-mado.lg{width:88px;height:88px;} .tsg-mado.lg svg{width:60px;height:60px;}
+  .tsg-mado.md{width:56px;height:56px;} .tsg-mado.md svg{width:38px;height:38px;}
+  .tsg-mado.sm{width:40px;height:40px;} .tsg-mado.sm svg{width:28px;height:28px;}
+  .tsg-mado.xs{width:34px;height:34px;} .tsg-mado.xs svg{width:24px;height:24px;}
+  /* 継ナビくんの一言。吹き出しは丸ゴシックで、声色までやわらかく */
+  .tsg-say{display:flex;gap:11px;align-items:flex-start;}
+  .tsg-say .bb{position:relative;flex:1;min-width:0;background:#FFFDF7;border:1px solid #EBDDB4;
+    border-radius:4px 14px 14px 14px;padding:11px 14px;font-family:var(--f-navi);font-size:13px;
+    line-height:1.9;color:var(--ink);box-shadow:inset 0 2px 0 var(--kin);}
+  .tsg-say .bb b{color:var(--navy);}
+  body.dark .tsg-say .bb{background:#141924;border-color:#2A3345;color:#ECEEF2;}
+  /* お辞儀：登場したときに一度だけ、そっと頭を下げる */
+  .tsg-bow .tsg-body{transform-box:fill-box;transform-origin:center bottom;animation:tsg-bow 1.1s ease .25s both;}
+  @keyframes tsg-bow{0%{transform:rotate(0) translateY(0);}30%{transform:rotate(0) translateY(3px) scaleY(.96);}55%{transform:rotate(0) translateY(0);}100%{transform:rotate(0) translateY(0);}}
+  /* 地：生成りの紙。文様は極薄で「ある」と気づかないくらいに */
+  body{background-color:var(--washi);background-image:var(--wa-seigaiha);background-attachment:fixed;}
+  body.dark{background-color:var(--bg);background-image:none;}
+  /* パネルは紙。金の細罫を上端に一本だけ通し、格を示す */
+  .panel{position:relative;}
+  .panel::after{content:'';position:absolute;left:0;right:0;top:0;height:2px;border-radius:12px 12px 0 0;
+    background:linear-gradient(90deg,rgba(195,155,63,.55),rgba(195,155,63,.06) 62%,transparent);pointer-events:none;}
+  /* 見出しの金の罫は、画面が現れるときに上から下へ引かれる */
+  .ph::before{transform-origin:top;animation:wa-rule .5s cubic-bezier(.2,.8,.3,1) both;}
+  @keyframes wa-rule{from{transform:scaleY(0);opacity:0;}to{transform:scaleY(1);opacity:1;}}
+  /* 所作：画面を切り替えると、紙が静かに立ち上がる */
+  #app-body .panel{animation:wa-rise .42s cubic-bezier(.2,.7,.3,1) both;}
+  #app-body .panel:nth-of-type(2){animation-delay:.05s;}
+  #app-body .panel:nth-of-type(3){animation-delay:.1s;}
+  #app-body .panel:nth-of-type(n+4){animation-delay:.14s;}
+  @keyframes wa-rise{from{opacity:0;transform:translateY(9px);}to{opacity:1;transform:none;}}
+  /* 左の帳（とばり）にも青海波を薄く重ねる */
+  .sb{background-image:var(--wa-seigaiha);background-blend-mode:soft-light;}
+  @media(prefers-reduced-motion:reduce){
+    .ph::before,#app-body .panel{animation:none!important;}
+  }
   :root{
     --f-head:'Shippori Mincho','Hiragino Mincho ProN','Yu Mincho','Noto Serif JP',serif;
     --f-body:'Noto Sans JP',sans-serif;
@@ -68,7 +124,13 @@
   a{color:var(--blue);}
   a:hover{color:var(--navy);}
   .gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:auto;padding:24px;
-    background:radial-gradient(1000px 600px at 84% -10%,rgba(195,155,63,.16),transparent 55%),radial-gradient(860px 520px at -8% 112%,rgba(44,93,168,.28),transparent 60%),#0E1B33;}
+    background:var(--wa-asanoha),radial-gradient(1000px 600px at 84% -10%,rgba(195,155,63,.16),transparent 55%),radial-gradient(860px 520px at -8% 112%,rgba(44,93,168,.28),transparent 60%),#0E1B33;}
+  /* 出迎えの継ナビくん：カードの内側、名乗りの上に据える */
+  .gate .card{position:relative;}
+  .gate-navi{display:block;margin:0 auto 16px;animation:tsg-greet 3.8s ease-in-out .9s infinite;}
+  @keyframes tsg-greet{0%,88%,100%{transform:translateY(0);}92%{transform:translateY(-5px);}96%{transform:translateY(0);}}
+  @media(prefers-reduced-motion:reduce){.gate-navi{animation:none;}}
+  .gate .brand{margin-top:2px;}
   .gatewrap{display:flex;justify-content:center;width:100%;}
   .card{background:#fff;border-radius:16px;box-shadow:0 32px 80px rgba(6,12,24,.5);max-width:430px;width:100%;padding:38px 34px;max-height:94vh;overflow:auto;}
   .brand{display:inline-flex;align-items:center;gap:10px;}
@@ -782,12 +844,13 @@
 <div id="gate" class="gate">
  <div class="gatewrap">
   <div class="card">
+    <span id="gate-navi" class="gate-navi tsg-mado lg tsg-bow"><svg viewBox="0 -4 64 64" aria-hidden="true" focusable="false"><g class="tsg-body"><path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/><rect x="9.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="49.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="14" y="23" width="36" height="30" rx="10" fill="#fff" stroke="#cfa860" stroke-width="1.6"/><circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/><circle cx="20.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><circle cx="43.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/></g></svg></span>
     <div style="text-align:center;">
       <div class="brand">
         <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div>
         <div class="name">TsuguAi</div>
       </div>
-      <div style="font-size:12px;color:#94A2B6;margin-top:4px;">AIと人で、会社の未来を継ぐ。</div>
+      <div style="font-family:var(--f-head);font-size:12.5px;color:#8A6A12;margin-top:6px;letter-spacing:.06em;">AIと人で、会社の未来を継ぐ。</div>
     </div>
 
     <div class="tabs">
@@ -841,12 +904,13 @@
 <div id="onb" class="gate hidden">
  <div class="gatewrap">
   <div class="card">
+    <span id="onb-navi" class="gate-navi tsg-mado lg tsg-bow"><svg viewBox="0 -4 64 64" aria-hidden="true" focusable="false"><g class="tsg-body"><path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/><rect x="9.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="49.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="14" y="23" width="36" height="30" rx="10" fill="#fff" stroke="#cfa860" stroke-width="1.6"/><circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/><circle cx="20.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><circle cx="43.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/></g></svg></span>
     <div style="text-align:center;">
       <div class="brand">
         <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div>
         <div class="name">TsuguAi</div>
       </div>
-      <div style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.8;">ようこそ。はじめに、少しだけ教えてください。</div>
+      <div style="font-family:var(--f-navi);font-size:13px;color:var(--muted);margin-top:8px;line-height:1.9;">ようこそ。継ナビくんです🌱<br>はじめに、少しだけ教えてください。</div>
     </div>
     <div class="tabs" style="margin:20px 0 18px;">
       <div id="onb-tab-customer" class="tab on" onclick="onbPick('customer')">経営者として使う</div>
@@ -1069,8 +1133,8 @@
       setMsg(t,'');
     });
   }
-  function showRecovery(){ $('gate').classList.remove('hidden'); $('app').classList.add('hidden'); PANELS.forEach(function(t){ var p=$('panel-'+t); if(p)p.classList.toggle('hidden', t!=='recovery'); }); }
-  function showAuth(){ $('app').classList.add('hidden'); $('gate').classList.remove('hidden'); showTab('login'); }
+  function showRecovery(){ $('gate').classList.remove('hidden'); $('app').classList.add('hidden'); tsgFill('gate-navi'); PANELS.forEach(function(t){ var p=$('panel-'+t); if(p)p.classList.toggle('hidden', t!=='recovery'); }); }
+  function showAuth(){ $('app').classList.add('hidden'); $('gate').classList.remove('hidden'); tsgFill('gate-navi'); showTab('login'); }
 
   async function doSignup(){
     var em=($('signup-email').value||'').trim().toLowerCase();
@@ -1178,6 +1242,7 @@
     $('app').classList.add('hidden');
     var w=$('onb'); if(!w) { renderApp(prof, email); return; }
     w.classList.remove('hidden');
+    tsgFill('onb-navi');
     onbPick('customer');
   }
   function onbPick(kind){
@@ -4157,7 +4222,7 @@
     var box=$('pdca-list'); if(!box)return;
     var rows=(PDCA_CACHE.items||[]).filter(function(d){ return d.status===PDCA_CACHE.filter; });
     if(!rows.length){
-      box.innerHTML='<div style="font-size:12px;color:#94A2B6;">'+(PDCA_CACHE.filter==='active'?'進行中の課題はありません。「＋ 課題を追加」から始めましょう。':'完了した課題はまだありません。')+'</div>';
+      box.innerHTML=tsgSay(PDCA_CACHE.filter==='active'?'進行中の課題はありません。<b>「＋ 課題を追加」</b>から、いちばん気になっていることを一つだけ書いてみませんか。':'完了した課題はまだありません。');
       return;
     }
     var h='';
@@ -4697,7 +4762,7 @@
   function renderClientReports(){
     var box=$('clrep-body'); if(!box) return;
     if(!CLREP.rows.length){
-      box.innerHTML='<div style="font-size:12px;color:#94A2B6;line-height:1.8;">この顧客のレポートはまだありません。月次の数字が登録されると下書きが用意されます。</div>';
+      box.innerHTML=tsgSay('この顧客のレポートはまだありません。<b>月次の数字が登録されると</b>、私が下書きを用意します。');
       return;
     }
     var drafts=CLREP.rows.filter(function(d){ return d.status!=='published'; });
@@ -4838,7 +4903,7 @@
     var res=await sb.from('monthly_reports').select('*').eq('customer_id',SCOPE).eq('status','published').order('report_month',{ascending:false}).limit(12);
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
     var reps=res.data||[];
-    if(!reps.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">公開されたレポートはまだありません。担当パートナーの確認後にここへ届きます。</div>'; return; }
+    if(!reps.length){ box.innerHTML=tsgSay('公開されたレポートはまだありません。<b>担当パートナーの確認後</b>、ここへお届けします。'); return; }
     var h='';
     reps.forEach(function(d,i){
       h+='<div style="border:1px solid #EDF1F6;border-radius:11px;padding:13px 14px;margin-bottom:9px;background:#fff;">'
@@ -4969,7 +5034,7 @@
     var box=$('my-ins'); if(!box)return;
     var res=await sb.from('insurance_results').select('*').eq('customer_id',SCOPE).order('created_at',{ascending:false});
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
-    if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">共有された試算結果はまだありません。保険や相続・贈与の試算をご希望の場合は「メッセージ」で担当パートナーにお伝えください。</div>'; return; }
+    if(!res.data.length){ box.innerHTML=tsgSay('共有された試算結果はまだありません。相続・贈与や保険の試算をご希望なら、<b>「メッセージ」から一言</b>お伝えください。'); return; }
     var h=''; res.data.forEach(function(r){ var dt=(r.created_at||'').slice(0,10); h+='<div style="border-left:3px solid #2C5DA8;background:#F8F9FC;border-radius:8px;padding:10px 12px;margin-bottom:6px;"><div style="font-size:11px;color:#94A2B6;margin-bottom:4px;">'+esc(dt)+'</div><div style="font-size:12.5px;color:#18202E;white-space:pre-wrap;line-height:1.7;">'+esc(r.summary||'')+'</div></div>'; });
     box.innerHTML=h;
   }
@@ -6979,7 +7044,7 @@
     var box=$('my-notes'); if(!box)return;
     var res=await sb.from('fde_notes').select('*').eq('customer_id',SCOPE).order('created_at',{ascending:false});
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
-    if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">担当パートナーからの提案はまだありません。</div>'; return; }
+    if(!res.data.length){ box.innerHTML=tsgSay('担当パートナーからの提案はまだありません。気になることがあれば、<b>私にいつでも聞いてください</b>。'); return; }
     var h='';
     res.data.forEach(function(n){
       var dt=(n.created_at||'').slice(0,10);
@@ -9124,7 +9189,7 @@
     var un=agentInsightsUnread();
     var h='<div style="border:1px solid var(--gold);background:rgba(195,155,63,.07);border-radius:11px;padding:13px 15px;margin-bottom:14px;">'
       +'<div style="display:flex;gap:8px;align-items:center;">'
-        +'<span class="tsg-face" style="width:26px;height:26px;border-radius:8px;">'+tsgNaviSvg()+'</span>'
+        +'<span class="tsg-mado xs">'+tsgNaviSvg()+'</span>'
         +'<div style="min-width:0;flex:1;"><div style="font-size:13px;font-weight:700;color:var(--navy);">✦ 継ナビくんからの提案（今日の一手）'+(un?' <span class="knv-tbadge" style="position:static;border:none;vertical-align:1px;">'+un+'</span>':'')+'</div>'
         +'<div style="font-size:11px;color:var(--muted);">担当顧客の状況から、継ナビくんが毎朝まとめています。</div></div>'
         +(un>1?'<button class="ghost" style="font-size:10.5px;border:1px solid var(--line);border-radius:7px;padding:3px 8px;white-space:nowrap;" onclick="agentInsightReadAll()">すべて既読</button>':'')
@@ -10025,6 +10090,15 @@
       +'</g></svg>';
   }
   function tsgSpin(sm){ return '<span class="tsg-spin'+(sm?' sm':'')+'" aria-hidden="true">'+tsgNaviSvg()+'</span>'; }
+  // 継ナビくんの一言（吹き出し）。空の画面・案内・ガイドなど、どこにでも置ける
+  function tsgSay(text, size){
+    return '<div class="tsg-say"><span class="tsg-mado '+(size||'sm')+'">'+tsgNaviSvg()+'</span>'
+      +'<div class="bb">'+text+'</div></div>';
+  }
+  // 器（span.tsg-mado）に継ナビくんを流し込む。ログイン画面など静的な置き場所用
+  function tsgFill(id){
+    var el=$(id); if(el && !el.querySelector('svg')) el.innerHTML=tsgNaviSvg();
+  }
   // 輪が回っている間は必ず「考え中…」を添える。時間のかかる処理では hint に所要時間の目安だけを渡す
   function tsgLoad(hint){ return '<div class="tsg-load">'+tsgSpin(false)+'<div class="hint"><b style="color:#8A6A12;">考え中…</b>'+(hint?'<br>'+esc(hint):'')+'</div></div>'; }
   function tsgThinking(){ return '<span style="display:inline-flex;align-items:center;gap:8px;">'+tsgSpin(true)+'<span style="font-size:12px;color:#94A2B6;">考え中…</span></span>'; }
@@ -12654,9 +12728,13 @@
     try{ el.scrollIntoView({behavior:'smooth', block:big?'start':'center'}); }catch(e){ el.scrollIntoView(); }
     var last=(i===CT.steps.length-1);
     $('ct-pop').innerHTML=
-       '<div class="ct-n">'+(i+1)+' / '+CT.steps.length+'</div>'
+       '<div style="display:flex;gap:10px;align-items:flex-start;">'
+      +'<span class="tsg-mado sm" style="margin-top:2px;">'+tsgNaviSvg()+'</span>'
+      +'<div style="flex:1;min-width:0;">'
+      +'<div class="ct-n">継ナビくん　'+(i+1)+' / '+CT.steps.length+'</div>'
       +'<div class="ct-t">'+esc(s.t)+'</div>'
       +'<div class="ct-b">'+esc(s.b)+'</div>'
+      +'</div></div>'
       +'<div class="ct-f">'
         +'<button class="sk" onclick="ctEnd()">閉じる</button>'
         +'<span style="flex:1;"></span>'
@@ -14524,6 +14602,7 @@
   }
 
   (async function init(){
+    tsgFill('gate-navi'); tsgFill('onb-navi');   // 出迎えの継ナビくんは通信を待たずに描く
     if(RECOVERING){ showRecovery(); return; }
     var s=await sb.auth.getSession();
     if(s.data && s.data.session){ await routeFromSession(s.data.session); } else { showAuth(); }
