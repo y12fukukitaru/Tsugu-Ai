@@ -71,6 +71,8 @@
     --wa-seigaiha:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='42' viewBox='0 0 60 30'%3E%3Cg fill='none' stroke='%23C39B3F' stroke-opacity='.075' stroke-width='1'%3E%3Cpath d='M0 30a15 15 0 0 1 30 0a15 15 0 0 1 30 0'/%3E%3Cpath d='M0 22a15 15 0 0 1 30 0a15 15 0 0 1 30 0'/%3E%3Cpath d='M0 14a15 15 0 0 1 30 0a15 15 0 0 1 30 0'/%3E%3C/g%3E%3C/svg%3E");
     /* 麻の葉（あさのは）：まっすぐ育つ麻にあやかる、成長と魔除けの文様 */
     --wa-asanoha:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='84' viewBox='0 0 48 84'%3E%3Cg fill='none' stroke='%23C39B3F' stroke-opacity='.10' stroke-width='1'%3E%3Cpath d='M24 0v84M0 21l24 14 24-14M0 63l24-14 24 14M0 21v42M48 21v42M24 0 0 21M24 0l24 21M24 84 0 63M24 84l24-21'/%3E%3C/g%3E%3C/svg%3E");
+    /* 濃い地（左の帳）用：同じ青海波を、沈まない濃さで */
+    --wa-seigaiha-dark:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='42' viewBox='0 0 60 30'%3E%3Cg fill='none' stroke='%23C39B3F' stroke-opacity='.10' stroke-width='1'%3E%3Cpath d='M0 30a15 15 0 0 1 30 0a15 15 0 0 1 30 0'/%3E%3Cpath d='M0 22a15 15 0 0 1 30 0a15 15 0 0 1 30 0'/%3E%3Cpath d='M0 14a15 15 0 0 1 30 0a15 15 0 0 1 30 0'/%3E%3C/g%3E%3C/svg%3E");
   }
   /* 継ナビくんの登場口：まる窓（円窓）に納めて和の設え に */
   .tsg-mado{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;
@@ -107,7 +109,7 @@
   #app-body .panel:nth-of-type(n+4){animation-delay:.14s;}
   @keyframes wa-rise{from{opacity:0;transform:translateY(9px);}to{opacity:1;transform:none;}}
   /* 左の帳（とばり）にも青海波を薄く重ねる */
-  .sb{background-image:var(--wa-seigaiha);background-blend-mode:soft-light;}
+  .sb.sb,.drawer.drawer{background-image:var(--wa-seigaiha-dark);}
   @media(prefers-reduced-motion:reduce){
     .ph::before,#app-body .panel{animation:none!important;}
   }
@@ -355,6 +357,7 @@
   .logo-ico{width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;}
   .logo-ico svg{width:17px;height:17px;fill:#fff;}
   .logo-nm{font-family:'DM Sans','Noto Sans JP',sans-serif;font-size:22px;font-weight:500;letter-spacing:.03em;}
+  .logo-tsg{font-family:var(--f-head);font-size:.72em;font-weight:400;color:var(--gold);letter-spacing:.04em;margin-left:.28em;vertical-align:.06em;white-space:nowrap;}
   .logo-tg{font-size:10px;color:rgba(255,255,255,.45);margin-top:7px;line-height:1.5;letter-spacing:.04em;}
   .sb-co{padding:10px 18px 15px;border-bottom:1px solid rgba(255,255,255,.07);}
   .co-nm{font-size:13px;font-weight:600;}
@@ -848,7 +851,7 @@
     <div style="text-align:center;">
       <div class="brand">
         <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div>
-        <div class="name">TsuguAi</div>
+        <div class="name">TsuguAi<span class="logo-tsg">-継-</span></div>
       </div>
       <div style="font-family:var(--f-head);font-size:12.5px;color:#8A6A12;margin-top:6px;letter-spacing:.06em;">AIと人で、会社の未来を継ぐ。</div>
     </div>
@@ -908,7 +911,7 @@
     <div style="text-align:center;">
       <div class="brand">
         <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div>
-        <div class="name">TsuguAi</div>
+        <div class="name">TsuguAi<span class="logo-tsg">-継-</span></div>
       </div>
       <div style="font-family:var(--f-navi);font-size:13px;color:var(--muted);margin-top:8px;line-height:1.9;">ようこそ。継ナビくんです🌱<br>はじめに、少しだけ教えてください。</div>
     </div>
@@ -933,7 +936,7 @@
 <div id="app" class="hidden">
   <aside class="sb">
     <div class="sb-logo">
-      <div class="logo-row"><div class="logo-ico"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div><span class="logo-nm">TsuguAi</span></div>
+      <div class="logo-row"><div class="logo-ico"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div><span class="logo-nm">TsuguAi<span class="logo-tsg">-継-</span></span></div>
       <div class="logo-tg">AIと人による伴走型経営支援</div>
     </div>
     <div class="sb-co"><div id="sb-co-nm" class="co-nm">—</div><span id="app-role" class="plan-pill"></span></div>
@@ -950,7 +953,7 @@
 <div id="drawer-back" class="drawer-back hidden" onclick="closeDrawer()"></div>
 <aside id="drawer" class="drawer" aria-hidden="true">
   <div class="drawer-head">
-    <div class="logo-row"><div class="logo-ico"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div><span class="logo-nm" style="font-size:20px;">TsuguAi</span></div>
+    <div class="logo-row"><div class="logo-ico"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div><span class="logo-nm" style="font-size:20px;">TsuguAi<span class="logo-tsg">-継-</span></span></div>
     <button class="drawer-close" onclick="closeDrawer()" aria-label="閉じる">×</button>
   </div>
   <div class="drawer-co"><div id="dw-co-nm" class="co-nm">—</div><span id="dw-role" class="plan-pill"></span></div>
@@ -1370,7 +1373,7 @@
   function navDefs(r){
     // 顧問税理士として招かれている場合は、数字の入力だけの画面にする
     if(r==='customer' && ACCESS==='finance') return [['sec-flow','月次数字の入力']];
-    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値・試算結果'],['sec-ai','AI診断・自動化'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','継ナビくん']];
+    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値・試算結果'],['sec-ai','AI自動化診断'],['sec-ma','M&A活用'],['sec-market','Tsugu投資・融資・M&A'],['sec-sec','継ナビくん']];
     // 運営は admin_role で見えるメニューを絞る（未設定は owner 扱い）
     if(r==='admin') return adminNavAll().filter(function(it){ return adminCanSee(it[0]); });
     // 以降はパートナー
@@ -2714,7 +2717,7 @@
           +'<div style="font-weight:600;font-size:14px;color:#1E3A66;margin:14px 0 6px;">③ 資金繰りシミュレーター</div>'
           +'<div style="font-size:12px;color:#94A2B6;">担当パートナーが実施します。結果はダッシュボードの「資金繰りステータス」に表示されます。<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;margin-left:6px;" onclick="goSec(\'sec-status\')">ステータスを見る →</button></div>'
         +'</div>'
-        +'<div class="panel" id="sec-ai"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="5" width="14" height="14" rx="2.5"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9.5 2v3M14.5 2v3M9.5 19v3M14.5 19v3M2 9.5h3M2 14.5h3M19 9.5h3M19 14.5h3"/></svg>AI診断・自動化</span></div>'
+        +'<div class="panel" id="sec-ai"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="5" width="14" height="14" rx="2.5"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9.5 2v3M14.5 2v3M9.5 19v3M14.5 19v3M2 9.5h3M2 14.5h3M19 9.5h3M19 14.5h3"/></svg>AI自動化診断</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">「こんな業務を楽にできたら」という気になることを選んで送るだけ。担当パートナーがAIで具体的な自動化プランを診断し、結果をこちらにご提案・フィードバックします。</div>'
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
             +'<div style="flex:1;min-width:200px;"><label class="fl">業種・事業内容（任意）</label><input id="ai-gyo" class="inp2" style="width:100%;" placeholder="例：金属加工業、調剤薬局 など"></div>'
@@ -9023,7 +9026,7 @@
     ]);
     h+=pcard('gr','③ 成長投資（余力を投資へ）','生まれた余力を成長に回す',[
       '設備・DX投資に補助金を活用（ものづくり／IT導入／省力化／事業再構築 補助金 等）',
-      'AI・自動化で生産性向上（「AI診断・自動化」の結果を実行へ）',
+      'AI・自動化で生産性向上（「AI自動化診断」の結果を実行へ）',
       '余剰資金の運用・M&Aで成長（「M&A活用」パネル）'
     ]);
     h+='<div style="font-size:11px;color:#94A2B6;margin-top:8px;line-height:1.7;">※ 金融機関へは資金繰り表・経営計画を示して対話を。認定経営革新等支援機関の関与も有効です。本診断は概算の目安であり、実際の調達可否・条件・税務上の取扱いは金融機関や専門家の確認が必要です。</div>';
@@ -9367,7 +9370,7 @@
     }
     return common
       +'【経営者ダッシュボードの画面ガイド】'
-      +'ダッシュボード=全体の入口／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=試算表の入力と資金繰りシミュレーター／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI診断・自動化=業務の自動化診断／M&A活用=利益のM&A活用の提案／Tsugu投資・融資・M&A=マッチング掲載。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE)／サポート(操作説明書)。'
+      +'ダッシュボード=全体の入口／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=試算表の入力と資金繰りシミュレーター／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=業務の自動化診断／M&A活用=利益のM&A活用の提案／Tsugu投資・融資・M&A=マッチング掲載。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE)／サポート(操作説明書)。'
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
@@ -12914,7 +12917,7 @@
       hint:'「一番負担に感じている作業やコストはどれですか？」と聞くと具体名が出やすい。その場でAI自動化診断をタップしてもらう。',
       sol:'AI自動化診断',
       solDesc:'困っている業務をタップで選ぶだけで、AI・自動化で解決しやすい業務を診断。導入の優先順位と進め方まで、担当パートナーが提案します。',
-      feat:'AI診断・自動化' },
+      feat:'AI自動化診断' },
     { cat:'保険・固定費', ic:'🧮',
       q:'会社で払っている保険料——「何のために・いくら」払っているか、すべて説明できますか？',
       sub:'何年も見直していない保険や固定費は、気づかないうちに利益を削っていることがあります。',
