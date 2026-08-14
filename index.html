@@ -258,6 +258,15 @@
   .sbtn:hover{border-color:var(--navy);color:var(--navy);}
   .sbtn.on{border-color:var(--navy);background:var(--navy);color:#fff;font-weight:600;}
   body.dark .sbtn.on{background:var(--blue);border-color:var(--blue);color:#fff;}
+  /* 表示モード切替：等幅のセグメントコントロール（運営・パートナー・顧客） */
+  .vaseg{display:inline-flex;background:var(--soft);border:1px solid var(--line);border-radius:11px;padding:4px;gap:4px;}
+  .vaseg button{flex:1 1 0;width:108px;min-width:0;padding:9px 6px;border:none;background:transparent;border-radius:8px;font-size:13px;font-family:inherit;font-weight:600;color:var(--muted);cursor:pointer;transition:background .18s,color .18s,box-shadow .18s;white-space:nowrap;text-align:center;}
+  .vaseg button:hover{color:var(--navy);}
+  .vaseg button.on{background:var(--navy);color:#fff;box-shadow:0 2px 8px rgba(14,27,51,.25);}
+  .vaseg button.on:hover{color:#fff;}
+  body.dark .vaseg{background:var(--card);}
+  body.dark .vaseg button.on{background:var(--blue);}
+  @media(max-width:600px){ .vaseg{display:flex;width:100%;} .vaseg button{width:auto;padding:9px 4px;font-size:12px;} }
   .ghost{background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;font-family:inherit;}
   table.ft{width:100%;border-collapse:collapse;font-size:12px;}
   table.ft th{color:var(--muted);text-align:left;font-weight:600;padding:6px 4px;letter-spacing:.03em;}
@@ -1492,11 +1501,12 @@
   var VIEWAS_NOTE=1; // 運営の表示モードは VIEWAS で管理
   function setAdminView(m){ VIEWAS=m; renderApp(window.__prof, window.__email); }
   function adminSwitchHtml(active){
-    return '<div class="panel" style="padding:12px 16px;"><div class="viewas-row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:12px;color:#94A2B6;">表示モード：</span>'
-      +'<button class="sbtn'+(active==='admin'?' on':'')+'" onclick="setAdminView(\'admin\')">運営</button>'
-      +'<button class="sbtn'+(active==='fde'?' on':'')+'" onclick="setAdminView(\'fde\')">パートナー</button>'
-      +'<button class="sbtn'+(active==='customer'?' on':'')+'" onclick="setAdminView(\'customer\')">顧客</button>'
-      +'</div></div>';
+    return '<div class="panel" style="padding:12px 16px;"><div class="viewas-row" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="font-size:12px;color:var(--muted);">表示モード</span>'
+      +'<div class="vaseg" role="group" aria-label="表示モード">'
+      +'<button class="'+(active==='admin'?'on':'')+'" onclick="setAdminView(\'admin\')">運営</button>'
+      +'<button class="'+(active==='fde'?'on':'')+'" onclick="setAdminView(\'fde\')">パートナー</button>'
+      +'<button class="'+(active==='customer'?'on':'')+'" onclick="setAdminView(\'customer\')">顧客</button>'
+      +'</div></div></div>';
   }
   function adminViewHtml(email, prof){
     return adminSwitchHtml('admin')
