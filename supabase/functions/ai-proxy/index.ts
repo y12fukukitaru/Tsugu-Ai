@@ -8,11 +8,19 @@
 //   決算書アップロード→AI読み込み（承継シミュレーション）が動作する。
 // 応答: { ok:true, text } / { ok:false, error }
 //
+// 認証:
+//   ログイン中の本人でなければ呼べない。Authorization ヘッダのトークンを
+//   Supabase の /auth/v1/user で検証する。
+//   これが無いと、URLさえ知っていれば誰でも Claude を呼べてしまい、
+//   こちらの API 利用料で好きなだけ使われる（データは漏れないが費用が出る）。
+//   ブラウザからは sb.functions.invoke が自動でトークンを送るため、
+//   画面側の変更は要らない。
+//
 // デプロイ:
 //   supabase functions deploy ai-proxy --no-verify-jwt
+//     ※ --no-verify-jwt のままでよい。認証はこの関数の中で行う
+//       （そのほうが「ログインが必要です」と日本語で返せる）
 //   supabase secrets set ANTHROPIC_API_KEY=<APIキー>（設定済みなら不要）
-// 備考: すでに稼働中の ai-proxy がある場合、決算書添付でエラーが出るときだけ
-//        このソースで上書きデプロイすればよい（応答形式は同じ）。
 // =============================================================
 
 const CORS = {
@@ -28,9 +36,34 @@ function json(obj: unknown, status = 200): Response {
   });
 }
 
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+
+// 呼んでいるのがログイン中の本人かどうかを確かめる。
+// publishable key（画面のソースに載っている公開鍵）を投げてきただけでは通らない。
+async function callerIsSignedIn(req: Request): Promise<boolean> {
+  const authz = req.headers.get("Authorization") ?? "";
+  const jwt = authz.replace(/^Bearer\s+/i, "").trim();
+  if (!jwt || jwt === ANON_KEY) return false;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: { Authorization: `Bearer ${jwt}`, apikey: ANON_KEY },
+    });
+    if (!r.ok) return false;
+    const u = await r.json();
+    return !!u?.id;
+  } catch {
+    return false;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ ok: false, error: "method not allowed" }, 405);
+
+  if (!(await callerIsSignedIn(req))) {
+    return json({ ok: false, error: "ログインが必要です" }, 401);
+  }
 
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
   if (!apiKey) return json({ ok: false, error: "ANTHROPIC_API_KEY が未設定です" });
