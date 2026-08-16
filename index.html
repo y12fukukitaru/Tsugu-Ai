@@ -1166,12 +1166,17 @@
   function setMsg(which, txt, ok){ var e=$('msg-'+which); if(!e)return; e.textContent=txt||''; e.style.color=ok?'#27684A':'#A9403D'; }
   function esc(s){ s=(s==null?'':String(s)); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function escA(s){ return esc(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  // インラインの onclick などに値を渡すとき用。
+  //  escA だけでは守れない。'&#39;' は HTML を読む段階で ' に戻されるため、
+  //  その後に読まれる JS からは素の ' に見え、文字列を抜けられてしまう。
+  //  先に JS の文字列として \' に直してから、HTML として escape する（順序が肝）。
+  function escJ(s){ return escA(String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")); }
 
   // ===== 版の確認 =====
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260815-3';
+  var APP_BUILD='20260816-1';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -4178,7 +4183,7 @@
     var h='';
     rows.forEach(function(r){
       var urgent=r.score>=80;
-      h+='<div class="clcard'+(urgent?' unread':'')+'" onclick="viewClient(\''+r.c.id+'\',\''+escA(r.c.email)+'\',\''+escA(r.c.company_name||'')+'\')">'
+      h+='<div class="clcard'+(urgent?' unread':'')+'" onclick="viewClient(\''+r.c.id+'\',\''+escJ(r.c.email)+'\',\''+escJ(r.c.company_name||'')+'\')">'
         +'<div class="cl-top"><span class="cl-nm">'+esc(r.c.company_name||r.c.email)+'</span>'
         +'<span style="margin-left:auto;color:#2C5DA8;font-size:11px;white-space:nowrap;">開く →</span></div>'
         +'<div class="cl-tags">'+r.tags.join('')+'</div>'
@@ -5134,7 +5139,7 @@
         var dt=(lm.created_at||'').replace('T',' ').slice(5,16);
         last='<div class="cl-last">💬 '+esc(who)+'（'+esc(dt)+'）：'+esc((lm.body||'').slice(0,60))+'</div>';
       }
-      h+='<div class="clcard'+(un?' unread':'')+'" onclick="viewClient(\''+c.id+'\',\''+escA(c.email)+'\',\''+escA(c.company_name||'')+'\')">'
+      h+='<div class="clcard'+(un?' unread':'')+'" onclick="viewClient(\''+c.id+'\',\''+escJ(c.email)+'\',\''+escJ(c.company_name||'')+'\')">'
         +'<div class="cl-top"><span class="cl-nm">'+esc(c.company_name||c.email)+'</span>'
         +(un?'<span class="nbadge" id="clb-'+c.id+'">未読 '+un+'</span>':'<span class="nbadge hidden" id="clb-'+c.id+'"></span>')
         +'<span style="margin-left:auto;color:#2C5DA8;font-size:11px;white-space:nowrap;">詳細 →</span></div>'
@@ -5277,7 +5282,10 @@
       box.innerHTML='<div style="font-size:12px;color:#94A2B6;">お支払いメニューは現在準備中です。運営からのご案内をお待ちください。</div>';
     } else {
       box.innerHTML=res.data.map(function(l){
+        // 運営が登録した決済リンク。念のため https:// のものだけを開く
+        //（javascript: などの scheme を弾く）
         var u=String(l.url||'').replace(/["'<>\s\\]/g,'');
+        if(!/^https:\/\//i.test(u)) return '';
         var url=u+(u.indexOf('?')>=0?'&':'?')+'prefilled_email='+encodeURIComponent(window.__email||'');
         return '<div style="border:1px solid var(--softline);border-radius:10px;padding:11px 13px;margin-bottom:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">'
           +'<div style="flex:1;min-width:180px;"><div style="font-size:13px;font-weight:700;color:var(--navy);">'+esc(l.label)+'</div>'
@@ -6165,7 +6173,7 @@
         +'<div style="font-size:12px;color:#1E3A66;margin-top:8px;line-height:1.7;"><b style="color:#27684A;">メリット：</b>'+esc(x.t.pros)+'</div>'
         +'<div style="font-size:12px;color:#1E3A66;margin-top:3px;line-height:1.7;"><b style="color:#A9403D;">注意点：</b>'+esc(x.t.cons)+'</div>'
         +(x.why.length?'<div style="font-size:10.5px;color:#94A2B6;margin-top:6px;">判定理由：'+x.why.map(esc).join('・')+'</div>':'')
-        +'<button class="ghost" style="font-size:12px;margin-top:8px;" onclick="loanToFunding(\''+custId+'\',\''+escA(x.t.name)+'\','+amount+')">この融資を調達ロードマップに登録</button>'
+        +'<button class="ghost" style="font-size:12px;margin-top:8px;" onclick="loanToFunding(\''+custId+'\',\''+escJ(x.t.name)+'\','+amount+')">この融資を調達ロードマップに登録</button>'
       +'</div>';
     });
     h+='<div style="font-size:10.5px;color:#94A2B6;margin-top:4px;line-height:1.7;">※金利・要件は時期や金融機関により異なります。複数を併用する設計（例：公庫＋保証協会、補助金＋つなぎ）も有効です。具体的な申込条件は各金融機関・認定支援機関にご確認ください。</div>';
@@ -7178,7 +7186,7 @@
       var who=mine?'':(m.sender_role==='customer'?'顧客':'パートナー');
       var dt=(m.created_at||'').replace('T',' ').slice(5,16);
       var att=m.attachment_path
-        ? '<div'+(m.body?' style="margin-top:6px;"':'')+'><a onclick="knvAttOpen(\''+escA(m.attachment_path)+'\')" style="cursor:pointer;font-size:12.5px;font-weight:600;text-decoration:underline;color:'+(mine?'#fff':'#2C5DA8')+';">📎 '+esc(m.attachment_name||'添付ファイル')+'</a></div>'
+        ? '<div'+(m.body?' style="margin-top:6px;"':'')+'><a onclick="knvAttOpen(\''+escJ(m.attachment_path)+'\')" style="cursor:pointer;font-size:12.5px;font-weight:600;text-decoration:underline;color:'+(mine?'#fff':'#2C5DA8')+';">📎 '+esc(m.attachment_name||'添付ファイル')+'</a></div>'
         : '';
       h+='<div style="display:flex;flex-direction:column;align-items:'+(mine?'flex-end':'flex-start')+';margin-bottom:8px;">'
         +'<div style="font-size:10px;color:#94A2B6;margin-bottom:2px;">'+(who?esc(who)+'　':'')+esc(dt)+'</div>'
@@ -11809,8 +11817,8 @@
         +'<span style="font-size:11.5px;color:var(--muted);">使用 '+(c.used_count||0)+' / '+(c.max_uses||0)+'（残り'+left+'）</span>'
         +(c.label?'<span style="font-size:11.5px;color:var(--muted);">'+esc(c.label)+'</span>':'')
         +'<span style="flex:1;"></span>'
-        +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:5px 11px;" onclick="copySignupCode(\''+escA(c.code)+'\')">コピー</button>'
-        +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:5px 11px;" onclick="toggleSignupCode(\''+escA(c.code)+'\','+(c.active?'false':'true')+')">'+(c.active?'停止':'再開')+'</button>'
+        +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:5px 11px;" onclick="copySignupCode(\''+escJ(c.code)+'\')">コピー</button>'
+        +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:5px 11px;" onclick="toggleSignupCode(\''+escJ(c.code)+'\','+(c.active?'false':'true')+')">'+(c.active?'停止':'再開')+'</button>'
       +'</div>';
     }).join('');
   }
@@ -12207,7 +12215,7 @@
             +'<div style="font-size:11px;color:var(--muted);margin-top:1px;">'+esc(m.label||'顧問税理士')
             +(m.member_id?'　<span style="color:#27684A;">利用中</span>':'　<span style="color:#8A6A12;">登録待ち</span>')+'</div>'
           +'</div>'
-          +'<button class="ghost" style="font-size:11px;padding:5px 10px;border:1px solid var(--line);border-radius:7px;" onclick="acctMail(\''+escA(m.member_email||'')+'\')">依頼メールを作成</button>'
+          +'<button class="ghost" style="font-size:11px;padding:5px 10px;border:1px solid var(--line);border-radius:7px;" onclick="acctMail(\''+escJ(m.member_email||'')+'\')">依頼メールを作成</button>'
           +'<button class="ghost" style="font-size:11px;padding:5px 10px;border:1px solid var(--line);border-radius:7px;" onclick="acctRemove(\''+m.id+'\')">解除</button>'
         +'</div>';
       }).join('');
