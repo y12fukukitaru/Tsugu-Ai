@@ -385,6 +385,23 @@
   .ni-tx{flex:1;min-width:0;}
   .sb-foot{padding:14px 16px;border-top:1px solid rgba(255,255,255,.07);}
   .sb-email{display:block;font-size:11px;color:rgba(255,255,255,.55);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  /* 継ナビくんの月カレンダー。パネルの幅でも読めるよう、日付は点で示す */
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+  .cal-hd{text-align:center;font-size:10.5px;color:var(--muted);padding:3px 0;letter-spacing:.04em;}
+  .cal-hd.sun{color:#A9403D;} .cal-hd.sat{color:#2C5DA8;}
+  .cal-cell{min-height:46px;border:1px solid var(--softline);border-radius:8px;background:var(--card);
+    padding:3px 2px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;
+    transition:background .15s,border-color .15s;}
+  .cal-cell:hover{background:var(--soft);}
+  .cal-cell.out{opacity:.38;}
+  .cal-cell.today{border-color:var(--gold);box-shadow:inset 0 0 0 1px rgba(195,155,63,.35);}
+  .cal-cell.on{background:rgba(44,93,168,.09);border-color:var(--blue);}
+  .cal-cell .d{font-size:11.5px;color:var(--ink);font-feature-settings:'tnum';line-height:1.2;}
+  .cal-cell.sun .d{color:#A9403D;} .cal-cell.sat .d{color:#2C5DA8;}
+  .cal-dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;}
+  .cal-dot{width:6px;height:6px;border-radius:50%;display:block;}
+  .cal-more{font-size:9px;color:var(--muted);line-height:1;}
+  @media(max-width:600px){ .cal-cell{min-height:40px;} .cal-cell .d{font-size:11px;} }
   /* 本人のしるし。写真・継ナビくん・頭文字のいずれかが入る */
   .me-row{display:flex;align-items:center;gap:9px;margin-bottom:9px;min-width:0;}
   .me-row .sb-email{margin-bottom:0;flex:1;min-width:0;}
@@ -1178,7 +1195,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260816-5';
+  var APP_BUILD='20260816-7';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -9639,6 +9656,7 @@
         ['補助金・助成金を知りたい','◯◯（設備投資／IT導入／雇用）に使える補助金・助成金の種類と、申請の一般的な流れを教えてください。']]},
       {t:'📅 予定', subs:[
         ['次の予定はいつ？','次の予定を教えてください。'],
+        ['予定を入れてほしい','来週◯曜日の◯時に「◯◯」の予定を入れてください。'],
         ['今週の予定を整理したい','今週の予定を整理して、優先順位と段取りを一緒に考えてください。'],
         ['面談までに準備すること','次の面談までに、私のほうで準備しておくとよいことを教えてください。']]},
       {t:'🧭 アプリの使い方', subs:[
@@ -10067,13 +10085,10 @@
   // 連携タブ：スマホ通知・Googleカレンダー・LINE（旧・継ナビくん画面から移設）
   function knvRenderSetup(){
     var box=$('knv-setup'); if(!box || box.getAttribute('data-ready')) return;
-    var isConsultant=(window.__eff||'')==='consultant';
-    var h='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">🔗 通知・外部連携</div>'
+    var h='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">🔗 通知の受け取り方</div>'
       +'<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">毎朝の継ナビくんのブリーフを、アプリの外でも受け取れます。</div>'
       +knvRow('🔔','スマホ通知をこの端末で受け取る','ブラウザのプッシュ通知。iPhoneは先に「ホーム画面に追加」','enablePush()','push-btn')
-      +(isConsultant?knvRow('📅','面談予定をGoogleカレンダーに表示','専用URLを登録すると、面談予定がリマインダー付きで自動表示','calendarFeedSetup()'):'')
       +knvRow('💬','LINEで通知を受け取る','6桁コードを継ナビくんの公式LINEに送るだけで連携完了','lineLinkSetup()')
-      +'<div id="calfeed-box" style="margin-top:10px;"></div>'
       +'<div id="linelink-box"></div>';
     box.innerHTML=h; box.setAttribute('data-ready','1');
   }
@@ -10318,6 +10333,8 @@
             +'<span class="tsg-face">'+tsgNaviSvg()+'</span>'
             +'<div style="min-width:0;max-width:86%;"><div class="tsg-name">継ナビくん'+tag+'</div>'
             +'<div class="ai-bubble">'+inner+'</div>'
+            +(m.draft?calDraftCard(m.draft, mi):'')
+            +(m.draftDone?'<div style="font-size:11.5px;color:#27684A;margin-top:6px;">✓ '+esc(m.draftDone)+'</div>':'')
             +'</div></div>';
         }
       });
@@ -10366,13 +10383,14 @@
   }
   // 自分の予定 ＋ TsuguAiの面談 を、時系列にひとつへまとめる
   async function calFetch(){
-    var now=Date.now(), since=new Date(now-24*3600*1000).toISOString();
-    var until=new Date(now+60*24*3600*1000).toISOString();
+    // 月送り・週送りのたびに取り直さなくて済むよう、前後に広めに取る
+    var now=Date.now(), since=new Date(now-90*24*3600*1000).toISOString();
+    var until=new Date(now+270*24*3600*1000).toISOString();
     var out=[], err=null;
     try{
       var r=await sb.from('agenda_events').select('*')
         .gte('starts_at',since).lte('starts_at',until)
-        .order('starts_at',{ascending:true}).limit(60);
+        .order('starts_at',{ascending:true}).limit(300);
       if(r.error) err=r.error.message;
       else out=(r.data||[]).map(function(e){
         return { kind:'own', id:e.id, title:e.title||'（無題）', when:e.starts_at, ends:e.ends_at,
@@ -10391,7 +10409,7 @@
     if(eff==='customer' && SCOPE){
       var r=await sb.from('meetings_scheduled').select('meet_at,place,note')
         .eq('customer_id',SCOPE).eq('status','scheduled')
-        .gte('meet_at',since).lte('meet_at',until).order('meet_at',{ascending:true}).limit(20);
+        .gte('meet_at',since).lte('meet_at',until).order('meet_at',{ascending:true}).limit(120);
       if(!r.error) out=(r.data||[]).map(function(m){
         return { kind:'meet', title:'担当パートナーとの面談', when:m.meet_at, ends:null,
                  allDay:false, place:m.place||'', note:m.note||'', who:'' };
@@ -10403,7 +10421,7 @@
       if(ids.length){
         var r2=await sb.from('meetings_scheduled').select('customer_id,meet_at,place,note')
           .eq('status','scheduled').in('customer_id',ids)
-          .gte('meet_at',since).lte('meet_at',until).order('meet_at',{ascending:true}).limit(40);
+          .gte('meet_at',since).lte('meet_at',until).order('meet_at',{ascending:true}).limit(200);
         if(!r2.error) out=(r2.data||[]).map(function(m){
           var w=nm[m.customer_id]||'顧客';
           return { kind:'meet', title:w+' との面談', when:m.meet_at, ends:null,
@@ -10499,61 +10517,186 @@
     return out;
   }
 
+  var CAL_VIEW=null, CAL_CUR=null, CAL_PICK=null;
+  function calViewGet(){
+    if(CAL_VIEW) return CAL_VIEW;
+    try{ CAL_VIEW=(loadPrefs().calView)||'month'; }catch(e){ CAL_VIEW='month'; }
+    return CAL_VIEW;
+  }
+  function calViewSet(v){
+    CAL_VIEW=v; CAL_PICK=null;
+    try{ var p=loadPrefs(); p.calView=v; savePrefs(p); }catch(e){}
+    knvRenderCal();
+  }
+  function calDkey(d){ var p=function(n){return ('0'+n).slice(-2);};
+    return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+  function calCur(){ if(!CAL_CUR) CAL_CUR=new Date(); return CAL_CUR; }
+  function calMove(n){
+    var d=new Date(calCur());
+    if(calViewGet()==='month') d.setMonth(d.getMonth()+n); else d.setDate(d.getDate()+7*n);
+    CAL_CUR=d; CAL_PICK=null; knvRenderCal();
+  }
+  function calToday(){ CAL_CUR=new Date(); CAL_PICK=null; knvRenderCal(); }
+  // 日付ごとにまとめる
+  function calByDay(){
+    var map={};
+    ((CAL_ROWS&&CAL_ROWS.rows)||[]).forEach(function(x){
+      var k=calDkey(new Date(x.when));
+      (map[k]=map[k]||[]).push(x);
+    });
+    return map;
+  }
+  // 予定1件のカード
+  function calCard(x){
+    var own=(x.kind==='own'), k=CAL_KINDS[x.kind]||null;
+    return '<div style="border:1px solid '+(k?k.bd:'var(--softline)')+';background:'+(k?k.bg:'var(--card)')
+      +';border-radius:10px;padding:9px 11px;margin-bottom:6px;">'
+      +'<div style="display:flex;gap:8px;align-items:flex-start;">'
+      +'<span style="font-size:12px;color:var(--muted);white-space:nowrap;font-feature-settings:\'tnum\';">'
+        +(x.allDay?'終日':esc(calDT(x.when).split('）')[1]||''))+'</span>'
+      +'<div style="flex:1;min-width:0;">'
+        +'<div style="font-size:13px;font-weight:700;color:var(--ink);">'+esc(x.title)+'</div>'
+        +(x.place?'<div style="font-size:11.5px;color:var(--muted);margin-top:2px;">場所・方法：'+esc(x.place)+'</div>':'')
+        +(x.note?'<div style="font-size:11.5px;color:var(--muted);margin-top:2px;">'+esc(x.note)+'</div>':'')
+      +'</div>'
+      +(own
+         ? '<span style="white-space:nowrap;">'
+           +'<button class="ghost" style="font-size:11px;padding:3px 6px;" onclick="calOpenForm(\''+escJ(x.id)+'\')">編集</button>'
+           +'<button class="ghost" style="font-size:11px;padding:3px 6px;color:#A9403D;" onclick="calDelete(\''+escJ(x.id)+'\')">削除</button>'
+         +'</span>'
+         : '<span style="font-size:10px;background:'+(k?k.bg:'var(--soft)')+';color:'+(k?k.fg:'var(--muted)')
+           +';border:1px solid '+(k?k.bd:'var(--line)')+';border-radius:99px;padding:2px 8px;white-space:nowrap;">'
+           +esc(k?k.label:'')+'</span>')
+    +'</div></div>';
+  }
+  function calDayHead(d, extra){
+    var w='日月火水木金土'.charAt(d.getDay());
+    return '<div style="font-size:11.5px;color:#8A6A12;letter-spacing:.06em;margin:12px 0 6px;font-weight:700;">'
+      +(d.getMonth()+1)+'月'+d.getDate()+'日（'+w+'）'+(extra?'　'+esc(extra):'')+'</div>';
+  }
+  function calRel(d){
+    var n=new Date(), a=new Date(d.getFullYear(),d.getMonth(),d.getDate()), b=new Date(n.getFullYear(),n.getMonth(),n.getDate());
+    var q=Math.round((a-b)/86400000);
+    return q===0?'今日':(q===1?'明日':(q===-1?'昨日':(q>1&&q<=7?q+'日後':'')));
+  }
+
   async function knvRenderCal(force){
     var box=$('knv-cal'); if(!box) return;
     if(!CAL_ROWS || force){ box.innerHTML=tsgLoad('予定を読み込んでいます'); await calFetch(); }
-    var d=new Date();
-    var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">'
-      +'<div style="flex:1;min-width:130px;font-size:13px;font-weight:700;color:var(--navy);font-family:var(--f-head);">'
-        +d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日（'+'日月火水木金土'.charAt(d.getDay())+'）</div>'
-      +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:5px 10px;" onclick="knvRenderCal(true)">↺ 更新</button>'
-      +'<button class="btn2" style="font-size:12px;padding:6px 13px;" onclick="calOpenForm()">＋ 予定を追加</button>'
+    var view=calViewGet(), cur=calCur(), today=new Date();
+    var h='';
+
+    // 上段：表示の切り替えと操作
+    h+='<div class="vaseg" style="margin-bottom:9px;">'
+      +[['month','月'],['week','週'],['list','一覧']].map(function(o){
+          return '<button class="'+(view===o[0]?'on':'')+'" onclick="calViewSet(\''+o[0]+'\')">'+o[1]+'</button>';
+        }).join('')
+    +'</div>';
+    h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:9px;flex-wrap:wrap;">';
+    if(view!=='list'){
+      h+='<button class="ghost" style="font-size:15px;padding:2px 8px;border:1px solid var(--line);border-radius:8px;" onclick="calMove(-1)" aria-label="前へ">‹</button>'
+        +'<div style="flex:1;min-width:110px;text-align:center;font-size:13px;font-weight:700;color:var(--navy);font-family:var(--f-head);">'
+          +(view==='month'
+             ? cur.getFullYear()+'年'+(cur.getMonth()+1)+'月'
+             : (function(){ var st=new Date(cur); st.setDate(st.getDate()-st.getDay());
+                            var en=new Date(st); en.setDate(en.getDate()+6);
+                            return (st.getMonth()+1)+'/'+st.getDate()+' 〜 '+(en.getMonth()+1)+'/'+en.getDate(); })())
+        +'</div>'
+        +'<button class="ghost" style="font-size:15px;padding:2px 8px;border:1px solid var(--line);border-radius:8px;" onclick="calMove(1)" aria-label="次へ">›</button>'
+        +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:4px 9px;" onclick="calToday()">今日</button>';
+    }else{
+      h+='<div style="flex:1;min-width:120px;font-size:13px;font-weight:700;color:var(--navy);font-family:var(--f-head);">'
+        +today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日（'+'日月火水木金土'.charAt(today.getDay())+'）</div>';
+    }
+    h+='<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:4px 9px;" onclick="knvRenderCal(true)">↺</button>'
+      +'<button class="btn2" style="font-size:12px;padding:6px 13px;" onclick="calOpenForm()">＋ 予定</button>'
     +'</div>';
     h+='<div id="cal-form"></div>';
+
     if(CAL_ROWS.err){
       h+='<div style="font-size:11.5px;color:#A9403D;line-height:1.7;margin-bottom:8px;">予定を読み込めませんでした：'+esc(CAL_ROWS.err)
         +'<br><span style="color:#94A2B6;">（Supabase で agenda_events のSQLが未実行の可能性があります）</span></div>';
     }
-    var rows=CAL_ROWS.rows||[];
-    if(!rows.length){
-      h+=tsgSay('これから60日間の予定はまだありません。<b>「＋ 予定を追加」</b>から入れておくと、私がいつでもお答えします。<br>面談・課題の期日・支払い予定・資金調達・補助金の締切は、登録されると自動でここに並びます。');
-    }else{
-      var lastDay='';
-      rows.forEach(function(x){
-        var day=calDay(x.when);
-        if(day!==lastDay){
-          lastDay=day;
-          var lb=calWhenLabel(x.when);
-          h+='<div style="font-size:11.5px;color:#8A6A12;letter-spacing:.06em;margin:12px 0 6px;font-weight:700;">'
-            +esc(calDT(x.when).split('）')[0]+'）')+(lb?'　'+esc(lb):'')+'</div>';
-        }
-        var own=(x.kind==='own'), k=CAL_KINDS[x.kind]||null;
-        h+='<div style="border:1px solid '+(k?k.bd:'var(--softline)')+';background:'+(k?k.bg:'var(--card)')
-          +';border-radius:10px;padding:10px 12px;margin-bottom:7px;">'
-          +'<div style="display:flex;gap:8px;align-items:flex-start;">'
-          +'<span style="font-size:12px;color:var(--muted);white-space:nowrap;font-feature-settings:\'tnum\';">'
-            +(x.allDay?'終日':esc(calDT(x.when).split('）')[1]||''))+'</span>'
-          +'<div style="flex:1;min-width:0;">'
-            +'<div style="font-size:13px;font-weight:700;color:var(--ink);">'+esc(x.title)+'</div>'
-            +(x.place?'<div style="font-size:11.5px;color:var(--muted);margin-top:2px;">場所・方法：'+esc(x.place)+'</div>':'')
-            +(x.note?'<div style="font-size:11.5px;color:var(--muted);margin-top:2px;">'+esc(x.note)+'</div>':'')
-          +'</div>'
-          +(own
-             ? '<span style="white-space:nowrap;">'
-               +'<button class="ghost" style="font-size:11px;padding:3px 6px;" onclick="calOpenForm(\''+escJ(x.id)+'\')">編集</button>'
-               +'<button class="ghost" style="font-size:11px;padding:3px 6px;color:#A9403D;" onclick="calDelete(\''+escJ(x.id)+'\')">削除</button>'
-             +'</span>'
-             : '<span style="font-size:10px;background:'+(k?k.bg:'var(--soft)')+';color:'+(k?k.fg:'var(--muted)')
-               +';border:1px solid '+(k?k.bd:'var(--line)')+';border-radius:99px;padding:2px 8px;white-space:nowrap;">'
-               +esc(k?k.label:'')+'</span>')
-        +'</div></div>';
-      });
-      h+='<div style="font-size:11px;color:#94A2B6;line-height:1.7;margin-top:10px;">'
-        +'印のついた予定（面談・課題・支払・調達・補助金・週次）は、それぞれの画面から自動で並びます。'
-        +'ここでは変更できません。<br>自分で入れた予定と合わせて、継ナビくんが把握しています。</div>';
+
+    var byDay=calByDay(), tKey=calDkey(today);
+
+    if(view==='month'){
+      var first=new Date(cur.getFullYear(), cur.getMonth(), 1);
+      var start=new Date(first); start.setDate(1-first.getDay());
+      h+='<div class="cal-grid">'
+        +['日','月','火','水','木','金','土'].map(function(w,i){
+            return '<div class="cal-hd'+(i===0?' sun':(i===6?' sat':''))+'">'+w+'</div>'; }).join('')
+      +'</div><div class="cal-grid" style="margin-top:2px;">';
+      for(var i=0;i<42;i++){
+        var d=new Date(start); d.setDate(start.getDate()+i);
+        var key=calDkey(d), items=byDay[key]||[];
+        var cls='cal-cell'+(d.getMonth()!==cur.getMonth()?' out':'')
+          +(key===tKey?' today':'')+(key===CAL_PICK?' on':'')
+          +(d.getDay()===0?' sun':(d.getDay()===6?' sat':''));
+        h+='<div class="'+cls+'" onclick="calPick(\''+key+'\')">'
+          +'<span class="d">'+d.getDate()+'</span>'
+          +'<span class="cal-dots">'
+          +items.slice(0,4).map(function(x){
+              var k=CAL_KINDS[x.kind];
+              return '<span class="cal-dot" style="background:'+(k?k.fg:'#2C5DA8')+';"></span>'; }).join('')
+          +'</span>'
+          +(items.length>4?'<span class="cal-more">+'+(items.length-4)+'</span>':'')
+        +'</div>';
+        if(i>=34 && d.getMonth()!==cur.getMonth() && d.getDay()===6) break;
+      }
+      h+='</div>';
+      var pick=CAL_PICK||tKey;
+      var pd=new Date(pick+'T00:00:00');
+      h+=calDayHead(pd, calRel(pd));
+      var pit=byDay[pick]||[];
+      h+=pit.length ? pit.map(calCard).join('')
+        : '<div style="font-size:12px;color:#94A2B6;padding:4px 2px 2px;">この日の予定はありません。</div>';
     }
+    else if(view==='week'){
+      var ws=new Date(cur); ws.setDate(ws.getDate()-ws.getDay());
+      var any=false;
+      for(var k2=0;k2<7;k2++){
+        var wd=new Date(ws); wd.setDate(ws.getDate()+k2);
+        var it=byDay[calDkey(wd)]||[];
+        h+=calDayHead(wd, calRel(wd));
+        if(it.length){ any=true; h+=it.map(calCard).join(''); }
+        else h+='<div style="font-size:11.5px;color:#C3CCD9;padding:1px 2px 4px;">—</div>';
+      }
+      if(!any) h+=tsgSay('この週の予定はありません。<b>「＋ 予定」</b>から入れておくと、私がお答えします。');
+    }
+    else{
+      var rows=(CAL_ROWS.rows||[]).filter(function(x){ return new Date(x.when)>=new Date(Date.now()-24*3600*1000); }).slice(0,80);
+      if(!rows.length){
+        h+=tsgSay('これからの予定はまだありません。<b>「＋ 予定」</b>から入れておくと、私がいつでもお答えします。<br>面談・課題の期日・支払い予定・資金調達・補助金の締切は、登録されると自動でここに並びます。');
+      }else{
+        var last='';
+        rows.forEach(function(x){
+          var d2=new Date(x.when), key2=calDkey(d2);
+          if(key2!==last){ last=key2; h+=calDayHead(d2, calRel(d2)); }
+          h+=calCard(x);
+        });
+      }
+    }
+
+    h+='<div style="font-size:11px;color:#94A2B6;line-height:1.7;margin-top:12px;">'
+      +'色の付いた予定（面談・課題・支払・調達・補助金・週次）は、それぞれの画面から自動で並びます。ここでは変更できません。'
+      +'<br>自分で入れた予定と合わせて、継ナビくんが把握しています。</div>';
+    h+='<div id="calfeed-host" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--softline);"></div>';
+
     box.innerHTML=h;
+    calFeedRow();
     if(CAL_EDIT!==null) calOpenForm(CAL_EDIT);
+  }
+  function calPick(key){ CAL_PICK=key; knvRenderCal(); }
+
+  // Googleカレンダーへの配信（連携タブから予定タブへ移設）
+  function calFeedRow(){
+    var host=$('calfeed-host'); if(!host) return;
+    host.innerHTML='<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">📅 Googleカレンダーに表示する</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:8px;">'
+      +'専用URLをGoogleカレンダーに登録すると、面談予定がリマインダー付きで自動表示されます。</div>'
+      +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:6px 12px;" onclick="calendarFeedSetup()">URLを表示する</button>'
+      +'<div id="calfeed-box" style="margin-top:10px;"></div>';
   }
 
   function calOpenForm(id){
@@ -10647,6 +10790,62 @@
     KNV_AGENDA=out.slice(0,20); KNV_AGENDA_AT=now;
     return KNV_AGENDA;
   }
+  // AIが出した下書きを、そのまま信じずに整える
+  function calDraftClean(o){
+    if(!o || typeof o!=='object') return null;
+    var t=String(o.title||'').trim().slice(0,120);
+    var when=String(o.start||'').trim();
+    if(!t || !when) return null;
+    var d=new Date(when);
+    if(isNaN(d)) return null;
+    // 過去すぎる・遠すぎるものは受け付けない（言い間違いの取り違えを防ぐ）
+    var diff=(d-Date.now())/86400000;
+    if(diff< -1 || diff>730) return null;
+    return { title:t, start:d.toISOString(), allDay:!!o.allDay,
+             place:String(o.place||'').trim().slice(0,120),
+             note:String(o.note||'').trim().slice(0,300) };
+  }
+  // 確認のカード（本文の下に出る）
+  function calDraftCard(d, mi){
+    return '<div style="border:1px solid var(--gold);background:rgba(195,155,63,.07);border-radius:11px;padding:11px 13px;margin-top:8px;">'
+      +'<div style="font-size:11px;color:#8A6A12;font-weight:700;letter-spacing:.06em;margin-bottom:5px;">この予定を登録しますか？</div>'
+      +'<div style="font-size:13px;font-weight:700;color:var(--ink);">'+esc(d.title)+'</div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:3px;">'+esc(calDT(d.start))+(d.allDay?'（終日）':'')+'</div>'
+      +(d.place?'<div style="font-size:11.5px;color:var(--muted);margin-top:2px;">場所・方法：'+esc(d.place)+'</div>':'')
+      +(d.note?'<div style="font-size:11.5px;color:var(--muted);margin-top:2px;">'+esc(d.note)+'</div>':'')
+      +'<div style="display:flex;gap:7px;align-items:center;margin-top:9px;flex-wrap:wrap;">'
+        +'<button class="btn2" style="font-size:12px;padding:6px 14px;" onclick="calDraftSave('+mi+')">📅 登録する</button>'
+        +'<button class="ghost" style="font-size:12px;" onclick="calDraftDrop('+mi+')">やめる</button>'
+      +'</div></div>';
+  }
+  async function calDraftSave(mi){
+    var m=SEC_MSGS[mi]; if(!m || !m.draft) return;
+    var d=m.draft;
+    var res=await sb.from('agenda_events').insert({
+      owner_id:ME, title:d.title, starts_at:d.start, all_day:!!d.allDay,
+      place:d.place||null, note:d.note||null
+    });
+    if(res.error){ alert('登録エラー：'+res.error.message+'（agenda_events のSQLが未実行の可能性があります）'); return; }
+    m.draft=null; m.draftDone='「'+d.title+'」を予定に登録しました。';
+    knvAgendaReset(); renderSecLog(); aisecSave();
+  }
+  function calDraftDrop(mi){
+    var m=SEC_MSGS[mi]; if(!m) return;
+    m.draft=null; m.draftDone='登録しませんでした。';
+    renderSecLog(); aisecSave();
+  }
+
+  // 会話から予定を登録する。AIには最後に [EVENT] 行を出させ、
+  //  画面側で「登録しますか？」を挟む。黙って書き込むことはしない。
+  function calAskNote(){
+    return ' 【予定の登録】ユーザーが「予定を入れて」「登録して」など、予定を作ってほしいと明確に頼んだときだけ、'
+      +'返答の最後に次の1行を足してください。頼まれていないときは絶対に出さないこと。'
+      +' [EVENT] {"title":"予定の名前","start":"YYYY-MM-DDTHH:MM","allDay":false,"place":"場所（無ければ空）","note":"メモ（無ければ空）"}'
+      +' 日時は上の【今日の情報】を基準に、「来週火曜」「明日の10時」などを実際の日付に直して書くこと。'
+      +' 時刻が分からないときは allDay を true にし、start の時刻は 09:00 とすること。'
+      +' 本文では「この内容でよろしければ、下のボタンから登録できます」と一言添えること。'
+      +' 実際に登録するのは本人がボタンを押したときなので、「登録しました」とは書かないこと。';
+  }
   function knvAgendaNote(list){
     var d=new Date();
     var head=' 【今日の情報】今日は'+d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日（'
@@ -10681,7 +10880,7 @@
     var rag='';
     if(aisecPortal()==='consultant'){ try{ rag=knRagContext(t, await knRagFetch()); }catch(e){} }
     var agenda=null; try{ agenda=await knvAgendaFetch(); }catch(e){}
-    var sys=SEC_SYS+secUsageGuide()+knvCtxNote()+knvAgendaNote(agenda)+secDrillNote()+rag;
+    var sys=SEC_SYS+secUsageGuide()+knvCtxNote()+knvAgendaNote(agenda)+calAskNote()+secDrillNote()+rag;
     var msgs=SEC_MSGS.filter(function(m){return m.content!=='（考え中…）';}).map(function(m){return {role:m.role,content:m.content};});
     try{
       var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:msgs, model:model, max_tokens:1400 } });
@@ -10696,7 +10895,13 @@
           SEC_FU=qm[1].split(/[｜|]/).map(function(s){ return s.trim(); }).filter(Boolean).slice(0,3);
           out=out.slice(0,qm.index).replace(/\s+$/,'');
         }
-        SEC_MSGS.push({role:'assistant',content:out, model:label, ts:Date.now()});
+        // 予定の下書き。ここでは保存せず、確認のカードとして本文の下に添える
+        var ev=null, em=out.match(/\n?\s*\[EVENT\]\s*(\{[\s\S]*?\})\s*$/);
+        if(em){
+          out=out.slice(0,em.index).replace(/\s+$/,'');
+          try{ ev=calDraftClean(JSON.parse(em[1])); }catch(e){ ev=null; }
+        }
+        SEC_MSGS.push({role:'assistant',content:out, model:label, ts:Date.now(), draft:ev});
       }
     }catch(e){ if(SEC_MSGS.length && SEC_MSGS[SEC_MSGS.length-1].content==='（考え中…）') SEC_MSGS.pop(); SEC_MSGS.push({role:'assistant',content:'エラー：'+String((e&&e.message)||e),ts:Date.now()}); }
     renderSecLog(); aisecSave(); knvSugsRender(); if(btn)btn.disabled=false;
