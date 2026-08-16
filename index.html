@@ -1060,6 +1060,7 @@
   </div>
   <div class="knv-tabs">
     <button id="knv-tab-chat" class="on" onclick="knvShowTab('chat')"><span class="ki">💬</span>相談</button>
+    <button id="knv-tab-cal" onclick="knvShowTab('cal')"><span class="ki">📅</span>予定</button>
     <button id="knv-tab-msg" onclick="knvShowTab('msg')"><span class="ki">✉️</span>メッセージ<span id="knv-mbadge" class="knv-tbadge hidden">0</span></button>
     <button id="knv-tab-kn" class="hidden" onclick="knvShowTab('kn')"><span class="ki">📚</span>ナレッジ</button>
     <button id="knv-tab-notif" onclick="knvShowTab('notif')"><span class="ki">🔔</span>お知らせ<span id="knv-tbadge" class="knv-tbadge hidden">0</span></button>
@@ -1071,6 +1072,7 @@
     <div id="knv-insights"></div>
     <div id="knv-log"></div>
   </div>
+  <div id="knv-cal" class="knv-body hidden"></div>
   <div id="knv-msg" class="knv-body hidden"></div>
   <div id="knv-kn" class="knv-body hidden"></div>
   <div id="knv-notif" class="knv-body hidden"></div>
@@ -1176,7 +1178,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260816-3';
+  var APP_BUILD='20260816-4';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -9635,8 +9637,9 @@
       {t:'🧾 税・保険・制度', subs:[
         ['税金まわりの相談','◯◯（法人税／相続・贈与／消費税）について気になっています。状況は◯◯です。一般的な考え方と、税理士に確認すべき点を分けて教えてください。'],
         ['補助金・助成金を知りたい','◯◯（設備投資／IT導入／雇用）に使える補助金・助成金の種類と、申請の一般的な流れを教えてください。']]},
-      {t:'📅 面談の予定', subs:[
-        ['次の面談はいつ？','次の面談の予定を教えてください。'],
+      {t:'📅 予定', subs:[
+        ['次の予定はいつ？','次の予定を教えてください。'],
+        ['今週の予定を整理したい','今週の予定を整理して、優先順位と段取りを一緒に考えてください。'],
         ['面談までに準備すること','次の面談までに、私のほうで準備しておくとよいことを教えてください。']]},
       {t:'🧭 アプリの使い方', subs:[
         ['画面の場所がわからない','◯◯をしたいのですが、どの画面から操作すればよいですか？'],
@@ -9771,7 +9774,7 @@
     SEC_QUERY=''; var sIn=$('knv-search-in'); if(sIn) sIn.value='';
     var sBar=$('knv-search'); if(sBar) sBar.classList.add('hidden');
     // ロール切替（運営のプレビュー含む）でタブ内容が前のロールのまま残らないよう、毎回作り直す
-    ['knv-setup','knv-support','knv-notif','knv-msg','knv-kn'].forEach(function(id){
+    ['knv-setup','knv-support','knv-notif','knv-msg','knv-kn','knv-cal'].forEach(function(id){
       var b=$(id); if(b){ b.removeAttribute('data-ready'); b.innerHTML=''; }
     });
     KNV_MSG_CID=null; KNV_MSG_CNAME=''; window.__KNV_PARTNER='';
@@ -9859,7 +9862,7 @@
   // 中身のdivを追加 ②下のtabsマップに キー:'div-id' を追加 ③必要ならレンダー関数を呼ぶ行を追加。
   // タブは等幅で自動的に収まる。ロール限定タブは knvInit で hidden を切り替える（例:メッセージ）。
   function knvShowTab(t){
-    var tabs={chat:'knv-body', msg:'knv-msg', kn:'knv-kn', notif:'knv-notif', setup:'knv-setup', support:'knv-support'};
+    var tabs={chat:'knv-body', cal:'knv-cal', msg:'knv-msg', kn:'knv-kn', notif:'knv-notif', setup:'knv-setup', support:'knv-support'};
     if(!tabs[t]) t='chat';
     if(t==='msg' && (window.__eff||'')==='admin') t='chat';
     if(t==='kn' && (window.__eff||'')!=='consultant') t='chat';
@@ -9869,6 +9872,7 @@
     });
     var foot=document.querySelector('.knv-foot');
     if(foot) foot.classList.toggle('hidden', t!=='chat');
+    if(t==='cal') knvRenderCal();
     if(t==='msg') knvRenderMsg();
     if(t==='kn') knvRenderKn();
     if(t==='notif') knvLoadNotif();
@@ -10338,60 +10342,242 @@
     var clerical = SEC_CLERICAL.test(t) && !SEC_JUDGEMENT.test(t) && t.length<=120;
     return clerical ? 'claude-sonnet-4-6' : 'claude-opus-4-8';
   }
+  // ===== 継ナビくんのカレンダー =====
+  //  Googleカレンダーを読みに行くのではなく、TsuguAi の中に予定の置き場所を持つ。
+  //  外部の審査に公開日を左右されず、私的な予定が外に出ることもない。
+  //  面談（パートナーが登録）は複製せず、読むときに重ねて見せる。
+  var CAL_ROWS=null, CAL_EDIT=null;
+
+  function calDT(iso){
+    var d=new Date(iso); if(isNaN(d)) return String(iso||'');
+    var w='日月火水木金土'.charAt(d.getDay());
+    return (d.getMonth()+1)+'月'+d.getDate()+'日（'+w+'）'+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+  }
+  function calDay(iso){ var d=new Date(iso); return isNaN(d)?'':d.toISOString().slice(0,10); }
+  function calWhenLabel(iso){
+    var d=new Date(iso), n=new Date();
+    var a=new Date(d.getFullYear(),d.getMonth(),d.getDate()), b=new Date(n.getFullYear(),n.getMonth(),n.getDate());
+    var diff=Math.round((a-b)/86400000);
+    if(diff===0) return '今日';
+    if(diff===1) return '明日';
+    if(diff===-1) return '昨日';
+    if(diff>1 && diff<=7) return diff+'日後';
+    return '';
+  }
+  // 自分の予定 ＋ TsuguAiの面談 を、時系列にひとつへまとめる
+  async function calFetch(){
+    var now=Date.now(), since=new Date(now-24*3600*1000).toISOString();
+    var until=new Date(now+60*24*3600*1000).toISOString();
+    var out=[], err=null;
+    try{
+      var r=await sb.from('agenda_events').select('*')
+        .gte('starts_at',since).lte('starts_at',until)
+        .order('starts_at',{ascending:true}).limit(60);
+      if(r.error) err=r.error.message;
+      else out=(r.data||[]).map(function(e){
+        return { kind:'own', id:e.id, title:e.title||'（無題）', when:e.starts_at, ends:e.ends_at,
+                 allDay:!!e.all_day, place:e.place||'', note:e.note||'' };
+      });
+    }catch(e){ err=String((e&&e.message)||e); }
+    try{
+      var mt=await knvMeetingsFetch(since, until);
+      out=out.concat(mt);
+    }catch(e){}
+    out.sort(function(a,b){ return new Date(a.when)-new Date(b.when); });
+    CAL_ROWS={ rows:out, err:err };
+    return CAL_ROWS;
+  }
+  // 面談（meetings_scheduled）を読む。顧客は自分の分、パートナーは担当顧客全社分
+  async function knvMeetingsFetch(since, until){
+    var eff=(window.__eff||currentRole()), out=[];
+    if(eff==='customer' && SCOPE){
+      var r=await sb.from('meetings_scheduled').select('meet_at,place,note')
+        .eq('customer_id',SCOPE).eq('status','scheduled')
+        .gte('meet_at',since).lte('meet_at',until).order('meet_at',{ascending:true}).limit(20);
+      if(!r.error) out=(r.data||[]).map(function(m){
+        return { kind:'meet', title:'担当パートナーとの面談', when:m.meet_at, ends:null,
+                 allDay:false, place:m.place||'', note:m.note||'', who:'' };
+      });
+    } else if(eff==='consultant' && ME){
+      var c=await sb.from('profiles').select('id,company_name').eq('role','customer').eq('consultant_id',ME);
+      var rows=c.error?[]:(c.data||[]), ids=rows.map(function(p){return p.id;}), nm={};
+      rows.forEach(function(p){ nm[p.id]=p.company_name||'顧客'; });
+      if(ids.length){
+        var r2=await sb.from('meetings_scheduled').select('customer_id,meet_at,place,note')
+          .eq('status','scheduled').in('customer_id',ids)
+          .gte('meet_at',since).lte('meet_at',until).order('meet_at',{ascending:true}).limit(40);
+        if(!r2.error) out=(r2.data||[]).map(function(m){
+          var w=nm[m.customer_id]||'顧客';
+          return { kind:'meet', title:w+' との面談', when:m.meet_at, ends:null,
+                   allDay:false, place:m.place||'', note:m.note||'', who:w };
+        });
+      }
+    }
+    return out;
+  }
+
+  async function knvRenderCal(force){
+    var box=$('knv-cal'); if(!box) return;
+    if(!CAL_ROWS || force){ box.innerHTML=tsgLoad('予定を読み込んでいます'); await calFetch(); }
+    var d=new Date();
+    var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">'
+      +'<div style="flex:1;min-width:130px;font-size:13px;font-weight:700;color:var(--navy);font-family:var(--f-head);">'
+        +d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日（'+'日月火水木金土'.charAt(d.getDay())+'）</div>'
+      +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:5px 10px;" onclick="knvRenderCal(true)">↺ 更新</button>'
+      +'<button class="btn2" style="font-size:12px;padding:6px 13px;" onclick="calOpenForm()">＋ 予定を追加</button>'
+    +'</div>';
+    h+='<div id="cal-form"></div>';
+    if(CAL_ROWS.err){
+      h+='<div style="font-size:11.5px;color:#A9403D;line-height:1.7;margin-bottom:8px;">予定を読み込めませんでした：'+esc(CAL_ROWS.err)
+        +'<br><span style="color:#94A2B6;">（Supabase で agenda_events のSQLが未実行の可能性があります）</span></div>';
+    }
+    var rows=CAL_ROWS.rows||[];
+    if(!rows.length){
+      h+=tsgSay('これから60日間の予定はまだありません。<b>「＋ 予定を追加」</b>から入れておくと、私がいつでもお答えします。');
+    }else{
+      var lastDay='';
+      rows.forEach(function(x){
+        var day=calDay(x.when);
+        if(day!==lastDay){
+          lastDay=day;
+          var lb=calWhenLabel(x.when);
+          h+='<div style="font-size:11.5px;color:#8A6A12;letter-spacing:.06em;margin:12px 0 6px;font-weight:700;">'
+            +esc(calDT(x.when).split('）')[0]+'）')+(lb?'　'+esc(lb):'')+'</div>';
+        }
+        var meet=(x.kind==='meet');
+        h+='<div style="border:1px solid '+(meet?'#EBDDB4':'var(--softline)')+';background:'+(meet?'rgba(195,155,63,.07)':'var(--card)')
+          +';border-radius:10px;padding:10px 12px;margin-bottom:7px;">'
+          +'<div style="display:flex;gap:8px;align-items:flex-start;">'
+          +'<span style="font-size:12px;color:var(--muted);white-space:nowrap;font-feature-settings:\'tnum\';">'
+            +(x.allDay?'終日':esc(calDT(x.when).split('）')[1]||''))+'</span>'
+          +'<div style="flex:1;min-width:0;">'
+            +'<div style="font-size:13px;font-weight:700;color:var(--ink);">'+esc(x.title)+'</div>'
+            +(x.place?'<div style="font-size:11.5px;color:var(--muted);margin-top:2px;">場所・方法：'+esc(x.place)+'</div>':'')
+            +(x.note?'<div style="font-size:11.5px;color:var(--muted);margin-top:2px;">'+esc(x.note)+'</div>':'')
+          +'</div>'
+          +(meet
+             ? '<span class="pill" style="font-size:10px;background:rgba(195,155,63,.16);color:#8A6A12;border-radius:99px;padding:2px 8px;white-space:nowrap;">面談</span>'
+             : '<span style="white-space:nowrap;">'
+               +'<button class="ghost" style="font-size:11px;padding:3px 6px;" onclick="calOpenForm(\''+escJ(x.id)+'\')">編集</button>'
+               +'<button class="ghost" style="font-size:11px;padding:3px 6px;color:#A9403D;" onclick="calDelete(\''+escJ(x.id)+'\')">削除</button>'
+             +'</span>')
+        +'</div></div>';
+      });
+      h+='<div style="font-size:11px;color:#94A2B6;line-height:1.7;margin-top:10px;">'
+        +'「面談」は担当パートナーが登録したものです（ここでは変更できません）。'
+        +'ここに入れた予定は継ナビくんが把握し、「次の予定は？」に答えます。</div>';
+    }
+    box.innerHTML=h;
+    if(CAL_EDIT!==null) calOpenForm(CAL_EDIT);
+  }
+
+  function calOpenForm(id){
+    CAL_EDIT=id||'';
+    var host=$('cal-form'); if(!host) return;
+    var row=null;
+    if(id) (CAL_ROWS&&CAL_ROWS.rows||[]).forEach(function(x){ if(x.kind==='own'&&x.id===id) row=x; });
+    function iso2local(v){
+      if(!v) return '';
+      var d=new Date(v); if(isNaN(d)) return '';
+      var p=function(n){ return ('0'+n).slice(-2); };
+      return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());
+    }
+    var def=row?iso2local(row.when):iso2local(new Date(Date.now()+3600000).toISOString());
+    host.innerHTML='<div style="border:1px solid var(--gold);background:rgba(195,155,63,.06);border-radius:11px;padding:12px 13px;margin-bottom:12px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">'+(row?'予定を編集':'予定を追加')+'</div>'
+      +'<input id="cal-t" class="inp2" placeholder="予定の名前（例：銀行と面談）" value="'+escA(row?row.title:'')+'" style="width:100%;margin-bottom:7px;">'
+      +'<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:7px;">'
+        +'<input id="cal-s" class="inp2" type="datetime-local" value="'+escA(def)+'" style="flex:1;min-width:190px;">'
+        +'<label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);">'
+          +'<input id="cal-a" type="checkbox"'+(row&&row.allDay?' checked':'')+'>終日</label>'
+      +'</div>'
+      +'<input id="cal-p" class="inp2" placeholder="場所・方法（任意）" value="'+escA(row?row.place:'')+'" style="width:100%;margin-bottom:7px;">'
+      +'<input id="cal-n" class="inp2" placeholder="メモ（任意）" value="'+escA(row?row.note:'')+'" style="width:100%;margin-bottom:9px;">'
+      +'<div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">'
+        +'<button class="btn2" style="font-size:12px;padding:7px 15px;" onclick="calSave(\''+escJ(id||'')+'\')">保存</button>'
+        +'<button class="ghost" style="font-size:12px;" onclick="calCloseForm()">やめる</button>'
+        +'<span id="cal-msg" style="font-size:11.5px;"></span>'
+      +'</div></div>';
+    var t=$('cal-t'); if(t) t.focus();
+  }
+  function calCloseForm(){ CAL_EDIT=null; var host=$('cal-form'); if(host) host.innerHTML=''; }
+
+  async function calSave(id){
+    var msg=$('cal-msg');
+    function say(t,ok){ if(msg){ msg.style.color=ok?'#27684A':'#A9403D'; msg.textContent=t; } }
+    var title=(($('cal-t')||{}).value||'').trim();
+    var when=(($('cal-s')||{}).value||'').trim();
+    if(!title){ say('予定の名前を入れてください'); return; }
+    if(!when){ say('日時を入れてください'); return; }
+    var row={
+      title:title,
+      starts_at:new Date(when).toISOString(),
+      all_day:!!(($('cal-a')||{}).checked),
+      place:(($('cal-p')||{}).value||'').trim()||null,
+      note:(($('cal-n')||{}).value||'').trim()||null
+    };
+    say('保存しています…', true);
+    var res;
+    if(id) res=await sb.from('agenda_events').update(row).eq('id',id);
+    else { row.owner_id=ME; res=await sb.from('agenda_events').insert(row); }
+    if(res.error){ say('保存エラー：'+res.error.message+'（agenda_events のSQLが未実行の可能性があります）'); return; }
+    CAL_EDIT=null; knvAgendaReset();
+    await knvRenderCal(true);
+  }
+  async function calDelete(id){
+    if(!confirm('この予定を削除します。よろしいですか？')) return;
+    var res=await sb.from('agenda_events').delete().eq('id',id);
+    if(res.error){ alert('削除エラー：'+res.error.message); return; }
+    knvAgendaReset();
+    await knvRenderCal(true);
+  }
+
   // ===== 継ナビくんに「予定」を持たせる =====
   //  面談の予定はパートナーが登録し、Googleカレンダーにも配信している。
   //  相談チャットだけがそれを知らないのはもったいないので、システム指示に添える。
   //  顧客は自分の面談、パートナーは担当顧客全社の面談。運営は対象外。
   var KNV_AGENDA=null, KNV_AGENDA_AT=0;
-  function knvAgendaReset(){ KNV_AGENDA=null; KNV_AGENDA_AT=0; }
+  function knvAgendaReset(){ KNV_AGENDA=null; KNV_AGENDA_AT=0; CAL_ROWS=null; }
   async function knvAgendaFetch(){
     var now=Date.now();
     if(KNV_AGENDA && (now-KNV_AGENDA_AT)<5*60*1000) return KNV_AGENDA;
     var eff=(window.__eff||currentRole());
-    var since=new Date(now-24*3600*1000).toISOString();   // 昨日の分までは残す
-    var out=null;
+    var since=new Date(now-24*3600*1000).toISOString();      // 昨日の分までは残す
+    var until=new Date(now+14*24*3600*1000).toISOString();   // 相談で使うのは2週間先まで
+    var out=[];
     try{
-      if(eff==='customer' && SCOPE){
-        var r=await sb.from('meetings_scheduled').select('meet_at,place,note')
-          .eq('customer_id',SCOPE).eq('status','scheduled').gte('meet_at',since)
-          .order('meet_at',{ascending:true}).limit(5);
-        out=r.error?[]:(r.data||[]).map(function(m){
-          return { when:m.meet_at, who:'', place:m.place||'', note:m.note||'' };
-        });
-      } else if(eff==='consultant' && ME){
-        var c=await sb.from('profiles').select('id,company_name').eq('role','customer').eq('consultant_id',ME);
-        var rows=c.error?[]:(c.data||[]);
-        var ids=rows.map(function(p){ return p.id; }), nm={};
-        rows.forEach(function(p){ nm[p.id]=p.company_name||'顧客'; });
-        out=[];
-        if(ids.length){
-          var r2=await sb.from('meetings_scheduled').select('customer_id,meet_at,place,note')
-            .eq('status','scheduled').in('customer_id',ids).gte('meet_at',since)
-            .order('meet_at',{ascending:true}).limit(8);
-          out=r2.error?[]:(r2.data||[]).map(function(m){
-            return { when:m.meet_at, who:nm[m.customer_id]||'顧客', place:m.place||'', note:m.note||'' };
-          });
-        }
-      }
-    }catch(e){ out=null; }
-    KNV_AGENDA=out; KNV_AGENDA_AT=now;
-    return out;
+      var r=await sb.from('agenda_events').select('title,starts_at,all_day,place,note')
+        .gte('starts_at',since).lte('starts_at',until)
+        .order('starts_at',{ascending:true}).limit(20);
+      if(!r.error) out=(r.data||[]).map(function(e){
+        return { kind:'own', title:e.title||'（無題）', when:e.starts_at,
+                 allDay:!!e.all_day, place:e.place||'', note:e.note||'' };
+      });
+    }catch(e){}
+    if(eff!=='admin'){
+      try{ out=out.concat(await knvMeetingsFetch(since, until)); }catch(e){}
+    }
+    out.sort(function(a,b){ return new Date(a.when)-new Date(b.when); });
+    KNV_AGENDA=out.slice(0,20); KNV_AGENDA_AT=now;
+    return KNV_AGENDA;
   }
   function knvAgendaNote(list){
     var d=new Date();
     var head=' 【今日の情報】今日は'+d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日（'
       +'日月火水木金土'.charAt(d.getDay())+'）です。日付や曜日を聞かれたらこれを使ってください。';
-    if(!list) return head;   // 運営、または取得できなかったとき
+    if(!list) return head;
     if(!list.length){
-      return head+' 面談の予定は入っていません。「予定」を聞かれたら、面談の予定は入っていない旨を伝えたうえで、'
-        +'必要なら担当パートナーへメッセージで相談できることを案内してください。';
+      return head+' 登録されている予定はありません。「予定」を聞かれたら、予定は入っていない旨を伝えたうえで、'
+        +'右下パネルの「📅 予定」タブから追加できることを案内してください。';
     }
     var t=list.map(function(x){
-      return '・'+fmtMeetWhen(x.when)+(x.who?'（'+x.who+'）':'')
-        +(x.place?'／場所・方法: '+x.place:'')+(x.note?'／議題: '+x.note:'');
+      return '・'+calDT(x.when)+(x.allDay?'（終日）':'')+' '+x.title
+        +(x.place?'／場所・方法: '+x.place:'')+(x.note?'／メモ: '+x.note:'')
+        +(x.kind==='meet'?'（担当パートナーが登録した面談）':'');
     }).join(' ');
-    return head+' 面談の予定は次のとおりです。「予定」「面談」を聞かれたらこれを答えてください。'
-      +'ここに無い予定を推測で作らないこと。'+t;
+    return head+' 登録されている予定は次のとおりです（2週間先まで）。'
+      +'「予定」「面談」「今日は何がある」などを聞かれたら、これをもとに答えてください。'
+      +'ここに無い予定を推測で作らないこと。予定の追加は右下パネルの「📅 予定」タブからできます。'+t;
   }
 
   async function secretarySend(src){
