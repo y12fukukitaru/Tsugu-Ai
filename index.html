@@ -1195,7 +1195,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260816-7';
+  var APP_BUILD='20260816-8';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -9493,14 +9493,16 @@
       }
       var url='https://yaururnkxjhtiowkpvyu.supabase.co/functions/v1/calendar-feed?t='+tok;
       box.innerHTML='<div style="border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px;background:var(--soft);">'
-        +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:6px;">📅 あなた専用のカレンダーURL</div>'
+        +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:2px;">📅 Googleカレンダーに表示する</div>'
+        +'<div style="font-size:11.5px;color:var(--muted);margin-bottom:7px;">登録するのは、下のURLひとつだけです。</div>'
         +'<div style="display:flex;gap:6px;align-items:center;">'
           +'<input id="calfeed-url" class="inp2" readonly value="'+esc(url)+'" style="flex:1;width:auto;font-size:11px;" onclick="this.select()">'
           +'<button class="btn2" style="font-size:11.5px;padding:8px 12px;flex-shrink:0;" onclick="calendarFeedCopy()">コピー</button>'
         +'</div>'
         +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:8px;">'
           +'<b>Googleカレンダーでの登録：</b>パソコンで <a href="https://calendar.google.com/calendar/u/0/r/settings/addbyurl" target="_blank" rel="noopener">カレンダー設定 → URLで追加</a> を開き、上のURLを貼り付けて「カレンダーを追加」。'
-          +'以後、担当顧客との面談予定（60分前リマインダー付き）が自動で表示されます。反映まで数時間かかることがあります。'
+          +'以後、<b>この「予定」タブにあるもの</b>——ご自身で入れた予定と面談——がリマインダー付きで自動表示されます。'
+          +'Googleが取りに来るまで数時間かかることがあります（こちらからは早められません）。'
           +'<br>このURLはあなた専用です。他の人に共有しないでください。'
         +'</div>'
       +'</div>';
@@ -10692,11 +10694,10 @@
   // Googleカレンダーへの配信（連携タブから予定タブへ移設）
   function calFeedRow(){
     var host=$('calfeed-host'); if(!host) return;
-    host.innerHTML='<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">📅 Googleカレンダーに表示する</div>'
-      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:8px;">'
-      +'専用URLをGoogleカレンダーに登録すると、面談予定がリマインダー付きで自動表示されます。</div>'
-      +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:6px 12px;" onclick="calendarFeedSetup()">URLを表示する</button>'
-      +'<div id="calfeed-box" style="margin-top:10px;"></div>';
+    // ボタンを押させない。押すものと出てくるものが縦に並ぶと、
+    // 登録するものが2つあるように見えてしまうため
+    host.innerHTML='<div id="calfeed-box"></div>';
+    calendarFeedSetup();
   }
 
   function calOpenForm(id){
