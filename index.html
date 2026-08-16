@@ -1176,7 +1176,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260816-2';
+  var APP_BUILD='20260816-3';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -6349,6 +6349,7 @@
     var row={ meet_at:new Date(atv).toISOString(), place:((($('meet-place-'+custId)||{}).value||'').trim()||null),
       note:((($('meet-note-'+custId)||{}).value||'').trim()||null) };
     var res;
+    knvAgendaReset();   // 継ナビくんが持っている予定も入れ替える
     if(id){ res=await sb.from('meetings_scheduled').update(row).eq('id',id); }
     else { row.customer_id=custId; row.created_by=ME; row.status='scheduled'; res=await sb.from('meetings_scheduled').insert(row); }
     if(res.error){ if(msg){ msg.style.color='#A9403D'; msg.textContent='保存エラー：'+res.error.message; } return; }
@@ -6357,6 +6358,7 @@
   }
   async function doneNextMeeting(id, custId){
     await sb.from('meetings_scheduled').update({ status:'done' }).eq('id',id);
+    knvAgendaReset();
     loadNextMeeting(custId);
   }
   // 顧客側：次回面談の表示（アラート付き）
@@ -9633,6 +9635,9 @@
       {t:'🧾 税・保険・制度', subs:[
         ['税金まわりの相談','◯◯（法人税／相続・贈与／消費税）について気になっています。状況は◯◯です。一般的な考え方と、税理士に確認すべき点を分けて教えてください。'],
         ['補助金・助成金を知りたい','◯◯（設備投資／IT導入／雇用）に使える補助金・助成金の種類と、申請の一般的な流れを教えてください。']]},
+      {t:'📅 面談の予定', subs:[
+        ['次の面談はいつ？','次の面談の予定を教えてください。'],
+        ['面談までに準備すること','次の面談までに、私のほうで準備しておくとよいことを教えてください。']]},
       {t:'🧭 アプリの使い方', subs:[
         ['画面の場所がわからない','◯◯をしたいのですが、どの画面から操作すればよいですか？'],
         ['パートナーへの連絡方法','担当パートナーへの連絡・相談はどこからできますか？']]}
@@ -9762,6 +9767,7 @@
     if(head && !head.querySelector('svg')) head.innerHTML=tsgNaviSvg();
     SEC_FU=[]; knvSugsRender();
     var g=$('knv-guide'); if(g){ g.classList.add('hidden'); g.innerHTML=''; }
+    knvAgendaReset();   // 開くたびに予定を取り直す
     SEC_QUERY=''; var sIn=$('knv-search-in'); if(sIn) sIn.value='';
     var sBar=$('knv-search'); if(sBar) sBar.classList.add('hidden');
     // ロール切替（運営のプレビュー含む）でタブ内容が前のロールのまま残らないよう、毎回作り直す
@@ -10332,6 +10338,62 @@
     var clerical = SEC_CLERICAL.test(t) && !SEC_JUDGEMENT.test(t) && t.length<=120;
     return clerical ? 'claude-sonnet-4-6' : 'claude-opus-4-8';
   }
+  // ===== 継ナビくんに「予定」を持たせる =====
+  //  面談の予定はパートナーが登録し、Googleカレンダーにも配信している。
+  //  相談チャットだけがそれを知らないのはもったいないので、システム指示に添える。
+  //  顧客は自分の面談、パートナーは担当顧客全社の面談。運営は対象外。
+  var KNV_AGENDA=null, KNV_AGENDA_AT=0;
+  function knvAgendaReset(){ KNV_AGENDA=null; KNV_AGENDA_AT=0; }
+  async function knvAgendaFetch(){
+    var now=Date.now();
+    if(KNV_AGENDA && (now-KNV_AGENDA_AT)<5*60*1000) return KNV_AGENDA;
+    var eff=(window.__eff||currentRole());
+    var since=new Date(now-24*3600*1000).toISOString();   // 昨日の分までは残す
+    var out=null;
+    try{
+      if(eff==='customer' && SCOPE){
+        var r=await sb.from('meetings_scheduled').select('meet_at,place,note')
+          .eq('customer_id',SCOPE).eq('status','scheduled').gte('meet_at',since)
+          .order('meet_at',{ascending:true}).limit(5);
+        out=r.error?[]:(r.data||[]).map(function(m){
+          return { when:m.meet_at, who:'', place:m.place||'', note:m.note||'' };
+        });
+      } else if(eff==='consultant' && ME){
+        var c=await sb.from('profiles').select('id,company_name').eq('role','customer').eq('consultant_id',ME);
+        var rows=c.error?[]:(c.data||[]);
+        var ids=rows.map(function(p){ return p.id; }), nm={};
+        rows.forEach(function(p){ nm[p.id]=p.company_name||'顧客'; });
+        out=[];
+        if(ids.length){
+          var r2=await sb.from('meetings_scheduled').select('customer_id,meet_at,place,note')
+            .eq('status','scheduled').in('customer_id',ids).gte('meet_at',since)
+            .order('meet_at',{ascending:true}).limit(8);
+          out=r2.error?[]:(r2.data||[]).map(function(m){
+            return { when:m.meet_at, who:nm[m.customer_id]||'顧客', place:m.place||'', note:m.note||'' };
+          });
+        }
+      }
+    }catch(e){ out=null; }
+    KNV_AGENDA=out; KNV_AGENDA_AT=now;
+    return out;
+  }
+  function knvAgendaNote(list){
+    var d=new Date();
+    var head=' 【今日の情報】今日は'+d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日（'
+      +'日月火水木金土'.charAt(d.getDay())+'）です。日付や曜日を聞かれたらこれを使ってください。';
+    if(!list) return head;   // 運営、または取得できなかったとき
+    if(!list.length){
+      return head+' 面談の予定は入っていません。「予定」を聞かれたら、面談の予定は入っていない旨を伝えたうえで、'
+        +'必要なら担当パートナーへメッセージで相談できることを案内してください。';
+    }
+    var t=list.map(function(x){
+      return '・'+fmtMeetWhen(x.when)+(x.who?'（'+x.who+'）':'')
+        +(x.place?'／場所・方法: '+x.place:'')+(x.note?'／議題: '+x.note:'');
+    }).join(' ');
+    return head+' 面談の予定は次のとおりです。「予定」「面談」を聞かれたらこれを答えてください。'
+      +'ここに無い予定を推測で作らないこと。'+t;
+  }
+
   async function secretarySend(src){
     src=src||'sec';
     var inp=$(src+'-input'); if(!inp)return;
@@ -10345,7 +10407,8 @@
     SEC_FU=[]; knvSugsRender();
     var rag='';
     if(aisecPortal()==='consultant'){ try{ rag=knRagContext(t, await knRagFetch()); }catch(e){} }
-    var sys=SEC_SYS+secUsageGuide()+knvCtxNote()+secDrillNote()+rag;
+    var agenda=null; try{ agenda=await knvAgendaFetch(); }catch(e){}
+    var sys=SEC_SYS+secUsageGuide()+knvCtxNote()+knvAgendaNote(agenda)+secDrillNote()+rag;
     var msgs=SEC_MSGS.filter(function(m){return m.content!=='（考え中…）';}).map(function(m){return {role:m.role,content:m.content};});
     try{
       var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:msgs, model:model, max_tokens:1400 } });
