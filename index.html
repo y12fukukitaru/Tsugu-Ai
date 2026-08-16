@@ -1178,7 +1178,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260816-4';
+  var APP_BUILD='20260816-5';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -10379,10 +10379,8 @@
                  allDay:!!e.all_day, place:e.place||'', note:e.note||'' };
       });
     }catch(e){ err=String((e&&e.message)||e); }
-    try{
-      var mt=await knvMeetingsFetch(since, until);
-      out=out.concat(mt);
-    }catch(e){}
+    try{ out=out.concat(await knvMeetingsFetch(since, until)); }catch(e){}
+    try{ out=out.concat(await calExtraFetch(since, until)); }catch(e){}
     out.sort(function(a,b){ return new Date(a.when)-new Date(b.when); });
     CAL_ROWS={ rows:out, err:err };
     return CAL_ROWS;
@@ -10416,6 +10414,91 @@
     return out;
   }
 
+  // 予定タブに重ねる「自動で並ぶもの」。どれも複製せず、読むときだけ混ぜる。
+  //  取得に失敗したもの（表が無い・権限が無い）は、静かに飛ばす。
+  var CAL_KINDS={
+    meet:  { label:'面談',   bd:'#EBDDB4', bg:'rgba(195,155,63,.07)',  fg:'#8A6A12' },
+    task:  { label:'課題',   bd:'#CBD9EE', bg:'rgba(44,93,168,.06)',   fg:'#2C5DA8' },
+    pay:   { label:'支払',   bd:'#EBC9C7', bg:'rgba(169,64,61,.06)',   fg:'#A9403D' },
+    fund:  { label:'調達',   bd:'#CFE3D6', bg:'rgba(39,104,74,.07)',   fg:'#27684A' },
+    subsidy:{label:'補助金', bd:'#DED3EC', bg:'rgba(96,72,150,.06)',   fg:'#604896' },
+    week:  { label:'週次',   bd:'#CDD5E4', bg:'rgba(30,58,102,.05)',   fg:'#1E3A66' }
+  };
+  function calDayIso(d){ return String(d||'').slice(0,10)+'T09:00:00'; }
+  async function calExtraFetch(since, until){
+    var eff=(window.__eff||currentRole()), out=[];
+    var sinceD=String(since).slice(0,10), untilD=String(until).slice(0,10);
+    // 担当顧客（パートナー用）
+    var ids=[], nm={};
+    if(eff==='consultant' && ME){
+      try{
+        var c=await sb.from('profiles').select('id,company_name').eq('role','customer').eq('consultant_id',ME);
+        (c.error?[]:(c.data||[])).forEach(function(p){ ids.push(p.id); nm[p.id]=p.company_name||'顧客'; });
+      }catch(e){}
+    }
+    var mine=(eff==='customer' && SCOPE) ? [SCOPE] : ids;
+    function who(cid){ return nm[cid]?nm[cid]+'：':''; }
+
+    if(mine.length){
+      // 経営課題の期日
+      try{
+        var t=await sb.from('pdca_items').select('customer_id,title,due_date,status')
+          .in('customer_id',mine).eq('status','active')
+          .gte('due_date',sinceD).lte('due_date',untilD).limit(30);
+        if(!t.error) (t.data||[]).forEach(function(x){
+          if(!x.due_date) return;
+          out.push({ kind:'task', title:who(x.customer_id)+(x.title||'課題')+' の期日',
+                     when:calDayIso(x.due_date), allDay:true, place:'', note:'' });
+        });
+      }catch(e){}
+      // 支払い予定
+      try{
+        var p=await sb.from('upcoming_payments').select('customer_id,title,due_date,amount')
+          .in('customer_id',mine).gte('due_date',sinceD).lte('due_date',untilD).limit(30);
+        if(!p.error) (p.data||[]).forEach(function(x){
+          if(!x.due_date) return;
+          out.push({ kind:'pay', title:who(x.customer_id)+(x.title||'支払い'),
+                     when:calDayIso(x.due_date), allDay:true, place:'',
+                     note:(x.amount>0?('金額 '+Number(x.amount).toLocaleString('ja-JP')+'万円'):'') });
+        });
+      }catch(e){}
+      // 資金調達の目標日
+      try{
+        var fr=await sb.from('funding_roadmap_items').select('customer_id,title,target_date,status,amount')
+          .in('customer_id',mine).gte('target_date',sinceD).lte('target_date',untilD).limit(30);
+        if(!fr.error) (fr.data||[]).forEach(function(x){
+          if(!x.target_date) return;
+          out.push({ kind:'fund', title:who(x.customer_id)+(x.title||'資金調達'),
+                     when:calDayIso(x.target_date), allDay:true, place:'',
+                     note:[(x.status||''),(x.amount>0?Number(x.amount).toLocaleString('ja-JP')+'万円':'')].filter(Boolean).join('／') });
+        });
+      }catch(e){}
+    }
+    // 補助金の締切（誰でも見る価値がある）
+    try{
+      var sb2=await sb.from('subsidies').select('name,deadline,url')
+        .gte('deadline',sinceD).lte('deadline',untilD).order('deadline',{ascending:true}).limit(15);
+      if(!sb2.error) (sb2.data||[]).forEach(function(x){
+        if(!x.deadline) return;
+        out.push({ kind:'subsidy', title:(x.name||'補助金')+' 締切',
+                   when:calDayIso(x.deadline), allDay:true, place:'', note:'' });
+      });
+    }catch(e){}
+    // 運営の週次計画（権限を持つ人だけ見える。RLSで弾かれれば静かに飛ぶ）
+    if(eff==='admin'){
+      try{
+        var w=await sb.from('exec_weekly_plans').select('week_no,week_start,theme,status')
+          .gte('week_start',sinceD).lte('week_start',untilD).order('week_start',{ascending:true}).limit(15);
+        if(!w.error) (w.data||[]).forEach(function(x){
+          if(!x.week_start) return;
+          out.push({ kind:'week', title:'第'+(x.week_no||'?')+'週 '+(x.theme||'週次計画')+' 開始',
+                     when:calDayIso(x.week_start), allDay:true, place:'', note:(x.status||'') });
+        });
+      }catch(e){}
+    }
+    return out;
+  }
+
   async function knvRenderCal(force){
     var box=$('knv-cal'); if(!box) return;
     if(!CAL_ROWS || force){ box.innerHTML=tsgLoad('予定を読み込んでいます'); await calFetch(); }
@@ -10433,7 +10516,7 @@
     }
     var rows=CAL_ROWS.rows||[];
     if(!rows.length){
-      h+=tsgSay('これから60日間の予定はまだありません。<b>「＋ 予定を追加」</b>から入れておくと、私がいつでもお答えします。');
+      h+=tsgSay('これから60日間の予定はまだありません。<b>「＋ 予定を追加」</b>から入れておくと、私がいつでもお答えします。<br>面談・課題の期日・支払い予定・資金調達・補助金の締切は、登録されると自動でここに並びます。');
     }else{
       var lastDay='';
       rows.forEach(function(x){
@@ -10444,8 +10527,8 @@
           h+='<div style="font-size:11.5px;color:#8A6A12;letter-spacing:.06em;margin:12px 0 6px;font-weight:700;">'
             +esc(calDT(x.when).split('）')[0]+'）')+(lb?'　'+esc(lb):'')+'</div>';
         }
-        var meet=(x.kind==='meet');
-        h+='<div style="border:1px solid '+(meet?'#EBDDB4':'var(--softline)')+';background:'+(meet?'rgba(195,155,63,.07)':'var(--card)')
+        var own=(x.kind==='own'), k=CAL_KINDS[x.kind]||null;
+        h+='<div style="border:1px solid '+(k?k.bd:'var(--softline)')+';background:'+(k?k.bg:'var(--card)')
           +';border-radius:10px;padding:10px 12px;margin-bottom:7px;">'
           +'<div style="display:flex;gap:8px;align-items:flex-start;">'
           +'<span style="font-size:12px;color:var(--muted);white-space:nowrap;font-feature-settings:\'tnum\';">'
@@ -10455,17 +10538,19 @@
             +(x.place?'<div style="font-size:11.5px;color:var(--muted);margin-top:2px;">場所・方法：'+esc(x.place)+'</div>':'')
             +(x.note?'<div style="font-size:11.5px;color:var(--muted);margin-top:2px;">'+esc(x.note)+'</div>':'')
           +'</div>'
-          +(meet
-             ? '<span class="pill" style="font-size:10px;background:rgba(195,155,63,.16);color:#8A6A12;border-radius:99px;padding:2px 8px;white-space:nowrap;">面談</span>'
-             : '<span style="white-space:nowrap;">'
+          +(own
+             ? '<span style="white-space:nowrap;">'
                +'<button class="ghost" style="font-size:11px;padding:3px 6px;" onclick="calOpenForm(\''+escJ(x.id)+'\')">編集</button>'
                +'<button class="ghost" style="font-size:11px;padding:3px 6px;color:#A9403D;" onclick="calDelete(\''+escJ(x.id)+'\')">削除</button>'
-             +'</span>')
+             +'</span>'
+             : '<span style="font-size:10px;background:'+(k?k.bg:'var(--soft)')+';color:'+(k?k.fg:'var(--muted)')
+               +';border:1px solid '+(k?k.bd:'var(--line)')+';border-radius:99px;padding:2px 8px;white-space:nowrap;">'
+               +esc(k?k.label:'')+'</span>')
         +'</div></div>';
       });
       h+='<div style="font-size:11px;color:#94A2B6;line-height:1.7;margin-top:10px;">'
-        +'「面談」は担当パートナーが登録したものです（ここでは変更できません）。'
-        +'ここに入れた予定は継ナビくんが把握し、「次の予定は？」に答えます。</div>';
+        +'印のついた予定（面談・課題・支払・調達・補助金・週次）は、それぞれの画面から自動で並びます。'
+        +'ここでは変更できません。<br>自分で入れた予定と合わせて、継ナビくんが把握しています。</div>';
     }
     box.innerHTML=h;
     if(CAL_EDIT!==null) calOpenForm(CAL_EDIT);
@@ -10557,6 +10642,7 @@
     if(eff!=='admin'){
       try{ out=out.concat(await knvMeetingsFetch(since, until)); }catch(e){}
     }
+    try{ out=out.concat(await calExtraFetch(since, until)); }catch(e){}
     out.sort(function(a,b){ return new Date(a.when)-new Date(b.when); });
     KNV_AGENDA=out.slice(0,20); KNV_AGENDA_AT=now;
     return KNV_AGENDA;
@@ -10573,7 +10659,8 @@
     var t=list.map(function(x){
       return '・'+calDT(x.when)+(x.allDay?'（終日）':'')+' '+x.title
         +(x.place?'／場所・方法: '+x.place:'')+(x.note?'／メモ: '+x.note:'')
-        +(x.kind==='meet'?'（担当パートナーが登録した面談）':'');
+        +(x.kind==='meet'?'（担当パートナーが登録した面談）':'')
+        +(x.kind&&CAL_KINDS[x.kind]&&x.kind!=='meet'?'（'+CAL_KINDS[x.kind].label+'）':'');
     }).join(' ');
     return head+' 登録されている予定は次のとおりです（2週間先まで）。'
       +'「予定」「面談」「今日は何がある」などを聞かれたら、これをもとに答えてください。'

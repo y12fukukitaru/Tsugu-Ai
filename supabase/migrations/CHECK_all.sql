@@ -60,6 +60,12 @@ select * from (
       then '✅ 実行済み' else '❌ 未実行' end,
     '20260814150000_signup_codes.sql'
   union all
+  select 12, '継ナビくんのカレンダー（agenda_events）',
+    case when exists (select 1 from information_schema.tables
+      where table_schema='public' and table_name='agenda_events')
+      then '✅ 実行済み' else '❌ 未実行' end,
+    '20260816090000_agenda_events.sql'
+  union all
   select 11, '権限昇格の防止（profiles の特権列トリガー）',
     case when exists (select 1 from pg_trigger
       where tgrelid='public.profiles'::regclass and not tgisinternal
