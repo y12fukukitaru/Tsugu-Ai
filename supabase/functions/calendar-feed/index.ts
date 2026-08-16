@@ -1,7 +1,10 @@
 // =============================================================
-// calendar-feed: TsuguAiの面談予定をICS形式で配信するEdge Function
-// Googleカレンダー等の「URLで追加」で購読すると、担当顧客との面談予定が
-// パートナーのカレンダーに自動表示される（Google審査・OAuth不要）。
+// calendar-feed: TsuguAiの予定をICS形式で配信するEdge Function
+// Googleカレンダー等の「URLで追加」で購読すると、次の2つが自動表示される
+// （Google審査・OAuth不要）。
+//   ① 面談予定（meetings_scheduled）… パートナーは担当顧客全社分
+//   ② 継ナビくんの「予定」タブに本人が入れた予定（agenda_events）
+// つまり「TsuguAiに入れれば Googleカレンダーにも出る」。
 //
 // 認証: URL内のトークン（calendar_feed_tokens）で本人を特定する
 //       いわゆるケイパビリティURL方式。JWTは使わないため
@@ -82,13 +85,53 @@ Deno.serve(async (req) => {
     });
   }
 
+  // 継ナビくんの「予定」タブに本人が入れた予定も配信する。
+  // TsuguAi に入れれば Googleカレンダーにも出る、という一方向の連携。
+  {
+    const { data: mine } = await sb
+      .from("agenda_events")
+      .select("id, title, starts_at, ends_at, all_day, place, note")
+      .eq("owner_id", partnerId)
+      .gte("starts_at", new Date(Date.now() - 30 * DAY).toISOString())
+      .lte("starts_at", new Date(Date.now() + 180 * DAY).toISOString())
+      .order("starts_at", { ascending: true })
+      .limit(300);
+
+    for (const e of mine ?? []) {
+      const start = new Date(e.starts_at);
+      const end = e.ends_at ? new Date(e.ends_at) : new Date(start.getTime() + 3600000);
+      const lines = [
+        "BEGIN:VEVENT",
+        `UID:tsuguai-agenda-${e.id}@tsugu-ai`,
+        `DTSTAMP:${icsDate(new Date())}`,
+      ];
+      if (e.all_day) {
+        // 終日はローカルの日付で書く（時刻を持たせると前日にずれることがある）
+        const d0 = icsDay(start);
+        const d1 = icsDay(new Date(start.getTime() + DAY));
+        lines.push(`DTSTART;VALUE=DATE:${d0}`, `DTEND;VALUE=DATE:${d1}`);
+      } else {
+        lines.push(`DTSTART:${icsDate(start)}`, `DTEND:${icsDate(end)}`);
+      }
+      lines.push(`SUMMARY:${icsText(e.title ?? "予定")}`);
+      if (e.place) lines.push(`LOCATION:${icsText(e.place)}`);
+      lines.push(`DESCRIPTION:${icsText((e.note ? e.note + " / " : "") + "TsuguAi の継ナビくんに登録された予定です。")}`);
+      if (!e.all_day) {
+        lines.push("BEGIN:VALARM", "TRIGGER:-PT30M", "ACTION:DISPLAY",
+                   `DESCRIPTION:${icsText("まもなく予定の時間です")}`, "END:VALARM");
+      }
+      lines.push("END:VEVENT");
+      events.push(lines.join("\r\n"));
+    }
+  }
+
   const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//TsuguAi//KeiNavi//JA",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    `X-WR-CALNAME:${icsText("TsuguAi 面談")}`,
+    `X-WR-CALNAME:${icsText("TsuguAi 継ナビくん")}`,
     "X-WR-TIMEZONE:Asia/Tokyo",
     ...events,
     "END:VCALENDAR",
@@ -105,6 +148,12 @@ Deno.serve(async (req) => {
 
 function icsDate(d: Date) {
   return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+}
+function icsDay(d: Date) {
+  // 日本時間の日付として書き出す（UTCだと前日になることがある）
+  const j = new Date(d.getTime() + 9 * 3600000);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${j.getUTCFullYear()}${p(j.getUTCMonth() + 1)}${p(j.getUTCDate())}`;
 }
 function icsText(s: string) {
   return String(s).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");

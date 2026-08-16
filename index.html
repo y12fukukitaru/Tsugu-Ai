@@ -1195,7 +1195,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260816-6';
+  var APP_BUILD='20260816-7';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -9656,6 +9656,7 @@
         ['補助金・助成金を知りたい','◯◯（設備投資／IT導入／雇用）に使える補助金・助成金の種類と、申請の一般的な流れを教えてください。']]},
       {t:'📅 予定', subs:[
         ['次の予定はいつ？','次の予定を教えてください。'],
+        ['予定を入れてほしい','来週◯曜日の◯時に「◯◯」の予定を入れてください。'],
         ['今週の予定を整理したい','今週の予定を整理して、優先順位と段取りを一緒に考えてください。'],
         ['面談までに準備すること','次の面談までに、私のほうで準備しておくとよいことを教えてください。']]},
       {t:'🧭 アプリの使い方', subs:[
@@ -10332,6 +10333,8 @@
             +'<span class="tsg-face">'+tsgNaviSvg()+'</span>'
             +'<div style="min-width:0;max-width:86%;"><div class="tsg-name">継ナビくん'+tag+'</div>'
             +'<div class="ai-bubble">'+inner+'</div>'
+            +(m.draft?calDraftCard(m.draft, mi):'')
+            +(m.draftDone?'<div style="font-size:11.5px;color:#27684A;margin-top:6px;">✓ '+esc(m.draftDone)+'</div>':'')
             +'</div></div>';
         }
       });
@@ -10787,6 +10790,62 @@
     KNV_AGENDA=out.slice(0,20); KNV_AGENDA_AT=now;
     return KNV_AGENDA;
   }
+  // AIが出した下書きを、そのまま信じずに整える
+  function calDraftClean(o){
+    if(!o || typeof o!=='object') return null;
+    var t=String(o.title||'').trim().slice(0,120);
+    var when=String(o.start||'').trim();
+    if(!t || !when) return null;
+    var d=new Date(when);
+    if(isNaN(d)) return null;
+    // 過去すぎる・遠すぎるものは受け付けない（言い間違いの取り違えを防ぐ）
+    var diff=(d-Date.now())/86400000;
+    if(diff< -1 || diff>730) return null;
+    return { title:t, start:d.toISOString(), allDay:!!o.allDay,
+             place:String(o.place||'').trim().slice(0,120),
+             note:String(o.note||'').trim().slice(0,300) };
+  }
+  // 確認のカード（本文の下に出る）
+  function calDraftCard(d, mi){
+    return '<div style="border:1px solid var(--gold);background:rgba(195,155,63,.07);border-radius:11px;padding:11px 13px;margin-top:8px;">'
+      +'<div style="font-size:11px;color:#8A6A12;font-weight:700;letter-spacing:.06em;margin-bottom:5px;">この予定を登録しますか？</div>'
+      +'<div style="font-size:13px;font-weight:700;color:var(--ink);">'+esc(d.title)+'</div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:3px;">'+esc(calDT(d.start))+(d.allDay?'（終日）':'')+'</div>'
+      +(d.place?'<div style="font-size:11.5px;color:var(--muted);margin-top:2px;">場所・方法：'+esc(d.place)+'</div>':'')
+      +(d.note?'<div style="font-size:11.5px;color:var(--muted);margin-top:2px;">'+esc(d.note)+'</div>':'')
+      +'<div style="display:flex;gap:7px;align-items:center;margin-top:9px;flex-wrap:wrap;">'
+        +'<button class="btn2" style="font-size:12px;padding:6px 14px;" onclick="calDraftSave('+mi+')">📅 登録する</button>'
+        +'<button class="ghost" style="font-size:12px;" onclick="calDraftDrop('+mi+')">やめる</button>'
+      +'</div></div>';
+  }
+  async function calDraftSave(mi){
+    var m=SEC_MSGS[mi]; if(!m || !m.draft) return;
+    var d=m.draft;
+    var res=await sb.from('agenda_events').insert({
+      owner_id:ME, title:d.title, starts_at:d.start, all_day:!!d.allDay,
+      place:d.place||null, note:d.note||null
+    });
+    if(res.error){ alert('登録エラー：'+res.error.message+'（agenda_events のSQLが未実行の可能性があります）'); return; }
+    m.draft=null; m.draftDone='「'+d.title+'」を予定に登録しました。';
+    knvAgendaReset(); renderSecLog(); aisecSave();
+  }
+  function calDraftDrop(mi){
+    var m=SEC_MSGS[mi]; if(!m) return;
+    m.draft=null; m.draftDone='登録しませんでした。';
+    renderSecLog(); aisecSave();
+  }
+
+  // 会話から予定を登録する。AIには最後に [EVENT] 行を出させ、
+  //  画面側で「登録しますか？」を挟む。黙って書き込むことはしない。
+  function calAskNote(){
+    return ' 【予定の登録】ユーザーが「予定を入れて」「登録して」など、予定を作ってほしいと明確に頼んだときだけ、'
+      +'返答の最後に次の1行を足してください。頼まれていないときは絶対に出さないこと。'
+      +' [EVENT] {"title":"予定の名前","start":"YYYY-MM-DDTHH:MM","allDay":false,"place":"場所（無ければ空）","note":"メモ（無ければ空）"}'
+      +' 日時は上の【今日の情報】を基準に、「来週火曜」「明日の10時」などを実際の日付に直して書くこと。'
+      +' 時刻が分からないときは allDay を true にし、start の時刻は 09:00 とすること。'
+      +' 本文では「この内容でよろしければ、下のボタンから登録できます」と一言添えること。'
+      +' 実際に登録するのは本人がボタンを押したときなので、「登録しました」とは書かないこと。';
+  }
   function knvAgendaNote(list){
     var d=new Date();
     var head=' 【今日の情報】今日は'+d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日（'
@@ -10821,7 +10880,7 @@
     var rag='';
     if(aisecPortal()==='consultant'){ try{ rag=knRagContext(t, await knRagFetch()); }catch(e){} }
     var agenda=null; try{ agenda=await knvAgendaFetch(); }catch(e){}
-    var sys=SEC_SYS+secUsageGuide()+knvCtxNote()+knvAgendaNote(agenda)+secDrillNote()+rag;
+    var sys=SEC_SYS+secUsageGuide()+knvCtxNote()+knvAgendaNote(agenda)+calAskNote()+secDrillNote()+rag;
     var msgs=SEC_MSGS.filter(function(m){return m.content!=='（考え中…）';}).map(function(m){return {role:m.role,content:m.content};});
     try{
       var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:msgs, model:model, max_tokens:1400 } });
@@ -10836,7 +10895,13 @@
           SEC_FU=qm[1].split(/[｜|]/).map(function(s){ return s.trim(); }).filter(Boolean).slice(0,3);
           out=out.slice(0,qm.index).replace(/\s+$/,'');
         }
-        SEC_MSGS.push({role:'assistant',content:out, model:label, ts:Date.now()});
+        // 予定の下書き。ここでは保存せず、確認のカードとして本文の下に添える
+        var ev=null, em=out.match(/\n?\s*\[EVENT\]\s*(\{[\s\S]*?\})\s*$/);
+        if(em){
+          out=out.slice(0,em.index).replace(/\s+$/,'');
+          try{ ev=calDraftClean(JSON.parse(em[1])); }catch(e){ ev=null; }
+        }
+        SEC_MSGS.push({role:'assistant',content:out, model:label, ts:Date.now(), draft:ev});
       }
     }catch(e){ if(SEC_MSGS.length && SEC_MSGS[SEC_MSGS.length-1].content==='（考え中…）') SEC_MSGS.pop(); SEC_MSGS.push({role:'assistant',content:'エラー：'+String((e&&e.message)||e),ts:Date.now()}); }
     renderSecLog(); aisecSave(); knvSugsRender(); if(btn)btn.disabled=false;
