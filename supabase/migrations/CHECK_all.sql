@@ -60,6 +60,13 @@ select * from (
       then '✅ 実行済み' else '❌ 未実行' end,
     '20260814150000_signup_codes.sql'
   union all
+  select 11, '権限昇格の防止（profiles の特権列トリガー）',
+    case when exists (select 1 from pg_trigger
+      where tgrelid='public.profiles'::regclass and not tgisinternal
+        and tgname='profiles_freeze_privileged')
+      then '✅ 実行済み' else '❌ 未実行（重大）' end,
+    '20260816070000_profiles_freeze_privileged.sql'
+  union all
   select 10, 'プロフィール画像（profiles.avatar）',
     case when exists (select 1 from information_schema.columns
       where table_schema='public' and table_name='profiles' and column_name='avatar')
