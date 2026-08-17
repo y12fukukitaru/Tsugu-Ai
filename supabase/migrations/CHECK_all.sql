@@ -66,6 +66,12 @@ select * from (
       then '✅ 実行済み' else '❌ 未実行' end,
     '20260817000000_onboarding_reports_status.sql'
   union all
+  select 15, '初期診断報告書の列がそろっているか（cash など）',
+    case when exists (select 1 from information_schema.columns
+      where table_schema='public' and table_name='onboarding_reports' and column_name='cash')
+      then '✅ 実行済み' else '❌ 未実行' end,
+    '20260817020000_onboarding_reports_columns.sql'
+  union all
   select 14, '初期診断レポート：下書きを顧客から隠す',
     case when exists (select 1 from pg_policies
       where schemaname='public' and tablename='onboarding_reports'
