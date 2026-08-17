@@ -1222,7 +1222,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260817-1';
+  var APP_BUILD='20260817-2';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2024,14 +2024,20 @@
         +'<div id="adm-risk">読み込み中...</div></div>'
       +'<div class="panel" id="sec-fde"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">パートナー 一覧・稼働モニタ<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
         +'<input id="adm-fde-search" class="searchbox" style="margin-top:8px;" placeholder="🔍 名前・メールアドレスで検索" oninput="renderAdmFde()">'
-        +'<div id="adm-fde" style="margin-top:10px;">読み込み中...</div></div>'
+        +'<div id="adm-fde" style="margin-top:10px;">読み込み中...</div>'
+        +'<div style="font-size:11px;color:#94A2B6;margin-top:8px;line-height:1.7;">'
+          +'役割（顧客／パートナー／運営）の変更は、<b>「運営メンバー」メニュー</b>の'
+          +'「アカウントと役割の管理」から行えます。登録コードを使わずに、あとから切り替えられます。</div></div>'
       +'<div class="panel" id="sec-cust"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">顧客 一覧・管理<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
         +'<input id="adm-cust-search" class="searchbox" style="margin-top:8px;" placeholder="🔍 会社名・メールアドレスで検索" oninput="renderAdmCust()">'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px;" id="adm-cust-filterbar">'
           +'<button class="sbtn on" data-f="all" onclick="setAdmCustFilter(\'all\',this)">すべて</button>'
           +'<button class="sbtn" data-f="unassigned" onclick="setAdmCustFilter(\'unassigned\',this)">担当未割当</button>'
         +'</div>'
-        +'<div id="adm-cust" style="margin-top:6px;">読み込み中...</div></div>'
+        +'<div id="adm-cust" style="margin-top:6px;">読み込み中...</div>'
+        +'<div style="font-size:11px;color:#94A2B6;margin-top:8px;line-height:1.7;">'
+          +'役割（顧客／パートナー／運営）の変更は、<b>「運営メンバー」メニュー</b>の'
+          +'「アカウントと役割の管理」から行えます。登録コードを使わずに、あとから切り替えられます。</div></div>'
       +'<div class="panel" id="sec-team"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 21v-1.8a3.7 3.7 0 0 0-3.7-3.7H6.2A3.7 3.7 0 0 0 2.5 19.2V21"/><circle cx="8.75" cy="7.5" r="3.7"/><path d="M21.5 21v-1.8a3.7 3.7 0 0 0-2.8-3.6"/><path d="M15.5 4a3.7 3.7 0 0 1 0 7.1"/></svg>運営メンバー</span>'
         +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin();loadAdmAssign();">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.8;">アカウントの役割と、運営内の権限を管理します。<b style="color:var(--navy);">このメニューは代表のみに表示されます。</b>権限を渡した相手が、さらに他の人へ権限を配れてしまうのを防ぐためです。</div>'
@@ -2461,9 +2467,16 @@
     var labels={customer:'顧客',consultant:'パートナー',admin:'運営'};
     var u=(ADM_CACHE.all||[]).filter(function(r){ return r.id===id; })[0]||{};
     var nm=u.company_name||u.contact_name||u.email||'このアカウント';
-    if(!confirm('「'+nm+'」の役割を「'+(labels[role]||role)+'」に変更します。\n役割を変えると、表示されるポータルと各一覧（顧客一覧・パートナー一覧）が変わります。\nよろしいですか？')){ renderAdmRoles(); return; }
+    if(!confirm('「'+nm+'」の役割を「'+(labels[role]||role)+'」に変更します。\n役割を変えると、表示されるポータルと各一覧（顧客一覧・パートナー一覧）が入れ替わります。よろしいですか？')){ loadAdmin(); return; }
     var res=await sb.from('profiles').update({ role:role }).eq('id',id);
-    if(res.error){ alert('役割変更エラー：'+res.error.message); }
+    if(res.error){ alert('役割変更エラー：'+res.error.message); loadAdmin(); return; }
+    // 役割の列はデータベース側でも守られており、代表以外の変更は
+    // エラーにならず「元の値のまま」戻る。反映されたかを必ず読み直す
+    var chk=await sb.from('profiles').select('role').eq('id',id).maybeSingle();
+    if(!chk.error && chk.data && chk.data.role!==role){
+      alert('役割は変更されませんでした。\n\n役割を変えられるのは代表アカウントのみです。'
+        +'（いまのアカウント：'+(window.__email||'')+'）\n代表アカウントでログインし直してからお試しください。');
+    }
     loadAdmin();
   }
   function renderAdmRoles(){
