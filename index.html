@@ -1218,11 +1218,40 @@
   //  先に JS の文字列として \' に直してから、HTML として escape する（順序が肝）。
   function escJ(s){ return escA(String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")); }
 
+  // ===== 日時（日本時間）=====
+  //  Supabase の *_at 列は timestamptz で、返ってくるのは UTC（…T07:49:12+00:00）。
+  //  これを文字で切ると 07:49 と出てしまう。日本時間では 16:49 で、9時間ずれる。
+  //  日付だけを切る場合も、0:00〜9:00 の間は前日の日付になる。
+  //  逆に new Date().toISOString() で「今日」を作ると、同じ9時間だけ前日になる。
+  //
+  //  この会社の予定・締切・報告日はすべて日本の日付なので、表示も判定も日本時間に
+  //  そろえる。端末の時計の地域には依存させない。
+  var JST_MS=9*3600*1000;
+  function jstShift(v){ var t=Date.parse(String(v||'')); return isNaN(t)?null:new Date(t+JST_MS); }
+  // 今日（日本時間）の 'YYYY-MM-DD'
+  function jstToday(){ return new Date(Date.now()+JST_MS).toISOString().slice(0,10); }
+  // 今月（日本時間）の 'YYYY-MM'
+  function jstMonth(){ return jstToday().slice(0,7); }
+  //  保存された値 → 日本時間の 'YYYY-MM-DD'
+  //  date 列（'2026-08-17'）は時刻を持たないのでそのまま返す。ずらすと日付が動く。
+  function jstDay(v){
+    var s=String(v==null?'':v); if(!s) return '';
+    if(s.length<=10) return s.slice(0,10);
+    var d=jstShift(s); return d? d.toISOString().slice(0,10) : s.slice(0,10);
+  }
+  //  保存された値 → 日本時間の 'MM-DD HH:MM'
+  function jstMin(v){ var d=jstShift(v); return d? d.toISOString().slice(5,16).replace('T',' ') : ''; }
+  //  組み立てた Date（端末の地域で年月日を指定したもの）→ 'YYYY-MM-DD'
+  //  toISOString を使うと UTC に戻されて前日になるため、部品から組む。
+  function ymdLocal(d){
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+
   // ===== 版の確認 =====
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260817-2';
+  var APP_BUILD='20260817-4';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2349,7 +2378,7 @@
     // 新規登録の推移（直近6ヶ月）
     var months=[], mlabel=[]; var now=new Date();
     for(var i=5;i>=0;i--){ var d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)); mlabel.push((d.getMonth()+1)+'月'); }
-    var mc={}; custs.forEach(function(c){ var ym=(c.created_at||'').slice(0,7); if(ym) mc[ym]=(mc[ym]||0)+1; });
+    var mc={}; custs.forEach(function(c){ var ym=jstDay(c.created_at).slice(0,7); if(ym) mc[ym]=(mc[ym]||0)+1; });
     var maxm=Math.max(1,Math.max.apply(null,months.map(function(m){return mc[m]||0;})));
     h+='<div style="font-size:12px;font-weight:700;color:var(--navy);margin:14px 0 6px;">新規顧客の推移（直近6ヶ月）</div>';
     h+='<div style="display:flex;align-items:flex-end;gap:8px;height:90px;padding:0 4px;">';
@@ -2691,8 +2720,8 @@
       return {c:c, raw:d.pct, pct:capped, isCap:(d.pct>cap), parts:d.parts, fee:fee, direct:false};
     });
     var mrr=partnerMRR+advNet;
-    var ym=new Date().toISOString().slice(0,7);
-    var newC=custs.filter(function(c){ return (c.created_at||'').slice(0,7)===ym; }).length;
+    var ym=jstMonth();
+    var newC=custs.filter(function(c){ return jstDay(c.created_at).slice(0,7)===ym; }).length;
     var initThisMonth=newC*init;
     function card(l,v,sub,c){ return '<div style="flex:1 1 150px;min-width:150px;background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:11px 13px;"><div style="font-size:10.5px;color:#94A2B6;">'+l+'</div><div style="font-size:19px;font-weight:700;color:'+(c||'#1E3A66')+';">'+v+'</div>'+(sub?'<div style="font-size:10.5px;color:#94A2B6;margin-top:2px;">'+sub+'</div>':'')+'</div>'; }
     box.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;">'
@@ -2822,7 +2851,7 @@
     var audL={all:'全員',consultant:'パートナー',customer:'顧客'};
     var h='';
     rows.forEach(function(a){
-      var dt=(a.created_at||'').slice(0,10);
+      var dt=jstDay(a.created_at);
       h+='<div style="border:1px solid #EDF1F6;border-radius:10px;padding:10px 12px;margin-bottom:8px;">'
         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span class="tag blue">'+esc(audL[a.audience]||a.audience)+'</span><span style="font-size:11px;color:#94A2B6;">'+esc(dt)+'</span><span style="flex:1;"></span><span onclick="delAnnouncement(\''+a.id+'\')" style="color:#A9403D;cursor:pointer;font-size:11px;">削除</span></div>'
         +'<div style="font-size:13px;font-weight:700;color:#18202E;margin-top:5px;">'+esc(a.title)+'</div>'
@@ -2845,7 +2874,7 @@
     if(res.error || !(res.data||[]).length){ box.innerHTML=''; return; }
     var h='<div class="panel"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3.5 10.2 15-5.2v14l-15-5.2z"/><path d="M11.6 16.2a3 3 0 0 1-5.5-1.2"/><path d="M20.5 9.5v5"/></svg>運営からのお知らせ</span></div>';
     (res.data||[]).forEach(function(a){
-      var dt=(a.created_at||'').slice(0,10);
+      var dt=jstDay(a.created_at);
       h+='<div style="border-left:3px solid #C39B3F;background:#FFFBF2;border-radius:8px;padding:9px 12px;margin-bottom:6px;"><div style="font-size:11px;color:#94A2B6;">'+esc(dt)+'</div><div style="font-size:13px;font-weight:700;color:#18202E;">'+esc(a.title)+'</div><div style="font-size:12px;color:#5A6981;line-height:1.6;margin-top:2px;white-space:pre-wrap;">'+esc(a.body)+'</div></div>';
     });
     box.innerHTML=h+'</div>';
@@ -3428,7 +3457,7 @@
     var open=(rows||[]).filter(function(r){ return r.status!=='done'; });
     if(!open.length) return '<div style="font-size:12px;color:#94A2B6;">未対応の課題はありません。</div>';
     open.sort(function(a,b){ return (a.due_date||'9999').localeCompare(b.due_date||'9999'); });
-    var today=new Date().toISOString().slice(0,10);
+    var today=jstToday();
     var h='<div style="font-size:12px;color:#5A6981;margin-bottom:8px;">未対応 '+open.length+' 件</div>';
     open.forEach(function(r){
       var over = r.due_date && r.due_date < today;
@@ -3495,7 +3524,7 @@
       res=await sb.from('financial_entries').insert(row);
     }
     if(res.error){ if(msg){msg.style.color='#A9403D'; msg.textContent='保存エラー：'+res.error.message+'（Phase21のSQL未実施の可能性があります）';} return; }
-    $('cfin-ym').value=new Date().toISOString().slice(0,7); $('cfin-rev').value=''; $('cfin-prof').value=''; $('cfin-memo').value='';
+    $('cfin-ym').value=jstMonth(); $('cfin-rev').value=''; $('cfin-prof').value=''; $('cfin-memo').value='';
     finDetailClear('cfin');
     if(msg){msg.style.color='#27684A'; msg.textContent='保存しました（顧客の画面にも反映されます）';}
     reloadClientFin(custId);
@@ -4594,7 +4623,7 @@
     {k:'q3', label:'統合作業', opts:['順調','遅れあり','停滞']}
   ];
   var MA_CACHE={deals:[],pulses:{},names:{}};
-  function thisYM(){ var d=new Date(Date.now()+9*3600*1000); return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0'); }
+  function thisYM(){ return jstMonth(); }
   function pulseLight(p){
     if(!p) return '<span class="tag gray">今月 未回答</span>';
     if(p.score<=1) return '<span class="tag green">今月 良好（'+p.score+'/6）</span>';
@@ -4622,7 +4651,7 @@
     var price=(d.closed_price!=null?d.closed_price:d.expected_price);
     var parts=[];
     if(price){ var f=lehmanFee(price); parts.push('<span style="color:#27684A;font-weight:700;">M&A仲介フィー（レーマン方式）：'+yen(f.total)+'</span><span style="color:#94A2B6;">（'+(d.closed_price!=null?'成約額':'想定額')+' '+Number(price).toLocaleString()+'万円）</span>'); }
-    if(d.closed_at) parts.push('<span class="tag green">成約 '+(d.closed_at||'').slice(0,10)+'</span>');
+    if(d.closed_at) parts.push('<span class="tag green">成約 '+jstDay(d.closed_at)+'</span>');
     if(d.savings_annual) parts.push('<span style="color:#8F7230;">💡 コスト削減 創出額：年 '+Number(d.savings_annual).toLocaleString()+'万円 → M&A原資・再投資へ</span>');
     if(d.batonz_ref){ var br=String(d.batonz_ref); var link=/^https?:\/\//.test(br)?('<a href="'+escA(br)+'" target="_blank" rel="noopener">バトンズ案件を開く ↗</a>'):('バトンズ参照：'+esc(br)); parts.push('<span style="color:#2C5DA8;">'+link+'</span>'); }
     if(!parts.length) return '';
@@ -4933,7 +4962,7 @@
         +(it.c1?'<div style="font-size:10.5px;color:#2C5DA8;font-weight:600;margin-top:6px;">'+esc(L.l1)+'</div><div style="font-size:12.5px;color:#1E3A66;line-height:1.7;white-space:pre-wrap;">'+esc(it.c1)+'</div>':'')
         +(it.c2?'<div style="font-size:10.5px;color:#2C5DA8;font-weight:600;margin-top:8px;">'+esc(L.l2)+'</div><div style="font-size:12.5px;color:#1E3A66;line-height:1.7;white-space:pre-wrap;background:#F8F9FC;border-radius:8px;padding:8px 10px;">'+esc(it.c2)+'</div>':'')
         +(it.c3?'<div style="font-size:10.5px;color:#2C5DA8;font-weight:600;margin-top:8px;">'+esc(L.l3)+'</div><div style="font-size:12.5px;color:#1E3A66;line-height:1.7;white-space:pre-wrap;">'+esc(it.c3)+'</div>':'')
-        +'<div style="font-size:10.5px;color:#94A2B6;margin-top:8px;">投稿：'+esc(KN_CACHE.names[it.author_id]||'パートナー')+'・'+esc((it.created_at||'').slice(0,10))+'</div>'
+        +'<div style="font-size:10.5px;color:#94A2B6;margin-top:8px;">投稿：'+esc(KN_CACHE.names[it.author_id]||'パートナー')+'・'+esc(jstDay(it.created_at))+'</div>'
         +((it.status==='pending'&&knIsApprover())?'<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;"><button class="btn2" style="padding:7px 14px;font-size:12px;" onclick="approveKnowledge(\''+it.id+'\',true)">承認して公開</button><button class="ghost" style="font-size:12px;" onclick="approveKnowledge(\''+it.id+'\',false)">差し戻す</button><span id="knmsg-'+it.id+'" style="font-size:12px;"></span></div>':'')
         +'</div>';
       h+='<div class="clcard" style="cursor:pointer;" onclick="toggleKnDetail(\''+it.id+'\',\''+it.status+'\','+(mine?'true':'false')+')">'
@@ -5035,7 +5064,7 @@
           +'<span class="tag green" style="font-size:10px;">公開済み</span>'
           +(d.partner_note?'<span style="font-size:10.5px;color:#8A6A12;">ひとことあり</span>':'')
           +'<span style="flex:1;"></span>'
-          +'<span style="font-size:10.5px;color:var(--muted);">'+esc(String(d.published_at||'').slice(0,10))+'</span>'
+          +'<span style="font-size:10.5px;color:var(--muted);">'+esc(jstDay(d.published_at))+'</span>'
           +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:6px 11px;" onclick="clRepOpen(\''+d.id+'\')">印刷・PDF</button>'
         +'</div>';
       }).join('');
@@ -5051,7 +5080,7 @@
     body.innerHTML='<div class="rep-sec">'
       +'<div class="rep-h" style="font-size:17px;color:#1E3A66;font-weight:700;">'+esc(co||'月次レポート')+'　'+esc(ymJp(d.report_month))+'分</div>'
       +'<div class="rep-meta" style="font-size:11px;color:#94A2B6;margin-bottom:10px;">'
-        +(d.status==='published'?('公開日 '+esc(String(d.published_at||'').slice(0,10))):'下書き（未公開）')+'</div>'
+        +(d.status==='published'?('公開日 '+esc(jstDay(d.published_at))):'下書き（未公開）')+'</div>'
       +(d.partner_note?'<div style="border:1.5px solid #E3D9BE;background:rgba(195,155,63,.09);border-radius:10px;padding:10px 13px;margin-bottom:10px;">'
           +'<div style="font-size:13px;color:#18202E;line-height:1.85;">'+esc(d.partner_note)+'</div>'
           +'<div style="font-size:10.5px;color:#8A6A12;margin-top:4px;">担当パートナーより</div></div>':'')
@@ -5146,7 +5175,7 @@
       h+='<div style="border:1px solid #EDF1F6;border-radius:11px;padding:13px 14px;margin-bottom:9px;background:#fff;">'
         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;font-weight:700;color:#18202E;">'+esc(ymJp(d.report_month))+'のレポート</span>'
         +(i===0?'<span class="tag blue">最新</span>':'')
-        +'<span style="margin-left:auto;font-size:10.5px;color:#94A2B6;">'+esc((d.published_at||'').slice(0,10))+' 公開</span></div>'
+        +'<span style="margin-left:auto;font-size:10.5px;color:#94A2B6;">'+esc(jstDay(d.published_at))+' 公開</span></div>'
         +(d.partner_note?'<div style="border:1.5px solid #E3D9BE;background:rgba(195,155,63,.09);border-radius:10px;padding:10px 13px;margin-top:9px;">'
             +'<div style="font-size:13px;color:#18202E;line-height:1.85;">'+esc(d.partner_note)+'</div>'
             +'<div style="font-size:10.5px;color:#8A6A12;margin-top:4px;">担当パートナーより</div>'
@@ -5195,7 +5224,7 @@
       var last='';
       if(lm){
         var who=lm.sender_role==='customer'?'顧客':'自分';
-        var dt=(lm.created_at||'').replace('T',' ').slice(5,16);
+        var dt=jstMin(lm.created_at);
         last='<div class="cl-last">💬 '+esc(who)+'（'+esc(dt)+'）：'+esc((lm.body||'').slice(0,60))+'</div>';
       }
       h+='<div class="clcard'+(un?' unread':'')+'" onclick="viewClient(\''+c.id+'\',\''+escJ(c.email)+'\',\''+escJ(c.company_name||'')+'\')">'
@@ -5217,9 +5246,9 @@
     if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">まだ提案メモはありません。</div>'; return; }
     var h='';
     res.data.forEach(function(n){
-      var dt=(n.created_at||'').slice(0,10);
+      var dt=jstDay(n.created_at);
       var ack = n.acked
-        ? '<span class="tag green">✓ 顧客確認済み'+(n.acked_at?('（'+String(n.acked_at).slice(0,10)+'）'):'')+'</span>'
+        ? '<span class="tag green">✓ 顧客確認済み'+(n.acked_at?('（'+jstDay(n.acked_at)+'）'):'')+'</span>'
         : '<span class="tag gray">顧客未確認</span>';
       h+='<div style="border:1px solid #EDF1F6;border-radius:9px;padding:10px 12px;margin-bottom:6px;background:#fff;">'
         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">'
@@ -5248,7 +5277,7 @@
   function payTable(rows, scope, editable){
     if(editable==null) editable=true;
     if(!rows||!rows.length) return '<div style="font-size:12px;color:#94A2B6;">支払予定はまだ登録されていません。</div>';
-    var today=new Date().toISOString().slice(0,10);
+    var today=jstToday();
     var h='<table class="ft"><tr><th>支払日</th><th>内容</th><th style="text-align:right;">金額(万円)</th>'+(editable?'<th></th>':'')+'</tr>';
     rows.forEach(function(r){
       var soon = r.due_date && r.due_date>=today && (new Date(r.due_date)-new Date(today))/86400000<=30;
@@ -5272,7 +5301,7 @@
     var res=await sb.from('insurance_results').select('*').eq('customer_id',SCOPE).order('created_at',{ascending:false});
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(res.error.message)+'</div>'; return; }
     if(!res.data.length){ box.innerHTML=tsgSay('共有された試算結果はまだありません。相続・贈与や保険の試算をご希望なら、<b>「メッセージ」から一言</b>お伝えください。'); return; }
-    var h=''; res.data.forEach(function(r){ var dt=(r.created_at||'').slice(0,10); h+='<div style="border-left:3px solid #2C5DA8;background:#F8F9FC;border-radius:8px;padding:10px 12px;margin-bottom:6px;"><div style="font-size:11px;color:#94A2B6;margin-bottom:4px;">'+esc(dt)+'</div><div style="font-size:12.5px;color:#18202E;white-space:pre-wrap;line-height:1.7;">'+esc(r.summary||'')+'</div></div>'; });
+    var h=''; res.data.forEach(function(r){ var dt=jstDay(r.created_at); h+='<div style="border-left:3px solid #2C5DA8;background:#F8F9FC;border-radius:8px;padding:10px 12px;margin-bottom:6px;"><div style="font-size:11px;color:#94A2B6;margin-bottom:4px;">'+esc(dt)+'</div><div style="font-size:12.5px;color:#18202E;white-space:pre-wrap;line-height:1.7;">'+esc(r.summary||'')+'</div></div>'; });
     box.innerHTML=h;
   }
   async function loadClientPayments(custId){
@@ -6004,7 +6033,7 @@
   // この顧客への診断・提案履歴（ai_proposals）。非表示（記録は残す）と削除（完全消去）を選べる
   var DIAG_SHOW_HIDDEN=false;
   function diagHistItem(p, custId, isHidden){
-    var dt=(p.created_at||'').slice(0,10);
+    var dt=jstDay(p.created_at);
     var hid='dh_'+String(p.id).replace(/[^a-zA-Z0-9]/g,'');
     return '<div style="border:1px solid '+(isHidden?'#E2E8F2':'#EDF1F6')+';border-radius:10px;padding:10px 12px;margin-bottom:8px;'+(isHidden?'background:#F7F9FC;opacity:.85;':'')+'">'
       +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
@@ -6325,7 +6354,7 @@
       var tc=(r.todos||[]).length;
       h+='<div class="clcard" style="cursor:pointer;" onclick="toggleMeeting(\''+r.id+'\')">'
         +'<div class="cl-top"><span class="cl-nm">'+esc(r.title||'議事録')+'</span>'
-        +'<span class="tag gray" style="margin-left:auto;">'+esc(r.meeting_date||(r.created_at||'').slice(0,10))+'</span>'
+        +'<span class="tag gray" style="margin-left:auto;">'+esc(r.meeting_date||jstDay(r.created_at))+'</span>'
         +(r.shared?'<span class="tag green">共有済</span>':'')
         +(tc?'<span class="tag blue">ToDo '+tc+'</span>':'')+'</div>'
         +'<div id="mnd-'+r.id+'" class="hidden" style="margin-top:8px;font-size:12.5px;color:var(--ink);line-height:1.8;white-space:pre-wrap;">'+mnFmt(r.summary)+'</div>'
@@ -6450,7 +6479,7 @@
     (res.data||[]).forEach(function(r){
       h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:12px 14px;margin-bottom:9px;background:var(--card);">'
         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:13px;font-weight:700;color:var(--ink);">'+esc(r.title||'面談記録')+'</span>'
-        +'<span style="margin-left:auto;font-size:11px;color:#94A2B6;">'+esc(r.meeting_date||(r.created_at||'').slice(0,10))+'</span></div>'
+        +'<span style="margin-left:auto;font-size:11px;color:#94A2B6;">'+esc(r.meeting_date||jstDay(r.created_at))+'</span></div>'
         +'<div style="font-size:12.5px;color:var(--ink);line-height:1.8;white-space:pre-wrap;margin-top:8px;">'+mnFmt(r.summary)+'</div>'
       +'</div>';
     });
@@ -6482,7 +6511,7 @@
       var txt=''; try{ var d=res.data; txt=(d&&d.content&&d.content.map?d.content.map(function(c){return c.text||'';}).join(''):String(d||'')); }catch(_){ txt=String(res.data||''); }
       var plan=null; try{ var i1=txt.indexOf('{'), i2=txt.lastIndexOf('}'); plan=JSON.parse(txt.slice(i1,i2+1)); }catch(_){ plan=null; }
       var body=$('bp-body'); if(!body) throw new Error('表示先がありません');
-      var today=new Date().toISOString().slice(0,10);
+      var today=jstToday();
       var h='<div class="rep-sec" style="margin-bottom:14px;">'
         +'<div style="display:flex;align-items:flex-start;gap:10px;"><div style="font-family:\'DM Sans\',sans-serif;font-size:22px;font-weight:600;color:#1E3A66;">TsuguAi</div><div style="flex:1;"></div><div style="text-align:right;font-size:11px;color:#94A2B6;">作成日：'+esc(today)+'</div></div>'
         +'<div style="font-size:18px;font-weight:700;color:#18202E;margin-top:8px;">事業計画書（ドラフト）</div>'
@@ -6826,7 +6855,7 @@
   }
   // ---- 資金見通しの共通計算 ----
   function cfProject(snap, pays){
-    var today=new Date(); var todayS=today.toISOString().slice(0,10);
+    var today=new Date(); var todayS=jstToday();
     var future=(pays||[]).filter(function(p){ return p.due_date && p.due_date>=todayS; });
     var out={ future:future, months:[], shortMonth:null, runway:null, cash:null, net:null, warnLine:null };
     if(!snap) return out;
@@ -6837,8 +6866,8 @@
     var bal=cash;
     for(var i=1;i<=6;i++){
       var mDate=new Date(today.getFullYear(), today.getMonth()+i, 1);
-      var mStart=mDate.toISOString().slice(0,10);
-      var mEnd=new Date(today.getFullYear(), today.getMonth()+i+1, 0).toISOString().slice(0,10);
+      var mStart=ymdLocal(mDate);
+      var mEnd=ymdLocal(new Date(today.getFullYear(), today.getMonth()+i+1, 0));
       var mPay=future.filter(function(p){ return p.due_date>=mStart && p.due_date<=mEnd; }).reduce(function(a,p){ return a+Number(p.amount||0); },0);
       bal=bal+net-mPay;
       var lbl=(mDate.getMonth()+1)+'月';
@@ -6851,7 +6880,7 @@
   // ---- 今日のサマリー（ダッシュボード最上部）----
   async function loadDashHero(){
     var box=$('dash-hero'); if(!box)return;
-    var todayS=new Date().toISOString().slice(0,10);
+    var todayS=jstToday();
     var r=await Promise.all([
       sb.from('financial_entries').select('year_month,revenue,profit').eq('customer_id',SCOPE).order('year_month',{ascending:false}).limit(2),
       sb.from('cashflow_snapshots').select('*').eq('customer_id',SCOPE).order('created_at',{ascending:false}).limit(1),
@@ -6927,7 +6956,7 @@
     var snapErr=r[0].error, snap=(r[0].data&&r[0].data[0])||null;
     var pays=(r[1].error?[]:(r[1].data||[]));
     var funds=(r[2].error?[]:(r[2].data||[]));
-    var today=new Date(); var todayS=today.toISOString().slice(0,10);
+    var today=new Date(); var todayS=jstToday();
     var future=pays.filter(function(p){ return p.due_date && p.due_date>=todayS; });
     var in30=future.filter(function(p){ return (new Date(p.due_date)-new Date(todayS))/86400000<=30; });
     var sum30=in30.reduce(function(a,p){ return a+Number(p.amount||0); },0);
@@ -6944,8 +6973,8 @@
       var bal=cash, months=[], shortMonth=null;
       for(var i=1;i<=6;i++){
         var mDate=new Date(today.getFullYear(), today.getMonth()+i, 1);
-        var mEnd=new Date(today.getFullYear(), today.getMonth()+i+1, 0).toISOString().slice(0,10);
-        var mStart=new Date(today.getFullYear(), today.getMonth()+i, 1).toISOString().slice(0,10);
+        var mEnd=ymdLocal(new Date(today.getFullYear(), today.getMonth()+i+1, 0));
+        var mStart=ymdLocal(new Date(today.getFullYear(), today.getMonth()+i, 1));
         var mPay=future.filter(function(p){ return p.due_date>=mStart && p.due_date<=mEnd; }).reduce(function(a,p){ return a+Number(p.amount||0); },0);
         bal=bal+net-mPay;
         var lbl=(mDate.getMonth()+1)+'月';
@@ -6955,7 +6984,7 @@
       var warnLine=(outflow+repay); // 1か月分の支出
       h+='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px;">'
         +'<div style="width:58px;height:58px;border-radius:50%;flex-shrink:0;background:conic-gradient('+color+' '+(score*3.6)+'deg,#EDF1F6 0deg);display:flex;align-items:center;justify-content:center;"><div style="width:44px;height:44px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:'+color+';">'+score+'</div></div>'
-        +'<div><div style="font-size:12px;color:#94A2B6;">資金繰りスコア（最終診断：'+esc((snap.created_at||'').slice(0,10))+'）</div><div style="font-size:16px;font-weight:700;color:'+color+';">ランク '+rank+'</div></div>'
+        +'<div><div style="font-size:12px;color:#94A2B6;">資金繰りスコア（最終診断：'+esc(jstDay(snap.created_at))+'）</div><div style="font-size:16px;font-weight:700;color:'+color+';">ランク '+rank+'</div></div>'
         +'<div style="flex:1 1 130px;background:#F8F9FC;border:1px solid #EDF1F6;border-radius:10px;padding:10px 14px;"><div style="font-size:11px;color:#5A6981;">手元資金のもち</div><div style="font-size:19px;font-weight:700;color:'+(runway>=3?'#27684A':(runway>=1.5?'#C39B3F':'#A9403D'))+';">'+(runway>=99?'十分':runway.toFixed(1)+' か月')+'</div></div>'
         +'<div style="flex:1 1 130px;background:#F8F9FC;border:1px solid #EDF1F6;border-radius:10px;padding:10px 14px;"><div style="font-size:11px;color:#5A6981;">30日以内の支払予定</div><div style="font-size:19px;font-weight:700;color:'+(sum30>cash?'#A9403D':'#1E3A66')+';">'+sum30.toLocaleString('ja-JP')+' 万円<span style="font-size:11px;font-weight:500;color:#94A2B6;">（'+in30.length+'件）</span></div></div>'
       +'</div>';
@@ -7245,7 +7274,7 @@
     rows.forEach(function(m){
       var mine=(m.sender_role===myRole);
       var who=mine?'':(m.sender_role==='customer'?'顧客':'パートナー');
-      var dt=(m.created_at||'').replace('T',' ').slice(5,16);
+      var dt=jstMin(m.created_at);
       var att=m.attachment_path
         ? '<div'+(m.body?' style="margin-top:6px;"':'')+'><a onclick="knvAttOpen(\''+escJ(m.attachment_path)+'\')" style="cursor:pointer;font-size:12.5px;font-weight:600;text-decoration:underline;color:'+(mine?'#fff':'#2C5DA8')+';">📎 '+esc(m.attachment_name||'添付ファイル')+'</a></div>'
         : '';
@@ -7289,9 +7318,9 @@
     if(!res.data.length){ box.innerHTML=tsgSay('担当パートナーからの提案はまだありません。気になることがあれば、<b>私にいつでも聞いてください</b>。'); return; }
     var h='';
     res.data.forEach(function(n){
-      var dt=(n.created_at||'').slice(0,10);
+      var dt=jstDay(n.created_at);
       var foot = n.acked
-        ? '<div style="font-size:11px;color:#27684A;margin-top:7px;">✓ 確認済み'+(n.acked_at?('（'+String(n.acked_at).slice(0,10)+'）'):'')+'　担当パートナーにも表示されます</div>'
+        ? '<div style="font-size:11px;color:#27684A;margin-top:7px;">✓ 確認済み'+(n.acked_at?('（'+jstDay(n.acked_at)+'）'):'')+'　担当パートナーにも表示されます</div>'
         : '<div style="margin-top:8px;"><button class="btn2" style="font-size:12px;padding:7px 16px;" onclick="ackMyNote(\''+n.id+'\')"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m4.5 12.5 5 5 10-11"/></svg>内容を確認しました</button><span style="font-size:11px;color:#94A2B6;margin-left:8px;">押すと担当パートナーに「確認済み」と伝わります</span></div>';
       h+='<div style="border-left:3px solid #2C5DA8;background:#F8F9FC;border-radius:8px;padding:10px 12px;margin-bottom:6px;">'
         +'<div style="font-size:11px;color:#94A2B6;margin-bottom:4px;">'+esc(dt)+'</div>'
@@ -8062,7 +8091,7 @@
   function openMonthlyReport(){
     if(!CURRENT_CLIENT)return;
     REP={ id:CURRENT_CLIENT.id, email:CURRENT_CLIENT.email, company:CURRENT_CLIENT.company||'' };
-    var mi=$('rep-month'); if(mi && !mi.value) mi.value=new Date().toISOString().slice(0,7);
+    var mi=$('rep-month'); if(mi && !mi.value) mi.value=jstMonth();
     repMonthShow(true);
     var m=$('rep-modal'); if(m){ m.classList.remove('hidden'); document.body.style.overflow='hidden'; }
     renderReport();
@@ -8149,7 +8178,7 @@
     var box=$('rep-body'); if(!box||!REP)return;
     box.innerHTML='<div style="font-size:13px;color:#94A2B6;padding:20px 4px;">読み込み中...</div>';
     var cid=REP.id;
-    var month=($('rep-month')&&$('rep-month').value)||new Date().toISOString().slice(0,7);
+    var month=($('rep-month')&&$('rep-month').value)||jstMonth();
     var r=await Promise.all([
       sb.from('financial_entries').select('*').eq('customer_id',cid).order('year_month',{ascending:false}),
       sb.from('action_items').select('*').eq('customer_id',cid),
@@ -8163,7 +8192,7 @@
     var prof=(r[6].data||{})||{};
     var title=(REP.company&&REP.company.length)?REP.company:REP.email;
     var stageN=parseInt(prof.stage||1,10); if(isNaN(stageN)||stageN<1||stageN>5) stageN=1;
-    var today=new Date().toISOString().slice(0,10);
+    var today=jstToday();
     var monthLbl=month.replace('-','年')+'月';
 
     // ---- header ----
@@ -8245,7 +8274,7 @@
 
     // ---- partner notes ----
     h+='<div class="rep-sec"><div class="rep-h">7. パートナーからの提案メモ（直近）</div>';
-    if(notes.length){ notes.forEach(function(n){ var dt=(n.created_at||'').slice(0,10); h+='<div class="rep-li"><span style="color:#94A2B6;font-size:11px;">'+esc(dt)+'</span><br>'+esc(n.body||'').replace(/\n/g,'<br>')+'</div>'; }); }
+    if(notes.length){ notes.forEach(function(n){ var dt=jstDay(n.created_at); h+='<div class="rep-li"><span style="color:#94A2B6;font-size:11px;">'+esc(dt)+'</span><br>'+esc(n.body||'').replace(/\n/g,'<br>')+'</div>'; }); }
     else { h+='<div style="font-size:12px;color:#94A2B6;">提案メモはありません。</div>'; }
     h+='</div>';
 
@@ -8710,7 +8739,7 @@
       +'<div class="ph" id="cs-meet" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-5"/><path d="M18.4 2.6a2 2 0 0 1 2.83 2.83L12.5 14.2l-3.6.95.95-3.6z"/></svg>議事録（面談メモのAI整形）</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">面談中のメモを貼り付けて「AIで整形」を押すと、要点・決定事項・ToDo・次回アジェンダに整理します。内容を確認・編集して保存できます。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">'
-        +'<div><label class="fl">面談日</label><input id="mn-date" type="date" class="inp2" value="'+new Date().toISOString().slice(0,10)+'"></div>'
+        +'<div><label class="fl">面談日</label><input id="mn-date" type="date" class="inp2" value="'+jstToday()+'"></div>'
         +'<div style="flex:1;min-width:160px;"><label class="fl">タイトル（任意）</label><input id="mn-title" class="inp2" style="width:100%;" placeholder="例：第3四半期 経営会議"></div>'
       +'</div>'
       +'<label class="fl">面談メモ（箇条書き・走り書きでOK）</label>'
@@ -8816,7 +8845,7 @@
     applyClKarteBadges(custId);
     var f=await sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false});
     var fb=$('cl-fin'); if(fb) fb.innerHTML = f.error?('<div style="color:#A9403D;font-size:12px;">'+esc(f.error.message)+'</div>'):finTable(f.data,true,'cl');
-    var cy=$('cfin-ym'); if(cy&&!cy.value) cy.value=new Date().toISOString().slice(0,7);
+    var cy=$('cfin-ym'); if(cy&&!cy.value) cy.value=jstMonth();
     loadClientPayments(custId);
     loadClientFunding(custId);
     reloadClientActions(custId);
@@ -8986,7 +9015,7 @@
     if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">この顧客はまだAI自動化診断を実施していません。</div>'; return; }
     var h='';
     res.data.forEach(function(d){
-      var dt=(d.created_at||'').slice(0,10);
+      var dt=jstDay(d.created_at);
       SHARED_TITLES[d.id]='AI自動化診断（'+dt+'）';
       h+='<div style="border:1px solid #EDF1F6;border-radius:10px;padding:12px 14px;margin-bottom:10px;">'
         +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;">実施日：'+esc(dt)+'</div>'
@@ -9071,7 +9100,7 @@
     (res.data||[]).forEach(function(p){
       h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:4px 4px;margin-bottom:10px;background:var(--card);">'
         +diagReport(p.result_text||'', null, false)
-        +'<div style="font-size:10.5px;color:#94A2B6;padding:0 12px 8px;">'+esc((p.created_at||'').slice(0,10))+' にご提案</div>'
+        +'<div style="font-size:10.5px;color:#94A2B6;padding:0 12px 8px;">'+esc(jstDay(p.created_at))+' にご提案</div>'
       +'</div>';
     });
     box.innerHTML=h;
@@ -9103,7 +9132,7 @@
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">'+esc(res.error.message)+'</div>'; return; }
     if(!res.data.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">共有された試算結果はまだありません。</div>'; return; }
     var h='';
-    res.data.forEach(function(r){ var dt=(r.created_at||'').slice(0,10); SHARED_TITLES[r.id]=(r.summary||'保険試算').slice(0,24);
+    res.data.forEach(function(r){ var dt=jstDay(r.created_at); SHARED_TITLES[r.id]=(r.summary||'保険試算').slice(0,24);
       h+='<div style="border:1px solid #EDF1F6;border-radius:9px;padding:10px 12px;margin-bottom:6px;">'
         +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;"><span style="font-size:11px;color:#94A2B6;">'+esc(dt)+'</span><span style="display:flex;gap:12px;"><span onclick="reactToShared(\''+custId+'\',\'保険・相続の試算\',\''+r.id+'\')" style="color:#2C5DA8;cursor:pointer;font-size:11px;">💬 顧客に反応する</span><span onclick="delClientIns(\''+r.id+'\')" style="color:#A9403D;cursor:pointer;font-size:11px;">共有を取り消す（削除）</span></span></div>'
         +'<div style="font-size:12px;color:#18202E;white-space:pre-wrap;line-height:1.6;">'+esc(r.summary||'')+'</div></div>'; });
@@ -10412,7 +10441,7 @@
     var w='日月火水木金土'.charAt(d.getDay());
     return (d.getMonth()+1)+'月'+d.getDate()+'日（'+w+'）'+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
   }
-  function calDay(iso){ var d=new Date(iso); return isNaN(d)?'':d.toISOString().slice(0,10); }
+  function calDay(iso){ return jstDay(iso); }
   function calWhenLabel(iso){
     var d=new Date(iso), n=new Date();
     var a=new Date(d.getFullYear(),d.getMonth(),d.getDate()), b=new Date(n.getFullYear(),n.getMonth(),n.getDate());
@@ -12564,7 +12593,7 @@
           +'<b style="font-size:12.5px;color:var(--ink);">サブ：'+esc(x.sub_email||'')+'</b>'
           +'<span style="font-size:11.5px;color:var(--muted);">メイン '+Number(x.main_share)+'% ／ サブ '+Number(x.sub_share)+'%</span>'
           +'<span style="flex:1;"></span>'
-          +'<span style="font-size:10.5px;color:var(--muted);">'+esc(String(x.created_at||'').slice(0,10))+'</span>'
+          +'<span style="font-size:10.5px;color:var(--muted);">'+esc(jstDay(x.created_at))+'</span>'
         +'</div>'
         +(x.reason?'<div style="font-size:12px;color:var(--ink);line-height:1.75;margin-top:5px;">'+esc(x.reason)+'</div>':'')
         +(x.sub_id?'':'<div style="font-size:11px;color:#8A6A12;margin-top:4px;">サブ担当はまだTsuguAiに登録されていません（本人のログイン後に有効化されます）。</div>')
@@ -12718,7 +12747,7 @@
           +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
             +'<span class="tag gold" style="font-size:10px;">'+esc(bizFieldName(x.field))+'</span>'
             +'<b style="font-size:12.5px;color:var(--ink);">'+esc(x.customer_name||'（相手先未記入）')+'</b>'
-            +'<span style="font-size:10.5px;color:var(--muted);">'+esc(String(x.created_at||'').slice(0,10))+'</span>'
+            +'<span style="font-size:10.5px;color:var(--muted);">'+esc(jstDay(x.created_at))+'</span>'
             +'<span style="flex:1;"></span>'
             +'<span class="tag '+(done?'gray':'red')+'" style="font-size:10px;">'+(done?'対応済み':'未対応')+'</span>'
           +'</div>'
@@ -13019,7 +13048,7 @@
           +'<b style="font-size:13.5px;color:var(--ink);">'+esc(f.name)+'</b>'
           +'<span class="tag gold" style="font-size:10.5px;">'+esc(ymJp(ACCT.ym))+'分</span>'
           +(has?'<span class="tag green" style="font-size:10px;">入力済み</span>':'<span class="tag red" style="font-size:10px;">未入力</span>')
-          +(by?'<span style="font-size:10.5px;color:var(--muted);">'+esc(by)+(e.created_at?'　'+esc(String(e.created_at).slice(0,10)):'')+'</span>':'')
+          +(by?'<span style="font-size:10.5px;color:var(--muted);">'+esc(by)+(e.created_at?'　'+esc(jstDay(e.created_at)):'')+'</span>':'')
           +(ACCT.dup[f.id]?'<span class="tag red" style="font-size:10px;">同月のデータが重複しています</span>':'')
         +'</div>'
         +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
@@ -14076,7 +14105,7 @@
   ];
   function subPurposeName(k){ var n=k; SUBSIDY_PURPOSES.forEach(function(x){ if(x[0]===k) n=x[1]; }); return n; }
   function subCsv(v){ return String(v||'').split(',').map(function(x){ return x.trim(); }).filter(Boolean); }
-  function subToday(){ return new Date().toISOString().slice(0,10); }
+  function subToday(){ return jstToday(); }
   // 判定は「除外できる根拠があるものだけ落とす」。情報が無い項目では落とさない
   function subsidyCheck(s, ctx){
     if(s.active===false) return null;
@@ -14363,7 +14392,7 @@
       +'</div>';
     }
     var co=prof.company_name||prof.contact_name||'';
-    var today=new Date().toISOString().slice(0,10);
+    var today=jstToday();
     var h='<div class="rep-sec">';
     // 表紙相当
     h+='<div style="border-bottom:2px solid #1E3A66;padding-bottom:9px;margin-bottom:12px;">'
@@ -15011,7 +15040,7 @@
   function obrNum(v){ var n=parseFloat(v); return isNaN(n)?0:n; }
   function obrFN(id){ var e=$(id); return obrNum(e&&e.value); }
   function obrFS(id){ var e=$(id); return e?String(e.value==null?'':e.value).trim():''; }
-  function obrToday(){ var d=new Date(Date.now()+9*3600*1000); return d.toISOString().slice(0,10); }
+  function obrToday(){ return jstToday(); }
   function obrDateJp(s){ if(!s) return ''; var a=String(s).slice(0,10).split('-'); if(a.length<3) return String(s); return a[0]+'年'+Number(a[1])+'月'+Number(a[2])+'日'; }
   function obrDefaultRoad(){ return OBR_ROAD_THEMES.map(function(t,i){ return { m:(i+1), theme:t, action:'', kpi:'', owner:'' }; }); }
   function obrEmpty(custId){
@@ -15061,7 +15090,7 @@
     var res=await sb.from('onboarding_reports').select('*').eq('customer_id',custId).maybeSingle();
     if(res.error){
       box.innerHTML='<div style="border:1px solid #E6C9C7;background:#FDF6F6;border-radius:10px;padding:12px 14px;font-size:12px;color:#A9403D;line-height:1.8;">読み込みエラー：'+esc(res.error.message)
-        +'<br><span style="color:#5A6981;">Supabase に <b>onboarding_reports</b> テーブルが未作成の可能性があります。作成後に「↺ 更新」を押してください。</span></div>';
+        +'<br><span style="color:#5A6981;">上の文言をそのままお知らせください（原因の特定に必要です）。</span></div>';
       return;
     }
     OBR_DATA = res.data ? obrNorm(res.data, custId) : obrEmpty(custId);
