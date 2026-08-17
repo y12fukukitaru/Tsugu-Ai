@@ -207,6 +207,17 @@
   .cl-ni.on .ci{background:var(--gold);border-color:var(--gold);}
   .clnb{margin-left:auto;background:#D2544A;color:#fff;border-radius:99px;font-size:10px;font-weight:700;padding:1px 6px;min-width:16px;text-align:center;flex-shrink:0;}
   .clmenu-i .clnb{margin-left:auto;}
+  /* カルテのメニュー：仕事のまとまりで畳む。閉じている組にも件数を出す。 */
+  .cl-grp{margin-bottom:1px;}
+  .cl-gh{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:9px;font-size:11px;font-weight:700;letter-spacing:.05em;color:rgba(255,255,255,.48);cursor:pointer;user-select:none;transition:background .15s,color .15s;}
+  .cl-gh:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.82);}
+  .cl-gc{width:12px;height:12px;flex-shrink:0;transition:transform .18s;}
+  .cl-grp.open>.cl-gh{color:rgba(255,255,255,.72);}
+  .cl-grp.open>.cl-gh .cl-gc{transform:rotate(90deg);}
+  .cl-gi{display:none;padding-left:5px;margin-bottom:5px;}
+  .cl-grp.open>.cl-gi{display:block;}
+  .cl-tgh{font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.06em;margin:13px 2px 6px;}
+  .cl-sheet-body>.cl-tgh:first-child{margin-top:2px;}
   .cl-main{flex:1;min-width:0;}
   /* ===== PC：カルテを大画面・固定レイアウトに（メニューは固定、本文のみスクロール） ===== */
   @media(min-width:761px){
@@ -275,6 +286,7 @@
     .cl-side{position:static;flex:1 1 auto;width:100%;max-height:none;display:flex;flex-wrap:wrap;gap:5px;padding:8px;}
     .cl-side .sb-sec{width:100%;}
     .cl-ni{margin-bottom:0;}
+    .cl-grp{width:100%;}   /* 折り返しの行に組が混ざらないように */
   }
   @media(max-width:640px){
     /* スマホのみ：左ナビを隠し、ヘッダーのハンバーガーに集約 */
@@ -1251,7 +1263,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260817-4';
+  var APP_BUILD='20260817-5';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -8291,8 +8303,18 @@
   function clSpySet(id){
     var side=$('cl-side'); if(!side)return;
     Array.prototype.forEach.call(side.querySelectorAll('.cl-ni'),function(n){ n.classList.toggle('on', n.id==='ni-'+id); });
+    // いま見ているタブの組は必ず開く。畳んだままだと現在地が見えない。
+    var gi=clGroupIdx(id);
+    if(gi>=0){ var g=$('clg-'+gi); if(g && !g.classList.contains('open')){ g.classList.add('open'); clOpenSet(gi,true); } }
   }
-  var CL_SPY_IDS=['cs-todo','cs-onboard','cs-report','cs-mreport','cs-subsidy','cs-bank','cs-hosho','cs-shindan','cs-company','cs-msg','cs-fin','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-pmi','cs-value','cs-bp','cs-ins','cs-shared'];
+  //  タブの見出しになる id。ここに載っている見出しから、次に載っている見出しの
+  //  直前までが1つのタブになる。載せなければ、その見出しは前のタブの中の小見出しに
+  //  なる ＝ 画面が統合される。
+  //    月次レポート ← 月次財務メモ
+  //    M&A提案     ← PMI補助
+  //    企業価値診断 ← 承継準備度スコア
+  //    銀行提出パッケージ ← 経営者保証ナビ・事業計画書
+  var CL_SPY_IDS=['cs-todo','cs-onboard','cs-report','cs-mreport','cs-subsidy','cs-bank','cs-company','cs-msg','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-value','cs-ins','cs-shared'];
   var CL_TAB_WRAPS=['ctab-msg','ctab-fin','ctab-tools','ctab-shared'];
   var CL_ACTIVE='cs-todo';
   // カルテ内タブ切替：見出し（cs-*）から次の見出しまでを1つのタブとして表示
@@ -8318,36 +8340,75 @@
     clShowSection('cs-todo');
   }
   // ===== カルテ内ダッシュボードナビ（左サイド＆ヘッダーのハンバーガーで共用） =====
-  // ===== カルテ内メニュー項目（フラット・カスタマイズ可能） =====
+  // ===== カルテ内メニュー項目（6つの組にまとめる・カスタマイズ可能） =====
+  //  25項目が縦一列に並んでいて、目で追うのが辛かった。仕事のまとまりで6つの組に
+  //  分け、いま見ている組だけを開く。閉じている組も、対応が必要なら見出しに件数が
+  //  出るので、畳んだせいで見落とすことはない。
+  //
+  //  あわせて、同じことを扱う画面を1つにまとめた（25 → 20）。
+  //    月次レポート・財務メモ  数字を入れて、そのまま報告書にする
+  //    銀行対応                銀行に持っていく資料を作る3画面
+  //    M&A・PMI                成約の前と後
+  //    企業価値・承継準備      「今いくらの会社か」と「いつでも継げるか」
+  //
+  //  ［id, アイコン, 表示名, 組］
+  var CL_GROUPS=['基本','導入','月次の運営','資金・銀行','企業価値・承継','その他の診断'];
   var CL_ITEMS=[
-    ['cs-todo','pin','やること'],
-    ['cs-onboard','checks','導入チェックリスト'],
-    ['cs-report','book','導入診断報告書'],
-    ['cs-mreport','doc','月次レポート'],
-    ['cs-company','building','会社情報'],
-    ['cs-msg','chat','メッセージ・提案'],
-    ['cs-shared','inbox','顧客からの共有'],
-    ['cs-fin','chart','月次財務メモ'],
-    ['cs-pay','calendar','支払予定'],
-    ['cs-cash','wallet','資金繰りシミュレーター'],
-    ['cs-fund','bank','資金調達ロードマップ'],
-    ['cs-loan','yen','融資ナビ'],
-    ['cs-bp','doc','事業計画書'],
-    ['cs-subsidy','gift','補助金ナビ'],
-    ['cs-bank','bank','銀行提出パッケージ'],
-    ['cs-hosho','shieldCheck','経営者保証ナビ'],
-    ['cs-shindan','trend','承継準備度スコア'],
-    ['cs-market','market','Tsugu投資・融資・M&A'],
-    ['cs-mna','link','M&A提案'],
-    ['cs-pmi','checks','PMI補助'],
-    ['cs-value','trend','企業価値診断'],
-    ['cs-ins','shieldCheck','保険シミュレーター'],
-    ['cs-ai','cpu','AI自動化診断'],
-    ['cs-meet','note','議事録'],
-    ['cs-act','checkCircle','課題・アクション']
+    ['cs-todo','pin','やること','基本'],
+    ['cs-company','building','会社情報','基本'],
+    ['cs-msg','chat','メッセージ・提案','基本'],
+    ['cs-shared','inbox','顧客からの共有','基本'],
+
+    ['cs-onboard','checks','導入チェックリスト','導入'],
+    ['cs-report','book','導入診断報告書','導入'],
+
+    ['cs-mreport','doc','月次レポート・財務メモ','月次の運営'],
+    ['cs-meet','note','議事録','月次の運営'],
+    ['cs-act','checkCircle','課題・アクション','月次の運営'],
+
+    ['cs-pay','calendar','支払予定','資金・銀行'],
+    ['cs-cash','wallet','資金繰りシミュレーター','資金・銀行'],
+    ['cs-fund','bank','資金調達ロードマップ','資金・銀行'],
+    ['cs-loan','yen','融資ナビ','資金・銀行'],
+    ['cs-subsidy','gift','補助金ナビ','資金・銀行'],
+    ['cs-bank','bank','銀行対応','資金・銀行'],
+
+    ['cs-value','trend','企業価値・承継準備','企業価値・承継'],
+    ['cs-mna','link','M&A・PMI','企業価値・承継'],
+    ['cs-market','market','Tsugu投資・融資・M&A','企業価値・承継'],
+
+    ['cs-ins','shieldCheck','保険シミュレーター','その他の診断'],
+    ['cs-ai','cpu','AI自動化診断','その他の診断']
   ];
+  function clGroupIdx(id){ for(var i=0;i<CL_ITEMS.length;i++){ if(CL_ITEMS[i][0]===id) return CL_GROUPS.indexOf(CL_ITEMS[i][3]); } return -1; }
+
+  // 開いている組（この端末のブラウザに保存）。未設定のうちは「いま見ているタブの組だけ」
+  var CL_OPEN_KEY='tsugu_clopen_v1';
+  function clOpenGet(){
+    try{ var a=JSON.parse(localStorage.getItem(CL_OPEN_KEY)||'null'); if(Array.isArray(a)) return a; }catch(e){}
+    return null;
+  }
+  function clOpenIs(gi){
+    var a=clOpenGet();
+    if(a===null) return gi===clGroupIdx(CL_ACTIVE);
+    return a.indexOf(gi)>=0;
+  }
+  function clOpenSet(gi, on){
+    var a=clOpenGet(); if(a===null){ var cur=clGroupIdx(CL_ACTIVE); a=(cur>=0?[cur]:[]); }
+    var i=a.indexOf(gi);
+    if(on && i<0) a.push(gi);
+    if(!on && i>=0) a.splice(i,1);
+    try{ localStorage.setItem(CL_OPEN_KEY, JSON.stringify(a)); }catch(e){}
+  }
+  function clGroupToggle(gi, ev){
+    if(ev) ev.stopPropagation();
+    var el=$('clg-'+gi); if(!el) return;
+    var on=!el.classList.contains('open');
+    el.classList.toggle('open', on);
+    clOpenSet(gi, on);
+  }
   // 並び順のカスタマイズ（この端末のブラウザに保存）
-  var CL_NAV_KEY='tsugu_clnav_v2';
+  var CL_NAV_KEY='tsugu_clnav_v3';   // v2 は統合前の並び。組に分けたので作り直す
   function clNavCustom(){
     try{ var c=JSON.parse(localStorage.getItem(CL_NAV_KEY)||'null');
       if(c && Array.isArray(c.order)) return { order:c.order };
@@ -8429,10 +8490,43 @@
         e.classList.toggle('hidden', !n);
       });
     });
+    // 組の見出しにも合計を出す。畳んでいる組の「要対応」を見落とさないため。
+    //  ※ cs-todo は全体の合計なので、二重に数えないよう組の集計からは外す。
+    var g=[];
+    Object.keys(c).forEach(function(id){
+      if(id==='cs-todo') return;
+      var gi=clGroupIdx(id); if(gi<0) return;
+      g[gi]=(g[gi]||0)+(c[id]||0);
+    });
+    CL_GROUPS.forEach(function(_,gi){
+      var e=$('clgb-'+gi); if(!e) return;
+      var n=g[gi]||0;
+      e.textContent=n>99?'99+':n;
+      e.classList.toggle('hidden', !n);
+    });
+  }
+  // 組ごとの内訳（clNavList の並びを保ったまま組で仕分ける）
+  function clNavByGroup(){
+    var list=clNavList(), out=[];
+    CL_GROUPS.forEach(function(g){
+      out.push({ name:g, items:list.filter(function(it){ return it[3]===g; }) });
+    });
+    return out;
   }
   function clSideHtml(){
     var h='<div class="cl-side" id="cl-side"><div class="sb-sec">メニュー</div>';
-    clNavList().forEach(function(it){ h+=clNi(it[0],it[1],it[2]); });
+    clNavByGroup().forEach(function(grp, gi){
+      if(!grp.items.length) return;
+      h+='<div class="cl-grp'+(clOpenIs(gi)?' open':'')+'" id="clg-'+gi+'">'
+        +'<div class="cl-gh" onclick="clGroupToggle('+gi+',event)">'
+          +'<svg class="cl-gc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6"/></svg>'
+          +'<span>'+esc(grp.name)+'</span>'
+          +'<span class="clnb hidden" id="clgb-'+gi+'">0</span>'
+        +'</div>'
+        +'<div class="cl-gi">';
+      grp.items.forEach(function(it){ h+=clNi(it[0],it[1],it[2]); });
+      h+='</div></div>';
+    });
     h+='<div class="cl-ni" onclick="clSheetOpen(true)"><span class="ci">'+icoSvg('gear')+'</span><span>並び順のカスタマイズ</span></div>';
     return h+'</div>';
   }
@@ -8465,22 +8559,30 @@
     if(!CL_EDIT && CURRENT_CLIENT) applyClKarteBadges(CURRENT_CLIENT.id);
   }
   function clTilesHtml(){
-    var h='<div class="cl-tiles">';
-    clNavList().forEach(function(it){
-      h+='<div class="cl-tile'+(it[0]===CL_ACTIVE?' on':'')+'" onclick="clMenuGo(\''+it[0]+'\')"><span class="ti">'+icoSvg(it[1])+'</span><span class="tl">'+it[2]+'</span><span class="clnb hidden" id="clmb-'+it[0]+'">0</span></div>';
+    var h='';
+    clNavByGroup().forEach(function(grp){
+      if(!grp.items.length) return;
+      h+='<div class="cl-tgh">'+esc(grp.name)+'</div><div class="cl-tiles">';
+      grp.items.forEach(function(it){
+        h+='<div class="cl-tile'+(it[0]===CL_ACTIVE?' on':'')+'" onclick="clMenuGo(\''+it[0]+'\')"><span class="ti">'+icoSvg(it[1])+'</span><span class="tl">'+it[2]+'</span><span class="clnb hidden" id="clmb-'+it[0]+'">0</span></div>';
+      });
+      h+='</div>';
     });
-    return h+'</div><div class="cl-sheet-hint">右上の「⚙ 編集」から、タブの並び順を変更できます。</div>';
+    return h+'<div class="cl-sheet-hint">右上の「⚙ 編集」から、タブの並び順を変更できます。</div>';
   }
   function clEditHtml(){
-    var list=clNavList();
-    var h='<div class="cl-sheet-hint" style="margin:0 0 8px;">▲▼でよく使うタブを上に並べ替えられます。設定はこの端末に保存され、メニューとPC版の左ナビの両方に反映されます。</div>';
-    list.forEach(function(it,idx){
-      h+='<div class="cl-edit-row">'
-        +'<span style="width:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+icoSvg(it[1])+'</span>'
-        +'<span style="flex:1;min-width:0;font-size:12.5px;font-weight:600;color:var(--ink);">'+it[2]+'</span>'
-        +'<button class="cl-ebtn" onclick="clEditMove(\''+it[0]+'\',-1)"'+(idx===0?' disabled':'')+'>▲</button>'
-        +'<button class="cl-ebtn" onclick="clEditMove(\''+it[0]+'\',1)"'+(idx===list.length-1?' disabled':'')+'>▼</button>'
-      +'</div>';
+    var h='<div class="cl-sheet-hint" style="margin:0 0 8px;">▲▼でよく使うタブを組の中で並べ替えられます。設定はこの端末に保存され、メニューとPC版の左ナビの両方に反映されます。</div>';
+    clNavByGroup().forEach(function(grp){
+      if(!grp.items.length) return;
+      h+='<div class="cl-tgh">'+esc(grp.name)+'</div>';
+      grp.items.forEach(function(it,idx){
+        h+='<div class="cl-edit-row">'
+          +'<span style="width:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+icoSvg(it[1])+'</span>'
+          +'<span style="flex:1;min-width:0;font-size:12.5px;font-weight:600;color:var(--ink);">'+it[2]+'</span>'
+          +'<button class="cl-ebtn" onclick="clEditMove(\''+it[0]+'\',-1)"'+(idx===0?' disabled':'')+'>▲</button>'
+          +'<button class="cl-ebtn" onclick="clEditMove(\''+it[0]+'\',1)"'+(idx===grp.items.length-1?' disabled':'')+'>▼</button>'
+        +'</div>';
+      });
     });
     h+='<div style="display:flex;gap:8px;margin-top:10px;">'
       +'<button class="btn2" style="flex:1;" onclick="clSheetEditToggle()">完了</button>'
@@ -8489,11 +8591,17 @@
     return h;
   }
   function clSheetEditToggle(){ CL_EDIT=!CL_EDIT; clSheetRender(); }
+  //  並べ替えは組の中だけ。組をまたぐと、見た目は動かないのに保存だけ変わって
+  //  「押しても何も起きない」ように見えるため。
   function clEditMove(id,dir){
     var c=clNavCustom();
     var order=clNavList().map(function(it){return it[0];});
-    var i=order.indexOf(id), j=i+dir;
-    if(i<0 || j<0 || j>=order.length) return;
+    var gi=clGroupIdx(id);
+    var mates=order.filter(function(x){ return clGroupIdx(x)===gi; });
+    var k=mates.indexOf(id)+dir;
+    if(k<0 || k>=mates.length) return;               // 組の端
+    var i=order.indexOf(id), j=order.indexOf(mates[k]);
+    if(i<0 || j<0) return;
     order.splice(i,1); order.splice(j,0,id);
     c.order=order; clNavSave(c);
     clSheetRender(); clNavRefreshSide();
@@ -8539,9 +8647,6 @@
       +'<div class="ph" id="cs-report" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 19.2A2.8 2.8 0 0 1 6.8 16.4H20"/><path d="M6.8 3H20v18H6.8A2.8 2.8 0 0 1 4 18.2V5.8A2.8 2.8 0 0 1 6.8 3z"/></svg>導入診断報告書</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadObr(\''+custId+'\')">↺ 更新</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">導入フェーズの4つの成果物（①企業価値診断 ②資金繰り現状 ③保険・固定費の棚卸し ④12ヶ月改善ロードマップ）をまとめる、初回報告面談用の報告書です。<b>「公開」にすると顧客ポータルの「月次レポート」欄にも表示されます。</b>印刷（PDF）は報告書全体・4項目の個別どちらも可能です。</div>'
       +'<div id="obr-body">読み込み中...</div>'
-      +'<div class="ph" id="cs-mreport" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>月次レポート</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientReports(\''+custId+'\')">↺ 更新</span></div>'
-      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">この顧客の月次レポートです。数字は自動生成されるので、コメントとひとことを添えてから<b style="color:#1E3A66;">「承認して公開」</b>を押してください。公開すると経営者ダッシュボードに表示されます。</div>'
-      +'<div id="clrep-body">読み込み中...</div>'
       +'<div class="ph" id="cs-company" style="font-size:13px;">会社情報（代行入力）</div>'
       +head
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">経営者ポータルには確認用に表示されます（顧客側は閲覧のみ）。</div>'
@@ -8584,6 +8689,9 @@
     +'</div>';
     // ---- タブ2：財務・支払・課題 ----
     var tabFin='<div id="ctab-fin">'
+      +'<div class="ph" id="cs-mreport" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>月次レポート</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientReports(\''+custId+'\')">↺ 更新</span></div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">この顧客の月次レポートです。数字は自動生成されるので、コメントとひとことを添えてから<b style="color:#1E3A66;">「承認して公開」</b>を押してください。公開すると経営者ダッシュボードに表示されます。</div>'
+      +'<div id="clrep-body">読み込み中...</div>'
       +'<div class="ph" id="cs-fin" style="font-size:13px;">月次財務メモ（代行入力）</div>'
       +'<div class="cl-cols">'
       +'<div class="cl-col">'
@@ -8786,6 +8894,9 @@
       +'<div id="ev-history">読み込み中...</div>'
       +'</div>'
       +'</div>'
+      +'<div class="ph" id="cs-shindan" style="font-size:13px;margin-top:18px;"><span class="ph-t">'+icoSvg('trend')+'承継準備度スコア（事業承継健診）</span></div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">「いつでも継げる会社か」を、財務データの自動評価とチェックリストでスコア化します。<b style="color:#1E3A66;">点数を上げること自体が磨き上げ＝企業価値の向上</b>につながります。承継の予定がまだなくても、経営改善の羅針盤としてお使いください。</div>'
+      +'<div id="shindan-body">読み込み中...</div>'
       +'<div class="ph" id="cs-subsidy" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="8.5" width="18" height="12.5" rx="2"/><path d="M3 13h18M12 8.5V21"/><path d="M12 8.5S10.5 3 8 3a2.5 2.5 0 0 0 0 5.5zM12 8.5S13.5 3 16 3a2.5 2.5 0 0 1 0 5.5z"/></svg>補助金ナビ</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">運営が登録した制度に、この顧客の<b style="color:#1E3A66;">業種・年商・資金使途</b>を照らして候補を出します。返済不要のため、融資より先に検討する価値があります。ここでの役割は<b style="color:#1E3A66;">制度のご案内（情報提供）まで</b>です。申請書類の作成・提出の代行は行わず、申請支援が必要な場合は専門家ネットワークの専門家におつなぎします。</div>'
       +'<div id="subn-body">読み込み中...</div>'
@@ -8804,9 +8915,6 @@
       +'<div class="ph" id="cs-hosho" style="font-size:13px;margin-top:18px;"><span class="ph-t">'+icoSvg('shieldCheck')+'経営者保証ナビ</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">個人保証（経営者保証）が残ったままでは、承継もM&Aも前に進みません。登録済みの試算表データを<b style="color:#1E3A66;">「経営者保証に関するガイドライン」の3要件</b>に照らして現在地を整理します。解除・不要化の可否は金融機関の判断のため、ここでは<b style="color:#1E3A66;">相談の準備</b>までを整えます。</div>'
       +'<div id="hosho-body">読み込み中...</div>'
-      +'<div class="ph" id="cs-shindan" style="font-size:13px;margin-top:18px;"><span class="ph-t">'+icoSvg('trend')+'承継準備度スコア（事業承継健診）</span></div>'
-      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">「いつでも継げる会社か」を、財務データの自動評価とチェックリストでスコア化します。<b style="color:#1E3A66;">点数を上げること自体が磨き上げ＝企業価値の向上</b>につながります。承継の予定がまだなくても、経営改善の羅針盤としてお使いください。</div>'
-      +'<div id="shindan-body">読み込み中...</div>'
       +'<div class="ph" id="cs-bp" style="font-size:13px;margin-top:18px;">事業計画書の作成（AI）</div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">登録済みの財務データと資金繰りシミュレーターを自動で読み込み、金融機関提出用ドラフトを作成します（印刷／PDF可）。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
