@@ -30,16 +30,20 @@
 （貼り付けを止められたら `allow pasting` と打ってから貼り直す）
 
 ```js
-window.__ERRS=[];
-(function(){const f=window.fetch;window.fetch=async function(){
-  const r=await f.apply(this,arguments);
-  if(!r.ok){let b='';try{b=await r.clone().text();}catch(e){}
-    window.__ERRS.push({状態:r.status,url:String(arguments[0]).slice(0,150),中身:b.slice(0,220)});}
-  return r;};})();
-console.log('記録を開始しました。画面をひと通り開いてください。');
+window.__ERRS=window.__ERRS||[];
+if(!window.__ERRREC){window.__ERRREC=1;
+  (function(){const f=window.fetch;window.fetch=async function(){
+    const r=await f.apply(this,arguments);
+    if(!r.ok){let b='';try{b=await r.clone().text();}catch(e){}
+      window.__ERRS.push({状態:r.status,url:String(arguments[0]).slice(0,150),中身:b.slice(0,220)});}
+    return r;};})();}
+console.log('記録中です。これまでに '+window.__ERRS.length+'件');
 ```
 
 これで、失敗した通信が**エラーの中身ごと**記録されます。赤い文字を目で探す必要はありません。
+
+**二度貼っても記録は消えません**（`記録中です。これまでに ◯件` と出るだけ）。
+迷ったら貼り直して構いません。
 
 > ⚠️ **ページを再読み込みすると記録は消えます。** 役割を切り替えるときは、
 > 先に 2-3 で結果を取り出してから切り替えてください。
