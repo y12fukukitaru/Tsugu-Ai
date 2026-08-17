@@ -3,7 +3,7 @@
 --   これは「調べるだけ」の SQL です。何も変更しません。
 --   Supabase Dashboard → SQL Editor に貼り付けて Run してください。
 --
---   index.html から機械的に抜き出した 405 件の参照を、実際のスキーマと
+--   index.html から機械的に抜き出した 402 件の参照を、実際のスキーマと
 --   突き合わせます。読み取り（select・絞り込み）だけでなく、
 --   書き込み（insert / update / upsert）の列も対象です。
 --
@@ -149,14 +149,11 @@ with used(tbl, col) as (values
   ('funding_roadmap_items','title'),
   ('funding_roadmap_items','updated_at'),
   ('insurance_diagnoses','created_at'),
-  ('insurance_diagnoses','cur'),
   ('insurance_diagnoses','customer_id'),
   ('insurance_diagnoses','diagnosed_on'),
   ('insurance_diagnoses','id'),
-  ('insurance_diagnoses','improve'),
   ('insurance_diagnoses','items'),
   ('insurance_diagnoses','note'),
-  ('insurance_diagnoses','opt'),
   ('insurance_diagnoses','summary'),
   ('insurance_diagnoses','updated_at'),
   ('insurance_results','created_at'),
