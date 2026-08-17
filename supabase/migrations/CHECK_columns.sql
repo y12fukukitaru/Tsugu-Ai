@@ -5,7 +5,7 @@
 --
 --   index.html の中の sb.from('表').select('列') などを機械的に
 --   抜き出した 303 件の参照を、実際のスキーマと突き合わせます。
---   先日の onboarding_reports.id（存在しない列を読んでいた）と
+--   onboarding_reports.id / .status（存在しない列を読み書きしていた）と
 --   同じ種類の不具合を、画面を開いて回らずに洗い出せます。
 --
 --   ❌ が1件も出なければ、この種類の不具合はありません。
@@ -91,11 +91,15 @@ with used(tbl, col) as (values
   ('company_members','member_id'),
   ('company_members','status'),
   ('exec_funding_items','amount_m'),
+  ('exec_funding_items','category'),
   ('exec_funding_items','created_at'),
   ('exec_funding_items','id'),
+  ('exec_funding_items','method'),
+  ('exec_funding_items','period'),
   ('exec_funding_items','phase'),
   ('exec_funding_items','sort'),
   ('exec_funding_items','status'),
+  ('exec_funding_items','usage'),
   ('exec_kpi_values','kpi'),
   ('exec_kpi_values','sort'),
   ('exec_kpi_values','ym'),
@@ -120,7 +124,6 @@ with used(tbl, col) as (values
   ('financial_entries','revenue'),
   ('financial_entries','source'),
   ('financial_entries','year_month'),
-  ('funding_roadmap_items','0'),
   ('funding_roadmap_items','amount'),
   ('funding_roadmap_items','created_at'),
   ('funding_roadmap_items','created_by'),
@@ -161,7 +164,6 @@ with used(tbl, col) as (values
   ('ma_deals','customer_id'),
   ('ma_deals','deal_type'),
   ('ma_deals','done_tasks'),
-  ('ma_deals','hidden'),
   ('ma_deals','id'),
   ('ma_deals','note'),
   ('ma_deals','pmi_done'),
@@ -289,7 +291,6 @@ with used(tbl, col) as (values
   ('support_inquiries','body'),
   ('support_inquiries','created_at'),
   ('support_inquiries','id'),
-  ('support_inquiries','max'),
   ('support_inquiries','partner_id'),
   ('support_inquiries','replied_at'),
   ('support_inquiries','replied_by'),
@@ -305,7 +306,6 @@ with used(tbl, col) as (values
   ('support_knowledge','title'),
   ('training_progress','lesson_id'),
   ('training_progress','user_id'),
-  ('upcoming_payments','0'),
   ('upcoming_payments','amount'),
   ('upcoming_payments','created_by'),
   ('upcoming_payments','customer_id'),

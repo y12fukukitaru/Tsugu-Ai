@@ -1222,7 +1222,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260816-9';
+  var APP_BUILD='20260817-1';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -15248,7 +15248,7 @@
       insurances:d.insurances||[], roadmap:d.roadmap||[], summary:d.summary||null, updated_at:new Date().toISOString() };
     if(msg){ msg.style.color='#5A6981'; msg.textContent='保存中...'; }
     var res=await sb.from('onboarding_reports').upsert(row,{onConflict:'customer_id'});
-    if(res.error){ if(msg){ msg.style.color='#A9403D'; msg.textContent='保存エラー：'+res.error.message+'（onboarding_reports テーブルが未作成の可能性があります）'; } return; }
+    if(res.error){ if(msg){ msg.style.color='#A9403D'; msg.textContent='保存エラー：'+res.error.message; } return; }
     if(msg){ msg.style.color='#27684A'; msg.textContent=(d.status==='published')?'保存しました（顧客に公開中）':'保存しました（下書き・顧客には非表示）'; }
   }
 
