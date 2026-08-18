@@ -16,29 +16,55 @@
 --  下書きが見えて当然。
 --
 --  ※ ポリシーは足すと「OR」で緩くなる。新しく足すのではなく、
---    同じ名前で作り直して条件を狭める。
+--    いまあるものの条件を狭める。
+--
+--  ※ drop → create ではなく alter policy を使う。drop して作り直すと、
+--    もとの対象（for all だったのか for select だったのか、書き込みの
+--    条件があったのか）を取り違えたときに、権限を静かに広げたり
+--    狭めたりしてしまう。alter policy なら「読める条件」だけが変わる。
+--    まだ無い環境のために、無いときは作る形にしてある。
 --
 -- 実行方法: Supabase Dashboard → SQL Editor に貼り付けて Run
+--           何度実行しても同じ結果になる。
 -- =============================================================
 
--- 顧客本人：公開されたものだけ
-drop policy if exists "onbr_customer_read" on public.onboarding_reports;
-create policy "onbr_customer_read" on public.onboarding_reports
-  for select to public
-  using (auth.uid() = customer_id and status = 'published');
+do $$
+begin
+  -- 顧客本人：公開されたものだけ
+  if exists (select 1 from pg_policies
+             where schemaname='public' and tablename='onboarding_reports'
+               and policyname='onbr_customer_read') then
+    alter policy "onbr_customer_read" on public.onboarding_reports
+      using (auth.uid() = customer_id and status = 'published');
+  else
+    create policy "onbr_customer_read" on public.onboarding_reports
+      for select to public
+      using (auth.uid() = customer_id and status = 'published');
+  end if;
 
--- 会社のメンバー：同上
-drop policy if exists "mem_obr" on public.onboarding_reports;
-create policy "mem_obr" on public.onboarding_reports
-  for select to public
-  using (is_company_member(customer_id) and status = 'published');
+  -- 会社のメンバー：同上
+  if exists (select 1 from pg_policies
+             where schemaname='public' and tablename='onboarding_reports'
+               and policyname='mem_obr') then
+    alter policy "mem_obr" on public.onboarding_reports
+      using (is_company_member(customer_id) and status = 'published');
+  else
+    create policy "mem_obr" on public.onboarding_reports
+      for select to public
+      using (is_company_member(customer_id) and status = 'published');
+  end if;
+end $$;
 
 
 -- =============================================================
 -- 確認 その1（Run したあとに、この select だけを実行）
 --   「読める条件」に status = 'published' が入っていれば成功です。
+--   あわせて「操作」が select のままか、作る側（onbr_staff_all）が
+--   ALL のまま残っているかも見てください。
 -- =============================================================
--- select policyname as 名前, cmd as 操作, qual as 読める条件
+-- select policyname as 名前, cmd as 操作,
+--        array_to_string(roles,',') as 対象,
+--        qual as 読める条件, with_check as 書ける条件
 --   from pg_policies
 --  where schemaname='public' and tablename='onboarding_reports'
 --  order by cmd, policyname;
