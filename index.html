@@ -4097,7 +4097,7 @@
     (ins.data||[]).forEach(function(r){ bump(r.customer_id,'ins'); });
     if(!ch.error){ (ch.data||[]).forEach(function(m){
       if(!lastMsg[m.customer_id]) lastMsg[m.customer_id]=m;
-      if(m.sender_role==='customer' && m.created_at>getLastRead(m.customer_id)) unread[m.customer_id]=(unread[m.customer_id]||0)+1;
+      if(m.sender_role==='customer' && !isSeen(m.customer_id, m.created_at)) unread[m.customer_id]=(unread[m.customer_id]||0)+1;
     }); }
     var ids=clients.map(function(c){ return c.id; });
     var funding=[], pays=[];
@@ -4184,7 +4184,11 @@
       var lm=CL_CACHE.lastMsg[c.id];
       var un=CL_CACHE.unread[c.id]||0;
       // ① 返信滞留（最後のメッセージが顧客発で48時間以上経過）
-      if(lm && lm.sender_role==='customer'){
+      //   スレッドを開いたら、この数は消える。バッジは「まだ見ていないもの」を
+      //   数えるものにして、減らす作業を軽くする。
+      //   見たうえで返信していないものは、翌朝の「今日の一手」が拾う。
+      //   （毎日の便りに載るので、画面から消えても忘れない）
+      if(lm && lm.sender_role==='customer' && !isSeen(c.id, lm.created_at)){
         var ageH=(now - new Date(lm.created_at))/3600000;
         if(ageH>=48){
           var d=Math.floor(ageH/24);
@@ -7039,6 +7043,11 @@
   function lastReadKey(custId){ return 'tsugu_lastread_'+(ME||'')+(custId?('_'+custId):''); }
   function getLastRead(custId){ try{ return localStorage.getItem(lastReadKey(custId))||'1970-01-01T00:00:00Z'; }catch(e){ return '1970-01-01T00:00:00Z'; } }
   function markRead(custId){ try{ localStorage.setItem(lastReadKey(custId), new Date().toISOString()); }catch(e){} }
+  //  既読かどうかは時刻を数値にしてから比べる。文字のまま比べると、こちらが
+  //  保存する形（…Z）とサーバーが返す形（…+00:00）が違い、境目で取り違える。
+  function readAtMs(custId){ var t=Date.parse(getLastRead(custId)); return isNaN(t)?0:t; }
+  //  そのメッセージを既に開いて見たか
+  function isSeen(custId, iso){ var t=Date.parse(iso); return !isNaN(t) && t<=readAtMs(custId); }
   function applyNotifBadges(){
     var n=UNREAD.total||0;
     // 「対応が必要な件数」（未読＋今日やること）は右下の継ナビくんのバッジに集約する
@@ -7259,14 +7268,13 @@
     if(eff==='customer'){
       var res=await sb.from('chat_messages').select('created_at').eq('customer_id',SCOPE).eq('sender_role','consultant').gt('created_at',getLastRead()).limit(100);
       if(res.error) return;
-      var lr=getLastRead();
-      UNREAD.total=(res.data||[]).filter(function(m){ return m.created_at>lr; }).length; UNREAD.perClient={};
+      UNREAD.total=(res.data||[]).filter(function(m){ return !isSeen(null, m.created_at); }).length; UNREAD.perClient={};
       applyNotifBadges();
     } else if(eff==='consultant'){
       var ch=await sb.from('chat_messages').select('customer_id,sender_role,created_at').eq('sender_role','customer').order('created_at',{ascending:false}).limit(500);
       if(ch.error) return;
       var unread={};
-      (ch.data||[]).forEach(function(m){ if(m.created_at>getLastRead(m.customer_id)) unread[m.customer_id]=(unread[m.customer_id]||0)+1; });
+      (ch.data||[]).forEach(function(m){ if(!isSeen(m.customer_id, m.created_at)) unread[m.customer_id]=(unread[m.customer_id]||0)+1; });
       var total=0; Object.keys(unread).forEach(function(id){ total+=unread[id]; });
       UNREAD.total=total; UNREAD.perClient=unread; CL_CACHE.unread=unread;
       applyNotifBadges();
@@ -7750,8 +7758,7 @@
       var d=function(i){ return (!rs[i].error && rs[i].data)?rs[i].data:[]; };
       // --- メッセージ：未読＋返信滞留 ---
       var msgs=d(0), un=0;
-      var lr=getLastRead(custId);
-      msgs.forEach(function(m){ if(m.sender_role==='customer' && m.created_at>lr) un++; });
+      msgs.forEach(function(m){ if(m.sender_role==='customer' && !isSeen(custId, m.created_at)) un++; });
       if(un){ sig.msgOk=false; rows.push(clTodoRow('red','💬 未読メッセージが <b>'+un+'件</b> あります','knvOpenMsg(\''+custId+'\')','返信する')); }
       else if(msgs.length && msgs[0].sender_role==='customer'){
         var hrs=(now - new Date(msgs[0].created_at))/3600000;
@@ -9630,6 +9637,7 @@
     AGENT_INSIGHTS.forEach(function(x){ if(x.id===id && x.status==='unread') x.status='read'; });
     renderAgentInsights();
     try{ renderNotifCenter(); }catch(e){}
+    try{ applyNotifBadges(); }catch(e){}   // 右下のバッジも数え直す
   }
   async function agentInsightReadAll(){
     var ids=AGENT_INSIGHTS.filter(function(x){ return x.status==='unread'; }).map(function(x){ return x.id; });
@@ -9638,6 +9646,7 @@
     AGENT_INSIGHTS.forEach(function(x){ if(x.status==='unread') x.status='read'; });
     renderAgentInsights();
     try{ renderNotifCenter(); }catch(e){}
+    try{ applyNotifBadges(); }catch(e){}   // 右下のバッジも数え直す
   }
 
   // ===== 継ナビくんのプッシュ通知（Web Push / PWA） =====
@@ -10095,6 +10104,12 @@
     if(t==='msg') knvRenderMsg();
     if(t==='kn') knvRenderKn();
     if(t==='notif') knvLoadNotif();
+    //  提案は開いたら既読にする。1件ずつ押して回らないと数字が減らないのは
+    //  手間が重い。既読にしても消えず、薄い表示で7日間は読み返せる。
+    //  ※ お知らせタブは同じことをしてはいけない。あの一覧は「未読のもの」から
+    //    組み立てているので、開いた瞬間に既読にすると中身が空になり、誰から
+    //    来ていたのかが読めなくなる。あちらは「すべて既読」ボタンで畳む。
+    if(t==='chat') try{ agentInsightReadAll(); }catch(e){}
     if(t==='setup') knvRenderSetup();
     if(t==='support') knvRenderSupport();
   }
