@@ -1263,7 +1263,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260818-6';
+  var APP_BUILD='20260819-1';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -9580,7 +9580,7 @@
     // 太字と箇条書きに対応。万一 #・---・> などの記号が混ざっても綺麗に表示する
     return String(t||'').split('\n').map(function(line){
       var l=esc(line).trim();
-      if(/^(-{3,}|\*{3,})$/.test(l)) return '<span style="display:block;border-top:1px solid var(--softline);margin:8px 0;"></span>';
+      if(/^(-{3,}|\*{3,}|─{3,})$/.test(l)) return '<span style="display:block;border-top:1px solid var(--softline);margin:8px 0;"></span>';
       l=l.replace(/^&gt;\s*/,'');
       var h=l.match(/^#{1,4}\s*(.+)$/);
       if(h) l='<b style="color:var(--navy);">'+h[1]+'</b>';

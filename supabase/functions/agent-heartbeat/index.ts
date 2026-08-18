@@ -187,6 +187,8 @@ async function customerBriefs(sb: any): Promise<number> {
       "あなたは経営支援プラットフォーム「TsuguAi」のAIエージェント「継ナビくん」です。" +
       "経営者ご本人に向けた、朝のひとことを作ります。" +
       "ルール: お願いは1〜2個まで。忙しい経営者の負担にならない軽さで、労いから入る。" +
+      "■ 書き方（スマホで読まれる）お願いが2つあるときは、あいだに1行あける。" +
+      "1文は40字程度で切る。箇条書きの記号は「・」。詰まった文字の塊にしない。" +
       "今日の予定は、本文の前に別枠で必ず表示される。だから本文で予定を並べ直さない。" +
       "予定が詰まっている日は、お願いを1個に減らす。" +
       "予定が無い日に「予定はありません」と書き添える必要はない（別枠に出ているため）。" +
@@ -681,7 +683,7 @@ async function deliver(sb: any, partnerId: string, brief: { title: string; body:
             to: link.line_user_id,
             messages: [{
               type: "text",
-              text: `✦ ${brief.title}\n\n${excerpt(brief.body, 400)}\n\nアプリで詳しく → ${APP_URL}`,
+              text: `✦ ${brief.title}\n\n${excerpt(brief.body, 1400)}\n\nアプリで詳しく → ${APP_URL}`,
             }],
           }),
         });
@@ -691,11 +693,21 @@ async function deliver(sb: any, partnerId: string, brief: { title: string; body:
   }
 }
 
+//  LINE や通知に出す用に、飾り記号を落として素の文にする。
+//   空行は残す。ここで潰すと、段落の切れ目が消えて一続きの文字の壁になり、
+//   スマホでは読まれない。実際そうなっていた。3行以上の空きだけ2行に詰める。
 function excerpt(t: string, n: number) {
   const plain = (t || "")
     .replace(/^#{1,4}\s*/gm, "").replace(/^>\s*/gm, "").replace(/^(-{3,}|\*{3,})$/gm, "")
-    .replace(/\*\*/g, "").replace(/\n+/g, "\n").trim();
-  return plain.length > n ? plain.slice(0, n) + "…" : plain;
+    .replace(/\*\*/g, "")
+    .replace(/[ \t]+$/gm, "")        // 行末の余白だけ落とす
+    .replace(/\n{3,}/g, "\n\n")      // 空きすぎだけ詰める（1行の空きは残す）
+    .trim();
+  if (plain.length <= n) return plain;
+  //  途中でぶつ切りにせず、直前の段落の切れ目で終える
+  const cut = plain.slice(0, n);
+  const at = cut.lastIndexOf("\n\n");
+  return (at > n * 0.5 ? cut.slice(0, at) : cut) + "\n…（続きはアプリで）";
 }
 
 function emailHtml(brief: { title: string; body: string }) {
@@ -704,7 +716,7 @@ function emailHtml(brief: { title: string; body: string }) {
     .split("\n")
     .map((line) => {
       let l = line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").trim();
-      if (/^(-{3,}|\*{3,})$/.test(l)) return '<div style="border-top:1px solid #E2E7EF;margin:10px 0;"></div>';
+      if (/^(-{3,}|\*{3,}|─{3,})$/.test(l)) return '<div style="border-top:1px solid #E2E7EF;margin:10px 0;"></div>';
       l = l.replace(/^&gt;\s*/, "");                    // 引用記号は外す
       const heading = /^#{1,4}\s*(.+)$/.exec(l);
       if (heading) l = `<b style="color:#1E3A66;">${heading[1]}</b>`;
@@ -916,6 +928,15 @@ async function composeBrief(signals: Signal[], agenda: string[] = []): Promise<{
     "親しみやすく、頼れる相棒として振る舞います（ただし馴れ馴れしくしない）。" +
     "毎朝、担当顧客の状況シグナルから「今日の一手」ブリーフを作ります。" +
     "ルール: 最重要の3件までに絞る。各件は必ず①顧客名②なぜ今日か（根拠）③最初の一言（そのまま送れる短い文面案）の3点で書く。" +
+    "■ 書き方（スマホの通知で読まれる。詰まった文字の塊にしない）" +
+    "・件と件のあいだは必ず1行あける。" +
+    "・各件はこの形にそろえる。1行目に見出し、次の行に理由、最後に2行。" +
+    "　1) ① 顧客名｜ひとことの見出し（20字以内）" +
+    "　2) なぜ今日かを1〜2文。長くしない。" +
+    "　3) ・いつ動くか：（時間帯）" +
+    "　4) ・最初の一言：「そのまま送れる文面」" +
+    "・箇条書きの記号は「・」を使う。番号や記号を混ぜない。" +
+    "・1文は40字程度で切る。読点でつなげ続けない。" +
     "今日の予定は、本文の前に別枠で必ず表示される。だから本文で予定を並べ直さない。" +
     "予定があるときは、その時間を踏まえて、いつ動くのが現実的かを添える。" +
     "予定が無い日に「予定はありません」と書き添える必要はない（別枠に出ているため）。" +
@@ -936,8 +957,11 @@ async function composeBrief(signals: Signal[], agenda: string[] = []): Promise<{
 //  ただしAIの文章には書かせない。日によって言い回しが変わると、
 //  読み手が「毎朝ここを見る」癖をつけられないため、こちらで組み立てる。
 function agendaBlock(agenda: string[]): string {
-  if (!agenda.length) return "**本日の予定**　なし\n\n";
-  return "**本日の予定**\n" + agenda.map((a) => "- " + a).join("\n") + "\n\n";
+  //  LINEでは ** が落ちるため、【】そのもので見出しと分かるようにする。
+  //  区切り線は、予定と本題のあいだに視線の切れ目を作るためのもの。
+  const head = "**【本日の予定】**\n";
+  if (!agenda.length) return head + "・なし\n\n────────────\n\n";
+  return head + agenda.map((a) => "・" + a).join("\n") + "\n\n────────────\n\n";
 }
 
 // ---- 今日の予定（継ナビくんのカレンダー＋面談）----
