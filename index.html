@@ -1263,7 +1263,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260818-5';
+  var APP_BUILD='20260818-6';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -10176,7 +10176,16 @@
         +'<textarea id="knv-msg-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="メッセージを入力（Enterで送信／Shift+Enterで改行）"></textarea>'
         +'<button class="btn2" id="knv-msg-send" onclick="knvMsgSend()">送信</button>'
       +'</div>'
-      +'<div id="knv-msg-note" style="font-size:10.5px;color:var(--muted);margin-top:6px;line-height:1.6;">'+note+'</div>';
+      +'<div id="knv-msg-note" style="font-size:10.5px;color:var(--muted);margin-top:6px;line-height:1.6;">'+note+'</div>'
+      // 会話は、こちらが送って終わるとは限らない。顧客のお礼で自然に終わる
+      // ことのほうが多い。そのままだと毎朝「まだ返信していません」と言われ
+      // 続けるので、一区切りを伝える手段を置く。
+      +(eff==='consultant'
+        ? '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--softline);">'
+          +'<span style="font-size:10.5px;color:var(--muted);flex:1;line-height:1.6;">返信の必要がなければ、一区切りにできます。新しく届けば、また戻ります。</span>'
+          +'<button class="ghost" id="knv-msg-close" style="font-size:11px;border:1px solid var(--line);border-radius:8px;padding:5px 11px;white-space:nowrap;" onclick="knvMsgClose()">✓ この件は一区切り</button>'
+          +'</div><div id="knv-msg-closemsg" style="font-size:11px;margin-top:6px;"></div>'
+        : '');
     if(eff==='customer') knvMsgTitle();
     knvMsgLoad();
     var p=$('knv-panel'), inp=$('knv-msg-input');
@@ -10234,6 +10243,21 @@
       markRead(); UNREAD.total=0;
     }
     applyNotifBadges();
+  }
+  //  「この件は一区切り」。その時刻を覚えておき、毎朝の「今日の一手」が
+  //  そこから先に新しいメッセージが無ければ蒸し返さないようにする。
+  //  顧客から新しく届けば、その時刻のほうが後になるので、また拾われる。
+  async function knvMsgClose(){
+    var cid=KNV_MSG_CID; if(!cid) return;
+    var m=$('knv-msg-closemsg'), btn=$('knv-msg-close');
+    if(btn) btn.disabled=true;
+    if(m){ m.style.color='var(--muted)'; m.textContent='記録中...'; }
+    var res=await sb.from('chat_threads').upsert(
+      { customer_id:cid, closed_at:new Date().toISOString(), closed_by:ME, updated_at:new Date().toISOString() },
+      { onConflict:'customer_id' });
+    if(btn) btn.disabled=false;
+    if(res.error){ if(m){ m.style.color='#A9403D'; m.textContent='記録エラー：'+res.error.message; } return; }
+    if(m){ m.style.color='#27684A'; m.textContent='✓ 一区切りにしました。新しく届いたら、また朝の便りでお知らせします。'; }
   }
   async function knvMsgSend(){
     var inp=$('knv-msg-input'); if(!inp) return; var b=inp.value.trim(); if(!b) return;
