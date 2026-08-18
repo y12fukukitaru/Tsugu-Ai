@@ -102,6 +102,7 @@ async function runHeartbeat(sb: any) {
 
     const brief = await composeBrief(signals, agenda);
     if (!brief) continue;
+    brief.body = agendaBlock(agenda) + brief.body;
 
     const { error: insErr } = await sb.from("agent_insights").insert({
       user_id: partnerId,
@@ -186,15 +187,18 @@ async function customerBriefs(sb: any): Promise<number> {
       "あなたは経営支援プラットフォーム「TsuguAi」のAIエージェント「継ナビくん」です。" +
       "経営者ご本人に向けた、朝のひとことを作ります。" +
       "ルール: お願いは1〜2個まで。忙しい経営者の負担にならない軽さで、労いから入る。" +
-      "今日の予定が渡されたときは、冒頭で一言だけ触れる（羅列はしない）。予定が詰まっている日は、お願いを1個に減らす。" +
+      "今日の予定は、本文の前に別枠で必ず表示される。だから本文で予定を並べ直さない。" +
+      "予定が詰まっている日は、お願いを1個に減らす。" +
+      "予定が無い日に「予定はありません」と書き添える必要はない（別枠に出ているため）。" +
       "面談準備や数字の入力はアプリのどの画面でやるかを一言添える。判断に迷う内容は担当パートナーへの相談を促す。" +
       '出力は次のJSONのみ: {"title":"見出し(20字以内)","body":"本文(Markdown可・250字以内)"}';
     const tj = jstToday();
     const usr = `会社: ${c.company_name || ""}\n今日は${tj.label}です。\n`
-      + (agenda.length ? `今日の予定:\n${agenda.map((a) => "- " + a).join("\n")}\n` : "今日の予定は入っていません。\n")
+      + (agenda.length ? `今日の予定:\n${agenda.map((a) => "- " + a).join("\n")}\n` : "")
       + (signals.length ? `\n今朝の状況:\n${signals.map((x) => "- " + x).join("\n")}` : "");
     const brief = await callClaudeJson(sys, usr, 700);
     if (!brief) continue;
+    brief.body = agendaBlock(agenda) + brief.body;
 
     const { error: insErr } = await sb.from("agent_insights").insert({
       user_id: c.id, kind: "daily_brief",
@@ -873,15 +877,28 @@ async function composeBrief(signals: Signal[], agenda: string[] = []): Promise<{
     "親しみやすく、頼れる相棒として振る舞います（ただし馴れ馴れしくしない）。" +
     "毎朝、担当顧客の状況シグナルから「今日の一手」ブリーフを作ります。" +
     "ルール: 最重要の3件までに絞る。各件は必ず①顧客名②なぜ今日か（根拠）③最初の一言（そのまま送れる短い文面案）の3点で書く。" +
-    "今日の予定が渡されたときは、冒頭で一言だけ触れてから本題に入る（予定の羅列はしない）。" +
-    "予定の時間を踏まえて、いつ動くのが現実的かを添える。" +
+    "今日の予定は、本文の前に別枠で必ず表示される。だから本文で予定を並べ直さない。" +
+    "予定があるときは、その時間を踏まえて、いつ動くのが現実的かを添える。" +
+    "予定が無い日に「予定はありません」と書き添える必要はない（別枠に出ているため）。" +
     "断定しすぎない。押し付けない。敬意のある簡潔な日本語。" +
     '出力は次のJSONのみ: {"title":"見出し(20字以内)","body":"本文(Markdown可・600字以内)"}';
   const t = jstToday();
   const usr = `今日は${t.label}です。\n`
-    + (agenda.length ? `今日の予定:\n${agenda.map((a) => "- " + a).join("\n")}\n\n` : "今日の予定は入っていません。\n\n")
+    + (agenda.length ? `今日の予定:\n${agenda.map((a) => "- " + a).join("\n")}\n\n` : "")
     + (signals.length ? "今朝のシグナル:\n" + signals.map((s) => `- [優先${s.priority}] ${s.fact}`).join("\n") : "特筆すべきシグナルはありません。");
   return await callClaudeJson(sys, usr, 1200);
+}
+
+// ---- 本文の頭に置く「本日の予定」の枠 ----
+//  予定が無い日も必ず出す。毎朝おなじ場所に同じ形であることに意味がある。
+//    ・「なし」は、カレンダーを見に行って空だった、という報告になる
+//      （届いていない・壊れている、と区別がつく）
+//    ・入れ忘れに気づける。「あるはずだが」と思えるのは、出ているときだけ
+//  ただしAIの文章には書かせない。日によって言い回しが変わると、
+//  読み手が「毎朝ここを見る」癖をつけられないため、こちらで組み立てる。
+function agendaBlock(agenda: string[]): string {
+  if (!agenda.length) return "**本日の予定**　なし\n\n";
+  return "**本日の予定**\n" + agenda.map((a) => "- " + a).join("\n") + "\n\n";
 }
 
 // ---- 今日の予定（継ナビくんのカレンダー＋面談）----
