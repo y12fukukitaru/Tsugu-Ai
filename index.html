@@ -1263,7 +1263,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260818-4';
+  var APP_BUILD='20260818-5';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -9185,6 +9185,28 @@
     return h;
   }
   function aiToggle(id){ var d=$(id), a=$(id+'_a'); if(!d)return; var open=d.style.display!=='none'; d.style.display=open?'none':'block'; if(a)a.textContent=open?'▸':'▾'; }
+  // 診断結果のカードから、興味のあるものを選んでパートナーに共有する。
+  //  M&A側の shareMaInterests と対になる関数。こちらだけ実装が無く、
+  //  ボタンは出るのに押しても何も起きない状態だった。作りは対の関数に合わせる。
+  //  status:'new' を入れるのは、パートナー側が「対応済み」に変えるときの
+  //  目印になっているため（未対応の件数がこれで数えられる）。
+  async function shareInterests(){
+    var msg=$('ai-share-msg');
+    var picks=document.querySelectorAll('.ai-pick:checked');
+    if(!picks.length){ if(msg){ msg.style.color='#A9403D'; msg.textContent='興味のある項目を1つ以上選んでください。'; } return; }
+    var arr=window.__lastProps||[];
+    var rows=[];
+    Array.prototype.forEach.call(picks,function(c){
+      var it=arr[parseInt(c.getAttribute('data-i'),10)];
+      if(it){ rows.push({ customer_id:SCOPE, category:'automation', status:'new',
+        title:(it['業務']||''),
+        detail:('自動化案: '+(it['自動化案']||'')+' ／ 期待効果: '+(it['期待効果']||'')) }); }
+    });
+    if(!rows.length) return;
+    var res=await sb.from('automation_interests').insert(rows);
+    if(res.error){ if(msg){ msg.style.color='#A9403D'; msg.textContent='共有エラー：'+res.error.message; } return; }
+    if(msg){ msg.style.color='#27684A'; msg.textContent=rows.length+'件をパートナーに共有しました。'; }
+  }
   // 顧客：興味を送るだけ（診断はパートナーが実施）
   async function sendInterests(){
     var result=$('ai-result');
