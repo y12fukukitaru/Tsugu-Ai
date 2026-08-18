@@ -92,6 +92,12 @@ select * from (
       then '✅ 実行済み' else '❌ 未実行（重大）' end,
     '20260816070000_profiles_freeze_privileged.sql'
   union all
+  select 16, '会話の一区切り（chat_threads）',
+    case when exists (select 1 from information_schema.tables
+      where table_schema='public' and table_name='chat_threads')
+      then '✅ 実行済み' else '❌ 未実行' end,
+    '20260818120000_chat_threads.sql'
+  union all
   select 10, 'プロフィール画像（profiles.avatar）',
     case when exists (select 1 from information_schema.columns
       where table_schema='public' and table_name='profiles' and column_name='avatar')

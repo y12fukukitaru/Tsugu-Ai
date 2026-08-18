@@ -811,6 +811,45 @@ async function collectSignals(sb: any, customerIds: string[]): Promise<Signal[]>
     }
   }
 
+  // 4-2) まだ返信していないやり取り
+  //   画面のバッジは、スレッドを開いた時点で消える（読む作業を軽くするため）。
+  //   その代わり、返信していないものは毎朝ここで拾って便りに載せる。
+  //   「この件は一区切り」を押した相手は、そこから先に新しいメッセージが
+  //   来ていなければ蒸し返さない。会話はこちらが送って終わるとは限らない。
+  {
+    const { data: last } = await sb
+      .from("chat_messages")
+      .select("customer_id, sender_role, created_at")
+      .in("customer_id", customerIds)
+      .gte("created_at", daysAgo(60))
+      .order("created_at", { ascending: false });
+    const { data: closed } = await sb
+      .from("chat_threads")
+      .select("customer_id, closed_at")
+      .in("customer_id", customerIds);
+    const closedAt = new Map<string, number>();
+    for (const c of closed ?? []) {
+      if (c.closed_at) closedAt.set(c.customer_id, new Date(c.closed_at).getTime());
+    }
+    const seen = new Set<string>();
+    for (const m of last ?? []) {
+      if (seen.has(m.customer_id)) continue;   // 顧客ごとの最新1件だけを見る
+      seen.add(m.customer_id);
+      if (m.sender_role !== "customer") continue;
+      const t = new Date(m.created_at).getTime();
+      if ((closedAt.get(m.customer_id) ?? 0) >= t) continue;   // 一区切り済み
+      const days = Math.floor((Date.now() - t) / DAY);
+      signals.push({
+        customer: nm(m.customer_id),
+        kind: "unreplied",
+        fact: days >= 1
+          ? `${nm(m.customer_id)}からのメッセージに、まだ返信していない（${days}日前）`
+          : `${nm(m.customer_id)}からメッセージが届いていて、まだ返信していない`,
+        priority: days >= 2 ? 1 : 2,
+      });
+    }
+  }
+
   // 5) 先月分の月次レポートが未作成・下書きのまま
   {
     const prev = new Date();

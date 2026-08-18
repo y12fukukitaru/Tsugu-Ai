@@ -3,7 +3,7 @@
 --   これは「調べるだけ」の SQL です。何も変更しません。
 --   Supabase Dashboard → SQL Editor に貼り付けて Run してください。
 --
---   index.html から機械的に抜き出した 402 件の参照を、実際のスキーマと
+--   index.html から機械的に抜き出した 406 件の参照を、実際のスキーマと
 --   突き合わせます。読み取り（select・絞り込み）だけでなく、
 --   書き込み（insert / update / upsert）の列も対象です。
 --
@@ -86,6 +86,10 @@ with used(tbl, col) as (values
   ('chat_messages','customer_id'),
   ('chat_messages','sender_id'),
   ('chat_messages','sender_role'),
+  ('chat_threads','closed_at'),
+  ('chat_threads','closed_by'),
+  ('chat_threads','customer_id'),
+  ('chat_threads','updated_at'),
   ('company_members','access'),
   ('company_members','created_at'),
   ('company_members','customer_id'),
