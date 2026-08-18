@@ -1263,7 +1263,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260818-3';
+  var APP_BUILD='20260818-5';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -7752,10 +7752,10 @@
       var msgs=d(0), un=0;
       var lr=getLastRead(custId);
       msgs.forEach(function(m){ if(m.sender_role==='customer' && m.created_at>lr) un++; });
-      if(un){ sig.msgOk=false; rows.push(clTodoRow('red','💬 未読メッセージが <b>'+un+'件</b> あります',"knvOpenMsg(\''+custId+'\')",'返信する')); }
+      if(un){ sig.msgOk=false; rows.push(clTodoRow('red','💬 未読メッセージが <b>'+un+'件</b> あります','knvOpenMsg(\''+custId+'\')','返信する')); }
       else if(msgs.length && msgs[0].sender_role==='customer'){
         var hrs=(now - new Date(msgs[0].created_at))/3600000;
-        if(hrs>=48){ sig.msgOk=false; rows.push(clTodoRow('red','💬 顧客からのメッセージに <b>'+Math.floor(hrs/24)+'日間</b> 返信していません',"knvOpenMsg(\''+custId+'\')",'返信する')); }
+        if(hrs>=48){ sig.msgOk=false; rows.push(clTodoRow('red','💬 顧客からのメッセージに <b>'+Math.floor(hrs/24)+'日間</b> 返信していません','knvOpenMsg(\''+custId+'\')','返信する')); }
       }
       // --- 次回面談 ---
       var mt=d(1)[0]||null; meetInfo=mt;
@@ -7814,10 +7814,10 @@
     if(rows.length) left+=rows.join('');
     else left+='<div style="background:#E9F5EE;border:1px solid #BFE2CD;border-radius:10px;padding:11px 13px;font-size:12.5px;color:#27684A;margin-bottom:6px;">✅ 現時点で急ぎの対応はありません。</div>';
     // ---- 定型作業（期間別タブ）----
-    var daily=clCheckRow(sig.msgOk, 'メッセージの確認・返信（未読ゼロ・滞留なし）', "knvOpenMsg(\''+custId+'\')", '確認する');
+    var daily=clCheckRow(sig.msgOk, 'メッセージの確認・返信（未読ゼロ・滞留なし）', 'knvOpenMsg(\''+custId+'\')', '確認する');
     var weekly=clCheckRow(sig.pdcaOk, '課題・アクションの進捗更新（全件7日以内）', "clNav(\'cs-act\')", '更新する')
       +clCheckRow(sig.dueOk, '支払・資金調達の期日確認（期日超過ゼロ）', "clNav(\'cs-fund\')", '確認する');
-    var monthly=clCheckRow(done.fin, '月次財務メモの入力', "clNav(\'cs-fin\')", '入力する')
+    var monthly=clCheckRow(done.fin, '月次財務メモの入力', "clNav(\'cs-mreport\')", '入力する')
       +clCheckRow(done.rep, '月次レポートの作成', "openMonthlyReport()", '作成する')
       +clCheckRow(done.note, '面談の実施・議事録の登録', "clNav(\'cs-meet\')", '登録する')
       +clCheckRow(done.meet, '次回面談の設定'+(meetInfo?'（'+esc(fmtMeetWhen(meetInfo.meet_at))+'）':''), "clNav(\'cs-company\')", '設定する')
@@ -9185,6 +9185,28 @@
     return h;
   }
   function aiToggle(id){ var d=$(id), a=$(id+'_a'); if(!d)return; var open=d.style.display!=='none'; d.style.display=open?'none':'block'; if(a)a.textContent=open?'▸':'▾'; }
+  // 診断結果のカードから、興味のあるものを選んでパートナーに共有する。
+  //  M&A側の shareMaInterests と対になる関数。こちらだけ実装が無く、
+  //  ボタンは出るのに押しても何も起きない状態だった。作りは対の関数に合わせる。
+  //  status:'new' を入れるのは、パートナー側が「対応済み」に変えるときの
+  //  目印になっているため（未対応の件数がこれで数えられる）。
+  async function shareInterests(){
+    var msg=$('ai-share-msg');
+    var picks=document.querySelectorAll('.ai-pick:checked');
+    if(!picks.length){ if(msg){ msg.style.color='#A9403D'; msg.textContent='興味のある項目を1つ以上選んでください。'; } return; }
+    var arr=window.__lastProps||[];
+    var rows=[];
+    Array.prototype.forEach.call(picks,function(c){
+      var it=arr[parseInt(c.getAttribute('data-i'),10)];
+      if(it){ rows.push({ customer_id:SCOPE, category:'automation', status:'new',
+        title:(it['業務']||''),
+        detail:('自動化案: '+(it['自動化案']||'')+' ／ 期待効果: '+(it['期待効果']||'')) }); }
+    });
+    if(!rows.length) return;
+    var res=await sb.from('automation_interests').insert(rows);
+    if(res.error){ if(msg){ msg.style.color='#A9403D'; msg.textContent='共有エラー：'+res.error.message; } return; }
+    if(msg){ msg.style.color='#27684A'; msg.textContent=rows.length+'件をパートナーに共有しました。'; }
+  }
   // 顧客：興味を送るだけ（診断はパートナーが実施）
   async function sendInterests(){
     var result=$('ai-result');
