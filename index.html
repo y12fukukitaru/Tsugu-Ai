@@ -1263,7 +1263,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260819-1';
+  var APP_BUILD='20260819-2';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -7183,23 +7183,20 @@
     h+='<div style="display:flex;gap:9px;align-items:flex-start;background:var(--soft);border-radius:11px;padding:12px 14px;margin-bottom:14px;">'
       +'<span class="tsg-face" style="width:28px;height:28px;">'+tsgNaviSvg()+'</span>'
       +'<div style="min-width:0;font-size:13px;color:var(--ink);line-height:1.7;"><div class="tsg-name">継ナビくん</div>'
-      +'<b style="color:var(--navy);">対応が必要な項目があります。</b> 下の順番でご対応ください。<br>'
-      +'<span style="font-size:12px;color:var(--muted);">'
-      +'未読メッセージ <b style="color:#A9403D;">'+totalUnread+'件</b>'
-      +' ／ 期日・対応事項 <b style="color:#A9403D;">'+todoCount+'件</b>'
-      +'</span></div></div>';
+      +'<b style="color:var(--navy);">'+notifLead(totalUnread, todoCount)+'</b>'
+      +'</div></div>';
 
-    // ① 未読メッセージ（返信が必要）
-    h+='<div style="display:flex;align-items:center;gap:8px;margin:4px 0 8px;">'
-      +'<span style="font-size:13px;font-weight:700;color:var(--navy);">① 未読メッセージ（返信）</span>'
-      +(totalUnread?'<span class="tag red">'+totalUnread+'件</span>':'<span class="tag gray">なし</span>')
-      +(unreadIds.length?'<button class="ghost" style="font-size:11px;margin-left:auto;border:1px solid var(--line);border-radius:7px;padding:3px 9px;" onclick="notifMarkAllRead()">すべて確認済みにする</button>':'')
-      +'</div>';
+    // 立っているものを先に置く。0件のものが先頭に大きく出ると、
+    // どれが立っているのかが一目で分からない。0件は最後に1行だけ。
+    var secs=[];
+
+    // 未読メッセージ（返信が必要）
+    var msgBody='';
     if(unreadIds.length){
       unreadIds.forEach(function(id){
         var c=byId[id];
         var nm=c?(c.company_name||c.email):'顧客';
-        h+='<div class="clcard" style="margin-bottom:8px;">'
+        msgBody+='<div class="clcard" style="margin-bottom:8px;">'
           +'<div class="cl-top"><span class="cl-nm">'+esc(nm)+'</span>'
           +'<span class="tag red" style="margin-left:auto;">未読 '+per[id]+'件</span></div>'
           +'<div style="font-size:12px;color:var(--muted);margin:6px 0 8px;">📩 メッセージに返信しましょう</div>'
@@ -7209,19 +7206,18 @@
           +'</div>'
         +'</div>';
       });
-    } else {
-      h+='<div style="font-size:12px;color:#27684A;background:#EBF2ED;border-radius:9px;padding:9px 12px;margin-bottom:10px;">返信待ちのメッセージはありません。</div>';
     }
-    // こちらから送る動線：送受信は「メッセージ」タブで完結する
-    h+='<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;margin-bottom:4px;" onclick="knvShowTab(\'msg\')">✉️ こちらから送る（メッセージタブへ） →</button>';
+    msgBody+='<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;margin-bottom:4px;" onclick="knvShowTab(\'msg\')">✉️ こちらから送る（メッセージタブへ） →</button>';
+    secs.push({ n:totalUnread, ttl:'未読メッセージ（返信）', tag:'red',
+      head:(unreadIds.length?'<button class="ghost" style="font-size:11px;margin-left:auto;border:1px solid var(--line);border-radius:7px;padding:3px 9px;" onclick="notifMarkAllRead()">すべて既読</button>':''),
+      body:msgBody });
 
-    // ② 期日・対応事項（今日やること）
-    h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 8px;">② 期日・対応事項 '
-      +(todoCount?'<span class="tag gold">'+todoCount+'件</span>':'<span class="tag gray">なし</span>')+'</div>';
+    // 期日・対応事項（今日やること）
+    var todoBody='';
     if(todoTop.length){
       todoTop.forEach(function(r){
         var nm=r.c.company_name||r.c.email;
-        h+='<div class="clcard" style="margin-bottom:8px;">'
+        todoBody+='<div class="clcard" style="margin-bottom:8px;">'
           +'<div class="cl-top"><span class="cl-nm">'+esc(nm)+'</span></div>'
           +'<div style="font-size:12.5px;color:var(--navy);font-weight:600;margin:6px 0 6px;">👉 '+esc(notifActionLine(r.tags))+'</div>'
           +'<div class="cl-tags" style="margin-bottom:8px;">'+r.tags.join('')+'</div>'
@@ -7229,13 +7225,36 @@
         +'</div>';
       });
       if(todoCount>todoTop.length){
-        h+='<div style="font-size:11.5px;color:var(--muted);margin:6px 2px;">ほか '+(todoCount-todoTop.length)+'件あります。</div>';
+        todoBody+='<div style="font-size:11.5px;color:var(--muted);margin:6px 2px;">ほか '+(todoCount-todoTop.length)+'件あります。</div>';
       }
-      h+='<button class="ghost" style="font-size:12px;margin-top:6px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;" onclick="closeNotif();knvToggle(false);goSec(\'sec-todo\');">「今日やること」一覧をすべて見る →</button>';
-    } else {
-      h+='<div style="font-size:12px;color:#27684A;background:#EBF2ED;border-radius:9px;padding:9px 12px;">期日・対応が必要な事項はありません。</div>';
+      todoBody+='<button class="ghost" style="font-size:12px;margin-top:6px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;" onclick="closeNotif();knvToggle(false);goSec(\'sec-flow\')">「今日やること」一覧をすべて見る →</button>';
     }
+    secs.push({ n:todoCount, ttl:'期日・対応事項', tag:'gold', head:'', body:todoBody });
+
+    // 件数のあるものを先に。同じなら元の順のまま。
+    secs.sort(function(a,b){ return (b.n?1:0)-(a.n?1:0); });
+    secs.forEach(function(sec){
+      if(!sec.n){
+        // 0件は1行だけ。目立たせない。
+        h+='<div style="display:flex;align-items:center;gap:7px;font-size:12px;color:#27684A;background:#EBF2ED;border-radius:9px;padding:8px 12px;margin-bottom:8px;">'
+          +'<span>✅</span><span>'+esc(sec.ttl)+'</span><span style="color:var(--muted);">なし</span></div>';
+        return;
+      }
+      h+='<div style="display:flex;align-items:center;gap:8px;margin:14px 0 8px;">'
+        +'<span style="font-size:13px;font-weight:700;color:var(--navy);">'+esc(sec.ttl)+'</span>'
+        +'<span class="tag '+sec.tag+'">'+sec.n+'件</span>'+sec.head
+      +'</div>'+sec.body;
+    });
+
     write(h);
+  }
+  //  何が立っているのかを、見出しで言い切る。「対応が必要な項目があります」
+  //  だけだと、開いてから下まで読まないとどれのことか分からない。
+  function notifLead(un, todo){
+    if(un && todo) return '未読メッセージ '+un+'件 と、期日・対応事項 '+todo+'件 があります。';
+    if(un)         return '未読メッセージが '+un+'件 あります。';
+    if(todo)       return '期日・対応事項が '+todo+'件 あります。';
+    return 'いま対応が必要な項目はありません。';
   }
   function notifOpenClient(id){
     closeNotif(); if(typeof knvToggle==='function') knvToggle(false);
