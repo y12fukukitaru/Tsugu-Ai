@@ -700,6 +700,7 @@ function excerpt(t: string, n: number) {
   const plain = (t || "")
     .replace(/^#{1,4}\s*/gm, "").replace(/^>\s*/gm, "").replace(/^(-{3,}|\*{3,})$/gm, "")
     .replace(/\*\*/g, "")
+    .replace(/^[-*]\s+/gm, "・")      // 箇条書きの記号をそろえる（メール側と同じ形に）
     .replace(/[ \t]+$/gm, "")        // 行末の余白だけ落とす
     .replace(/\n{3,}/g, "\n\n")      // 空きすぎだけ詰める（1行の空きは残す）
     .trim();
@@ -724,7 +725,11 @@ function emailHtml(brief: { title: string; body: string }) {
       return l;
     })
     .join("<br>")
-    .replace(/(<br>){3,}/g, "<br><br>");
+    .replace(/(<br>){3,}/g, "<br><br>")
+    //  区切り線の前後の改行を吸わせる。残すと線のまわりが空きすぎて、
+    //  かえって「何も無い場所」に見える。線自体も薄すぎたので少し濃くする。
+    .replace(/(?:<br>)*<div style="border-top:[^"]*"><\/div>(?:<br>)*/g,
+             '<div style="border-top:1px solid #D8E0EC;margin:14px 0;"></div>');
   return `<div style="font-family:'Hiragino Sans','Noto Sans JP',sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#18202E;">
     <div style="font-size:13px;color:#C39B3F;font-weight:bold;">✦ 継ナビくんからの提案（今日の一手）</div>
     <h2 style="font-size:17px;color:#1E3A66;margin:8px 0 14px;">${brief.title}</h2>
@@ -960,7 +965,7 @@ function agendaBlock(agenda: string[]): string {
   //  LINEでは ** が落ちるため、【】そのもので見出しと分かるようにする。
   //  区切り線は、予定と本題のあいだに視線の切れ目を作るためのもの。
   const head = "**【本日の予定】**\n";
-  if (!agenda.length) return head + "・なし\n\n────────────\n\n";
+  if (!agenda.length) return "**【本日の予定】**　なし\n\n────────────\n\n";
   return head + agenda.map((a) => "・" + a).join("\n") + "\n\n────────────\n\n";
 }
 
