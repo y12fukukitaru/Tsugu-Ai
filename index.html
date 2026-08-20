@@ -1263,7 +1263,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260819-2';
+  var APP_BUILD='20260819-3';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -10378,6 +10378,12 @@
       h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">🎤 商談用スライド（説明会・面談で見せる）</div>'
         +knvRow('🤝','パートナー候補向け プロダクト説明','「顧問先に承継という未来を売れる人へ」——収入の波・一度きりの関係への問いかけから始まる説明スライド','openManual(\'pitch-partner.html\')')
         +knvRow('🏢','顧客候補向け プロダクト説明','パートナーが経営者に見せる商談スライド。内容確認・研修用に','openManual(\'pitch-customer.html\')')
+        +'<div style="height:8px;"></div>'
+        // 社外に見せる資料。相手によって話す順番が変わるため、目的ごとに分けてある
+        +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">🏦 社外向け説明資料</div>'
+        +knvRow('🏦','金融機関向け 提携のご提案','「後継者不在は御行の課題でもあります」——紹介の流れ・線引き・情報の取り扱いまで。手数料のやり取りが無いことも明記','openManual(\'pitch-bank.html\')')
+        +knvRow('📊','事業のご説明（金融機関提出用）','自社の事業・収益の仕組み・資金使途。融資や審査の場で使う資料。<b>実績と計画は［要記入］のまま</b>なので、提出前に埋めてください','openManual(\'pitch-finance.html\')')
+        +knvRow('🏛️','会社・サービスのご紹介（汎用）','自治体・商工会議所・士業団体・事業会社など、相手を選ばず使える紹介資料。売り込み色を抜いた構成','openManual(\'pitch-general.html\')')
         +'<div style="height:8px;"></div>';
     }
     if(eff==='customer'){
