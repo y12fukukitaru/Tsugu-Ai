@@ -1263,7 +1263,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260820-1';
+  var APP_BUILD='20260821-1';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -3095,7 +3095,7 @@
           + stepperHtml()
         +'</div>'
         +'<div class="panel" id="sec-growth"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6.5 13.5 5.5-5.5 5.5 5.5"/><path d="m6.5 19 5.5-5.5 5.5 5.5"/></svg>成長ロードマップ・研修</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadPartnerGrowth()">↺ 更新</span></div>'
-          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;line-height:1.7;">認定パートナーのレベルと特典です。顧問契約数・HD化（M&A成約）実績に応じてレベルが上がり、外注費率と紹介先への割引が拡大します。実績はあなたの担当データから自動集計しています（正式なレベル認定は運営が行います）。</div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;line-height:1.7;">認定パートナーのレベルです。顧問契約数に応じてレベルが上がり、外注費率が拡大します。実績はあなたの担当データから自動集計しています（正式なレベル認定・外注費率の適用は運営が行います）。</div>'
           +'<div id="pg-body">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-training">'
@@ -9589,7 +9589,10 @@
   async function loadAgentInsights(){
     AGENT_INSIGHTS=[];
     try{
-      var since=new Date(Date.now()-7*86400000).toISOString();
+      //  開かずに翌日を迎えると、前日までのぶんは出さない。毎朝1通ずつ
+      //  溜まっていくと、どれが今日のものか分からなくなるため。
+      //  日付の境目は日本時間で切る（jstToday は日本時間の YYYY-MM-DD）。
+      var since=new Date(jstToday()+'T00:00:00+09:00').toISOString();
       var res=await sb.from('agent_insights').select('*').eq('user_id',ME).in('status',['unread','read']).gte('created_at',since).order('created_at',{ascending:false}).limit(10);
       if(!res.error && res.data) AGENT_INSIGHTS=res.data;
     }catch(e){}
@@ -11858,23 +11861,23 @@
           tgCard('パートナー成長ロードマップ',
             '<div style="display:flex;gap:4px;align-items:stretch;" data-t="lvrow">'
             +lv(1,'アソシエイト','研修修了でスタート','個別設定','—','now')
-            +lv(2,'シニア','初の顧問契約','60%','2%OFF','next')
-            +lv(3,'エグゼクティブ','顧問5件＋HD化1件','70%','5%OFF','')
-            +lv(4,'プレミアム','顧問10件＋HD化2件','80%','10%OFF','')
+            +lv(2,'シニア','初の顧問契約','50%','','next')
+            +lv(3,'エグゼクティブ','顧問契約5件','60%','','')
+            +lv(4,'プレミアム','顧問契約10件','70%','','')
             +'</div>','lvcard')
           +tgCard('実績は自動集計されます',
             tgRow('顧問契約数　＝ 担当顧客として登録されている社数','<span class="tg-btn o">顧客管理</span>','agg1')
-            +tgRow('HD化　＝ 担当顧客のM&A案件がクロージング以降に到達した件数','<span class="tg-btn o">M&A案件</span>','agg2'),'aggcard'));
+            ,'aggcard'));
       },
       scenes:[
-        { t:5, chip:'全体像', focus:'lvcard', cap:'パートナーのランクは4段階です。上がるほど外注費率が高くなり、紹介先の顧問料も割引できます。' },
+        { t:5, chip:'全体像', focus:'lvcard', cap:'パートナーのランクは4段階です。上がるほど外注費率が高くなります。' },
         { t:6, chip:'Lv.1', focus:'lv1', click:true, cap:'Lv.1 アソシエイトは、この研修を修了した時点からスタートです。いまご覧いただいているレッスンがそれにあたります。' },
-        { t:5, chip:'Lv.2', focus:'lv2', click:true, cap:'Lv.2 シニアは、初めての顧問契約を獲得すると到達します。ここから外注費率60%です。' },
-        { t:6, chip:'Lv.3', focus:'lv3', click:true, cap:'Lv.3 エグゼクティブは顧問契約5件とHD化1件。HD化とは、担当顧客のM&Aが成約まで進んだ状態を指します。' },
-        { t:5, chip:'Lv.4', focus:'lv4', click:true, cap:'Lv.4 プレミアムで外注費率80%、紹介先の顧問料は10%OFFになります。' },
+        { t:5, chip:'Lv.2', focus:'lv2', click:true, cap:'Lv.2 シニアは、初めての顧問契約を獲得すると到達します。ここから外注費率50%です。' },
+        { t:6, chip:'Lv.3', focus:'lv3', click:true, cap:'Lv.3 エグゼクティブは顧問契約5件です。ここから外注費率60%になります。' },
+        { t:5, chip:'Lv.4', focus:'lv4', click:true, cap:'Lv.4 プレミアムで外注費率70%。さらに顧問契約30社以上になると、スケールメリットとして80%になります。' },
         { t:7, chip:'自動集計', focus:'aggcard', cap:'これらの実績は、あなたの担当データから自動で集計されます。別途の申請は不要です。ただし正式なレベル認定と外注費率の適用は運営が行います。' },
         { t:5, chip:'顧問契約数', focus:'agg1', click:true, cap:'顧問契約数は「顧客管理」に登録されている担当顧客の数です。登録漏れがあると実績に反映されません。' },
-        { t:6, chip:'HD化', focus:'agg2', click:true, cap:'HD化は「M&A案件」のステージがクロージング・PMI以降まで進んだ件数です。案件の進捗更新を忘れないでください。' }
+        { t:6, chip:'外注費率', focus:'lvcard', click:false, cap:'外注費率は運営が正式に適用します。相違があれば運営サポートへ。案件の進捗更新を忘れないでください。' }
       ] },
     { id:'t1-3', title:'認定パートナー 禁止行為ガイドライン（必読）', min:8, kind:'link',
       sec:'sec-knowledge',
@@ -13877,9 +13880,10 @@
   // ---- パートナー成長ロードマップ（認定レベル）----
   var PG_LEVELS=[
     { lv:1, name:'アソシエイト', cond:'研修修了でスタート', need:{cl:0,hd:0}, fee:'個別設定', off:'—' },
-    { lv:2, name:'シニア', cond:'初の顧問契約を獲得', need:{cl:1,hd:0}, fee:'60%', off:'2%OFF' },
-    { lv:3, name:'エグゼクティブ', cond:'顧問契約5件＋HD化1件', need:{cl:5,hd:1}, fee:'70%', off:'5%OFF' },
-    { lv:4, name:'プレミアム', cond:'顧問契約10件＋HD化2件', need:{cl:10,hd:2}, fee:'80%', off:'10%OFF' }
+    { lv:2, name:'シニア', cond:'初の顧問契約を獲得', need:{cl:1,hd:0}, fee:'50%' },
+    { lv:3, name:'エグゼクティブ', cond:'顧問契約5件', need:{cl:5,hd:0}, fee:'60%' },
+    //  プレミアムは基本70%。30社以上でスケールメリットとして80%になる。
+    { lv:4, name:'プレミアム', cond:'顧問契約10件', need:{cl:10,hd:0}, fee:'70%', scale:{cl:30, fee:'80%'} }
   ];
   async function loadPartnerGrowth(){
     var box=$('pg-body'); if(!box) return;
@@ -13914,7 +13918,7 @@
       var done=(L.lv<=lv), isCur=(L.lv===lv+1)||(lv===4&&L.lv===4);
       if(lv===4) { done=(L.lv<=4); isCur=false; }
       var inner='';
-      if(L.lv===lv+1){ inner = bar('顧問契約', cl, L.need.cl) + (L.need.hd?bar('HD化（M&A成約）', hd, L.need.hd):''); }
+      if(L.lv===lv+1){ inner = bar('顧問契約', cl, L.need.cl); }
       var st = done ? '<div style="font-size:9px;color:#fff;background:#27684A;border-radius:99px;padding:1px 8px;display:inline-block;margin-top:6px;">'+(L.lv===lv?'現在のレベル':'達成')+'</div>'
         : (isCur ? '<div style="font-size:9px;color:#fff;background:#C39B3F;border-radius:99px;padding:1px 8px;display:inline-block;margin-top:6px;">次の目標</div>'
         : '<div style="font-size:10px;color:#94A2B6;margin-top:6px;">今後</div>');
@@ -13922,7 +13926,8 @@
         +'<div style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:99px;padding:0 7px;background:'+(done?'#27684A':(isCur?'#C39B3F':'#94A2B6'))+';color:#fff;font-size:11px;font-weight:700;">Lv.'+L.lv+'</div>'
         +'<div style="font-size:13px;font-weight:700;color:#18202E;margin-top:6px;">'+L.name+'</div>'
         +'<div style="font-size:10.5px;color:#94A2B6;margin-top:2px;line-height:1.5;">'+L.cond+'</div>'
-        +'<div style="font-size:10.5px;color:#1E3A66;margin-top:6px;line-height:1.6;background:#fff;border:1px solid #E8EDF4;border-radius:8px;padding:5px 7px;">外注費率 <b>'+L.fee+'</b><br>紹介先の顧問料 <b>'+L.off+'</b></div>'
+        +'<div style="font-size:10.5px;color:#1E3A66;margin-top:6px;line-height:1.6;background:#fff;border:1px solid #E8EDF4;border-radius:8px;padding:5px 7px;">外注費率 <b>'+L.fee+'</b>'
+          +(L.scale?'<br><span style="color:#8A6A12;">'+L.scale.cl+'社以上で <b>'+L.scale.fee+'</b></span>':'')+'</div>'
         +inner+st
       +'</div>';
     }).join(ar);
@@ -13948,18 +13953,17 @@
     +'</div>';
     // 次のレベルまでのサマリー
     if(next){
-      var needCl=Math.max(0, next.need.cl-cl), needHd=Math.max(0, next.need.hd-hd);
+      var needCl=Math.max(0, next.need.cl-cl);
       var parts=[];
       if(needCl>0) parts.push('顧問契約 あと'+needCl+'件');
-      if(needHd>0) parts.push('HD化（M&A成約） あと'+needHd+'件');
       h+='<div style="margin-top:12px;border:1.5px solid #C9D6EA;background:#F5F9FE;border-radius:11px;padding:12px 14px;font-size:13px;color:#1E3A66;">'
         +'<b>Lv.'+next.lv+' '+next.name+'</b> まで：'+(parts.length?parts.join('・'):'条件達成！運営の認定をお待ちください')
-        +'<span style="font-size:11px;color:#5A6981;">（現在：顧問契約 '+cl+'件・HD化 '+hd+'件）</span>'
+        +'<span style="font-size:11px;color:#5A6981;">（現在：顧問契約 '+cl+'件）</span>'
       +'</div>';
     } else {
       h+='<div style="margin-top:12px;border:1.5px solid #CFE3D6;background:#F2F8F4;border-radius:11px;padding:12px 14px;font-size:13px;color:#27684A;"><b>最高レベル（Lv.4 プレミアム）の条件を満たしています。</b>いつもありがとうございます！</div>';
     }
-    h+='<div style="font-size:11px;color:#94A2B6;margin-top:10px;line-height:1.7;">※ 顧問契約数＝担当顧客数、HD化＝担当顧客のM&A案件で「クロージング・PMI」以降に到達した件数として自動集計した目安です。正式なレベル認定・外注費率の適用は運営が行います。相違がある場合は<span style="color:#2C5DA8;cursor:pointer;font-weight:600;" onclick="goSec(\'sec-support\')">運営サポート</span>からお問い合わせください。</div>';
+    h+='<div style="font-size:11px;color:#94A2B6;margin-top:10px;line-height:1.7;">※ 顧問契約数＝担当顧客数として自動集計した目安です。正式なレベル認定・外注費率の適用は運営が行います。相違がある場合は<span style="color:#2C5DA8;cursor:pointer;font-weight:600;" onclick="goSec(\'sec-support\')">運営サポート</span>からお問い合わせください。</div>';
     box.innerHTML=h;
   }
   async function admPostListing(){
