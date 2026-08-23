@@ -441,6 +441,21 @@
   .cal-dot{width:6px;height:6px;border-radius:50%;display:block;}
   .cal-more{font-size:9px;color:var(--muted);line-height:1;}
   @media(max-width:600px){ .cal-cell{min-height:40px;} .cal-cell .d{font-size:11px;} }
+  /* 予定の中身をひと目で読むための小窓。月・週の枠は小さく、題名も切れるため、
+     押したらここに開いて全部見せる。継ナビくんのパネル（71）より前に出す。 */
+  .cpk-bg{position:fixed;inset:0;background:rgba(8,14,26,.5);z-index:80;display:flex;
+    align-items:center;justify-content:center;padding:18px;}
+  .cpk{width:min(420px,100%);max-height:82vh;overflow:auto;background:var(--card);
+    border-radius:15px;box-shadow:0 24px 70px rgba(6,12,24,.45);padding:16px 17px;}
+  .cpk-h{display:flex;align-items:flex-start;gap:9px;margin-bottom:10px;}
+  .cpk-t{flex:1;min-width:0;font-size:16px;font-weight:700;color:var(--ink);line-height:1.5;
+    font-family:var(--f-head);word-break:break-word;}
+  .cpk-x{flex:0 0 auto;border:1px solid var(--line);background:var(--card);color:var(--muted);
+    border-radius:9px;font-size:13px;padding:4px 9px;cursor:pointer;font-family:inherit;}
+  .cpk-r{display:flex;gap:9px;font-size:12.5px;line-height:1.8;padding:7px 0;border-top:1px solid var(--softline);}
+  .cpk-r .k{flex:0 0 76px;color:var(--muted);white-space:nowrap;}
+  .cpk-r .v{flex:1;min-width:0;color:var(--ink);word-break:break-word;white-space:pre-wrap;}
+  body.dark .cpk{background:var(--card);}
   /* 本人のしるし。写真・継ナビくん・頭文字のいずれかが入る */
   .me-row{display:flex;align-items:center;gap:9px;margin-bottom:9px;min-width:0;}
   .me-row .sb-email{margin-bottom:0;flex:1;min-width:0;}
@@ -1263,7 +1278,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260821-1';
+  var APP_BUILD='20260823-1';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -10634,7 +10649,7 @@
   //  Googleカレンダーを読みに行くのではなく、TsuguAi の中に予定の置き場所を持つ。
   //  外部の審査に公開日を左右されず、私的な予定が外に出ることもない。
   //  面談（パートナーが登録）は複製せず、読むときに重ねて見せる。
-  var CAL_ROWS=null, CAL_EDIT=null;
+  var CAL_ROWS=null, CAL_EDIT=null, CAL_EDIT_WHEN=null;
 
   function calDT(iso){
     var d=new Date(iso); if(isNaN(d)) return String(iso||'');
@@ -10820,7 +10835,8 @@
   // 予定1件のカード
   function calCard(x){
     var own=(x.kind==='own'), k=CAL_KINDS[x.kind]||null;
-    return '<div style="border:1px solid '+(k?k.bd:'var(--softline)')+';background:'+(k?k.bg:'var(--card)')
+    //  カードごと押せる。枠の中で切れている題名・場所・メモを小窓で全部見せる。
+    return '<div onclick="calPeek('+(x._ri|0)+')" style="cursor:pointer;border:1px solid '+(k?k.bd:'var(--softline)')+';background:'+(k?k.bg:'var(--card)')
       +';border-radius:10px;padding:9px 11px;margin-bottom:6px;">'
       +'<div style="display:flex;gap:8px;align-items:flex-start;">'
       +'<span style="font-size:12px;color:var(--muted);white-space:nowrap;font-feature-settings:\'tnum\';">'
@@ -10832,18 +10848,24 @@
       +'</div>'
       +(own
          ? '<span style="white-space:nowrap;">'
-           +'<button class="ghost" style="font-size:11px;padding:3px 6px;" onclick="calOpenForm(\''+escJ(x.id)+'\')">編集</button>'
-           +'<button class="ghost" style="font-size:11px;padding:3px 6px;color:#A9403D;" onclick="calDelete(\''+escJ(x.id)+'\')">削除</button>'
+           +'<button class="ghost" style="font-size:11px;padding:3px 6px;" onclick="event.stopPropagation();calOpenForm(\''+escJ(x.id)+'\')">編集</button>'
+           +'<button class="ghost" style="font-size:11px;padding:3px 6px;color:#A9403D;" onclick="event.stopPropagation();calDelete(\''+escJ(x.id)+'\')">削除</button>'
          +'</span>'
          : '<span style="font-size:10px;background:'+(k?k.bg:'var(--soft)')+';color:'+(k?k.fg:'var(--muted)')
            +';border:1px solid '+(k?k.bd:'var(--line)')+';border-radius:99px;padding:2px 8px;white-space:nowrap;">'
            +esc(k?k.label:'')+'</span>')
     +'</div></div>';
   }
-  function calDayHead(d, extra){
+  //  add を true にすると「＋ この日」が付く。日付を打ち直さずに、
+  //  いま見ている日のまま予定を足せる。一覧では日ごとに出ると煩いので付けない。
+  function calDayHead(d, extra, add){
     var w='日月火水木金土'.charAt(d.getDay());
-    return '<div style="font-size:11.5px;color:#8A6A12;letter-spacing:.06em;margin:12px 0 6px;font-weight:700;">'
-      +(d.getMonth()+1)+'月'+d.getDate()+'日（'+w+'）'+(extra?'　'+esc(extra):'')+'</div>';
+    var key=calDkey(d);
+    return '<div style="display:flex;align-items:center;gap:8px;margin:12px 0 6px;">'
+      +'<span style="font-size:11.5px;color:#8A6A12;letter-spacing:.06em;font-weight:700;">'
+        +(d.getMonth()+1)+'月'+d.getDate()+'日（'+w+'）'+(extra?'　'+esc(extra):'')+'</span>'
+      +(add?'<button class="ghost" style="margin-left:auto;font-size:11px;border:1px solid var(--line);border-radius:8px;padding:3px 9px;white-space:nowrap;" onclick="calOpenForm(\'\',\''+escJ(key)+'T09:00\')">＋ この日</button>':'')
+    +'</div>';
   }
   function calRel(d){
     var n=new Date(), a=new Date(d.getFullYear(),d.getMonth(),d.getDate()), b=new Date(n.getFullYear(),n.getMonth(),n.getDate());
@@ -10889,7 +10911,7 @@
           var k=CAL_KINDS[x.kind];
           h+='<span class="wk-chip" style="background:'+(k?k.bg:'var(--soft)')+';color:'+(k?k.fg:'var(--ink)')
             +';border:1px solid '+(k?k.bd:'var(--line)')+';" title="'+escA(x.title)+'"'
-            +' onclick="calPick(\''+calDkey(d)+'\')">'+esc(x.title)+'</span>';
+            +' onclick="event.stopPropagation();calPeek('+(x._ri|0)+')">'+esc(x.title)+'</span>';
         });
         h+='</div>';
       });
@@ -10902,7 +10924,7 @@
     h+='</div>';
     days.forEach(function(d){
       var k2=calDkey(d);
-      h+='<div class="wk-col'+(k2===tKey?' today':'')+'" onclick="calPick(\''+k2+'\')">';
+      h+='<div class="wk-col'+(k2===tKey?' today':'')+'" onclick="calWkSlot(event,\''+k2+'\','+lo+')">';
       var timed=(byDay[k2]||[]).filter(function(x){ return !x.allDay; })
         .sort(function(a,b){ return new Date(a.when)-new Date(b.when); });
       calLayoutDay(timed).forEach(function(x){
@@ -10912,6 +10934,7 @@
         var w=100/x._n, left=x._i*w;
         h+='<div class="wk-ev" style="top:'+top+'px;height:'+hgt+'px;left:calc('+left+'% + 1px);width:calc('+w+'% - 3px);'
           +'background:'+(kk?kk.bg:'rgba(44,93,168,.10)')+';border-color:'+(kk?kk.bd:'#CBD9EE')+';color:'+(kk?kk.fg:'#1E3A66')+';"'
+          +' onclick="event.stopPropagation();calPeek('+(x._ri|0)+')"'
           +' title="'+escA(('0'+t3.getHours()).slice(-2)+':'+('0'+t3.getMinutes()).slice(-2)+' '+x.title)+'">'
           +'<b>'+esc(x.title)+'</b>'
           +(hgt>=32?'<span>'+('0'+t3.getHours()).slice(-2)+':'+('0'+t3.getMinutes()).slice(-2)+'</span>':'')
@@ -10955,6 +10978,10 @@
     var box=$('knv-cal'); if(!box) return;
     if(!CAL_ROWS || force){ box.innerHTML=tsgLoad('予定を読み込んでいます'); await calFetch(); }
     var view=calViewGet(), cur=calCur(), today=new Date();
+    //  小窓に「どの予定か」を渡すための通し番号。並べ直しても崩れないよう毎回振る。
+    //  週表示の重なり配置は同じ予定に _i（何列目か）を付ける。名前を分けておかないと
+    //  こちらが上書きされ、押した予定と違うものが開く。
+    ((CAL_ROWS&&CAL_ROWS.rows)||[]).forEach(function(x,i){ x._ri=i; });
     var h='';
 
     // 上段：表示の切り替えと操作
@@ -11018,7 +11045,7 @@
       h+='</div>';
       var pick=CAL_PICK||tKey;
       var pd=new Date(pick+'T00:00:00');
-      h+=calDayHead(pd, calRel(pd));
+      h+=calDayHead(pd, calRel(pd), true);
       var pit=byDay[pick]||[];
       h+=pit.length ? pit.map(calCard).join('')
         : '<div style="font-size:12px;color:#94A2B6;padding:4px 2px 2px;">この日の予定はありません。</div>';
@@ -11034,7 +11061,7 @@
           ? calDkey(t5) : calDkey(ws);
       }
       var wpd=new Date(wkPick+'T00:00:00');
-      h+=calDayHead(wpd, calRel(wpd));
+      h+=calDayHead(wpd, calRel(wpd), true);
       var wit=byDay[wkPick]||[];
       h+=wit.length ? wit.map(calCard).join('')
         : '<div style="font-size:12px;color:#94A2B6;padding:4px 2px 2px;">この日の予定はありません。</div>';
@@ -11067,9 +11094,75 @@
       }
     }catch(e){}
     calFeedRow();
-    if(CAL_EDIT!==null) calOpenForm(CAL_EDIT);
+    if(CAL_EDIT!==null) calOpenForm(CAL_EDIT, CAL_EDIT_WHEN);
   }
   function calPick(key){ CAL_PICK=key; knvRenderCal(); }
+  //  週表示で空いているところを押したら、その日のその時刻で新規作成を開く。
+  //  日付も時刻も打ち直さずに済む。予定そのものを押した場合は小窓が開く
+  //  （そちらで stopPropagation しているので、ここには来ない）。
+  function calWkSlot(ev, key, lo){
+    var hh=9;
+    try{
+      var box=ev.currentTarget.getBoundingClientRect();
+      hh=Math.max(0, Math.min(23, Math.floor(lo + (ev.clientY-box.top)/WK_PX)));
+    }catch(e){}
+    CAL_PICK=key;
+    CAL_EDIT=''; CAL_EDIT_WHEN=key+'T'+('0'+hh).slice(-2)+':00';
+    knvRenderCal();
+  }
+
+  // ===== 予定の中身を開く小窓 =====
+  //  月・週の枠は小さく、題名も場所もメモも切れて読めない。押したらここに
+  //  全部出す。自分で入れた予定はここから直せる。自動で並ぶ予定（面談・課題
+  //  など）は、どの画面から来たものかを書いて、そこへ行けるようにする。
+  var CAL_KIND_SEC={ meet:'sec-clients', task:'sec-pdca', pay:'sec-clients', fund:'sec-clients',
+                     subsidy:'sec-subsidy', week:'sec-flow' };
+  //  行き先の画面をその人が見られるとは限らない（権限で隠れている）。
+  //  出ていない画面へ送るボタンは嘘になるので、実際に在るときだけ出す。
+  function calGoSec(kind){ var s=CAL_KIND_SEC[kind]; return (s && $(s)) ? s : ''; }
+  function calPeek(i){
+    var x=((CAL_ROWS&&CAL_ROWS.rows)||[])[i]; if(!x) return;
+    calPeekClose();
+    var k=CAL_KINDS[x.kind]||null, own=(x.kind==='own');
+    //  終わりの時刻があれば「〜HH:MM」まで見せる。枠の高さでは分からないため。
+    function hm(v){ var t=new Date(v); return isNaN(t)?'':('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2); }
+    var when = x.allDay
+      ? (calDT(x.when).split('）')[0]+'）　終日')
+      : (calDT(x.when)+(x.ends?(' 〜 '+hm(x.ends)):''));
+    var rows='';
+    function row(kk,v){ if(!v) return ''; return '<div class="cpk-r"><span class="k">'+kk+'</span><span class="v">'+esc(v)+'</span></div>'; }
+    rows+=row('日時', when);
+    rows+=row('場所・方法', x.place||'');
+    rows+=row('メモ', x.note||'');
+    if(!own) rows+=row('出どころ', (k?k.label:'')+'の画面から自動で並んでいます。ここでは変更できません。');
+    var act = own
+      ? '<button class="btn2" style="font-size:12.5px;padding:8px 16px;" onclick="calPeekClose();calOpenForm(\''+escJ(x.id)+'\')">編集する</button>'
+        +'<button class="ghost" style="font-size:12.5px;color:#A9403D;border:1px solid var(--line);border-radius:9px;padding:7px 13px;" onclick="calPeekClose();calDelete(\''+escJ(x.id)+'\')">削除</button>'
+      : (calGoSec(x.kind)
+          ? '<button class="btn2" style="font-size:12.5px;padding:8px 16px;" onclick="calPeekClose();knvToggle(false);goSec(\''+escJ(calGoSec(x.kind))+'\')">その画面を開く →</button>'
+          : '');
+    var el=document.createElement('div');
+    el.className='cpk-bg'; el.id='cal-peek';
+    el.onclick=function(ev){ if(ev.target===el) calPeekClose(); };
+    el.innerHTML='<div class="cpk">'
+      +'<div class="cpk-h">'
+        +'<div style="flex:1;min-width:0;">'
+          //  自分で入れたものか、他の画面から自動で並んだものか。
+          //  ここが分からないと「なぜ直せないのか」が分からない。
+          +'<span style="display:inline-block;font-size:10.5px;font-weight:700;border-radius:99px;padding:1px 9px;margin-bottom:6px;'
+            +(k?('color:'+k.fg+';background:'+k.bg+';border:1px solid '+k.bd+';')
+               :'color:var(--muted);background:var(--soft);border:1px solid var(--line);')
+          +'">'+esc(k?k.label:'自分の予定')+'</span>'
+          +'<div class="cpk-t">'+esc(x.title)+'</div>'
+        +'</div>'
+        +'<button class="cpk-x" onclick="calPeekClose()" aria-label="閉じる">✕</button>'
+      +'</div>'
+      +rows
+      +(act?'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;">'+act+'</div>':'')
+    +'</div>';
+    document.body.appendChild(el);
+  }
+  function calPeekClose(){ var e=$('cal-peek'); if(e && e.parentNode) e.parentNode.removeChild(e); }
 
   // Googleカレンダーへの配信（連携タブから予定タブへ移設）
   function calFeedRow(){
@@ -11080,8 +11173,21 @@
     calendarFeedSetup();
   }
 
-  function calOpenForm(id){
-    CAL_EDIT=id||'';
+  //  時刻だけを HH:MM で取り出す（終わりの欄に戻すため）
+  function hm2(v){
+    if(!v) return '';
+    var d=new Date(v); if(isNaN(d)) return '';
+    return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+  }
+  //  終日なら終わりの時刻は意味がないので伏せる
+  function calAllDayToggle(){
+    var a=$('cal-a'), r=$('cal-end-row');
+    if(a && r) r.style.display = a.checked ? 'none' : 'flex';
+  }
+  //  whenLocal（'YYYY-MM-DDTHH:MM'）を渡すと、その日時が入った状態で開く。
+  //  日付を打ち直さずに済むよう、日付の見出しや週の空きから呼ぶ。
+  function calOpenForm(id, whenLocal){
+    CAL_EDIT=id||''; CAL_EDIT_WHEN=whenLocal||null;
     var host=$('cal-form'); if(!host) return;
     var row=null;
     if(id) (CAL_ROWS&&CAL_ROWS.rows||[]).forEach(function(x){ if(x.kind==='own'&&x.id===id) row=x; });
@@ -11091,14 +11197,21 @@
       var p=function(n){ return ('0'+n).slice(-2); };
       return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());
     }
-    var def=row?iso2local(row.when):iso2local(new Date(Date.now()+3600000).toISOString());
+    var def=row?iso2local(row.when):(whenLocal||iso2local(new Date(Date.now()+3600000).toISOString()));
     host.innerHTML='<div style="border:1px solid var(--gold);background:rgba(195,155,63,.06);border-radius:11px;padding:12px 13px;margin-bottom:12px;">'
       +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">'+(row?'予定を編集':'予定を追加')+'</div>'
       +'<input id="cal-t" class="inp2" placeholder="予定の名前（例：銀行と面談）" value="'+escA(row?row.title:'')+'" style="width:100%;margin-bottom:7px;">'
       +'<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:7px;">'
         +'<input id="cal-s" class="inp2" type="datetime-local" value="'+escA(def)+'" style="flex:1;min-width:190px;">'
         +'<label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);">'
-          +'<input id="cal-a" type="checkbox"'+(row&&row.allDay?' checked':'')+'>終日</label>'
+          +'<input id="cal-a" type="checkbox"'+(row&&row.allDay?' checked':'')+' onchange="calAllDayToggle()">終日</label>'
+      +'</div>'
+      //  終わりの時刻。空でよい。日付は始まりと同じ日として扱い、
+      //  始まりより前になったら翌日にまたぐものとみなす（22:00〜01:00 など）。
+      +'<div id="cal-end-row" style="display:'+(row&&row.allDay?'none':'flex')+';gap:7px;align-items:center;margin-bottom:7px;">'
+        +'<span style="font-size:12px;color:var(--muted);white-space:nowrap;">終わり</span>'
+        +'<input id="cal-e" class="inp2" type="time" value="'+escA(row?hm2(row.ends):'')+'" style="flex:0 0 auto;">'
+        +'<span style="font-size:11px;color:var(--muted);">空欄でも構いません</span>'
       +'</div>'
       +'<input id="cal-p" class="inp2" placeholder="場所・方法（任意）" value="'+escA(row?row.place:'')+'" style="width:100%;margin-bottom:7px;">'
       +'<input id="cal-n" class="inp2" placeholder="メモ（任意）" value="'+escA(row?row.note:'')+'" style="width:100%;margin-bottom:9px;">'
@@ -11107,9 +11220,12 @@
         +'<button class="ghost" style="font-size:12px;" onclick="calCloseForm()">やめる</button>'
         +'<span id="cal-msg" style="font-size:11.5px;"></span>'
       +'</div></div>';
-    var t=$('cal-t'); if(t) t.focus();
+    //  入力欄は暦の上端にある。下のほうの日を押して開いたとき、そのままでは
+    //  画面の外に出ていて「押しても何も起きない」ように見える。必ず見せる。
+    try{ host.scrollIntoView({block:'center', behavior:'smooth'}); }catch(e){ try{ host.scrollIntoView(); }catch(e2){} }
+    var t=$('cal-t'); if(t) t.focus({preventScroll:true});
   }
-  function calCloseForm(){ CAL_EDIT=null; var host=$('cal-form'); if(host) host.innerHTML=''; }
+  function calCloseForm(){ CAL_EDIT=null; CAL_EDIT_WHEN=null; var host=$('cal-form'); if(host) host.innerHTML=''; }
 
   async function calSave(id){
     var msg=$('cal-msg');
@@ -11118,10 +11234,22 @@
     var when=(($('cal-s')||{}).value||'').trim();
     if(!title){ say('予定の名前を入れてください'); return; }
     if(!when){ say('日時を入れてください'); return; }
+    var allDay=!!(($('cal-a')||{}).checked);
+    var st=new Date(when);
+    //  終わりは時刻だけ受け取る。始まりと同じ日に置き、それより前なら
+    //  日をまたいだものとして翌日にする（22:00〜01:00 など）。
+    var ends=null, et=(($('cal-e')||{}).value||'').trim();
+    if(!allDay && et){
+      var p=et.split(':');
+      var e=new Date(st); e.setHours(Number(p[0])||0, Number(p[1])||0, 0, 0);
+      if(e<=st) e.setDate(e.getDate()+1);
+      ends=e.toISOString();
+    }
     var row={
       title:title,
-      starts_at:new Date(when).toISOString(),
-      all_day:!!(($('cal-a')||{}).checked),
+      starts_at:st.toISOString(),
+      ends_at:ends,
+      all_day:allDay,
       place:(($('cal-p')||{}).value||'').trim()||null,
       note:(($('cal-n')||{}).value||'').trim()||null
     };
@@ -11130,7 +11258,7 @@
     if(id) res=await sb.from('agenda_events').update(row).eq('id',id);
     else { row.owner_id=ME; res=await sb.from('agenda_events').insert(row); }
     if(res.error){ say('保存エラー：'+res.error.message+'（agenda_events のSQLが未実行の可能性があります）'); return; }
-    CAL_EDIT=null; knvAgendaReset();
+    CAL_EDIT=null; CAL_EDIT_WHEN=null; knvAgendaReset();
     await knvRenderCal(true);
   }
   async function calDelete(id){
