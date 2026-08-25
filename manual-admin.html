@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Shippori+Mincho:wght@500;600;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{--navy:#1E3A66;--blue:#2C5DA8;--gold:#C39B3F;--ink:#18202E;--muted:#5A6981;
   --line:#E2E7EF;--soft:#F8F9FC;--softline:#EDF1F6;--deep:#0E1B33;--green:#27684A;--red:#A9403D;}
@@ -164,6 +164,7 @@ ul.dots li{font-size:14.5px;}
 @media(max-width:820px){ .slide{padding:24px 18px 30px;} h1{font-size:27px;} h2{font-size:20px;} .cover h1{font-size:30px;} }
 @media print{ .mnv-top,.mnv-toc{display:none!important;} .slide{margin:0;} }
 </style>
+<link rel="stylesheet" href="manual-wa.css">
 </head>
 <body>
 <div class="deck" id="deck">
@@ -175,9 +176,9 @@ ul.dots li{font-size:14.5px;}
   <p class="sub">全機能と、課金・報酬支払いの詳細<br>所要 35分／支払い章は目次から「■ 支払い・課金の章」へ</p>
 </section>
 
-<section class="slide" data-t="全体像">
+<section class="slide" data-t="全体像" data-g="はじめに">
   <div class="eyebrow">はじめに</div>
-  <h2>運営コンソールの12メニュー</h2>
+  <h2>運営コンソールの13メニュー</h2>
   <table class="kv tight">
     <tr><th>ダッシュボード</th><td>TsuguAi自体の成長ロードマップ（事業計画連動）。顧客・パートナー・調達の実データから現在地を自動表示。</td></tr>
     <tr><th>KPI・経営計画</th><td>ステージ・ファネル／稼働状況と、経営計画（資金調達リスト・週次計画・KPIトラッキング）。1つのタブに統合されています。経営計画の部分は<b>権限（sec-exec）を持つメンバーにだけ</b>表示されます。</td></tr>
@@ -186,6 +187,7 @@ ul.dots li{font-size:14.5px;}
     <tr><th>顧客</th><td>一覧・管理。担当未割当での絞り込み。</td></tr>
     <tr><th>運営メンバー <span class="pill r">代表のみ</span></th><td>アカウントの役割変更、運営内の権限設定、2名体制の承認、<b>🎫 登録コードの発行・停止</b>。<b>このメニューは代表にしか表示されません。</b></td></tr>
     <tr><th>専門家ネットワーク</th><td>領域カバレッジ／顧客の業種分布／提携専門家の名簿／紹介依頼の受信箱。</td></tr>
+        <tr><th>補助金マスタ</th><td>公募中の補助金制度を運営が登録します。登録した制度は、要件に合う顧客のカルテに<b>候補として自動で並びます</b>。</td></tr>
         <tr><th>Tsugu投資・融資・M&A</th><td>掲載案件の管理と、パートナーからの掲載申請の審査。</td></tr>
     <tr><th>課金・契約</th><td>MRR試算、顧問料の割引設定（<b>変更は自動保存され運営全員に共有</b>）、決済リンク、入金履歴、<b>パートナー報酬の配分</b>。</td></tr>
     <tr><th>監査ログ</th><td>操作履歴。コンプライアンス対応の証跡。</td></tr>
@@ -195,7 +197,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:12px;">画面上部の<b>表示モード</b>（運営／パートナー／顧客）で、各ロールの見え方をプレビューできます。動作確認に使ってください。</div>
 </section>
 
-<section class="slide" data-t="登録コード（納品時）">
+<section class="slide" data-t="登録コード（納品時）" data-g="はじめに">
   <div class="eyebrow">運営メンバー（代表のみ）</div>
   <h2>登録コード ― パートナーを待たせない仕組み</h2>
   <p class="sub">新規登録した方は全員、最初は<b>経営者（顧客）</b>として始まります。パートナーには<b>登録コード</b>をお渡しください。初回ログインの「はじめの設定」で「認定パートナー」を選び、そのコードを入力すると<b>その場でパートナーポータルが開きます</b>。運営での権限変更は不要です。</p>
@@ -207,7 +209,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note r" style="margin-top:14px;"><b>コードは第三者に渡らないよう管理してください。</b>コードを知っている人は誰でもパートナーとして登録できます。使用上限を必要な人数に絞り、配布が終わったら停止するのが安全です。<b>運営（admin）権限はコードでは付与できません</b>——運営アカウントは従来どおり「アカウントと役割の管理」からのみ設定します。</div>
 </section>
 
-<section class="slide" data-t="運営メンバーの権限">
+<section class="slide" data-t="運営メンバーの権限" data-g="はじめに">
   <div class="eyebrow">運営メンバー（代表のみ）</div>
   <h2>誰に、どこまで開けるか</h2>
   <p class="sub">運営コンソールは全部入りではありません。役員・委託契約者ごとに、見えるメニューを1つずつ設定できます。</p>
@@ -223,7 +225,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note r" style="margin-top:12px;"><b>メニューを隠すだけでは「見せない」ことになりません。</b>Supabase側のRLS（Phase71／72）を適用して初めて、データそのものが読めなくなります。UIだけの制限は、開発者ツールから回避できます。</div>
 </section>
 
-<section class="slide" data-t="パートナー管理">
+<section class="slide" data-t="パートナー管理" data-g="人を見る">
   <div class="eyebrow">パートナー</div>
   <h2>一覧・稼働モニタと、2名体制の承認</h2>
   <div class="grid g2">
@@ -234,7 +236,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note r" style="margin-top:10px;"><b>承認の判断材料：</b>申し送りに引き継ぎの意図が書かれているか、配分が極端でないか（例：サブ90%）。実態と合わない配分は、後で報酬トラブルになります。</div>
 </section>
 
-<section class="slide" data-t="顧客管理">
+<section class="slide" data-t="顧客管理" data-g="人を見る">
   <div class="eyebrow">顧客</div>
   <h2>顧客一覧と、役割の変更</h2>
   <div class="grid g2">
@@ -244,7 +246,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:14px;"><b>顧客の業種</b>は、担当パートナーが顧客カルテの「会社情報（代行入力）」で登録します。専門家ネットワークの業種分布に集計されるので、未設定が多い場合はパートナーに登録を促してください。</div>
 </section>
 
-<section class="slide" data-t="専門家ネットワーク">
+<section class="slide" data-t="専門家ネットワーク" data-g="外とつなぐ">
   <div class="eyebrow">専門家ネットワーク</div>
   <h2>誰がどの領域を実行でき、どこが手薄か</h2>
   <div class="grid g2">
@@ -254,7 +256,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:14px;">この2つは<b>パートナーの資格登録</b>（本業と連携）と<b>顧客の業種登録</b>（カルテ）が入力源です。どちらも現場が入れるものなので、入力率そのものが運営の管理指標になります。</div>
 </section>
 
-<section class="slide" data-t="専門家名簿">
+<section class="slide" data-t="専門家名簿" data-g="外とつなぐ">
   <div class="eyebrow">専門家ネットワーク</div>
   <h2>③ 提携専門家の名簿と、紹介料の考え方</h2>
   <p class="sub">ここに登録した専門家は、パートナーの「本業と連携」画面に表示されます。</p>
@@ -269,7 +271,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note g" style="margin-top:12px;"><b>方針：紹介料は運営の利益にせず、依頼者への値引きとして全額お返しします。</b>パートナー画面では通常料金に取り消し線が入り、TsuguAi経由の価格が強調されます。この方針が明示されていないと、パートナーは「運営が中抜きしている」と疑って紹介を止めます。</div>
 </section>
 
-<section class="slide" data-t="紹介依頼">
+<section class="slide" data-t="紹介依頼" data-g="外とつなぐ">
   <div class="eyebrow">専門家ネットワーク</div>
   <h2>④ パートナーからの紹介依頼</h2>
   <div class="flow">
@@ -285,7 +287,7 @@ ul.dots li{font-size:14.5px;}
   </div>
 </section>
 
-<section class="slide" data-t="補助金マスタ">
+<section class="slide" data-t="補助金マスタ" data-g="外とつなぐ">
   <div class="eyebrow">補助金マスタ</div>
   <h2>運営が制度を登録し、カルテに候補が出ます</h2>
   <p class="sub">ここに登録した制度が、パートナーの顧客カルテ「補助金ナビ」で顧客の<b>業種・年商・資金使途</b>に照らして自動表示されます。この画面を扱えるのは<b>代表・COO・CTO</b>です。</p>
@@ -296,7 +298,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:14px;">パートナーの役割は<b>制度のご案内（情報提供）まで</b>と規程・研修で定めています。申請支援の依頼が来たら、専門家ネットワーク（行政書士等）への紹介対応になります。</div>
 </section>
 
-<section class="slide" data-t="経営計画・融資">
+<section class="slide" data-t="経営計画・融資" data-g="数字を見る">
   <div class="eyebrow">経営計画</div>
   <h2>資金調達の記録と、成長ロードマップ連動</h2>
   <p class="sub">調達（融資・出資）を実行したら、必ずここに記録してください。ダッシュボードの成長ロードマップが自動で拾います。</p>
@@ -308,7 +310,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:10px;">成長ロードマップの<b>ステージ3「シード調達」</b>は累計<b>5,000万円</b>で達成判定です。ステージ2「初期トラクション」はパートナー10名・顧問先10社・MRR50万円が目安になっています。<br><b>DD（デューデリジェンス）で参照される箇所</b>でもあるため、実行のたびに記録しておくと後から遡らずに済みます。</div>
 </section>
 
-<section class="slide" data-t="財務データと自動レポート">
+<section class="slide" data-t="財務データと自動レポート" data-g="数字を見る">
   <div class="eyebrow">データ基盤</div>
   <h2>試算表17項目と、そこから出る指標</h2>
   <p class="sub">売上・営業利益の2項目では財務力が分かりません。試算表に載る17項目（PL7・BS10）を保持し、そこから14指標を自動算出します。単位はすべて<b>万円</b>です。</p>
@@ -321,7 +323,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note r" style="margin-top:10px;">読み取れない様式の報告が来たら、科目名の照合パターンを追加すれば次から通ります。<b>運用しながら精度が上がる作り</b>なので、現場からの報告を集めてください。確実なのは会計ソフトのPDF出力です。</div>
 </section>
 
-<section class="slide" data-t="顧問税理士の連携">
+<section class="slide" data-t="顧問税理士の連携" data-g="数字を見る">
   <div class="eyebrow">社数を増やす鍵</div>
   <h2>顧問税理士による月次入力</h2>
   <p class="sub">試算表の入手待ちが、パートナー1人が担当できる社数を縛ります。顧問税理士に直接入れてもらうことで、催促と転送の工程が消えます。</p>
@@ -339,13 +341,13 @@ ul.dots li{font-size:14.5px;}
 </section>
 
 <!-- ===== 支払い章 ===== -->
-<section class="slide divider" data-t="■ 支払い・課金の章">
+<section class="slide divider" data-t="■ 支払い・課金の章" data-g="お金の章">
   <div class="mark">SECTION</div>
   <h1>課金・契約管理／<br>支払いのすべて</h1>
   <p class="sub">MRR試算・顧問料の割引・決済リンク・入金記録・パートナー報酬の配分</p>
 </section>
 
-<section class="slide" data-t="課金の全体像">
+<section class="slide" data-t="課金の全体像" data-g="お金の章">
   <div class="eyebrow pay">課金・契約</div>
   <h2>6つのタブと、お金の流れ</h2>
   <div class="flow" style="margin-bottom:16px;">
@@ -363,7 +365,7 @@ ul.dots li{font-size:14.5px;}
   </table>
 </section>
 
-<section class="slide" data-t="MRR試算のパラメータ">
+<section class="slide" data-t="MRR試算のパラメータ" data-g="お金の章">
   <div class="eyebrow pay">課金・契約 ①概要</div>
   <h2>MRR試算のパラメータ</h2>
   <p class="sub">登録済みのパートナー・顧客から月次売上を自動試算します。<b>この画面のパラメータは試算用で、保存されません。</b>画面を離れると初期値に戻ります。</p>
@@ -377,7 +379,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note r" style="margin-top:12px;"><b>運営直接担当は割引・階層付与の対象外です。</b>パートナーへの外注費が発生しないため一律料金としています。担当パートナーが運営アカウントの顧客は、自動的にこの扱いになります。</div>
 </section>
 
-<section class="slide" data-t="顧問料の割引ロジック">
+<section class="slide" data-t="顧問料の割引ロジック" data-g="お金の章">
   <div class="eyebrow pay">課金・契約 ①概要</div>
   <h2>顧問料の割引ロジック</h2>
   <p class="sub">3つの割引を合算し、上限で頭打ちにしてから顧問料に適用します。</p>
@@ -393,7 +395,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:10px;">上位ランクが条件未達の場合は、<b>条件を満たす下位の率が付与</b>されます（例：エグゼクティブだが顧問3件なら、シニアの2%）。上限を超えた顧客は画面上で分かるように表示されます。</div>
 </section>
 
-<section class="slide" data-t="決済リンク">
+<section class="slide" data-t="決済リンク" data-g="お金の章">
   <div class="eyebrow pay">課金・契約 ④決済リンク</div>
   <h2>Stripe決済リンクの登録</h2>
   <p class="sub">Stripeで作成したPayment Linkを登録すると、顧客・パートナーの「お支払い」メニューに<b>即時表示</b>されます。</p>
@@ -406,7 +408,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note r"><b>割引を適用した顧客には、必ず専用リンクを割り当ててください。</b>全顧客共通リンクのままだと定価で決済されます。割引率は③顧客別タブで確認できます。</div>
 </section>
 
-<section class="slide" data-t="入金の記録">
+<section class="slide" data-t="入金の記録" data-g="お金の章">
   <div class="eyebrow pay">課金・契約 ⑤入金履歴</div>
   <h2>売上・入金の記録方法</h2>
   <div class="grid g2">
@@ -417,7 +419,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:10px;">絞り込みは<b>年月／対象（顧客・パートナー）／記録種別（Stripe・手動）／区分</b>の4軸。月次の締めではまず年月で絞ってください。</div>
 </section>
 
-<section class="slide" data-t="報酬配分の考え方">
+<section class="slide" data-t="報酬配分の考え方" data-g="お金の章">
   <div class="eyebrow pay">課金・契約 ⑤報酬配分</div>
   <h2>パートナー報酬の配分 ― 計算の順序</h2>
   <p class="sub">選択中の年月に<b>成約（入金記録）した案件</b>を対象に、次の順で計算します。</p>
@@ -429,28 +431,29 @@ ul.dots li{font-size:14.5px;}
   </div>
   <table class="kv num" style="margin-top:16px;">
     <tr><th>アソシエイト（Lv.1）</th><td>外注費率は「個別設定」のため自動計算できません</td><td>— </td></tr>
-    <tr><th>シニア（Lv.2）</th><td>入金額に対する率</td><td>60%</td></tr>
-    <tr><th>エグゼクティブ（Lv.3）</th><td>同上</td><td>70%</td></tr>
-    <tr><th>プレミアム（Lv.4）</th><td>同上</td><td>80%</td></tr>
+    <tr><th>シニア（Lv.2）</th><td>入金額に対する率</td><td>50%</td></tr>
+    <tr><th>エグゼクティブ（Lv.3）</th><td>同上</td><td>60%</td></tr>
+    <tr><th>プレミアム（Lv.4）</th><td>同上</td><td>70%</td></tr>
+    <tr><th>プレミアム（30社以上）</th><td>スケールメリット</td><td>80%</td></tr>
   </table>
   <div class="note" style="margin-top:10px;"><b>配分は顧客ごとに効きます。</b>同じパートナーでも、2名体制の顧客の売上だけが分割され、それ以外の顧客の分は全額メインに乗ります。</div>
 </section>
 
-<section class="slide" data-t="報酬配分の計算例">
+<section class="slide" data-t="報酬配分の計算例" data-g="お金の章">
   <div class="eyebrow pay">課金・契約 ⑤報酬配分</div>
   <h2>計算例で確かめる</h2>
-  <p class="sub">田中パートナー（エグゼクティブ＝70%）が2社を担当。山田製作所のみ2名体制（メイン70／サブ30）。</p>
+  <p class="sub">田中パートナー（エグゼクティブ＝<b>60%</b>）が2社を担当。山田製作所のみ2名体制（メイン70／サブ30）。</p>
   <div class="calc">
-    <b>山田製作所</b>　入金 <code>3,000,000</code> × 外注費率 <code>70%</code> = 2,100,000<br>
-    　└ 2名体制 → メイン <code>70%</code> = <span class="r">1,470,000</span>　／　サブ <code>30%</code> = <span class="r">630,000</span><br>
-    <b>中村商事</b>　入金 <code>500,000</code> × 外注費率 <code>70%</code> = <span class="r">350,000</span>（体制なし → 全額メイン）<br>
+    <b>山田製作所</b>　入金 <code>3,000,000</code> × 外注費率 <code>60%</code> = 1,800,000<br>
+    　└ 2名体制 → メイン <code>70%</code> = <span class="r">1,260,000</span>　／　サブ <code>30%</code> = <span class="r">540,000</span><br>
+    <b>中村商事</b>　入金 <code>500,000</code> × 外注費率 <code>60%</code> = <span class="r">300,000</span>（体制なし → 全額メイン）<br>
     <hr style="border:none;border-top:1px solid var(--line);margin:9px 0;">
-    <b>田中パートナーの報酬合計</b> = <span class="r">2,450,000 円</span>　（メイン <b>1,820,000</b> ／ サブ <b>630,000</b>）
+    <b>田中パートナーの報酬合計</b> = <span class="r">2,100,000 円</span>　（メイン <b>1,560,000</b> ／ サブ <b>540,000</b>）
   </div>
   <div class="note" style="margin-top:12px;">画面上部には<b>対象の入金／パートナー報酬 合計／うちサブ担当ぶん</b>の3つが表示されます。サブへの支払い漏れを防ぐため、まずここを見てください。</div>
 </section>
 
-<section class="slide" data-t="報酬配分の注意点">
+<section class="slide" data-t="報酬配分の注意点" data-g="お金の章">
   <div class="eyebrow pay">課金・契約 ⑤報酬配分</div>
   <h2>3つの警告と、その意味</h2>
   <div class="grid g3">
@@ -461,7 +464,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note r" style="margin-top:16px;"><b>計算結果は保存されません。</b>現在のランクと配分で毎回計算し直す仕組みです。支払い確定後にランクや配分を変更すると、この画面の数字も変わります。<b>確定額は必ず運営の帳簿（会計側）で管理してください。</b>この画面は支払額を決めるための参照であり、支払記録ではありません。</div>
 </section>
 
-<section class="slide" data-t="月次の締めフロー">
+<section class="slide" data-t="月次の締めフロー" data-g="お金の章">
   <div class="eyebrow pay">運用</div>
   <h2>月次の締め ― 実行順序</h2>
   <ol class="steps">
@@ -475,7 +478,7 @@ ul.dots li{font-size:14.5px;}
   </ol>
 </section>
 
-<section class="slide" data-t="その他の機能">
+<section class="slide" data-t="その他の機能" data-g="そのほか">
   <div class="eyebrow">運用</div>
   <h2>監査ログ・お知らせ配信・サポート管理</h2>
   <div class="grid g3">
@@ -486,7 +489,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:16px;"><b>サポートAIのナレッジは必ず登録してください。</b>運営ルール・報酬規程・申請手順を登録しておくと、AIがその内容に基づいて回答します。<b>未登録の場合、AIは運営固有の事項を推測で答えず、問い合わせを案内します</b>（誤情報を防ぐための仕様です）。「有効」のものだけが読み込まれます。</div>
 </section>
 
-<section class="slide" data-t="重要な注意事項">
+<section class="slide" data-t="重要な注意事項" data-g="そのほか">
   <div class="eyebrow">最後に</div>
   <h2>運営として押さえておくこと</h2>
   <div class="grid g2">
@@ -550,15 +553,22 @@ show(isFinite(h)&&h>0 ? h-1 : 0);
     if(window.self!==window.top){ try{ parent.postMessage({tsugu:'closeManual'},'*'); return; }catch(e){} }
     if(history.length>1) history.back(); else location.href='./index.html';
   };
-  var slides=document.querySelectorAll('.slide'); var links='';
+  var slides=document.querySelectorAll('.slide'); var links='', lastG=null, n=0;
   Array.prototype.forEach.call(slides,function(s,i){
     s.id=s.id||('mnv-s'+i);
     var t=s.getAttribute('data-t')||'';
-    if(t&&t!=='表紙') links+='<a href="#'+s.id+'">'+t+'</a>';
+    if(!t||t==='表紙') return;
+    // 組が変わったら見出しを挟む。平らに並べると、どこに何があるか読めない。
+    var g=s.getAttribute('data-g')||'';
+    if(g!==lastG){ if(lastG!==null) links+='</div>'; links+='<div class="mnv-g"><i>'+g+'</i>'; lastG=g; }
+    n++;
+    links+='<a href="#'+s.id+'"><em>'+(n<10?'0':'')+n+'</em>'+t+'</a>';
   });
   if(links){
+    if(lastG!==null) links+='</div>';
     var toc=document.createElement('div'); toc.className='mnv-toc';
-    toc.innerHTML='<b>目次（タップで移動）</b>'+links;
+    toc.innerHTML='<b>目次</b><p class="lead">全'+n+'項目。押すとその場所へ移動します。'
+      +'上から順に読んでも、必要なところだけ拾っても構いません。</p>'+links;
     var first=document.querySelector('.slide');
     if(first&&first.parentNode) first.parentNode.insertBefore(toc, first.nextSibling);
   }

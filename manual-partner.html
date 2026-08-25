@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Shippori+Mincho:wght@500;600;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{--navy:#1E3A66;--blue:#2C5DA8;--gold:#C39B3F;--ink:#18202E;--muted:#5A6981;
   --line:#E2E7EF;--soft:#F8F9FC;--softline:#EDF1F6;--deep:#0E1B33;--green:#27684A;--red:#A9403D;}
@@ -161,6 +161,7 @@ ul.dots li{font-size:14.5px;}
 @media(max-width:820px){ .slide{padding:24px 18px 30px;} h1{font-size:27px;} h2{font-size:20px;} .cover h1{font-size:30px;} }
 @media print{ .mnv-top,.mnv-toc{display:none!important;} .slide{margin:0;} }
 </style>
+<link rel="stylesheet" href="manual-wa.css">
 </head>
 <body>
 <div class="deck" id="deck">
@@ -172,7 +173,7 @@ ul.dots li{font-size:14.5px;}
   <p class="sub">認定パートナー向け／本業と併走するための使い方<br>所要 20分</p>
 </section>
 
-<section class="slide" data-t="はじめの設定">
+<section class="slide" data-t="はじめの設定" data-g="はじめに">
   <div class="eyebrow">最初の1回だけ</div>
   <h2>はじめの設定 ― 登録コードでパートナーとして開始</h2>
   <p class="sub">新規登録して最初にログインすると、「はじめの設定」画面が表示されます。ここで<b>「認定パートナー」</b>を選び、運営からお渡しした<b>登録コード</b>を入力してください。お名前を入れて「はじめる」を押せば、すぐにパートナーポータルが開きます。</p>
@@ -182,7 +183,7 @@ ul.dots li{font-size:14.5px;}
   </div>
 </section>
 
-<section class="slide" data-t="TsuguAiの位置づけ">
+<section class="slide" data-t="TsuguAiの位置づけ" data-g="はじめに">
   <div class="eyebrow">最初に</div>
   <h2>TsuguAiは、あなたの本業と競合しません</h2>
   <p class="sub">認定パートナーの多くは、保険・不動産・士業・M&Aなどフルコミッションの営業職として本業をお持ちです。TsuguAiはその案件を奪う場ではありません。</p>
@@ -193,9 +194,9 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:16px;"><b>キャッシュベース思考。</b>提案の良し悪しは「顧客の現金がいくら増えたか」で測ります。売った金額ではありません。迷ったら「これで顧客の現金は増えるか？」に立ち返ってください。増えないなら提案しない。それがTsuguAiの基準です。</div>
 </section>
 
-<section class="slide" data-t="画面の全体像">
+<section class="slide" data-t="画面の全体像" data-g="はじめに">
   <div class="eyebrow">メニュー</div>
-  <h2>14の画面と、その役割</h2>
+  <h2>左メニューの10画面と、右下の継ナビくん</h2>
   <table class="kv tight">
     <tr><th>ダッシュボード</th><td>毎朝ここだけ見れば抜け漏れが防げます。<b>今日やること</b>が並びます。</td></tr>
     <tr><th>成長・研修</th><td>認定レベル（Lv.1〜4）と外注費率、本業への還元額、研修プログラム（全4章10レッスン）。1つのタブに統合されています。</td></tr>
@@ -211,7 +212,7 @@ ul.dots li{font-size:14.5px;}
   </table>
 </section>
 
-<section class="slide" data-t="今日やること">
+<section class="slide" data-t="今日やること" data-g="毎日ひらく画面">
   <div class="eyebrow">毎朝ここから</div>
   <h2>ダッシュボードの「今日やること」</h2>
   <p class="sub">3種類のチェックが自動で走っています。ここを空にすることが、日々のいちばんの仕事です。</p>
@@ -224,7 +225,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:18px;">その下に<b>「課題ヒアリング診断」</b>への入口があります。まだ登録していない見込み客との商談で使うツールです。</div>
 </section>
 
-<section class="slide" data-t="継ナビくん">
+<section class="slide" data-t="継ナビくん" data-g="毎日ひらく画面">
   <div class="eyebrow">AIからの働きかけ</div>
   <h2>継ナビくんが毎朝「今日の一手」を届けます</h2>
   <p class="sub">担当顧客全社の状況をAIが毎朝読み終えた状態で、いま動くべき3件までを理由つきで提案します。右下の継ナビくんボタン（バッジ付き）とパネルの冒頭に表示されます。</p>
@@ -235,24 +236,47 @@ ul.dots li{font-size:14.5px;}
   </div>
   <div class="tsg-say"><span class="tsg-mado sm"><svg viewBox="0 -4 64 64" aria-hidden="true" focusable="false"><path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/><rect x="9.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="49.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="14" y="23" width="36" height="30" rx="10" fill="#fff" stroke="#cfa860" stroke-width="1.6"/><circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/><circle cx="20.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><circle cx="43.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/></svg></span><div class="bb"><span class="who">継ナビくん</span>毎朝、担当顧客全社を読み終えた状態でお待ちしています。<b>提案までが私の仕事</b>——顧客に届く操作は、必ずあなたの手で。</div></div>
   <div class="note" style="margin-top:10px;"><b>どの画面からでも呼べます。</b>画面右下の継ナビくんボタンを押すと、いつでも相談窓口が開きます。経営の相談はもちろん、<b>「この操作はどこ？」という使い方の質問</b>にも答えます。</div>
-  <div class="note" style="margin-top:10px;"><b>届き方は4つ。</b>①アプリ内（右下の継ナビくんボタン） ②メール ③LINE ④スマホ通知——LINEとスマホ通知は、右下の継ナビくんを開いて<b>「連携」タブ</b>から設定します（スマホ通知は先にこのアプリを「ホーム画面に追加」。iPhoneは共有ボタン→ホーム画面に追加→追加したアイコンから開いて設定）。<b>「📅 Googleカレンダーに表示」は「予定」タブに移りました</b>（連携タブは通知の設定だけになりました）。専用URLをGoogleカレンダーに登録すると、担当顧客との面談予定がリマインダー付きで自動表示されます。</div>
+
+  <h3 style="font-size:16px;margin:20px 0 8px;">赤い数字を消してまわらなくて済みます</h3>
+  <p class="sub" style="margin-bottom:12px;">未読の数字を1件ずつ押して減らすのは手間です。<b>開けば減る</b>ようにしてあります。</p>
+  <table class="kv tight">
+    <tr><th>今日の一手</th><td><b>「相談」タブを開いた時点で、まとめて既読</b>になります。消えるわけではなく、薄い表示で読み返せます。</td></tr>
+    <tr><th>メッセージ</th><td>その顧客のやり取りを<b>開いた時点で既読</b>。カルテと「やること」の赤い数字も同時に下がります。</td></tr>
+    <tr><th>お知らせ</th><td>ここだけは開いても既読にしません。<b>この一覧は未読のものから組み立てている</b>ため、開いた瞬間に既読にすると中身が空になり、誰から来ていたか分からなくなるからです。<b>「すべて既読」</b>ボタンで畳んでください。</td></tr>
+  </table>
+  <div class="note g" style="margin-top:12px;"><b>会話は、こちらが送って終わるとは限りません。</b>顧客の「ありがとうございます」で自然に終わることのほうが多く、仕組みの上では「最後が顧客発＝まだ返信していない」に見えてしまいます。区切りがついたら、メッセージ欄の下の<b>「✓ この件は一区切り」</b>を押してください。翌朝の「今日の一手」で蒸し返しません。<b>新しく届けば、また拾います。</b></div>
+  <div class="note" style="margin-top:10px;"><b>「今日の一手」は溜まりません。</b>開かずに翌日を迎えた場合、前日までのぶんは表示されなくなります。毎朝1通ずつ積み上がって、どれが今日のものか分からなくなるのを避けるためです（日付の境目は日本時間）。</div>
+
+  <h3 style="font-size:16px;margin:20px 0 8px;">届き方は4つ</h3>
+  <table class="kv tight">
+    <tr><th>① アプリ内</th><td>画面右下の継ナビくんボタン（バッジ付き）。設定は要りません。</td></tr>
+    <tr><th>② メール</th><td>ご登録のアドレスへ。設定は要りません。</td></tr>
+    <tr><th>③ LINE</th><td>右下の継ナビくん →<b>「連携」タブ</b>から設定します。</td></tr>
+    <tr><th>④ スマホ通知</th><td>同じく「連携」タブ。<b>先にこのアプリを「ホーム画面に追加」</b>してください。iPhoneは 共有ボタン → ホーム画面に追加 → <b>追加したアイコンから開いて</b>設定します。</td></tr>
+  </table>
+  <div class="note" style="margin-top:10px;"><b>「📅 Googleカレンダーに表示」は「予定」タブに移りました。</b>（連携タブは通知の設定だけになりました）専用URLをGoogleカレンダーに登録すると、担当顧客との面談予定がリマインダー付きで自動表示されます。</div>
 </section>
 
-<section class="slide" data-t="予定（カレンダー）">
+<section class="slide" data-t="予定（カレンダー）" data-g="毎日ひらく画面">
   <div class="eyebrow">新しく増えました</div>
   <h2>予定 ― 担当顧客全社の面談が、1枚に</h2>
   <p class="sub">右下の継ナビくんを開き、<b>「📅 予定」タブ</b>。ご自身の予定を入れられるほか、<b>担当顧客全社の面談・課題の期日・支払い予定・資金調達の目標日・補助金の締切が自動で並びます</b>。顧客ごとにカルテを開いて回る必要がなくなります。</p>
   <div class="grid g3">
-    <div class="card"><h3>3つの見方</h3><p><b>月</b>…今月の埋まり具合を点で。<br><b>週</b>…横に7日・縦に時間。空き時間がひと目で分かります。<br><b>一覧</b>…これからの順番に。</p></div>
+    <div class="card"><h3>3つの見方</h3><p><b>月</b>…今月の埋まり具合を点で。<br><b>週</b>…横に7日・縦に時間（6時〜）。空き時間がひと目で分かります。<br><b>一覧</b>…これからの順番に。</p></div>
     <div class="card g"><h3>会社名つき</h3><p>自動で並ぶ予定には<b>会社名が頭に付きます</b>。「◯◯商事：資金繰りの改善 の期日」のように、誰の予定かがひと目で分かります。</p></div>
-    <div class="card w"><h3>入れ方は2通り</h3><p><b>「＋ 予定」</b>から入力するか、<b>継ナビくんに話しかける</b>だけ。「明日15時に◯◯社と面談」で下書きが出ます。</p></div>
+    <div class="card w"><h3>押すと中身が開きます</h3><p>枠の中では題名も場所もメモも切れています。<b>予定を押すと小窓が開き</b>、日時・場所・メモが最後まで読めます。ご自身の予定は、そこから<b>編集・削除</b>もできます。</p></div>
+  </div>
+  <div class="grid g3" style="margin-top:12px;">
+    <div class="card soft"><h3>入れ方は4通り</h3><p>①上の<b>「＋ 予定」</b>　②日付の見出しの<b>「＋ この日」</b>　③<b>週表示の空いているところを押す</b>（その日その時刻で開きます）　④<b>継ナビくんに話しかける</b>——「明日15時に◯◯社と面談」で下書きが出ます。</p></div>
+    <div class="card soft"><h3>日付を打ち直さずに済みます</h3><p>②③から開くと、<b>その日・その時刻がすでに入った状態</b>で入力欄が開きます。入力欄は暦の上にあるので、下の日から開いたときは自動で画面内まで送られます。</p></div>
+    <div class="card soft"><h3>終わりの時刻も入ります</h3><p><b>終わり</b>の欄は空欄で構いません。入れると週表示の枠がその長さになり、小窓にも「10:00 〜 11:30」と出ます。22:00〜01:00のように<b>日をまたぐ指定</b>もそのまま扱えます。</p></div>
   </div>
   <div class="tsg-say"><span class="tsg-mado sm"><svg viewBox="6 0 52 56" aria-hidden="true" focusable="false"><path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/><rect x="9.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="49.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="14" y="23" width="36" height="30" rx="10" fill="#fff" stroke="#cfa860" stroke-width="1.6"/><circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/><circle cx="20.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><circle cx="43.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/></svg></span><div class="bb"><span class="who">継ナビくん</span>毎朝の「今日の一手」でも、その日のご予定に触れます。<b>予定の時間を踏まえて、どの提案をいつ動かすのが現実的か</b>を添えます。</div></div>
   <div class="note" style="margin-top:14px;"><b>Googleカレンダーへの表示はここから。</b>予定タブのいちばん下の<b>あなた専用のURL</b>を、Googleカレンダーの「URLで追加」に登録してください。<b>登録するのはURLひとつだけ</b>です。以後、担当顧客との面談とご自身の予定が、リマインダー付きで自動表示されます。Googleが取りに来るまで数時間かかることがあります。</div>
   <div class="note r" style="margin-top:10px;"><b>顧客の予定は見えません。</b>ここに並ぶのは面談など共有されている情報だけで、顧客がご自分で入れた予定は表示されません（逆も同じです）。</div>
 </section>
 
-<section class="slide" data-t="ランクと報酬">
+<section class="slide" data-t="ランクと報酬" data-g="パートナーとしての立場">
   <div class="eyebrow">成長ロードマップ</div>
   <h2>認定レベルと外注費率</h2>
   <div class="lv">
@@ -268,7 +292,7 @@ ul.dots li{font-size:14.5px;}
   </div>
 </section>
 
-<section class="slide" data-t="本業と連携①">
+<section class="slide" data-t="本業と連携①" data-g="パートナーとしての立場">
   <div class="eyebrow">本業と連携 ①</div>
   <h2>保有資格を登録する</h2>
   <p class="sub">主戦場（本業）と保有資格、対応エリアを登録します。ここに登録した領域は、顧客の課題が当たったときに<b>あなたの案件として最初にお知らせ</b>します。</p>
@@ -280,7 +304,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note r"><b>実行の進め方は「禁止行為ガイドライン」が優先します。</b>ご自身が有資格の場合の取り扱いは現在<b>規程の改定を検討中</b>です。該当する場面では、実行の前に必ず運営サポートへご相談ください。</div>
 </section>
 
-<section class="slide" data-t="本業と連携②">
+<section class="slide" data-t="本業と連携②" data-g="パートナーとしての立場">
   <div class="eyebrow">本業と連携 ②</div>
   <h2>本業案件を記録する</h2>
   <p class="sub">顧問先から生まれた本業の案件を記録すると、TsuguAiがあなたの本業にどれだけ効いているかが数字で分かります。</p>
@@ -291,7 +315,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:16px;">この記録は<b>あなただけのもの</b>です。顧客ポータルには表示されません。成約額の合計は「成長ロードマップ」の<b>本業への還元</b>に反映されます。</div>
 </section>
 
-<section class="slide" data-t="本業と連携③">
+<section class="slide" data-t="本業と連携③" data-g="パートナーとしての立場">
   <div class="eyebrow">本業と連携 ③</div>
   <h2>専門家にお繋ぎする</h2>
   <p class="sub">資格が要る領域は、運営が審査した提携専門家にお繋ぎできます。無理に扱う必要はありません。</p>
@@ -307,7 +331,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note">つないだ案件はあなたの実績にはなりませんが、<b>「この人に聞けば何とかなる」という信頼</b>が残り、次の本業案件として返ってきます。</div>
 </section>
 
-<section class="slide" data-t="2名体制">
+<section class="slide" data-t="2名体制" data-g="パートナーとしての立場">
   <div class="eyebrow">引き継ぎ</div>
   <h2>2名体制（サブ担当）の申請</h2>
   <p class="sub">顧客ごとに、サブ担当と2名で見る体制にできます。<b>報酬の配分はメイン担当のあなたが決めて</b>、運営に申請します。</p>
@@ -319,7 +343,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note"><b>引き継ぎのコツ：</b>いきなり交代せず、サブとして併走してもらう期間をつくってください。担当がある日突然変わると、顧客は離れます。<br>承認後、サブ担当の顧客管理には<span class="pill">サブ担当</span>バッジ付きでその顧客が並びます。配分の変更はメイン担当のみ行えます。</div>
 </section>
 
-<section class="slide" data-t="顧客管理・カルテ">
+<section class="slide" data-t="顧客管理・カルテ" data-g="顧客を担当する">
   <div class="eyebrow">いちばん大事なところ</div>
   <h2>カルテに残す4点</h2>
   <p class="sub">面談のたびに、次の4つを必ず書いてください。</p>
@@ -332,7 +356,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note r" style="margin-top:18px;"><b>記録のない提案は禁止行為です。</b>後から「言った・言わない」になったとき、あなたを守るのはこのカルテだけです。<b>面談の当日中</b>に書いてください。</div>
 </section>
 
-<section class="slide" data-t="カルテのメニュー">
+<section class="slide" data-t="カルテのメニュー" data-g="顧客を担当する">
   <div class="eyebrow">どこに何があるか</div>
   <h2>左メニューは6つの組にまとまっています</h2>
   <p class="sub">いま見ている組だけが開きます。ほかの組は見出しをクリックすると開きます。<b>閉じている組も、対応が必要なら見出しに赤い件数が出ます</b>ので、畳んだせいで見落とすことはありません。</p>
@@ -350,7 +374,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:10px;">並び順は「⚙ 並び順のカスタマイズ」から、<b>組の中で</b>入れ替えられます。設定はお使いの端末に保存されます。</div>
 </section>
 
-<section class="slide" data-t="導入90日">
+<section class="slide" data-t="導入90日" data-g="顧客を担当する">
   <div class="eyebrow">解約がいちばん多い時期</div>
   <h2>導入90日プログラム ― 3つの成果物を期日までに</h2>
   <p class="sub">契約直後の顧客の画面には「お渡し予定の成果物」が3つ表示されます。同じ内容がカルテにも出ます。達成は実データからの<b>自動判定</b>で、手動のチェックはありません。</p>
@@ -363,7 +387,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:10px;">お渡しを約束しているのは<b>成果物</b>であって、業績の改善そのものではありません。「必ず増えます」等の断定表現は禁止行為です。</div>
 </section>
 
-<section class="slide" data-t="毎月の数字を取り込む">
+<section class="slide" data-t="毎月の数字を取り込む" data-g="顧客を担当する">
   <div class="eyebrow">月次の起点</div>
   <h2>試算表を取り込めば、財務力まで自動で出ます</h2>
   <p class="sub">カルテの「財務」で試算表のファイルを選ぶだけです。CSV・Excel・PDF・画像に対応し、様式が違っても読み取ります。</p>
@@ -375,7 +399,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:10px;">読み取れない様式に当たったら、その試算表を運営にお知らせください。<b>科目名のパターンを追加すれば次から通ります。</b>確実なのは会計ソフトのPDF出力です。</div>
 </section>
 
-<section class="slide" data-t="税理士に入力を任せる">
+<section class="slide" data-t="税理士に入力を任せる" data-g="顧客を担当する">
   <div class="eyebrow">社数を増やすために</div>
   <h2>顧問税理士に月次入力を任せる</h2>
   <p class="sub">試算表の入手待ちが、担当できる社数を縛る最大の要因です。顧問税理士に直接入れてもらえば、催促と転送の工程が丸ごと消えます。</p>
@@ -392,7 +416,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:14px;">先生が入力した数字には出所が記録され、<b>あなたが上書きしようとすると確認が出ます。</b>取り違えを防ぐためです。</div>
 </section>
 
-<section class="slide" data-t="レポートの承認">
+<section class="slide" data-t="レポートの承認" data-g="顧客を担当する">
   <div class="eyebrow">毎月の仕事</div>
   <h2>月次レポートを承認して公開する</h2>
   <p class="sub">承認は<b>顧客カルテの中</b>で行います。顧客管理 → 該当の顧客を開く → 左メニューの<b>「月次の運営 → 月次レポート・財務メモ」</b>。その顧客の財務データを見ながら承認できます。</p>
@@ -408,7 +432,7 @@ ul.dots li{font-size:14.5px;}
   </div>
 </section>
 
-<section class="slide" data-t="資金調達の道具">
+<section class="slide" data-t="資金調達の道具" data-g="提案の道具">
   <div class="eyebrow">顧客カルテの中にあります</div>
   <h2>返済不要 → 融資 の順で提案できます</h2>
   <div class="grid g2">
@@ -418,7 +442,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:14px;">提案の型：<b>補助金ナビで返済不要の選択肢を先に確認 → 足りない分を銀行提出パッケージ＋事業計画書（AI）で融資相談</b>。この順番だけで、資金調達の相談相手としての信頼が取れます。</div>
 </section>
 
-<section class="slide" data-t="承継の道具とPMI">
+<section class="slide" data-t="承継の道具とPMI" data-g="提案の道具">
   <div class="eyebrow">「継」の中核</div>
   <h2>経営者保証・承継準備・M&A後の統合</h2>
   <div class="grid g3">
@@ -429,7 +453,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note r" style="margin-top:14px;"><b>当社およびパートナーはPMIの実行を請け負いません。</b>労務・法務・税務など個別の判断が必要な項目は、専門家ネットワークの専門家へおつなぎしてください。</div>
 </section>
 
-<section class="slide" data-t="研修と営業ツール">
+<section class="slide" data-t="研修と営業ツール" data-g="支えと決まりごと">
   <div class="eyebrow">はじめの一歩と、日々の武器</div>
   <h2>研修プログラムと営業ツール</h2>
   <div class="grid g2">
@@ -438,7 +462,7 @@ ul.dots li{font-size:14.5px;}
   </div>
 </section>
 
-<section class="slide" data-t="やってはいけないこと">
+<section class="slide" data-t="やってはいけないこと" data-g="支えと決まりごと">
   <div class="eyebrow">必読</div>
   <h2>禁止行為（要点）</h2>
   <div class="grid g2">
@@ -450,7 +474,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note r" style="margin-top:16px;">違反時は利用規約に基づき、警告・契約解除・報酬の不支給・損害賠償請求等の措置を行うことがあります。<b>判断に迷う場合は、実行する前に必ず運営へ相談してください。</b>全文は右下の継ナビくん「ナレッジ」タブの赤い枠にあります。</div>
 </section>
 
-<section class="slide" data-t="日々の運用">
+<section class="slide" data-t="日々の運用" data-g="支えと決まりごと">
   <div class="eyebrow">まとめ</div>
   <h2>毎日・毎週・毎月やること</h2>
   <div class="grid g3">
@@ -510,15 +534,22 @@ show(isFinite(h)&&h>0 ? h-1 : 0);
     if(window.self!==window.top){ try{ parent.postMessage({tsugu:'closeManual'},'*'); return; }catch(e){} }
     if(history.length>1) history.back(); else location.href='./index.html';
   };
-  var slides=document.querySelectorAll('.slide'); var links='';
+  var slides=document.querySelectorAll('.slide'); var links='', lastG=null, n=0;
   Array.prototype.forEach.call(slides,function(s,i){
     s.id=s.id||('mnv-s'+i);
     var t=s.getAttribute('data-t')||'';
-    if(t&&t!=='表紙') links+='<a href="#'+s.id+'">'+t+'</a>';
+    if(!t||t==='表紙') return;
+    // 組が変わったら見出しを挟む。平らに並べると、どこに何があるか読めない。
+    var g=s.getAttribute('data-g')||'';
+    if(g!==lastG){ if(lastG!==null) links+='</div>'; links+='<div class="mnv-g"><i>'+g+'</i>'; lastG=g; }
+    n++;
+    links+='<a href="#'+s.id+'"><em>'+(n<10?'0':'')+n+'</em>'+t+'</a>';
   });
   if(links){
+    if(lastG!==null) links+='</div>';
     var toc=document.createElement('div'); toc.className='mnv-toc';
-    toc.innerHTML='<b>目次（タップで移動）</b>'+links;
+    toc.innerHTML='<b>目次</b><p class="lead">全'+n+'項目。押すとその場所へ移動します。'
+      +'上から順に読んでも、必要なところだけ拾っても構いません。</p>'+links;
     var first=document.querySelector('.slide');
     if(first&&first.parentNode) first.parentNode.insertBefore(toc, first.nextSibling);
   }
