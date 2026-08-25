@@ -185,10 +185,18 @@
   .clrow{padding:10px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;cursor:pointer;font-size:13px;display:flex;justify-content:space-between;align-items:center;transition:border-color .15s,background .15s;}
   .clrow:hover{border-color:var(--blue);background:var(--soft);}
   .modal-back{position:fixed;inset:0;background:rgba(7,13,25,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;padding:32px 16px;z-index:50;overflow-y:auto;}
-  .modal{background:#fff;border-radius:14px;box-shadow:0 32px 90px rgba(4,9,20,.5);max-width:760px;width:100%;margin:auto;animation:mpop .18s ease;}
+  /* ポップアップも一枚の紙として扱う。上端に金の罫を通し、見出しは明朝。
+     パネル（.panel）と同じ設えにして、開いた先が別物に見えないようにする。 */
+  /*  overflow:hidden は付けないこと。付けると .modal が新しいスクロール文脈になり、
+      中身が画面より高いときに .modal-head の position:sticky が効かなくなる。
+      金の罫は ::after 側で角を丸めてある。 */
+  .modal{position:relative;background:#fff;background-image:var(--wa-asanoha-paper);border-radius:14px;box-shadow:0 32px 90px rgba(4,9,20,.5);max-width:760px;width:100%;margin:auto;animation:mpop .18s ease;}
+  .modal::after{content:'';position:absolute;left:0;right:0;top:0;height:2px;border-radius:14px 14px 0 0;
+    background:linear-gradient(90deg,rgba(195,155,63,.55),rgba(195,155,63,.06) 62%,transparent);pointer-events:none;z-index:3;}
+  body.dark .modal{background-image:none;}
   @keyframes mpop{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
-  .modal-head{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);border-radius:14px 14px 0 0;display:flex;align-items:center;gap:12px;padding:16px 22px;z-index:2;}
-  .modal-head .mt{font-weight:600;font-size:15px;color:var(--navy);line-height:1.4;}
+  .modal-head{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--line);border-radius:14px 14px 0 0;display:flex;align-items:center;gap:12px;padding:16px 22px;z-index:2;}
+  .modal-head .mt{font-family:var(--f-head);font-weight:600;font-size:15.5px;color:var(--navy);line-height:1.5;letter-spacing:.03em;}
   .modal-close{margin-left:auto;flex-shrink:0;width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--soft);color:var(--muted);font-size:20px;cursor:pointer;line-height:1;font-family:inherit;transition:background .15s;}
   .modal-close:hover{background:var(--softline);color:var(--navy);}
   .modal-body{padding:18px 22px 26px;}
@@ -1278,7 +1286,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260825-1';
+  var APP_BUILD='20260825-2';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
