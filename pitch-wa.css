@@ -26,10 +26,9 @@ body{
    面は 16:9 で余白が多いため、文様はいちばん薄い霞に落とす。
    説明書の紙（文字が詰まっている）と同じ濃度だと、ここでは文様が前に出る。
    銀行に提出して印刷される資料でもあるので、面は静かに保つ。 */
-.slide{
-  box-shadow:0 20px 60px rgba(6,10,20,.45);
-  background-image:var(--wa-asanoha-mist);
-}
+.slide{box-shadow:0 20px 60px rgba(6,10,20,.45);}
+/* 表紙・中扉は地そのものが意匠なので、霞は当てない（当てると地が消える） */
+.slide:not(.cover):not(.divider){background-image:var(--wa-asanoha-mist);}
 
 /* ===== 下の操作バー ― 墨に金 ===== */
 .bar{
@@ -51,6 +50,19 @@ body{
   background:var(--kin);color:#0E1B33;border:none;
   font-family:var(--f-body);font-weight:700;
 }
+
+/* ===== 表紙の継ナビくん ― 丸窓（円窓）に納める =====
+   もとは丸に「継」の字を置いていたが、本体・説明書と揃えて継ナビくんにする。
+   しるしが資料ごとに違うと、同じ会社のものに見えない。
+   話している最中に動くと目が逸れるので、ここでは揺らさない。 */
+.hero-art .tsg-mado{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:200px;height:200px;border-radius:50%;
+  background:#0E2038;border:2px solid var(--kin);
+  box-shadow:0 10px 34px rgba(6,12,24,.42);
+}
+.hero-art .tsg-mado svg{width:126px;height:126px;display:block;}
+@media(max-width:820px){ .hero-art .tsg-mado{width:120px;height:120px;} .hero-art .tsg-mado svg{width:76px;height:76px;} }
 
 /* ===== 表紙・中扉 ― 見出しは明朝、金の罫を一本 =====
    一枚目で「継ぐ」の格を出す。ここだけ罫を横に通す。 */

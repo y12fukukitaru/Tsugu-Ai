@@ -1,0 +1,74 @@
+/* =============================================================
+   パートナー専用ツールの設え ― 働く道具としての作り
+   ---------------------------------------------------------------
+   色・書体・紙は tsugu-wa.css で決めている。ここはそのうえに、
+   「手を動かしながら使う画面」としての作りだけを足す。
+
+   対象
+     sozoku.html                 相続・贈与シミュレーター
+     tsugu-retirement.html       役員退職金シミュレーター
+     tsugu-medical-equity.html   医療法人の持分
+     tsugu-ma-knowledge.html     M&Aナレッジ
+     tsugu-succession-form.html  事業承継フォーム
+
+   これらは別々に作られていて、部品の名前がほとんど揃っていない
+   （全5本に共通なのは .card と .note だけ）。まずは地・書体・紙・
+   添え書きという、どの画面にもある土台から揃える。
+
+   読み込む順番： tsugu-wa.css → tool-wa.css
+   ============================================================= */
+
+/* ===== 地 ― 生成りに麻の葉。読みながら手を動かす画面なので、紙の色にする ===== */
+body{
+  background-color:var(--washi);
+  background-image:var(--wa-asanoha-paper);
+  color:var(--ink);
+}
+
+/* ===== 書体の役割分担 ===== */
+h1,h2,h3{font-family:var(--f-head);letter-spacing:.03em;}
+
+/* ===== 紙 ― 一区切りごとの札。上端に金の罫を一本 ===== */
+.card{
+  position:relative;
+  background-image:var(--wa-asanoha-paper);
+  border-color:var(--washi-line);
+  overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;left:0;right:0;top:0;height:2px;
+  background:linear-gradient(90deg,rgba(195,155,63,.5),rgba(195,155,63,.05) 62%,transparent);
+  pointer-events:none;
+}
+
+/* ===== 添え書き ― 金の罫を左に立てる ===== */
+.note{
+  border-left:3px solid var(--kin);
+  background:#FFFDF7;
+  border-top:1px solid #F0E6CE;
+  border-right:1px solid #F0E6CE;
+  border-bottom:1px solid #F0E6CE;
+  border-radius:0 10px 10px 0;
+}
+
+/* ===== 上の見出し帯 =====
+   ここでは background-image に触らないこと。各ツールの帯は
+   linear-gradient で地を作っており、文様を background-image で被せると
+   その地ごと消えて、白い文字が生成りの上に乗って読めなくなる。
+   （実際にそうなった。帯の和は、明朝の見出しと金の罫で出す） */
+.hero h1,.hero h2{font-family:var(--f-head);}
+.hero{border-bottom:1px solid rgba(195,155,63,.35);}
+.tool-title,.tsugu-logo{font-family:var(--f-head);letter-spacing:.03em;}
+
+/* ===== ポップアップ ― 本体（index.html）と同じ紙にする ===== */
+.modal,.modal-content,.sz-modal,.case-modal{
+  background-image:var(--wa-asanoha-paper);
+}
+
+/* ===== 印刷 ― 文様は落とす（提出物として渡ることがある） ===== */
+@media print{
+  body{background:#fff;background-image:none;}
+  .card{background-image:none;}
+  .card::before{display:none;}
+  .hero,header .tsugu-bar{background-image:none;}
+}

@@ -185,10 +185,18 @@
   .clrow{padding:10px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;cursor:pointer;font-size:13px;display:flex;justify-content:space-between;align-items:center;transition:border-color .15s,background .15s;}
   .clrow:hover{border-color:var(--blue);background:var(--soft);}
   .modal-back{position:fixed;inset:0;background:rgba(7,13,25,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;padding:32px 16px;z-index:50;overflow-y:auto;}
-  .modal{background:#fff;border-radius:14px;box-shadow:0 32px 90px rgba(4,9,20,.5);max-width:760px;width:100%;margin:auto;animation:mpop .18s ease;}
+  /* ポップアップも一枚の紙として扱う。上端に金の罫を通し、見出しは明朝。
+     パネル（.panel）と同じ設えにして、開いた先が別物に見えないようにする。 */
+  /*  overflow:hidden は付けないこと。付けると .modal が新しいスクロール文脈になり、
+      中身が画面より高いときに .modal-head の position:sticky が効かなくなる。
+      金の罫は ::after 側で角を丸めてある。 */
+  .modal{position:relative;background:#fff;background-image:var(--wa-asanoha-paper);border-radius:14px;box-shadow:0 32px 90px rgba(4,9,20,.5);max-width:760px;width:100%;margin:auto;animation:mpop .18s ease;}
+  .modal::after{content:'';position:absolute;left:0;right:0;top:0;height:2px;border-radius:14px 14px 0 0;
+    background:linear-gradient(90deg,rgba(195,155,63,.55),rgba(195,155,63,.06) 62%,transparent);pointer-events:none;z-index:3;}
+  body.dark .modal{background-image:none;}
   @keyframes mpop{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
-  .modal-head{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);border-radius:14px 14px 0 0;display:flex;align-items:center;gap:12px;padding:16px 22px;z-index:2;}
-  .modal-head .mt{font-weight:600;font-size:15px;color:var(--navy);line-height:1.4;}
+  .modal-head{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--line);border-radius:14px 14px 0 0;display:flex;align-items:center;gap:12px;padding:16px 22px;z-index:2;}
+  .modal-head .mt{font-family:var(--f-head);font-weight:600;font-size:15.5px;color:var(--navy);line-height:1.5;letter-spacing:.03em;}
   .modal-close{margin-left:auto;flex-shrink:0;width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--soft);color:var(--muted);font-size:20px;cursor:pointer;line-height:1;font-family:inherit;transition:background .15s;}
   .modal-close:hover{background:var(--softline);color:var(--navy);}
   .modal-body{padding:18px 22px 26px;}
@@ -1278,7 +1286,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260825-1';
+  var APP_BUILD='20260825-2';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -15013,14 +15021,114 @@
         +'</div>'
         +'<div style="font-size:10px;color:#94A2B6;margin-top:4px;">変動費率＝仕入・材料など売上に比例して増減する費用の割合。粗利率が40%なら変動費率は60%です。</div>'
         +'<div id="ps-result" style="margin-top:12px;"></div>'
+        //  他のシミュレーターと同じように、試算を残せるようにする。
+        //  顧客ごとの画面ではなく共通の道具なので、相続シミュレーターと同じく
+        //  この端末の中に保存する（サーバーには送らない）。
+        +'<div style="border-top:1px solid var(--softline);margin-top:14px;padding-top:12px;">'
+          +'<div style="display:flex;gap:7px;align-items:flex-end;flex-wrap:wrap;">'
+            +'<div style="flex:1;min-width:170px;"><label class="fl">この試算に名前を付けて保存</label>'
+              +'<input id="ps-name" class="inp2" style="width:100%;" placeholder="例：山田製作所 5%案" onkeydown="if(event.key===\'Enter\')priceSimSave()"></div>'
+            +'<button class="btn2" style="font-size:12px;padding:8px 15px;" onclick="priceSimSave()">保存</button>'
+            +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;" onclick="priceSimCopy()">結果をコピー</button>'
+            +'<span id="ps-msg" style="font-size:11.5px;"></span>'
+          +'</div>'
+          +'<div id="ps-saved" style="margin-top:10px;"></div>'
+        +'</div>'
         +'<div style="font-size:10.5px;color:#94A2B6;margin-top:10px;line-height:1.75;">※ 概算の試算です。実際の顧客の反応は業種・契約・競合状況により異なります。原価上昇など根拠を添えた交渉が基本です（国も「パートナーシップ構築宣言」等で適正な価格転嫁を後押ししています）。値付けの詳細な検討は担当パートナー・専門家にご相談ください。</div>'
         +'</div></div>';
       document.body.appendChild(d);
     }
     $('price-modal').classList.remove('hidden');
+    priceSimRestore();
+    priceSimList();
     priceSimCalc();
   }
   function closePriceSim(){ var d=$('price-modal'); if(d) d.classList.add('hidden'); }
+
+  // ---- 試算の保存（この端末の中だけ。サーバーには送らない）----
+  //  相続・贈与シミュレーターと同じ考え方。前回の続きから開けるように
+  //  入力をそのつど覚え、名前を付けたものは一覧から呼び戻せるようにする。
+  var PS_KEY='tsugu.pricesim.v1';
+  var PS_FIELDS=['ps-rev','ps-vc','ps-up','ps-drop'];
+  function priceSimStore(){
+    try{ return JSON.parse(localStorage.getItem(PS_KEY)||'{}')||{}; }catch(e){ return {}; }
+  }
+  function priceSimWrite(o){
+    try{ localStorage.setItem(PS_KEY, JSON.stringify(o)); return true; }catch(e){ return false; }
+  }
+  function priceSimValues(){
+    var v={}; PS_FIELDS.forEach(function(id){ v[id]=(($(id)||{}).value)||''; }); return v;
+  }
+  function priceSimApply(v){
+    if(!v) return;
+    PS_FIELDS.forEach(function(id){ var el=$(id); if(el && v[id]!=null && v[id]!=='') el.value=v[id]; });
+  }
+  //  開いたときは前回の続きから
+  function priceSimRestore(){ priceSimApply(priceSimStore().last); }
+  //  入力するたび、そっと覚えておく（保存ボタンを押さなくても失われない）
+  function priceSimRemember(){
+    var s=priceSimStore(); s.last=priceSimValues(); priceSimWrite(s);
+  }
+  function priceSimSay(t, ok){
+    var m=$('ps-msg'); if(!m) return;
+    m.style.color = ok===false ? '#A9403D' : '#27684A'; m.textContent=t;
+    setTimeout(function(){ if(m.textContent===t) m.textContent=''; }, 4000);
+  }
+  function priceSimSave(){
+    var nm=((($('ps-name')||{}).value)||'').trim();
+    if(!nm){ priceSimSay('名前を入れてください', false); return; }
+    var s=priceSimStore(); var list=s.cases||[];
+    var v=priceSimValues(); v.name=nm; v.at=new Date().toISOString();
+    //  同じ名前は上書きする（作り直すより、直して保存し直すほうが自然）
+    var hit=-1; list.forEach(function(x,i){ if(x.name===nm) hit=i; });
+    if(hit>=0) list[hit]=v; else list.unshift(v);
+    if(list.length>30) list=list.slice(0,30);   // 端末に溜め込みすぎない
+    s.cases=list; s.last=priceSimValues();
+    if(!priceSimWrite(s)){ priceSimSay('保存できませんでした（ブラウザの設定をご確認ください）', false); return; }
+    var el=$('ps-name'); if(el) el.value='';
+    priceSimSay(hit>=0 ? '「'+nm+'」を上書きしました' : '「'+nm+'」を保存しました');
+    priceSimList();
+  }
+  function priceSimLoad(i){
+    var list=priceSimStore().cases||[]; var v=list[i]; if(!v) return;
+    priceSimApply(v); priceSimRemember(); priceSimCalc();
+    priceSimSay('「'+v.name+'」を読み込みました');
+  }
+  function priceSimDelete(i){
+    var s=priceSimStore(); var list=s.cases||[]; var v=list[i]; if(!v) return;
+    if(!confirm('「'+v.name+'」を削除します。よろしいですか？')) return;
+    list.splice(i,1); s.cases=list; priceSimWrite(s);
+    priceSimList(); priceSimSay('削除しました');
+  }
+  function priceSimList(){
+    var box=$('ps-saved'); if(!box) return;
+    var list=priceSimStore().cases||[];
+    if(!list.length){
+      box.innerHTML='<div style="font-size:11px;color:#94A2B6;line-height:1.7;">'
+        +'保存した試算はまだありません。名前を付けて保存すると、ここから呼び戻せます'
+        +'（この端末の中にだけ残ります）。</div>';
+      return;
+    }
+    box.innerHTML='<div style="font-size:11px;color:#94A2B6;margin-bottom:5px;">保存した試算（'+list.length+'件）</div>'
+      +list.map(function(v,i){
+        return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--softline);flex-wrap:wrap;">'
+          +'<span style="flex:1;min-width:130px;font-size:12.5px;color:var(--ink);">'+esc(v.name||'（無題）')+'</span>'
+          +'<span style="font-size:11px;color:var(--muted);white-space:nowrap;">月商'+esc(v['ps-rev']||'-')+'／値上げ'+esc(v['ps-up']||'-')+'%</span>'
+          +'<span style="font-size:10.5px;color:#94A2B6;white-space:nowrap;">'+esc(jstDay(v.at||''))+'</span>'
+          +'<button class="ghost" style="font-size:11px;padding:3px 9px;border:1px solid var(--line);border-radius:7px;" onclick="priceSimLoad('+i+')">呼び出す</button>'
+          +'<button class="ghost" style="font-size:11px;padding:3px 8px;color:#A9403D;" onclick="priceSimDelete('+i+')">削除</button>'
+        +'</div>';
+      }).join('');
+  }
+  //  そのまま顧客へのメッセージに貼れる形で書き出す
+  function priceSimCopy(){
+    var t=(($('ps-summary')||{}).textContent)||'';
+    if(!t){ priceSimSay('先に試算してください', false); return; }
+    try{
+      navigator.clipboard.writeText(t).then(function(){ priceSimSay('コピーしました'); },
+        function(){ priceSimSay('コピーできませんでした', false); });
+    }catch(e){ priceSimSay('コピーできませんでした', false); }
+  }
   function priceSimCalc(){
     var box=$('ps-result'); if(!box) return;
     var rev=Number(($('ps-rev')||{}).value)||0;
@@ -15050,6 +15158,23 @@
       +(qStar!=null?cell('限界の離脱率', finFmt(qStar,'%'), 'これを超えて客数が減ると逆効果', '#8A6A12'):'')
       +'</div>'
       +(qStar!=null?'<div style="font-size:11.5px;color:#18202E;line-height:1.8;margin-top:8px;">'+Math.round(p*100)+'%の値上げなら、客数が<b style="color:#8A6A12;">'+finFmt(qStar,'%')+'</b>減るまでは利益が増えます。中小企業の実感として、丁寧に説明した数%の値上げでこの水準まで離脱することはまれです。</div>':'');
+
+    //  そのままメッセージに貼れる形。画面には出さず、コピー用に持っておく。
+    var lines=['【価格転嫁の試算】',
+      '月商 '+yen(rev)+'／変動費率 '+Math.round(v*100)+'%／値上げ '+Math.round(p*100)+'%'+(q>0?('／客数減 '+Math.round(q*100)+'%'):''),
+      '',
+      //  等幅で揃わないので、空白ではなく「：」で区切る
+      '・いまの月間粗利：'+yen(gpNow),
+      '・値上げ後の月間粗利：'+yen(gpAfter),
+      '・差額：月 '+(dM>=0?'+':'')+yen(dM)+'／年 '+(dY>=0?'+':'')+yen(dY)];
+    if(qStar!=null) lines.push('・限界の離脱率：'+finFmt(qStar,'%')+'（これを超えて客数が減ると逆効果）');
+    lines.push('', '※ 概算の試算です。実際の反応は業種・契約・競合状況により異なります。');
+    var sum=$('ps-summary');
+    if(!sum){ sum=document.createElement('div'); sum.id='ps-summary'; sum.style.display='none'; box.parentNode.appendChild(sum); }
+    sum.textContent=lines.join('\n');
+
+    //  入力をそっと覚えておく（次に開いたとき続きから）
+    try{ priceSimRemember(); }catch(e){}
   }
 
   // ============================================================
