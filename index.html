@@ -1278,7 +1278,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260823-1';
+  var APP_BUILD='20260825-1';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2169,7 +2169,7 @@
         +'</div>'
         +'<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
           +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">顧問料の割引設定（％・運用しながら調整可）</div>'
-          +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;">契約社数による割引＋HD化ボーナス＋担当パートナーの階層付与を合算して、各顧客の顧問料に適用します。上位ランクは条件未達の場合、条件を満たす下位の率を付与します。</div>'
+          +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;">契約社数による割引＋HD化ボーナス＋担当パートナーの階層付与を合算して、各顧客の顧問料に適用します。階層付与の条件は<b style=\'color:#27684A;\'>顧問契約数だけ</b>です（ランク側でHD化の要件を撤廃したため）。上位ランクは条件未達の場合、条件を満たす下位の率を付与します。</div>'
           +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
             +'<div><label class="fl">契約2〜4社</label><input id="bl-vol1" type="number" class="inp2" style="width:74px;" value="3" oninput="renderAdmBilling();blRatesSave()"></div>'
             +'<div><label class="fl">契約5社〜</label><input id="bl-vol2" type="number" class="inp2" style="width:74px;" value="5" oninput="renderAdmBilling();blRatesSave()"></div>'
@@ -2178,10 +2178,8 @@
             +'<div><label class="fl">シニア付与</label><input id="bl-snr" type="number" class="inp2" style="width:74px;" value="2" oninput="renderAdmBilling();blRatesSave()"></div>'
             +'<div><label class="fl">エグゼ付与</label><input id="bl-exe" type="number" class="inp2" style="width:74px;" value="5" oninput="renderAdmBilling();blRatesSave()"></div>'
             +'<div><label class="fl">条件:顧問先</label><input id="bl-exeC" type="number" class="inp2" style="width:64px;" value="5" oninput="renderAdmBilling();blRatesSave()"></div>'
-            +'<div><label class="fl">条件:HD化</label><input id="bl-exeH" type="number" class="inp2" style="width:64px;" value="1" oninput="renderAdmBilling();blRatesSave()"></div>'
             +'<div><label class="fl">プレミアム付与</label><input id="bl-prem" type="number" class="inp2" style="width:74px;" value="10" oninput="renderAdmBilling();blRatesSave()"></div>'
             +'<div><label class="fl">条件:顧問先</label><input id="bl-premC" type="number" class="inp2" style="width:64px;" value="10" oninput="renderAdmBilling();blRatesSave()"></div>'
-            +'<div><label class="fl">条件:HD化</label><input id="bl-premH" type="number" class="inp2" style="width:64px;" value="2" oninput="renderAdmBilling();blRatesSave()"></div>'
             +'<div style="width:1px;height:34px;background:var(--softline);margin:0 2px;"></div>'
             +'<div><label class="fl">割引上限（合算）</label><input id="bl-cap" type="number" class="inp2" style="width:84px;" value="10" oninput="renderAdmBilling();blRatesSave()"></div>'
           +'</div>'
@@ -2674,10 +2672,17 @@
   // ---- G. 課金・契約管理 ----
   function yen(n){ return '¥'+Math.round(n||0).toLocaleString('ja-JP'); }
   function blRate(id,def){ var el=$(id); var v=el?Number(el.value):NaN; return isFinite(v)?v:def; }
-  function partnerTierPct(rank, clients, hd, cfg){
-    if(rank==='Premium Partner' && clients>=cfg.premC && hd>=cfg.premH) return cfg.prem;
-    if((rank==='Executive'||rank==='Premium Partner') && clients>=cfg.exeC && hd>=cfg.exeH) return cfg.exe;
-    if(rank==='Senior'||rank==='Executive'||rank==='Premium Partner') return cfg.snr;
+  //  担当パートナーのランクに応じて、その顧客の顧問料に付ける割引（階層付与）。
+  //  ランク側でHD化の要件を撤廃したので、ここも顧問契約数だけで決める。
+  //  以前はHD化を要求していたため、エグゼクティブでもHD0件だとシニア相当まで
+  //  落ちて、ランクの表示と付与が食い違っていた。
+  //  上位の条件に届かない場合は、条件を満たす下位の率を付与する（従来どおり）。
+  function partnerTierPct(rank, clients, cfg){
+    var L=pgLevelOf(rank); if(!L) return 0;
+    var n=Number(clients)||0;
+    if(L.lv>=4 && n>=cfg.premC) return cfg.prem;
+    if(L.lv>=3 && n>=cfg.exeC) return cfg.exe;
+    if(L.lv>=2) return cfg.snr;
     return 0;
   }
   function custDiscount(cust, cfg, partnerInfo){
@@ -2688,13 +2693,13 @@
     if(cust.hd_done){ pct+=cfg.hd; parts.push({t:'HD化',p:cfg.hd}); }
     if(cust.consultant_id && partnerInfo[cust.consultant_id]){
       var pi=partnerInfo[cust.consultant_id];
-      var tp=partnerTierPct(pi.rank, pi.clients, pi.hd, cfg);
+      var tp=partnerTierPct(pi.rank, pi.clients, cfg);
       if(tp>0){ pct+=tp; parts.push({t:(pi.rank||'P')+'付与',p:tp}); }
     }
     return {pct:pct, parts:parts};
   }
   // ---- 料率・割引設定の保存（app_settings）：運営全員のコンソールで同じ値を使う ----
-  var BL_RATE_IDS=['bl-pbase','bl-pclient','bl-adv','bl-direct','bl-init','bl-vol1','bl-vol2','bl-hd','bl-snr','bl-exe','bl-exeC','bl-exeH','bl-prem','bl-premC','bl-premH','bl-cap'];
+  var BL_RATE_IDS=['bl-pbase','bl-pclient','bl-adv','bl-direct','bl-init','bl-vol1','bl-vol2','bl-hd','bl-snr','bl-exe','bl-exeC','bl-prem','bl-premC','bl-cap'];
   var BL_RATES_OK=false, BL_SAVE_T=null;
   function blRatesNote(t){ var el=$('bl-rates-note'); if(el) el.textContent=t?('　'+t):''; }
   async function blRatesLoad(){
@@ -2722,10 +2727,12 @@
     var fdes=ADM_CACHE.fdes||[], custs=ADM_CACHE.custs||[], cc=ADM_CACHE.clientCount||{};
     var pbase=blRate('bl-pbase',3000), pcl=blRate('bl-pclient',2000), adv=blRate('bl-adv',50000), init=blRate('bl-init',100000);
     var cfg={ vol1:blRate('bl-vol1',3), vol2:blRate('bl-vol2',5), hd:blRate('bl-hd',5),
-              snr:blRate('bl-snr',2), exe:blRate('bl-exe',5), exeC:blRate('bl-exeC',5), exeH:blRate('bl-exeH',1),
-              prem:blRate('bl-prem',10), premC:blRate('bl-premC',10), premH:blRate('bl-premH',2) };
+              snr:blRate('bl-snr',2), exe:blRate('bl-exe',5), exeC:blRate('bl-exeC',5),
+              prem:blRate('bl-prem',10), premC:blRate('bl-premC',10) };
     // パートナーごとの「顧問先数」「担当顧客のHD化件数」「ランク」
     var rankOf={}; fdes.forEach(function(f){ rankOf[f.id]=f.fde_rank||''; });
+    //  担当顧客のうちHD化まで進んだ件数。階層付与の条件からは外したので、
+    //  いまは一覧に出すだけの数字（顧客ごとのHD化ボーナスは別に効いている）。
     var hdCnt={}; custs.forEach(function(c){ if(c.consultant_id && c.hd_done) hdCnt[c.consultant_id]=(hdCnt[c.consultant_id]||0)+1; });
     var partnerInfo={}; fdes.forEach(function(f){ partnerInfo[f.id]={rank:rankOf[f.id], clients:(cc[f.id]||0), hd:(hdCnt[f.id]||0)}; });
     // パートナー料
@@ -2760,7 +2767,7 @@
     var db=$('bl-detail'); if(db){
       if(!fdes.length){ db.innerHTML='<div style="font-size:12px;color:#94A2B6;">パートナーがまだいません。</div>'; }
       else {
-        var rows=fdes.map(function(f){ var n=cc[f.id]||0; var pi=partnerInfo[f.id]; var tp=partnerTierPct(pi.rank,pi.clients,pi.hd,cfg);
+        var rows=fdes.map(function(f){ var n=cc[f.id]||0; var pi=partnerInfo[f.id]; var tp=partnerTierPct(pi.rank,pi.clients,cfg);
           return {name:(f.contact_name||f.company_name||f.email), rank:pi.rank, n:n, hd:pi.hd, tp:tp, fee:pbase+pcl*n}; });
         rows.sort(function(a,b){ return b.fee-a.fee; });
         var pq=((($('bl-p-search')||{}).value)||'').trim().toLowerCase();
@@ -5474,7 +5481,15 @@
         (pr.error?[]:(pr.data||[])).forEach(function(p){ mainRate[p.id]=rankFeeRate(p.fde_rank); });
       }catch(e){}
     }
-    var myRate=rankFeeRate((window.__prof||{}).fde_rank);
+    //  自分の顧問契約数は数えられるので、スケールメリットまで反映できる。
+    //  メイン担当の分（mainRate）は、他人の担当顧客数を数える権限が無いため
+    //  基本の率にとどめる。確定額は運営の配分画面が正となる。
+    var myClients=null;
+    try{
+      var mc=await sb.from('profiles').select('id').eq('consultant_id',ME);
+      if(!mc.error) myClients=(mc.data||[]).length;
+    }catch(e){}
+    var myRate=rankFeeRate((window.__prof||{}).fde_rank, myClients==null?undefined:myClients);
     var rv=await sb.from('revenue_entries').select('customer_id,category,amount,occurred_on,description')
       .in('customer_id',custIds).gte('occurred_on',fromS).lt('occurred_on',toS)
       .order('occurred_on',{ascending:true}).limit(2000);
@@ -9628,7 +9643,8 @@
       .replace(/(?:<br>)*<span style="display:block;border-top:[^"]*"><\/span>(?:<br>)*/g,
                '<span style="display:block;border-top:1px solid var(--line);margin:14px 0;"></span>');
   }
-  // 未読の提案の数（バッジ・サマリーは未読だけを数える。既読は7日間、薄い表示で読み返せる）
+  // 未読の提案の数（バッジ・サマリーは未読だけを数える。既読のものも消えず、
+  // その日のうちは薄い表示で読み返せる。翌日には出さない＝上の loadAgentInsights）
   function agentInsightsUnread(){
     return (AGENT_INSIGHTS||[]).filter(function(x){ return x.status==='unread'; }).length;
   }
@@ -12502,12 +12518,25 @@
   // 計算結果は保存せず、そのつど現在の配分とランクで出す（過去の支払いを
   // 遡って書き換えないよう、確定した支払いは運営側の帳簿で管理する前提）。
   // ============================================================
-  function rankFeeRate(rankName){
-    var f=null;
-    PG_LEVELS.forEach(function(L){ if(L.name===rankName) f=L.fee; });
-    if(!f) return null;
-    var m=String(f).match(/(\d+)\s*%/);
-    return m ? Number(m[1])/100 : null;   // 「個別設定」は率が決まらないので null
+  //  ランクの保存値は英語（FDE_RANKS＝Associate/Senior/Executive/Premium Partner）、
+  //  成長ロードマップの表示は日本語。かつては日本語だけで突き合わせていたため、
+  //  実際に保存されている値では一件も引き当たらず、外注費が全員0円になっていた。
+  //  どちらの名前でも引けるようにする。
+  function pgLevelOf(rankName){
+    var s=String(rankName==null?'':rankName).trim(); if(!s) return null;
+    var hit=null;
+    PG_LEVELS.forEach(function(L){ if(L.key===s || L.name===s) hit=L; });
+    return hit;
+  }
+  function pgPct(v){ var m=String(v==null?'':v).match(/(\d+(?:\.\d+)?)\s*%/); return m?Number(m[1])/100:null; }
+  //  clients（顧問契約数）を渡すと、スケールメリット（プレミアム30社以上で80%）まで見る。
+  //  渡さなかった・分からない場合は基本の率にとどめる。分からないときに上へ倒すと
+  //  払い過ぎになるため。
+  function rankFeeRate(rankName, clients){
+    var L=pgLevelOf(rankName); if(!L) return null;
+    var f=L.fee;
+    if(L.scale && typeof clients==='number' && clients>=L.scale.cl) f=L.scale.fee;
+    return pgPct(f);   // 「個別設定」は率が決まらないので null
   }
   function yen(n){ return Math.round(n).toLocaleString('ja-JP')+' 円'; }
   async function loadPayout(){
@@ -12542,6 +12571,20 @@
       var pp=await sb.from('profiles').select('id,full_name,email,fde_rank').in('id',pids);
       (pp.error?[]:(pp.data||[])).forEach(function(p){ partners[p.id]=p; });
     }
+    //  スケールメリット（プレミアム30社以上で80%）の判定に、パートナーごとの
+    //  顧問契約数が要る。この月に入金のあった顧客の数ではなく、担当している
+    //  顧客の総数で見る。運営一覧の集計（ADM_CACHE）があればそれを使い、
+    //  無ければ数え直す。
+    var payClients={};
+    if(ADM_CACHE && ADM_CACHE.clientCount && Object.keys(ADM_CACHE.clientCount).length){
+      payClients=ADM_CACHE.clientCount;
+    }else if(pids.length){
+      try{
+        var ac=await sb.from('profiles').select('consultant_id').in('consultant_id',pids);
+        (ac.error?[]:(ac.data||[])).forEach(function(r){
+          if(r.consultant_id) payClients[r.consultant_id]=(payClients[r.consultant_id]||0)+1; });
+      }catch(e){}
+    }
     var asg={};
     try{
       var aa=await sb.from('partner_assignments').select('customer_id,main_id,sub_id,sub_email,main_share,sub_share')
@@ -12557,7 +12600,7 @@
     rows.forEach(function(r){
       var c=custs[r.customer_id]; if(!c || !c.consultant_id){ noPartner+=Number(r.amount)||0; return; }
       var p=partners[c.consultant_id]||{};
-      var rate=rankFeeRate(p.fde_rank);
+      var rate=rankFeeRate(p.fde_rank, payClients[c.consultant_id]||0);
       var amt=Number(r.amount)||0;
       var b=bucket(c.consultant_id, p.full_name||p.email||'パートナー');
       b.rate=rate; b.gross+=amt;
@@ -14007,11 +14050,13 @@
 
   // ---- パートナー成長ロードマップ（認定レベル）----
   var PG_LEVELS=[
-    { lv:1, name:'アソシエイト', cond:'研修修了でスタート', need:{cl:0,hd:0}, fee:'個別設定', off:'—' },
-    { lv:2, name:'シニア', cond:'初の顧問契約を獲得', need:{cl:1,hd:0}, fee:'50%' },
-    { lv:3, name:'エグゼクティブ', cond:'顧問契約5件', need:{cl:5,hd:0}, fee:'60%' },
+    //  key は運営が profiles.fde_rank に保存する値（FDE_RANKS）。name は表示用。
+    //  この2つが対応していないと、外注費率が引き当たらない。必ず揃えること。
+    { lv:1, key:'Associate',       name:'アソシエイト', cond:'研修修了でスタート', need:{cl:0,hd:0}, fee:'個別設定', off:'—' },
+    { lv:2, key:'Senior',          name:'シニア', cond:'初の顧問契約を獲得', need:{cl:1,hd:0}, fee:'50%' },
+    { lv:3, key:'Executive',       name:'エグゼクティブ', cond:'顧問契約5件', need:{cl:5,hd:0}, fee:'60%' },
     //  プレミアムは基本70%。30社以上でスケールメリットとして80%になる。
-    { lv:4, name:'プレミアム', cond:'顧問契約10件', need:{cl:10,hd:0}, fee:'70%', scale:{cl:30, fee:'80%'} }
+    { lv:4, key:'Premium Partner', name:'プレミアム', cond:'顧問契約10件', need:{cl:10,hd:0}, fee:'70%', scale:{cl:30, fee:'80%'} }
   ];
   async function loadPartnerGrowth(){
     var box=$('pg-body'); if(!box) return;

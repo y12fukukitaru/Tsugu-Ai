@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Shippori+Mincho:wght@500;600;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{--navy:#1E3A66;--blue:#2C5DA8;--gold:#C39B3F;--ink:#18202E;--muted:#5A6981;
   --line:#E2E7EF;--soft:#F8F9FC;--softline:#EDF1F6;--deep:#0E1B33;--green:#27684A;--red:#A9403D;}
@@ -145,6 +145,7 @@ ul.dots li{font-size:14.5px;}
 @media(max-width:820px){ .slide{padding:24px 18px 30px;} h1{font-size:27px;} h2{font-size:20px;} .cover h1{font-size:30px;} }
 @media print{ .mnv-top,.mnv-toc{display:none!important;} .slide{margin:0;} }
 </style>
+<link rel="stylesheet" href="manual-wa.css">
 </head>
 <body>
 <div class="deck" id="deck">
@@ -156,7 +157,7 @@ ul.dots li{font-size:14.5px;}
   <p class="sub">数字の入力はいりません。見るところと、伝えるところだけ覚えてください。<br>所要 5分</p>
 </section>
 
-<section class="slide" data-t="この画面でできること">
+<section class="slide" data-t="この画面でできること" data-g="はじめに">
   <div class="eyebrow">はじめに</div>
   <h2>この画面でできること</h2>
   <p class="sub">TsuguAiは「経営者に入力させない」という考え方で作られています。数値の入力・試算・レポート作成は、担当パートナーとAIが代わりに行います。</p>
@@ -168,7 +169,7 @@ ul.dots li{font-size:14.5px;}
   <div class="tsg-say"><span class="tsg-mado sm"><svg viewBox="0 -4 64 64" aria-hidden="true" focusable="false"><path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/><rect x="9.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="49.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="14" y="23" width="36" height="30" rx="10" fill="#fff" stroke="#cfa860" stroke-width="1.6"/><circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/><circle cx="20.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><circle cx="43.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/></svg></span><div class="bb"><span class="who">継ナビくん</span>はじめまして、<b>継ナビくん</b>です🌱　画面右下にいつもいます。<b>操作が分からないときも、そのまま聞いてください。</b>私で分からないことは、担当パートナーにおつなぎします。</div></div>
 </section>
 
-<section class="slide" data-t="最初の3つ">
+<section class="slide" data-t="最初の3つ" data-g="はじめに">
   <div class="eyebrow">初回</div>
   <h2>まずはこの3つだけ</h2>
   <p class="sub">ログインすると、ダッシュボードの先頭に同じ案内が表示されます。</p>
@@ -180,7 +181,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:6px;">画面右上または左メニューの<b>「使い方ガイド（1分）</b>」を押すと、実際の画面の上で順番に案内が出ます。何度でもご覧いただけます。</div>
 </section>
 
-<section class="slide" data-t="最初の90日">
+<section class="slide" data-t="最初の90日" data-g="はじめに">
   <div class="eyebrow">ご契約直後</div>
   <h2>最初の90日でお渡しする3つ</h2>
   <p class="sub">ダッシュボードに「導入90日プログラム」として表示されます。必要な資料をお預かりしてから、90日を目安に進みます。</p>
@@ -192,7 +193,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note g" style="margin-top:6px;"><b>お願いしたいのは資料のご提供だけです。</b>試算表（顧問税理士から毎月届く資料）と保険証券をお渡しいただければ、あとは担当パートナーが進めます。「ご提供待ち」と表示されている項目は、資料が届き次第すぐに着手します。</div>
 </section>
 
-<section class="slide" data-t="ダッシュボード">
+<section class="slide" data-t="ダッシュボード" data-g="毎日見るところ">
   <div class="eyebrow">ダッシュボード</div>
   <h2>見るところは上から4つ</h2>
   <table class="kv">
@@ -204,7 +205,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:16px;">その下の<b>「価値の流れ」</b>は、①現状把握 → ②AI・自動化 → ③コスト削減 → ④余力 → ⑤次の投資 という支援の順番です。色が付いているところが現在地です。</div>
 </section>
 
-<section class="slide" data-t="増えた現金">
+<section class="slide" data-t="増えた現金" data-g="毎日見るところ">
   <div class="eyebrow">成果の確認</div>
   <h2>「これまでに増えた現金」の見かた</h2>
   <div class="grid g3">
@@ -215,7 +216,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:18px;">内訳は<b>「試算結果」</b>と<b>「月次レポート」</b>で確認できます。金額に疑問があれば、そのままメッセージでお尋ねください。</div>
 </section>
 
-<section class="slide" data-t="メッセージ">
+<section class="slide" data-t="メッセージ" data-g="毎日見るところ">
   <div class="eyebrow">いちばん使う機能</div>
   <h2>メッセージ ― 伝えるだけで済みます</h2>
   <p class="sub">担当パートナーとのメッセージは、画面右下の<b>継ナビくんの「メッセージ」タブ</b>で送受信します。月次の売上も、表に入力する必要はありません。メッセージで送っていただければ、担当パートナーが数字を登録し、レポートまで作成します。</p>
@@ -224,22 +225,27 @@ ul.dots li{font-size:14.5px;}
     <div class="card soft"><h3>覚えておくこと</h3><p>右下の継ナビくんは<b>どの画面からでも</b>開けます。返信の目安は<b>2〜3営業日以内</b>です。お急ぎのときはお電話などでご連絡ください。</p></div>
   </div>
   <div class="tsg-say"><span class="tsg-mado sm"><svg viewBox="0 -4 64 64" aria-hidden="true" focusable="false"><path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/><rect x="9.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="49.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="14" y="23" width="36" height="30" rx="10" fill="#fff" stroke="#cfa860" stroke-width="1.6"/><circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/><circle cx="20.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><circle cx="43.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/></svg></span><div class="bb"><span class="who">継ナビくん</span>メッセージは<b>私の中で完結</b>します。未読があると右下のボタンにバッジを出すので、見落としの心配はありません。</div></div>
+  <div class="note" style="margin-top:12px;"><b>赤い数字は、開けば消えます。</b>「メッセージ」タブを開いた時点で既読になります。1件ずつ押して減らしていただく必要はありません。<br><b>「お知らせ」タブだけは別です。</b>あの一覧は未読のものから組み立てているため、開いても既読にはしません。読み終えたら<b>「すべて既読」</b>を押してください。</div>
 </section>
 
-<section class="slide" data-t="予定（カレンダー）">
+<section class="slide" data-t="予定（カレンダー）" data-g="毎日見るところ">
   <div class="eyebrow">新しく増えました</div>
   <h2>予定 ― 継ナビくんが、あなたの一日を知っている</h2>
   <p class="sub">画面右下の継ナビくんを開き、<b>「📅 予定」タブ</b>。ご自身の予定を入れておくと、継ナビくんがそれを踏まえて答えるようになります。<b>面談・課題の期日・支払い予定・資金調達・補助金の締切は、自動で並びます</b>（入力は不要です）。</p>
   <div class="grid g3">
-    <div class="card"><h3>3つの見方</h3><p><b>月</b>…今月の埋まり具合を点で。<br><b>週</b>…横に7日・縦に時間。<br><b>一覧</b>…これからの順番に。</p></div>
-    <div class="card g"><h3>入れ方は2通り</h3><p><b>「＋ 予定」</b>から入力するか、<b>継ナビくんに話しかける</b>だけ。「来週火曜10時に銀行と面談を入れて」で下書きが出ます。</p></div>
+    <div class="card"><h3>3つの見方</h3><p><b>月</b>…今月の埋まり具合を点で。<br><b>週</b>…横に7日・縦に時間（6時〜）。<br><b>一覧</b>…これからの順番に。</p></div>
+    <div class="card g"><h3>入れ方は4通り</h3><p>①上の<b>「＋ 予定」</b>　②日付の見出しの<b>「＋ この日」</b>　③<b>週表示の空いているところを押す</b>　④<b>継ナビくんに話しかける</b>——「来週火曜10時に銀行と面談を入れて」で下書きが出ます。②③なら日付を打ち直さずに済みます。</p></div>
     <div class="card w"><h3>色の意味</h3><p>色と印のついた予定は<b>自動で並んだもの</b>で、ここでは直せません。ご自身で入れた予定だけ、編集・削除ができます。</p></div>
+  </div>
+  <div class="grid g2" style="margin-top:12px;">
+    <div class="card soft"><h3>押すと中身が開きます</h3><p>枠の中では題名や場所が切れています。<b>予定を押すと小窓が開き</b>、日時・場所・メモが最後まで読めます。ご自身の予定なら、そこから<b>編集・削除</b>もできます。自動で並んだ予定には<b>どの画面から来たものか</b>が書かれています。</p></div>
+    <div class="card soft"><h3>終わりの時刻も入ります</h3><p><b>終わり</b>の欄は空欄で構いません。入れておくと、週表示でその長さの枠になり、小窓にも「10:00 〜 11:30」と出ます。</p></div>
   </div>
   <div class="tsg-say"><span class="tsg-mado sm"><svg viewBox="6 0 52 56" aria-hidden="true" focusable="false"><path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/><rect x="9.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="49.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="14" y="23" width="36" height="30" rx="10" fill="#fff" stroke="#cfa860" stroke-width="1.6"/><circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/><circle cx="20.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><circle cx="43.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/></svg></span><div class="bb"><span class="who">継ナビくん</span>予定を入れておいていただけると、<b>「次の予定は？」「今週は何がある？」</b>にお答えできます。毎朝のお知らせでも、その日のご予定に触れます。</div></div>
   <div class="note" style="margin-top:14px;"><b>Googleカレンダーにも出せます。</b>予定タブのいちばん下にある<b>あなた専用のURL</b>を、Googleカレンダーの「URLで追加」に登録してください。ここに入れた予定と面談が、リマインダー付きで自動表示されます。<b>登録するのはURLひとつだけ</b>です。Googleが取りに来るまで数時間かかることがあります。</div>
 </section>
 
-<section class="slide" data-t="月次レポート">
+<section class="slide" data-t="月次レポート" data-g="毎月届くもの">
   <div class="eyebrow">毎月届くもの</div>
   <h2>月次レポート</h2>
   <p class="sub">担当パートナーが毎月の数字とコメントをまとめたものです。<b>パートナーが承認したものだけ</b>がここに表示されます。作成中のものは見えません。</p>
@@ -251,7 +257,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:18px;">レポートが届かない月があれば、<b>データが揃っていない可能性</b>があります。メッセージでお知らせください。</div>
 </section>
 
-<section class="slide" data-t="その他の画面">
+<section class="slide" data-t="その他の画面" data-g="そのほか">
   <div class="eyebrow">左メニュー</div>
   <h2>そのほかの画面</h2>
   <table class="kv">
@@ -265,7 +271,7 @@ ul.dots li{font-size:14.5px;}
   </table>
 </section>
 
-<section class="slide" data-t="メンバー追加">
+<section class="slide" data-t="メンバー追加" data-g="そのほか">
   <div class="eyebrow">複数人で使う</div>
   <h2>この画面を一緒に見る人</h2>
   <p class="sub">社長のほかに<b>2名まで</b>、同じ画面を見て操作していただけます。専務や経理のご担当者など、日々の数字を扱う方を入れておくと、やり取りが止まりません。</p>
@@ -277,7 +283,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note"><b>ご注意：</b>追加した方には、財務・資金繰りを含む<b>この会社の情報がすべて見えます</b>。追加と解除ができるのは社長（登録者ご本人）だけです。</div>
 </section>
 
-<section class="slide" data-t="税理士へのお願い">
+<section class="slide" data-t="税理士へのお願い" data-g="そのほか">
   <div class="eyebrow">毎月の手間をなくす</div>
   <h2>顧問税理士に月次入力をお願いする</h2>
   <p class="sub">毎月の試算表をパートナーに送る手間をなくせます。顧問税理士の先生に、数字を直接ご入力いただく方法です。</p>
@@ -293,7 +299,7 @@ ul.dots li{font-size:14.5px;}
   <div class="note" style="margin-top:12px;">先生が入力されると<b>担当パートナーに自動で通知</b>が届き、月次レポートの作成に進みます。社長の操作は最初の1回だけです。</div>
 </section>
 
-<section class="slide" data-t="困ったときは">
+<section class="slide" data-t="困ったときは" data-g="そのほか">
   <div class="eyebrow">サポート</div>
   <h2>困ったときは</h2>
   <div class="grid g3">
@@ -353,15 +359,22 @@ show(isFinite(h)&&h>0 ? h-1 : 0);
     if(window.self!==window.top){ try{ parent.postMessage({tsugu:'closeManual'},'*'); return; }catch(e){} }
     if(history.length>1) history.back(); else location.href='./index.html';
   };
-  var slides=document.querySelectorAll('.slide'); var links='';
+  var slides=document.querySelectorAll('.slide'); var links='', lastG=null, n=0;
   Array.prototype.forEach.call(slides,function(s,i){
     s.id=s.id||('mnv-s'+i);
     var t=s.getAttribute('data-t')||'';
-    if(t&&t!=='表紙') links+='<a href="#'+s.id+'">'+t+'</a>';
+    if(!t||t==='表紙') return;
+    // 組が変わったら見出しを挟む。平らに並べると、どこに何があるか読めない。
+    var g=s.getAttribute('data-g')||'';
+    if(g!==lastG){ if(lastG!==null) links+='</div>'; links+='<div class="mnv-g"><i>'+g+'</i>'; lastG=g; }
+    n++;
+    links+='<a href="#'+s.id+'"><em>'+(n<10?'0':'')+n+'</em>'+t+'</a>';
   });
   if(links){
+    if(lastG!==null) links+='</div>';
     var toc=document.createElement('div'); toc.className='mnv-toc';
-    toc.innerHTML='<b>目次（タップで移動）</b>'+links;
+    toc.innerHTML='<b>目次</b><p class="lead">全'+n+'項目。押すとその場所へ移動します。'
+      +'上から順に読んでも、必要なところだけ拾っても構いません。</p>'+links;
     var first=document.querySelector('.slide');
     if(first&&first.parentNode) first.parentNode.insertBefore(toc, first.nextSibling);
   }
