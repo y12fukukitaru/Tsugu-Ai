@@ -144,22 +144,33 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Shippori+Mincho:wght@500;600;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <header>
-    <div class="tsugu-bar">
-      <span class="tsugu-logo">TsuguAi <b>-継-</b></span>
-      <span class="tool-title">相続・贈与シミュレーター</span>
-      <span class="tool-badge">パートナー専用ツール</span>
-      <!-- このツールは別タブで開く。そのまま index.html へ遷移させると、
-           元のポータルを開いたまま「もう1つ」アプリを丸ごと読み込むことになり、
-           戻ったつもりが重くなる。szReturn() でこのタブを閉じ、元のポータルに戻す
-           （閉じられない場合だけ遷移する）。他のツールも同じ作りにしてある。 -->
-      <a class="back-link" href="./index.html" onclick="if(window.szReturn){szReturn();return false;}">← パートナーポータルへ戻る</a>
-    </div>
-    <div class="lead-wrap">
-      <p>相続人の順位・法定相続分・生命保険の非課税枠・暦年贈与加算（2024年改正対応）・相続時精算課税・配偶者軽減・各種控除・小規模宅地等の特例・遺留分・二次相続までを1画面で横断確認できます。結果は「印刷／PDF出力」で顧客への提示資料になります。</p>
-      <p class="small">注意：事前整理・概算用です。申告実務では戸籍、遺言、養子数制限、代襲、各種特例要件、評価明細などの個別確認（税理士関与）が必要です。</p>
-    </div>
-  </header>
+  <div class="hero">
+  <div class="hero-in">
+    <div class="brand"><span class="logo">継</span><span class="nm">TsuguAi</span>
+      <!-- このツールは別タブで開く。そのまま index.html へ遷移させると、元のポータルを
+           開いたまま「もう1つ」アプリを丸ごと読み込むことになる。szReturn() でこのタブを
+           閉じ、元のポータルに戻す（閉じられない場合だけ遷移する）。 -->
+      <a class="hero-back" href="./index.html" onclick="if(window.szReturn){szReturn();return false;}">← パートナーポータルへ戻る</a></div>
+    <div class="eyebrow">認定パートナー向け・相続／贈与の事前整理</div>
+    <h1>相続・贈与シミュレーター<br><span class="h1sub">「誰がいくら受け取り、税はいくらか」を1画面で概算する。</span></h1>
+    <p>相続人の順位・法定相続分・生命保険の非課税枠・暦年贈与加算（2024年改正対応）・相続時精算課税・配偶者軽減・各種控除・小規模宅地等の特例・遺留分・二次相続までを1画面で横断確認できます。結果は「印刷／PDF出力」で顧客への提示資料になります。</p>
+    <span class="for">注意：事前整理・概算用です。申告実務では戸籍、遺言、養子数制限、代襲、各種特例要件、評価明細などの個別確認（税理士関与）が必要です。</span>
+  </div>
+</div>
+
+<div class="nav"><div class="nav-in">
+  <a href="#s1">①基本情報</a>
+  <a href="#s2">②サマリー</a>
+  <a href="#s3">③相続人</a>
+  <a href="#s4">④生命保険</a>
+  <a href="#s5">⑤小規模宅地</a>
+  <a href="#s6">⑥生前贈与</a>
+  <a href="#s7">⑦取り分・税額</a>
+  <a href="#s8">⑧計算ロジック</a>
+  <a href="#s9">⑨遺留分</a>
+  <a href="#s10">⑩二次相続</a>
+  <a href="#s11">⑪参考リンク</a>
+</div></div>
 
   <div class="deadline-bar" id="deadlineBar" style="display:none">
     <div>
@@ -198,8 +209,8 @@
       <span class="save-status" id="saveStatus">—</span>
     </div>
 
-    <section class="card">
-      <h2>1. 基本情報</h2>
+    <section id="s1" class="card">
+      <h2 class="numbered"><span class="no">1</span>基本情報</h2>
       <div class="fields">
         <div>
           <label>被相続人の死亡日</label>
@@ -252,8 +263,8 @@
       </div>
     </section>
 
-    <section class="card" style="margin-top:16px">
-      <h2>2. 計算サマリー</h2>
+    <section id="s2" class="card" style="margin-top:16px">
+      <h2 class="numbered"><span class="no">2</span>計算サマリー</h2>
       <div class="summary-grid" id="summaryGrid"></div>
       <div class="note info" id="periodNote" style="margin-top:12px">死亡日を入れると、暦年贈与の加算期間と100万円控除の扱いを表示します。</div>
     </section>
@@ -299,10 +310,10 @@
       </div>
     </div>
 
-    <section class="card" style="margin-top:16px">
+    <section id="s3" class="card" style="margin-top:16px">
       <div class="stack" style="justify-content:space-between">
         <div>
-          <h2>3. 相続人・受遺者</h2>
+          <h2 class="numbered"><span class="no">3</span>相続人・受遺者</h2>
           <div class="sub">「続柄グループ」で法定相続人の順位を判定し、「税区分」で2割加算の有無を判定します。<br>代襲や半血、養子数制限など特殊ケースは「法定按分係数」で微調整してください。</div>
         </div>
         <button class="mini-btn" id="addHeir">行を追加</button>
@@ -316,10 +327,10 @@
       </table></div>
     </section>
 
-    <section class="card" style="margin-top:16px">
+    <section id="s4" class="card" style="margin-top:16px">
       <div class="stack" style="justify-content:space-between">
         <div>
-          <h2>4. 生命保険</h2>
+          <h2 class="numbered"><span class="no">4</span>生命保険</h2>
           <div class="sub">国税庁の非課税限度額「500万円 × 法定相続人の数」を、相続人が受け取る保険金に按分して適用します。</div>
         </div>
         <button class="mini-btn" id="addInsurance">行を追加</button>
@@ -329,10 +340,10 @@
       </table></div>
     </section>
 
-    <section class="card" style="margin-top:16px">
+    <section id="s5" class="card" style="margin-top:16px">
       <div class="stack" style="justify-content:space-between">
         <div>
-          <h2>5. 小規模宅地等の特例</h2>
+          <h2 class="numbered"><span class="no">5</span>小規模宅地等の特例</h2>
           <div class="sub">400㎡80%、330㎡80%、200㎡50% の主要区分を実装。按分の複雑な組合せは概算化しています。</div>
         </div>
         <button class="mini-btn" id="addLand">行を追加</button>
@@ -342,10 +353,10 @@
       </table></div>
     </section>
 
-    <section class="card" style="margin-top:16px">
+    <section id="s6" class="card" style="margin-top:16px">
       <div class="stack" style="justify-content:space-between">
         <div>
-          <h2>6. 生前贈与・特別受益</h2>
+          <h2 class="numbered"><span class="no">6</span>生前贈与・特別受益</h2>
           <div class="sub">暦年課税・相続時精算課税・民法上の特別受益を一元入力します。特別受益は民法上の取り分目安に反映し、税務上加算とは分けて表示します。</div>
         </div>
         <button class="mini-btn" id="addGift">行を追加</button>
@@ -360,8 +371,8 @@
       <div class="small" style="margin-top:10px">「持戻し免除」は民法903条3項・4項の整理用です。婚姻20年以上の配偶者への居住用不動産贈与等は、持戻し免除意思の推定が問題になるため、個別事情の確認を前提に手動でONにできます。</div>
     </section>
 
-    <section class="card" style="margin-top:16px">
-      <h2>7. 取り分・税額の一覧</h2>
+    <section id="s7" class="card" style="margin-top:16px">
+      <h2 class="numbered"><span class="no">7</span>取り分・税額の一覧</h2>
       <div class="table-wrap"><table id="resultTable">
         <thead>
           <tr>
@@ -371,16 +382,16 @@
       </table></div>
     </section>
 
-    <section class="card" style="margin-top:16px">
-      <h2>8. 計算ロジック説明</h2>
+    <section id="s8" class="card" style="margin-top:16px">
+      <h2 class="numbered"><span class="no">8</span>計算ロジック説明</h2>
       <div id="explain" class="sub"></div>
       <div class="note" style="margin-top:12px">
         このアプリは、<strong>法定相続人の人数・順位</strong>、<strong>死亡保険金の非課税枠</strong>、<strong>基礎控除</strong>、<strong>速算表</strong>、<strong>配偶者軽減</strong>、<strong>未成年者控除</strong>、<strong>障害者控除</strong>、<strong>相次相続控除</strong>、<strong>相続時精算課税</strong>、<strong>暦年課税の加算</strong>、<strong>小規模宅地等の特例</strong>、<strong>遺留分</strong>、<strong>二次相続概算</strong>を反映します。適用要件の厳密判定や申告書別表の完全再現ではありません。
       </div>
     </section>
 
-    <section class="card" style="margin-top:16px">
-      <h2>9. 遺留分チェック</h2>
+    <section id="s9" class="card" style="margin-top:16px">
+      <h2 class="numbered"><span class="no">9</span>遺留分チェック</h2>
       <div class="sub" id="iryuubunNote" style="margin-bottom:10px">配偶者・第1順位（子）・第2順位（直系尊属）には遺留分が認められます。第3順位（兄弟姉妹）には遺留分はありません。</div>
       <div class="table-wrap"><table id="iryuubunTable">
         <thead>
@@ -392,8 +403,8 @@
       <div id="iryuubunAlert"></div>
     </section>
 
-    <section class="card" style="margin-top:16px">
-      <h2>10. 二次相続シミュレーション</h2>
+    <section id="s10" class="card" style="margin-top:16px">
+      <h2 class="numbered"><span class="no">10</span>二次相続シミュレーション</h2>
       <div class="sub" style="margin-bottom:10px">
         一次相続で配偶者が取得した財産（課税価格ベース）に、配偶者の固有財産と増減見込みを加算し、第1順位の子で均等取得する前提で二次相続を試算します。
         配偶者軽減は使えません。経過年数が10年未満なら一次相続で配偶者が負担した税額を基礎に相次相続控除を概算反映します。
@@ -418,8 +429,8 @@
       <div class="note info" style="margin-top:10px" id="secondInheritanceNote">二次相続の前提を変えると合計税額が下がる場合があります。配偶者の取得割合と固有財産の両方を確認してください。</div>
     </section>
 
-    <section class="card footer-links" style="margin-top:16px">
-      <h2>11. 参考法令・国税庁リンク</h2>
+    <section id="s11" class="card footer-links" style="margin-top:16px">
+      <h2 class="numbered"><span class="no">11</span>参考法令・国税庁リンク</h2>
       <div class="sub">
         <div>相続人の範囲と法定相続分：<a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4132.htm" target="_blank" rel="noreferrer">https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4132.htm</a></div>
         <div>死亡保険金の非課税：<a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4114.htm" target="_blank" rel="noreferrer">https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4114.htm</a></div>
@@ -1758,6 +1769,67 @@
   .sz-back.open{display:block;}
   main section.card{scroll-margin-top:14px;}
   @media(max-width:640px){ .sz-burger{display:inline-flex;align-items:center;} }
+
+/* =============================================================
+   外枠を、他のパートナー専用ツールと同じ作りに揃える
+   ---------------------------------------------------------------
+     濃い帯の見出し（hero）／上に貼り付く目次（nav）／番号付きの見出し
+   これまでは細い白帯に小さな題名だけで、11ある区画のどこに何があるか
+   スクロールしないと分からなかった。
+   ============================================================= */
+.hero{background:linear-gradient(150deg,var(--navy),#16466f 58%,#4E7FB5);color:#fff;padding:44px 0 36px;}
+.hero-in{max-width:1180px;margin:0 auto;padding:0 20px;}
+.brand{display:flex;align-items:center;gap:11px;margin-bottom:24px;}
+.brand .logo{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.16);
+  display:flex;align-items:center;justify-content:center;font-size:18px;font-family:var(--f-head);}
+.brand .nm{font-family:var(--f-head);font-size:21px;font-weight:600;letter-spacing:.04em;}
+.hero-back{margin-left:auto;font-size:12px;font-weight:600;color:#fff;text-decoration:none;
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.32);border-radius:9px;
+  padding:8px 13px;white-space:nowrap;}
+.hero-back:hover{background:rgba(255,255,255,.24);}
+.hero .eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;color:#9FC2E8;margin-bottom:12px;}
+.hero h1{font-family:var(--f-head);font-size:27px;font-weight:600;line-height:1.5;margin:0 0 14px;color:#fff;}
+.hero h1 .h1sub{display:inline-block;font-size:16px;font-weight:500;color:#CFE0F0;margin-top:6px;}
+.hero p{font-size:13.5px;color:#D6E4F2;margin:0;max-width:820px;line-height:1.9;}
+.hero .for{display:inline-block;margin-top:16px;font-size:12px;line-height:1.8;
+  background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.26);border-radius:12px;padding:8px 15px;max-width:820px;}
+
+/* 上に貼り付く目次。11区画あるので、押して飛べないと探すのが大変 */
+.nav{position:sticky;top:0;z-index:30;background:rgba(250,248,243,.94);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--washi-line);margin-bottom:18px;}
+.nav-in{max-width:1180px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;padding:8px 20px;}
+.nav a{flex:0 0 auto;font-size:12px;color:var(--muted);text-decoration:none;padding:7px 12px;
+  border-radius:9px;white-space:nowrap;font-weight:600;}
+.nav a:hover{background:#FFFDF7;color:var(--navy);}
+
+/* 番号は角丸のしるしに。どこを見ているかが目で追える */
+section.card h2.numbered .no{
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#fff;background:var(--navy);
+  min-width:26px;height:26px;border-radius:8px;display:inline-flex;align-items:center;
+  justify-content:center;padding:0 6px;margin-right:10px;flex:0 0 auto;}
+section.card h2.numbered{display:flex;align-items:center;font-family:var(--f-head);font-size:17px;letter-spacing:.02em;
+  padding-left:0;margin:0 0 12px;}
+/*  番号のしるしだけを残す。共通CSSの金の縦罫と、このツールが元から持っていた
+    金の下線が重なると、しるしが3つ並んで何が見出しか分からなくなる。
+    （下線は display:block を前提にしていたので、flex にした時点で右へ回り込む） */
+section.card h2.numbered::before{display:none;}
+section.card h2.numbered::after{display:none;}
+section.card{scroll-margin-top:58px;}
+
+@media(max-width:820px){
+  .hero{padding:30px 0 26px;}
+  .hero h1{font-size:21px;} .hero h1 .h1sub{font-size:14px;}
+  .brand{margin-bottom:16px;}
+  .hero-back{display:none;}     /* 狭い画面では右下の目次から戻る */
+  .nav{display:none;}           /* 同上。横に長い目次は狭い画面で邪魔になる */
+}
+@media print{
+  .hero{background:none;color:#000;padding:0 0 10px;}
+  .hero h1,.hero .h1sub,.hero p{color:#000;}
+  .hero .for{border-color:#999;background:none;}
+  .brand,.nav,.hero-back{display:none!important;}
+}
 </style>
 <link rel="stylesheet" href="tsugu-wa.css">
 <link rel="stylesheet" href="tool-wa.css">
@@ -1774,7 +1846,12 @@
     secs.forEach(function(s,i){
       var hh=s.querySelector('h2'); if(!hh)return;
       if(!s.id) s.id='szsec'+i;
-      h+='<div class="it" onclick="szGo(\''+s.id+'\')">'+esc(hh.textContent.trim())+'</div>';
+      //  見出しの番号は <span class="no"> に分けてあるので、textContent だと
+      //  「1基本情報」と繋がってしまう。番号と題名を組み直して読める形にする。
+      var no=hh.querySelector('.no');
+      var label=no ? (no.textContent.trim()+'. '+hh.textContent.replace(no.textContent,'').trim())
+                   : hh.textContent.trim();
+      h+='<div class="it" onclick="szGo(\''+s.id+'\')">'+esc(label)+'</div>';
     });
     menu.innerHTML=h;
   }
