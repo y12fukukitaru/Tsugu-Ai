@@ -1,0 +1,107 @@
+/* =============================================================
+   TsuguAi の設え ― 和モダン（共通の語彙）
+   ---------------------------------------------------------------
+   アプリ本体（index.html）と同じ意匠語彙を、外に出す資料にも通す。
+   資料だけ別の顔をしていると、読んだあと画面に戻ったときに繋がらない。
+
+     生成り（きなり）の地 … 紙の温かみ
+     麻の葉              … まっすぐ育つ麻にあやかる吉祥文様。
+                            「ある」と気づかない濃度で敷く
+     金の罫              … 見出しと紙の上端に一本だけ通し、格を示す
+     見出しは明朝        … 継ぐことの重み
+     本文はゴシック      … 判断材料は読みやすさ最優先
+     継ナビくんは丸ゴシック … 声色までやわらかく
+
+   ここは「色・書体・紙」だけを決める。
+   読み物としての作り（目次・通し番号）は manual-wa.css、
+   見せるスライドとしての作り（舞台・操作バー）は pitch-wa.css。
+
+     操作説明書   … tsugu-wa.css + manual-wa.css
+     商談スライド … tsugu-wa.css + pitch-wa.css
+
+   どちらも既存の <style> のあとに読み込むので、上書きが効く。
+   色や書体を変えるときは、必ずこの1枚だけを直すこと。
+   ============================================================= */
+
+:root{
+  --washi:#FAF8F3;          /* 生成り（地） */
+  --washi-line:#EDE7DA;     /* 生成りの罫 */
+  --kin:#C39B3F;            /* 金 */
+  --sumi:#1A2030;           /* 墨 */
+  --f-head:'Shippori Mincho','Hiragino Mincho ProN','Yu Mincho','Noto Serif JP',serif;
+  --f-body:'Noto Sans JP',sans-serif;
+  --f-navi:'Zen Maru Gothic','Noto Sans JP',sans-serif;
+  /* 麻の葉。濃い地に敷く用と、白い紙に刷る用で濃度を変える */
+  --wa-asanoha:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='84' viewBox='0 0 48 84'%3E%3Cg fill='none' stroke='%23C39B3F' stroke-opacity='.10' stroke-width='1'%3E%3Cpath d='M24 0v84M0 21l24 14 24-14M0 63l24-14 24 14M0 21v42M48 21v42M24 0 0 21M24 0l24 21M24 84 0 63M24 84l24-21'/%3E%3C/g%3E%3C/svg%3E");
+  --wa-asanoha-paper:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='84' viewBox='0 0 48 84'%3E%3Cg fill='none' stroke='%23C39B3F' stroke-opacity='.075' stroke-width='1'%3E%3Cpath d='M24 0v84M0 21l24 14 24-14M0 63l24-14 24 14M0 21v42M48 21v42M24 0 0 21M24 0l24 21M24 84 0 63M24 84l24-21'/%3E%3C/g%3E%3C/svg%3E");
+  /* いちばん薄い霞（かすみ）。16:9 の大きな面に敷く用。
+     余白の多い面に .075 を敷くと文様が前に出て、中身と競ってしまう。 */
+  --wa-asanoha-mist:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='84' viewBox='0 0 48 84'%3E%3Cg fill='none' stroke='%23C39B3F' stroke-opacity='.038' stroke-width='1'%3E%3Cpath d='M24 0v84M0 21l24 14 24-14M0 63l24-14 24 14M0 21v42M48 21v42M24 0 0 21M24 0l24 21M24 84 0 63M24 84l24-21'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+body{font-family:var(--f-body);}
+
+/* ===== 紙 ― 一枚ずつの札 =====
+   面は白のまま。生成りにすると、投影や画面共有でコントラストが落ちる。
+   文様は白い紙に刷る濃度（.075）で、あると気づかないくらいに。 */
+.slide{
+  background:#fff;
+  background-image:var(--wa-asanoha-paper);
+  border:1px solid var(--washi-line);
+  border-radius:14px;
+  position:relative;
+  overflow:hidden;
+}
+/* 紙の上端に、金の罫を一本。左が濃く、右へ消えていく */
+.slide::before{
+  content:'';position:absolute;left:0;right:0;top:0;height:2px;
+  background:linear-gradient(90deg,rgba(195,155,63,.55),rgba(195,155,63,.06) 62%,transparent);
+  pointer-events:none;z-index:1;
+}
+
+/* ===== 書体の役割分担 ===== */
+h1,h2,h3,.cover h1{font-family:var(--f-head);letter-spacing:.03em;font-weight:600;}
+.card h3{font-family:var(--f-head);letter-spacing:.02em;}
+.eyebrow{font-family:var(--f-body);color:#8A6A12;letter-spacing:.16em;}
+
+/* 見出しの左に金の罫（本体の .ph と同じ所作） */
+h2{position:relative;padding-left:14px;}
+h2::before{
+  content:'';position:absolute;left:0;top:.18em;bottom:.18em;width:3px;
+  border-radius:2px;background:var(--kin);
+}
+/* 表紙・中扉の大見出しには罫を付けない（地がすでに立っているため） */
+.cover h1::before,.cover h2::before,.divider h1::before,.divider h2::before{display:none;}
+.cover h2,.divider h2{padding-left:0;}
+
+/* ===== 継ナビくんの声 ― 丸ゴシックで、やわらかく ===== */
+.tsg-say .bb{font-family:var(--f-navi);line-height:1.95;}
+.tsg-say .bb .who{font-family:var(--f-navi);}
+
+/* ===== 添え書き（note）― 金の罫を左に立てる ===== */
+.note{
+  border-left:3px solid var(--kin);
+  background:#FFFDF7;
+  border-top:1px solid #F0E6CE;
+  border-right:1px solid #F0E6CE;
+  border-bottom:1px solid #F0E6CE;
+  border-radius:0 10px 10px 0;
+}
+.note.r{background:#FDF8F7;border-color:#F0DEDC;border-left-color:#A9403D;}
+.note.g{background:#F7FBF8;border-color:#D8E8DE;border-left-color:#27684A;}
+
+/* ===== 表紙 ― 墨紺の地に、金と麻の葉 ===== */
+.cover{
+  background-image:var(--wa-asanoha),linear-gradient(150deg,#0E1B33 0%,#1B2E52 58%,#22406F 100%);
+  border-color:rgba(195,155,63,.3);
+}
+.cover .eyebrow{color:var(--kin);}
+.cover h1{color:#fff;}
+.cover .mark{font-family:var(--f-head);letter-spacing:.14em;}
+
+/* ===== 印刷 ― 文様と影は落とす ===== */
+@media print{
+  body{background:#fff;background-image:none;}
+  .slide{box-shadow:none;background-image:none;border:none;}
+  .slide::before{display:none;}
+}

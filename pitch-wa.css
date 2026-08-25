@@ -1,0 +1,87 @@
+/* =============================================================
+   商談・社外向けスライドの設え ― 見せるものとしての作り
+   ---------------------------------------------------------------
+   色・書体・紙は tsugu-wa.css で決めている。ここはそのうえに、
+   「相手に見せる一枚」としての作りだけを足す。
+
+   説明書との違いは、読み方が違うこと。
+     操作説明書   … 上から下へ読む。地も紙の色にする
+     商談スライド … 一枚ずつ見せる。地は舞台なので、暗いまま退かせる
+
+   舞台を生成りにすると紙との境が消え、投影や画面共有で
+   一枚の輪郭が分からなくなる。だから地は墨のままにして、
+   そこに麻の葉を敷くことで和の設えだけを通す。
+
+   読み込む順番： tsugu-wa.css → pitch-wa.css
+   ============================================================= */
+
+/* ===== 舞台 ― 墨に麻の葉。紙を前に出すため、地は退かせる ===== */
+body{
+  background-color:var(--sumi);
+  background-image:var(--wa-asanoha);
+  color:var(--ink);
+}
+
+/* 暗い舞台の上なので、影は説明書より深く。
+   面は 16:9 で余白が多いため、文様はいちばん薄い霞に落とす。
+   説明書の紙（文字が詰まっている）と同じ濃度だと、ここでは文様が前に出る。
+   銀行に提出して印刷される資料でもあるので、面は静かに保つ。 */
+.slide{
+  box-shadow:0 20px 60px rgba(6,10,20,.45);
+  background-image:var(--wa-asanoha-mist);
+}
+
+/* ===== 下の操作バー ― 墨に金 ===== */
+.bar{
+  background:rgba(20,26,40,.94);
+  background-image:var(--wa-asanoha);
+  border-top:1px solid rgba(195,155,63,.32);
+}
+.bar .ttl{font-family:var(--f-head);letter-spacing:.04em;color:#EDE3CC;}
+.bar .pos{color:#C0A96F;}
+.bar button{
+  background:rgba(195,155,63,.14);
+  color:#E9DCBB;
+  border:1px solid rgba(195,155,63,.34);
+}
+.bar button:hover{background:rgba(195,155,63,.24);}
+
+/* 「プラットフォームに戻る」ボタンが別に置かれている資料もある */
+#backbtn{
+  background:var(--kin);color:#0E1B33;border:none;
+  font-family:var(--f-body);font-weight:700;
+}
+
+/* ===== 表紙・中扉 ― 見出しは明朝、金の罫を一本 =====
+   一枚目で「継ぐ」の格を出す。ここだけ罫を横に通す。 */
+.cover h1,.divider h1{line-height:1.5;}
+.cover .mark,.divider .mark{
+  display:inline-block;position:relative;padding-bottom:10px;
+}
+.cover .mark::after,.divider .mark::after{
+  content:'';position:absolute;left:0;bottom:0;width:64px;height:2px;
+  background:linear-gradient(90deg,var(--kin),rgba(195,155,63,.15));
+}
+
+/* 中扉（章の変わり目）も、表紙と同じ設えに揃える */
+.divider{
+  background-image:var(--wa-asanoha),linear-gradient(150deg,#0F2A1E 0%,#1B4633 70%,#27684A 100%);
+  border-color:rgba(195,155,63,.28);
+}
+.divider .mark{color:#9FD8B8;}
+
+/* ===== 通し番号 ― 紙の右下に、控えめに =====
+   スライドは data-n（1/9 のような表記）を持っているので、それを活かす。
+   説明書のような通し番号の振り直しはしない。 */
+.slide::after{
+  color:#C9BFA8;font-family:'DM Sans',sans-serif;letter-spacing:.06em;
+}
+.cover::after,.divider::after{color:rgba(233,220,187,.55);}
+
+/* ===== 印刷 ― 舞台は白地に。A4横のまま ===== */
+@media print{
+  body{background:#fff;background-image:none;}
+  .bar,#backbtn{display:none!important;}
+  .slide::before{display:none;}
+  .cover,.divider{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
