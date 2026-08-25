@@ -158,7 +158,8 @@ async function customerBriefs(sb: any): Promise<number> {
   const jstNow = new Date(Date.now() + 9 * 3600 * 1000);
   const prev = new Date(jstNow); prev.setUTCDate(1); prev.setUTCDate(0);
   const prevMonth = prev.toISOString().slice(0, 7);
-  const today = new Date().toISOString().slice(0, 10);
+  //  日本時間の今日。UTCで取ると、朝6時の実行では前日になる。
+  const today = jstToday().date;
 
   let made = 0;
   for (const c of custs) {
@@ -179,6 +180,14 @@ async function customerBriefs(sb: any): Promise<number> {
     const { data: rp } = await sb.from("monthly_reports").select("report_month").eq("customer_id", c.id).eq("status", "published")
       .gte("published_at", daysAgo(7)).limit(1);
     if (rp?.length) signals.push(`新しい月次レポート(${rp[0].report_month})が届いている`);
+    //  ご自分で書いた「やること」。今日のぶんと、過ぎてしまったぶん。
+    //  書いた本人に読み上げるので、催促にならない言い方で添える。
+    const todos = await openTodos(sb, c.id, today);
+    for (const t of todos.slice(0, 4)) {
+      signals.push(t.due_on < today
+        ? `ご自分で書いた「${t.title}」が${t.due_on}の予定のまま`
+        : `今日やると書いていた「${t.title}」`);
+    }
     const agenda = await todayAgenda(sb, c.id, [c.id]);
     // 予定が入っている日は、シグナルが無くても朝のひとことを届ける
     if (!signals.length && !agenda.length) continue;
@@ -889,6 +898,26 @@ async function collectSignals(sb: any, customerIds: string[]): Promise<Signal[]>
     }
   }
 
+  // 5.5) 経営者ご本人が書いた「やること」
+  //   全部を並べるとただのTODO一覧になって読まれなくなるので、
+  //   優先度が高いものと、期日を過ぎたものだけを拾う（openTodosForCustomers 側で絞る）。
+  //   こちらから片づけるものではなく、声をかける手がかりとして渡す。
+  {
+    const today = jstToday().date;
+    const todos = await openTodosForCustomers(sb, customerIds, today);
+    for (const t of todos.slice(0, 5)) {
+      const late = t.due_on < today;
+      signals.push({
+        customer: nm(t.customer_id),
+        kind: "cust_todo",
+        fact: late
+          ? `${nm(t.customer_id)}がご自分で書いた「${t.title}」が${t.due_on}のまま残っている`
+          : `${nm(t.customer_id)}が今日やると書いている「${t.title}」（優先度：高）`,
+        priority: late ? 2 : 3,
+      });
+    }
+  }
+
   // 6) 締切30日以内の補助金（全顧客共通のレーダー情報）
   {
     const { data } = await sb
@@ -973,7 +1002,7 @@ function agendaBlock(agenda: string[]): string {
 //  ブリーフの冒頭に「今日は何があるか」を置く。予定を知らないまま
 //  「今日の一手」を語っても、相手の一日と噛み合わないため。
 //  日付の境目は日本時間で切る（サーバーはUTCで動いている）。
-function jstToday(): { from: string; to: string; label: string } {
+function jstToday(): { from: string; to: string; label: string; date: string } {
   const j = new Date(Date.now() + 9 * 3600000);
   const y = j.getUTCFullYear(), m = j.getUTCMonth(), d = j.getUTCDate();
   const startUtc = Date.UTC(y, m, d) - 9 * 3600000;
@@ -982,11 +1011,42 @@ function jstToday(): { from: string; to: string; label: string } {
     from: new Date(startUtc).toISOString(),
     to: new Date(startUtc + 24 * 3600000).toISOString(),
     label: `${m + 1}月${d}日（${w}）`,
+    //  日付そのもの（YYYY-MM-DD）。期日の比較は必ずこちらを使うこと。
+    //  この関数は 6:00 JST（＝21:00 UTC）に走るので、UTCで日付を取ると
+    //  前日になってしまう。
+    date: j.toISOString().slice(0, 10),
   };
 }
 function fmtTimeJst(iso: string) {
   const j = new Date(new Date(iso).getTime() + 9 * 3600000);
   return `${String(j.getUTCHours()).padStart(2, "0")}:${String(j.getUTCMinutes()).padStart(2, "0")}`;
+}
+//  経営者ご本人が書いた「やること」のうち、まだ済んでいないもの。
+//  今日までのぶんだけを拾う（明後日の予定を今朝せかす理由はない）。
+//  表が未作成の環境でも黙って空を返す。
+type OpenTodo = { customer_id: string; title: string; due_on: string; priority: number };
+async function openTodos(sb: any, customerId: string, today: string, limit = 6): Promise<OpenTodo[]> {
+  try {
+    const { data, error } = await sb.from("customer_todos")
+      .select("customer_id, title, due_on, priority")
+      .eq("customer_id", customerId).is("done_at", null).lte("due_on", today)
+      .order("priority", { ascending: true }).order("due_on", { ascending: true }).limit(limit);
+    if (error) return [];
+    return (data ?? []) as OpenTodo[];
+  } catch { return []; }
+}
+//  担当顧客ぶんをまとめて。パートナーには「優先度が高い」か「期日を過ぎた」
+//  ものだけを渡す。全部を並べると、毎朝ただのTODO一覧になって読まれなくなる。
+async function openTodosForCustomers(sb: any, customerIds: string[], today: string): Promise<OpenTodo[]> {
+  if (!customerIds.length) return [];
+  try {
+    const { data, error } = await sb.from("customer_todos")
+      .select("customer_id, title, due_on, priority")
+      .in("customer_id", customerIds).is("done_at", null).lte("due_on", today)
+      .order("priority", { ascending: true }).order("due_on", { ascending: true }).limit(40);
+    if (error) return [];
+    return ((data ?? []) as OpenTodo[]).filter((t) => t.priority === 1 || t.due_on < today);
+  } catch { return []; }
 }
 async function todayAgenda(sb: any, ownerId: string, customerIds?: string[]): Promise<string[]> {
   const { from, to } = jstToday();
