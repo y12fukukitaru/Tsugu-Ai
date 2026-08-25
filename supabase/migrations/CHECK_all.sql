@@ -104,6 +104,12 @@ select * from (
       then '✅ 実行済み' else '❌ 未実行' end,
     '20260825000000_agent_insights_retention.sql'
   union all
+  select 18, '顧客のやることメモ（customer_todos）',
+    case when exists (select 1 from information_schema.tables
+      where table_schema='public' and table_name='customer_todos')
+      then '✅ 実行済み' else '❌ 未実行' end,
+    '20260826000000_customer_todos.sql'
+  union all
   select 10, 'プロフィール画像（profiles.avatar）',
     case when exists (select 1 from information_schema.columns
       where table_schema='public' and table_name='profiles' and column_name='avatar')
