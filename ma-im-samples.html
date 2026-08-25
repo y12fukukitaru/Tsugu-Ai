@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>企業概要書（例）| TsuguAi -継-</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Shippori+Mincho:wght@500;600;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1E3A66;--blue:#2C5DA8;--gold:#C39B3F;--ink:#18202E;--muted:#5A6981;
+  --line:#E2E7EF;--soft:#F8F9FC;--softline:#EDF1F6;--green:#27684A;--red:#A9403D;}
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Noto Sans JP',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;}
+
+.hero{background:linear-gradient(150deg,var(--navy),#16466f 58%,#4E7FB5);color:#fff;padding:44px 0 36px;}
+.hero-in{max-width:1000px;margin:0 auto;padding:0 20px;}
+.brand{display:flex;align-items:center;gap:11px;margin-bottom:24px;}
+.brand .logo{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.16);
+  display:flex;align-items:center;justify-content:center;font-size:18px;font-family:var(--f-head);}
+.brand .nm{font-family:var(--f-head);font-size:21px;font-weight:600;letter-spacing:.04em;}
+.hero-back{margin-left:auto;font-size:12px;font-weight:600;color:#fff;text-decoration:none;
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.32);border-radius:9px;padding:8px 13px;white-space:nowrap;}
+.hero .eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;color:#9FC2E8;margin-bottom:12px;}
+.hero h1{font-family:var(--f-head);font-size:27px;font-weight:600;line-height:1.5;margin:0 0 14px;color:#fff;}
+.hero h1 .h1sub{display:inline-block;font-size:16px;font-weight:500;color:#CFE0F0;margin-top:6px;}
+.hero p{font-size:13.5px;color:#D6E4F2;margin:0;max-width:820px;line-height:1.9;}
+.hero .for{display:inline-block;margin-top:16px;font-size:12px;line-height:1.8;
+  background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.26);border-radius:12px;padding:8px 15px;max-width:820px;}
+
+.nav{position:sticky;top:0;z-index:30;background:rgba(250,248,243,.94);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--washi-line,#EDE7DA);margin-bottom:18px;}
+.nav-in{max-width:1000px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;padding:8px 20px;}
+.nav a{flex:0 0 auto;font-size:12px;color:var(--muted);text-decoration:none;padding:7px 12px;
+  border-radius:9px;white-space:nowrap;font-weight:600;}
+.nav a:hover{background:#FFFDF7;color:var(--navy);}
+
+.wrap{max-width:1000px;margin:0 auto;padding:0 20px 90px;}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:0 0 16px;scroll-margin-top:58px;}
+.card h2{display:flex;align-items:center;font-family:var(--f-head);font-size:19px;color:var(--navy);
+  margin:0 0 6px;letter-spacing:.02em;line-height:1.5;}
+.card h2 .no{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;color:#fff;background:var(--navy);
+  min-width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;
+  padding:0 7px;margin-right:11px;flex:0 0 auto;}
+.lead{font-size:13.5px;color:var(--muted);line-height:1.95;margin:0 0 4px;}
+p{font-size:13.5px;line-height:1.95;margin:0 0 10px;}
+b{color:var(--navy);}
+ul{margin:0 0 10px;padding-left:20px;} li{font-size:13.5px;line-height:1.95;margin-bottom:4px;}
+.note{border-left:3px solid var(--gold);background:#FFFDF7;border-top:1px solid #F0E6CE;border-right:1px solid #F0E6CE;
+  border-bottom:1px solid #F0E6CE;border-radius:0 10px 10px 0;padding:13px 16px;font-size:12.8px;line-height:1.9;
+  color:var(--muted);margin:12px 0;}
+.note b{color:var(--navy);}
+.note.r{border-left-color:var(--red);background:#FDF8F7;border-color:#F0DEDC;border-left-color:var(--red);}
+.note.r b{color:var(--red);}
+.note.g{border-left-color:var(--green);background:#F7FBF8;border-color:#D8E8DE;border-left-color:var(--green);}
+.note.g b{color:var(--green);}
+
+/* ===== 概要書そのもの（読み物ではなく「資料」に見えるように） ===== */
+.im{border:1px solid #D8DFEA;border-radius:12px;overflow:hidden;margin:14px 0 6px;background:#fff;}
+.im-h{background:var(--navy);color:#fff;padding:12px 16px;font-family:var(--f-head);font-size:14.5px;letter-spacing:.04em;}
+.im-h span{display:block;font-family:'Noto Sans JP',sans-serif;font-size:11px;color:#B9CDE6;font-weight:400;margin-top:3px;letter-spacing:0;}
+.im-b{padding:16px 18px;}
+.im-s{font-family:var(--f-head);font-size:13.5px;color:var(--navy);margin:18px 0 6px;padding-left:10px;
+  border-left:3px solid var(--gold);}
+.im-s:first-child{margin-top:0;}
+table{width:100%;border-collapse:collapse;font-size:12.6px;margin:6px 0 10px;}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--softline);vertical-align:top;line-height:1.85;}
+th{background:var(--soft);color:var(--navy);font-weight:700;white-space:nowrap;width:30%;}
+table.fin th{width:auto;text-align:right;} table.fin td{text-align:right;font-family:'DM Sans',sans-serif;}
+table.fin th:first-child,table.fin td:first-child{text-align:left;font-family:'Noto Sans JP',sans-serif;}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;border-radius:99px;padding:2px 9px;margin-right:5px;}
+.tag.b{background:rgba(44,93,168,.1);color:var(--blue);}
+.tag.g{background:rgba(39,104,74,.12);color:var(--green);}
+.tag.w{background:rgba(195,155,63,.16);color:#8A6A12;}
+.read{background:var(--soft);border:1px dashed #C9D4E4;border-radius:11px;padding:13px 16px;margin:10px 0 0;}
+.read h4{font-family:var(--f-head);font-size:13px;color:var(--navy);margin:0 0 6px;}
+.read ul{margin:0;padding-left:19px;} .read li{font-size:12.6px;line-height:1.9;color:var(--muted);}
+.read li b{color:var(--ink);}
+@media(max-width:820px){
+  .hero{padding:30px 0 26px;} .hero h1{font-size:21px;} .hero h1 .h1sub{font-size:14px;}
+  .brand{margin-bottom:16px;} .hero-back{display:none;} .nav{display:none;}
+  .card{padding:18px 16px;} th{width:auto;}
+}
+@media print{
+  .hero{background:none;color:#000;padding:0 0 10px;}
+  .hero h1,.hero .h1sub,.hero p{color:#000;}
+  .brand,.nav,.hero-back{display:none!important;}
+  .card,.im{break-inside:avoid;}
+}
+</style>
+<link rel="stylesheet" href="tsugu-wa.css">
+<link rel="stylesheet" href="tool-wa.css">
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-in">
+    <div class="brand"><span class="logo">継</span><span class="nm">TsuguAi</span>
+      <a class="hero-back" href="./index.html" onclick="if(window.backToPortal){backToPortal();return false;}">← パートナーポータルへ戻る</a></div>
+    <div class="eyebrow">認定パートナー向け・M&A 体系講座 別冊</div>
+    <h1>企業概要書（例）を読む<br><span class="h1sub">同じ形式でも、業種が変われば買い手の見るところが変わります。</span></h1>
+    <p>企業概要書（IM）は、買い手が最初に会社を判断する資料です。私たちが作るわけではありませんが、
+      顧客が受け取った資料を一緒に見て「ここが弱い」「この強みが書かれていない」と言えるかどうかで、
+      関われる深さが変わります。<b style="color:#fff;">5つの業種の完成例</b>を、読みどころ付きで並べました。</p>
+    <span class="for">すべて架空の会社です。実在の企業とは関係ありません。数字は形式を掴むためのもので、業界の相場を示すものではありません。</span>
+  </div>
+</div>
+
+<div class="nav"><div class="nav-in">
+  <a href="#s0">読む前に</a>
+  <a href="#s1">①製造業</a>
+  <a href="#s2">②建設業</a>
+  <a href="#s3">③飲食業</a>
+  <a href="#s4">④IT・サービス</a>
+  <a href="#s5">⑤介護</a>
+  <a href="#s6">読み比べ</a>
+</div></div>
+
+<div class="wrap">
+
+<section class="card" id="s0">
+  <h2><span class="no">序</span>読む前に ― 企業概要書の骨格</h2>
+  <p class="lead">形式に決まりはありませんが、載る項目はおおむね共通しています。まず骨格を頭に入れてから、実例に入ってください。</p>
+  <table>
+    <tr><th>1. 会社概要</th><td>所在地、設立、資本金、株主構成、従業員数、許認可</td></tr>
+    <tr><th>2. 事業内容</th><td>何を、誰に、どうやって売っているか。売上の内訳</td></tr>
+    <tr><th>3. 沿革</th><td>いつ何があったか。転機と、いまの形になった理由</td></tr>
+    <tr><th>4. 組織・人員</th><td>年齢構成、勤続、有資格者、キーマン。社長がどこまで関与しているか</td></tr>
+    <tr><th>5. 取引先</th><td>主要顧客と依存度、仕入先、取引年数</td></tr>
+    <tr><th>6. 財務</th><td>3期分の損益・貸借。正常収益力への調整。設備投資、借入</td></tr>
+    <tr><th>7. 強み・課題</th><td>なぜ選ばれているか。何が弱いか（隠さない）</td></tr>
+    <tr><th>8. 譲渡条件</th><td>譲渡理由、希望スキーム、希望価格の考え方、引き継ぎ期間、従業員の雇用条件</td></tr>
+  </table>
+  <div class="note"><b>「7. 課題」を正直に書いてある資料ほど、話が早く進みます。</b>どうせデューデリで出ます。先に書いてある会社は「隠さない相手だ」と評価され、出てこなかった会社は全部を疑われます。</div>
+</section>
+
+<!-- ========== ① 製造業 ========== -->
+<section class="card" id="s1">
+  <h2><span class="no">①</span>製造業 ― 技術と設備が価値になる</h2>
+  <div class="im">
+    <div class="im-h">企業概要書<span>案件番号 MFG-001 ／ 金属精密加工業（架空）</span></div>
+    <div class="im-b">
+      <div class="im-s">1. 会社概要</div>
+      <table>
+        <tr><th>事業内容</th><td>自動車部品・産業機械向け 金属精密加工（切削・研削）</td></tr>
+        <tr><th>所在地</th><td>中部地方（工業団地内・自社工場）</td></tr>
+        <tr><th>設立</th><td>1978年（創業48年）</td></tr>
+        <tr><th>資本金</th><td>3,000万円</td></tr>
+        <tr><th>株主</th><td>代表 80%／代表の妻 20%（<b>2名のみ・分散なし</b>）</td></tr>
+        <tr><th>従業員</th><td>32名（正社員28・パート4）平均年齢 47歳</td></tr>
+        <tr><th>設備</th><td>NC旋盤12台、マシニングセンタ8台、三次元測定機2台。<b>直近5年で3.2億円を投資済み</b></td></tr>
+      </table>
+
+      <div class="im-s">2. 事業内容・売上構成</div>
+      <table class="fin">
+        <tr><th>区分</th><th>構成比</th><th>粗利率</th></tr>
+        <tr><td>自動車部品（Tier2）</td><td>52%</td><td>18%</td></tr>
+        <tr><td>産業機械部品</td><td>31%</td><td>26%</td></tr>
+        <tr><td>試作・小ロット</td><td>17%</td><td>34%</td></tr>
+      </table>
+      <p>試作・小ロットは1個から受注。図面から段取りまで自社で完結し、<b>短納期（最短3日）</b>で応えられることが選ばれる理由。</p>
+
+      <div class="im-s">3. 組織・キーマン</div>
+      <table>
+        <tr><th>代表</th><td>68歳。営業と最終品質判断を担当。<b>現場作業からは5年前に離れている</b></td></tr>
+        <tr><th>工場長</th><td>54歳。勤続29年。段取り・工程設計の中心。<b>残留の意向あり</b></td></tr>
+        <tr><th>技能者</th><td>1級技能士 4名、2級 7名。20代 5名（育成中）</td></tr>
+      </table>
+
+      <div class="im-s">4. 財務（3期・単位:百万円）</div>
+      <table class="fin">
+        <tr><th></th><th>3期前</th><th>2期前</th><th>直近期</th></tr>
+        <tr><td>売上高</td><td>842</td><td>901</td><td>958</td></tr>
+        <tr><td>営業利益</td><td>38</td><td>52</td><td>61</td></tr>
+        <tr><td>減価償却費</td><td>44</td><td>49</td><td>53</td></tr>
+        <tr><td>純資産</td><td>412</td><td>448</td><td>492</td></tr>
+        <tr><td>有利子負債</td><td>218</td><td>196</td><td>174</td></tr>
+      </table>
+      <p><b>正常収益力への調整：</b>役員報酬（代表 2,400万円）を後任相場 1,200万円に置き換え ＋1,200万円／代表の車両・保険 ＋380万円。調整後の営業利益は約 <b>7,700万円</b>。</p>
+
+      <div class="im-s">5. 強み・課題</div>
+      <p><span class="tag g">強み</span>短納期の試作対応／設備が新しく当面の大型投資が不要／技能承継が始まっている／株主が2名のみ</p>
+      <p><span class="tag w">課題</span>自動車依存52%（EV化の影響を受ける可能性）／代表の営業属人性（主要3社は代表の個人的関係）／原価計算が製品別に取れていない</p>
+
+      <div class="im-s">6. 譲渡条件</div>
+      <table>
+        <tr><th>譲渡理由</th><td>代表の高齢化。子は他業種に就職済みで承継意思なし</td></tr>
+        <tr><th>希望スキーム</th><td>株式譲渡 100%</td></tr>
+        <tr><th>引き継ぎ</th><td>代表は<b>1〜2年の顧問残留可</b>（営業引き継ぎのため）</td></tr>
+        <tr><th>従業員</th><td>全員の雇用継続を希望。給与水準の維持を条件とする</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="read">
+    <h4>この資料の読みどころ</h4>
+    <ul>
+      <li><b>設備投資が済んでいる</b>——買った翌年に数億円が要る会社と、当面要らない会社では、実質の投資額がまるで違う。ここを書いていない製造業の資料は、必ず質問される</li>
+      <li><b>代表が現場から離れている</b>——製造業で最も重要な情報のひとつ。「社長が抜けたら作れない」会社は評価が大きく下がる</li>
+      <li><b>依存度を自分から書いている</b>——自動車52%は弱点だが、隠していない。むしろ「分かったうえで経営している」と読まれる</li>
+      <li><b>営業が属人的だと正直に書いている</b>——だから引き継ぎ期間の提案がセットになっている。課題と対策を並べるのが良い書き方</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ========== ② 建設業 ========== -->
+<section class="card" id="s2">
+  <h2><span class="no">②</span>建設業 ― 許認可と技術者が価値になる</h2>
+  <div class="im">
+    <div class="im-h">企業概要書<span>案件番号 CON-002 ／ 総合建設業（架空）</span></div>
+    <div class="im-b">
+      <div class="im-s">1. 会社概要</div>
+      <table>
+        <tr><th>事業内容</th><td>公共土木工事（道路・河川）、民間建築の元請</td></tr>
+        <tr><th>所在地</th><td>東北地方</td></tr>
+        <tr><th>設立</th><td>1965年（創業61年）</td></tr>
+        <tr><th>許認可</th><td><b>特定建設業許可（土木一式・建築一式・とび土工）</b><br>経営事項審査 総合評定値 <b>P点 812</b>（土木一式）</td></tr>
+        <tr><th>株主</th><td>代表 55%／弟 25%／叔父 12%／その他個人3名 8%<br><span class="tag w">要整理</span>少数株主が分散</td></tr>
+        <tr><th>従業員</th><td>41名。<b>1級土木施工管理技士 7名／1級建築施工管理技士 3名</b></td></tr>
+      </table>
+
+      <div class="im-s">2. 売上構成</div>
+      <table class="fin">
+        <tr><th>区分</th><th>構成比</th><th>備考</th></tr>
+        <tr><td>公共工事（県・市）</td><td>68%</td><td>指名参加資格あり。過去10年、受注は安定</td></tr>
+        <tr><td>民間建築</td><td>24%</td><td>地元企業の工場・倉庫</td></tr>
+        <tr><td>維持補修</td><td>8%</td><td>年間契約。利益率は高い</td></tr>
+      </table>
+
+      <div class="im-s">3. 財務（3期・単位:百万円）</div>
+      <table class="fin">
+        <tr><th></th><th>3期前</th><th>2期前</th><th>直近期</th></tr>
+        <tr><td>完成工事高</td><td>1,240</td><td>1,180</td><td>1,352</td></tr>
+        <tr><td>営業利益</td><td>51</td><td>29</td><td>68</td></tr>
+        <tr><td>純資産</td><td>586</td><td>601</td><td>655</td></tr>
+        <tr><td>有利子負債</td><td>142</td><td>168</td><td>131</td></tr>
+      </table>
+      <p>年度により工事の端境期があり、利益は変動する。3期平均の営業利益は約 <b>4,900万円</b>。</p>
+
+      <div class="im-s">4. 強み・課題</div>
+      <p><span class="tag g">強み</span>特定建設業許可とP点812（新規参入では数年かかる）／有資格の施工管理技士が10名／公共工事の実績と指名参加資格／自社保有の重機・資材置場</p>
+      <p><span class="tag w">課題</span><b>少数株主が5名に分散（要整理）</b>／技術者の平均年齢52歳／公共依存68%／年度による業績変動</p>
+
+      <div class="im-s">5. 譲渡条件</div>
+      <table>
+        <tr><th>譲渡理由</th><td>代表71歳。後継予定だった弟も66歳のため、次の世代へ渡せない</td></tr>
+        <tr><th>希望スキーム</th><td>株式譲渡（<b>少数株主分の集約を先行して進める意向</b>）</td></tr>
+        <tr><th>引き継ぎ</th><td>代表・弟ともに1年程度の残留可</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="read">
+    <h4>この資料の読みどころ ― 製造業との違い</h4>
+    <ul>
+      <li><b>許認可とP点が最大の価値</b>——建設業では、これがそのまま「買う理由」になる。特定建設業許可を新規で取るには年数と実績が要る。資料の一番上に書くべき情報</li>
+      <li><b>資格者の人数が価値</b>——1級施工管理技士がいないと現場を持てない。人数と年齢構成は必ず見られる。この会社は人数はいるが平均52歳という弱点も併記している</li>
+      <li><b>株主の分散が明示されている</b>——5名に散っているのは重い課題。しかし<b>「集約を先行して進める」と対策まで書いてある</b>。買い手は「話が止まらない」と読める</li>
+      <li><b>利益の変動を隠していない</b>——建設業は年度で振れる。1期だけ良い数字を出すより、3期平均を示すほうが信頼される</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ========== ③ 飲食業 ========== -->
+<section class="card" id="s3">
+  <h2><span class="no">③</span>飲食業 ― 立地と再現性が価値になる</h2>
+  <div class="im">
+    <div class="im-h">企業概要書<span>案件番号 F&B-003 ／ 和食店チェーン（架空）</span></div>
+    <div class="im-b">
+      <div class="im-s">1. 会社概要</div>
+      <table>
+        <tr><th>事業内容</th><td>和食店 6店舗（直営）／宅配・仕出し</td></tr>
+        <tr><th>所在地</th><td>関西圏（駅前立地4／ロードサイド2）</td></tr>
+        <tr><th>設立</th><td>1992年</td></tr>
+        <tr><th>株主</th><td>代表 100%（<b>分散なし</b>）</td></tr>
+        <tr><th>従業員</th><td>正社員 18名／アルバイト 74名</td></tr>
+        <tr><th>店舗</th><td>全店<b>賃借</b>。契約残存 平均4.2年。<b>うち2店舗は譲渡時に貸主の承諾が必要</b></td></tr>
+      </table>
+
+      <div class="im-s">2. 店舗別の状況</div>
+      <table class="fin">
+        <tr><th>店舗</th><th>月商(百万円)</th><th>営業利益率</th><th>開業</th></tr>
+        <tr><td>A店（駅前）</td><td>18.2</td><td>11%</td><td>1998</td></tr>
+        <tr><td>B店（駅前）</td><td>15.6</td><td>9%</td><td>2004</td></tr>
+        <tr><td>C店（駅前）</td><td>12.1</td><td>7%</td><td>2011</td></tr>
+        <tr><td>D店（駅前）</td><td>9.8</td><td>4%</td><td>2017</td></tr>
+        <tr><td>E店（RS）</td><td>11.4</td><td>8%</td><td>2015</td></tr>
+        <tr><td>F店（RS）</td><td>6.2</td><td><b>−3%</b></td><td>2021</td></tr>
+      </table>
+      <p>F店は開業がコロナ期と重なり、現在も赤字。<b>撤退または業態転換を検討中</b>であることを明示。</p>
+
+      <div class="im-s">3. 財務（3期・単位:百万円）</div>
+      <table class="fin">
+        <tr><th></th><th>3期前</th><th>2期前</th><th>直近期</th></tr>
+        <tr><td>売上高</td><td>612</td><td>721</td><td>879</td></tr>
+        <tr><td>営業利益</td><td>−18</td><td>21</td><td>58</td></tr>
+        <tr><td>純資産</td><td>96</td><td>112</td><td>158</td></tr>
+      </table>
+
+      <div class="im-s">4. 強み・課題</div>
+      <p><span class="tag g">強み</span>駅前の一等地を長期契約で確保／セントラルキッチンにより<b>調理の再現性が高い</b>（新店の立ち上げが早い）／宅配・仕出しの法人固定客</p>
+      <p><span class="tag w">課題</span>F店の赤字／アルバイト比率が高く採用・定着が経営課題／店舗の賃借契約に<b>譲渡時の承諾条項</b>あり（2店舗）／代表が仕入交渉を一手に担っている</p>
+
+      <div class="im-s">5. 譲渡条件</div>
+      <table>
+        <tr><th>譲渡理由</th><td>代表59歳。多店舗展開を続けるには資本力が必要と判断。自身は事業に残る意向</td></tr>
+        <tr><th>希望スキーム</th><td>株式譲渡（<b>代表は続投を希望</b>）</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="read">
+    <h4>この資料の読みどころ ― 飲食業ならでは</h4>
+    <ul>
+      <li><b>店舗別に開示している</b>——飲食は店ごとに別事業。合計だけ出す資料は必ず「店別を出してください」と言われる。最初から出しておくほうが早い</li>
+      <li><b>赤字店を隠していない</b>——F店の −3% を書いたうえで対応方針まで示している。合計に紛れ込ませると、デューデリで見つかったとき全体を疑われる</li>
+      <li><b>賃借契約の承諾条項が最重要</b>——株式譲渡でも、支配権が変わると解除できる条項（チェンジ・オブ・コントロール条項）が入っていることがある。飲食は立地が価値なので、ここが崩れると取引そのものが壊れる</li>
+      <li><b>再現性を価値として書いている</b>——「美味しい」ではなく「同じ味を誰でも出せる仕組みがある」。買い手が知りたいのはこちら</li>
+      <li><b>代表が残る前提</b>——譲渡＝引退とは限らない。資本だけ入れて経営は続ける形もある</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ========== ④ IT・サービス ========== -->
+<section class="card" id="s4">
+  <h2><span class="no">④</span>IT・サービス業 ― 継続収益と人が価値になる</h2>
+  <div class="im">
+    <div class="im-h">企業概要書<span>案件番号 ITS-004 ／ 業務システム受託・保守（架空）</span></div>
+    <div class="im-b">
+      <div class="im-s">1. 会社概要</div>
+      <table>
+        <tr><th>事業内容</th><td>中堅企業向け業務システムの受託開発、および保守・運用</td></tr>
+        <tr><th>所在地</th><td>首都圏（オフィス賃借・リモート併用）</td></tr>
+        <tr><th>設立</th><td>2006年</td></tr>
+        <tr><th>株主</th><td>代表 70%／共同創業者 20%／従業員持株 10%</td></tr>
+        <tr><th>従業員</th><td>36名（エンジニア29・営業4・管理3）平均年齢 34歳</td></tr>
+      </table>
+
+      <div class="im-s">2. 売上構成 ― ここが最重要</div>
+      <table class="fin">
+        <tr><th>区分</th><th>構成比</th><th>性質</th></tr>
+        <tr><td><b>保守・運用（月額）</b></td><td><b>46%</b></td><td><b>継続収益。解約率 年3%</b></td></tr>
+        <tr><td>受託開発</td><td>41%</td><td>都度受注。案件により変動</td></tr>
+        <tr><td>SES・常駐</td><td>13%</td><td>人月請負</td></tr>
+      </table>
+      <p>保守契約は <b>52社</b>。平均取引年数 <b>7.4年</b>。最大顧客の売上比率 <b>9%</b>（依存は低い）。</p>
+
+      <div class="im-s">3. 財務（3期・単位:百万円）</div>
+      <table class="fin">
+        <tr><th></th><th>3期前</th><th>2期前</th><th>直近期</th></tr>
+        <tr><td>売上高</td><td>418</td><td>452</td><td>496</td></tr>
+        <tr><td>営業利益</td><td>44</td><td>51</td><td>62</td></tr>
+        <tr><td>純資産</td><td>188</td><td>224</td><td>271</td></tr>
+        <tr><td>有利子負債</td><td>30</td><td>10</td><td>0</td></tr>
+      </table>
+
+      <div class="im-s">4. 強み・課題</div>
+      <p><span class="tag g">強み</span><b>売上の46%が継続収益</b>で解約率が低い／顧客が52社に分散（依存なし）／無借金／エンジニアの平均年齢34歳で若い</p>
+      <p><span class="tag w">課題</span>受託案件の見積が<b>特定の2名に依存</b>／技術スタックが一部レガシー（保守案件の一部）／採用競争が激しく人件費が上昇傾向／<b>従業員持株10%の取扱い要協議</b></p>
+
+      <div class="im-s">5. 譲渡条件</div>
+      <table>
+        <tr><th>譲渡理由</th><td>代表52歳。事業拡大には営業力と資本が必要。グループ入りを希望</td></tr>
+        <tr><th>希望スキーム</th><td>株式譲渡（<b>代表・共同創業者ともに3年以上の残留を確約</b>）</td></tr>
+        <tr><th>従業員</th><td>雇用維持のほか、<b>持株分の買取条件を明示すること</b>を条件とする</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="read">
+    <h4>この資料の読みどころ ― 無形資産の会社</h4>
+    <ul>
+      <li><b>継続収益と解約率を数字で出している</b>——IT・サービス業の価値はここに集約される。「保守46%・解約率3%・平均7.4年」は、製造業の設備投資に相当する情報</li>
+      <li><b>顧客分散を明示</b>——最大顧客9%。1社依存の会社とは評価がまるで違う。低いなら必ず書く</li>
+      <li><b>人が資産＝人が抜けるリスク</b>——だからキーマンの残留確約が条件に入っている。無形資産の会社では、これが無いと買い手は踏み込めない</li>
+      <li><b>従業員持株の扱いを先に書いている</b>——後から出ると必ず揉める。株主構成が単純でない場合、扱い方まで書くのが誠実な資料</li>
+      <li><b>レガシー技術という弱点も書いている</b>——保守で稼げている裏返し。デューデリで技術者が入れば必ず分かる</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ========== ⑤ 介護 ========== -->
+<section class="card" id="s5">
+  <h2><span class="no">⑤</span>介護事業 ― 指定と人員基準が価値になる</h2>
+  <div class="im">
+    <div class="im-h">企業概要書<span>案件番号 CARE-005 ／ 通所介護・訪問介護（架空）</span></div>
+    <div class="im-b">
+      <div class="im-s">1. 会社概要</div>
+      <table>
+        <tr><th>事業内容</th><td>通所介護（デイサービス）3事業所／訪問介護 2事業所</td></tr>
+        <tr><th>所在地</th><td>九州地方</td></tr>
+        <tr><th>設立</th><td>2003年</td></tr>
+        <tr><th>指定</th><td>各事業所につき<b>介護保険事業者指定</b>を取得済み。直近の実地指導で指摘事項なし</td></tr>
+        <tr><th>株主</th><td>代表 100%</td></tr>
+        <tr><th>従業員</th><td>68名（常勤42・非常勤26）<b>介護福祉士 24名／看護師 6名／ケアマネジャー 5名</b></td></tr>
+      </table>
+
+      <div class="im-s">2. 事業所別の状況</div>
+      <table class="fin">
+        <tr><th>事業所</th><th>定員/稼働</th><th>稼働率</th><th>月売上(百万円)</th></tr>
+        <tr><td>デイA</td><td>35名</td><td>91%</td><td>9.8</td></tr>
+        <tr><td>デイB</td><td>30名</td><td>86%</td><td>7.6</td></tr>
+        <tr><td>デイC</td><td>25名</td><td><b>68%</b></td><td>4.9</td></tr>
+        <tr><td>訪問D</td><td>—</td><td>—</td><td>6.2</td></tr>
+        <tr><td>訪問E</td><td>—</td><td>—</td><td>4.4</td></tr>
+      </table>
+      <p>デイCは開設3年目で稼働率が低い。<b>ケアマネ事業所への営業体制が未整備</b>であることを課題として認識。</p>
+
+      <div class="im-s">3. 財務（3期・単位:百万円）</div>
+      <table class="fin">
+        <tr><th></th><th>3期前</th><th>2期前</th><th>直近期</th></tr>
+        <tr><td>売上高</td><td>352</td><td>371</td><td>396</td></tr>
+        <tr><td>営業利益</td><td>19</td><td>22</td><td>28</td></tr>
+        <tr><td>純資産</td><td>141</td><td>158</td><td>182</td></tr>
+      </table>
+      <p>売上は介護報酬に基づくため<b>景気変動の影響を受けにくい</b>一方、<b>報酬改定の影響を直接受ける</b>。</p>
+
+      <div class="im-s">4. 強み・課題</div>
+      <p><span class="tag g">強み</span>指定と実地指導のクリーンな履歴／有資格者が揃い<b>人員基準に余裕がある</b>／稼働率の高い2事業所／地域のケアマネからの紹介が安定</p>
+      <p><span class="tag w">課題</span>デイCの稼働率68%／<b>人材採用が最大の経営課題</b>（常時2〜3名の欠員）／代表が管理者を兼務する事業所が1つある／報酬改定リスク</p>
+
+      <div class="im-s">5. 譲渡条件</div>
+      <table>
+        <tr><th>譲渡理由</th><td>代表64歳。採用力と管理体制のある事業者の傘下で継続したい</td></tr>
+        <tr><th>希望スキーム</th><td>株式譲渡 100%</td></tr>
+        <tr><th>条件</th><td>従業員の雇用継続と、<b>現在の処遇水準の維持</b>を最重要条件とする</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="read">
+    <h4>この資料の読みどころ ― 規制産業</h4>
+    <ul>
+      <li><b>指定と実地指導の履歴が価値</b>——介護は指定が無ければ1円も売上が立たない。指摘事項の有無は、建設業のP点に相当する情報</li>
+      <li><b>人員基準に余裕があるか</b>——基準を割ると事業が止まる。有資格者の人数は、単なる人件費ではなく事業継続の条件</li>
+      <li><b>稼働率が事業所ごとに出ている</b>——飲食の店舗別と同じ考え方。合計だけでは判断できない</li>
+      <li><b>報酬改定リスクを自分から書いている</b>——制度に売上を握られている事業では、買い手が必ず気にする。触れていない資料は「分かっていない」と読まれる</li>
+      <li><b>代表が管理者を兼務している</b>——譲渡後に代表が抜けると人員基準を満たせなくなる可能性がある。規制産業では、社長の属人性が法令上の問題に直結する</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ========== 読み比べ ========== -->
+<section class="card" id="s6">
+  <h2><span class="no">終</span>読み比べ ― 業種で「価値の置き場所」が変わる</h2>
+  <p class="lead">同じ形式の資料でも、買い手が最初に探す情報は業種ごとに違います。ここを掴んでおくと、顧客の資料を見たときに何が足りないか分かります。</p>
+  <table>
+    <tr><th>業種</th><th>買い手が最初に探すもの</th><th>致命傷になりやすいもの</th></tr>
+    <tr><td><b>製造業</b></td><td>設備の更新状況、技能者、社長の現場依存度</td><td>直後に大型投資が必要／社長がいないと作れない</td></tr>
+    <tr><td><b>建設業</b></td><td>許認可、経営事項審査のP点、有資格の施工管理技士</td><td>資格者の高齢化／株主の分散で取引が止まる</td></tr>
+    <tr><td><b>飲食業</b></td><td>店舗別の採算、賃借契約の残存と承諾条項、再現性</td><td>チェンジ・オブ・コントロール条項で立地を失う</td></tr>
+    <tr><td><b>IT・サービス</b></td><td>継続収益の比率と解約率、顧客の分散、キーマン</td><td>キーマンの離職／1社依存</td></tr>
+    <tr><td><b>介護・医療</b></td><td>指定と実地指導の履歴、人員基準の余裕、稼働率</td><td>基準割れ／代表が管理者を兼務している</td></tr>
+  </table>
+
+  <h3 style="font-family:var(--f-head);font-size:15.5px;color:var(--navy);margin:22px 0 7px;">共通して効いていたこと</h3>
+  <ul>
+    <li><b>課題を自分から書いている</b>——5例すべてに弱点が明記されている。どうせデューデリで出る。先に書けば「隠さない相手」になる</li>
+    <li><b>細かい単位で開示している</b>——店舗別、事業所別、売上区分別。合計だけの資料は必ず追加質問を招き、時間を失う</li>
+    <li><b>課題に対策が添えてある</b>——「株主が分散している。ただし集約を進めている」「営業が属人的。ただし引き継ぎ期間を用意する」。この形が、話を前に進める</li>
+  </ul>
+
+  <div class="note g"><b>私たちが顧客の資料を見るときの視点。</b>「この業種で買い手が最初に探すものが、この資料に書いてあるか」。書いていなければ、それを補うことが、日々の顧問業務で今日からできることです。</div>
+  <div class="note r"><b>企業概要書の作成・添削は、私たちの業務ではありません。</b>読んで理解し、足りない観点を経営者と共有し、運営・専門家に繋ぐところまでが役割です。</div>
+</section>
+
+</div>
+
+<script>
+window.backToPortal=function(){
+  try{ window.close(); }catch(e){}
+  setTimeout(function(){ location.href='./index.html'; }, 150);
+};
+</script>
+</body>
+</html>

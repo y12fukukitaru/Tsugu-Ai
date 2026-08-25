@@ -1286,7 +1286,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260826-1';
+  var APP_BUILD='20260826-2';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -12287,7 +12287,62 @@
       desc:'M&Aは「仲介」ではなく「紹介」に徹します。ティーアップの型とチェックリストを、別タブで最後までお読みください。',
       note:'読み終えたら、この画面に戻って「読了にする」を押してください。' }
   ]},
-  { n:4, title:'修了確認', lessons:[
+  //  M&Aは私たちが「仲介しない」領域だが、経営者から打ち明けられたときに
+  //  受け止められなければ意味がない。大枠（全体像）から小枠（各段階）へ
+  //  降りていく順に並べ、最後に理解度チェックを置く。
+  //  本文は ma-course.html に章立てで置き、各レッスンはその章へ直接開く。
+  { n:4, title:'M&Aを深く学ぶ', opt:true, lessons:[
+    { id:'t5-1', title:'M&Aの全体像 ― まず地図を持つ', min:10, kind:'doc',
+      file:'ma-course.html#c0',
+      desc:'M&Aは承継の手段のひとつでしかありません。まず全体を掴んでから各論に入ります。序章と第1章（取引の流れ・スキームの違い）をお読みください。',
+      note:'読み終えたら、この画面に戻って「読了にする」を押してください。' },
+    { id:'t5-2', title:'譲る側 ― 何を準備し、どう決めるか', min:12, kind:'doc',
+      file:'ma-course.html#c2',
+      desc:'私たちが日常的に接するのは、ほとんどが譲る側です。動機のほどき方、磨き上げ、従業員へ伝える順番、手取りの考え方まで。第2章です。',
+      note:'磨き上げは、承継の話が具体化する何年も前から始められます。日々の顧問業務がそのまま準備になる、という視点で読んでください。' },
+    { id:'t5-3', title:'譲り受ける側 ― 買い手は何を見ているか', min:8, kind:'doc',
+      file:'ma-course.html#c3',
+      desc:'買い手の関心が分かると、譲る側への助言の質が上がります。「買い手はここを見ます」と言えるからです。第3章です。',
+      note:'読み終えたら、この画面に戻って「読了にする」を押してください。' },
+    { id:'t5-4', title:'数字の見方 ― いくらになるのか', min:12, kind:'doc',
+      file:'ma-course.html#c4',
+      desc:'価格の話は必ず出ます。決めるのは専門家ですが、どういう理屈で決まるかを知らないと、経営者の期待値と現実の差を埋められません。第4章です。',
+      note:'とくに「正常収益力」は、決算書の利益が少ない会社にこそ効く考え方です。' },
+    { id:'t5-5', title:'企業概要書（例）を読む ― 5業種の実例', min:15, kind:'doc',
+      file:'ma-im-samples.html',
+      desc:'買い手が最初に会社を判断する資料です。製造業・建設業・飲食業・IT／サービス業・介護の完成例を、読みどころ付きで並べました。業種が変われば、買い手が見るところも変わります。',
+      note:'すべて架空の会社です。最後の「読み比べ」まで目を通すと、業種ごとの違いが一枚で掴めます。' },
+    { id:'t5-6', title:'書類と契約 ― やり取りされる紙', min:8, kind:'doc',
+      file:'ma-course.html#c5',
+      desc:'秘密保持契約から最終契約まで、それぞれが何のためにあるか。作成は弁護士の領域ですが、読めることが私たちの仕事です。第5章です。',
+      note:'読み終えたら、この画面に戻って「読了にする」を押してください。' },
+    { id:'t5-7', title:'統合（PMI）と、私たちの関わり方', min:10, kind:'doc',
+      file:'ma-course.html#c6',
+      desc:'M&Aは成約がゴールではありません。うまくいかない事例の多くは成約後に起きます。第6章と第7章（やること・やらないこと）をお読みください。',
+      note:'第7章の「やること・やらないこと」は、迷ったときに立ち返る場所です。' },
+    { id:'t5-8', title:'理解度チェック（M&A編）', min:6, kind:'quiz',
+      desc:'M&Aの章から8問です。間違えても何度でも受け直せます。',
+      qs:[
+        { q:'認定パートナーがM&Aで行わないこととして、正しくないものはどれですか。',
+          o:['相手を探して引き合わせる','価格を交渉する','契約書を作成・修正する','経営者の話を聴き、承継の選択肢を整理する'], a:3 },
+        { q:'中小M&Aで最も多く使われるスキームはどれですか。',
+          o:['株式譲渡','事業譲渡','会社分割','合併'], a:0 },
+        { q:'「正常収益力」への調整として行われないものはどれですか。',
+          o:['社長個人の車・保険の費用を戻す','役員報酬を後任を雇う場合の相場に直す','一度きりの特別損益を除く','来期の売上計画を上乗せする'], a:3 },
+        { q:'デューデリジェンスで発見されて破談の原因になりやすい、代表的な簿外債務はどれですか。',
+          o:['未払残業代や社会保険の加入漏れ','来期の広告宣伝費','減価償却費','売掛金の入金予定'], a:0 },
+        { q:'企業概要書（IM）を開示するのは、どの時点ですか。',
+          o:['最初の打診と同時','秘密保持契約を結んだあと','基本合意のあと','最終契約の締結後'], a:1 },
+        { q:'飲食業の企業概要書で、とくに確認が必要な事項はどれですか。',
+          o:['店舗の賃借契約の残存期間と、譲渡時の承諾条項','厨房機器の購入年月','アルバイトの制服の枚数','看板の色'], a:0 },
+        { q:'従業員に譲渡を伝える時期として、原則はどれですか。',
+          o:['相手探しを始めた時点','基本合意の直後','最終契約の締結後','伝えなくてよい'], a:2 },
+        { q:'統合（PMI）でよくある失敗として、正しくないものはどれですか。',
+          o:['買い手の流儀を一気に持ち込む','給与・評価の統一を急ぐ','決まっていないことは「まだ決まっていない」と伝える','前社長が突然いなくなる'], a:2 }
+      ] }
+  ]},
+
+  { n:5, title:'修了確認', lessons:[
     { id:'t4-1', title:'理解度チェック（全問正解で修了）', min:5, kind:'quiz',
       desc:'これまでのレッスンの内容から6問です。間違えても何度でも受け直せます。',
       qs:[
@@ -12302,6 +12357,11 @@
   ]}
   ];
   function trLessons(){ var a=[]; TRAINING.forEach(function(c){ c.lessons.forEach(function(l){ a.push(l); }); }); return a; }
+  //  修了（Lv.1の条件）は必修の章だけで判定する。
+  //  あとから章を足したときに、すでに修了した人が未修了に戻ってしまわないように。
+  //  M&A編（opt:true）は発展として別に進捗を出す。
+  function trReq(){ var a=[]; TRAINING.forEach(function(c){ if(!c.opt) c.lessons.forEach(function(l){ a.push(l); }); }); return a; }
+  function trOptLessons(){ var a=[]; TRAINING.forEach(function(c){ if(c.opt) c.lessons.forEach(function(l){ a.push(l); }); }); return a; }
   function trFind(id){ var f=null; trLessons().forEach(function(l){ if(l.id===id) f=l; }); return f; }
   function trKindLabel(k){ return {guide:'ガイド',video:'動画',link:'画面で確認',doc:'資料',quiz:'テスト'}[k]||''; }
 
@@ -12345,7 +12405,7 @@
       await sb.from('training_progress').upsert({ user_id:ME, lesson_id:id });
     }catch(e){}
   }
-  function trIsComplete(){ return trLessons().every(function(l){ return !!TR_PROG[l.id]; }); }
+  function trIsComplete(){ return trReq().every(function(l){ return !!TR_PROG[l.id]; }); }
 
   async function loadTraining(){
     var box=$('tr-body-list'); if(!box) return;
@@ -12356,7 +12416,7 @@
   }
   function renderTraining(){
     var box=$('tr-body-list'); if(!box) return;
-    var all=trLessons(), done=all.filter(function(l){ return !!TR_PROG[l.id]; }).length;
+    var all=trReq(), done=all.filter(function(l){ return !!TR_PROG[l.id]; }).length;
     var pc=all.length?Math.round(done/all.length*100):0;
     var h='';
     // 修了バナー
@@ -12371,6 +12431,22 @@
       +'<div style="flex:1;min-width:160px;"><div class="tr-bar"><i style="width:'+pc+'%;"></i></div></div>'
       +'<div style="font-size:12px;color:var(--muted);white-space:nowrap;">'+done+' / '+all.length+' レッスン（'+pc+'%）</div>'
     +'</div>';
+    //  発展（M&A編）は修了の条件に入れていないので、進捗を別に出す。
+    //  必修と混ぜると「終わったのに終わっていない」ように見えてしまう。
+    var opt=trOptLessons();
+    if(opt.length){
+      var od=opt.filter(function(l){ return !!TR_PROG[l.id]; }).length;
+      var oc=Math.round(od/opt.length*100);
+      h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;'
+        +'border:1px solid var(--gold);background:rgba(195,155,63,.06);border-radius:11px;padding:10px 13px;">'
+        +'<span style="font-size:11.5px;font-weight:700;color:#8A6A12;white-space:nowrap;">発展・M&A編</span>'
+        +'<div style="flex:1;min-width:140px;"><div class="tr-bar"><i style="width:'+oc+'%;"></i></div></div>'
+        +'<div style="font-size:12px;color:var(--muted);white-space:nowrap;">'+od+' / '+opt.length+' レッスン</div>'
+        +(od===opt.length?'<span class="tag green" style="white-space:nowrap;">修了</span>':'')
+        +'<div style="flex-basis:100%;font-size:11px;color:var(--muted);line-height:1.7;">'
+          +'修了（Lv.1の条件）には含まれません。M&Aの相談を受け止められるようになるための発展課程です。</div>'
+      +'</div>';
+    }
     if(!TR_REMOTE){
       h+='<div style="font-size:11px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:8px 11px;margin-bottom:12px;line-height:1.6;">'
         +'進捗をサーバーに保存できなかったため、この端末にのみ記録しています（受講は問題なく続けられます）。'
@@ -14244,7 +14320,7 @@
       +'</div>';
     }
     // Lv.1 の条件は研修修了。ロードマップからも進捗が見えるようにする
-    var trAll=trLessons(), trDone=trAll.filter(function(x){ return !!TR_PROG[x.id]; }).length;
+    var trAll=trReq(), trDone=trAll.filter(function(x){ return !!TR_PROG[x.id]; }).length;
     var trOk=(trDone===trAll.length);
     var ar='<div style="display:flex;align-items:center;color:#B7C4D6;font-size:16px;">→</div>';
     var cards=PG_LEVELS.map(function(L){
