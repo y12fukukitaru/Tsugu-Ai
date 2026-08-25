@@ -98,6 +98,12 @@ select * from (
       then '✅ 実行済み' else '❌ 未実行' end,
     '20260818120000_chat_threads.sql'
   union all
+  select 17, '「今日の一手」の保持期間を14日に短縮',
+    case when exists (select 1 from cron.job
+      where jobname='agent-insights-cleanup' and schedule='30 18 * * *')
+      then '✅ 実行済み' else '❌ 未実行' end,
+    '20260825000000_agent_insights_retention.sql'
+  union all
   select 10, 'プロフィール画像（profiles.avatar）',
     case when exists (select 1 from information_schema.columns
       where table_schema='public' and table_name='profiles' and column_name='avatar')
