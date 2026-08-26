@@ -754,8 +754,12 @@
   .knv-fab.hop{animation:knv-hop 1.1s cubic-bezier(.28,.84,.42,1) 2;}
   @keyframes knv-hop{0%,100%{transform:translateY(0) scale(1);}18%{transform:translateY(-14px) scale(1.06,.94);}36%{transform:translateY(0) scale(.96,1.04);}52%{transform:translateY(-6px) scale(1.02,.98);}70%{transform:translateY(0) scale(1);}}
   .knv-badge{position:absolute;top:-4px;right:-4px;min-width:19px;height:19px;border-radius:99px;background:#A9403D;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #fff;}
-  /* PC版は余裕のある大きさで表示し、ヘッダーの⤢でさらに拡大できる */
-  .knv-panel{position:fixed;right:14px;bottom:14px;z-index:71;width:min(520px,calc(100vw - 24px));height:min(760px,calc(100vh - 60px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(6,12,24,.45);display:flex;flex-direction:column;overflow:hidden;
+  /* PC版は余裕のある大きさで表示し、ヘッダーの⤢でさらに拡大できる。
+     幅は「予定の週表示（7日ぶん）が横スクロール無しで収まること」で決めている。
+     週表示の中身は 514px 必要で、枠線2＋余白24＋縦スクロールバー約15を足すと
+     555px。600px にして、1日あたり約72pxの余裕を持たせている。
+     ここを狭めると土曜が切れて日付が読めなくなるので注意 */
+  .knv-panel{position:fixed;right:14px;bottom:14px;z-index:71;width:min(600px,calc(100vw - 24px));height:min(820px,calc(100vh - 60px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(6,12,24,.45);display:flex;flex-direction:column;overflow:hidden;
     transform-origin:calc(100% - 22px) calc(100% + 8px);animation:knvOpen .34s cubic-bezier(.34,1.42,.5,1);}
   .knv-panel.max{width:min(920px,calc(100vw - 28px));height:calc(100vh - 24px);bottom:12px;}
   /* 開く：右下の継ナビくんの位置からふわっと膨らんで出てくる */
@@ -1301,7 +1305,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260826-3';
+  var APP_BUILD='20260826-4';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
