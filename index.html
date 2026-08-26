@@ -381,6 +381,11 @@
   table.ft{width:100%;border-collapse:collapse;font-size:12px;}
   table.ft th{color:var(--muted);text-align:left;font-weight:600;padding:6px 4px;letter-spacing:.03em;}
   table.ft td{padding:6px 4px;border-top:1px solid var(--softline);font-feature-settings:'tnum';}
+  /* エンタープライズ（法人パートナー）の一覧で使う小さな札と、表の中の数値入力 */
+  .ep-tag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;padding:2px 8px;
+    border-radius:99px;letter-spacing:.02em;white-space:nowrap;}
+  .ep-num{width:104px;padding:5px 8px;font-size:12px;text-align:right;font-feature-settings:'tnum';}
+  @media(max-width:600px){ .ep-num{width:104px!important;} }
   .hidden{display:none!important;}
   #app{display:flex;min-height:100vh;align-items:stretch;}
   .sb{width:238px;flex-shrink:0;background:var(--deep);color:#fff;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
@@ -1305,7 +1310,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260826-4';
+  var APP_BUILD='20260826-7';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -1425,6 +1430,7 @@
     MYROLE=prof.role||'customer';
     await claimLinks(session.user.email);   // メールで指名された枠を本人と結びつける
     await resolveScope();                   // 閲覧メンバーなら、招かれた会社を見る
+    await epBoot();                         // 法人（エンタープライズ）に属しているか
     // 初回ログイン（お名前・会社名が未設定）は、先に「はじめの設定」を出す。
     // ここでパートナーは登録コードを入れて、その場でパートナーとして使い始められる。
     if(needsOnboard(prof)){ showOnboard(prof, session.user.email); return; }
@@ -1562,7 +1568,7 @@
     return presetPerms(role);
   }
   function adminNavAll(){
-    return [['sec-flow','ダッシュボード'],['sec-kpi','KPI・経営計画'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-cust','顧客'],['sec-team','運営メンバー'],['sec-network','専門家ネットワーク'],['sec-subsidy','補助金マスタ'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
+    return [['sec-flow','ダッシュボード'],['sec-kpi','KPI・経営計画'],['sec-risk','要対応'],['sec-fde','パートナー'],['sec-ep','エンタープライズ'],['sec-cust','顧客'],['sec-team','運営メンバー'],['sec-network','専門家ネットワーク'],['sec-subsidy','補助金マスタ'],['sec-market','Tsugu投資・融資・M&A'],['sec-billing','課金・契約'],['sec-audit','監査ログ'],['sec-broadcast','お知らせ配信'],['sec-support','サポート管理']];
   }
   // 権限管理の対象一覧：メニューからは消えたが個別権限は残す項目（経営計画=KPIタブ内に統合）も含める
   function adminPermAll(){
@@ -1581,7 +1587,11 @@
     // 運営は admin_role で見えるメニューを絞る（未設定は owner 扱い）
     if(r==='admin') return adminNavAll().filter(function(it){ return adminCanSee(it[0]); });
     // 以降はパートナー
-    return [['sec-flow','ダッシュボード'],['sec-growth','成長・研修'],['sec-biz','本業と連携'],['sec-sales','営業ツール'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','継ナビくん'],['sec-support','運営サポート']];
+    var pn=[['sec-flow','ダッシュボード'],['sec-growth','成長・研修'],['sec-biz','本業と連携'],['sec-sales','営業ツール'],['sec-clients','顧客管理'],['sec-pdca','課題PDCA'],['sec-madeals','M&A案件'],['sec-market','Tsugu投資・融資・M&A'],['sec-knowledge','ナレッジ'],['sec-sozoku','各種シミュレーター'],['sec-billpay','お支払い'],['sec-sec','継ナビくん'],['sec-support','運営サポート']];
+    //  法人（エンタープライズ）に所属している方にだけ出す。ひとりで活動して
+    //  いる方のメニューに、関係のない項目を増やさない。
+    if(EP_ME) pn.splice(5, 0, ['sec-ep','エンタープライズ']);
+    return pn;
   }
   // 設定（順序・非表示）を反映した実際の表示メニューを返す
   // 継ナビくん（sec-sec）と運営サポート（sec-support）は右下のパネルに集約したため
@@ -1815,6 +1825,16 @@
       +[['30日（最長）',30],['15日',15],['7日',7]].map(function(o){ return '<button class="sbtn'+(rd===o[1]?' on':'')+'" onclick="setAisecRetention('+o[1]+')">'+o[0]+'</button>'; }).join('')
       +'</div>';
     if(r==='consultant'){
+      h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 4px;">個人・法人の区別</div>';
+      h+='<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">'
+        +'源泉徴収の要否が変わるため、ご登録をお願いします。'
+        +'<b style="color:var(--navy);">個人</b>（個人事業主）の方への報酬からは源泉徴収（10.21%、100万円を超える部分は20.42%）を差し引いてお振込みします。'
+        +'<b style="color:var(--navy);">法人</b>の方には源泉徴収は生じません。未登録のあいだは差し引かずに計算します。</div>';
+      h+='<div style="display:flex;gap:6px;flex-wrap:wrap;" id="set-entity-row">'
+        +[['individual','個人（個人事業主）'],['corporate','法人']].map(function(o){
+            return '<button class="sbtn" id="set-ent-'+o[0]+'" onclick="saveEntityType(\''+o[0]+'\')">'+o[1]+'</button>'; }).join('')
+        +'</div>';
+      h+='<div id="set-entity-msg" style="font-size:11.5px;margin-top:6px;min-height:16px;"></div>';
       h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 4px;">インボイス（適格請求書発行事業者）登録番号</div>';
       h+='<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">報酬の支払通知書に記載するため、登録番号（Tから始まる13桁）をご登録ください。未登録（免税事業者）の場合は空欄のまま保存してください。</div>';
       h+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'
@@ -1831,8 +1851,32 @@
       +'<button class="btn2" onclick="closeSettings()">閉じる</button></div>';
     box.innerHTML=h;
     renderAvatar();
-    if(r==='consultant') loadInvoiceNo();
+    if(r==='consultant'){ loadInvoiceNo(); renderEntityType(); }
   }
+  // ===== 個人か法人か（源泉徴収の要否）=====
+  //  ご本人に選んでいただく。運営が勝手に決めると、間違っていたときに
+  //  税金の返還という面倒をお相手に負わせることになる。
+  function renderEntityType(){
+    var cur=(window.__prof||{}).entity_type||null;
+    [['individual'],['corporate']].forEach(function(o){
+      var b=$('set-ent-'+o[0]); if(b) b.className='sbtn'+(cur===o[0]?' on':'');
+    });
+    var m=$('set-entity-msg');
+    if(m && !cur) m.innerHTML='<span style="color:#8A6A12;">未登録です。どちらかをお選びください。</span>';
+  }
+  async function saveEntityType(v){
+    var msg=$('set-entity-msg'); if(!ME) return;
+    if(msg){ msg.style.color='var(--muted)'; msg.textContent='保存しています…'; }
+    var r=await sb.from('profiles').update({ entity_type:v }).eq('id',ME);
+    if(r.error){ if(msg){ msg.style.color='#A9403D'; msg.textContent='保存できませんでした：'+r.error.message; } return; }
+    if(window.__prof) window.__prof.entity_type=v;
+    renderEntityType();
+    if(msg){ msg.style.color='#27684A';
+      msg.textContent=(v==='individual'
+        ? '個人として保存しました。報酬から源泉徴収を差し引いてお振込みします。'
+        : '法人として保存しました。源泉徴収は差し引きません。'); }
+  }
+
   // ===== インボイス登録番号（パートナー本人のprofilesに保存）=====
   async function loadInvoiceNo(){
     var inp=$('set-invoice'); if(!inp||!ME) return;
@@ -2111,6 +2155,7 @@
         +'<div style="font-size:11px;color:#94A2B6;margin-top:8px;line-height:1.7;">'
           +'役割（顧客／パートナー／運営）の変更は、<b>「運営メンバー」メニュー</b>の'
           +'「アカウントと役割の管理」から行えます。登録コードを使わずに、あとから切り替えられます。</div></div>'
+      +(adminCanSee('sec-ep')?epPanelHtml(true):'')
       +'<div class="panel" id="sec-cust"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">顧客 一覧・管理<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
         +'<input id="adm-cust-search" class="searchbox" style="margin-top:8px;" placeholder="🔍 会社名・メールアドレスで検索" oninput="renderAdmCust()">'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px;" id="adm-cust-filterbar">'
@@ -2190,7 +2235,7 @@
         +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;background:var(--soft);border-radius:10px;padding:10px 12px;">'
           +'<div><label class="fl">パートナー基本（円/月）</label><input id="bl-pbase" type="number" class="inp2" style="width:120px;" value="3000" oninput="renderAdmBilling();blRatesSave()"></div>'
           +'<div><label class="fl">顧問先1社あたり加算（円/月）</label><input id="bl-pclient" type="number" class="inp2" style="width:140px;" value="2000" oninput="renderAdmBilling();blRatesSave()"></div>'
-          +'<div><label class="fl">顧問料（円/月）</label><input id="bl-adv" type="number" class="inp2" style="width:120px;" value="50000" oninput="renderAdmBilling();blRatesSave()"></div>'
+          +'<div><label class="fl">顧問料（円/月・税別）</label><input id="bl-adv" type="number" class="inp2" style="width:120px;" value="45000" oninput="renderAdmBilling();blRatesSave()"></div>'
           +'<div><label class="fl">運営直接担当（円/月・一律）</label><input id="bl-direct" type="number" class="inp2" style="width:120px;" value="30000" oninput="renderAdmBilling();blRatesSave()"></div>'
           +'<div><label class="fl">初期登録料（円・初回）</label><input id="bl-init" type="number" class="inp2" style="width:130px;" value="100000" oninput="renderAdmBilling();blRatesSave()"></div>'
         +'</div>'
@@ -3174,6 +3219,7 @@
             +'</div>'
           +'<div id="biz-body">読み込み中...</div>'
         +'</div>'
+        +(EP_ME?epPanelHtml(false):'')
         +'<div class="panel" id="sec-clients">'
           +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">顧客管理'
             +'<span style="display:flex;gap:8px;align-items:center;">'
@@ -3414,7 +3460,10 @@
             +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;" onclick="poCsv(\'year\')">⬇ CSV保存</button>'
           +'</div>'
           +'<div id="po-year-out"></div>'
-          +'<div style="font-size:11px;color:#94A2B6;margin-top:8px;line-height:1.7;">※ 本明細は現在の認定ランク・2名体制の配分に基づく<b>計算値（目安）</b>です。実際の振込額と異なる場合は運営にお問い合わせください。源泉徴収・消費税の取り扱いは、パートナー契約の定めによります。</div>'
+          +'<div style="font-size:11px;color:#94A2B6;margin-top:8px;line-height:1.7;">※ 本明細は現在の認定ランク・2名体制の配分に基づく<b>計算値（目安）</b>です。'
+            +'外注費率は、入金額から消費税相当を外した<b>税抜</b>の額に掛けています。'
+            +'源泉徴収は個人の方へのお支払いにのみ生じ（10.21%、100万円を超える部分は20.42%）、法人へのお支払いには生じません。'
+            +'実際の振込額と異なる場合は運営にお問い合わせください。</div>'
         +'</div>'
         +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.8"/><path d="m5.6 5.6 3.7 3.7M14.7 14.7l3.7 3.7M14.7 9.3l3.7-3.7M5.6 18.4l3.7-3.7"/></svg>運営サポート'
           +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadSupportKnowledge();loadMyInquiries()">↺ 更新</span></div>'
@@ -3460,10 +3509,11 @@
     $('app-body').innerHTML=view;
     if(eff==='customer' && ACCESS==='finance'){ loadAcct(); }
     else if(eff==='customer'){ loadDashHero(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); loadAgentInsights(); knvInit(); }
-    else if(eff==='consultant'){ loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); loadAgentInsights(); knvInit(); }
+    else if(eff==='consultant'){ if(EP_ME) loadEp(); loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); loadAgentInsights(); knvInit(); }
     else {
       // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
       loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadAdmAssign();
+      if(adminCanSee('sec-ep')) loadEp();
       if(adminCanSee('sec-team')) loadSignupCodes();
       if(adminCanSee('sec-exec')){ loadExecFunding(); loadExecWeekly(); }
       if(adminCanSee('sec-billing')){ loadBillingAdminLinks(); loadPayout(); }
@@ -5635,6 +5685,7 @@
       if(!mc.error) myClients=(mc.data||[]).length;
     }catch(e){}
     var myRate=rankFeeRate((window.__prof||{}).fde_rank, myClients==null?undefined:myClients);
+    var myEntity=(window.__prof||{}).entity_type||null;
     var rv=await sb.from('revenue_entries').select('customer_id,category,amount,occurred_on,description')
       .in('customer_id',custIds).gte('occurred_on',fromS).lt('occurred_on',toS)
       .order('occurred_on',{ascending:true}).limit(2000);
@@ -5653,35 +5704,56 @@
         role='サブ'; share=Number(a.sub_share)||0;
         rate=(a.main_id && mainRate[a.main_id]!=null)?mainRate[a.main_id]:null;
       }else{ return; }
-      var fee=(rate==null)?null:amt*rate*share/100;
+      //  外注費率は税抜の土台に掛ける（運営の配分画面と同じ計算）
+      var net=taxEx(amt);
+      var fee=(rate==null)?null:net*rate*share/100;
       rows.push({ on:r.occurred_on, cust:names[r.customer_id]||'', cat:r.category||'', desc:r.description||'',
-                  amt:amt, rate:rate, role:role, share:share, fee:fee });
+                  amt:amt, net:net, rate:rate, role:role, share:share, fee:fee });
     });
-    return { rows:rows };
+    return { rows:rows, entity:myEntity };
   }
-  function poTableHtml(rows){
+  function poTableHtml(rows, entity){
     if(!rows.length) return '<div style="font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:11px 13px;">この期間には、担当顧客の入金記録がありません。</div>';
-    var ta=0, tf=0, unk=false;
-    rows.forEach(function(r){ ta+=r.amt; if(r.fee==null) unk=true; else tf+=r.fee; });
-    var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:560px;">'
-      +'<tr style="background:var(--soft);color:var(--navy);"><th style="text-align:left;padding:7px 9px;">日付</th><th style="text-align:left;padding:7px 9px;">顧客</th><th style="text-align:left;padding:7px 9px;">区分</th><th style="text-align:right;padding:7px 9px;">入金額</th><th style="text-align:right;padding:7px 9px;">率</th><th style="text-align:right;padding:7px 9px;">配分</th><th style="text-align:right;padding:7px 9px;">支払額（目安）</th></tr>';
+    var ta=0, tn=0, tf=0, unk=false;
+    rows.forEach(function(r){ ta+=r.amt; tn+=(r.net==null?taxEx(r.amt):r.net); if(r.fee==null) unk=true; else tf+=r.fee; });
+    //  源泉徴収は明細の1行ごとではなく、その期間の報酬合計に対して1回
+    var ind=isIndiv(entity), wh=withholdYen(tf, ind);
+    var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:660px;">'
+      +'<tr style="background:var(--soft);color:var(--navy);"><th style="text-align:left;padding:7px 9px;">日付</th><th style="text-align:left;padding:7px 9px;">顧客</th><th style="text-align:left;padding:7px 9px;">区分</th><th style="text-align:right;padding:7px 9px;">入金額<br><span style="font-weight:400;font-size:10px;">（税込）</span></th><th style="text-align:right;padding:7px 9px;">税抜</th><th style="text-align:right;padding:7px 9px;">率</th><th style="text-align:right;padding:7px 9px;">配分</th><th style="text-align:right;padding:7px 9px;">報酬（目安）</th></tr>';
     rows.forEach(function(r){
       h+='<tr style="border-bottom:1px solid var(--softline);">'
         +'<td style="padding:6px 9px;white-space:nowrap;">'+esc(r.on||'')+'</td>'
         +'<td style="padding:6px 9px;">'+esc(r.cust)+(r.role==='サブ'?' <span class="tag gold" style="font-size:9px;">サブ</span>':'')+'</td>'
         +'<td style="padding:6px 9px;">'+esc(r.cat)+'</td>'
         +'<td style="padding:6px 9px;text-align:right;white-space:nowrap;">'+yen(r.amt)+'</td>'
+        +'<td style="padding:6px 9px;text-align:right;white-space:nowrap;color:var(--muted);">'+yen(r.net==null?taxEx(r.amt):r.net)+'</td>'
         +'<td style="padding:6px 9px;text-align:right;">'+(r.rate==null?'未確定':Math.round(r.rate*100)+'%')+'</td>'
         +'<td style="padding:6px 9px;text-align:right;">'+r.share+'%</td>'
         +'<td style="padding:6px 9px;text-align:right;white-space:nowrap;font-weight:700;color:#27684A;">'+(r.fee==null?'—':yen(r.fee))+'</td>'
       +'</tr>';
     });
     h+='<tr><td colspan="3" style="padding:8px 9px;font-weight:700;color:var(--navy);">合計</td>'
-      +'<td style="padding:8px 9px;text-align:right;font-weight:700;">'+yen(ta)+'</td><td></td><td></td>'
+      +'<td style="padding:8px 9px;text-align:right;font-weight:700;">'+yen(ta)+'</td>'
+      +'<td style="padding:8px 9px;text-align:right;font-weight:700;color:var(--muted);">'+yen(tn)+'</td><td></td><td></td>'
       +'<td style="padding:8px 9px;text-align:right;font-weight:700;color:#27684A;">'+yen(tf)+'</td></tr>'
       +'</table></div>';
+    h+=poNetBox(tf, wh, ind, entity);
     if(unk) h+='<div style="font-size:11px;color:#8A6A12;margin-top:6px;">「未確定」はランク未設定・個別設定のため率が決まっていない明細です。運営にご確認ください。</div>';
     return h;
+  }
+  //  報酬から源泉徴収を引いて、実際のお振込額を出す枠
+  function poNetBox(fee, wh, ind, entity){
+    return '<div style="margin-top:9px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--soft);">'
+      +'<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;padding:3px 0;">'
+        +'<span>報酬（税抜 × 外注費率）</span><b>'+yen(fee)+'</b></div>'
+      +'<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;padding:3px 0;color:'+(ind?'#A9403D':'#94A2B6')+';">'
+        +'<span>源泉徴収'+(ind?'（10.21%）':'（'+esc(entityLabel(entity))+'のため対象外）')+'</span><b>'+(ind?'− '+yen(wh):'—')+'</b></div>'
+      +'<div style="display:flex;justify-content:space-between;gap:12px;font-size:13.5px;padding:6px 0 0;margin-top:4px;border-top:1px solid var(--line);">'
+        +'<b style="color:var(--navy);">お振込額（目安）</b><b style="color:#27684A;">'+yen(fee-wh)+'</b></div>'
+      +(entity?'':'<div style="font-size:11px;color:#8A6A12;margin-top:7px;line-height:1.7;">'
+        +'個人・法人の区別が未設定のため、源泉徴収を引かずに計算しています。'
+        +'「設定」からご登録ください（個人の方は源泉徴収の対象になります）。</div>')
+    +'</div>';
   }
   async function poRenderMonth(){
     var out=$('po-month-out'); if(!out) return;
@@ -5692,8 +5764,8 @@
       var yy=+ym.slice(0,4), mm=+ym.slice(5,7);
       var toS=(mm===12?(yy+1)+'-01':yy+'-'+('0'+(mm+1)).slice(-2))+'-01';
       var d=await poFetch(ym+'-01', toS);
-      PO_CACHE.month={ label:yy+'年'+mm+'月', rows:d.rows };
-      out.innerHTML=poTableHtml(d.rows);
+      PO_CACHE.month={ label:yy+'年'+mm+'月', rows:d.rows, entity:d.entity };
+      out.innerHTML=poTableHtml(d.rows, d.entity);
     }catch(e){ out.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みに失敗しました：'+esc(String((e&&e.message)||e))+'</div>'; }
   }
   async function poRenderYear(){
@@ -5707,21 +5779,29 @@
         var m=(r.on||'').slice(0,7); if(!byM[m]) byM[m]={amt:0,fee:0,unk:false};
         byM[m].amt+=r.amt; if(r.fee==null) byM[m].unk=true; else byM[m].fee+=r.fee;
       });
-      PO_CACHE.year={ label:y+'年', rows:d.rows, months:byM };
-      var ta=0, tf=0;
-      var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:380px;">'
-        +'<tr style="background:var(--soft);color:var(--navy);"><th style="text-align:left;padding:7px 9px;">月</th><th style="text-align:right;padding:7px 9px;">対象入金 合計</th><th style="text-align:right;padding:7px 9px;">支払額 合計（目安）</th></tr>';
+      PO_CACHE.year={ label:y+'年', rows:d.rows, months:byM, entity:d.entity };
+      //  源泉徴収は月ごとのお支払いに対して掛かるので、月単位で出す
+      var ind=isIndiv(d.entity);
+      var ta=0, tf=0, tw=0;
+      var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:520px;">'
+        +'<tr style="background:var(--soft);color:var(--navy);"><th style="text-align:left;padding:7px 9px;">月</th><th style="text-align:right;padding:7px 9px;">対象入金<br><span style="font-weight:400;font-size:10px;">（税込）</span></th><th style="text-align:right;padding:7px 9px;">報酬（目安）</th><th style="text-align:right;padding:7px 9px;">源泉徴収</th><th style="text-align:right;padding:7px 9px;">お振込額（目安）</th></tr>';
       for(var m=1;m<=12;m++){
         var k=y+'-'+('0'+m).slice(-2), b=byM[k];
+        var w=b?withholdYen(b.fee, ind):0;
         h+='<tr style="border-bottom:1px solid var(--softline);"><td style="padding:6px 9px;">'+m+'月</td>'
           +'<td style="padding:6px 9px;text-align:right;">'+(b?yen(b.amt):'—')+'</td>'
-          +'<td style="padding:6px 9px;text-align:right;font-weight:700;color:#27684A;">'+(b?yen(b.fee)+(b.unk?' ※':''):'—')+'</td></tr>';
-        if(b){ ta+=b.amt; tf+=b.fee; }
+          +'<td style="padding:6px 9px;text-align:right;">'+(b?yen(b.fee)+(b.unk?' ※':''):'—')+'</td>'
+          +'<td style="padding:6px 9px;text-align:right;color:'+(ind?'#A9403D':'#94A2B6')+';">'+(b&&ind?'− '+yen(w):'—')+'</td>'
+          +'<td style="padding:6px 9px;text-align:right;font-weight:700;color:#27684A;">'+(b?yen(b.fee-w):'—')+'</td></tr>';
+        if(b){ ta+=b.amt; tf+=b.fee; tw+=w; }
       }
       h+='<tr><td style="padding:8px 9px;font-weight:700;color:var(--navy);">'+y+'年 合計</td>'
         +'<td style="padding:8px 9px;text-align:right;font-weight:700;">'+yen(ta)+'</td>'
-        +'<td style="padding:8px 9px;text-align:right;font-weight:700;color:#27684A;">'+yen(tf)+'</td></tr>'
+        +'<td style="padding:8px 9px;text-align:right;font-weight:700;">'+yen(tf)+'</td>'
+        +'<td style="padding:8px 9px;text-align:right;font-weight:700;color:'+(ind?'#A9403D':'#94A2B6')+';">'+(ind?'− '+yen(tw):'—')+'</td>'
+        +'<td style="padding:8px 9px;text-align:right;font-weight:700;color:#27684A;">'+yen(tf-tw)+'</td></tr>'
         +'</table></div>';
+      if(!d.entity) h+='<div style="font-size:11px;color:#8A6A12;margin-top:6px;line-height:1.7;">個人・法人の区別が未設定のため、源泉徴収を引かずに計算しています。「設定」からご登録ください。</div>';
       out.innerHTML=h;
     }catch(e){ out.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みに失敗しました：'+esc(String((e&&e.message)||e))+'</div>'; }
   }
@@ -5752,26 +5832,38 @@
     if(!c || !c.rows){ alert('先に「表示」を押して明細を表示してください。'); return; }
     var me=(window.__prof||{});
     var pname=me.full_name||me.contact_name||window.__email||'';
-    var note='※ 本明細は、認定ランクに基づく外注費率と2名体制の配分から計算した金額（目安）です。実際の振込額と異なる場合は運営にお問い合わせください。源泉徴収・消費税の取り扱いは、パートナー契約の定めによります。';
+    var note='※ 本明細は、認定ランクに基づく外注費率と2名体制の配分から計算した金額（目安）です。'
+      +'外注費率は、入金額から消費税相当を外した<b>税抜</b>の額に対して掛けています。'
+      +'源泉徴収は個人の方へのお支払いにのみ生じ（10.21%、100万円を超える部分は20.42%）、法人へのお支払いには生じません。'
+      +'実際の振込額と異なる場合は運営にお問い合わせください。';
     if(kind==='month'){
-      var h='<table><tr><th>日付</th><th>顧客</th><th>区分</th><th class="r">入金額</th><th class="r">率</th><th class="r">配分</th><th class="r">支払額（目安）</th></tr>';
-      var ta=0,tf=0;
-      c.rows.forEach(function(r){ ta+=r.amt; if(r.fee!=null) tf+=r.fee;
+      var h='<table><tr><th>日付</th><th>顧客</th><th>区分</th><th class="r">入金額（税込）</th><th class="r">税抜</th><th class="r">率</th><th class="r">配分</th><th class="r">報酬（目安）</th></tr>';
+      var ta=0,tn=0,tf=0;
+      c.rows.forEach(function(r){ var nt=(r.net==null?taxEx(r.amt):r.net); ta+=r.amt; tn+=nt; if(r.fee!=null) tf+=r.fee;
         h+='<tr><td>'+esc(r.on||'')+'</td><td>'+esc(r.cust)+(r.role==='サブ'?'（サブ）':'')+'</td><td>'+esc(r.cat)+'</td>'
-          +'<td class="r">'+yen(r.amt)+'</td><td class="r">'+(r.rate==null?'未確定':Math.round(r.rate*100)+'%')+'</td>'
+          +'<td class="r">'+yen(r.amt)+'</td><td class="r">'+yen(nt)+'</td><td class="r">'+(r.rate==null?'未確定':Math.round(r.rate*100)+'%')+'</td>'
           +'<td class="r">'+r.share+'%</td><td class="r">'+(r.fee==null?'—':yen(r.fee))+'</td></tr>'; });
-      h+='<tr><th colspan="3">合計</th><th class="r">'+yen(ta)+'</th><th></th><th></th><th class="r">'+yen(tf)+'</th></tr></table>';
+      var ind1=isIndiv(c.entity), w1=withholdYen(tf, ind1);
+      h+='<tr><th colspan="3">合計</th><th class="r">'+yen(ta)+'</th><th class="r">'+yen(tn)+'</th><th></th><th></th><th class="r">'+yen(tf)+'</th></tr></table>';
+      h+='<table style="margin-top:10px;max-width:340px;">'
+        +'<tr><th>報酬（税抜 × 外注費率）</th><th class="r">'+yen(tf)+'</th></tr>'
+        +'<tr><td>源泉徴収'+(ind1?'（10.21%）':'（'+esc(entityLabel(c.entity))+'のため対象外）')+'</td><td class="r">'+(ind1?'△ '+yen(w1):'—')+'</td></tr>'
+        +'<tr><th>お振込額（目安）</th><th class="r">'+yen(tf-w1)+'</th></tr></table>';
       poDocOpen('外注費 支払明細書', '支払先', pname+' 様', c.label, h, note);
     }else{
       var y=parseInt(c.label,10);
-      var h2='<table><tr><th>月</th><th class="r">対象入金 合計</th><th class="r">支払額 合計（目安）</th></tr>';
-      var ta2=0,tf2=0;
+      var ind2=isIndiv(c.entity);
+      var h2='<table><tr><th>月</th><th class="r">対象入金 合計（税込）</th><th class="r">報酬 合計（目安）</th><th class="r">源泉徴収</th><th class="r">お振込額（目安）</th></tr>';
+      var ta2=0,tf2=0,tw2=0;
       for(var m=1;m<=12;m++){
         var b=(c.months||{})[y+'-'+('0'+m).slice(-2)];
-        h2+='<tr><td>'+m+'月</td><td class="r">'+(b?yen(b.amt):'—')+'</td><td class="r">'+(b?yen(b.fee):'—')+'</td></tr>';
-        if(b){ ta2+=b.amt; tf2+=b.fee; }
+        var w2=b?withholdYen(b.fee, ind2):0;
+        h2+='<tr><td>'+m+'月</td><td class="r">'+(b?yen(b.amt):'—')+'</td><td class="r">'+(b?yen(b.fee):'—')+'</td>'
+          +'<td class="r">'+(b&&ind2?'△ '+yen(w2):'—')+'</td><td class="r">'+(b?yen(b.fee-w2):'—')+'</td></tr>';
+        if(b){ ta2+=b.amt; tf2+=b.fee; tw2+=w2; }
       }
-      h2+='<tr><th>'+y+'年 合計</th><th class="r">'+yen(ta2)+'</th><th class="r">'+yen(tf2)+'</th></tr></table>';
+      h2+='<tr><th>'+y+'年 合計</th><th class="r">'+yen(ta2)+'</th><th class="r">'+yen(tf2)+'</th>'
+        +'<th class="r">'+(ind2?'△ '+yen(tw2):'—')+'</th><th class="r">'+yen(tf2-tw2)+'</th></tr></table>';
       poDocOpen('外注費 年間支払明細書（確定申告用資料）', '支払先', pname+' 様', c.label+'（1月〜12月）', h2, note);
     }
   }
@@ -11068,6 +11160,603 @@
     return q===0?'今日':(q===1?'明日':(q===-1?'昨日':(q>1&&q<=7?q+'日後':'')));
   }
 
+  // ===== 法人向けエンタープライズ・パートナー（EP）=====
+  //  これまでのパートナーは個人が前提だった。法人と組むかたちは2つある。
+  //    A型（A-1／A-2）… 所属型。本部とマスター契約を結び、所属個人が認定される。
+  //                      委託料率は個人のLv基準から▲5pt、その5ptが本部へ入る。
+  //    B型            … 顧客基盤型。士業法人が自社サービスとして顧問先に出し、
+  //                      継へ卸値を払う。委託料率もティア昇格も無く、レンジ課金一本。
+  //  画面はひとつにまとめ、区分によって「概要」の中身だけを替える。
+  //  数字の置き場所は supabase の ep_orgs / ep_members / ep_clients / ep_grants。
+  var EP_ME=null;      // {org, me, isMgr} … 自分が属する法人。属していなければ null
+  var EP_TAB='sum';
+  var EP_DATA=null;    // 読み込んだ一式
+  var EP_ADM=null;     // 運営が見ている法人の一覧
+  var EP_ADM_ID='';    // 運営がいま開いている法人
+
+  // ---- B型の料金 ----
+  //  標準の月額顧問料は45,000円（税別）。このうち8割がEPの手取りで、
+  //  残る2割（9,000円）が継への卸値になる。
+  //  契約で決まる数字は「継への卸値9,000円」のほうで、45,000円は標準額。
+  //  EPは仕入れたものを自社サービスとして再販するお立場なので、継が売値を
+  //  固定すると再販価格の拘束にあたるおそれがある。実際にいくらで請求されるかは
+  //  顧問先ごとに記録でき（顧問先タブ）、EPの手取りはそこから卸値を引いた額になる。
+  var EP_STD_FEE=45000;        // 標準の月額顧問料（税別）
+  var EP_SHARE=0.8;            // うちEPの取り分
+  var EP_TAX=0.10;             // 消費税
+  var EP_MIN_CLIENTS=3;        // B型の最低導入社数
+  var EP_SETUP_FEE=300000;     // 上記3社ぶんの初期導入研修費（継が受領）
+  var EP_SETUP_CAP=100000;     // 4社目以降、EPが独自に値付けするときの上限
+  function epWholesale(){ return Math.round(EP_STD_FEE*(1-EP_SHARE)); }   // 継への卸値 9,000円
+  function epEpTake(){ return EP_STD_FEE-epWholesale(); }                 // EPの手取り 36,000円
+  function epTaxIn(v){ return Math.round((Number(v)||0)*(1+EP_TAX)); }    // 税込
+  //  継への月額。実際の請求額に関わらず、卸値は1社あたり定額
+  function epMonthly(n){ return (Number(n)||0)*epWholesale(); }
+  //  その顧問先でEPがいくら残るか。請求額の記録が無ければ標準額で見る
+  function epTakeOf(price){
+    var v=(price==null||price==='')?EP_STD_FEE:Number(price);
+    return v-epWholesale();
+  }
+  function epYen(v){ return (Number(v)||0).toLocaleString('ja-JP'); }
+  function epKindName(k){ return k==='A1'?'A-1（所属型・継が運営）':(k==='A2'?'A-2（所属型・本部が自社分を運営）':'B（顧客基盤型・エンタープライズ）'); }
+  function epKindShort(k){ return k==='A1'?'A-1':(k==='A2'?'A-2':'B'); }
+  function epIsB(k){ return k!=='A1' && k!=='A2'; }
+
+  // ---- 自分がどの法人に属しているかを、ログイン直後に一度だけ調べる ----
+  async function epBoot(){
+    EP_ME=null;
+    if(!ME) return;
+    try{
+      var m=await sb.from('ep_members').select('id,ep_id,seat_role,status,certified_at')
+        .eq('user_id',ME).eq('status','active').limit(1);
+      if(m.error || !m.data || !m.data.length) return;
+      var mem=m.data[0];
+      var o=await sb.from('ep_orgs').select('*').eq('id',mem.ep_id).limit(1);
+      if(o.error || !o.data || !o.data.length) return;
+      EP_ME={ org:o.data[0], me:mem, isMgr:(mem.seat_role==='manager') };
+    }catch(e){}
+  }
+
+  // ---- 画面 ----
+  function epPanelHtml(forAdmin){
+    return '<div class="panel" id="sec-ep">'
+      +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">'
+        +'<span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+        +'<path d="M3 21h18"/><path d="M6 21V4.5A1.5 1.5 0 0 1 7.5 3h5A1.5 1.5 0 0 1 14 4.5V21"/><path d="M14 10h3.5A1.5 1.5 0 0 1 19 11.5V21"/><path d="M9 7h2M9 11h2M9 15h2"/>'
+        +'</svg>エンタープライズ</span>'
+        +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadEp()">↺ 更新</span></div>'
+      +'<div id="ep-body">読み込み中...</div>'
+    +'</div>';
+  }
+
+  async function loadEp(){
+    var box=$('ep-body'); if(!box) return;
+    var isAdm=(window.__role==='admin');
+    //  運営は法人を選んでから中身を見る
+    if(isAdm){
+      var os=await sb.from('ep_orgs').select('*').order('created_at',{ascending:false});
+      if(os.error){ box.innerHTML=epErr(os.error.message); return; }
+      EP_ADM=os.data||[];
+      if(!EP_ADM_ID && EP_ADM.length) EP_ADM_ID=EP_ADM[0].id;
+    }
+    var org = isAdm ? (EP_ADM||[]).filter(function(o){ return o.id===EP_ADM_ID; })[0] : (EP_ME&&EP_ME.org);
+    if(!org){
+      box.innerHTML = isAdm ? epAdminHtml(null) : epNoneHtml();
+      return;
+    }
+    var isMgr = isAdm || (EP_ME && EP_ME.isMgr);
+    var mem=await sb.from('ep_members').select('*').eq('ep_id',org.id).order('granted_at');
+    var cl =await sb.from('ep_clients').select('*').eq('ep_id',org.id).order('started_on');
+    var gr =await sb.from('ep_grants').select('*').eq('ep_id',org.id).is('revoked_at',null);
+    var pe =await sb.rpc('ep_people',{ p_ep:org.id });
+    var lg =await sb.from('ep_audit').select('*').eq('ep_id',org.id).order('at',{ascending:false}).limit(80);
+    var err=[mem,cl,gr,pe,lg].filter(function(r){ return r && r.error; })[0];
+    if(err){ box.innerHTML=epErr(err.error.message); return; }
+    var name={};
+    (pe.data||[]).forEach(function(p){ name[p.id]={ nm:p.name||p.email, email:p.email }; });
+    EP_DATA={ org:org, isAdm:isAdm, isMgr:isMgr,
+              members:(mem.data||[]), clients:(cl.data||[]), grants:(gr.data||[]),
+              name:name, log:(lg.data||[]) };
+    epRender();
+  }
+  function epErr(m){ return '<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(m)+'</div>'; }
+  function epNoneHtml(){
+    return '<div style="font-size:12px;color:#94A2B6;line-height:1.9;">'
+      +'いまはどの法人にも所属していません。<br>'
+      +'法人としてのご参加（A型：本部と所属個人／B型：顧問先へ自社サービスとして提供）をご検討の場合は、運営サポートからお問い合わせください。</div>';
+  }
+
+  function epRender(){
+    var box=$('ep-body'); if(!box||!EP_DATA) return;
+    var d=EP_DATA, tabs=[['sum','概要'],['cl','顧問先'],['mb','担当者'],['gr','席の割当'],['lg','記録']];
+    if(d.isAdm) tabs.push(['adm','法人の管理']);
+    if(!tabs.some(function(t){ return t[0]===EP_TAB; })) EP_TAB='sum';
+    var h='';
+    if(d.isAdm) h+=epAdmPicker();
+    h+='<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px;">'
+      +'<span style="font-size:15px;font-weight:700;color:var(--navy);">'+esc(d.org.name)+'</span>'
+      +epBadge(d.org.kind)
+      +(d.org.status!=='active'?'<span class="ep-tag" style="background:#F6E7E6;color:#A9403D;">'+esc(d.org.status==='suspended'?'停止中':'終了')+'</span>':'')
+      +'<span style="flex:1;"></span>'
+      +'<span style="font-size:11px;color:#94A2B6;">'+(d.isMgr?'管理者として表示':'担当者として表示')+'</span>'
+    +'</div>';
+    h+='<div class="vaseg" style="margin-bottom:11px;">'
+      +tabs.map(function(t){ return '<button class="'+(EP_TAB===t[0]?'on':'')+'" onclick="epTab(\''+t[0]+'\')">'+t[1]+'</button>'; }).join('')
+    +'</div>';
+    h+= EP_TAB==='sum' ? epSumHtml(d)
+      : EP_TAB==='cl'  ? epClientsHtml(d)
+      : EP_TAB==='mb'  ? epMembersHtml(d)
+      : EP_TAB==='gr'  ? epGrantsHtml(d)
+      : EP_TAB==='lg'  ? epLogHtml(d)
+      : epAdminHtml(d.org);
+    box.innerHTML=h;
+  }
+  function epTab(t){ EP_TAB=t; epRender(); }
+  function epBadge(k){
+    var c = k==='B' ? ['#EBDDB4','rgba(195,155,63,.10)','#8A6A12'] : ['#CBD9EE','rgba(44,93,168,.08)','#2C5DA8'];
+    return '<span class="ep-tag" style="border:1px solid '+c[0]+';background:'+c[1]+';color:'+c[2]+';">'+esc(epKindShort(k))+'型</span>';
+  }
+  function epAdmPicker(){
+    if(!EP_ADM || !EP_ADM.length) return '';
+    return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">'
+      +'<span style="font-size:11.5px;color:var(--muted);">法人</span>'
+      +'<select class="inp2" style="max-width:280px;" onchange="epPick(this.value)">'
+      +EP_ADM.map(function(o){ return '<option value="'+escA(o.id)+'"'+(o.id===EP_ADM_ID?' selected':'')+'>'+esc(o.name)+'（'+esc(epKindShort(o.kind))+'型）</option>'; }).join('')
+      +'</select></div>';
+  }
+  function epPick(id){ EP_ADM_ID=id; EP_TAB='sum'; loadEp(); }
+
+  // ---- 概要 ----
+  function epActive(d){ return d.clients.filter(function(c){ return c.status==='active'; }); }
+  function epCertified(d){ return d.members.filter(function(m){ return m.status==='active' && m.certified_at; }); }
+  function epCard(lbl,val,sub,color){
+    return '<div style="flex:1 1 158px;min-width:158px;background:#F8F9FC;border:1px solid #EDF1F6;border-radius:11px;padding:13px 15px;">'
+      +'<div style="font-size:11.5px;color:#5A6981;">'+lbl+'</div>'
+      +'<div style="font-size:21px;font-weight:700;color:'+(color||'#1E3A66')+';margin-top:2px;font-feature-settings:\'tnum\';">'+val+'</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-top:3px;line-height:1.6;">'+(sub||'')+'</div></div>';
+  }
+  function epSumHtml(d){
+    return epIsB(d.org.kind) ? epSumB(d) : epSumA(d);
+  }
+  function epSumB(d){
+    var live=epActive(d), n=live.length, cert=epCertified(d).length;
+    var ws=epWholesale(), take=epEpTake();
+    //  実際にご請求されている額の合計。記録が無い顧問先は標準額で見込む
+    var gross=0; live.forEach(function(c){ gross+=(c.ep_price==null||c.ep_price==='')?EP_STD_FEE:Number(c.ep_price); });
+    var h='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">'
+      +epCard('導入社数', n+' 社', n<EP_MIN_CLIENTS?('最低導入は'+EP_MIN_CLIENTS+'社です'):'稼働中の顧問先', n<EP_MIN_CLIENTS?'#A9403D':null)
+      +epCard('標準の月額顧問料', epYen(EP_STD_FEE)+' 円', '税別（税込 '+epYen(epTaxIn(EP_STD_FEE))+' 円）／1社・月')
+      +epCard('御社の手取り（月）', epYen(gross-n*ws)+' 円', n?(n+' 社ぶん・税別／標準なら1社 '+epYen(take)+' 円'):'　')
+      +epCard('継への卸値（月）', epYen(epMonthly(n))+' 円', n+' 社 × '+epYen(ws)+' 円・税別（税込 '+epYen(epTaxIn(epMonthly(n)))+' 円）')
+    +'</div>';
+    h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">1社あたりの内訳（標準額のとき）</div>'
+      +'<table class="ft" style="max-width:430px;"><thead><tr><th></th>'
+        +'<th style="text-align:right;">税別</th><th style="text-align:right;">消費税10%</th><th style="text-align:right;">税込</th></tr></thead><tbody>'
+      +'<tr><td>月額顧問料（標準）</td><td style="text-align:right;">'+epYen(EP_STD_FEE)+' 円</td>'
+        +'<td style="text-align:right;">'+epYen(epTaxIn(EP_STD_FEE)-EP_STD_FEE)+' 円</td>'
+        +'<td style="text-align:right;"><b>'+epYen(epTaxIn(EP_STD_FEE))+' 円</b></td></tr>'
+      +'<tr style="background:rgba(39,104,74,.06);"><td>　うち 御社の手取り（8割）</td>'
+        +'<td style="text-align:right;"><b>'+epYen(take)+' 円</b></td><td style="text-align:right;">—</td><td style="text-align:right;">—</td></tr>'
+      +'<tr style="background:rgba(195,155,63,.09);"><td>　継への卸値（2割）</td>'
+        +'<td style="text-align:right;"><b>'+epYen(ws)+' 円</b></td>'
+        +'<td style="text-align:right;">'+epYen(epTaxIn(ws)-ws)+' 円</td>'
+        +'<td style="text-align:right;"><b>'+epYen(epTaxIn(ws))+' 円</b></td></tr>'
+      +'</tbody></table>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-top:7px;line-height:1.7;">'
+      +'契約でお決めいただくのは<b style="color:#1E3A66;">継への卸値 '+epYen(ws)+' 円（税別）</b>のほうです。'
+      +'45,000円は標準の顧問料で、実際のご請求額は御社でお決めいただけます。'
+      +'ご請求額を上げ下げされても卸値は変わりませんので、差額はそのまま御社の手取りになります。'
+      +'（顧問先ごとの実額は「顧問先」タブでご記入いただけます）</div>'
+    +'</div>';
+    //  消費税の流れ
+    h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">消費税の流れ</div>'
+      +'<div style="font-size:11.5px;color:#5A6981;line-height:1.9;">'
+      +'金額はすべて<b style="color:#1E3A66;">税別</b>で書いています。消費税は各段階でそれぞれ乗ります。<br>'
+      +'① 御社 → 顧問先：'+epYen(EP_STD_FEE)+' 円＋消費税 '+epYen(epTaxIn(EP_STD_FEE)-EP_STD_FEE)+' 円 ＝ <b>'+epYen(epTaxIn(EP_STD_FEE))+' 円</b>をご請求（標準額のとき）<br>'
+      +'② 継 → 御社：'+epYen(ws)+' 円＋消費税 '+epYen(epTaxIn(ws)-ws)+' 円 ＝ <b>'+epYen(epTaxIn(ws))+' 円</b>をご請求<br>'
+      +'②は御社の仕入になりますので、<b style="color:#1E3A66;">仕入税額控除</b>の対象です。継は適格請求書（インボイス）を発行します。'
+      +'8割・2割の按分は<b style="color:#1E3A66;">税別の金額</b>で行い、消費税はそれぞれの請求に別立てで乗せます。'
+      +'</div></div>';
+    //  初期導入費
+    var paid=!!d.org.setup_paid_on;
+    h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">初期導入費</div>'
+      +'<div class="kv" style="font-size:12px;">'
+        +'<div>最初の'+EP_MIN_CLIENTS+'社：<b>'+epYen(d.org.setup_fee_yen==null?EP_SETUP_FEE:d.org.setup_fee_yen)+' 円</b>（一括・継が受領）　'
+          +(paid?'<span class="ep-tag" style="background:rgba(39,104,74,.09);color:#27684A;border:1px solid #CFE3D6;">受領済み '+esc(d.org.setup_paid_on)+'</span>'
+                :'<span class="ep-tag" style="background:#F6E7E6;color:#A9403D;">未受領</span>')+'</div>'
+        +'<div style="margin-top:5px;">4社目以降：<b>上限 '+epYen(EP_SETUP_CAP)+' 円</b>の範囲で、お客さまが自由に値付けし顧問先へ直接ご請求ください</div>'
+      +'</div>'
+      +'<div style="font-size:11.5px;margin-top:8px;padding:9px 11px;border-radius:9px;'
+        +(cert>0?'background:rgba(39,104,74,.07);color:#27684A;">':'background:rgba(169,64,61,.06);color:#A9403D;">')
+        +(cert>0
+          ? '認定研修の修了者が '+cert+' 名 在籍しています。4社目以降の独自の値付けが可能です。'
+          : '認定研修の修了者がまだ在籍していません。4社目以降を独自に値付けするには、担当者のどなたかが研修を修了している必要があります。')
+      +'</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-top:7px;line-height:1.7;">上限だけを定め、下限や固定額は定めていません。仕入れたものを自社サービスとして再販するお立場のため、継が下限を縛ると再販価格の拘束にあたるおそれがあるためです。月額の顧問料も同じ考え方で、'+epYen(EP_STD_FEE)+' 円は標準額であり、下限ではありません。</div>'
+    +'</div>';
+    h+=epNoteB();
+    return h;
+  }
+  function epNoteB(){
+    return '<div style="border:1.5px solid #EBDDB4;background:#FDFAF1;border-radius:11px;padding:12px 14px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:#8A6A12;margin-bottom:6px;">この形（B型）の決めごと</div>'
+      +'<div style="font-size:11.5px;color:#5A6981;line-height:1.9;">'
+      +'・御社が<b style="color:#1E3A66;">自社サービスとして</b>顧問先に提供し、継へ卸値をお支払いいただく形です。継は顧問先と契約しません。<br>'
+      +'・標準の月額顧問料は<b style="color:#1E3A66;">'+epYen(EP_STD_FEE)+' 円（税別）</b>。うち<b style="color:#1E3A66;">8割が御社の手取り</b>、2割（'+epYen(epWholesale())+' 円）が継への卸値です。<br>'
+      +'・顧問先は<b style="color:#1E3A66;">御社に帰属</b>します。契約終了のときは、顧問先が継へ直接移れる条項を置いています。<br>'
+      +'・委託料率やティア昇格はありません。<b style="color:#1E3A66;">1社あたり定額</b>に一本化しています。<br>'
+      +'・M&A案件が出たときは、継（福來）が受け取った手数料から<b style="color:#1E3A66;">税金分</b>を差し引いた額の<b style="color:#1E3A66;">5割</b>を御社へお支払いします。'
+        +'税金分は消費税と、御社が<b style="color:#1E3A66;">個人事業</b>の場合の源泉徴収（10.21%、100万円を超える部分は20.42%）です。法人の場合、源泉徴収は生じません。'
+        +'継の役割は<b style="color:#1E3A66;">買い手候補の特定まで</b>です。'
+      +'</div></div>';
+  }
+  function epSumA(d){
+    var seats=d.members.filter(function(m){ return m.status==='active'; }).length;
+    var cert=epCertified(d).length, n=epActive(d).length;
+    var a2=(d.org.kind==='A2');
+    var h='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">'
+      +epCard('所属している方', seats+' 名', 'プラットフォーム利用料は本部が一括負担（席数無制限・定額）')
+      +epCard('認定研修 修了者', cert+' 名', seats?('全'+seats+'名中'):'')
+      +epCard('本部オーバーライド', '5.0 pt', '所属個人のLv基準から▲5pt、その5ptが本部へ')
+      +epCard('担当している会社', n+' 社', '顧客は継に帰属します')
+    +'</div>';
+    h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">'+esc(epKindName(d.org.kind))+'</div>'
+      +'<table class="ft"><thead><tr><th>機能</th><th>担うのは</th></tr></thead><tbody>'
+      +[['顧問先アカウントの発行',a2],['初期導入・操作研修',a2],['一次サポート窓口',a2],['請求・回収',a2]]
+        .map(function(x){
+          var who = x[1] ? ('<b style="color:#2C5DA8;">本部</b>'+(x[0]==='請求・回収'?'（継へ卸値を送金）':'')) : '継';
+          return '<tr><td>'+x[0]+'</td><td>'+who+'</td></tr>';
+        }).join('')
+      +'<tr><td>新規認定者の育成・認定試験</td><td>継'+(a2?'（合格の判定は継に残します）':'')+'</td></tr>'
+      +'<tr><td>M&A進行支援</td><td>継</td></tr>'
+      +'</tbody></table>'
+      +(a2
+        ? '<div style="font-size:11.5px;color:#5A6981;margin-top:8px;line-height:1.8;">本部が上の4つを担うぶん、本部の取り分を <b style="color:#1E3A66;">'
+            +(Number(d.org.override_bonus_pt)||0).toFixed(1)+' pt</b> 厚くしています（5〜7ptの範囲）。'
+            +'認定試験の合格の判定だけは継に残します。ここを渡すと品質の管理が効かず、商標の毀損が本部側のリスクになるためです。</div>'
+        : '<div style="font-size:11.5px;color:#5A6981;margin-top:8px;line-height:1.8;">アカウントの発行から請求まで継が担います。本部のお仕事は、所属する方の採用と育成です。</div>')
+    +'</div>';
+    h+='<div style="border:1.5px solid #CBD9EE;background:#F7FAFF;border-radius:11px;padding:12px 14px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:#2C5DA8;margin-bottom:6px;">この形（A型）の決めごと</div>'
+      +'<div style="font-size:11.5px;color:#5A6981;line-height:1.9;">'
+      +'・委託料率は<b style="color:#1E3A66;">所属する方のLv基準から▲5pt</b>（例：Lv.2なら60%→55%）。その5ptが本部オーバーライドとして本部へ入ります。<br>'
+      +'・プラットフォーム利用料は<b style="color:#1E3A66;">本部が一括負担</b>（席数無制限・定額）。入会金はいただきません。<br>'
+      +'・ティアの判定は<b style="color:#1E3A66;">個人単位</b>です。法人合算の実績で本部側の料率が上がります。<br>'
+      +'・顧客は<b style="color:#1E3A66;">継に帰属</b>します。ご担当が退職されたときは、本部が後任を指名してください。<br>'
+      +'・ブランドの使用は、商標が出願中である事実を許諾条項に明記し、登録後に本許諾へ自動で切り替わります。'
+      +'</div></div>';
+    return h;
+  }
+
+  // ---- 顧問先 ----
+  function epNm(d,id){ var x=d.name[id]; return x?x.nm:'（名前を取得できません）'; }
+  function epEm(d,id){ var x=d.name[id]; return x?x.email:''; }
+  function epClientsHtml(d){
+    //  稼働中を先に、それぞれ開始の早い順。
+    //  「一括分」（最初の3社）は稼働中だけで数える。終了した顧問先が枠を
+    //  ふさぐと、4社目でない会社に初期導入費を入れられてしまう。
+    var byDate=function(a,b){ return String(a.started_on).localeCompare(String(b.started_on)); };
+    var onList =d.clients.filter(function(c){ return c.status==='active'; }).sort(byDate);
+    var offList=d.clients.filter(function(c){ return c.status!=='active'; }).sort(byDate);
+    var bulk={};   // 一括分（最初の3社）に入る顧問先
+    onList.slice(0, EP_MIN_CLIENTS).forEach(function(c){ bulk[c.id]=1; });
+    var list=onList.concat(offList);
+    var h='';
+    if(d.isMgr){
+      h+='<div style="background:#F8F9FC;border:1px solid #EDF1F6;border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
+        +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">顧問先を追加する</div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'
+          +'<input id="ep-cl-mail" class="inp2" style="flex:1;min-width:220px;" placeholder="顧問先の登録メールアドレス">'
+          +'<button class="btn2" style="padding:9px 16px;" onclick="epAddClient()">追加</button>'
+        +'</div>'
+        +'<div id="ep-cl-msg" style="font-size:11.5px;margin-top:6px;min-height:16px;"></div>'
+        +'<div style="font-size:11px;color:#94A2B6;margin-top:2px;line-height:1.7;">先に顧問先ご自身で登録（アカウント作成）を済ませていただく必要があります。</div>'
+      +'</div>';
+    }
+    if(!list.length) return h+'<div style="font-size:12px;color:#94A2B6;">まだ顧問先がありません。</div>';
+    h+='<div style="overflow-x:auto;"><table class="ft" style="min-width:660px;"><thead><tr>'
+      +'<th>顧問先</th><th>開始</th><th style="text-align:right;">御社の請求額（月）</th><th style="text-align:right;">御社の手取り</th><th style="text-align:right;">初期導入費</th><th>状態</th>'
+      +(d.isMgr?'<th></th>':'')+'</tr></thead><tbody>';
+    list.forEach(function(c){
+      var live=(c.status==='active');
+      h+='<tr'+(live?'':' style="opacity:.5;"')+'>'
+        +'<td><b>'+esc(epNm(d,c.customer_id))+'</b><div style="font-size:10.5px;color:#94A2B6;">'+esc(epEm(d,c.customer_id))+'</div></td>'
+        +'<td>'+esc(c.started_on||'—')+'</td>'
+        //  終了した顧問先の金額は書き替えられないようにする。過ぎた月の
+        //  請求の控えなので、あとから動かせると記録の意味が無くなる。
+        +'<td style="text-align:right;">'+((d.isMgr && live)
+            ? '<input class="inp2 ep-num" value="'+escA(c.ep_price==null?'':c.ep_price)+'" placeholder="'+EP_STD_FEE+'" onchange="epSaveNum(\''+escJ(c.id)+'\',\'ep_price\',this)">'
+            : (c.ep_price==null?epYen(EP_STD_FEE)+' 円':epYen(c.ep_price)+' 円'))+'</td>'
+        //  御社にいくら残るか。請求額を上げ下げしても卸値は変わらない
+        +'<td style="text-align:right;">'+(live?('<b>'+epYen(epTakeOf(c.ep_price))+'</b> 円'):'—')+'</td>'
+        +'<td style="text-align:right;">'+(bulk[c.id]
+            ? '<span style="color:#94A2B6;">一括分</span>'
+            : ((d.isMgr && live)
+                ? '<input class="inp2 ep-num" value="'+escA(c.setup_yen==null?'':c.setup_yen)+'" placeholder="—" onchange="epSaveNum(\''+escJ(c.id)+'\',\'setup_yen\',this)">'
+                : (c.setup_yen==null?'—':epYen(c.setup_yen)+' 円')))+'</td>'
+        +'<td>'+(live?'<span class="ep-tag" style="background:rgba(39,104,74,.09);color:#27684A;">稼働中</span>'
+                     :'<span class="ep-tag" style="background:var(--soft);color:#94A2B6;">終了</span>')+'</td>'
+        +(d.isMgr?'<td style="text-align:right;white-space:nowrap;">'
+            +(live?'<span class="ghost" style="font-size:11px;color:#A9403D;" onclick="epEndClient(\''+escJ(c.id)+'\')">終了にする</span>'
+                  :'<span class="ghost" style="font-size:11px;" onclick="epReopenClient(\''+escJ(c.id)+'\')">再開する</span>')+'</td>':'')
+      +'</tr>';
+    });
+    h+='</tbody></table></div>';
+    h+='<div style="font-size:11px;color:#94A2B6;margin-top:8px;line-height:1.7;">'
+      +'「御社の請求額」は顧問先へご請求されている月額（税別）です。空欄のときは標準額 '+epYen(EP_STD_FEE)+' 円として扱います。'
+      +'継への卸値は1社あたり '+epYen(epWholesale())+' 円（税別）の定額ですので、請求額を上げ下げされた差額はそのまま御社の手取りになります。'
+      +'初期導入費は4社目以降のみ、上限 '+epYen(EP_SETUP_CAP)+' 円の範囲でご記入いただけます。</div>';
+    return h;
+  }
+  async function epAddClient(){
+    var inp=$('ep-cl-mail'), msg=$('ep-cl-msg'); if(!inp||!EP_DATA) return;
+    var v=(inp.value||'').trim();
+    if(!v){ msg.innerHTML='<span style="color:#A9403D;">メールアドレスを入力してください</span>'; return; }
+    msg.textContent='追加しています…';
+    var r=await sb.rpc('ep_add_client',{ p_ep:EP_DATA.org.id, p_email:v });
+    if(r.error){ msg.innerHTML='<span style="color:#A9403D;">'+esc(r.error.message)+'</span>'; return; }
+    var d=r.data||{};
+    if(!d.ok){ msg.innerHTML='<span style="color:#A9403D;">'+esc(d.error||'追加できませんでした')+'</span>'; return; }
+    inp.value=''; msg.innerHTML='<span style="color:#27684A;">'+esc(d.name||'')+' を追加しました</span>';
+    loadEp();
+  }
+  async function epEndClient(id){
+    if(!confirm('この顧問先を終了にします。よろしいですか。')) return;
+    var t=new Date(); var ymd=t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2);
+    var r=await sb.from('ep_clients').update({ status:'ended', ended_on:ymd }).eq('id',id);
+    if(r.error){ alert('変更できませんでした：'+r.error.message); return; }
+    loadEp();
+  }
+  async function epReopenClient(id){
+    var r=await sb.from('ep_clients').update({ status:'active', ended_on:null }).eq('id',id);
+    if(r.error){ alert('変更できませんでした：'+r.error.message); return; }
+    loadEp();
+  }
+  async function epSaveNum(id, col, el){
+    var raw=String(el.value||'').replace(/[^\d]/g,'');
+    var v = raw==='' ? null : Number(raw);
+    if(col==='setup_yen' && v!=null && v>EP_SETUP_CAP){
+      alert('初期導入費は '+epYen(EP_SETUP_CAP)+' 円までです。');
+      el.value=''; return;
+    }
+    var patch={}; patch[col]=v;
+    var r=await sb.from('ep_clients').update(patch).eq('id',id);
+    if(r.error){ alert('保存できませんでした：'+r.error.message); return; }
+    el.value = v==null ? '' : String(v);
+  }
+
+  // ---- 担当者（席）----
+  function epMembersHtml(d){
+    var cnt={};
+    d.grants.forEach(function(g){ cnt[g.member_id]=(cnt[g.member_id]||0)+1; });
+    var h='';
+    if(d.isMgr){
+      h+='<div style="background:#F8F9FC;border:1px solid #EDF1F6;border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
+        +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">担当者を追加する</div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'
+          +'<input id="ep-mb-mail" class="inp2" style="flex:1;min-width:220px;" placeholder="担当者の登録メールアドレス">'
+          +(d.isAdm?'<select id="ep-mb-role" class="inp2" style="max-width:130px;"><option value="staff">担当者</option><option value="manager">管理者</option></select>':'')
+          +'<button class="btn2" style="padding:9px 16px;" onclick="epAddMember()">追加</button>'
+        +'</div>'
+        +'<div id="ep-mb-msg" style="font-size:11.5px;margin-top:6px;min-height:16px;"></div>'
+        +'<div style="font-size:11px;color:#94A2B6;margin-top:2px;line-height:1.7;">'
+        +'認定パートナーとして登録済みの方のみ追加できます。'
+        +(d.isAdm?'':'管理者を増やすときは運営にご依頼ください。')+'</div>'
+      +'</div>';
+    }
+    if(!d.members.length) return h+'<div style="font-size:12px;color:#94A2B6;">まだ担当者がいません。</div>';
+    h+='<div style="overflow-x:auto;"><table class="ft" style="min-width:560px;"><thead><tr>'
+      +'<th>担当者</th><th>役割</th><th>認定研修</th><th style="text-align:right;">持っている顧問先</th><th>状態</th>'
+      +(d.isMgr?'<th></th>':'')+'</tr></thead><tbody>';
+    d.members.forEach(function(m){
+      var live=(m.status==='active');
+      h+='<tr'+(live?'':' style="opacity:.5;"')+'>'
+        +'<td><b>'+esc(epNm(d,m.user_id))+'</b><div style="font-size:10.5px;color:#94A2B6;">'+esc(epEm(d,m.user_id))+'</div></td>'
+        +'<td>'+(m.seat_role==='manager'?'<b style="color:#2C5DA8;">管理者</b>':'担当者')+'</td>'
+        +'<td>'+(m.certified_at
+            ? '<span class="ep-tag" style="background:rgba(39,104,74,.09);color:#27684A;">修了 '+esc(m.certified_at)+'</span>'
+            : (d.isAdm?'<input class="inp2 ep-num" style="width:120px;" type="date" onchange="epSetCert(\''+escJ(m.id)+'\',this.value)">'
+                      :'<span style="color:#94A2B6;">未修了</span>'))+'</td>'
+        +'<td style="text-align:right;">'+(cnt[m.id]||0)+' 社</td>'
+        +'<td>'+(live?'<span class="ep-tag" style="background:rgba(39,104,74,.09);color:#27684A;">在籍</span>'
+                     :'<span class="ep-tag" style="background:var(--soft);color:#94A2B6;">席なし</span>')+'</td>'
+        +(d.isMgr?'<td style="text-align:right;white-space:nowrap;">'
+            +(live?'<span class="ghost" style="font-size:11px;color:#A9403D;" onclick="epRevokeMember(\''+escJ(m.id)+'\')">席を外す</span>'
+                  :'<span class="ghost" style="font-size:11px;" onclick="epRestoreMember(\''+escJ(m.id)+'\')">席を戻す</span>')+'</td>':'')
+      +'</tr>';
+    });
+    h+='</tbody></table></div>';
+    h+='<div style="font-size:11px;color:#94A2B6;margin-top:8px;line-height:1.7;">'
+      +'席を外すと、その方は顧問先のデータを一切ご覧になれなくなります。行は消さず記録に残しますので、ご担当の交代を後から辿れます。</div>';
+    return h;
+  }
+  async function epAddMember(){
+    var inp=$('ep-mb-mail'), msg=$('ep-mb-msg'), sel=$('ep-mb-role'); if(!inp||!EP_DATA) return;
+    var v=(inp.value||'').trim();
+    if(!v){ msg.innerHTML='<span style="color:#A9403D;">メールアドレスを入力してください</span>'; return; }
+    msg.textContent='追加しています…';
+    var r=await sb.rpc('ep_add_member',{ p_ep:EP_DATA.org.id, p_email:v, p_role:(sel?sel.value:'staff') });
+    if(r.error){ msg.innerHTML='<span style="color:#A9403D;">'+esc(r.error.message)+'</span>'; return; }
+    var d=r.data||{};
+    if(!d.ok){ msg.innerHTML='<span style="color:#A9403D;">'+esc(d.error||'追加できませんでした')+'</span>'; return; }
+    inp.value=''; msg.innerHTML='<span style="color:#27684A;">'+esc(d.name||'')+' を追加しました</span>';
+    loadEp();
+  }
+  async function epRevokeMember(id){
+    if(!confirm('この方の席を外します。割り当てている顧問先も見られなくなります。よろしいですか。')) return;
+    var r=await sb.from('ep_members').update({ status:'revoked', revoked_at:new Date().toISOString(), revoked_by:ME }).eq('id',id);
+    if(r.error){ alert('変更できませんでした：'+r.error.message); return; }
+    //  席を外したら、その人の割当も切る（記録は残る）
+    await sb.from('ep_grants').update({ revoked_at:new Date().toISOString(), revoked_by:ME })
+      .eq('member_id',id).is('revoked_at',null);
+    loadEp();
+  }
+  async function epRestoreMember(id){
+    var r=await sb.from('ep_members').update({ status:'active', revoked_at:null, revoked_by:null }).eq('id',id);
+    if(r.error){ alert('変更できませんでした：'+r.error.message); return; }
+    loadEp();
+  }
+  async function epSetCert(id, v){
+    var r=await sb.from('ep_members').update({ certified_at:(v||null) }).eq('id',id);
+    if(r.error){ alert('保存できませんでした：'+r.error.message); return; }
+    loadEp();
+  }
+
+  // ---- 席の割当 ----
+  function epGrantsHtml(d){
+    if(!d.isMgr){
+      var mine=d.grants.filter(function(g){ return d.members.some(function(m){ return m.id===g.member_id && m.user_id===ME; }); });
+      if(!mine.length) return '<div style="font-size:12px;color:#94A2B6;">まだ顧問先が割り当てられていません。管理者にご依頼ください。</div>';
+      return '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">あなたに割り当てられている顧問先です。</div>'
+        +'<ul style="font-size:12.5px;line-height:2;padding-left:18px;">'
+        +mine.map(function(g){ return '<li>'+esc(epNm(d,g.customer_id))+'</li>'; }).join('')+'</ul>';
+    }
+    var mem=d.members.filter(function(m){ return m.status==='active'; });
+    var cl=epActive(d);
+    if(!mem.length || !cl.length){
+      return '<div style="font-size:12px;color:#94A2B6;">担当者と顧問先の両方が登録されると、ここで席を配れます。</div>';
+    }
+    var live={};
+    d.grants.forEach(function(g){ live[g.member_id+'|'+g.customer_id]=g.id; });
+    var h='<div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.8;">'
+      +'どの担当者にどの顧問先を見せるかを決めます。チェックを外した瞬間からその顧問先のデータは見えなくなり、付け外しは「記録」に残ります。</div>';
+    h+='<div style="overflow-x:auto;"><table class="ft" style="min-width:'+(200+cl.length*110)+'px;"><thead><tr><th>担当者</th>'
+      +cl.map(function(c){ return '<th style="text-align:center;font-size:11px;">'+esc(epNm(d,c.customer_id))+'</th>'; }).join('')
+      +'</tr></thead><tbody>';
+    mem.forEach(function(m){
+      h+='<tr><td><b>'+esc(epNm(d,m.user_id))+'</b>'+(m.seat_role==='manager'?'<div style="font-size:10.5px;color:#2C5DA8;">管理者</div>':'')+'</td>';
+      cl.forEach(function(c){
+        var k=m.id+'|'+c.customer_id, on=!!live[k];
+        h+='<td style="text-align:center;">'
+          +'<input type="checkbox"'+(on?' checked':'')+' style="width:17px;height:17px;cursor:pointer;"'
+          +' onchange="epToggleGrant(\''+escJ(m.id)+'\',\''+escJ(c.customer_id)+'\',this)"></td>';
+      });
+      h+='</tr>';
+    });
+    h+='</tbody></table></div>';
+    return h;
+  }
+  async function epToggleGrant(memberId, customerId, el){
+    if(!EP_DATA) return;
+    el.disabled=true;
+    var r;
+    if(el.checked){
+      r=await sb.from('ep_grants').insert({ ep_id:EP_DATA.org.id, member_id:memberId, customer_id:customerId, granted_by:ME });
+    }else{
+      r=await sb.from('ep_grants').update({ revoked_at:new Date().toISOString(), revoked_by:ME })
+        .eq('member_id',memberId).eq('customer_id',customerId).is('revoked_at',null);
+    }
+    el.disabled=false;
+    if(r.error){ alert('変更できませんでした：'+r.error.message); el.checked=!el.checked; return; }
+    loadEp();
+  }
+
+  // ---- 記録（監査ログ）----
+  var EP_ACT={ grant:'席を配った', revoke:'席を外した', client_add:'顧問先を追加', member_add:'担当者を追加' };
+  function epLogHtml(d){
+    if(!d.log.length) return '<div style="font-size:12px;color:#94A2B6;">まだ記録がありません。</div>';
+    var h='<div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.8;">'
+      +'席の付け外しと、顧問先・担当者の追加を残しています。ご担当が交代したときに「いつ誰が誰の担当だったか」を辿るためのものです。</div>';
+    h+='<div style="overflow-x:auto;"><table class="ft" style="min-width:520px;"><thead><tr>'
+      +'<th>日時</th><th>できごと</th><th>対象</th><th>操作した方</th></tr></thead><tbody>';
+    d.log.forEach(function(r){
+      var dt=new Date(r.at);
+      var det=r.detail||{};
+      var who = det.customer_id ? epNm(d,det.customer_id) : (det.user_id ? epNm(d,det.user_id) : '—');
+      var mb  = det.member_id ? (d.members.filter(function(m){ return m.id===det.member_id; })[0]) : null;
+      var tgt = (r.action==='grant'||r.action==='revoke')
+        ? (mb?epNm(d,mb.user_id):'担当者')+' → '+who
+        : who;
+      h+='<tr><td style="white-space:nowrap;">'+(isNaN(dt)?esc(String(r.at)):
+            (dt.getFullYear()+'/'+(dt.getMonth()+1)+'/'+dt.getDate()+' '+('0'+dt.getHours()).slice(-2)+':'+('0'+dt.getMinutes()).slice(-2)))+'</td>'
+        +'<td>'+esc(EP_ACT[r.action]||r.action)+'</td>'
+        +'<td>'+esc(tgt)+'</td>'
+        +'<td>'+esc(r.actor?epNm(d,r.actor):'—')+'</td></tr>';
+    });
+    h+='</tbody></table></div>';
+    return h;
+  }
+
+  // ---- 運営：法人の管理 ----
+  function epAdminHtml(org){
+    var h='<div style="background:#F8F9FC;border:1px solid #EDF1F6;border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">法人を追加する</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'
+        +'<input id="ep-new-nm" class="inp2" style="flex:1;min-width:200px;" placeholder="法人名（例：継税理士法人）">'
+        +'<select id="ep-new-kind" class="inp2" style="max-width:220px;">'
+          +'<option value="B">B型（顧客基盤型）</option>'
+          +'<option value="A1">A-1型（所属型・継が運営）</option>'
+          +'<option value="A2">A-2型（所属型・本部が運営）</option>'
+        +'</select>'
+        +'<input id="ep-new-mail" class="inp2" style="min-width:200px;" placeholder="管理者のメールアドレス">'
+        +'<button class="btn2" style="padding:9px 16px;" onclick="epCreateOrg()">作成</button>'
+      +'</div>'
+      +'<div id="ep-new-msg" style="font-size:11.5px;margin-top:6px;min-height:16px;"></div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-top:2px;line-height:1.7;">管理者は認定パートナーとして登録済みの方を指定してください。作成後に担当者と顧問先を足していきます。</div>'
+    +'</div>';
+    if(!org) return h+'<div style="font-size:12px;color:#94A2B6;">まだ法人が登録されていません。</div>';
+    h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:12px 14px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:9px;">'+esc(org.name)+' の設定</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+        +epFld('区分','<select class="inp2" onchange="epSetOrg(\'kind\',this.value)">'
+          +['B','A1','A2'].map(function(k){ return '<option value="'+k+'"'+(org.kind===k?' selected':'')+'>'+esc(epKindName(k))+'</option>'; }).join('')
+          +'</select>')
+        +epFld('状態','<select class="inp2" onchange="epSetOrg(\'status\',this.value)">'
+          +[['active','稼働中'],['suspended','停止'],['ended','終了']].map(function(s){ return '<option value="'+s[0]+'"'+(org.status===s[0]?' selected':'')+'>'+s[1]+'</option>'; }).join('')
+          +'</select>')
+        +epFld('初期導入費（円）','<input class="inp2" value="'+escA(org.setup_fee_yen==null?'':org.setup_fee_yen)+'" onchange="epSetOrgNum(\'setup_fee_yen\',this)">')
+        +epFld('初期導入費の受領日','<input class="inp2" type="date" value="'+escA(org.setup_paid_on||'')+'" onchange="epSetOrg(\'setup_paid_on\',this.value||null)">')
+        +epFld('A-2の上乗せ（pt）','<input class="inp2" value="'+escA(org.override_bonus_pt==null?'':org.override_bonus_pt)+'" placeholder="5.0〜7.0" onchange="epSetOrgNum(\'override_bonus_pt\',this)">')
+        +epFld('個人・法人','<select class="inp2" onchange="epSetOrg(\'entity_type\',this.value||null)">'
+          +[['','未設定'],['individual','個人事業'],['corporate','法人']].map(function(e){
+              return '<option value="'+e[0]+'"'+((org.entity_type||'')===e[0]?' selected':'')+'>'+e[1]+'</option>'; }).join('')
+          +'</select>')
+        +epFld('インボイス登録番号','<input class="inp2" value="'+escA(org.invoice_reg_no||'')+'" placeholder="T1234567890123" onchange="epSetOrg(\'invoice_reg_no\',this.value||null)">')
+      +'</div>'
+      +'<div id="ep-org-msg" style="font-size:11.5px;margin-top:8px;min-height:16px;"></div>'
+    +'</div>';
+    return h;
+  }
+  function epFld(lbl, inner){
+    return '<div style="flex:1 1 200px;min-width:200px;"><label class="fl">'+lbl+'</label>'+inner+'</div>';
+  }
+  async function epCreateOrg(){
+    var nm=$('ep-new-nm'), kd=$('ep-new-kind'), ml=$('ep-new-mail'), msg=$('ep-new-msg');
+    if(!nm||!msg) return;
+    var name=(nm.value||'').trim(), mail=(ml.value||'').trim();
+    if(!name){ msg.innerHTML='<span style="color:#A9403D;">法人名を入力してください</span>'; return; }
+    if(!mail){ msg.innerHTML='<span style="color:#A9403D;">管理者のメールアドレスを入力してください</span>'; return; }
+    msg.textContent='作成しています…';
+    var ins=await sb.from('ep_orgs').insert({ name:name, kind:kd.value, contact_email:mail }).select('id').single();
+    if(ins.error){ msg.innerHTML='<span style="color:#A9403D;">'+esc(ins.error.message)+'</span>'; return; }
+    var r=await sb.rpc('ep_add_member',{ p_ep:ins.data.id, p_email:mail, p_role:'manager' });
+    if(r.error || !(r.data&&r.data.ok)){
+      msg.innerHTML='<span style="color:#A9403D;">法人は作成しましたが管理者を設定できませんでした：'
+        +esc((r.error&&r.error.message)||(r.data&&r.data.error)||'')+'</span>';
+      EP_ADM_ID=ins.data.id; loadEp(); return;
+    }
+    nm.value=''; ml.value='';
+    EP_ADM_ID=ins.data.id; EP_TAB='sum';
+    loadEp();
+  }
+  async function epSetOrg(col, v){
+    if(!EP_DATA) return;
+    var patch={}; patch[col]=v;
+    var r=await sb.from('ep_orgs').update(patch).eq('id',EP_DATA.org.id);
+    var msg=$('ep-org-msg');
+    if(r.error){ if(msg) msg.innerHTML='<span style="color:#A9403D;">'+esc(r.error.message)+'</span>'; return; }
+    if(msg) msg.innerHTML='<span style="color:#27684A;">保存しました</span>';
+    loadEp();
+  }
+  function epSetOrgNum(col, el){
+    var raw=String(el.value||'').replace(/[^\d.]/g,'');
+    epSetOrg(col, raw===''?(col==='override_bonus_pt'?0:null):Number(raw));
+  }
+
   // 週表示（バーチカル）。横に7日、縦に時間。Googleカレンダーの週と同じ読み方。
   var WK_PX=42;   // 1時間の高さ
   function calWeekVertical(byDay, ws){
@@ -12807,6 +13496,38 @@
     return pgPct(f);   // 「個別設定」は率が決まらないので null
   }
   function yen(n){ return Math.round(n).toLocaleString('ja-JP')+' 円'; }
+
+  // ===== 消費税と源泉徴収 =====
+  //  外注費率を掛ける土台は「税抜」。入金額には消費税が乗っているので、
+  //  そこから消費税相当を外してから率を掛ける。ここを税込のまま掛けると、
+  //  お預かりしている消費税まで配分してしまう。
+  //
+  //  源泉徴収は「法人が個人へ支払うとき」の制度で、法人への支払いには
+  //  生じない。誰が個人かは profiles.entity_type（B型は ep_orgs.entity_type）で
+  //  持ち、未設定のあいだは引かない。分からないまま引くと、あとで返す
+  //  手間をお相手に負わせることになるため。
+  var TAX_RATE=0.10;        // 消費税
+  var WH_RATE=0.1021;       // 源泉徴収（100万円までの部分）
+  var WH_RATE2=0.2042;      // 源泉徴収（100万円を超える部分）
+  var WH_STEP=1000000;
+  //  税込 → 税抜（1円未満切り捨て）
+  //  「/1.1」で割ると 55000/1.1 が 49999.999… になり、1円足りなくなる。
+  //  円は整数なので、整数のまま 10/11 を掛けて割り切る。
+  function taxEx(gross){ var v=Math.round(Number(gross)||0); return Math.floor(v*10/11); }
+  //  税込のうち、消費税にあたる額
+  function taxOf(gross){ var v=Math.round(Number(gross)||0); return v-taxEx(v); }
+  //  税抜 → 税込（同じ理由で整数のまま計算する）
+  function taxIn(net){ return Math.round((Number(net)||0)*11/10); }
+  //  源泉徴収税額。1円未満切り捨て。個人でなければ 0
+  function withholdYen(fee, isIndividual){
+    if(!isIndividual) return 0;
+    var f=Math.round(Number(fee)||0); if(f<=0) return 0;
+    if(f<=WH_STEP) return Math.floor(f*WH_RATE);
+    return Math.floor(WH_STEP*WH_RATE) + Math.floor((f-WH_STEP)*WH_RATE2);
+  }
+  //  entity_type から「源泉徴収の対象か」を返す。未設定は対象外（引かない）
+  function isIndiv(entityType){ return String(entityType||'')==='individual'; }
+  function entityLabel(t){ return t==='individual'?'個人':(t==='corporate'?'法人':'未設定'); }
   async function loadPayout(){
     var box=$('bl-payout'); if(!box) return;
     var ym=(($('bl-pay-month')||{}).value)||'';
@@ -12836,7 +13557,7 @@
     var pids=[]; Object.keys(custs).forEach(function(k){ var c=custs[k]; if(c.consultant_id && pids.indexOf(c.consultant_id)<0) pids.push(c.consultant_id); });
     var partners={};
     if(pids.length){
-      var pp=await sb.from('profiles').select('id,full_name,email,fde_rank').in('id',pids);
+      var pp=await sb.from('profiles').select('id,full_name,email,fde_rank,entity_type').in('id',pids);
       (pp.error?[]:(pp.data||[])).forEach(function(p){ partners[p.id]=p; });
     }
     //  スケールメリット（プレミアム30社以上で80%）の判定に、パートナーごとの
@@ -12862,7 +13583,8 @@
     // パートナー別に積み上げる
     var acc={}, noPartner=0, noRate=[];
     function bucket(pid, label){
-      if(!acc[pid]) acc[pid]={ label:label, gross:0, fee:0, main:0, sub:0, subLabel:null, rate:null, rows:[] };
+      if(!acc[pid]) acc[pid]={ label:label, gross:0, net:0, fee:0, main:0, sub:0, subLabel:null,
+                               rate:null, entity:null, rows:[] };
       return acc[pid];
     }
     rows.forEach(function(r){
@@ -12870,10 +13592,13 @@
       var p=partners[c.consultant_id]||{};
       var rate=rankFeeRate(p.fde_rank, payClients[c.consultant_id]||0);
       var amt=Number(r.amount)||0;
+      //  外注費率は税抜の土台に掛ける。入金額にはお預かりの消費税が
+      //  乗っているので、そこまで配分しないようにする。
+      var net=taxEx(amt);
       var b=bucket(c.consultant_id, p.full_name||p.email||'パートナー');
-      b.rate=rate; b.gross+=amt;
+      b.rate=rate; b.gross+=amt; b.net+=net; b.entity=p.entity_type||null;
       if(rate==null){ if(noRate.indexOf(b.label)<0) noRate.push(b.label); }
-      var fee=(rate==null?0:amt*rate);
+      var fee=(rate==null?0:net*rate);
       b.fee+=fee;
       var a=asg[r.customer_id];
       if(a && a.main_id===c.consultant_id){
@@ -12881,7 +13606,7 @@
         b.sub +=fee*(Number(a.sub_share)||0)/100;
         b.subLabel=a.sub_email||'サブ担当';
       } else { b.main+=fee; }
-      b.rows.push({ cust:(c.company_name||c.contact_name||c.email||''), amt:amt, cat:r.category, on:r.occurred_on,
+      b.rows.push({ cust:(c.company_name||c.contact_name||c.email||''), amt:amt, net:net, cat:r.category, on:r.occurred_on,
                     share:(a&&a.main_id===c.consultant_id)?(Number(a.main_share)+'/'+Number(a.sub_share)):null });
     });
     var keys=Object.keys(acc);
@@ -12890,11 +13615,17 @@
         +'この月の入金記録に、担当パートナーのついた顧客がありません。</div>';
       return;
     }
-    var tG=0,tF=0,tM=0,tS=0;
-    keys.forEach(function(k){ var b=acc[k]; tG+=b.gross; tF+=b.fee; tM+=b.main; tS+=b.sub; });
+    var tG=0,tN=0,tF=0,tM=0,tS=0,tW=0;
+    keys.forEach(function(k){ var b=acc[k];
+      b.wh=withholdYen(b.fee, isIndiv(b.entity));       // 源泉徴収はその月の報酬合計に対して1回
+      b.pay=b.fee-b.wh;
+      tG+=b.gross; tN+=b.net; tF+=b.fee; tM+=b.main; tS+=b.sub; tW+=b.wh; });
     var h='<div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:10px;">'
-      +bizChip('対象の入金', yen(tG), keys.length+' 名ぶん', 'var(--navy)')
-      +bizChip('パートナー報酬 合計', yen(tF), '外注費率適用後', '#27684A')
+      +bizChip('対象の入金（税込）', yen(tG), keys.length+' 名ぶん', 'var(--navy)')
+      +bizChip('税抜の土台', yen(tN), '消費税 '+yen(tG-tN)+' を外した額', 'var(--navy)')
+      +bizChip('パートナー報酬 合計', yen(tF), '税抜 × 外注費率', '#27684A')
+      +bizChip('源泉徴収 合計', yen(tW), '個人の方のみ', '#A9403D')
+      +bizChip('お振込額 合計', yen(tF-tW), '報酬 − 源泉徴収', '#27684A')
       +bizChip('うちサブ担当ぶん', yen(tS), '2名体制の配分', '#8F7230')
     +'</div>';
     keys.forEach(function(k){
@@ -12903,10 +13634,16 @@
         +'<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">'
           +'<b style="font-size:13px;color:var(--ink);">'+esc(b.label)+'</b>'
           +'<span class="tag gray" style="font-size:10px;">外注費率 '+(b.rate==null?'未設定':Math.round(b.rate*100)+'%')+'</span>'
+          +'<span class="tag '+(b.entity?'gray':'gold')+'" style="font-size:10px;">'+esc(entityLabel(b.entity))+'</span>'
           +'<span style="flex:1;"></span>'
-          +'<span style="font-size:11.5px;color:var(--muted);">入金 '+yen(b.gross)+'</span>'
-          +'<b style="font-size:13.5px;color:#27684A;">'+yen(b.fee)+'</b>'
+          +'<span style="font-size:11.5px;color:var(--muted);">入金 '+yen(b.gross)+'（税抜 '+yen(b.net)+'）</span>'
+          +'<b style="font-size:13.5px;color:#27684A;">'+yen(b.pay)+'</b>'
         +'</div>'
+        +'<div style="font-size:11.5px;color:var(--muted);margin-top:4px;">'
+          +'報酬 <b style="color:var(--ink);">'+yen(b.fee)+'</b>'
+          +'　− 源泉徴収 <b style="color:'+(isIndiv(b.entity)?'#A9403D':'#94A2B6')+';">'
+          +(isIndiv(b.entity)?yen(b.wh):(b.entity?'対象外':'未設定のため引かず'))+'</b>'
+          +'　＝ お振込 <b style="color:#27684A;">'+yen(b.pay)+'</b></div>'
         +(b.sub>0
           ? '<div style="font-size:12px;color:var(--ink);margin-top:5px;">メイン <b>'+yen(b.main)+'</b>　／　サブ（'+esc(b.subLabel||'')+'） <b style="color:#8F7230;">'+yen(b.sub)+'</b></div>'
           : '')
@@ -12923,7 +13660,15 @@
       h+='<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7;">担当パートナーのいない顧客の入金 '+yen(noPartner)+' は配分の対象外です。</div>';
     }
     h+=unlinkedNote;
-    h+='<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7;">※ 現在のランクと配分で計算した目安です。支払い確定後にランクや配分を変更すると、この画面の数字も変わります。確定額は運営の帳簿で管理してください。</div>';
+    var noEnt=keys.filter(function(k){ return !acc[k].entity; }).map(function(k){ return acc[k].label; });
+    if(noEnt.length){
+      h+='<div style="font-size:11px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:8px 11px;margin-top:8px;line-height:1.7;">'
+        +esc(noEnt.join('・'))+' は個人・法人の区別が未設定です。源泉徴収を引かずに計算しています。ご本人に「設定」からのご登録をお願いしてください。</div>';
+    }
+    h+='<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7;">'
+      +'※ 現在のランクと配分で計算した目安です。外注費率は入金額から消費税相当を外した<b>税抜</b>に掛けています。'
+      +'源泉徴収は個人の方のみ（10.21%、100万円を超える部分は20.42%）で、その月の報酬合計に対して1回計算しています。'
+      +'支払い確定後にランクや配分を変更すると、この画面の数字も変わります。確定額は運営の帳簿で管理してください。</div>';
     box.innerHTML=h;
   }
 
