@@ -16,8 +16,11 @@ create table if not exists public.line_links (
 alter table public.line_links enable row level security;
 
 -- 確認・解除は本人のみ。作成（コード照合後のinsert）はservice role（webhook）が行う。
+drop policy if exists "own line link: select" on public.line_links;
 create policy "own line link: select" on public.line_links
   for select using (auth.uid() = user_id);
+
+drop policy if exists "own line link: delete" on public.line_links;
 
 create policy "own line link: delete" on public.line_links
   for delete using (auth.uid() = user_id);
@@ -32,8 +35,11 @@ create table if not exists public.line_link_codes (
 alter table public.line_link_codes enable row level security;
 
 -- コードの発行は本人のみ。照合・削除はservice role（webhook）が行う。
+drop policy if exists "own line code: insert" on public.line_link_codes;
 create policy "own line code: insert" on public.line_link_codes
   for insert with check (auth.uid() = user_id);
+
+drop policy if exists "own line code: select" on public.line_link_codes;
 
 create policy "own line code: select" on public.line_link_codes
   for select using (auth.uid() = user_id);

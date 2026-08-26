@@ -15,12 +15,16 @@ create table if not exists public.calendar_feed_tokens (
 alter table public.calendar_feed_tokens enable row level security;
 
 -- 発行・確認は本人のみ。フィード配信（tokenでの照合）はservice roleが行う。
+drop policy if exists "own calendar token: select" on public.calendar_feed_tokens;
 create policy "own calendar token: select" on public.calendar_feed_tokens
   for select using (auth.uid() = user_id);
+
+drop policy if exists "own calendar token: insert" on public.calendar_feed_tokens;
 
 create policy "own calendar token: insert" on public.calendar_feed_tokens
   for insert with check (auth.uid() = user_id);
 
 -- 万一URLが漏れた場合は、行を削除して再発行（新しいtokenで再作成）できるようにする
+drop policy if exists "own calendar token: delete" on public.calendar_feed_tokens;
 create policy "own calendar token: delete" on public.calendar_feed_tokens
   for delete using (auth.uid() = user_id);
