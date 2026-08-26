@@ -1310,7 +1310,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260826-5';
+  var APP_BUILD='20260826-6';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -11095,30 +11095,29 @@
   var EP_ADM=null;     // 運営が見ている法人の一覧
   var EP_ADM_ID='';    // 運営がいま開いている法人
 
-  // ---- B型の卸値（社/月・税別）。到達したレンジの単価を全社に当てる ----
-  var EP_TIERS=[
-    { lo:1,  hi:4,    yen:20000 },
-    { lo:5,  hi:19,   yen:17000 },
-    { lo:20, hi:49,   yen:15000 },
-    { lo:50, hi:null, yen:12000 }
-  ];
+  // ---- B型の料金 ----
+  //  標準の月額顧問料は45,000円（税別）。このうち8割がEPの手取りで、
+  //  残る2割（9,000円）が継への卸値になる。
+  //  契約で決まる数字は「継への卸値9,000円」のほうで、45,000円は標準額。
+  //  EPは仕入れたものを自社サービスとして再販するお立場なので、継が売値を
+  //  固定すると再販価格の拘束にあたるおそれがある。実際にいくらで請求されるかは
+  //  顧問先ごとに記録でき（顧問先タブ）、EPの手取りはそこから卸値を引いた額になる。
+  var EP_STD_FEE=45000;        // 標準の月額顧問料（税別）
+  var EP_SHARE=0.8;            // うちEPの取り分
+  var EP_TAX=0.10;             // 消費税
   var EP_MIN_CLIENTS=3;        // B型の最低導入社数
   var EP_SETUP_FEE=300000;     // 上記3社ぶんの初期導入研修費（継が受領）
   var EP_SETUP_CAP=100000;     // 4社目以降、EPが独自に値付けするときの上限
-  function epUnit(n){
-    n=Number(n)||0;
-    var t=EP_TIERS[0];
-    EP_TIERS.forEach(function(x){ if(n>=x.lo && (x.hi==null || n<=x.hi)) t=x; });
-    return t.yen;
+  function epWholesale(){ return Math.round(EP_STD_FEE*(1-EP_SHARE)); }   // 継への卸値 9,000円
+  function epEpTake(){ return EP_STD_FEE-epWholesale(); }                 // EPの手取り 36,000円
+  function epTaxIn(v){ return Math.round((Number(v)||0)*(1+EP_TAX)); }    // 税込
+  //  継への月額。実際の請求額に関わらず、卸値は1社あたり定額
+  function epMonthly(n){ return (Number(n)||0)*epWholesale(); }
+  //  その顧問先でEPがいくら残るか。請求額の記録が無ければ標準額で見る
+  function epTakeOf(price){
+    var v=(price==null||price==='')?EP_STD_FEE:Number(price);
+    return v-epWholesale();
   }
-  //  次のレンジまであと何社か。いちばん下まで来ていれば null
-  function epNext(n){
-    n=Number(n)||0;
-    var out=null;
-    EP_TIERS.forEach(function(x){ if(out==null && x.lo>n) out={ need:x.lo-n, at:x.lo, yen:x.yen }; });
-    return out;
-  }
-  function epMonthly(n){ return (Number(n)||0)*epUnit(n); }
   function epYen(v){ return (Number(v)||0).toLocaleString('ja-JP'); }
   function epKindName(k){ return k==='A1'?'A-1（所属型・継が運営）':(k==='A2'?'A-2（所属型・本部が自社分を運営）':'B（顧客基盤型・エンタープライズ）'); }
   function epKindShort(k){ return k==='A1'?'A-1':(k==='A2'?'A-2':'B'); }
@@ -11241,25 +11240,46 @@
     return epIsB(d.org.kind) ? epSumB(d) : epSumA(d);
   }
   function epSumB(d){
-    var n=epActive(d).length, unit=epUnit(n), nx=epNext(n), cert=epCertified(d).length;
+    var live=epActive(d), n=live.length, cert=epCertified(d).length;
+    var ws=epWholesale(), take=epEpTake();
+    //  実際にご請求されている額の合計。記録が無い顧問先は標準額で見込む
+    var gross=0; live.forEach(function(c){ gross+=(c.ep_price==null||c.ep_price==='')?EP_STD_FEE:Number(c.ep_price); });
     var h='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">'
       +epCard('導入社数', n+' 社', n<EP_MIN_CLIENTS?('最低導入は'+EP_MIN_CLIENTS+'社です'):'稼働中の顧問先', n<EP_MIN_CLIENTS?'#A9403D':null)
-      +epCard('いまの卸値', epYen(unit)+' 円', '1社あたり／月・税別')
-      +epCard('継へのお支払い（月）', epYen(epMonthly(n))+' 円', n+' 社 × '+epYen(unit)+' 円・税別')
-      +epCard('次のレンジ', nx?('あと '+nx.need+' 社'):'到達済み', nx?(nx.at+'社で '+epYen(nx.yen)+' 円になります'):'いちばん下のレンジです')
+      +epCard('標準の月額顧問料', epYen(EP_STD_FEE)+' 円', '税別（税込 '+epYen(epTaxIn(EP_STD_FEE))+' 円）／1社・月')
+      +epCard('御社の手取り（月）', epYen(gross-n*ws)+' 円', n?(n+' 社ぶん・税別／標準なら1社 '+epYen(take)+' 円'):'　')
+      +epCard('継への卸値（月）', epYen(epMonthly(n))+' 円', n+' 社 × '+epYen(ws)+' 円・税別（税込 '+epYen(epTaxIn(epMonthly(n)))+' 円）')
     +'</div>';
     h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
-      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">卸値のレンジ</div>'
-      +'<table class="ft" style="max-width:340px;"><thead><tr><th>導入社数</th><th style="text-align:right;">卸値（社/月・税別）</th></tr></thead><tbody>'
-      +EP_TIERS.map(function(t){
-          var on=(n>=t.lo && (t.hi==null||n<=t.hi));
-          return '<tr'+(on?' style="background:rgba(195,155,63,.09);"':'')+'>'
-            +'<td>'+t.lo+(t.hi==null?'社以上':'–'+t.hi+'社')+(on?'　<b style="color:#8A6A12;">いまここ</b>':'')+'</td>'
-            +'<td style="text-align:right;">'+epYen(t.yen)+' 円</td></tr>';
-        }).join('')
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">1社あたりの内訳（標準額のとき）</div>'
+      +'<table class="ft" style="max-width:430px;"><thead><tr><th></th>'
+        +'<th style="text-align:right;">税別</th><th style="text-align:right;">消費税10%</th><th style="text-align:right;">税込</th></tr></thead><tbody>'
+      +'<tr><td>月額顧問料（標準）</td><td style="text-align:right;">'+epYen(EP_STD_FEE)+' 円</td>'
+        +'<td style="text-align:right;">'+epYen(epTaxIn(EP_STD_FEE)-EP_STD_FEE)+' 円</td>'
+        +'<td style="text-align:right;"><b>'+epYen(epTaxIn(EP_STD_FEE))+' 円</b></td></tr>'
+      +'<tr style="background:rgba(39,104,74,.06);"><td>　うち 御社の手取り（8割）</td>'
+        +'<td style="text-align:right;"><b>'+epYen(take)+' 円</b></td><td style="text-align:right;">—</td><td style="text-align:right;">—</td></tr>'
+      +'<tr style="background:rgba(195,155,63,.09);"><td>　継への卸値（2割）</td>'
+        +'<td style="text-align:right;"><b>'+epYen(ws)+' 円</b></td>'
+        +'<td style="text-align:right;">'+epYen(epTaxIn(ws)-ws)+' 円</td>'
+        +'<td style="text-align:right;"><b>'+epYen(epTaxIn(ws))+' 円</b></td></tr>'
       +'</tbody></table>'
-      +'<div style="font-size:11px;color:#94A2B6;margin-top:7px;line-height:1.7;">到達したレンジの単価を、導入している全社に当てます。顧問先への請求額はお客さま（EP）が自由に決められます（目安：既存の顧問料に月5万円の上乗せ）。</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-top:7px;line-height:1.7;">'
+      +'契約でお決めいただくのは<b style="color:#1E3A66;">継への卸値 '+epYen(ws)+' 円（税別）</b>のほうです。'
+      +'45,000円は標準の顧問料で、実際のご請求額は御社でお決めいただけます。'
+      +'ご請求額を上げ下げされても卸値は変わりませんので、差額はそのまま御社の手取りになります。'
+      +'（顧問先ごとの実額は「顧問先」タブでご記入いただけます）</div>'
     +'</div>';
+    //  消費税の流れ
+    h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">消費税の流れ</div>'
+      +'<div style="font-size:11.5px;color:#5A6981;line-height:1.9;">'
+      +'金額はすべて<b style="color:#1E3A66;">税別</b>で書いています。消費税は各段階でそれぞれ乗ります。<br>'
+      +'① 御社 → 顧問先：'+epYen(EP_STD_FEE)+' 円＋消費税 '+epYen(epTaxIn(EP_STD_FEE)-EP_STD_FEE)+' 円 ＝ <b>'+epYen(epTaxIn(EP_STD_FEE))+' 円</b>をご請求（標準額のとき）<br>'
+      +'② 継 → 御社：'+epYen(ws)+' 円＋消費税 '+epYen(epTaxIn(ws)-ws)+' 円 ＝ <b>'+epYen(epTaxIn(ws))+' 円</b>をご請求<br>'
+      +'②は御社の仕入になりますので、<b style="color:#1E3A66;">仕入税額控除</b>の対象です。継は適格請求書（インボイス）を発行します。'
+      +'8割・2割の按分は<b style="color:#1E3A66;">税別の金額</b>で行い、消費税はそれぞれの請求に別立てで乗せます。'
+      +'</div></div>';
     //  初期導入費
     var paid=!!d.org.setup_paid_on;
     h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
@@ -11276,7 +11296,7 @@
           ? '認定研修の修了者が '+cert+' 名 在籍しています。4社目以降の独自の値付けが可能です。'
           : '認定研修の修了者がまだ在籍していません。4社目以降を独自に値付けするには、担当者のどなたかが研修を修了している必要があります。')
       +'</div>'
-      +'<div style="font-size:11px;color:#94A2B6;margin-top:7px;line-height:1.7;">上限だけを定め、下限や固定額は定めていません。仕入れたものを自社サービスとして再販するお立場のため、継が下限を縛ると再販価格の拘束にあたるおそれがあるためです。</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-top:7px;line-height:1.7;">上限だけを定め、下限や固定額は定めていません。仕入れたものを自社サービスとして再販するお立場のため、継が下限を縛ると再販価格の拘束にあたるおそれがあるためです。月額の顧問料も同じ考え方で、'+epYen(EP_STD_FEE)+' 円は標準額であり、下限ではありません。</div>'
     +'</div>';
     h+=epNoteB();
     return h;
@@ -11285,10 +11305,11 @@
     return '<div style="border:1.5px solid #EBDDB4;background:#FDFAF1;border-radius:11px;padding:12px 14px;">'
       +'<div style="font-size:12.5px;font-weight:700;color:#8A6A12;margin-bottom:6px;">この形（B型）の決めごと</div>'
       +'<div style="font-size:11.5px;color:#5A6981;line-height:1.9;">'
-      +'・お客さまが<b style="color:#1E3A66;">自社サービスとして</b>顧問先に提供し、継へ卸値をお支払いいただく形です。継は顧問先と契約しません。<br>'
-      +'・顧問先は<b style="color:#1E3A66;">お客さまに帰属</b>します。契約終了のときは、顧問先が継へ直接移れる条項を置いています。<br>'
-      +'・委託料率やティア昇格はありません。<b style="color:#1E3A66;">レンジ課金に一本化</b>しています。<br>'
-      +'・M&A案件が出たときは、パトンズ10%控除後を50/50。継の役割は<b style="color:#1E3A66;">買い手候補の特定まで</b>です。'
+      +'・御社が<b style="color:#1E3A66;">自社サービスとして</b>顧問先に提供し、継へ卸値をお支払いいただく形です。継は顧問先と契約しません。<br>'
+      +'・標準の月額顧問料は<b style="color:#1E3A66;">'+epYen(EP_STD_FEE)+' 円（税別）</b>。うち<b style="color:#1E3A66;">8割が御社の手取り</b>、2割（'+epYen(epWholesale())+' 円）が継への卸値です。<br>'
+      +'・顧問先は<b style="color:#1E3A66;">御社に帰属</b>します。契約終了のときは、顧問先が継へ直接移れる条項を置いています。<br>'
+      +'・委託料率やティア昇格はありません。<b style="color:#1E3A66;">1社あたり定額</b>に一本化しています。<br>'
+      +'・M&A案件が出たときは、継（福來）が受け取った手数料から<b style="color:#1E3A66;">税金分（消費税・源泉徴収）</b>を差し引いた額の<b style="color:#1E3A66;">5割</b>を御社へお支払いします。継の役割は<b style="color:#1E3A66;">買い手候補の特定まで</b>です。'
       +'</div></div>';
   }
   function epSumA(d){
@@ -11356,8 +11377,8 @@
       +'</div>';
     }
     if(!list.length) return h+'<div style="font-size:12px;color:#94A2B6;">まだ顧問先がありません。</div>';
-    h+='<div style="overflow-x:auto;"><table class="ft" style="min-width:560px;"><thead><tr>'
-      +'<th>顧問先</th><th>開始</th><th style="text-align:right;">御社の請求額（月）</th><th style="text-align:right;">初期導入費</th><th>状態</th>'
+    h+='<div style="overflow-x:auto;"><table class="ft" style="min-width:660px;"><thead><tr>'
+      +'<th>顧問先</th><th>開始</th><th style="text-align:right;">御社の請求額（月）</th><th style="text-align:right;">御社の手取り</th><th style="text-align:right;">初期導入費</th><th>状態</th>'
       +(d.isMgr?'<th></th>':'')+'</tr></thead><tbody>';
     list.forEach(function(c){
       var live=(c.status==='active');
@@ -11367,8 +11388,10 @@
         //  終了した顧問先の金額は書き替えられないようにする。過ぎた月の
         //  請求の控えなので、あとから動かせると記録の意味が無くなる。
         +'<td style="text-align:right;">'+((d.isMgr && live)
-            ? '<input class="inp2 ep-num" value="'+escA(c.ep_price==null?'':c.ep_price)+'" placeholder="—" onchange="epSaveNum(\''+escJ(c.id)+'\',\'ep_price\',this)">'
-            : (c.ep_price==null?'—':epYen(c.ep_price)+' 円'))+'</td>'
+            ? '<input class="inp2 ep-num" value="'+escA(c.ep_price==null?'':c.ep_price)+'" placeholder="'+EP_STD_FEE+'" onchange="epSaveNum(\''+escJ(c.id)+'\',\'ep_price\',this)">'
+            : (c.ep_price==null?epYen(EP_STD_FEE)+' 円':epYen(c.ep_price)+' 円'))+'</td>'
+        //  御社にいくら残るか。請求額を上げ下げしても卸値は変わらない
+        +'<td style="text-align:right;">'+(live?('<b>'+epYen(epTakeOf(c.ep_price))+'</b> 円'):'—')+'</td>'
         +'<td style="text-align:right;">'+(bulk[c.id]
             ? '<span style="color:#94A2B6;">一括分</span>'
             : ((d.isMgr && live)
@@ -11383,7 +11406,8 @@
     });
     h+='</tbody></table></div>';
     h+='<div style="font-size:11px;color:#94A2B6;margin-top:8px;line-height:1.7;">'
-      +'「御社の請求額」は、お客さまが顧問先へご請求されている月額の控えです。継の卸値とは別で、継はこの金額に関与しません。'
+      +'「御社の請求額」は顧問先へご請求されている月額（税別）です。空欄のときは標準額 '+epYen(EP_STD_FEE)+' 円として扱います。'
+      +'継への卸値は1社あたり '+epYen(epWholesale())+' 円（税別）の定額ですので、請求額を上げ下げされた差額はそのまま御社の手取りになります。'
       +'初期導入費は4社目以降のみ、上限 '+epYen(EP_SETUP_CAP)+' 円の範囲でご記入いただけます。</div>';
     return h;
   }
