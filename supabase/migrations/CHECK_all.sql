@@ -124,6 +124,13 @@ select * from (
       then '✅ 実行済み' else '❌ 未実行' end,
     '20260826020000_entity_type.sql'
   union all
+  select 21, '法人パートナーの区分を EP-I / EP-II に整理',
+    case when exists (select 1 from pg_constraint
+      where conrelid='public.ep_orgs'::regclass and conname='ep_orgs_kind_check')
+      and not exists (select 1 from public.ep_orgs where kind not in ('EP1','EP2'))
+      then '✅ 実行済み' else '❌ 未実行' end,
+    '20260826030000_ep_kind_rename.sql'
+  union all
   select 10, 'プロフィール画像（profiles.avatar）',
     case when exists (select 1 from information_schema.columns
       where table_schema='public' and table_name='profiles' and column_name='avatar')
