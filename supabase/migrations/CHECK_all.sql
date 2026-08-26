@@ -110,6 +110,13 @@ select * from (
       then '✅ 実行済み' else '❌ 未実行' end,
     '20260826000000_customer_todos.sql'
   union all
+  select 19, '法人エンタープライズ・パートナー（ep_orgs ほか5表）',
+    case when (select count(*) from information_schema.tables
+      where table_schema='public'
+        and table_name in ('ep_orgs','ep_members','ep_clients','ep_grants','ep_audit'))=5
+      then '✅ 実行済み' else '❌ 未実行' end,
+    '20260826010000_enterprise_partners.sql'
+  union all
   select 10, 'プロフィール画像（profiles.avatar）',
     case when exists (select 1 from information_schema.columns
       where table_schema='public' and table_name='profiles' and column_name='avatar')
