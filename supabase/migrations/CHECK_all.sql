@@ -117,6 +117,13 @@ select * from (
       then '✅ 実行済み' else '❌ 未実行' end,
     '20260826010000_enterprise_partners.sql'
   union all
+  select 20, '個人・法人の区別（源泉徴収の要否）',
+    case when (select count(*) from information_schema.columns
+      where table_schema='public'
+        and (table_name,column_name) in (('profiles','entity_type'),('ep_orgs','entity_type')))=2
+      then '✅ 実行済み' else '❌ 未実行' end,
+    '20260826020000_entity_type.sql'
+  union all
   select 10, 'プロフィール画像（profiles.avatar）',
     case when exists (select 1 from information_schema.columns
       where table_schema='public' and table_name='profiles' and column_name='avatar')

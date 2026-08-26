@@ -1310,7 +1310,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260826-6';
+  var APP_BUILD='20260826-7';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -1825,6 +1825,16 @@
       +[['30日（最長）',30],['15日',15],['7日',7]].map(function(o){ return '<button class="sbtn'+(rd===o[1]?' on':'')+'" onclick="setAisecRetention('+o[1]+')">'+o[0]+'</button>'; }).join('')
       +'</div>';
     if(r==='consultant'){
+      h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 4px;">個人・法人の区別</div>';
+      h+='<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">'
+        +'源泉徴収の要否が変わるため、ご登録をお願いします。'
+        +'<b style="color:var(--navy);">個人</b>（個人事業主）の方への報酬からは源泉徴収（10.21%、100万円を超える部分は20.42%）を差し引いてお振込みします。'
+        +'<b style="color:var(--navy);">法人</b>の方には源泉徴収は生じません。未登録のあいだは差し引かずに計算します。</div>';
+      h+='<div style="display:flex;gap:6px;flex-wrap:wrap;" id="set-entity-row">'
+        +[['individual','個人（個人事業主）'],['corporate','法人']].map(function(o){
+            return '<button class="sbtn" id="set-ent-'+o[0]+'" onclick="saveEntityType(\''+o[0]+'\')">'+o[1]+'</button>'; }).join('')
+        +'</div>';
+      h+='<div id="set-entity-msg" style="font-size:11.5px;margin-top:6px;min-height:16px;"></div>';
       h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 4px;">インボイス（適格請求書発行事業者）登録番号</div>';
       h+='<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">報酬の支払通知書に記載するため、登録番号（Tから始まる13桁）をご登録ください。未登録（免税事業者）の場合は空欄のまま保存してください。</div>';
       h+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'
@@ -1841,8 +1851,32 @@
       +'<button class="btn2" onclick="closeSettings()">閉じる</button></div>';
     box.innerHTML=h;
     renderAvatar();
-    if(r==='consultant') loadInvoiceNo();
+    if(r==='consultant'){ loadInvoiceNo(); renderEntityType(); }
   }
+  // ===== 個人か法人か（源泉徴収の要否）=====
+  //  ご本人に選んでいただく。運営が勝手に決めると、間違っていたときに
+  //  税金の返還という面倒をお相手に負わせることになる。
+  function renderEntityType(){
+    var cur=(window.__prof||{}).entity_type||null;
+    [['individual'],['corporate']].forEach(function(o){
+      var b=$('set-ent-'+o[0]); if(b) b.className='sbtn'+(cur===o[0]?' on':'');
+    });
+    var m=$('set-entity-msg');
+    if(m && !cur) m.innerHTML='<span style="color:#8A6A12;">未登録です。どちらかをお選びください。</span>';
+  }
+  async function saveEntityType(v){
+    var msg=$('set-entity-msg'); if(!ME) return;
+    if(msg){ msg.style.color='var(--muted)'; msg.textContent='保存しています…'; }
+    var r=await sb.from('profiles').update({ entity_type:v }).eq('id',ME);
+    if(r.error){ if(msg){ msg.style.color='#A9403D'; msg.textContent='保存できませんでした：'+r.error.message; } return; }
+    if(window.__prof) window.__prof.entity_type=v;
+    renderEntityType();
+    if(msg){ msg.style.color='#27684A';
+      msg.textContent=(v==='individual'
+        ? '個人として保存しました。報酬から源泉徴収を差し引いてお振込みします。'
+        : '法人として保存しました。源泉徴収は差し引きません。'); }
+  }
+
   // ===== インボイス登録番号（パートナー本人のprofilesに保存）=====
   async function loadInvoiceNo(){
     var inp=$('set-invoice'); if(!inp||!ME) return;
@@ -2201,7 +2235,7 @@
         +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;background:var(--soft);border-radius:10px;padding:10px 12px;">'
           +'<div><label class="fl">パートナー基本（円/月）</label><input id="bl-pbase" type="number" class="inp2" style="width:120px;" value="3000" oninput="renderAdmBilling();blRatesSave()"></div>'
           +'<div><label class="fl">顧問先1社あたり加算（円/月）</label><input id="bl-pclient" type="number" class="inp2" style="width:140px;" value="2000" oninput="renderAdmBilling();blRatesSave()"></div>'
-          +'<div><label class="fl">顧問料（円/月）</label><input id="bl-adv" type="number" class="inp2" style="width:120px;" value="50000" oninput="renderAdmBilling();blRatesSave()"></div>'
+          +'<div><label class="fl">顧問料（円/月・税別）</label><input id="bl-adv" type="number" class="inp2" style="width:120px;" value="45000" oninput="renderAdmBilling();blRatesSave()"></div>'
           +'<div><label class="fl">運営直接担当（円/月・一律）</label><input id="bl-direct" type="number" class="inp2" style="width:120px;" value="30000" oninput="renderAdmBilling();blRatesSave()"></div>'
           +'<div><label class="fl">初期登録料（円・初回）</label><input id="bl-init" type="number" class="inp2" style="width:130px;" value="100000" oninput="renderAdmBilling();blRatesSave()"></div>'
         +'</div>'
@@ -3426,7 +3460,10 @@
             +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;" onclick="poCsv(\'year\')">⬇ CSV保存</button>'
           +'</div>'
           +'<div id="po-year-out"></div>'
-          +'<div style="font-size:11px;color:#94A2B6;margin-top:8px;line-height:1.7;">※ 本明細は現在の認定ランク・2名体制の配分に基づく<b>計算値（目安）</b>です。実際の振込額と異なる場合は運営にお問い合わせください。源泉徴収・消費税の取り扱いは、パートナー契約の定めによります。</div>'
+          +'<div style="font-size:11px;color:#94A2B6;margin-top:8px;line-height:1.7;">※ 本明細は現在の認定ランク・2名体制の配分に基づく<b>計算値（目安）</b>です。'
+            +'外注費率は、入金額から消費税相当を外した<b>税抜</b>の額に掛けています。'
+            +'源泉徴収は個人の方へのお支払いにのみ生じ（10.21%、100万円を超える部分は20.42%）、法人へのお支払いには生じません。'
+            +'実際の振込額と異なる場合は運営にお問い合わせください。</div>'
         +'</div>'
         +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.8"/><path d="m5.6 5.6 3.7 3.7M14.7 14.7l3.7 3.7M14.7 9.3l3.7-3.7M5.6 18.4l3.7-3.7"/></svg>運営サポート'
           +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadSupportKnowledge();loadMyInquiries()">↺ 更新</span></div>'
@@ -5648,6 +5685,7 @@
       if(!mc.error) myClients=(mc.data||[]).length;
     }catch(e){}
     var myRate=rankFeeRate((window.__prof||{}).fde_rank, myClients==null?undefined:myClients);
+    var myEntity=(window.__prof||{}).entity_type||null;
     var rv=await sb.from('revenue_entries').select('customer_id,category,amount,occurred_on,description')
       .in('customer_id',custIds).gte('occurred_on',fromS).lt('occurred_on',toS)
       .order('occurred_on',{ascending:true}).limit(2000);
@@ -5666,35 +5704,56 @@
         role='サブ'; share=Number(a.sub_share)||0;
         rate=(a.main_id && mainRate[a.main_id]!=null)?mainRate[a.main_id]:null;
       }else{ return; }
-      var fee=(rate==null)?null:amt*rate*share/100;
+      //  外注費率は税抜の土台に掛ける（運営の配分画面と同じ計算）
+      var net=taxEx(amt);
+      var fee=(rate==null)?null:net*rate*share/100;
       rows.push({ on:r.occurred_on, cust:names[r.customer_id]||'', cat:r.category||'', desc:r.description||'',
-                  amt:amt, rate:rate, role:role, share:share, fee:fee });
+                  amt:amt, net:net, rate:rate, role:role, share:share, fee:fee });
     });
-    return { rows:rows };
+    return { rows:rows, entity:myEntity };
   }
-  function poTableHtml(rows){
+  function poTableHtml(rows, entity){
     if(!rows.length) return '<div style="font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:11px 13px;">この期間には、担当顧客の入金記録がありません。</div>';
-    var ta=0, tf=0, unk=false;
-    rows.forEach(function(r){ ta+=r.amt; if(r.fee==null) unk=true; else tf+=r.fee; });
-    var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:560px;">'
-      +'<tr style="background:var(--soft);color:var(--navy);"><th style="text-align:left;padding:7px 9px;">日付</th><th style="text-align:left;padding:7px 9px;">顧客</th><th style="text-align:left;padding:7px 9px;">区分</th><th style="text-align:right;padding:7px 9px;">入金額</th><th style="text-align:right;padding:7px 9px;">率</th><th style="text-align:right;padding:7px 9px;">配分</th><th style="text-align:right;padding:7px 9px;">支払額（目安）</th></tr>';
+    var ta=0, tn=0, tf=0, unk=false;
+    rows.forEach(function(r){ ta+=r.amt; tn+=(r.net==null?taxEx(r.amt):r.net); if(r.fee==null) unk=true; else tf+=r.fee; });
+    //  源泉徴収は明細の1行ごとではなく、その期間の報酬合計に対して1回
+    var ind=isIndiv(entity), wh=withholdYen(tf, ind);
+    var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:660px;">'
+      +'<tr style="background:var(--soft);color:var(--navy);"><th style="text-align:left;padding:7px 9px;">日付</th><th style="text-align:left;padding:7px 9px;">顧客</th><th style="text-align:left;padding:7px 9px;">区分</th><th style="text-align:right;padding:7px 9px;">入金額<br><span style="font-weight:400;font-size:10px;">（税込）</span></th><th style="text-align:right;padding:7px 9px;">税抜</th><th style="text-align:right;padding:7px 9px;">率</th><th style="text-align:right;padding:7px 9px;">配分</th><th style="text-align:right;padding:7px 9px;">報酬（目安）</th></tr>';
     rows.forEach(function(r){
       h+='<tr style="border-bottom:1px solid var(--softline);">'
         +'<td style="padding:6px 9px;white-space:nowrap;">'+esc(r.on||'')+'</td>'
         +'<td style="padding:6px 9px;">'+esc(r.cust)+(r.role==='サブ'?' <span class="tag gold" style="font-size:9px;">サブ</span>':'')+'</td>'
         +'<td style="padding:6px 9px;">'+esc(r.cat)+'</td>'
         +'<td style="padding:6px 9px;text-align:right;white-space:nowrap;">'+yen(r.amt)+'</td>'
+        +'<td style="padding:6px 9px;text-align:right;white-space:nowrap;color:var(--muted);">'+yen(r.net==null?taxEx(r.amt):r.net)+'</td>'
         +'<td style="padding:6px 9px;text-align:right;">'+(r.rate==null?'未確定':Math.round(r.rate*100)+'%')+'</td>'
         +'<td style="padding:6px 9px;text-align:right;">'+r.share+'%</td>'
         +'<td style="padding:6px 9px;text-align:right;white-space:nowrap;font-weight:700;color:#27684A;">'+(r.fee==null?'—':yen(r.fee))+'</td>'
       +'</tr>';
     });
     h+='<tr><td colspan="3" style="padding:8px 9px;font-weight:700;color:var(--navy);">合計</td>'
-      +'<td style="padding:8px 9px;text-align:right;font-weight:700;">'+yen(ta)+'</td><td></td><td></td>'
+      +'<td style="padding:8px 9px;text-align:right;font-weight:700;">'+yen(ta)+'</td>'
+      +'<td style="padding:8px 9px;text-align:right;font-weight:700;color:var(--muted);">'+yen(tn)+'</td><td></td><td></td>'
       +'<td style="padding:8px 9px;text-align:right;font-weight:700;color:#27684A;">'+yen(tf)+'</td></tr>'
       +'</table></div>';
+    h+=poNetBox(tf, wh, ind, entity);
     if(unk) h+='<div style="font-size:11px;color:#8A6A12;margin-top:6px;">「未確定」はランク未設定・個別設定のため率が決まっていない明細です。運営にご確認ください。</div>';
     return h;
+  }
+  //  報酬から源泉徴収を引いて、実際のお振込額を出す枠
+  function poNetBox(fee, wh, ind, entity){
+    return '<div style="margin-top:9px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--soft);">'
+      +'<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;padding:3px 0;">'
+        +'<span>報酬（税抜 × 外注費率）</span><b>'+yen(fee)+'</b></div>'
+      +'<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;padding:3px 0;color:'+(ind?'#A9403D':'#94A2B6')+';">'
+        +'<span>源泉徴収'+(ind?'（10.21%）':'（'+esc(entityLabel(entity))+'のため対象外）')+'</span><b>'+(ind?'− '+yen(wh):'—')+'</b></div>'
+      +'<div style="display:flex;justify-content:space-between;gap:12px;font-size:13.5px;padding:6px 0 0;margin-top:4px;border-top:1px solid var(--line);">'
+        +'<b style="color:var(--navy);">お振込額（目安）</b><b style="color:#27684A;">'+yen(fee-wh)+'</b></div>'
+      +(entity?'':'<div style="font-size:11px;color:#8A6A12;margin-top:7px;line-height:1.7;">'
+        +'個人・法人の区別が未設定のため、源泉徴収を引かずに計算しています。'
+        +'「設定」からご登録ください（個人の方は源泉徴収の対象になります）。</div>')
+    +'</div>';
   }
   async function poRenderMonth(){
     var out=$('po-month-out'); if(!out) return;
@@ -5705,8 +5764,8 @@
       var yy=+ym.slice(0,4), mm=+ym.slice(5,7);
       var toS=(mm===12?(yy+1)+'-01':yy+'-'+('0'+(mm+1)).slice(-2))+'-01';
       var d=await poFetch(ym+'-01', toS);
-      PO_CACHE.month={ label:yy+'年'+mm+'月', rows:d.rows };
-      out.innerHTML=poTableHtml(d.rows);
+      PO_CACHE.month={ label:yy+'年'+mm+'月', rows:d.rows, entity:d.entity };
+      out.innerHTML=poTableHtml(d.rows, d.entity);
     }catch(e){ out.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みに失敗しました：'+esc(String((e&&e.message)||e))+'</div>'; }
   }
   async function poRenderYear(){
@@ -5720,21 +5779,29 @@
         var m=(r.on||'').slice(0,7); if(!byM[m]) byM[m]={amt:0,fee:0,unk:false};
         byM[m].amt+=r.amt; if(r.fee==null) byM[m].unk=true; else byM[m].fee+=r.fee;
       });
-      PO_CACHE.year={ label:y+'年', rows:d.rows, months:byM };
-      var ta=0, tf=0;
-      var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:380px;">'
-        +'<tr style="background:var(--soft);color:var(--navy);"><th style="text-align:left;padding:7px 9px;">月</th><th style="text-align:right;padding:7px 9px;">対象入金 合計</th><th style="text-align:right;padding:7px 9px;">支払額 合計（目安）</th></tr>';
+      PO_CACHE.year={ label:y+'年', rows:d.rows, months:byM, entity:d.entity };
+      //  源泉徴収は月ごとのお支払いに対して掛かるので、月単位で出す
+      var ind=isIndiv(d.entity);
+      var ta=0, tf=0, tw=0;
+      var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:520px;">'
+        +'<tr style="background:var(--soft);color:var(--navy);"><th style="text-align:left;padding:7px 9px;">月</th><th style="text-align:right;padding:7px 9px;">対象入金<br><span style="font-weight:400;font-size:10px;">（税込）</span></th><th style="text-align:right;padding:7px 9px;">報酬（目安）</th><th style="text-align:right;padding:7px 9px;">源泉徴収</th><th style="text-align:right;padding:7px 9px;">お振込額（目安）</th></tr>';
       for(var m=1;m<=12;m++){
         var k=y+'-'+('0'+m).slice(-2), b=byM[k];
+        var w=b?withholdYen(b.fee, ind):0;
         h+='<tr style="border-bottom:1px solid var(--softline);"><td style="padding:6px 9px;">'+m+'月</td>'
           +'<td style="padding:6px 9px;text-align:right;">'+(b?yen(b.amt):'—')+'</td>'
-          +'<td style="padding:6px 9px;text-align:right;font-weight:700;color:#27684A;">'+(b?yen(b.fee)+(b.unk?' ※':''):'—')+'</td></tr>';
-        if(b){ ta+=b.amt; tf+=b.fee; }
+          +'<td style="padding:6px 9px;text-align:right;">'+(b?yen(b.fee)+(b.unk?' ※':''):'—')+'</td>'
+          +'<td style="padding:6px 9px;text-align:right;color:'+(ind?'#A9403D':'#94A2B6')+';">'+(b&&ind?'− '+yen(w):'—')+'</td>'
+          +'<td style="padding:6px 9px;text-align:right;font-weight:700;color:#27684A;">'+(b?yen(b.fee-w):'—')+'</td></tr>';
+        if(b){ ta+=b.amt; tf+=b.fee; tw+=w; }
       }
       h+='<tr><td style="padding:8px 9px;font-weight:700;color:var(--navy);">'+y+'年 合計</td>'
         +'<td style="padding:8px 9px;text-align:right;font-weight:700;">'+yen(ta)+'</td>'
-        +'<td style="padding:8px 9px;text-align:right;font-weight:700;color:#27684A;">'+yen(tf)+'</td></tr>'
+        +'<td style="padding:8px 9px;text-align:right;font-weight:700;">'+yen(tf)+'</td>'
+        +'<td style="padding:8px 9px;text-align:right;font-weight:700;color:'+(ind?'#A9403D':'#94A2B6')+';">'+(ind?'− '+yen(tw):'—')+'</td>'
+        +'<td style="padding:8px 9px;text-align:right;font-weight:700;color:#27684A;">'+yen(tf-tw)+'</td></tr>'
         +'</table></div>';
+      if(!d.entity) h+='<div style="font-size:11px;color:#8A6A12;margin-top:6px;line-height:1.7;">個人・法人の区別が未設定のため、源泉徴収を引かずに計算しています。「設定」からご登録ください。</div>';
       out.innerHTML=h;
     }catch(e){ out.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みに失敗しました：'+esc(String((e&&e.message)||e))+'</div>'; }
   }
@@ -5765,26 +5832,38 @@
     if(!c || !c.rows){ alert('先に「表示」を押して明細を表示してください。'); return; }
     var me=(window.__prof||{});
     var pname=me.full_name||me.contact_name||window.__email||'';
-    var note='※ 本明細は、認定ランクに基づく外注費率と2名体制の配分から計算した金額（目安）です。実際の振込額と異なる場合は運営にお問い合わせください。源泉徴収・消費税の取り扱いは、パートナー契約の定めによります。';
+    var note='※ 本明細は、認定ランクに基づく外注費率と2名体制の配分から計算した金額（目安）です。'
+      +'外注費率は、入金額から消費税相当を外した<b>税抜</b>の額に対して掛けています。'
+      +'源泉徴収は個人の方へのお支払いにのみ生じ（10.21%、100万円を超える部分は20.42%）、法人へのお支払いには生じません。'
+      +'実際の振込額と異なる場合は運営にお問い合わせください。';
     if(kind==='month'){
-      var h='<table><tr><th>日付</th><th>顧客</th><th>区分</th><th class="r">入金額</th><th class="r">率</th><th class="r">配分</th><th class="r">支払額（目安）</th></tr>';
-      var ta=0,tf=0;
-      c.rows.forEach(function(r){ ta+=r.amt; if(r.fee!=null) tf+=r.fee;
+      var h='<table><tr><th>日付</th><th>顧客</th><th>区分</th><th class="r">入金額（税込）</th><th class="r">税抜</th><th class="r">率</th><th class="r">配分</th><th class="r">報酬（目安）</th></tr>';
+      var ta=0,tn=0,tf=0;
+      c.rows.forEach(function(r){ var nt=(r.net==null?taxEx(r.amt):r.net); ta+=r.amt; tn+=nt; if(r.fee!=null) tf+=r.fee;
         h+='<tr><td>'+esc(r.on||'')+'</td><td>'+esc(r.cust)+(r.role==='サブ'?'（サブ）':'')+'</td><td>'+esc(r.cat)+'</td>'
-          +'<td class="r">'+yen(r.amt)+'</td><td class="r">'+(r.rate==null?'未確定':Math.round(r.rate*100)+'%')+'</td>'
+          +'<td class="r">'+yen(r.amt)+'</td><td class="r">'+yen(nt)+'</td><td class="r">'+(r.rate==null?'未確定':Math.round(r.rate*100)+'%')+'</td>'
           +'<td class="r">'+r.share+'%</td><td class="r">'+(r.fee==null?'—':yen(r.fee))+'</td></tr>'; });
-      h+='<tr><th colspan="3">合計</th><th class="r">'+yen(ta)+'</th><th></th><th></th><th class="r">'+yen(tf)+'</th></tr></table>';
+      var ind1=isIndiv(c.entity), w1=withholdYen(tf, ind1);
+      h+='<tr><th colspan="3">合計</th><th class="r">'+yen(ta)+'</th><th class="r">'+yen(tn)+'</th><th></th><th></th><th class="r">'+yen(tf)+'</th></tr></table>';
+      h+='<table style="margin-top:10px;max-width:340px;">'
+        +'<tr><th>報酬（税抜 × 外注費率）</th><th class="r">'+yen(tf)+'</th></tr>'
+        +'<tr><td>源泉徴収'+(ind1?'（10.21%）':'（'+esc(entityLabel(c.entity))+'のため対象外）')+'</td><td class="r">'+(ind1?'△ '+yen(w1):'—')+'</td></tr>'
+        +'<tr><th>お振込額（目安）</th><th class="r">'+yen(tf-w1)+'</th></tr></table>';
       poDocOpen('外注費 支払明細書', '支払先', pname+' 様', c.label, h, note);
     }else{
       var y=parseInt(c.label,10);
-      var h2='<table><tr><th>月</th><th class="r">対象入金 合計</th><th class="r">支払額 合計（目安）</th></tr>';
-      var ta2=0,tf2=0;
+      var ind2=isIndiv(c.entity);
+      var h2='<table><tr><th>月</th><th class="r">対象入金 合計（税込）</th><th class="r">報酬 合計（目安）</th><th class="r">源泉徴収</th><th class="r">お振込額（目安）</th></tr>';
+      var ta2=0,tf2=0,tw2=0;
       for(var m=1;m<=12;m++){
         var b=(c.months||{})[y+'-'+('0'+m).slice(-2)];
-        h2+='<tr><td>'+m+'月</td><td class="r">'+(b?yen(b.amt):'—')+'</td><td class="r">'+(b?yen(b.fee):'—')+'</td></tr>';
-        if(b){ ta2+=b.amt; tf2+=b.fee; }
+        var w2=b?withholdYen(b.fee, ind2):0;
+        h2+='<tr><td>'+m+'月</td><td class="r">'+(b?yen(b.amt):'—')+'</td><td class="r">'+(b?yen(b.fee):'—')+'</td>'
+          +'<td class="r">'+(b&&ind2?'△ '+yen(w2):'—')+'</td><td class="r">'+(b?yen(b.fee-w2):'—')+'</td></tr>';
+        if(b){ ta2+=b.amt; tf2+=b.fee; tw2+=w2; }
       }
-      h2+='<tr><th>'+y+'年 合計</th><th class="r">'+yen(ta2)+'</th><th class="r">'+yen(tf2)+'</th></tr></table>';
+      h2+='<tr><th>'+y+'年 合計</th><th class="r">'+yen(ta2)+'</th><th class="r">'+yen(tf2)+'</th>'
+        +'<th class="r">'+(ind2?'△ '+yen(tw2):'—')+'</th><th class="r">'+yen(tf2-tw2)+'</th></tr></table>';
       poDocOpen('外注費 年間支払明細書（確定申告用資料）', '支払先', pname+' 様', c.label+'（1月〜12月）', h2, note);
     }
   }
@@ -11309,7 +11388,9 @@
       +'・標準の月額顧問料は<b style="color:#1E3A66;">'+epYen(EP_STD_FEE)+' 円（税別）</b>。うち<b style="color:#1E3A66;">8割が御社の手取り</b>、2割（'+epYen(epWholesale())+' 円）が継への卸値です。<br>'
       +'・顧問先は<b style="color:#1E3A66;">御社に帰属</b>します。契約終了のときは、顧問先が継へ直接移れる条項を置いています。<br>'
       +'・委託料率やティア昇格はありません。<b style="color:#1E3A66;">1社あたり定額</b>に一本化しています。<br>'
-      +'・M&A案件が出たときは、継（福來）が受け取った手数料から<b style="color:#1E3A66;">税金分（消費税・源泉徴収）</b>を差し引いた額の<b style="color:#1E3A66;">5割</b>を御社へお支払いします。継の役割は<b style="color:#1E3A66;">買い手候補の特定まで</b>です。'
+      +'・M&A案件が出たときは、継（福來）が受け取った手数料から<b style="color:#1E3A66;">税金分</b>を差し引いた額の<b style="color:#1E3A66;">5割</b>を御社へお支払いします。'
+        +'税金分は消費税と、御社が<b style="color:#1E3A66;">個人事業</b>の場合の源泉徴収（10.21%、100万円を超える部分は20.42%）です。法人の場合、源泉徴収は生じません。'
+        +'継の役割は<b style="color:#1E3A66;">買い手候補の特定まで</b>です。'
       +'</div></div>';
   }
   function epSumA(d){
@@ -11630,6 +11711,10 @@
         +epFld('初期導入費（円）','<input class="inp2" value="'+escA(org.setup_fee_yen==null?'':org.setup_fee_yen)+'" onchange="epSetOrgNum(\'setup_fee_yen\',this)">')
         +epFld('初期導入費の受領日','<input class="inp2" type="date" value="'+escA(org.setup_paid_on||'')+'" onchange="epSetOrg(\'setup_paid_on\',this.value||null)">')
         +epFld('A-2の上乗せ（pt）','<input class="inp2" value="'+escA(org.override_bonus_pt==null?'':org.override_bonus_pt)+'" placeholder="5.0〜7.0" onchange="epSetOrgNum(\'override_bonus_pt\',this)">')
+        +epFld('個人・法人','<select class="inp2" onchange="epSetOrg(\'entity_type\',this.value||null)">'
+          +[['','未設定'],['individual','個人事業'],['corporate','法人']].map(function(e){
+              return '<option value="'+e[0]+'"'+((org.entity_type||'')===e[0]?' selected':'')+'>'+e[1]+'</option>'; }).join('')
+          +'</select>')
         +epFld('インボイス登録番号','<input class="inp2" value="'+escA(org.invoice_reg_no||'')+'" placeholder="T1234567890123" onchange="epSetOrg(\'invoice_reg_no\',this.value||null)">')
       +'</div>'
       +'<div id="ep-org-msg" style="font-size:11.5px;margin-top:8px;min-height:16px;"></div>'
@@ -13411,6 +13496,38 @@
     return pgPct(f);   // 「個別設定」は率が決まらないので null
   }
   function yen(n){ return Math.round(n).toLocaleString('ja-JP')+' 円'; }
+
+  // ===== 消費税と源泉徴収 =====
+  //  外注費率を掛ける土台は「税抜」。入金額には消費税が乗っているので、
+  //  そこから消費税相当を外してから率を掛ける。ここを税込のまま掛けると、
+  //  お預かりしている消費税まで配分してしまう。
+  //
+  //  源泉徴収は「法人が個人へ支払うとき」の制度で、法人への支払いには
+  //  生じない。誰が個人かは profiles.entity_type（B型は ep_orgs.entity_type）で
+  //  持ち、未設定のあいだは引かない。分からないまま引くと、あとで返す
+  //  手間をお相手に負わせることになるため。
+  var TAX_RATE=0.10;        // 消費税
+  var WH_RATE=0.1021;       // 源泉徴収（100万円までの部分）
+  var WH_RATE2=0.2042;      // 源泉徴収（100万円を超える部分）
+  var WH_STEP=1000000;
+  //  税込 → 税抜（1円未満切り捨て）
+  //  「/1.1」で割ると 55000/1.1 が 49999.999… になり、1円足りなくなる。
+  //  円は整数なので、整数のまま 10/11 を掛けて割り切る。
+  function taxEx(gross){ var v=Math.round(Number(gross)||0); return Math.floor(v*10/11); }
+  //  税込のうち、消費税にあたる額
+  function taxOf(gross){ var v=Math.round(Number(gross)||0); return v-taxEx(v); }
+  //  税抜 → 税込（同じ理由で整数のまま計算する）
+  function taxIn(net){ return Math.round((Number(net)||0)*11/10); }
+  //  源泉徴収税額。1円未満切り捨て。個人でなければ 0
+  function withholdYen(fee, isIndividual){
+    if(!isIndividual) return 0;
+    var f=Math.round(Number(fee)||0); if(f<=0) return 0;
+    if(f<=WH_STEP) return Math.floor(f*WH_RATE);
+    return Math.floor(WH_STEP*WH_RATE) + Math.floor((f-WH_STEP)*WH_RATE2);
+  }
+  //  entity_type から「源泉徴収の対象か」を返す。未設定は対象外（引かない）
+  function isIndiv(entityType){ return String(entityType||'')==='individual'; }
+  function entityLabel(t){ return t==='individual'?'個人':(t==='corporate'?'法人':'未設定'); }
   async function loadPayout(){
     var box=$('bl-payout'); if(!box) return;
     var ym=(($('bl-pay-month')||{}).value)||'';
@@ -13440,7 +13557,7 @@
     var pids=[]; Object.keys(custs).forEach(function(k){ var c=custs[k]; if(c.consultant_id && pids.indexOf(c.consultant_id)<0) pids.push(c.consultant_id); });
     var partners={};
     if(pids.length){
-      var pp=await sb.from('profiles').select('id,full_name,email,fde_rank').in('id',pids);
+      var pp=await sb.from('profiles').select('id,full_name,email,fde_rank,entity_type').in('id',pids);
       (pp.error?[]:(pp.data||[])).forEach(function(p){ partners[p.id]=p; });
     }
     //  スケールメリット（プレミアム30社以上で80%）の判定に、パートナーごとの
@@ -13466,7 +13583,8 @@
     // パートナー別に積み上げる
     var acc={}, noPartner=0, noRate=[];
     function bucket(pid, label){
-      if(!acc[pid]) acc[pid]={ label:label, gross:0, fee:0, main:0, sub:0, subLabel:null, rate:null, rows:[] };
+      if(!acc[pid]) acc[pid]={ label:label, gross:0, net:0, fee:0, main:0, sub:0, subLabel:null,
+                               rate:null, entity:null, rows:[] };
       return acc[pid];
     }
     rows.forEach(function(r){
@@ -13474,10 +13592,13 @@
       var p=partners[c.consultant_id]||{};
       var rate=rankFeeRate(p.fde_rank, payClients[c.consultant_id]||0);
       var amt=Number(r.amount)||0;
+      //  外注費率は税抜の土台に掛ける。入金額にはお預かりの消費税が
+      //  乗っているので、そこまで配分しないようにする。
+      var net=taxEx(amt);
       var b=bucket(c.consultant_id, p.full_name||p.email||'パートナー');
-      b.rate=rate; b.gross+=amt;
+      b.rate=rate; b.gross+=amt; b.net+=net; b.entity=p.entity_type||null;
       if(rate==null){ if(noRate.indexOf(b.label)<0) noRate.push(b.label); }
-      var fee=(rate==null?0:amt*rate);
+      var fee=(rate==null?0:net*rate);
       b.fee+=fee;
       var a=asg[r.customer_id];
       if(a && a.main_id===c.consultant_id){
@@ -13485,7 +13606,7 @@
         b.sub +=fee*(Number(a.sub_share)||0)/100;
         b.subLabel=a.sub_email||'サブ担当';
       } else { b.main+=fee; }
-      b.rows.push({ cust:(c.company_name||c.contact_name||c.email||''), amt:amt, cat:r.category, on:r.occurred_on,
+      b.rows.push({ cust:(c.company_name||c.contact_name||c.email||''), amt:amt, net:net, cat:r.category, on:r.occurred_on,
                     share:(a&&a.main_id===c.consultant_id)?(Number(a.main_share)+'/'+Number(a.sub_share)):null });
     });
     var keys=Object.keys(acc);
@@ -13494,11 +13615,17 @@
         +'この月の入金記録に、担当パートナーのついた顧客がありません。</div>';
       return;
     }
-    var tG=0,tF=0,tM=0,tS=0;
-    keys.forEach(function(k){ var b=acc[k]; tG+=b.gross; tF+=b.fee; tM+=b.main; tS+=b.sub; });
+    var tG=0,tN=0,tF=0,tM=0,tS=0,tW=0;
+    keys.forEach(function(k){ var b=acc[k];
+      b.wh=withholdYen(b.fee, isIndiv(b.entity));       // 源泉徴収はその月の報酬合計に対して1回
+      b.pay=b.fee-b.wh;
+      tG+=b.gross; tN+=b.net; tF+=b.fee; tM+=b.main; tS+=b.sub; tW+=b.wh; });
     var h='<div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:10px;">'
-      +bizChip('対象の入金', yen(tG), keys.length+' 名ぶん', 'var(--navy)')
-      +bizChip('パートナー報酬 合計', yen(tF), '外注費率適用後', '#27684A')
+      +bizChip('対象の入金（税込）', yen(tG), keys.length+' 名ぶん', 'var(--navy)')
+      +bizChip('税抜の土台', yen(tN), '消費税 '+yen(tG-tN)+' を外した額', 'var(--navy)')
+      +bizChip('パートナー報酬 合計', yen(tF), '税抜 × 外注費率', '#27684A')
+      +bizChip('源泉徴収 合計', yen(tW), '個人の方のみ', '#A9403D')
+      +bizChip('お振込額 合計', yen(tF-tW), '報酬 − 源泉徴収', '#27684A')
       +bizChip('うちサブ担当ぶん', yen(tS), '2名体制の配分', '#8F7230')
     +'</div>';
     keys.forEach(function(k){
@@ -13507,10 +13634,16 @@
         +'<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">'
           +'<b style="font-size:13px;color:var(--ink);">'+esc(b.label)+'</b>'
           +'<span class="tag gray" style="font-size:10px;">外注費率 '+(b.rate==null?'未設定':Math.round(b.rate*100)+'%')+'</span>'
+          +'<span class="tag '+(b.entity?'gray':'gold')+'" style="font-size:10px;">'+esc(entityLabel(b.entity))+'</span>'
           +'<span style="flex:1;"></span>'
-          +'<span style="font-size:11.5px;color:var(--muted);">入金 '+yen(b.gross)+'</span>'
-          +'<b style="font-size:13.5px;color:#27684A;">'+yen(b.fee)+'</b>'
+          +'<span style="font-size:11.5px;color:var(--muted);">入金 '+yen(b.gross)+'（税抜 '+yen(b.net)+'）</span>'
+          +'<b style="font-size:13.5px;color:#27684A;">'+yen(b.pay)+'</b>'
         +'</div>'
+        +'<div style="font-size:11.5px;color:var(--muted);margin-top:4px;">'
+          +'報酬 <b style="color:var(--ink);">'+yen(b.fee)+'</b>'
+          +'　− 源泉徴収 <b style="color:'+(isIndiv(b.entity)?'#A9403D':'#94A2B6')+';">'
+          +(isIndiv(b.entity)?yen(b.wh):(b.entity?'対象外':'未設定のため引かず'))+'</b>'
+          +'　＝ お振込 <b style="color:#27684A;">'+yen(b.pay)+'</b></div>'
         +(b.sub>0
           ? '<div style="font-size:12px;color:var(--ink);margin-top:5px;">メイン <b>'+yen(b.main)+'</b>　／　サブ（'+esc(b.subLabel||'')+'） <b style="color:#8F7230;">'+yen(b.sub)+'</b></div>'
           : '')
@@ -13527,7 +13660,15 @@
       h+='<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7;">担当パートナーのいない顧客の入金 '+yen(noPartner)+' は配分の対象外です。</div>';
     }
     h+=unlinkedNote;
-    h+='<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7;">※ 現在のランクと配分で計算した目安です。支払い確定後にランクや配分を変更すると、この画面の数字も変わります。確定額は運営の帳簿で管理してください。</div>';
+    var noEnt=keys.filter(function(k){ return !acc[k].entity; }).map(function(k){ return acc[k].label; });
+    if(noEnt.length){
+      h+='<div style="font-size:11px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:8px 11px;margin-top:8px;line-height:1.7;">'
+        +esc(noEnt.join('・'))+' は個人・法人の区別が未設定です。源泉徴収を引かずに計算しています。ご本人に「設定」からのご登録をお願いしてください。</div>';
+    }
+    h+='<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7;">'
+      +'※ 現在のランクと配分で計算した目安です。外注費率は入金額から消費税相当を外した<b>税抜</b>に掛けています。'
+      +'源泉徴収は個人の方のみ（10.21%、100万円を超える部分は20.42%）で、その月の報酬合計に対して1回計算しています。'
+      +'支払い確定後にランクや配分を変更すると、この画面の数字も変わります。確定額は運営の帳簿で管理してください。</div>';
     box.innerHTML=h;
   }
 
