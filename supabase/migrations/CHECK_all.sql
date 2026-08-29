@@ -131,6 +131,14 @@ select * from (
       then '✅ 実行済み' else '❌ 未実行' end,
     '20260826030000_ep_kind_rename.sql'
   union all
+  select 22, '担当の付け方（主担当・副担当／EP-IIの担当表）',
+    case when exists (select 1 from information_schema.columns
+      where table_schema='public' and table_name='ep_grants' and column_name='grant_role')
+      and (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+            where n.nspname='public' and p.proname in ('ep_book','ep_affiliation'))=2
+      then '✅ 実行済み' else '❌ 未実行' end,
+    '20260826040000_ep_assign.sql'
+  union all
   select 10, 'プロフィール画像（profiles.avatar）',
     case when exists (select 1 from information_schema.columns
       where table_schema='public' and table_name='profiles' and column_name='avatar')

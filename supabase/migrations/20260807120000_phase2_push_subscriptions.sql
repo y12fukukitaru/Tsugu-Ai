@@ -17,11 +17,16 @@ create index if not exists push_subscriptions_user_idx
 alter table public.push_subscriptions enable row level security;
 
 -- 登録・確認・削除は本人のみ。配信（読み取り）はservice roleが行う。
+drop policy if exists "own push subs: select" on public.push_subscriptions;
 create policy "own push subs: select" on public.push_subscriptions
   for select using (auth.uid() = user_id);
 
+drop policy if exists "own push subs: insert" on public.push_subscriptions;
+
 create policy "own push subs: insert" on public.push_subscriptions
   for insert with check (auth.uid() = user_id);
+
+drop policy if exists "own push subs: delete" on public.push_subscriptions;
 
 create policy "own push subs: delete" on public.push_subscriptions
   for delete using (auth.uid() = user_id);

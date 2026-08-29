@@ -25,8 +25,11 @@ create index if not exists agent_insights_user_idx
 alter table public.agent_insights enable row level security;
 
 -- 本人だけが読める・状態更新できる。生成（insert）はservice roleのみ。
+drop policy if exists "own insights: select" on public.agent_insights;
 create policy "own insights: select" on public.agent_insights
   for select using (auth.uid() = user_id);
+
+drop policy if exists "own insights: update status/feedback" on public.agent_insights;
 
 create policy "own insights: update status/feedback" on public.agent_insights
   for update using (auth.uid() = user_id)
@@ -36,30 +39,48 @@ create policy "own insights: update status/feedback" on public.agent_insights
 -- 定期実行: pg_cron + pg_net で agent-heartbeat を毎朝6:00 JSTに起動
 -- ※ <PROJECT-REF> と <CRON_SECRET> を自環境の値に書き換えてから実行。
 --    CRON_SECRET は Edge Function 側の Secret と同じ値にすること。
+--
+-- ※※ 下の登録は「まだ無いときだけ」行う。ここを素通しにすると、この
+--     ファイルをもう一度流したときに、動いている設定を穴埋めのままの
+--     URL（<PROJECT-REF>）で上書きしてしまい、毎朝の配信が止まる。
+--     掃除のほうも、あとから 20260825000000 で14日に縮めた設定を
+--     90日へ巻き戻してしまう。
 -- =============================================================
 
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
 
 -- 6:00 JST = 21:00 UTC（前日）
-select cron.schedule(
-  'agent-heartbeat-daily',
-  '0 21 * * *',
-  $$
-  select net.http_post(
-    url     := 'https://<PROJECT-REF>.supabase.co/functions/v1/agent-heartbeat',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'x-cron-secret', '<CRON_SECRET>'
-    ),
-    body    := '{}'::jsonb
-  );
-  $$
-);
+do $do$
+begin
+  if not exists (select 1 from cron.job where jobname = 'agent-heartbeat-daily') then
+    perform cron.schedule(
+      'agent-heartbeat-daily',
+      '0 21 * * *',
+      $$
+      select net.http_post(
+        url     := 'https://<PROJECT-REF>.supabase.co/functions/v1/agent-heartbeat',
+        headers := jsonb_build_object(
+          'Content-Type', 'application/json',
+          'x-cron-secret', '<CRON_SECRET>'
+        ),
+        body    := '{}'::jsonb
+      );
+      $$
+    );
+  end if;
+end
+$do$;
 
--- 古い提案の掃除（90日で削除・毎週日曜）
-select cron.schedule(
-  'agent-insights-cleanup',
-  '0 18 * * 0',
-  $$ delete from public.agent_insights where created_at < now() - interval '90 days'; $$
-);
+-- 古い提案の掃除（この時点では90日・毎週日曜。20260825000000 で14日・毎日に変更）
+do $do$
+begin
+  if not exists (select 1 from cron.job where jobname = 'agent-insights-cleanup') then
+    perform cron.schedule(
+      'agent-insights-cleanup',
+      '0 18 * * 0',
+      $$ delete from public.agent_insights where created_at < now() - interval '90 days'; $$
+    );
+  end if;
+end
+$do$;
