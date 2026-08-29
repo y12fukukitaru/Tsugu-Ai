@@ -1310,7 +1310,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260826-8';
+  var APP_BUILD='20260826-9';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2423,7 +2423,17 @@
     var diagCount={};
     try{ var pr=await sb.from('ai_proposals').select('author_id').limit(5000);
       if(!pr.error){ (pr.data||[]).forEach(function(p){ diagCount[p.author_id]=(diagCount[p.author_id]||0)+1; }); } }catch(e){}
-    ADM_CACHE={all:rows,fdes:fdes,admins:admins,custs:custs,nameOf:nameOf,clientCount:clientCount,kn:kn,scoreOf:scoreOf,lastMsg:lastMsg,lastActBy:lastActBy,diagCount:diagCount};
+    //  どのパートナーがどの法人に所属しているか。パートナー一覧と顧客一覧の
+    //  両方で札を出すので、ここで一度だけ引いておく。
+    var epOf={};
+    try{
+      if(fdes.length){
+        var ea=await sb.rpc('ep_affiliation',{ p_users:fdes.map(function(f){ return f.id; }) });
+        if(!ea.error) (ea.data||[]).forEach(function(r){
+          epOf[r.user_id]={ id:r.ep_id, name:r.ep_name, kind:r.ep_kind, seat:r.seat_role }; });
+      }
+    }catch(e){}
+    ADM_CACHE={all:rows,fdes:fdes,admins:admins,custs:custs,nameOf:nameOf,clientCount:clientCount,kn:kn,scoreOf:scoreOf,lastMsg:lastMsg,lastActBy:lastActBy,diagCount:diagCount,epOf:epOf};
     var unassigned=custs.filter(function(c){ return !c.consultant_id; }).length;
     var sum=$('adm-sum');
     if(sum){
@@ -2507,6 +2517,18 @@
     });
     box.innerHTML=h;
   }
+  //  「この方は◯◯法人に所属」の札。EP-I は金、EP-II は青で区分も見せる。
+  //  法人としての参加は個人の活動と扱いが違うので、ひと目で分かるようにする。
+  //    full=true  … パートナー一覧。区分と、法人の管理者かどうかまで出す
+  //    full=false … 顧客一覧。担当者名の横に添えるだけなので法人名だけにする
+  //                 （その方が法人の管理者かどうかは、この顧客の話ではない）
+  function epBadgeOf(uid, full){
+    var e=(ADM_CACHE.epOf||{})[uid]; if(!e) return '';
+    var kind=(e.kind==='EP2')?'EP-II':'EP-I';
+    var cls=(e.kind==='EP2')?'blue':'gold';
+    return '<span class="tag '+cls+'" title="'+escA(kind+' に所属')+'">'+esc(e.name)
+      +(full?('（'+kind+'）'+(e.seat==='manager'?'・管理者':'')):'')+'</span>';
+  }
   function renderAdmFde(){
     var fb=$('adm-fde'); if(!fb)return;
     var fdes=ADM_CACHE.fdes||[];
@@ -2530,6 +2552,7 @@
       h+='<div class="clcard" style="cursor:default;">'
         +'<div class="cl-top"><span class="cl-nm">'+esc(u.contact_name||u.company_name||u.email)+'</span>'
         +(u.fde_rank?'<span class="tag blue">'+esc(u.fde_rank)+'</span>':'<span class="tag gray">ランク未設定</span>')
+        +epBadgeOf(u.id, true)
         +'<span class="tag '+(nc?'green':'gray')+'">担当 '+nc+'社</span>'
         +lastTag
         +'<span class="tag blue">診断 '+dc+'件</span>'
@@ -2562,7 +2585,8 @@
     var admOpts=(ADM_CACHE.admins||[]).map(function(a){ return {id:a.id, name:(a.contact_name||a.company_name||a.email)}; });
     rows.forEach(function(u){
       var fdeTag=u.consultant_id
-        ?'<span class="tag green">担当：'+esc(ADM_CACHE.nameOf[u.consultant_id]||'パートナー')+'</span>'
+        ?('<span class="tag green">担当：'+esc(ADM_CACHE.nameOf[u.consultant_id]||'パートナー')+'</span>'
+          +epBadgeOf(u.consultant_id, false))
         :'<span class="tag red">担当未割当</span>';
       var assignSel='<select class="inp2" style="width:200px;" onchange="assignConsultant(\''+u.id+'\',this.value)"><option value="">（未割当）</option>'
         +(admOpts.length?('<optgroup label="運営（直接担当）">'+admOpts.map(function(f){ return '<option value="'+f.id+'"'+(u.consultant_id===f.id?' selected':'')+'>'+esc(f.name)+'（運営）</option>'; }).join('')+'</optgroup>'):'')
@@ -3152,6 +3176,21 @@
         +'<div class="panel" id="sec-flow"><span class="pill" style="background:#EAF0F9;color:#2C5DA8;">パートナーポータル</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">パートナーポータル</h2>'
         +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b>'+(prof.fde_rank?'　ランク：<b>'+esc(prof.fde_rank)+'</b>':'')+'</div>'
+        //  法人に所属している方には、そのことをはっきり出す。個人で活動する
+        //  場合と、報酬の配分もお客さまとの関係も違うため。
+        +(EP_ME
+          ? '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted);'
+            +'border:1px solid '+(epIsB(EP_ME.org.kind)?'#EBDDB4':'#CBD9EE')+';'
+            +'background:'+(epIsB(EP_ME.org.kind)?'rgba(195,155,63,.07)':'rgba(44,93,168,.05)')+';'
+            +'border-radius:10px;padding:9px 12px;margin-bottom:10px;">'
+            +'<b style="color:var(--navy);font-size:12.5px;">'+esc(EP_ME.org.name)+'</b> に所属'
+            +'<span class="ep-tag" style="border:1px solid '+(epIsB(EP_ME.org.kind)?'#EBDDB4':'#CBD9EE')+';'
+              +'color:'+(epIsB(EP_ME.org.kind)?'#8A6A12':'#2C5DA8')+';">'+esc(epKindShort(EP_ME.org.kind))+'</span>'
+            +(EP_ME.isMgr?'<span class="ep-tag" style="background:var(--soft);color:var(--muted);">管理者</span>':'')
+            +'<span style="flex:1;"></span>'
+            +'<span class="ghost" style="font-size:11.5px;" onclick="goSec(\'sec-ep\')">エンタープライズを開く →</span>'
+          +'</div>'
+          : '')
         +'<div id="fde-hero" style="display:flex;gap:8px;flex-wrap:wrap;">読み込み中...</div></div>'
         +'<div id="my-annc"></div>'
         +'<div class="panel" id="sec-todo">'
@@ -8926,6 +8965,34 @@
     if(CURRENT_CLIENT) applyClKarteBadges(CURRENT_CLIENT.id);
   }
   function clMenuGo(id){ clMenuClose(); clNav(id); }
+  //  カルテの上に出す「◯◯法人としての関わり」。
+  //  EP-I は法人が担当を決めるので主担当・副担当を、EP-II は所属していること
+  //  だけを出す（EP-II の担当は継が決め、法人の中では分けない）。
+  function clKarteEpNote(custId){
+    if(!EP_ME) return '';
+    var ep1=epIsB(EP_ME.org.kind);
+    var line='';
+    if(ep1 && EP_DATA && EP_DATA.org && EP_DATA.org.id===EP_ME.org.id){
+      var gs=(EP_DATA.grants||[]).filter(function(g){ return g.customer_id===custId; });
+      if(gs.length){
+        line=gs.map(function(g){
+          var m=(EP_DATA.members||[]).filter(function(x){ return x.id===g.member_id; })[0];
+          var nm=m?epNm(EP_DATA,m.user_id):'担当者';
+          return ((g.grant_role||'main')==='sub'?'副担当':'主担当')+'：'+esc(nm);
+        }).join('　/　');
+      }else{
+        line='この顧問先にはまだ担当が決まっていません。';
+      }
+    }
+    var c=ep1?['#EBDDB4','rgba(195,155,63,.07)','#8A6A12']:['#CBD9EE','rgba(44,93,168,.05)','#2C5DA8'];
+    return '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted);'
+      +'border:1px solid '+c[0]+';background:'+c[1]+';border-radius:10px;padding:8px 11px;margin-bottom:10px;">'
+      +'<b style="color:'+c[2]+';font-size:12.5px;">'+esc(EP_ME.org.name)+'</b>'
+      +'<span class="ep-tag" style="border:1px solid '+c[0]+';color:'+c[2]+';">'+esc(epKindShort(EP_ME.org.kind))+'</span>'
+      +(line?'<span>'+line+'</span>':'')
+      +(EP_ME.isMgr?'<span style="flex:1;"></span><span class="ghost" style="font-size:11.5px;" onclick="closeClientModal();goSec(\'sec-ep\')">担当を変える →</span>':'')
+    +'</div>';
+  }
   async function viewClient(custId, email, company){
     CURRENT_CLIENT={ id:custId, email:email, company:company||'' };
     setTimeout(function(){ loadInsDiagList(custId); }, 300);
@@ -8934,7 +9001,10 @@
     var mt=$('cl-modal-title'); if(mt) mt.textContent=titleTxt;
     openClientModal();
     // ---- 常時表示ヘッダー：ステージ＋レポート ----
-    var head='<div id="cl-head"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">'
+    //  法人に所属している方には、この会社に同じ法人の誰が関わっているかを先に出す。
+    //  主担当が別の方でも、副担当として入っていることがあるため。
+    var head='<div id="cl-head">'+clKarteEpNote(custId)
+      +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">'
       +'<span style="font-size:12px;color:#5A6981;">進捗ステージ</span><span id="cl-stage-auto" style="font-size:12.5px;">判定中…</span>'
       +'<span style="flex:1;"></span>'
       +'<button class="btn2" onclick="openMonthlyReport()" style="background:#fff;color:#2C5DA8;border:1.5px solid #2C5DA8;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>月次レポート</button>'
@@ -11255,13 +11325,25 @@
     var gr =await sb.from('ep_grants').select('*').eq('ep_id',org.id).is('revoked_at',null);
     var pe =await sb.rpc('ep_people',{ p_ep:org.id });
     var lg =await sb.from('ep_audit').select('*').eq('ep_id',org.id).order('at',{ascending:false}).limit(80);
+    //  EP-II は顧客が継に帰属するので、担当は profiles.consultant_id が正。
+    //  本部の画面はそれを集めて出す（本部での登録作業を増やさない）
+    var book=null;
+    if(!epIsB(org.kind)){
+      var bk=await sb.rpc('ep_book',{ p_ep:org.id });
+      if(!bk.error) book=bk.data||[];
+    }
     var err=[mem,cl,gr,pe,lg].filter(function(r){ return r && r.error; })[0];
     if(err){ box.innerHTML=epErr(err.error.message); return; }
     var name={};
     (pe.data||[]).forEach(function(p){ name[p.id]={ nm:p.name||p.email, email:p.email }; });
+    //  担当表に出てくる方の名前も引けるようにしておく（顧客は ep_people に居ない）
+    (book||[]).forEach(function(r){
+      if(r.user_id && !name[r.user_id])          name[r.user_id]={ nm:r.user_name, email:r.user_email };
+      if(r.customer_id && !name[r.customer_id])  name[r.customer_id]={ nm:r.customer_name, email:r.customer_email };
+    });
     EP_DATA={ org:org, isAdm:isAdm, isMgr:isMgr,
               members:(mem.data||[]), clients:(cl.data||[]), grants:(gr.data||[]),
-              name:name, log:(lg.data||[]) };
+              book:book, name:name, log:(lg.data||[]) };
     epRender();
   }
   function epErr(m){ return '<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(m)+'</div>'; }
@@ -11273,7 +11355,12 @@
 
   function epRender(){
     var box=$('ep-body'); if(!box||!EP_DATA) return;
-    var d=EP_DATA, tabs=[['sum','概要'],['cl','顧問先'],['mb','担当者'],['gr','席の割当'],['lg','記録']];
+    var d=EP_DATA;
+    //  EP-I は法人が担当を決める（担当の割当）。EP-II は継が決めた担当を眺める（担当表）。
+    //  EP-II で顧問先タブを出すと、継が持つ顧客と二重に登録できてしまうので出さない。
+    var tabs=[['sum','概要']];
+    if(epIsB(d.org.kind)) tabs.push(['cl','顧問先']);
+    tabs.push(['mb','担当者'], ['gr', epIsB(d.org.kind)?'担当の割当':'担当表'], ['lg','記録']);
     if(d.isAdm) tabs.push(['adm','法人の管理']);
     if(!tabs.some(function(t){ return t[0]===EP_TAB; })) EP_TAB='sum';
     var h='';
@@ -11621,53 +11708,172 @@
     loadEp();
   }
 
-  // ---- 席の割当 ----
+  // ---- 担当（EP-I は主／副の割当、EP-II は所属パートナーの担当表）----
+  var EP_ASG_Q='', EP_ASG_ONLY=false;
   function epGrantsHtml(d){
-    if(!d.isMgr){
-      var mine=d.grants.filter(function(g){ return d.members.some(function(m){ return m.id===g.member_id && m.user_id===ME; }); });
-      if(!mine.length) return '<div style="font-size:12px;color:#94A2B6;">まだ顧問先が割り当てられていません。管理者にご依頼ください。</div>';
-      return '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">あなたに割り当てられている顧問先です。</div>'
-        +'<ul style="font-size:12.5px;line-height:2;padding-left:18px;">'
-        +mine.map(function(g){ return '<li>'+esc(epNm(d,g.customer_id))+'</li>'; }).join('')+'</ul>';
-    }
+    return epIsB(d.org.kind) ? epAssignHtml(d) : epBookHtml(d);
+  }
+
+  //  EP-I：1社につき 主担当1名・副担当1名。顧問先を縦に並べるので、
+  //  何社になっても横に伸びない（総当たりの表は20社で読めなくなる）。
+  function epAssignHtml(d){
     var mem=d.members.filter(function(m){ return m.status==='active'; });
     var cl=epActive(d);
-    if(!mem.length || !cl.length){
-      return '<div style="font-size:12px;color:#94A2B6;">担当者と顧問先の両方が登録されると、ここで席を配れます。</div>';
+    if(!d.isMgr){
+      var mine=d.grants.filter(function(g){
+        return d.members.some(function(m){ return m.id===g.member_id && m.user_id===ME; }); });
+      if(!mine.length) return '<div style="font-size:12px;color:#94A2B6;">まだ顧問先が割り当てられていません。管理者にご依頼ください。</div>';
+      return '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">あなたが担当している顧問先です。</div>'
+        +'<table class="ft" style="max-width:420px;"><tbody>'
+        +mine.map(function(g){
+            return '<tr><td>'+esc(epNm(d,g.customer_id))+'</td><td style="text-align:right;">'
+              +(g.grant_role==='sub'?'<span class="ep-tag" style="background:var(--soft);color:var(--muted);">副担当</span>'
+                                    :'<span class="ep-tag" style="background:rgba(44,93,168,.08);color:#2C5DA8;">主担当</span>')
+              +'</td></tr>'; }).join('')
+        +'</tbody></table>';
     }
-    var live={};
-    d.grants.forEach(function(g){ live[g.member_id+'|'+g.customer_id]=g.id; });
+    if(!mem.length || !cl.length){
+      return '<div style="font-size:12px;color:#94A2B6;">担当者と顧問先の両方が登録されると、ここで担当を決められます。</div>';
+    }
+    //  いま誰が付いているか
+    var byRole={};   // customer_id|role -> member_id
+    d.grants.forEach(function(g){ byRole[g.customer_id+'|'+(g.grant_role||'main')]=g.member_id; });
+    var cnt={};      // 担当者ごとの持ち社数（主担当だけ数える）
+    d.grants.forEach(function(g){ if((g.grant_role||'main')==='main') cnt[g.member_id]=(cnt[g.member_id]||0)+1; });
+    var none=cl.filter(function(c){ return !byRole[c.customer_id+'|main']; }).length;
+
     var h='<div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.8;">'
-      +'どの担当者にどの顧問先を見せるかを決めます。チェックを外した瞬間からその顧問先のデータは見えなくなり、付け外しは「記録」に残ります。</div>';
-    h+='<div style="overflow-x:auto;"><table class="ft" style="min-width:'+(200+cl.length*110)+'px;"><thead><tr><th>担当者</th>'
-      +cl.map(function(c){ return '<th style="text-align:center;font-size:11px;">'+esc(epNm(d,c.customer_id))+'</th>'; }).join('')
-      +'</tr></thead><tbody>';
-    mem.forEach(function(m){
-      h+='<tr><td><b>'+esc(epNm(d,m.user_id))+'</b>'+(m.seat_role==='manager'?'<div style="font-size:10.5px;color:#2C5DA8;">管理者</div>':'')+'</td>';
-      cl.forEach(function(c){
-        var k=m.id+'|'+c.customer_id, on=!!live[k];
-        h+='<td style="text-align:center;">'
-          +'<input type="checkbox"'+(on?' checked':'')+' style="width:17px;height:17px;cursor:pointer;"'
-          +' onchange="epToggleGrant(\''+escJ(m.id)+'\',\''+escJ(c.customer_id)+'\',this)"></td>';
-      });
-      h+='</tr>';
+      +'顧問先ごとに<b style="color:var(--navy);">主担当</b>を1名、必要なら<b style="color:var(--navy);">副担当</b>を1名決めます。'
+      +'選んだ瞬間からその方に見えるようになり、外した瞬間から見えなくなります。付け外しは「記録」に残ります。</div>';
+    //  担当者ごとの持ち社数
+    h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">'
+      +mem.map(function(m){
+          return '<span class="ep-tag" style="background:var(--soft);color:var(--muted);font-weight:400;">'
+            +esc(epNm(d,m.user_id))+' <b style="color:var(--ink);">'+(cnt[m.id]||0)+'</b> 社</span>'; }).join('')
+      +(none?'<span class="ep-tag" style="background:rgba(169,64,61,.08);color:#A9403D;">未割当 '+none+' 社</span>':'')
+    +'</div>';
+    //  検索と絞り込み
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:9px;">'
+      +'<input id="ep-asg-q" class="inp2" style="flex:1;min-width:180px;" placeholder="🔍 顧問先を名前で探す" value="'+escA(EP_ASG_Q)+'" oninput="epAsgFilter()">'
+      +'<label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);cursor:pointer;white-space:nowrap;">'
+        +'<input type="checkbox" id="ep-asg-only"'+(EP_ASG_ONLY?' checked':'')+' onchange="epAsgFilter()" style="width:15px;height:15px;cursor:pointer;">未割当だけ</label>'
+    +'</div>';
+
+    function sel(c, role){
+      var cur=byRole[c.customer_id+'|'+role]||'';
+      var other=byRole[c.customer_id+'|'+(role==='main'?'sub':'main')]||'';
+      return '<select class="inp2" style="width:100%;min-width:120px;padding:6px 8px;font-size:12px;'
+        +(role==='main'&&!cur?'border-color:#E3B7B5;':'')+'"'
+        +' onchange="epSetGrant(\''+escJ(c.customer_id)+'\',\''+role+'\',this.value,this)">'
+        +'<option value="">'+(role==='main'?'— 未割当':'— なし')+'</option>'
+        +mem.map(function(m){
+            //  もう片方の役に付いている人は選べない（同じ人を主と副に重ねない）
+            var dis=(m.id===other)?' disabled':'';
+            return '<option value="'+escA(m.id)+'"'+(m.id===cur?' selected':'')+dis+'>'+esc(epNm(d,m.user_id))+'</option>';
+          }).join('')
+        +'</select>';
+    }
+    h+='<div style="overflow-x:auto;"><table class="ft" id="ep-asg-tbl" style="min-width:520px;"><thead><tr>'
+      +'<th style="min-width:150px;">顧問先</th><th style="width:38%;">主担当</th><th style="width:38%;">副担当</th></tr></thead><tbody>';
+    cl.forEach(function(c){
+      var nm=epNm(d,c.customer_id);
+      h+='<tr data-nm="'+escA(nm.toLowerCase())+'" data-none="'+(byRole[c.customer_id+'|main']?'0':'1')+'">'
+        +'<td><b>'+esc(nm)+'</b>'
+          +(byRole[c.customer_id+'|main']?'':'<div style="font-size:10.5px;color:#A9403D;">未割当</div>')+'</td>'
+        +'<td>'+sel(c,'main')+'</td>'
+        +'<td>'+sel(c,'sub')+'</td>'
+      +'</tr>';
     });
     h+='</tbody></table></div>';
+    h+='<div id="ep-asg-empty" class="hidden" style="font-size:12px;color:#94A2B6;padding:10px 2px;">この条件に当てはまる顧問先はありません。</div>';
+    h+='<div id="ep-asg-msg" style="font-size:11.5px;margin-top:7px;min-height:16px;"></div>';
     return h;
   }
-  async function epToggleGrant(memberId, customerId, el){
-    if(!EP_DATA) return;
-    el.disabled=true;
-    var r;
-    if(el.checked){
-      r=await sb.from('ep_grants').insert({ ep_id:EP_DATA.org.id, member_id:memberId, customer_id:customerId, granted_by:ME });
-    }else{
-      r=await sb.from('ep_grants').update({ revoked_at:new Date().toISOString(), revoked_by:ME })
-        .eq('member_id',memberId).eq('customer_id',customerId).is('revoked_at',null);
+  //  絞り込みは行の表示/非表示だけで行う。作り直すと入力中の文字が消えるため
+  function epAsgFilter(){
+    var q=(($('ep-asg-q')||{}).value||'').trim().toLowerCase();
+    var only=(($('ep-asg-only')||{}).checked)||false;
+    EP_ASG_Q=q; EP_ASG_ONLY=only;
+    var tbl=$('ep-asg-tbl'); if(!tbl) return;
+    var rows=tbl.querySelectorAll('tbody tr'), shown=0;
+    for(var i=0;i<rows.length;i++){
+      var r=rows[i];
+      var okQ=!q || (r.getAttribute('data-nm')||'').indexOf(q)>=0;
+      var okN=!only || r.getAttribute('data-none')==='1';
+      var on=okQ&&okN; r.style.display=on?'':'none'; if(on) shown++;
     }
-    el.disabled=false;
-    if(r.error){ alert('変更できませんでした：'+r.error.message); el.checked=!el.checked; return; }
-    loadEp();
+    var em=$('ep-asg-empty'); if(em) em.classList.toggle('hidden', shown>0);
+  }
+  //  主担当・副担当の付け替え。外してから付けるので、間に他の人が入る心配はない
+  async function epSetGrant(customerId, role, memberId, el){
+    if(!EP_DATA) return;
+    var msg=$('ep-asg-msg');
+    el.disabled=true;
+    if(msg){ msg.style.color='var(--muted)'; msg.textContent='変更しています…'; }
+    try{
+      var cur=EP_DATA.grants.filter(function(g){
+        return g.customer_id===customerId && (g.grant_role||'main')===role; })[0];
+      if(cur && cur.member_id===memberId){ el.disabled=false; if(msg) msg.textContent=''; return; }
+      if(cur){
+        var rv=await sb.from('ep_grants').update({ revoked_at:new Date().toISOString(), revoked_by:ME }).eq('id',cur.id);
+        if(rv.error) throw new Error(rv.error.message);
+      }
+      if(memberId){
+        var ins=await sb.from('ep_grants').insert({ ep_id:EP_DATA.org.id, member_id:memberId,
+          customer_id:customerId, grant_role:role, granted_by:ME });
+        if(ins.error) throw new Error(ins.error.message);
+      }
+      if(msg){ msg.style.color='#27684A'; msg.textContent='変更しました'; }
+      loadEp();
+    }catch(e){
+      el.disabled=false;
+      if(msg){ msg.style.color='#A9403D'; msg.textContent='変更できませんでした：'+String((e&&e.message)||e); }
+    }
+  }
+
+  //  EP-II：所属パートナー → その担当顧客。登録作業は要らない。
+  //  顧客は継に帰属し、担当は profiles.consultant_id が正なので、それを集めて出す。
+  function epBookHtml(d){
+    var book=d.book||[];
+    if(!book.length){
+      return '<div style="font-size:12px;color:#94A2B6;line-height:1.9;">'
+        +'まだ担当が付いていません。<br>'
+        +'EP-II では顧客は継に帰属し、担当は<b>個々の認定パートナー</b>に付きます。'
+        +'運営が顧客に担当パートナーを設定すると、ここに自動で並びます（本部での登録作業はありません）。</div>';
+    }
+    //  担当者ごとにまとめる
+    var by={}, order=[];
+    book.forEach(function(r){
+      if(!by[r.user_id]){ by[r.user_id]={ nm:r.user_name, email:r.user_email, rank:r.fde_rank, cs:[] }; order.push(r.user_id); }
+      if(r.customer_id) by[r.user_id].cs.push(r);
+    });
+    var total=book.filter(function(r){ return r.customer_id; }).length;
+    var h='<div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.8;">'
+      +'所属されている認定パートナーと、その方が担当している顧客です。'
+      +'<b style="color:var(--navy);">顧客は継に帰属</b>し、担当は継が設定しますので、本部での登録作業はありません。'
+      +'ご担当が退職されたときは、後任のご指名を運営までお知らせください。</div>';
+    h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:11px;">'
+      +'<span class="ep-tag" style="background:var(--soft);color:var(--muted);font-weight:400;">所属 <b style="color:var(--ink);">'+order.length+'</b> 名</span>'
+      +'<span class="ep-tag" style="background:var(--soft);color:var(--muted);font-weight:400;">担当 <b style="color:var(--ink);">'+total+'</b> 社</span>'
+    +'</div>';
+    order.forEach(function(uid){
+      var p=by[uid];
+      var L=pgLevelOf(p.rank);
+      h+='<div style="border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:8px;">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+          +'<b style="font-size:13px;color:var(--ink);">'+esc(p.nm)+'</b>'
+          +(L?'<span class="ep-tag" style="background:rgba(44,93,168,.08);color:#2C5DA8;">Lv.'+L.lv+' '+esc(L.name)+'</span>':'')
+          +'<span style="font-size:10.5px;color:#94A2B6;">'+esc(p.email||'')+'</span>'
+          +'<span style="flex:1;"></span>'
+          +'<span style="font-size:12px;color:var(--muted);">担当 <b style="color:var(--ink);">'+p.cs.length+'</b> 社</span>'
+        +'</div>'
+        +(p.cs.length
+          ? '<div style="font-size:12px;color:var(--ink);line-height:1.9;margin-top:6px;">'
+            +p.cs.map(function(c){ return esc(c.customer_name); }).join('　/　')+'</div>'
+          : '<div style="font-size:11.5px;color:#94A2B6;margin-top:6px;">まだ担当している顧客がありません。</div>')
+      +'</div>';
+    });
+    return h;
   }
 
   // ---- 記録（監査ログ）----
