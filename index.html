@@ -1320,7 +1320,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260826-10';
+  var APP_BUILD='20260826-11';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -8450,7 +8450,10 @@
     if(t.id==='sec-input'){ if(!e.shiftKey){ e.preventDefault(); secretarySend(); } return; }
     if(t.id==='knv-input'){ if(!e.shiftKey){ e.preventDefault(); secretarySend('knv'); } return; }
     if(t.id==='sup-input'){ if(!e.shiftKey){ e.preventDefault(); supportSend(); } return; }
-    if(t.id==='knv-msg-input'){ if(!e.shiftKey){ e.preventDefault(); knvMsgSend(); } return; }
+    //  メッセージだけは Enter で送らない。書きかけで指が触れて出てしまうと
+    //  取り消せないため、送るのは「送信」ボタンからだけにしている。
+    //  Enter は素通しさせて、そのまま改行にする。
+    if(t.id==='knv-msg-input') return;
     var map={ 'login-email':doLogin, 'login-pw':doLogin, 'signup-email':doSignup, 'signup-pw':doSignup, 'signup-pw2':doSignup, 'reset-email':doReset, 'rec-pw':doUpdatePassword, 'rec-pw2':doUpdatePassword };
     if(map[t.id]){ e.preventDefault(); map[t.id](); }
   });
@@ -10549,10 +10552,12 @@
       head='<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:5px 10px;white-space:nowrap;" onclick="knvMsgBack()">← 顧客一覧</button>'
         +'<div style="flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(KNV_MSG_CNAME||'顧客')+'</div>';
       note='送信すると、顧客の継ナビくん「メッセージ」タブに届きます。'
+        +'<b>Enterは改行です。送信は「送信」ボタンから</b>。'
         +'画面の写しは<b>そのまま貼り付け（Ctrl+V）</b>でも、ドラッグして落としても送れます。';
     }else{
       head='<div style="flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="knv-msg-title">担当パートナーとのメッセージ</div>';
       note='数値の報告・質問・相談など、何でもどうぞ。月次の売上も送るだけでOK（入力はパートナーが代行）。'
+        +'<b>Enterは改行です。送信は「送信」ボタンから</b>。'
         +'画面の写しは<b>そのまま貼り付け（Ctrl+V）</b>でも、ドラッグして落としても送れます。返信の目安は2〜3営業日以内です。';
     }
     box.innerHTML=
@@ -10564,7 +10569,7 @@
       +'<div style="display:flex;gap:6px;align-items:flex-end;">'
         +'<button class="ghost" id="knv-msg-att" title="ファイルを添付（10MBまで）" style="flex:0 0 auto;font-size:15px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;line-height:1;" onclick="$(\'knv-msg-file\').click()">📎</button>'
         +'<input type="file" id="knv-msg-file" class="hidden" accept="image/*,.pdf,.xlsx,.xls,.csv,.docx,.doc,.pptx,.txt" onchange="knvMsgAttach(this)">'
-        +'<textarea id="knv-msg-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="メッセージを入力（画像はそのまま貼り付け／Enterで送信・Shift+Enterで改行）"></textarea>'
+        +'<textarea id="knv-msg-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="メッセージを入力（Enterで改行／送信は「送信」ボタン・画像はそのまま貼り付け）"></textarea>'
         +'<button class="btn2" id="knv-msg-send" onclick="knvMsgSend()">送信</button>'
       +'</div>'
       +'<div id="knv-msg-note" style="font-size:10.5px;color:var(--muted);margin-top:6px;line-height:1.6;">'+note+'</div>'
