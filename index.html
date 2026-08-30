@@ -385,6 +385,16 @@
   .ep-tag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;padding:2px 8px;
     border-radius:99px;letter-spacing:.02em;white-space:nowrap;}
   .ep-num{width:104px;padding:5px 8px;font-size:12px;text-align:right;font-feature-settings:'tnum';}
+  /* メッセージに貼り付けた画像の下見。名前だけ聞かれても何の画像か分からないので、
+     送る前に小さく見せて確かめられるようにする */
+  .knv-pv{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;
+    padding:9px 11px;margin-bottom:8px;background:var(--soft);}
+  .knv-pv img{width:56px;height:56px;object-fit:cover;border-radius:7px;border:1px solid var(--line);
+    background:#fff;flex:0 0 auto;}
+  .knv-pv .t{flex:1;min-width:0;font-size:12px;color:var(--ink);line-height:1.6;}
+  .knv-pv .t i{display:block;font-style:normal;font-size:10.5px;color:var(--muted);}
+  /* ドラッグしてきたときに、落とせる場所だと分かるようにする */
+  .knv-drop{outline:2px dashed var(--blue);outline-offset:-4px;background:rgba(44,93,168,.04);}
   @media(max-width:600px){ .ep-num{width:104px!important;} }
   .hidden{display:none!important;}
   #app{display:flex;min-height:100vh;align-items:stretch;}
@@ -1310,7 +1320,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260826-9';
+  var APP_BUILD='20260826-10';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -10538,20 +10548,23 @@
     if(eff==='consultant'){
       head='<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:5px 10px;white-space:nowrap;" onclick="knvMsgBack()">← 顧客一覧</button>'
         +'<div style="flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(KNV_MSG_CNAME||'顧客')+'</div>';
-      note='送信すると、顧客の継ナビくん「メッセージ」タブに届きます。';
+      note='送信すると、顧客の継ナビくん「メッセージ」タブに届きます。'
+        +'画面の写しは<b>そのまま貼り付け（Ctrl+V）</b>でも、ドラッグして落としても送れます。';
     }else{
       head='<div style="flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="knv-msg-title">担当パートナーとのメッセージ</div>';
-      note='数値の報告・質問・相談など、何でもどうぞ。月次の売上も送るだけでOK（入力はパートナーが代行）。返信の目安は2〜3営業日以内です。';
+      note='数値の報告・質問・相談など、何でもどうぞ。月次の売上も送るだけでOK（入力はパートナーが代行）。'
+        +'画面の写しは<b>そのまま貼り付け（Ctrl+V）</b>でも、ドラッグして落としても送れます。返信の目安は2〜3営業日以内です。';
     }
     box.innerHTML=
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'+head
         +'<span class="ghost" style="font-size:11px;cursor:pointer;" onclick="knvMsgLoad()">↺ 更新</span>'
       +'</div>'
       +'<div id="knv-msg-log" style="height:300px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:12px;background:#FBFCFE;margin-bottom:8px;">読み込み中...</div>'
+      +'<div id="knv-msg-pv"></div>'
       +'<div style="display:flex;gap:6px;align-items:flex-end;">'
         +'<button class="ghost" id="knv-msg-att" title="ファイルを添付（10MBまで）" style="flex:0 0 auto;font-size:15px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;line-height:1;" onclick="$(\'knv-msg-file\').click()">📎</button>'
         +'<input type="file" id="knv-msg-file" class="hidden" accept="image/*,.pdf,.xlsx,.xls,.csv,.docx,.doc,.pptx,.txt" onchange="knvMsgAttach(this)">'
-        +'<textarea id="knv-msg-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="メッセージを入力（Enterで送信／Shift+Enterで改行）"></textarea>'
+        +'<textarea id="knv-msg-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="メッセージを入力（画像はそのまま貼り付け／Enterで送信・Shift+Enterで改行）"></textarea>'
         +'<button class="btn2" id="knv-msg-send" onclick="knvMsgSend()">送信</button>'
       +'</div>'
       +'<div id="knv-msg-note" style="font-size:10.5px;color:var(--muted);margin-top:6px;line-height:1.6;">'+note+'</div>'
@@ -10565,6 +10578,7 @@
           +'</div><div id="knv-msg-closemsg" style="font-size:11px;margin-top:6px;"></div>'
         : '');
     if(eff==='customer') knvMsgTitle();
+    knvMsgBindPaste();
     knvMsgLoad();
     var p=$('knv-panel'), inp=$('knv-msg-input');
     if(p && !p.classList.contains('hidden') && inp) setTimeout(function(){ try{ inp.focus(); }catch(e){} },60);
@@ -10652,33 +10666,121 @@
     if(isCon && typeof loadFollowups==='function') try{ loadFollowups(); }catch(e){}
   }
   // ファイル添付：選択→ストレージにアップロード→添付メッセージとして送信
+  // ===== 画像の貼り付け・ドラッグ＆ドロップ =====
+  //  画面の写しを送りたい場面がいちばん多いのに、Windowsの画面写しは
+  //  そのままではファイルにならない（クリップボードに絵が乗るだけ）。
+  //  ファイル選択だけだと、いったん保存してから選ぶ手間になる。
+  //  そこで入力欄にそのまま貼れるようにする。
+  var KNV_PV=null;    // 送る前の1枚
+  function knvMsgBindPaste(){
+    var inp=$('knv-msg-input'), log=$('knv-msg-log');
+    if(inp && !inp.__pasteBound){
+      inp.__pasteBound=1;
+      inp.addEventListener('paste', function(e){
+        var f=knvImgFromClipboard(e.clipboardData);
+        if(!f) return;                 // 文字の貼り付けはこれまでどおり
+        e.preventDefault();
+        knvMsgPreview(f);
+      });
+    }
+    //  受け皿は「やりとりの表示」と入力欄の両方。どちらに落としても届く
+    [log, inp].forEach(function(el){
+      if(!el || el.__dropBound) return;
+      el.__dropBound=1;
+      el.addEventListener('dragover', function(e){ e.preventDefault(); el.classList.add('knv-drop'); });
+      el.addEventListener('dragleave', function(){ el.classList.remove('knv-drop'); });
+      el.addEventListener('drop', function(e){
+        e.preventDefault(); el.classList.remove('knv-drop');
+        var f=(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) || null;
+        if(f) knvMsgPreview(f);
+      });
+    });
+  }
+  //  クリップボードから画像を1枚取り出す。無ければ null
+  function knvImgFromClipboard(dt){
+    if(!dt) return null;
+    var items=dt.items||[];
+    for(var i=0;i<items.length;i++){
+      var it=items[i];
+      if(it.kind==='file' && String(it.type||'').indexOf('image/')===0){
+        var f=it.getAsFile(); if(f) return f;
+      }
+    }
+    var fs=dt.files||[];
+    for(var j=0;j<fs.length;j++){ if(String(fs[j].type||'').indexOf('image/')===0) return fs[j]; }
+    return null;
+  }
+  //  貼り付けた画像には名前が無い（image.png になる）。日時から付け直す
+  function knvShotName(f){
+    var t=String((f&&f.type)||'image/png').split('/')[1]||'png';
+    t=t.replace(/[^a-z0-9]/gi,'').slice(0,5)||'png';
+    var d=new Date(), p=function(n){ return ('0'+n).slice(-2); };
+    return '画面の写し_'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+'.'+t;
+  }
+  function knvSize(n){
+    n=Number(n)||0;
+    return n<1024 ? n+' B' : (n<1024*1024 ? (n/1024).toFixed(0)+' KB' : (n/1024/1024).toFixed(1)+' MB');
+  }
+  //  送る前に小さく見せる。「image.png を送信しますか？」では何の絵か分からない
+  function knvMsgPreview(f){
+    var box=$('knv-msg-pv'); if(!box||!f) return;
+    if(f.size>10*1024*1024){ alert('ファイルが大きすぎます（10MBまで）。'); return; }
+    var isImg=String(f.type||'').indexOf('image/')===0;
+    var nm=(!f.name || f.name==='image.png' || !f.name.indexOf('image.')) ? knvShotName(f) : f.name;
+    KNV_PV={ file:f, name:nm };
+    var url=isImg?URL.createObjectURL(f):'';
+    box.innerHTML='<div class="knv-pv">'
+      +(isImg?'<img src="'+url+'" alt="">':'<div style="width:56px;height:56px;border-radius:7px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;">📄</div>')
+      +'<div class="t"><b>'+esc(nm)+'</b><i>'+knvSize(f.size)+'　これでよろしければ送信してください</i></div>'
+      +'<button class="btn2" style="padding:7px 15px;font-size:12px;" onclick="knvMsgPvSend()">送信</button>'
+      +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:6px 11px;" onclick="knvMsgPvClear()">やめる</button>'
+    +'</div>';
+    if(url) setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, 30000);
+  }
+  function knvMsgPvClear(){ KNV_PV=null; var b=$('knv-msg-pv'); if(b) b.innerHTML=''; }
+  function knvMsgPvSend(){
+    if(!KNV_PV) return;
+    var f=KNV_PV.file, nm=KNV_PV.name;
+    knvMsgPvClear();
+    knvMsgUpload(f, nm, true);
+  }
+
   async function knvMsgAttach(fileInp){
     var f=fileInp && fileInp.files && fileInp.files[0];
     fileInp.value='';
+    if(!f) return;
+    //  選んだファイルも同じ下見を通す。押し間違いをその場で気づける
+    knvMsgPreview(f);
+  }
+  //  実際に送る。skipConfirm は下見で確かめたあと
+  async function knvMsgUpload(f, name, skipConfirm){
     if(!f) return;
     if(f.size>10*1024*1024){ alert('ファイルが大きすぎます（10MBまで）。'); return; }
     var eff=window.__eff||'customer';
     var isCon=(eff==='consultant');
     var cid=isCon?KNV_MSG_CID:(typeof SCOPE!=='undefined'?SCOPE:null);
     if(!cid) return;
-    if(!confirm('「'+f.name+'」を送信しますか？')) return;
-    var note=$('knv-msg-note'), noteOld=note?note.textContent:'';
+    if(!skipConfirm && !confirm('「'+f.name+'」を送信しますか？')) return;
+    //  案内文には <b> が入っているので innerHTML で控えて戻す。
+    //  textContent で戻すと、送信のたびに書式が落ちていく
+    var note=$('knv-msg-note'), noteOld=note?note.innerHTML:'';
     var ab=$('knv-msg-att'), sb2=$('knv-msg-send');
     if(ab)ab.disabled=true; if(sb2)sb2.disabled=true;
-    if(note){ note.textContent='📎 アップロード中…（'+f.name+'）'; }
+    if(note){ note.textContent='📎 アップロード中…（'+(name||f.name)+'）'; }   // ここは素の文字でよい
     try{
       // パスは推測不能に（顧客ID/時刻_乱数.拡張子）。表示用の元ファイル名は列に持つ
-      var ext=(f.name.indexOf('.')>=0)?f.name.split('.').pop().replace(/[^A-Za-z0-9]/g,'').slice(0,8):'bin';
+      var nm=name||f.name||'file';
+      var ext=(nm.indexOf('.')>=0)?nm.split('.').pop().replace(/[^A-Za-z0-9]/g,'').slice(0,8):'bin';
       var path=cid+'/'+Date.now()+'_'+Math.random().toString(36).slice(2,10)+'.'+(ext||'bin');
       var up=await sb.storage.from('chat-attach').upload(path, f, { upsert:false, contentType:f.type||'application/octet-stream' });
       if(up.error) throw new Error(up.error.message+'（添付機能のSQL設定が未実施の可能性があります）');
-      var res=await sb.from('chat_messages').insert({ customer_id:cid, sender_id:ME, sender_role:isCon?'consultant':'customer', body:'', attachment_path:path, attachment_name:f.name });
+      var res=await sb.from('chat_messages').insert({ customer_id:cid, sender_id:ME, sender_role:isCon?'consultant':'customer', body:'', attachment_path:path, attachment_name:nm });
       if(res.error) throw new Error(res.error.message);
       knvMsgLoad();
       if(isCon && typeof loadFollowups==='function') try{ loadFollowups(); }catch(e){}
     }catch(e){ alert('添付の送信に失敗しました：'+String((e&&e.message)||e)); }
     if(ab)ab.disabled=false; if(sb2)sb2.disabled=false;
-    if(note){ note.textContent=noteOld; }
+    if(note){ note.innerHTML=noteOld; }
   }
   // 添付を開く：署名付きURL（10分有効）を発行して別タブで表示
   async function knvAttOpen(p){
