@@ -1323,7 +1323,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260901-02';
+  var APP_BUILD='20260901-03';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -3049,6 +3049,7 @@
         +'<div style="margin-bottom:12px;"><button id="ct-btn" class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;font-weight:600;" onclick="ctStart(true)"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5.5 3.5-5.5 3.5z"/></svg>使い方ガイド（1分）</button>'
           +'</div>'
         +'<div id="dash-hero">読み込み中...</div>'
+        +'<div id="my-cash"></div>'
         +'<div id="my-onboard"></div>'
         +'<div id="my-impact"></div>'
         +'<div id="my-members"></div>'
@@ -3545,7 +3546,7 @@
     window.__eff=eff;
     $('app-body').innerHTML=view;
     if(eff==='customer' && ACCESS==='finance'){ loadAcct(); }
-    else if(eff==='customer'){ loadDashHero(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); loadAgentInsights(); knvInit(); }
+    else if(eff==='customer'){ loadDashHero(); loadMyCash(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); loadAgentInsights(); knvInit(); }
     else if(eff==='consultant'){ if(EP_ME) loadEp(); loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); loadAgentInsights(); knvInit(); }
     else {
       // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
@@ -7198,6 +7199,107 @@
   }
 
   // ---- 今日のサマリー（ダッシュボード最上部）----
+  // ===== 社長がひと言で入れる「いまの手元資金」 =====
+  //  試算表は月に一度しか入らない。けれど社長が本当に不安なのは
+  //  「今月末、払えるか」で、これは週ごとに動く。数字ひとつだけを
+  //  そのつど入れてもらえば、継ナビくんも担当パートナーも生きた数字を
+  //  見られる。
+  //
+  //  入れるのは任意。この製品は「入力の負担を社長にかけない」と決めて
+  //  作られているので、その線は越えない。促しはするが、迫らない。
+  //
+  //  単位は万円。ほかの数字とそろえる。
+  var MYCASH=null;
+
+  async function loadMyCash(){
+    var box=$('my-cash'); if(!box) return;
+    var r;
+    try{
+      r=await sb.from('cash_checkins').select('*').eq('customer_id',SCOPE)
+        .order('on_date',{ascending:false}).limit(5);
+    }catch(e){ r={error:1}; }
+    //  表がまだ無い環境では、何も出さずに黙る。空の枠だけ出ても意味がない
+    if(!r || r.error){ box.innerHTML=''; return; }
+    var rows=r.data||[];
+    MYCASH=rows[0]||null;
+    var today=jstToday();
+    var isToday=!!(MYCASH && MYCASH.on_date===today);
+    //  何日ぶん空いたか。8日以上（＝週をまたいだ）で促しを強める
+    var days=MYCASH?Math.floor((Date.parse(today)-Date.parse(MYCASH.on_date))/86400000):null;
+    var stale=(days===null)||(days>=8);
+
+    var head=MYCASH
+      ? (isToday?'今日の手元資金を記録しました'
+                :(days===1?'昨日の記録があります':days+'日前の記録があります'))
+      : '手元資金を、ひと言だけ教えてください';
+
+    var h='<div style="border:1.5px solid '+(stale?'#EAD9AC':'#E2E7EF')+';background:'+(stale?'#FDFAF1':'#F8F9FC')+';'
+      +'border-radius:12px;padding:14px 16px;margin-top:12px;">'
+      +'<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px;">'
+        +'<div style="font-size:13.5px;font-weight:700;color:'+(stale?'#8A6A12':'#1E3A66')+';">'+esc(head)+'</div>'
+        +'<div style="font-size:11px;color:#94A2B6;">30秒で終わります・任意です</div>'
+      +'</div>'
+      +'<div style="font-size:11.5px;color:#5A6981;line-height:1.75;margin-bottom:10px;">'
+      +'いまの預金残高だけで構いません。入れておくと、継ナビくんが今の数字で答えられるようになり、'
+      +'担当パートナーも早めに気づけます。</div>'
+      +'<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">'
+        +'<div><label class="fl">いまの手元資金</label>'
+          +'<div style="display:flex;align-items:baseline;gap:5px;">'
+          +'<input id="mycash-v" class="inp2" type="number" inputmode="numeric" min="0" step="1" '
+          //  前回の額をそのまま薄字で置くと、入力済みに見えて空のまま押される。
+          //  「前回」と付けて、これは控えだと分かるようにする
+          +'style="width:130px;text-align:right;" placeholder="'
+          +(MYCASH?'前回 '+esc(String(MYCASH.balance)):'例 1200')+'" '
+          +'value="'+(isToday?esc(String(MYCASH.balance)):'')+'">'
+          +'<span style="font-size:12.5px;color:#5A6981;">万円</span></div></div>'
+        +'<div style="flex:1;min-width:190px;"><label class="fl">ひと言（任意）</label>'
+          +'<input id="mycash-n" class="inp2" style="width:100%;" placeholder="例：来週に大きな支払いがあります" '
+          +'value="'+(isToday?esc(MYCASH.note||''):'')+'"></div>'
+        +'<button class="btn2" id="mycash-go" style="font-size:12.5px;padding:9px 18px;" onclick="cashSave()">'
+          +(isToday?'記録を直す':'記録する')+'</button>'
+      +'</div>'
+      +'<div id="mycash-msg" style="font-size:11.5px;margin-top:7px;min-height:15px;"></div>';
+
+    //  流れが見えると、入れる意味が伝わる。数字が2つ以上あるときだけ出す
+    if(rows.length>1){
+      h+='<div style="font-size:11px;color:#94A2B6;margin-top:8px;line-height:1.8;">これまで：'
+        +rows.slice().reverse().map(function(x){
+          return esc(x.on_date.slice(5).replace('-','/'))+' '+Number(x.balance).toLocaleString('ja-JP')+'万';
+        }).join(' → ')+'</div>';
+    }
+    h+='</div>';
+    box.innerHTML=h;
+  }
+
+  async function cashSave(){
+    var el=$('mycash-v'), msg=$('mycash-msg'), btn=$('mycash-go');
+    if(!el) return;
+    var raw=String(el.value||'').trim();
+    if(raw===''){ if(msg) msg.innerHTML='<span style="color:#A9403D;">金額を入れてください。</span>'; el.focus(); return; }
+    var v=Math.round(Number(raw));
+    if(!isFinite(v)||v<0){ if(msg) msg.innerHTML='<span style="color:#A9403D;">0以上の数字で入れてください。</span>'; el.focus(); return; }
+    //  桁の打ち間違いは戻せない誤解を生む。1兆円を超えたら一度止める
+    if(v>100000000){ if(msg) msg.innerHTML='<span style="color:#A9403D;">桁が大きすぎるようです。単位は万円です。</span>'; el.focus(); return; }
+    if(btn) btn.disabled=true;
+    if(msg) msg.innerHTML='<span style="color:#94A2B6;">記録しています…</span>';
+    var note=String((($('mycash-n')||{}).value)||'').trim();
+    try{
+      var r=await sb.from('cash_checkins')
+        .upsert({ customer_id:SCOPE, balance:v, note:note||null, on_date:jstToday(),
+                  updated_at:new Date().toISOString() }, { onConflict:'customer_id,on_date' });
+      if(r.error) throw new Error(r.error.message);
+    }catch(e){
+      if(msg) msg.innerHTML='<span style="color:#A9403D;">記録できませんでした：'+esc(String((e&&e.message)||e))
+        +'<br>（手元資金のSQLが未実行の可能性があります）</span>';
+      if(btn) btn.disabled=false;
+      return;
+    }
+    if(btn) btn.disabled=false;
+    await loadMyCash();
+    var m2=$('mycash-msg');
+    if(m2) m2.innerHTML='<span style="color:#27684A;">✓ 記録しました。ありがとうございます。</span>';
+  }
+
   async function loadDashHero(){
     var box=$('dash-hero'); if(!box)return;
     var todayS=jstToday();
@@ -9090,6 +9192,11 @@
       +'<div class="ph" id="cs-mreport" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>月次レポート</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientReports(\''+custId+'\')">↺ 更新</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">この顧客の月次レポートです。数字は自動生成されるので、コメントとひとことを添えてから<b style="color:#1E3A66;">「承認して公開」</b>を押してください。公開すると経営者ダッシュボードに表示されます。</div>'
       +'<div id="clrep-body">読み込み中...</div>'
+      +'<div class="ph" id="cs-cash" style="font-size:13px;">社長からの手元資金（本人の申告）</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">'
+      +'社長ご本人がダッシュボードから入れた数字です。月次の試算表より新しいことが多いので、面談前にここを見てください。'
+      +'こちらからは書き換えられません。</div>'
+      +'<div id="cl-cash" style="margin-bottom:14px;">読み込み中...</div>'
       +'<div class="ph" id="cs-fin" style="font-size:13px;">月次財務メモ（代行入力）</div>'
       +'<div class="cl-cols">'
       +'<div class="cl-col">'
@@ -9361,7 +9468,7 @@
     loadClientPayments(custId);
     loadClientFunding(custId);
     reloadClientActions(custId);
-    loadClientInterests(custId); loadClShares(custId);
+    loadClientInterests(custId); loadClShares(custId); loadClCash(custId);
     loadClientMna(custId);
     loadClientInsurance(custId);
     loadClientDiag(custId);
@@ -9512,7 +9619,7 @@
     if(!confirm('この共有項目を削除します。よろしいですか？')) return;
     var r=await sbDelete('automation_interests', id);
     if(!r.ok){ alert(r.msg); return; }
-    loadClientInterests(custId); loadClShares(custId); loadClientMna(custId); if(typeof loadDiagInterests==='function') loadDiagInterests(custId);
+    loadClientInterests(custId); loadClShares(custId); loadClCash(custId); loadClientMna(custId); if(typeof loadDiagInterests==='function') loadDiagInterests(custId);
   }
   async function delClientDiag(id, custId){
     if(!confirm('このAI自動化診断結果を削除します。よろしいですか？')) return;
@@ -9638,6 +9745,48 @@
       +'</div>';
     });
     box.innerHTML=h;
+  }
+
+  //  社長の申告した手元資金。減り方が見えるように並べて出す。
+  async function loadClCash(custId){
+    var box=$('cl-cash'); if(!box) return;
+    var r;
+    try{
+      r=await sb.from('cash_checkins').select('*').eq('customer_id',custId)
+        .order('on_date',{ascending:false}).limit(8);
+    }catch(e){ r={error:{message:String((e&&e.message)||e)}}; }
+    if(r.error){
+      box.innerHTML='<div style="font-size:12px;color:#94A2B6;">読み込めませんでした（手元資金のSQLが未実行の可能性があります）</div>';
+      return;
+    }
+    var rows=r.data||[];
+    if(!rows.length){
+      box.innerHTML='<div style="font-size:12px;color:#94A2B6;line-height:1.7;">まだありません。'
+        +'社長がダッシュボードの「いまの手元資金」に入れると、ここに出ます。</div>';
+      return;
+    }
+    var cur=rows[0], prev=rows[1]||null;
+    var days=Math.floor((Date.parse(jstToday())-Date.parse(cur.on_date))/86400000);
+    var diff=prev?Number(cur.balance)-Number(prev.balance):null;
+    //  減っているときだけ色を付ける。増減すべてに色を付けると、どれが
+    //  目を向けるべき変化なのか分からなくなる
+    var down=(diff!==null && diff<0);
+    box.innerHTML='<div style="border:1px solid '+(down?'#E7C9C7':'#EDF1F6')+';background:'+(down?'#FCF4F3':'transparent')+';'
+      +'border-radius:9px;padding:11px 13px;">'
+      +'<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">'
+        +'<div style="font-size:19px;font-weight:700;color:'+(down?'#A9403D':'#1E3A66')+';">'
+          +Number(cur.balance).toLocaleString('ja-JP')+'<span style="font-size:12px;font-weight:400;"> 万円</span></div>'
+        +(diff!==null?'<div style="font-size:12px;color:'+(down?'#A9403D':'#27684A')+';">前回比 '
+          +(diff>=0?'+':'')+diff.toLocaleString('ja-JP')+'万</div>':'')
+        +'<div style="font-size:11px;color:#94A2B6;">'+esc(cur.on_date)
+          +(days>=8?'（'+days+'日前・そろそろ確認を）':(days===0?'（今日）':'（'+days+'日前）'))+'</div>'
+      +'</div>'
+      +(cur.note?'<div style="font-size:12px;color:#18202E;margin-top:6px;">「'+esc(cur.note)+'」</div>':'')
+      +(rows.length>1?'<div style="font-size:11px;color:#94A2B6;margin-top:7px;line-height:1.8;">推移：'
+        +rows.slice().reverse().map(function(x){
+          return esc(x.on_date.slice(5).replace('-','/'))+' '+Number(x.balance).toLocaleString('ja-JP')+'万';
+        }).join(' → ')+'</div>':'')
+      +'</div>';
   }
 
   //  一覧では全文は要らない。切ったことが分かるように「…」を付ける
@@ -10231,6 +10380,27 @@
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
+  //  社長が入れた手元資金を、継ナビくんの手元に渡す。これが無いと
+  //  月次の古い数字で「資金繰りが不安です」に答えることになる。
+  async function knvCashNote(){
+    try{
+      if(!SCOPE) return '';
+      var r=await sb.from('cash_checkins').select('balance,note,on_date')
+        .eq('customer_id',SCOPE).order('on_date',{ascending:false}).limit(3);
+      if(r.error || !(r.data||[]).length) return '';
+      var rows=r.data, cur=rows[0];
+      var t=' 【いまの手元資金】社長ご本人の申告で、'+cur.on_date+'時点の手元資金は'
+        +Number(cur.balance).toLocaleString('ja-JP')+'万円です。'
+        +(cur.note?'そのときの一言は「'+cur.note+'」でした。':'');
+      if(rows.length>1){
+        t+='直近の推移は '+rows.slice().reverse().map(function(x){
+          return x.on_date+'に'+Number(x.balance).toLocaleString('ja-JP')+'万円';
+        }).join('、')+' です。';
+      }
+      return t+'資金繰りやお金の話では、月次の試算表よりこちらを優先してください。'
+        +'ただし社長の申告なので、断定はせず「お聞きしている◯◯万円をもとにすると」と前置きすること。';
+    }catch(e){ return ''; }
+  }
   function knvCtxNote(){
     try{
       var id=window.__CUR_SEC; if(!id) return '';
@@ -10285,12 +10455,58 @@
   //   質問ひな形が入力欄に入る。漏れやすい前提（金額・期限・相手など）を最初から尋ねる設計。
   // ②AIフォローアップ：回答末尾の [Q] 行を解析し、次に聞くとよい深掘り質問をボタンで提示。
   var SEC_FU=[]; // 直近の回答が提案したフォローアップ質問
+  // ===== 継ナビくんからの、週に1問 =====
+  //  「何を相談すべきか」が分からない、という詰まり方がいちばん多い。
+  //  質問ガイドはあるが、そこから選ぶことも能動的な行為で、迷っている人は
+  //  そもそも開かない。だからこちらから聞く。
+  //
+  //  週に1問だけにする。毎日だと催促になり、月1だと忘れられる。
+  //  答えは経営課題の種になるので、継ナビくんには「課題として整理して」
+  //  までを頼む。
+  var KNV_WEEKLY=[
+    ['最近いちばん時間を取られている作業はなんですか？',
+     '最近いちばん時間を取られている作業は◯◯です。減らす方法を一緒に考えてください。減らせない場合は、その理由も教えてください。'],
+    ['いま、いちばん気がかりなことはなんですか？',
+     'いま、いちばん気がかりなことは◯◯です。何から手をつけるべきか、順番を整理してください。'],
+    ['この3か月で、いちばん増えた費用はなんですか？',
+     'この3か月で、いちばん増えた費用は◯◯です。放っておくとどうなるか、今できる手はあるかを教えてください。'],
+    ['社長ご自身にしかできない仕事は、いまいくつありますか？',
+     '私にしかできない仕事が◯◯あります。人に渡していくとしたら、どれから、どうやって渡すべきでしょうか。'],
+    ['去年の同じ時期と比べて、良くなったことはなんですか？',
+     '去年の同じ時期と比べて、◯◯が良くなりました。この流れを続けるために、次に打つべき手を教えてください。'],
+    ['お客様から最近言われて、気になった一言はありますか？',
+     'お客様から「◯◯」と言われました。ここから読み取れることと、次に確かめるべきことを教えてください。'],
+    ['5年後、この会社はどうなっていてほしいですか？',
+     '5年後、この会社は◯◯であってほしいと思っています。そこから逆算して、今年やるべきことを整理してください。']
+  ];
+  //  何週目かで選ぶ。日ではなく週で変わるので、月曜も金曜も同じ問いになる。
+  //  「今週の問い」であることが、答えなくてよい自由も伝える。
+  //
+  //  そのまま7日で割ると、区切りが木曜に来る（1970年1月1日が木曜のため）。
+  //  週の途中で問いが変わってしまうので、4日ずらして月曜始まりにする。
+  function knvWeeklyIdx(){
+    var jst=Date.now()+9*3600000;
+    var w=Math.floor((jst-4*86400000)/(7*86400000));
+    return ((w%KNV_WEEKLY.length)+KNV_WEEKLY.length)%KNV_WEEKLY.length;
+  }
+  function knvWeekly(){
+    if(aisecPortal()!=='customer') return null;      // 聞く相手は経営者
+    return KNV_WEEKLY[knvWeeklyIdx()];
+  }
+
   function knvSugsRender(){
     var sugs=$('knv-sugs'); if(!sugs) return;
     var fu=(SEC_FU&&SEC_FU.length)?SEC_FU:null;
     var chips=fu||secSuggests().slice(0,2).concat(['TsuguAiの使い方を知りたい']);
     var h='<button class="ai-sug" style="border-color:#cfa860;color:#8A6A12;background:#FDFAF1;" onclick="knvGuideToggle()">🧭 質問ガイド</button>'
       +'<button class="ai-sug" onclick="knvSearchToggle()" title="相談履歴を検索">🔍 履歴</button>';
+    //  深掘りの候補が出ているときは、そちらが優先。問いを重ねない
+    var wk=fu?null:knvWeekly();
+    if(wk){
+      h+='<button class="ai-sug" style="border-color:#B7CBE8;color:#1E3A66;background:#F4F8FD;" '
+        +'onclick="secAsk(this,\'knv\')" data-q="'+escA(wk[1])+'" title="今週、継ナビくんからの問いです">'
+        +'💬 '+esc(wk[0])+'</button>';
+    }
     h+=chips.map(function(s){ return '<button class="ai-sug" onclick="secAsk(this,\'knv\')" data-q="'+escA(s)+'">'+(fu?'🔍 ':'')+esc(s)+'</button>'; }).join('');
     sugs.innerHTML=h;
   }
@@ -12957,7 +13173,8 @@
     var rag='';
     if(aisecPortal()==='consultant'){ try{ rag=knRagContext(t, await knRagFetch()); }catch(e){} }
     var agenda=null; try{ agenda=await knvAgendaFetch(); }catch(e){}
-    var sys=SEC_SYS+secUsageGuide()+knvCtxNote()+knvAgendaNote(agenda)+calAskNote()+secDrillNote()+rag;
+    var cash=''; if(aisecPortal()==='customer'){ try{ cash=await knvCashNote(); }catch(e){} }
+    var sys=SEC_SYS+secUsageGuide()+knvCtxNote()+cash+knvAgendaNote(agenda)+calAskNote()+secDrillNote()+rag;
     var msgs=secApiMsgs();
     try{
       var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:msgs, model:model, max_tokens:1400 } });
@@ -15262,7 +15479,10 @@
       if(t && (!first || t<first)) first=t;
     });
     var annual=insImp+maSav;
-    if(!annual){ box.innerHTML=''; return; }                  // 実績が無いうちは何も出さない
+    //  金額が立つ前の数週間が、いちばん不安な時期になる。ここが空欄だと
+    //  「何にお金を払っているのか」だけが残る。何が、いつ届くのかを
+    //  約束として先に出す。空欄で待たせるより、期日を示すほうが待てる。
+    if(!annual){ await myPromiseCard(box); return; }
     var months=1;
     if(first){
       var el=(Date.now()-Date.parse(first))/(1000*60*60*24*30.44);
@@ -15286,6 +15506,49 @@
       +'<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="goSec(\'sec-ins\')">試算結果</span>と'
       +'<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="goSec(\'sec-reports\')">月次レポート</span>でご確認いただけます。</div>'
     +'</div>';
+  }
+
+  //  まだ成果の金額が立っていない顧客に、これから届くものを示す。
+  //  導入診断報告書の4つの成果物が、初期費用に対する最初の対価になる。
+  var OBR_DAYS=28;                                   // 登録から4週間を目安にする
+  async function myPromiseCard(box){
+    if(!box) return;
+    box.innerHTML='';
+    try{
+      var r=await Promise.all([
+        sb.from('profiles').select('created_at').eq('id',SCOPE).limit(1),
+        sb.from('onboarding_reports').select('status').eq('customer_id',SCOPE).limit(1)
+      ]);
+      //  もう報告書が公開されているなら、約束は役目を終えている
+      var obr=(r[1].error?[]:(r[1].data||[]))[0];
+      if(obr && obr.status==='published') return;
+      var prof=(r[0].error?[]:(r[0].data||[]))[0];
+      if(!prof || !prof.created_at) return;
+      var start=Date.parse(prof.created_at);
+      if(!isFinite(start)) return;
+      var days=Math.floor((Date.now()-start)/86400000);
+      //  半年たってなお何も無いなら、それは約束ではなく督促になる。出さない
+      if(days>180) return;
+      var due=new Date(start+OBR_DAYS*86400000);
+      var dueS=(due.getMonth()+1)+'月'+due.getDate()+'日';
+      var late=(days>OBR_DAYS);
+      var items=['企業価値診断書（いまの会社の値段）','資金繰り現状レポート',
+                 '保険・固定費の棚卸し','12ヶ月の改善ロードマップ'];
+      box.innerHTML='<div style="border:1.5px solid #CFE3D6;background:rgba(39,104,74,.07);border-radius:12px;padding:14px 16px;margin-top:12px;">'
+        +'<div style="font-size:13.5px;font-weight:700;color:#27684A;margin-bottom:7px;">これからお届けするもの</div>'
+        +'<div style="font-size:12px;color:#5A6981;line-height:1.85;margin-bottom:9px;">'
+        +(late
+          ? '担当パートナーが準備を進めています。お急ぎでしたら、<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="knvOpenMsg()">メッセージ</span>でお声がけください。'
+          : '<b style="color:#27684A;">'+esc(dueS)+'ごろまで</b>に、担当パートナーから次の4つをお渡しします。')
+        +'</div>'
+        +'<div style="font-size:12.5px;color:#18202E;line-height:2;">'
+        +items.map(function(t,i){ return '<div>'+(i+1)+'. '+esc(t)+'</div>'; }).join('')
+        +'</div>'
+        +'<div style="font-size:11px;color:var(--muted);line-height:1.75;margin-top:9px;">'
+        +'この4つが揃うと、削減できる費用や会社の値段が数字で見えるようになります。'
+        +'そのあとは、ここに「これまでに増えた現金」が出ます。</div>'
+      +'</div>';
+    }catch(e){ box.innerHTML=''; }
   }
 
   // ============================================================
