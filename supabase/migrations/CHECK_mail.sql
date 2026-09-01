@@ -49,7 +49,9 @@ select n.nspname as スキーマ,
 -- ---------------------------------------------------------------
 --  pg_net を使って送っている場合だけ出る。「関係がありません」と出たら
 --  pg_net 経由ではないということなので、それはそれで手がかりになる。
-select id, created, url, left(coalesce(headers::text,''), 120) as 見出し
+--  headers は応答側（_http_response）と要求側（http_request_queue）の両方に
+--  あるため、q. を付けて要求側だと明示する。付けないと ambiguous で止まる。
+select q.id, r.created, q.url, left(coalesce(q.headers::text,''), 120) as 見出し
   from net._http_response r
   join net.http_request_queue q using (id)
  order by id desc
@@ -59,6 +61,13 @@ select id, created, url, left(coalesce(headers::text,''), 120) as 見出し
 -- =============================================================
 -- このあと
 -- ---------------------------------------------------------------
+--  【2026-09-01 の実行結果】
+--    1 の結果、送り主は monthly-report（毎月1日 0:00 UTC ＝ 9:00 JST）と判明。
+--    あわせて daily-reminder（毎日 23:00 UTC ＝ 8:00 JST）も、この
+--    リポジトリに無い Edge Function だと分かった。
+--    2 は 6件出たがすべて %運営% に当たっただけの無関係な関数で、
+--    メールを送っているデータベース関数は無い。
+--
 --  1 で見つかった Edge Function 名（例: monthly-report）を
 --  Dashboard → Edge Functions → その名前 → Code で開き、中身をそのまま
 --  貼って教えてください。件名の【Tsugu運営】と、末尾の「— Tsugu 自動レポート」
