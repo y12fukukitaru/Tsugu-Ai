@@ -22,7 +22,11 @@ const CRON_SECRET = Deno.env.get("CRON_SECRET")!;
 
 // ---- Phase 2: 配信チャネル（未設定のチャネルは自動的にスキップされる） ----
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";                 // メール配信（Resend）
-const MAIL_FROM = Deno.env.get("MAIL_FROM") ?? "TsuguAi 継ナビくん <onboarding@resend.dev>";
+//  差出人名は「TsuguAi -継-」で通す。受信箱に並んだときに、どこから来た
+//  メールなのかが名前だけで分かるようにするため。ここは Secret の MAIL_FROM が
+//  設定されていればそちらが勝つので、実際に届く名前を変えるときは
+//  Supabase の Secrets 側（MAIL_FROM）も同じ書き方に揃えること。
+const MAIL_FROM = Deno.env.get("MAIL_FROM") ?? "TsuguAi -継- <onboarding@resend.dev>";
 const APP_URL = Deno.env.get("APP_URL") ?? "https://y12fukukitaru.github.io/Tsugu-Ai/";
 const VAPID_PUBLIC = Deno.env.get("VAPID_PUBLIC_KEY") ?? "";             // プッシュ通知（Web Push）
 const VAPID_PRIVATE = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
