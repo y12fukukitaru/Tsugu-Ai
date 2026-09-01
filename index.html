@@ -1201,8 +1201,11 @@
     </div>
     <div id="knv-guide" class="hidden" style="background:#FDFAF1;border:1px solid #EAD9AC;border-radius:10px;padding:9px 11px;margin-bottom:8px;max-height:210px;overflow:auto;"></div>
     <div id="knv-sugs" class="ai-sugrow" style="margin-bottom:8px;"></div>
+    <div id="knv-ask-pv"></div>
     <div style="display:flex;gap:8px;align-items:flex-end;">
-      <textarea id="knv-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="相談・使い方の質問など、なんでもどうぞ"></textarea>
+      <input type="file" id="knv-ask-file" class="hidden" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" onchange="knvAskAttach(this)">
+      <button class="ghost" id="knv-ask-att" style="font-size:15px;border:1px solid var(--line);border-radius:9px;padding:8px 11px;line-height:1;flex:0 0 auto;" onclick="knvAskPick()" title="画面の写しやファイルを添えて聞く" aria-label="ファイルを添える">📎</button>
+      <textarea id="knv-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="相談・使い方の質問など、なんでもどうぞ（画面の写しはそのまま貼れます）"></textarea>
       <button class="btn2" id="knv-send" onclick="secretarySend('knv')">送信</button>
     </div>
   </div>
@@ -1320,7 +1323,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260826-11';
+  var APP_BUILD='20260901-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -10165,12 +10168,12 @@
     if(aisecPortal()==='consultant'){
       return common
         +'【パートナーポータルの画面ガイド】'
-        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全4章10レッスン)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介／営業ツール=課題ヒアリング診断(見込み客との商談用)／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugu投資・融資・M&A=プラットフォーム内マッチング(掲載は運営への申請制)／各種シミュレーター=事業承継・株対策/医療法人持分/退職金／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ)。'
+        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全4章10レッスン)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介／営業ツール=課題ヒアリング診断(見込み客との商談用)／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugu投資・融資・M&A=プラットフォーム内マッチング(掲載は運営への申請制)／各種シミュレーター=事業承継・株対策/医療法人持分/退職金／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ)。'
         +'操作説明書は右下パネルの「サポート」タブから開けます。毎朝の「今日の一手」とお知らせは右下ボタンのバッジに届きます。';
     }
     return common
       +'【経営者ダッシュボードの画面ガイド】'
-      +'ダッシュボード=全体の入口／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=試算表の入力と資金繰りシミュレーター／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=業務の自動化診断／M&A活用=利益のM&A活用の提案／Tsugu投資・融資・M&A=マッチング掲載。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE)／サポート(操作説明書)。'
+      +'ダッシュボード=全体の入口／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=試算表の入力と資金繰りシミュレーター／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=業務の自動化診断／M&A活用=利益のM&A活用の提案／Tsugu投資・融資・M&A=マッチング掲載。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE)／サポート(操作説明書)。'
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
@@ -10373,7 +10376,18 @@
   }
   function aisecLoad(){ aisecMigrate(); return aisecPruneKey(aisecKey()); }
   function aisecSave(){
-    try{ var arr=SEC_MSGS.filter(function(m){ return m.content!=='（考え中…）'; }); localStorage.setItem(aisecKey(), JSON.stringify(arr)); }catch(e){}
+    try{
+      var arr=SEC_MSGS.filter(function(m){ return m.content!=='（考え中…）'; }).map(function(m){
+        if(!m.att) return m;
+        //  絵の中身は控えない。写し1枚で数MBになり、localStorage はすぐ
+        //  一杯になる。あふれると例外が出て、この try が会話まるごと
+        //  控え損ねる。名前だけ残し、絵は画面を開き直すと消える。
+        var c={}; for(var k in m){ if(Object.prototype.hasOwnProperty.call(m,k)) c[k]=m[k]; }
+        c.att={ name:m.att.name, media_type:m.att.media_type };
+        return c;
+      });
+      localStorage.setItem(aisecKey(), JSON.stringify(arr));
+    }catch(e){}
   }
   function aisecPruneAll(){
     try{ var pre='tsugu_aisec_'+((typeof ME!=='undefined'&&ME)?ME:'guest')+'_'; for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i); if(k&&k.indexOf(pre)===0) aisecPruneKey(k); } }catch(e){}
@@ -10403,6 +10417,7 @@
     knvShowTab('chat');
     knvMaxRestore();
     fab.classList.remove('hidden');
+    knvAskPvClear(); knvAskBindPaste();
     renderSecLog();
     if((window.__eff||'')==='admin') knvAdminBadge();
   }
@@ -10787,6 +10802,110 @@
     if(ab)ab.disabled=false; if(sb2)sb2.disabled=false;
     if(note){ note.innerHTML=noteOld; }
   }
+
+  // ===== 相談タブ：質問に画面の写しやファイルを添える =====
+  //  「この画面のここが分からない」を文字だけで説明するのは難しい。写しが
+  //  あれば一目で伝わる。メッセージ側と同じ「貼る・引き寄せる・選ぶ」の
+  //  三通りにそろえ、覚え直さなくて済むようにする。
+  //
+  //  ただしメッセージ側とは行き先が違う。あちらは相手に届ける荷物なので
+  //  Storage に置くが、こちらは継ナビくんに読ませるだけなので、その場で
+  //  base64 にして問い合わせに同梱する。置き場所を作らないぶん、消し忘れも
+  //  出ない。
+  var KNV_ASK=null;                                    // 質問に添える1枚
+  var KNV_ASK_MAX=5*1024*1024;                         // Claudeが1枚で受け取れる上限に合わせる
+  var KNV_ASK_TYPES=['image/png','image/jpeg','image/webp','image/gif','application/pdf'];
+  function knvAskPick(){ var f=$('knv-ask-file'); if(f) f.click(); }
+  function knvAskBindPaste(){
+    var inp=$('knv-input'), log=$('knv-log');
+    if(inp && !inp.__askPaste){
+      inp.__askPaste=1;
+      inp.addEventListener('paste', function(e){
+        var f=knvImgFromClipboard(e.clipboardData);
+        if(!f) return;                 // 文字の貼り付けはこれまでどおり
+        e.preventDefault();
+        knvAskPreview(f);
+      });
+    }
+    //  受け皿はやりとりの表示と入力欄の両方。どちらに落としても届く
+    [log, inp].forEach(function(el){
+      if(!el || el.__askDrop) return;
+      el.__askDrop=1;
+      el.addEventListener('dragover', function(e){ e.preventDefault(); el.classList.add('knv-drop'); });
+      el.addEventListener('dragleave', function(){ el.classList.remove('knv-drop'); });
+      el.addEventListener('drop', function(e){
+        e.preventDefault(); el.classList.remove('knv-drop');
+        var f=(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) || null;
+        if(f) knvAskPreview(f);
+      });
+    });
+  }
+  function knvAskAttach(fileInp){
+    var f=fileInp && fileInp.files && fileInp.files[0];
+    fileInp.value='';
+    if(f) knvAskPreview(f);
+  }
+  //  添える前に小さく見せる。押し間違いにその場で気づける
+  function knvAskPreview(f){
+    var box=$('knv-ask-pv'); if(!box||!f) return;
+    var mt=String(f.type||'');
+    if(KNV_ASK_TYPES.indexOf(mt)<0){ alert('画像（PNG・JPEG・WebP・GIF）かPDFを選んでください。'); return; }
+    if(f.size>KNV_ASK_MAX){ alert('ファイルが大きすぎます（5MBまで）。\n画面の写しであれば、必要なところだけを切り取ると小さくなります。'); return; }
+    var nm=(!f.name || f.name==='image.png' || !f.name.indexOf('image.')) ? knvShotName(f) : f.name;
+    box.innerHTML='<div class="knv-pv"><div class="t">読み込んでいます…</div></div>';
+    var rd=new FileReader();
+    rd.onerror=function(){ box.innerHTML=''; alert('ファイルを読み込めませんでした。'); };
+    rd.onload=function(){
+      var b64=String(rd.result||'').split(',')[1]||'';
+      if(!b64){ box.innerHTML=''; alert('ファイルを読み込めませんでした。'); return; }
+      KNV_ASK={ name:nm, media_type:mt, data:b64, size:f.size };
+      knvAskPvRender();
+    };
+    rd.readAsDataURL(f);
+  }
+  function knvAskPvRender(){
+    var box=$('knv-ask-pv'); if(!box) return;
+    if(!KNV_ASK){ box.innerHTML=''; return; }
+    var a=KNV_ASK, isImg=a.media_type.indexOf('image/')===0;
+    box.innerHTML='<div class="knv-pv">'
+      +(isImg?'<img src="data:'+a.media_type+';base64,'+a.data+'" alt="">'
+             :'<div style="width:56px;height:56px;border-radius:7px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;">📄</div>')
+      +'<div class="t"><b>'+esc(a.name)+'</b><i>'+knvSize(a.size)+'　質問と一緒に継ナビくんへ届きます</i></div>'
+      +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:6px 11px;" onclick="knvAskPvClear()">外す</button>'
+    +'</div>';
+  }
+  function knvAskPvClear(){ KNV_ASK=null; var b=$('knv-ask-pv'); if(b) b.innerHTML=''; }
+  //  会話の中の添付を、送った本人の吹き出しに出す
+  function secAttHtml(a){
+    if(!a) return '';
+    if(a.media_type && a.media_type.indexOf('image/')===0 && a.data){
+      return '<img src="data:'+a.media_type+';base64,'+a.data+'" alt="'+esc(a.name||'')+'" '
+        +'style="display:block;max-width:100%;max-height:200px;border-radius:8px;margin-bottom:7px;">';
+    }
+    //  絵の中身は保存していないので、開き直したあとは名前だけになる
+    return '<span style="display:inline-block;font-size:11.5px;background:rgba(255,255,255,.16);'
+      +'border:1px solid rgba(255,255,255,.28);border-radius:7px;padding:4px 9px;margin-bottom:7px;">📎 '
+      +esc(a.name||'添付')+'</span><br>';
+  }
+  //  問い合わせに載せる形へ。添付の中身は新しい2件だけ本体を送る。
+  //  古いものまで毎回運ぶと、往復のたびに同じ絵を送ることになり、
+  //  待ち時間も費用も積み上がる。外した分は名前だけ文で伝える。
+  function secApiMsgs(){
+    var live=SEC_MSGS.filter(function(m){ return m.content!=='（考え中…）'; });
+    var full={}, n=0;
+    for(var i=live.length-1;i>=0;i--){
+      if(live[i].att && live[i].att.data && n<2){ full[i]=1; n++; }
+    }
+    return live.map(function(m,i){
+      if(!m.att) return { role:m.role, content:m.content };
+      if(!full[i]) return { role:m.role, content:m.content+'\n（このとき「'+m.att.name+'」を添付。中身は今回の問い合わせには含めていません）' };
+      return { role:m.role, content:[
+        { type:(m.att.media_type==='application/pdf')?'document':'image',
+          source:{ type:'base64', media_type:m.att.media_type, data:m.att.data } },
+        { type:'text', text:m.content }
+      ]};
+    });
+  }
   // 添付を開く：署名付きURL（10分有効）を発行して別タブで表示
   async function knvAttOpen(p){
     try{
@@ -11056,7 +11175,7 @@
         var thinking=(m.content==='（考え中…）');
         var inner=thinking?tsgThinking():(me?esc(m.content):mdLite(m.content));
         if(me){
-          h+='<div data-mi="'+mi+'" style="display:flex;justify-content:flex-end;margin-bottom:10px;"><div class="ai-bubble-me">'+inner+'</div></div>';
+          h+='<div data-mi="'+mi+'" style="display:flex;justify-content:flex-end;margin-bottom:10px;"><div class="ai-bubble-me">'+secAttHtml(m.att)+inner+'</div></div>';
         }else{
           // 継ナビくんの発言：顔チップ＋名前ラベル＋吹き出し
           var tag=m.model?' <span style="font-weight:400;color:#94A2B6;letter-spacing:0;">'+esc(m.model)+'</span>':'';
@@ -12603,11 +12722,19 @@
   async function secretarySend(src){
     src=src||'sec';
     var inp=$(src+'-input'); if(!inp)return;
-    var t=inp.value.trim(); if(!t)return;
+    var t=inp.value.trim();
+    //  添付だけで送られることがある。写しを貼って、聞きたいことは
+    //  絵を見れば分かる、という場面。そのときは問いをこちらで補う。
+    var att=KNV_ASK;
+    if(!t && !att) return;
+    if(!t) t='添付した画面について教えてください。';
     var turns=SEC_MSGS.filter(function(m){ return m.role==='user'; }).length;
-    var model=pickModel(t, turns);
+    //  添付があるときは読み取りの精度を優先して、事務作業ぶんの
+    //  切り替えをしない
+    var model=att?'claude-opus-4-8':pickModel(t, turns);
     var label=(model.indexOf('opus')>=0)?'じっくり考えて回答':'すばやく回答';
-    SEC_MSGS.push({role:'user',content:t,ts:Date.now()}); inp.value='';
+    SEC_MSGS.push({role:'user',content:t,att:att,ts:Date.now()}); inp.value='';
+    if(att) knvAskPvClear();
     SEC_MSGS.push({role:'assistant',content:'（考え中…）'}); renderSecLog();
     var btn=$(src+'-send'); if(btn)btn.disabled=true;
     SEC_FU=[]; knvSugsRender();
@@ -12615,7 +12742,7 @@
     if(aisecPortal()==='consultant'){ try{ rag=knRagContext(t, await knRagFetch()); }catch(e){} }
     var agenda=null; try{ agenda=await knvAgendaFetch(); }catch(e){}
     var sys=SEC_SYS+secUsageGuide()+knvCtxNote()+knvAgendaNote(agenda)+calAskNote()+secDrillNote()+rag;
-    var msgs=SEC_MSGS.filter(function(m){return m.content!=='（考え中…）';}).map(function(m){return {role:m.role,content:m.content};});
+    var msgs=secApiMsgs();
     try{
       var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:msgs, model:model, max_tokens:1400 } });
       if(SEC_MSGS.length && SEC_MSGS[SEC_MSGS.length-1].content==='（考え中…）') SEC_MSGS.pop();
