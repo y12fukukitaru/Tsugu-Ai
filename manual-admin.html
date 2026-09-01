@@ -190,7 +190,7 @@ ul.dots li{font-size:14.5px;}
     <tr><th>専門家ネットワーク</th><td>領域カバレッジ／顧客の業種分布／提携専門家の名簿／紹介依頼の受信箱。</td></tr>
         <tr><th>補助金マスタ</th><td>公募中の補助金制度を運営が登録します。登録した制度は、要件に合う顧客のカルテに<b>候補として自動で並びます</b>。</td></tr>
         <tr><th>Tsugu投資・融資・M&A</th><td>掲載案件の管理と、パートナーからの掲載申請の審査。</td></tr>
-    <tr><th>課金・契約</th><td>MRR試算、顧問料の割引設定（<b>変更は自動保存され運営全員に共有</b>）、決済リンク、入金履歴、<b>パートナー報酬の配分</b>。</td></tr>
+    <tr><th>課金・契約</th><td>MRR試算、料率パラメータ（<b>変更は自動保存され運営全員に共有</b>）、決済リンク、入金履歴、<b>パートナー報酬の配分</b>。</td></tr>
     <tr><th>監査ログ</th><td>操作履歴。コンプライアンス対応の証跡。</td></tr>
     <tr><th>お知らせ配信／サポート管理</th><td>一斉配信と、パートナーからの問い合わせ対応・AIナレッジ管理。</td></tr>
     <tr><th>継ナビくん <span class="pill">画面右下</span></th><td>メニューではなく<b>画面右下のボタン</b>から開きます。相談／<b>📅 予定</b>（カレンダー。運営の週次計画と補助金の締切も自動で並びます）／お知らせ／連携（LINE・スマホ通知）／サポート（操作説明書）。運営には顧客とのメッセージタブは出ません。</td></tr>
@@ -342,10 +342,41 @@ ul.dots li{font-size:14.5px;}
 </section>
 
 <!-- ===== 支払い章 ===== -->
+<section class="slide" data-t="顧客への配信" data-g="数字を見る">
+  <div class="eyebrow">プロアクティブAI</div>
+  <h2>誰に、いつ、何が届くか</h2>
+  <p class="sub"><code>agent-heartbeat</code> が毎朝6時（JST）に走ります。<b>相手によって頻度が違います。</b></p>
+  <table class="kv">
+    <tr><th>パートナー</th><td><b>毎朝</b>「今日の一手」。担当顧客全社のシグナルから3件まで。ほかに面談準備ブリーフ、新人指南、承継レーダー（月）、M&amp;Aマッチング（水）、ナレッジ便り（金）。</td></tr>
+    <tr><th>経営者</th><td><b>毎週月曜の朝</b>「今週のひとこと」。今週の予定・新しい月次レポート・期日超過の課題・未返信のメッセージ・手元資金の記録から。<br><b>面談の前日</b>にもお知らせが出ます（曜日を問いません）。</td></tr>
+    <tr><th>運営</th><td>月次レポートの自動生成の結果メール（<code>monthly-report</code>／毎月1日）。</td></tr>
+  </table>
+  <div class="note r" style="margin-top:14px;"><b>経営者向けは、もとは毎朝でした。</b>社長は毎朝アプリを開く方ではなく、毎朝届く通知は3週間ほどで無視されるようになります。無視された通知は二度と読まれないため、<b>週に一度</b>に改めました。<br>ただし<b>初めての方には曜日を待たせません</b>。登録した週にいちども便りが来ないのは、いちばん期待されている時期に沈黙することになるためです。</div>
+  <div class="note" style="margin-top:10px;">お伝えすることが無い週は<b>送りません</b>。中身の無い便りを送ると、次から開かれなくなります。</div>
+</section>
+
+<section class="slide" data-t="相談と手元資金" data-g="数字を見る">
+  <div class="eyebrow">運営にも見えないもの</div>
+  <h2>継ナビくんへの相談は、運営も読めません</h2>
+  <p class="sub">経営者と継ナビくんの会話は <code>ai_messages</code> に保存されますが、<b>権限（RLS）で本人以外は読めません。運営も例外ではありません。</b></p>
+  <div class="grid g3">
+    <div class="card w"><h3>なぜそうしたか</h3><p>全部が見えると分かった瞬間、経営者は継ナビくんに本音を書かなくなります。<b>夜中に弱音を吐ける場所であること</b>が、この機能の価値そのものです。</p></div>
+    <div class="card g"><h3>伝わるのは押されたぶんだけ</h3><p>顧客が「担当パートナーに伝える」を押すと <code>ai_shares</code> に<b>写しが作られ</b>、担当・副担当・運営が読めます。参照ではなく写しなので、あとで顧客が履歴を消しても残ります。</p></div>
+    <div class="card"><h3>受け取った側は書き換えられない</h3><p>問いと答えは社長の言葉です。担当が触れるのは<b>「読んだ印」だけ</b>で、それ以外はデータベース側の引き金で止めています。</p></div>
+  </div>
+  <h3 style="font-size:16px;margin:22px 0 8px;">社長からの手元資金（<code>cash_checkins</code>）</h3>
+  <table class="kv tight">
+    <tr><th>入れるのは本人だけ</th><td>経営者がダッシュボードから、いまの預金残高（万円）を1日1行。<b>任意</b>です。</td></tr>
+    <tr><th>担当・運営は読むだけ</th><td>書き換えられません。書き換えられたら、それは社長の申告ではなくなります。</td></tr>
+    <tr><th>薄いときは手当てが出る</th><td>顧客の画面に、支払予定からの見通しと<b>押せる先が3つ</b>出ます。「担当パートナーに知らせる」を押すと、残高入りのメッセージが担当に届きます。</td></tr>
+  </table>
+  <div class="note" style="margin-top:12px;"><b>問い合わせを受けたときの答え方。</b>「継ナビくんに相談した内容を運営で確認してほしい」と言われても<b>読めません</b>。顧客ご本人に、その回答の下の「✉️ 担当パートナーに伝える」を押していただくようご案内してください。</div>
+</section>
+
 <section class="slide divider" data-t="■ 支払い・課金の章" data-g="お金の章">
   <div class="mark">SECTION</div>
   <h1>課金・契約管理／<br>支払いのすべて</h1>
-  <p class="sub">MRR試算・顧問料の割引・決済リンク・入金記録・パートナー報酬の配分</p>
+  <p class="sub">MRR試算・料率パラメータ・決済リンク・入金記録・パートナー報酬の配分</p>
 </section>
 
 <section class="slide" data-t="課金の全体像" data-g="お金の章">
@@ -357,9 +388,9 @@ ul.dots li{font-size:14.5px;}
     <div><b>出ていく</b>パートナー報酬<br>（外注費率×配分）</div>
   </div>
   <table class="kv">
-    <tr><th>① 概要</th><td>MRRの自動試算、料率パラメータ、顧問料の割引設定、M&A仲介フィー計算。<b>料率・割引の変更は自動保存</b>され、運営メンバー全員のコンソールで同じ値が使われます。</td></tr>
+    <tr><th>① 概要</th><td>MRRの自動試算、料率パラメータ、M&A仲介フィー計算。<b>料率の変更は自動保存</b>され、運営メンバー全員のコンソールで同じ値が使われます。</td></tr>
     <tr><th>② パートナー別</th><td>パートナーごとの月額内訳（基本＋顧問先加算）。</td></tr>
-    <tr><th>③ 顧客別</th><td>顧客ごとの顧問料（割引適用後）と、割引の内訳。</td></tr>
+    <tr><th>③ 顧客別</th><td>顧客ごとの顧問料。<b>全社一律45,000円（税別）</b>なので、内訳は社数と加算のぶんだけです。</td></tr>
     <tr><th>④ 決済リンク</th><td>Stripeの決済リンクを登録。顧客・パートナーの「お支払い」に即時反映。</td></tr>
     <tr><th>⑤ 売上・入金履歴</th><td>Stripe自動記録＋手動記録の一覧。<b>ここに「パートナー報酬の配分」があります。</b></td></tr>
     <tr><th>⑥ 売上目標・実績</th><td>年間目標に対する達成状況（区分別）。</td></tr>
@@ -373,27 +404,43 @@ ul.dots li{font-size:14.5px;}
   <table class="kv num">
     <tr><th>パートナー基本</th><td>パートナー1名あたりの月額利用料</td><td>3,000 円/月</td></tr>
     <tr><th>顧問先1社あたり加算</th><td>パートナーの担当顧客1社ごとの加算</td><td>2,000 円/月</td></tr>
-    <tr><th>顧問料</th><td>顧客1社あたりの月額顧問料（定価）</td><td>50,000 円/月</td></tr>
+    <tr><th>顧問料</th><td>顧客1社あたりの月額顧問料（<b>税別・一律</b>）</td><td>45,000 円/月</td></tr>
     <tr><th>運営直接担当</th><td>運営が直接担当する顧客の一律料金</td><td>30,000 円/月</td></tr>
     <tr><th>初期登録料</th><td>新規顧客の初回のみ</td><td>100,000 円</td></tr>
+    <tr><th>AI利用料</th><td>パートナーが継へお支払い</td><td>2,000 円/社・月</td></tr>
+    <tr><th>担当者登録使用料</th><td><b>エンタープライズ型のみ</b>。法人パートナーの負担</td><td>3,000 円/人・月</td></tr>
   </table>
-  <div class="note r" style="margin-top:12px;"><b>運営直接担当は割引・階層付与の対象外です。</b>パートナーへの外注費が発生しないため一律料金としています。担当パートナーが運営アカウントの顧客は、自動的にこの扱いになります。</div>
+  <div class="note r" style="margin-top:12px;"><b>運営直接担当は30,000円の一律で、外注費の配分もありません。</b>パートナーへの外注費が発生しないためです。担当パートナーが運営アカウントの顧客は、自動的にこの扱いになります。</div>
 </section>
 
-<section class="slide" data-t="顧問料の割引ロジック" data-g="お金の章">
+<section class="slide" data-t="顧問料は一律（割引は廃止）" data-g="お金の章">
   <div class="eyebrow pay">課金・契約 ①概要</div>
-  <h2>顧問料の割引ロジック</h2>
-  <p class="sub">3つの割引を合算し、上限で頭打ちにしてから顧問料に適用します。</p>
+  <h2>顧問料は 45,000円（税別）の一律です</h2>
+  <p class="sub">かつては契約社数・HD化・階層による3つの割引を合算し、上限10%で頭打ちにしていました。<b>これらはすべて廃止しました。</b>顧客ごとに料金が変わらないため、見積りも精算も一目で確かめられます。</p>
   <div class="grid g3">
-    <div class="card"><h3>A. 契約社数による割引</h3><p>2〜4社：<b>3%</b><br>5社〜：<b>5%</b><br><span style="font-size:11.5px;">※ カルテの「契約社数」</span></p></div>
-    <div class="card"><h3>B. HD化ボーナス</h3><p>HD化経験あり：<b>5%</b><br><span style="font-size:11.5px;">※ カルテの「HD化を経験済み」チェック</span></p></div>
-    <div class="card"><h3>C. 担当パートナーの階層付与</h3><p>シニア：<b>2%</b><br>エグゼクティブ：<b>5%</b>（顧問契約5件）<br>プレミアム：<b>10%</b>（顧問契約10件）</p></div>
+    <div class="card g"><h3>基本顧問料</h3><p class="big" style="font-size:26px;">45,000円</p><p style="margin-top:6px;">/ 社・月（税別）。<b>全社共通</b>です。</p></div>
+    <div class="card"><h3>AI利用料</h3><p class="big" style="font-size:26px;color:var(--navy);">2,000円</p><p style="margin-top:6px;">/ 社・月。パートナーが継へお支払いいただきます。</p></div>
+    <div class="card"><h3>初期導入費</h3><p class="big" style="font-size:26px;color:var(--navy);">100,000円</p><p style="margin-top:6px;">/ 社。初回のみ、全社一律です。</p></div>
   </div>
-  <div class="calc" style="margin-top:14px;">
-    割引率 = <code>A + B + C</code>　→　<code>min(合算, 上限10%)</code>　→　顧問料 <code>50,000円 × (1 − 割引率)</code>
-    <br><span style="font-size:12.5px;color:var(--muted);">例：契約3社(3%) ＋ HD化(5%) ＋ シニア(2%) = 10% → 上限ちょうど → <span class="r">45,000円/月</span></span>
+  <div class="note r" style="margin-top:16px;"><b>画面から割引の入力欄そのものが無くなりました。</b>「契約社数」「HD化」のチェックは残っていますが、料金には影響しません。過去の精算を確かめるために残しているだけです。</div>
+</section>
+
+<section class="slide" data-t="消費税と源泉徴収" data-g="お金の章">
+  <div class="eyebrow pay">課金・契約 ①概要</div>
+  <h2>報酬は「税抜」に率を掛けます</h2>
+  <p class="sub">入金額には消費税が乗っています。<b>そのまま外注費率を掛けると、お預かりしている消費税まで配分してしまいます。</b>先に消費税を外してから率を掛けます。</p>
+  <div class="calc">
+    入金（税込） <code>55,000</code>　→　税抜 <code>50,000</code>　→　× 外注費率 <code>60%</code>　=　<span class="r">30,000円</span>
+    <br><span style="font-size:12.5px;color:var(--muted);">税抜への直しは1円未満を切り捨てます（<code>×10÷11</code>。<code>÷1.1</code> だと1円足りなくなります）。</span>
   </div>
-  <div class="note" style="margin-top:10px;">上位ランクが条件未達の場合は、<b>条件を満たす下位の率が付与</b>されます（例：エグゼクティブだが顧問3件なら、シニアの2%）。上限を超えた顧客は画面上で分かるように表示されます。</div>
+  <h3 style="font-size:16px;margin:22px 0 8px;">源泉徴収は「個人へのお支払い」だけ</h3>
+  <table class="kv num">
+    <tr><th>個人（個人事業主）</th><td>100万円までの部分</td><td>10.21%</td></tr>
+    <tr><th>同上</th><td>100万円を超える部分</td><td>20.42%</td></tr>
+    <tr><th>法人</th><td>源泉徴収は生じません</td><td>—</td></tr>
+    <tr><th>未設定</th><td><b>差し引きません</b>（分からないまま引くと、返す手間をお相手に負わせるため）</td><td>—</td></tr>
+  </table>
+  <div class="note" style="margin-top:12px;"><b>個人か法人かは、ご本人に登録していただきます。</b>パートナーの設定画面に「個人・法人の区別」があります。法人パートナー（エンタープライズ）は <code>ep_orgs</code> 側で持ちます。未登録の方には、設定をご案内してください。</div>
 </section>
 
 <section class="slide" data-t="決済リンク" data-g="お金の章">
@@ -404,9 +451,9 @@ ul.dots li{font-size:14.5px;}
     <li>Stripe側で<b>Payment Link</b>を作成する<span>作り方は納品資料「Stripe課金セットアップ手順」を参照。</span></li>
     <li>「対象」で<b>顧客</b>または<b>パートナー</b>を選ぶ</li>
     <li><b>対象顧客</b>を指定するか、「全顧客共通」にする<span>特定の会社を選ぶと、その顧客にだけ表示されます。<b>割引後の金額別リンクを割り当てる</b>ときに使います。</span></li>
-    <li>名称・URL・説明を入れて<b>追加</b><span>名称は顧客がそのまま読むので「月額顧問料（50,000円/月）」のように金額を含めると親切です。</span></li>
+    <li>名称・URL・説明を入れて<b>追加</b><span>名称は顧客がそのまま読むので「月額顧問料（45,000円/月・税別）」のように金額を含めると親切です。</span></li>
   </ol>
-  <div class="note r"><b>割引を適用した顧客には、必ず専用リンクを割り当ててください。</b>全顧客共通リンクのままだと定価で決済されます。割引率は③顧客別タブで確認できます。</div>
+  <div class="note r"><b>顧問料は全社一律なので、通常は「全顧客共通」のリンクで足ります。</b>個別の取り決めがある顧客にだけ、専用リンクを割り当ててください。</div>
 </section>
 
 <section class="slide" data-t="入金の記録" data-g="お金の章">
@@ -426,9 +473,11 @@ ul.dots li{font-size:14.5px;}
   <p class="sub">選択中の年月に<b>成約（入金記録）した案件</b>を対象に、次の順で計算します。</p>
   <div class="flow">
     <div><b>1</b>その月の入金記録<br>（revenue_entries）</div><span>→</span>
-    <div><b>2</b>顧客の担当パートナー<br>を特定</div><span>→</span>
-    <div><b>3</b>ランクの外注費率<br>を掛ける</div><span>→</span>
-    <div><b>4</b>2名体制なら<br>メイン／サブに分割</div>
+    <div><b>2</b>消費税を外す<br>（税込→税抜）</div><span>→</span>
+    <div><b>3</b>顧客の担当パートナー<br>を特定</div><span>→</span>
+    <div><b>4</b>ランクの外注費率<br>を掛ける</div><span>→</span>
+    <div><b>5</b>2名体制なら<br>メイン／サブに分割</div><span>→</span>
+    <div><b>6</b>個人なら<br>源泉徴収を差し引く</div>
   </div>
   <table class="kv num" style="margin-top:16px;">
     <tr><th>アソシエイト（Lv.1）</th><td>外注費率は「個別設定」のため自動計算できません</td><td>— </td></tr>
@@ -443,14 +492,16 @@ ul.dots li{font-size:14.5px;}
 <section class="slide" data-t="報酬配分の計算例" data-g="お金の章">
   <div class="eyebrow pay">課金・契約 ⑤報酬配分</div>
   <h2>計算例で確かめる</h2>
-  <p class="sub">田中パートナー（エグゼクティブ＝<b>60%</b>）が2社を担当。山田製作所のみ2名体制（メイン70／サブ30）。</p>
+  <p class="sub">田中パートナー（エグゼクティブ＝<b>60%</b>・<b>個人事業主</b>）が2社を担当。山田製作所のみ2名体制（メイン70／サブ30）。</p>
   <div class="calc">
-    <b>山田製作所</b>　入金 <code>3,000,000</code> × 外注費率 <code>60%</code> = 1,800,000<br>
-    　└ 2名体制 → メイン <code>70%</code> = <span class="r">1,260,000</span>　／　サブ <code>30%</code> = <span class="r">540,000</span><br>
-    <b>中村商事</b>　入金 <code>500,000</code> × 外注費率 <code>60%</code> = <span class="r">300,000</span>（体制なし → 全額メイン）<br>
+    <b>山田製作所</b>　入金（税込） <code>3,300,000</code> → 税抜 <code>3,000,000</code> × <code>60%</code> = 1,800,000<br>
+    　└ 2名体制 → メイン <code>70%</code> = 1,260,000　／　サブ <code>30%</code> = 540,000<br>
+    <b>中村商事</b>　入金（税込） <code>550,000</code> → 税抜 <code>500,000</code> × <code>60%</code> = 300,000（体制なし → 全額メイン）<br>
     <hr style="border:none;border-top:1px solid var(--line);margin:9px 0;">
-    <b>田中パートナーの報酬合計</b> = <span class="r">2,100,000 円</span>　（メイン <b>1,560,000</b> ／ サブ <b>540,000</b>）
+    <b>メイン合計</b> 1,560,000 → 源泉徴収 <code>102,100 + 114,352</code> = 216,452 → <span class="r">お振込 1,343,548 円</span><br>
+    <span style="font-size:12.5px;color:var(--muted);">（100万円まで 10.21% ＝ 102,100／超過 560,000 × 20.42% ＝ 114,352）</span>
   </div>
+  <div class="note" style="margin-top:12px;"><b>パートナーが法人であれば、源泉徴収は生じません。</b>この例では 1,560,000円 がそのままお振込額になります。区別が未登録の方も、差し引かずに計算します。</div>
   <div class="note" style="margin-top:12px;">画面上部には<b>対象の入金／パートナー報酬 合計／うちサブ担当ぶん</b>の3つが表示されます。サブへの支払い漏れを防ぐため、まずここを見てください。</div>
 </section>
 
