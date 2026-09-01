@@ -1323,7 +1323,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260901-01';
+  var APP_BUILD='20260901-05';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -1832,10 +1832,14 @@
     h+='<input type="file" id="set-av-file" accept="image/*" class="hidden" onchange="avatarFileChosen(this)">';
     h+='<div id="set-av-msg" style="font-size:11.5px;margin-top:6px;min-height:16px;"></div>';
     h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 4px;">継ナビくんの会話履歴</div>';
-    h+='<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;">タブを切り替えても会話は残ります。下の期間を過ぎた会話は自動で消去されます（この端末・ログイン中の方のみ）。</div>';
+    h+='<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">会話はご本人のアカウントに保存され、'
+      +'<b style="color:var(--navy);">パソコンでもスマホでも同じ続きから</b>読めます。'
+      +'内容を読めるのはご本人だけで、担当パートナーにも運営にも見えません'
+      +'（回答ごとの「担当パートナーに伝える」を押したぶんだけが担当に届きます）。<br>'
+      +'期間を選ぶと、それより古い会話は自動で消去されます。</div>';
     var rd=aisecRetentionDays();
     h+='<div style="display:flex;gap:6px;flex-wrap:wrap;">'
-      +[['30日（最長）',30],['15日',15],['7日',7]].map(function(o){ return '<button class="sbtn'+(rd===o[1]?' on':'')+'" onclick="setAisecRetention('+o[1]+')">'+o[0]+'</button>'; }).join('')
+      +[['消さない',0],['1年',365],['90日',90],['30日',30]].map(function(o){ return '<button class="sbtn'+(rd===o[1]?' on':'')+'" onclick="setAisecRetention('+o[1]+')">'+o[0]+'</button>'; }).join('')
       +'</div>';
     if(r==='consultant'){
       h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 4px;">個人・法人の区別</div>';
@@ -3045,6 +3049,7 @@
         +'<div style="margin-bottom:12px;"><button id="ct-btn" class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;font-weight:600;" onclick="ctStart(true)"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5.5 3.5-5.5 3.5z"/></svg>使い方ガイド（1分）</button>'
           +'</div>'
         +'<div id="dash-hero">読み込み中...</div>'
+        +'<div id="my-cash"></div>'
         +'<div id="my-onboard"></div>'
         +'<div id="my-impact"></div>'
         +'<div id="my-members"></div>'
@@ -3541,7 +3546,7 @@
     window.__eff=eff;
     $('app-body').innerHTML=view;
     if(eff==='customer' && ACCESS==='finance'){ loadAcct(); }
-    else if(eff==='customer'){ loadDashHero(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); loadAgentInsights(); knvInit(); }
+    else if(eff==='customer'){ loadDashHero(); loadMyCash(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); loadAgentInsights(); knvInit(); }
     else if(eff==='consultant'){ if(EP_ME) loadEp(); loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); loadAgentInsights(); knvInit(); }
     else {
       // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
@@ -7194,6 +7199,293 @@
   }
 
   // ---- 今日のサマリー（ダッシュボード最上部）----
+  // ===== 社長がひと言で入れる「いまの手元資金」 =====
+  //  試算表は月に一度しか入らない。けれど社長が本当に不安なのは
+  //  「今月末、払えるか」で、これは週ごとに動く。数字ひとつだけを
+  //  そのつど入れてもらえば、継ナビくんも担当パートナーも生きた数字を
+  //  見られる。
+  //
+  //  入れるのは任意。この製品は「入力の負担を社長にかけない」と決めて
+  //  作られているので、その線は越えない。促しはするが、迫らない。
+  //
+  //  単位は万円。ほかの数字とそろえる。
+  var MYCASH=null;
+
+  async function loadMyCash(){
+    var box=$('my-cash'); if(!box) return;
+    var r;
+    try{
+      r=await sb.from('cash_checkins').select('*').eq('customer_id',SCOPE)
+        .order('on_date',{ascending:false}).limit(5);
+    }catch(e){ r={error:1}; }
+    //  表がまだ無い環境では、何も出さずに黙る。空の枠だけ出ても意味がない
+    if(!r || r.error){ box.innerHTML=''; return; }
+    var rows=r.data||[];
+    MYCASH=rows[0]||null;
+    var today=jstToday();
+    var isToday=!!(MYCASH && MYCASH.on_date===today);
+    //  何日ぶん空いたか。8日以上（＝週をまたいだ）で促しを強める
+    var days=MYCASH?Math.floor((Date.parse(today)-Date.parse(MYCASH.on_date))/86400000):null;
+    var stale=(days===null)||(days>=8);
+
+    var head=MYCASH
+      ? (isToday?'今日の手元資金を記録しました'
+                :(days===1?'昨日の記録があります':days+'日前の記録があります'))
+      : '手元資金を、ひと言だけ教えてください';
+
+    var h='<div style="border:1.5px solid '+(stale?'#EAD9AC':'#E2E7EF')+';background:'+(stale?'#FDFAF1':'#F8F9FC')+';'
+      +'border-radius:12px;padding:14px 16px;margin-top:12px;">'
+      +'<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px;">'
+        +'<div style="font-size:13.5px;font-weight:700;color:'+(stale?'#8A6A12':'#1E3A66')+';">'+esc(head)+'</div>'
+        +'<div style="font-size:11px;color:#94A2B6;">30秒で終わります・任意です</div>'
+      +'</div>'
+      +'<div style="font-size:11.5px;color:#5A6981;line-height:1.75;margin-bottom:10px;">'
+      +'いまの預金残高だけで構いません。入れておくと、継ナビくんが今の数字で答えられるようになり、'
+      +'担当パートナーも早めに気づけます。</div>'
+      +'<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">'
+        +'<div><label class="fl">いまの手元資金</label>'
+          +'<div style="display:flex;align-items:baseline;gap:5px;">'
+          +'<input id="mycash-v" class="inp2" type="number" inputmode="numeric" min="0" step="1" '
+          //  前回の額をそのまま薄字で置くと、入力済みに見えて空のまま押される。
+          //  「前回」と付けて、これは控えだと分かるようにする
+          +'style="width:130px;text-align:right;" placeholder="'
+          +(MYCASH?'前回 '+esc(String(MYCASH.balance)):'例 1200')+'" '
+          +'value="'+(isToday?esc(String(MYCASH.balance)):'')+'">'
+          +'<span style="font-size:12.5px;color:#5A6981;">万円</span></div></div>'
+        +'<div style="flex:1;min-width:190px;"><label class="fl">ひと言（任意）</label>'
+          +'<input id="mycash-n" class="inp2" style="width:100%;" placeholder="例：来週に大きな支払いがあります" '
+          +'value="'+(isToday?esc(MYCASH.note||''):'')+'"></div>'
+        +'<button class="btn2" id="mycash-go" style="font-size:12.5px;padding:9px 18px;" onclick="cashSave()">'
+          +(isToday?'記録を直す':'記録する')+'</button>'
+      +'</div>'
+      +'<div id="mycash-msg" style="font-size:11.5px;margin-top:7px;min-height:15px;"></div>'
+      +'<div id="mycash-advice"></div>';
+
+    //  流れが見えると、入れる意味が伝わる。数字が2つ以上あるときだけ出す
+    if(rows.length>1){
+      h+='<div style="font-size:11px;color:#94A2B6;margin-top:8px;line-height:1.8;">これまで：'
+        +rows.slice().reverse().map(function(x){
+          return esc(x.on_date.slice(5).replace('-','/'))+' '+Number(x.balance).toLocaleString('ja-JP')+'万';
+        }).join(' → ')+'</div>';
+    }
+    h+='</div>';
+    box.innerHTML=h;
+    if(MYCASH) cashAdvice();
+  }
+
+  // ===== 入れたあと、何をすればよいかまで出す =====
+  //  数字を書かせて「はい終わり」では、不安な数字を見せただけになる。
+  //  むしろ入れる前より悪い。残高が薄いと分かったその場で、いま打てる手を
+  //  出す。ここがこの機能の本体で、入力欄はその入口にすぎない。
+  //
+  //  出し方は残高に見合わせる。余裕があるなら一行で終える。心配の要らない
+  //  人に危機を語ると、本当に薄いときの言葉が効かなくなる。
+  var CASH_VIEW=null;     // 直近の見立て（担当への連絡文にも使う）
+
+  async function cashAdvice(){
+    var box=$('mycash-advice'); if(!box||!MYCASH) return;
+    box.innerHTML='';
+    var bal=Number(MYCASH.balance)||0;
+    var pays=[], fin=[];
+    try{
+      var r=await Promise.all([
+        sb.from('upcoming_payments').select('title,due_date,amount').eq('customer_id',SCOPE)
+          .gte('due_date',jstToday()).order('due_date',{ascending:true}).limit(40),
+        sb.from('financial_entries').select('year_month,profit').eq('customer_id',SCOPE)
+          .order('year_month',{ascending:false}).limit(3)
+      ]);
+      pays=(r[0].error?[]:(r[0].data||[]));
+      fin=(r[1].error?[]:(r[1].data||[]));
+    }catch(e){ /* 読めなくても、下の連絡と相談は出せる */ }
+
+    //  月の増減。営業利益の平均をそのまま使う。粗いが、社長が
+    //  「毎月どれくらい減っているか」を掴むにはこの粒度で足りる。
+    var profs=fin.map(function(f){ return Number(f.profit); }).filter(function(v){ return isFinite(v); });
+    var monthly=profs.length?Math.round(profs.reduce(function(a,b){ return a+b; },0)/profs.length):null;
+
+    //  いちばん近い「払えない支払い」を探す。3か月先まで月ごとに見る。
+    var view={ bal:bal, monthly:monthly, short:null, nextPay:null, pay30:0, months:[] };
+    var t=new Date(jstToday()+'T00:00:00');
+    var run=bal;
+    for(var i=0;i<3;i++){
+      var mS=new Date(t.getFullYear(), t.getMonth()+i, 1);
+      var mE=new Date(t.getFullYear(), t.getMonth()+i+1, 0);
+      var sum=pays.filter(function(p){
+        return p.due_date>=ymdLocal(mS) && p.due_date<=ymdLocal(mE);
+      }).reduce(function(a,p){ return a+(Number(p.amount)||0); },0);
+      if(i===0) view.pay30=sum;
+      run=run+(monthly||0)-sum;
+      view.months.push({ lbl:(mS.getMonth()+1)+'月', bal:run, pay:sum });
+      if(view.short===null && run<0) view.short=(mS.getMonth()+1)+'月';
+    }
+    //  一件で残高を超える支払いは、月の合計より先に効く
+    for(var k=0;k<pays.length;k++){
+      if((Number(pays[k].amount)||0)>bal){ view.nextPay=pays[k]; break; }
+    }
+    CASH_VIEW=view;
+
+    //  段階を決める。
+    //   red     … 足りない見込みがはっきりしている
+    //   amber   … 今月のお支払いに対して薄い
+    //   ok      … 見立てる材料があって、足りている
+    //   unknown … 材料が無い。ここで「大丈夫です」と言ってはいけない
+    var lvl;
+    var broke=(bal<=0) || (monthly!==null && monthly<0 && bal<Math.abs(monthly));
+    if(view.short!==null || view.nextPay || broke) lvl='red';
+    else if(view.pay30>0 && bal<view.pay30*1.5) lvl='amber';
+    else if(pays.length) lvl='ok';
+    else lvl='unknown';
+
+    if(lvl==='ok'){
+      box.innerHTML='<div style="font-size:11.5px;color:#27684A;margin-top:9px;line-height:1.75;">'
+        +'いまのところ、直近のお支払いは足りている見込みです。'
+        +'（今月のお支払い予定 '+view.pay30.toLocaleString('ja-JP')+'万円）'
+        +'</div>';
+      return;
+    }
+    //  お支払い予定が登録されていなければ、足りるかどうかは言えない。
+    //  分からないことを「大丈夫」と言うと、本当に薄いときの言葉が効かなくなる。
+    if(lvl==='unknown'){
+      box.innerHTML='<div style="font-size:11.5px;color:#5A6981;margin-top:9px;line-height:1.8;">'
+        +'お支払いの予定がまだ登録されていないため、足りるかどうかの見立てはできません。'
+        +'借入の返済・納税・賞与などのご予定を担当パートナーにお伝えいただくと、'
+        +'不足しそうな月を先にお知らせできるようになります。'
+        +'<br><span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="cashAskNavi()">'
+        +'継ナビくんに、いまの資金繰りを相談する →</span></div>';
+      return;
+    }
+
+    var red=(lvl==='red');
+    var head;
+    if(!red){
+      head='今月のお支払い予定に対して、手元が薄くなっています。';
+    } else if(view.nextPay){
+      head='<b>'+esc(fmtMD(view.nextPay.due_date))+'の「'+esc(view.nextPay.title||'お支払い')+'」'
+        +Number(view.nextPay.amount).toLocaleString('ja-JP')+'万円</b>に、いまの残高では足りない見込みです。';
+    } else if(view.short!==null){
+      head='<b>'+esc(view.short)+'に資金が不足する見込み</b>です。';
+    } else {
+      //  支払予定も見通しも無いのにここへ来るのは、残高そのものが尽きた場合。
+      //  （持ち出しが残高を上回るときは、上の見通しが先に月を言い当てる）
+      head='<b>手元資金がほとんど残っていません。</b>';
+    }
+
+    var h='<div style="border:1.5px solid '+(red?'#E7C9C7':'#EAD9AC')+';background:'+(red?'#FCF4F3':'#FDFAF1')+';'
+      +'border-radius:11px;padding:13px 15px;margin-top:11px;">'
+      +'<div style="font-size:13px;font-weight:700;color:'+(red?'#A9403D':'#8A6A12')+';margin-bottom:6px;">'
+      +(red?'早めに手を打てる段階です':'少し注意が要ります')+'</div>'
+      +'<div style="font-size:12px;color:#18202E;line-height:1.85;margin-bottom:10px;">'+head
+      +(monthly!==null && monthly<0
+        ? '<br>直近の月次では、毎月およそ'+Math.abs(monthly).toLocaleString('ja-JP')+'万円の持ち出しになっています。'
+        : '')
+      +'</div>';
+
+    //  打てる手を、速い順に。ここは押せるボタンにする。
+    //  「相談してください」だけでは、押す先が無い。
+    h+='<div style="display:flex;gap:7px;flex-wrap:wrap;">'
+      +'<button class="btn2" style="font-size:12px;padding:8px 14px;" onclick="cashTellPartner()">'
+        +'担当パートナーに知らせる</button>'
+      +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;" '
+        +'onclick="cashAskNavi()">継ナビくんに手を聞く</button>'
+      +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;" '
+        +'onclick="goSec(\'sec-status\')">資金繰りの見通しを見る</button>'
+      +'</div>'
+      +'<div id="mycash-sent" style="font-size:11.5px;margin-top:7px;"></div>';
+
+    if(red){
+      //  何から相談すべきかを、こちらから並べる。「相談してください」だけでは
+      //  何を相談すればよいのか分からないまま終わる。
+      //  実行の可否は個々の事情によるので、担当と確かめる項目として出す。
+      h+='<div style="font-size:11.5px;color:#5A6981;line-height:1.9;margin-top:10px;'
+        +'border-top:1px dashed #E7C9C7;padding-top:9px;">'
+        +'<b style="color:#A9403D;">担当パートナーと確かめられること</b><br>'
+        +'・お支払いの繰り延べを、相手先に相談する<br>'
+        +'・入金の前倒しをお願いできる先がないか洗い出す<br>'
+        +'・税金・社会保険料には猶予の制度があります（要件の確認が要ります）<br>'
+        +'・当座貸越やつなぎの借入（銀行対応は担当がお手伝いします）<br>'
+        +'・今月から止められる支出を、金額の大きい順に見直す'
+        +'</div>';
+    }
+    h+='</div>';
+    box.innerHTML=h;
+  }
+
+  function fmtMD(d){
+    var p=String(d||'').split('-');
+    return p.length>2 ? (Number(p[1])+'月'+Number(p[2])+'日') : String(d||'');
+  }
+
+  //  担当パートナーへ、いまの数字ごと知らせる。ひと押しで届くことに意味がある。
+  //  不安なときに、何をどう書けばよいか考えるところから始めさせない。
+  async function cashTellPartner(){
+    var out=$('mycash-sent'); if(!CASH_VIEW) return;
+    var v=CASH_VIEW;
+    var body='【手元資金のお知らせ】\n'
+      +'いまの手元資金は '+v.bal.toLocaleString('ja-JP')+'万円です。\n'
+      +(MYCASH && MYCASH.note ? '（'+MYCASH.note+'）\n' : '')
+      +(v.nextPay
+        ? fmtMD(v.nextPay.due_date)+'の「'+(v.nextPay.title||'お支払い')+'」'
+          +Number(v.nextPay.amount).toLocaleString('ja-JP')+'万円に足りない見込みです。\n'
+        : (v.short ? v.short+'に資金が不足する見込みです。\n' : ''))
+      +'一度ご相談させてください。';
+    if(!confirm('担当パートナーに次の内容をお送りします。よろしいですか？\n\n'+body)) return;
+    if(out) out.innerHTML='<span style="color:#94A2B6;">お送りしています…</span>';
+    try{
+      var r=await sb.from('chat_messages').insert({
+        customer_id:SCOPE, sender_id:ME, sender_role:'customer', body:body });
+      if(r.error) throw new Error(r.error.message);
+    }catch(e){
+      if(out) out.innerHTML='<span style="color:#A9403D;">お送りできませんでした：'+esc(String((e&&e.message)||e))+'</span>';
+      return;
+    }
+    if(out) out.innerHTML='<span style="color:#27684A;">✓ 担当パートナーにお送りしました。'
+      +'<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="knvOpenMsg()">やりとりを開く</span></span>';
+  }
+
+  //  継ナビくんには、数字を入れた問いを渡す。空欄から書かせない。
+  function cashAskNavi(){
+    if(!CASH_VIEW) return;
+    var v=CASH_VIEW;
+    var q='いまの手元資金は'+v.bal.toLocaleString('ja-JP')+'万円です。'
+      +(v.monthly!==null && v.monthly<0 ? '毎月およそ'+Math.abs(v.monthly).toLocaleString('ja-JP')+'万円の持ち出しがあります。' : '')
+      +(v.nextPay
+        ? fmtMD(v.nextPay.due_date)+'に「'+(v.nextPay.title||'支払い')+'」'
+          +Number(v.nextPay.amount).toLocaleString('ja-JP')+'万円の支払いがあり、足りない見込みです。'
+        : (v.short ? v.short+'に資金が不足する見込みです。' : ''))
+      +'いまから打てる手を、早く効く順に具体的に教えてください。'
+      +'それぞれ、誰に何をお願いするところから始めればよいかまで書いてください。';
+    knvAsk(q);
+  }
+
+  async function cashSave(){
+    var el=$('mycash-v'), msg=$('mycash-msg'), btn=$('mycash-go');
+    if(!el) return;
+    var raw=String(el.value||'').trim();
+    if(raw===''){ if(msg) msg.innerHTML='<span style="color:#A9403D;">金額を入れてください。</span>'; el.focus(); return; }
+    var v=Math.round(Number(raw));
+    if(!isFinite(v)||v<0){ if(msg) msg.innerHTML='<span style="color:#A9403D;">0以上の数字で入れてください。</span>'; el.focus(); return; }
+    //  桁の打ち間違いは戻せない誤解を生む。1兆円を超えたら一度止める
+    if(v>100000000){ if(msg) msg.innerHTML='<span style="color:#A9403D;">桁が大きすぎるようです。単位は万円です。</span>'; el.focus(); return; }
+    if(btn) btn.disabled=true;
+    if(msg) msg.innerHTML='<span style="color:#94A2B6;">記録しています…</span>';
+    var note=String((($('mycash-n')||{}).value)||'').trim();
+    try{
+      var r=await sb.from('cash_checkins')
+        .upsert({ customer_id:SCOPE, balance:v, note:note||null, on_date:jstToday(),
+                  updated_at:new Date().toISOString() }, { onConflict:'customer_id,on_date' });
+      if(r.error) throw new Error(r.error.message);
+    }catch(e){
+      if(msg) msg.innerHTML='<span style="color:#A9403D;">記録できませんでした：'+esc(String((e&&e.message)||e))
+        +'<br>（手元資金のSQLが未実行の可能性があります）</span>';
+      if(btn) btn.disabled=false;
+      return;
+    }
+    if(btn) btn.disabled=false;
+    await loadMyCash();
+    var m2=$('mycash-msg');
+    if(m2) m2.innerHTML='<span style="color:#27684A;">✓ 記録しました。ありがとうございます。</span>';
+  }
+
   async function loadDashHero(){
     var box=$('dash-hero'); if(!box)return;
     var todayS=jstToday();
@@ -9086,6 +9378,11 @@
       +'<div class="ph" id="cs-mreport" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>月次レポート</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientReports(\''+custId+'\')">↺ 更新</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">この顧客の月次レポートです。数字は自動生成されるので、コメントとひとことを添えてから<b style="color:#1E3A66;">「承認して公開」</b>を押してください。公開すると経営者ダッシュボードに表示されます。</div>'
       +'<div id="clrep-body">読み込み中...</div>'
+      +'<div class="ph" id="cs-cash" style="font-size:13px;">社長からの手元資金（本人の申告）</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">'
+      +'社長ご本人がダッシュボードから入れた数字です。月次の試算表より新しいことが多いので、面談前にここを見てください。'
+      +'こちらからは書き換えられません。</div>'
+      +'<div id="cl-cash" style="margin-bottom:14px;">読み込み中...</div>'
       +'<div class="ph" id="cs-fin" style="font-size:13px;">月次財務メモ（代行入力）</div>'
       +'<div class="cl-cols">'
       +'<div class="cl-col">'
@@ -9325,6 +9622,12 @@
       +'<div class="ph" id="cs-shared" style="font-size:13px;">顧客からの共有</div>'
       +'<div class="cl-cols">'
       +'<div class="cl-col">'
+        +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin:2px 0 4px;">継ナビくんへの相談（顧客が伝えたもの）</div>'
+        +'<div style="font-size:11px;color:#94A2B6;line-height:1.7;margin-bottom:6px;">'
+        +'相談そのものは顧客本人しか読めません。ここに出るのは、顧客が「担当パートナーに伝える」を押したぶんだけです。</div>'
+        +'<div id="cl-aishare" style="margin-top:4px;">読み込み中...</div>'
+      +'</div>'
+      +'<div class="cl-col">'
         +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin:2px 0 4px;">顧客が興味を示した自動化項目</div>'
         +'<div id="cl-interest" style="margin-top:4px;">読み込み中...</div>'
       +'</div>'
@@ -9351,7 +9654,7 @@
     loadClientPayments(custId);
     loadClientFunding(custId);
     reloadClientActions(custId);
-    loadClientInterests(custId);
+    loadClientInterests(custId); loadClShares(custId); loadClCash(custId);
     loadClientMna(custId);
     loadClientInsurance(custId);
     loadClientDiag(custId);
@@ -9502,7 +9805,7 @@
     if(!confirm('この共有項目を削除します。よろしいですか？')) return;
     var r=await sbDelete('automation_interests', id);
     if(!r.ok){ alert(r.msg); return; }
-    loadClientInterests(custId); loadClientMna(custId); if(typeof loadDiagInterests==='function') loadDiagInterests(custId);
+    loadClientInterests(custId); loadClShares(custId); loadClCash(custId); loadClientMna(custId); if(typeof loadDiagInterests==='function') loadDiagInterests(custId);
   }
   async function delClientDiag(id, custId){
     if(!confirm('このAI自動化診断結果を削除します。よろしいですか？')) return;
@@ -9628,6 +9931,92 @@
       +'</div>';
     });
     box.innerHTML=h;
+  }
+
+  //  社長の申告した手元資金。減り方が見えるように並べて出す。
+  async function loadClCash(custId){
+    var box=$('cl-cash'); if(!box) return;
+    var r;
+    try{
+      r=await sb.from('cash_checkins').select('*').eq('customer_id',custId)
+        .order('on_date',{ascending:false}).limit(8);
+    }catch(e){ r={error:{message:String((e&&e.message)||e)}}; }
+    if(r.error){
+      box.innerHTML='<div style="font-size:12px;color:#94A2B6;">読み込めませんでした（手元資金のSQLが未実行の可能性があります）</div>';
+      return;
+    }
+    var rows=r.data||[];
+    if(!rows.length){
+      box.innerHTML='<div style="font-size:12px;color:#94A2B6;line-height:1.7;">まだありません。'
+        +'社長がダッシュボードの「いまの手元資金」に入れると、ここに出ます。</div>';
+      return;
+    }
+    var cur=rows[0], prev=rows[1]||null;
+    var days=Math.floor((Date.parse(jstToday())-Date.parse(cur.on_date))/86400000);
+    var diff=prev?Number(cur.balance)-Number(prev.balance):null;
+    //  減っているときだけ色を付ける。増減すべてに色を付けると、どれが
+    //  目を向けるべき変化なのか分からなくなる
+    var down=(diff!==null && diff<0);
+    box.innerHTML='<div style="border:1px solid '+(down?'#E7C9C7':'#EDF1F6')+';background:'+(down?'#FCF4F3':'transparent')+';'
+      +'border-radius:9px;padding:11px 13px;">'
+      +'<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">'
+        +'<div style="font-size:19px;font-weight:700;color:'+(down?'#A9403D':'#1E3A66')+';">'
+          +Number(cur.balance).toLocaleString('ja-JP')+'<span style="font-size:12px;font-weight:400;"> 万円</span></div>'
+        +(diff!==null?'<div style="font-size:12px;color:'+(down?'#A9403D':'#27684A')+';">前回比 '
+          +(diff>=0?'+':'')+diff.toLocaleString('ja-JP')+'万</div>':'')
+        +'<div style="font-size:11px;color:#94A2B6;">'+esc(cur.on_date)
+          +(days>=8?'（'+days+'日前・そろそろ確認を）':(days===0?'（今日）':'（'+days+'日前）'))+'</div>'
+      +'</div>'
+      +(cur.note?'<div style="font-size:12px;color:#18202E;margin-top:6px;">「'+esc(cur.note)+'」</div>':'')
+      +(rows.length>1?'<div style="font-size:11px;color:#94A2B6;margin-top:7px;line-height:1.8;">推移：'
+        +rows.slice().reverse().map(function(x){
+          return esc(x.on_date.slice(5).replace('-','/'))+' '+Number(x.balance).toLocaleString('ja-JP')+'万';
+        }).join(' → ')+'</div>':'')
+      +'</div>';
+  }
+
+  //  一覧では全文は要らない。切ったことが分かるように「…」を付ける
+  function clip(t, n){
+    t=String(t||'');
+    return t.length>n ? t.slice(0,n)+'…' : t;
+  }
+  //  顧客が渡すと決めた相談を出す。開いた時点で「読んだ印」を付けるので、
+  //  顧客の画面からも「届いた」ことが分かる。
+  async function loadClShares(custId){
+    var box=$('cl-aishare'); if(!box) return;
+    var r;
+    try{
+      r=await sb.from('ai_shares').select('*').eq('customer_id',custId)
+        .order('created_at',{ascending:false}).limit(20);
+    }catch(e){ r={error:{message:String((e&&e.message)||e)}}; }
+    if(r.error){
+      box.innerHTML='<div style="font-size:12px;color:#94A2B6;line-height:1.7;">読み込めませんでした。'
+        +'<br><span style="color:#A9403D;">'+esc(r.error.message)+'</span>'
+        +'<br>（相談の共有のSQLが未実行の可能性があります）</div>';
+      return;
+    }
+    var rows=r.data||[];
+    if(!rows.length){
+      box.innerHTML='<div style="font-size:12px;color:#94A2B6;line-height:1.7;">まだありません。'
+        +'顧客が継ナビくんの回答で「✉️ 担当パートナーに伝える」を押すと、ここに届きます。</div>';
+      return;
+    }
+    box.innerHTML=rows.map(function(x){
+      var isNew=!x.read_at;
+      return '<div style="border:1px solid '+(isNew?'#EAD9AC':'#EDF1F6')+';background:'+(isNew?'#FDFAF1':'transparent')+';'
+        +'border-radius:9px;padding:10px 12px;margin-bottom:6px;">'
+        +'<div style="font-size:10.5px;color:#94A2B6;margin-bottom:5px;">'+esc(jstDay(x.created_at))
+        +(isNew?' <span style="color:#8A6A12;font-weight:700;">未読</span>':'')+'</div>'
+        +(x.note?'<div style="font-size:12.5px;font-weight:700;color:#8A6A12;margin-bottom:6px;">「'+esc(x.note)+'」</div>':'')
+        +'<div style="font-size:12.5px;font-weight:600;color:#18202E;line-height:1.75;">Q. '+esc(clip(x.question,180))+'</div>'
+        +'<div style="font-size:12px;color:#5A6981;line-height:1.8;margin-top:5px;">'+esc(clip(x.answer,300))+'</div>'
+        +'</div>';
+    }).join('');
+    //  開いた＝読んだ、として印を付ける
+    var un=rows.filter(function(x){ return !x.read_at; }).map(function(x){ return x.id; });
+    if(un.length){
+      try{ await sb.from('ai_shares').update({ read_at:new Date().toISOString() }).in('id',un); }catch(e){}
+    }
   }
 
   async function loadClientInterests(custId){
@@ -10173,10 +10562,31 @@
     }
     return common
       +'【経営者ダッシュボードの画面ガイド】'
-      +'ダッシュボード=全体の入口／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=試算表の入力と資金繰りシミュレーター／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=業務の自動化診断／M&A活用=利益のM&A活用の提案／Tsugu投資・融資・M&A=マッチング掲載。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE)／サポート(操作説明書)。'
+      +'ダッシュボード=全体の入口／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=試算表の入力と資金繰りシミュレーター／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=業務の自動化診断／M&A活用=利益のM&A活用の提案／Tsugu投資・融資・M&A=マッチング掲載。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
+  //  社長が入れた手元資金を、継ナビくんの手元に渡す。これが無いと
+  //  月次の古い数字で「資金繰りが不安です」に答えることになる。
+  async function knvCashNote(){
+    try{
+      if(!SCOPE) return '';
+      var r=await sb.from('cash_checkins').select('balance,note,on_date')
+        .eq('customer_id',SCOPE).order('on_date',{ascending:false}).limit(3);
+      if(r.error || !(r.data||[]).length) return '';
+      var rows=r.data, cur=rows[0];
+      var t=' 【いまの手元資金】社長ご本人の申告で、'+cur.on_date+'時点の手元資金は'
+        +Number(cur.balance).toLocaleString('ja-JP')+'万円です。'
+        +(cur.note?'そのときの一言は「'+cur.note+'」でした。':'');
+      if(rows.length>1){
+        t+='直近の推移は '+rows.slice().reverse().map(function(x){
+          return x.on_date+'に'+Number(x.balance).toLocaleString('ja-JP')+'万円';
+        }).join('、')+' です。';
+      }
+      return t+'資金繰りやお金の話では、月次の試算表よりこちらを優先してください。'
+        +'ただし社長の申告なので、断定はせず「お聞きしている◯◯万円をもとにすると」と前置きすること。';
+    }catch(e){ return ''; }
+  }
   function knvCtxNote(){
     try{
       var id=window.__CUR_SEC; if(!id) return '';
@@ -10231,12 +10641,58 @@
   //   質問ひな形が入力欄に入る。漏れやすい前提（金額・期限・相手など）を最初から尋ねる設計。
   // ②AIフォローアップ：回答末尾の [Q] 行を解析し、次に聞くとよい深掘り質問をボタンで提示。
   var SEC_FU=[]; // 直近の回答が提案したフォローアップ質問
+  // ===== 継ナビくんからの、週に1問 =====
+  //  「何を相談すべきか」が分からない、という詰まり方がいちばん多い。
+  //  質問ガイドはあるが、そこから選ぶことも能動的な行為で、迷っている人は
+  //  そもそも開かない。だからこちらから聞く。
+  //
+  //  週に1問だけにする。毎日だと催促になり、月1だと忘れられる。
+  //  答えは経営課題の種になるので、継ナビくんには「課題として整理して」
+  //  までを頼む。
+  var KNV_WEEKLY=[
+    ['最近いちばん時間を取られている作業はなんですか？',
+     '最近いちばん時間を取られている作業は◯◯です。減らす方法を一緒に考えてください。減らせない場合は、その理由も教えてください。'],
+    ['いま、いちばん気がかりなことはなんですか？',
+     'いま、いちばん気がかりなことは◯◯です。何から手をつけるべきか、順番を整理してください。'],
+    ['この3か月で、いちばん増えた費用はなんですか？',
+     'この3か月で、いちばん増えた費用は◯◯です。放っておくとどうなるか、今できる手はあるかを教えてください。'],
+    ['社長ご自身にしかできない仕事は、いまいくつありますか？',
+     '私にしかできない仕事が◯◯あります。人に渡していくとしたら、どれから、どうやって渡すべきでしょうか。'],
+    ['去年の同じ時期と比べて、良くなったことはなんですか？',
+     '去年の同じ時期と比べて、◯◯が良くなりました。この流れを続けるために、次に打つべき手を教えてください。'],
+    ['お客様から最近言われて、気になった一言はありますか？',
+     'お客様から「◯◯」と言われました。ここから読み取れることと、次に確かめるべきことを教えてください。'],
+    ['5年後、この会社はどうなっていてほしいですか？',
+     '5年後、この会社は◯◯であってほしいと思っています。そこから逆算して、今年やるべきことを整理してください。']
+  ];
+  //  何週目かで選ぶ。日ではなく週で変わるので、月曜も金曜も同じ問いになる。
+  //  「今週の問い」であることが、答えなくてよい自由も伝える。
+  //
+  //  そのまま7日で割ると、区切りが木曜に来る（1970年1月1日が木曜のため）。
+  //  週の途中で問いが変わってしまうので、4日ずらして月曜始まりにする。
+  function knvWeeklyIdx(){
+    var jst=Date.now()+9*3600000;
+    var w=Math.floor((jst-4*86400000)/(7*86400000));
+    return ((w%KNV_WEEKLY.length)+KNV_WEEKLY.length)%KNV_WEEKLY.length;
+  }
+  function knvWeekly(){
+    if(aisecPortal()!=='customer') return null;      // 聞く相手は経営者
+    return KNV_WEEKLY[knvWeeklyIdx()];
+  }
+
   function knvSugsRender(){
     var sugs=$('knv-sugs'); if(!sugs) return;
     var fu=(SEC_FU&&SEC_FU.length)?SEC_FU:null;
     var chips=fu||secSuggests().slice(0,2).concat(['TsuguAiの使い方を知りたい']);
     var h='<button class="ai-sug" style="border-color:#cfa860;color:#8A6A12;background:#FDFAF1;" onclick="knvGuideToggle()">🧭 質問ガイド</button>'
       +'<button class="ai-sug" onclick="knvSearchToggle()" title="相談履歴を検索">🔍 履歴</button>';
+    //  深掘りの候補が出ているときは、そちらが優先。問いを重ねない
+    var wk=fu?null:knvWeekly();
+    if(wk){
+      h+='<button class="ai-sug" style="border-color:#B7CBE8;color:#1E3A66;background:#F4F8FD;" '
+        +'onclick="secAsk(this,\'knv\')" data-q="'+escA(wk[1])+'" title="今週、継ナビくんからの問いです">'
+        +'💬 '+esc(wk[0])+'</button>';
+    }
     h+=chips.map(function(s){ return '<button class="ai-sug" onclick="secAsk(this,\'knv\')" data-q="'+escA(s)+'">'+(fu?'🔍 ':'')+esc(s)+'</button>'; }).join('');
     sugs.innerHTML=h;
   }
@@ -10362,19 +10818,123 @@
       localStorage.setItem(newKey, JSON.stringify(out));
     }catch(e){}
   }
-  function aisecRetentionDays(){ try{ var d=parseInt((loadPrefs().aisecRetention)||30,10); return (d===7||d===15||d===30)?d:30; }catch(e){ return 30; } }
+  //  相談をサーバに残すようにしたので、既定は「消さない」。
+  //  9月に事業承継の話をして、11月に読み返せないほうがよほど困る。
+  //  0＝消さない。消したい方のために、期間を選ぶ道は残す。
+  function aisecRetentionDays(){
+    try{
+      var v=loadPrefs().aisecRetention;
+      if(v===undefined||v===null) return 0;
+      var d=parseInt(v,10);
+      return (d===0||d===30||d===90||d===365)?d:0;
+    }catch(e){ return 0; }
+  }
   // 指定キーの会話に保存期間を適用して返す（キーの形に依存しないため、旧キーもそのまま整理できる）
   function aisecPruneKey(key){
     try{
       var raw=localStorage.getItem(key); if(!raw) return [];
       var arr=JSON.parse(raw); if(!Array.isArray(arr)) return [];
-      var cutoff=Date.now()-aisecRetentionDays()*86400000;
+      var rd=aisecRetentionDays(); if(!rd) return arr;      // 0＝消さない
+      var cutoff=Date.now()-rd*86400000;
       var keep=arr.filter(function(m){ return !m.ts || m.ts>=cutoff; });
       if(keep.length!==arr.length){ try{ localStorage.setItem(key, JSON.stringify(keep)); }catch(e){} }
       return keep;
     }catch(e){ return []; }
   }
   function aisecLoad(){ aisecMigrate(); return aisecPruneKey(aisecKey()); }
+
+  // ===== 相談の記録をサーバに残す =====
+  //  これまでは端末のブラウザの中だけだった。機種を替えれば消え、パソコンで
+  //  話した続きをスマホで読むこともできず、何より担当パートナーに何も
+  //  伝わらなかった。毎晩生まれている、いちばん大事な材料が捨てられていた。
+  //
+  //  読めるのは本人だけにしてある（権限で担保。運営も読めない）。全部が
+  //  見えると分かった瞬間、社長は継ナビくんに本音を書かなくなるため。
+  //  伝えるかどうかは、回答ごとに本人が決める。
+  //
+  //  端末の控えは残す。通信できないときにも読めるように、そして移行SQLを
+  //  まだ流していない環境でも、画面がこれまでどおり動くように。
+  var AISEC_SRV=0;        // サーバから読めたか。読めていないうちは消しにいかない
+  var AISEC_MAX=400;      // 一度に持ってくる件数。古いものは残るが画面には出さない
+
+  async function aisecFetch(){
+    if(!ME) return null;
+    try{
+      var r=await sb.from('ai_messages')
+        .select('role,content,att_name,att_type,model,created_at')
+        .eq('user_id',ME).eq('portal',aisecPortal())
+        .order('created_at',{ascending:false}).limit(AISEC_MAX);
+      if(r.error) return null;
+      AISEC_SRV=1;
+      return (r.data||[]).slice().reverse().map(function(x){
+        var m={ role:x.role, content:x.content, ts:Date.parse(x.created_at)||Date.now(), sv:1 };
+        if(x.model) m.model=x.model;
+        //  絵そのものは持っていないので、名前だけ戻す
+        if(x.att_name) m.att={ name:x.att_name, media_type:x.att_type||'' };
+        return m;
+      });
+    }catch(e){ return null; }
+  }
+
+  //  まだ上げていないものだけを足す。保存に失敗しても相談は続けられる。
+  async function aisecPush(){
+    if(!ME || !AISEC_SRV) return;
+    var pend=SEC_MSGS.filter(function(m){ return !m.sv && m.content!=='（考え中…）'; });
+    if(!pend.length) return;
+    var rows=pend.map(function(m){
+      return { user_id:ME, portal:aisecPortal(), role:m.role, content:String(m.content||''),
+               att_name:(m.att&&m.att.name)||null, att_type:(m.att&&m.att.media_type)||null,
+               model:m.model||null };
+    });
+    try{
+      var r=await sb.from('ai_messages').insert(rows);
+      if(!r.error) pend.forEach(function(m){ m.sv=1; });
+    }catch(e){}
+  }
+
+  //  開いたら、まず端末の控えを出して待たせない。サーバの記録が届いたら
+  //  そちらで置き換える。読めなければ控えのまま（決して消さない）。
+  async function aisecRestore(){
+    var srv=await aisecFetch();
+    if(!srv) return;
+    //  端末にしか無い会話は、いちどだけサーバへ移す。これまで書いたものが
+    //  切り替えた瞬間に消えたように見えるのを防ぐ。
+    if(!srv.length && SEC_MSGS.length){
+      SEC_MSGS.forEach(function(m){ m.sv=0; });
+      await aisecPush();
+      srv=await aisecFetch();
+      if(!srv) return;
+    }
+    //  期間を選んでいる方は、古いものをサーバからも消す
+    var rd=aisecRetentionDays();
+    if(rd>0){
+      try{
+        await sb.from('ai_messages').delete().eq('user_id',ME)
+          .lt('created_at', new Date(Date.now()-rd*86400000).toISOString());
+      }catch(e){}
+      var cut=Date.now()-rd*86400000;
+      srv=srv.filter(function(m){ return !m.ts || m.ts>=cut; });
+    }
+    SEC_MSGS=srv;
+    await aisecMarkShared();
+    renderSecLog();
+    try{ localStorage.setItem(aisecKey(), JSON.stringify(SEC_MSGS)); }catch(e){}
+  }
+
+  //  すでに担当へ伝えた回答には、もう一度ボタンを出さない。
+  //  伝えた事実は ai_shares にあるので、そちらと突き合わせる。
+  async function aisecMarkShared(){
+    if(!ME || aisecPortal()!=='customer') return;
+    try{
+      var r=await sb.from('ai_shares').select('answer').eq('customer_id',ME).limit(200);
+      if(r.error) return;
+      var seen={};
+      (r.data||[]).forEach(function(x){ seen[String(x.answer||'').slice(0,300)]=1; });
+      SEC_MSGS.forEach(function(m){
+        if(m.role==='assistant' && seen[String(m.content||'').slice(0,300)]) m.shared=1;
+      });
+    }catch(e){}
+  }
   function aisecSave(){
     try{
       var arr=SEC_MSGS.filter(function(m){ return m.content!=='（考え中…）'; }).map(function(m){
@@ -10388,11 +10948,16 @@
       });
       localStorage.setItem(aisecKey(), JSON.stringify(arr));
     }catch(e){}
+    aisecPush();   // サーバへは足りないぶんだけ。失敗しても端末の控えは残る
   }
   function aisecPruneAll(){
     try{ var pre='tsugu_aisec_'+((typeof ME!=='undefined'&&ME)?ME:'guest')+'_'; for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i); if(k&&k.indexOf(pre)===0) aisecPruneKey(k); } }catch(e){}
   }
-  function restoreSecLog(){ try{ SEC_MSGS=aisecLoad(); }catch(e){ SEC_MSGS=[]; } renderSecLog(); }
+  function restoreSecLog(){
+    try{ SEC_MSGS=aisecLoad(); }catch(e){ SEC_MSGS=[]; }
+    renderSecLog();          // まず控えを出す。通信を待たせない
+    aisecRestore();          // 届いたらサーバの記録で置き換える
+  }
 
   // ===== 継ナビくん：右下フローティング窓口 =====
   // どの画面にいても右下から継ナビくんに相談できる。会話はタブ内の画面と共有。
@@ -10929,8 +11494,15 @@
   // 連携タブ：スマホ通知・Googleカレンダー・LINE（旧・継ナビくん画面から移設）
   function knvRenderSetup(){
     var box=$('knv-setup'); if(!box || box.getAttribute('data-ready')) return;
+    //  何がいつ届くのかは、役割で違う。まとめて「毎朝」と書くと、
+    //  経営者には届かない約束になる。それぞれに実際のことを書く。
+    var eff0=window.__eff||'customer';
+    var when=(eff0==='customer')
+      ? '<b style="color:var(--navy);">毎週月曜の朝</b>に「今週のひとこと」、'
+        +'<b style="color:var(--navy);">面談の前日</b>にお知らせを、アプリの外でも受け取れます。'
+      : '<b style="color:var(--navy);">毎朝</b>の継ナビくんのブリーフを、アプリの外でも受け取れます。';
     var h='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">🔗 通知の受け取り方</div>'
-      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">毎朝の継ナビくんのブリーフを、アプリの外でも受け取れます。</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">'+when+'</div>'
       +knvRow('🔔','スマホ通知をこの端末で受け取る','ブラウザのプッシュ通知。iPhoneは先に「ホーム画面に追加」','enablePush()','push-btn')
       +knvRow('💬','LINEで通知を受け取る','6桁コードを継ナビくんの公式LINEに送るだけで連携完了','lineLinkSetup()')
       +'<div id="linelink-box"></div>';
@@ -11046,7 +11618,20 @@
     box.innerHTML=h; box.classList.remove('hidden');
   }
   // 画面内の継ナビくん要素（チップ・バナー）は廃止。継ナビくんは右下に一本化。
-  function clearSecLog(){ if(!confirm('この会話履歴を消去します。よろしいですか？')) return; SEC_MSGS=[]; try{ localStorage.removeItem(aisecKey()); }catch(e){} SEC_QUERY=''; var si=$('knv-search-in'); if(si) si.value=''; renderSecLog(); }
+  async function clearSecLog(){
+    //  どこまで消えるのかを、押す前に言う。あとから「あれも消えたのか」と
+    //  なるのがいちばん困る。
+    if(!confirm('この会話履歴を消去します。よろしいですか？\n\n'
+      +'・保存された記録も消えます（他の端末からも見えなくなります）\n'
+      +'・担当パートナーに伝えたぶんは、共有として残ります')) return;
+    SEC_MSGS=[];
+    try{ localStorage.removeItem(aisecKey()); }catch(e){}
+    if(ME && AISEC_SRV){
+      try{ await sb.from('ai_messages').delete().eq('user_id',ME).eq('portal',aisecPortal()); }catch(e){}
+    }
+    SEC_QUERY=''; var si=$('knv-search-in'); if(si) si.value='';
+    renderSecLog();
+  }
   // ===== 相談履歴の検索（ローカル保存の会話から探す。通信なし） =====
   var SEC_QUERY='';
   function knvSearchToggle(){
@@ -11183,6 +11768,7 @@
             +'<span class="tsg-face">'+tsgNaviSvg()+'</span>'
             +'<div style="min-width:0;max-width:86%;"><div class="tsg-name">継ナビくん'+tag+'</div>'
             +'<div class="ai-bubble">'+inner+'</div>'
+            +(thinking?'':secShareBtn(m, mi))
             +(m.draft?calDraftCard(m.draft, mi):'')
             +(m.draftDone?'<div style="font-size:11.5px;color:#27684A;margin-top:6px;">✓ '+esc(m.draftDone)+'</div>':'')
             +'</div></div>';
@@ -11195,6 +11781,45 @@
       box.innerHTML=h; box.scrollTop=box.scrollHeight;
     });
   }
+  // ===== 継ナビくんの回答を、担当パートナーに伝える =====
+  //  相談そのものは本人しか読めない。全部が自動で見えると分かった瞬間、
+  //  社長は本音を書かなくなるからで、そこは動かさない。
+  //  そのうえで「これは相談したい」と思ったものだけを、本人が押して渡す。
+  //  渡されたものは、担当の毎朝のブリーフと顧客カルテに出る。
+  function secShareBtn(m, mi){
+    if(aisecPortal()!=='customer') return '';          // 渡す先があるのは経営者だけ
+    if(m.shared){
+      return '<div style="font-size:11px;color:#27684A;margin-top:7px;">✓ 担当パートナーに伝えました</div>';
+    }
+    return '<button class="ghost" style="font-size:11px;border:1px solid var(--line);'
+      +'border-radius:8px;padding:5px 11px;margin-top:7px;" onclick="secShare('+mi+')" '
+      +'title="この質問と回答を担当パートナーに渡します">✉️ 担当パートナーに伝える</button>';
+  }
+  async function secShare(mi){
+    var m=SEC_MSGS[mi];
+    if(!m || m.role!=='assistant' || m.shared) return;
+    //  直前の自分の発言が「問い」。それが無いと、渡されたほうは文脈を掴めない
+    var q=null;
+    for(var i=mi-1;i>=0;i--){ if(SEC_MSGS[i].role==='user'){ q=SEC_MSGS[i]; break; } }
+    if(!q){ alert('この回答のもとになった質問が見つかりませんでした。'); return; }
+    var note=prompt('担当パートナーへ、ひと言を添えられます。\n（そのままでも構いません）', '');
+    if(note===null) return;                             // 取り消し
+    try{
+      var r=await sb.from('ai_shares').insert({
+        customer_id: ME,
+        question: String(q.content||''),
+        answer:   String(m.content||''),
+        note:     (note||'').trim() || null
+      });
+      if(r.error) throw new Error(r.error.message);
+    }catch(e){
+      alert('伝えられませんでした：'+String((e&&e.message)||e)
+        +'\n（共有のSQLがまだ実行されていない可能性があります）');
+      return;
+    }
+    m.shared=1; renderSecLog(); aisecSave();
+  }
+
   // ===== モデルの使い分け =====
   // 分野チップを廃したので、どの分野かではなく「その質問が判断を要するか」で選ぶ。
   // この製品の本業は経営判断の相談なので、既定は Opus。
@@ -12741,7 +13366,8 @@
     var rag='';
     if(aisecPortal()==='consultant'){ try{ rag=knRagContext(t, await knRagFetch()); }catch(e){} }
     var agenda=null; try{ agenda=await knvAgendaFetch(); }catch(e){}
-    var sys=SEC_SYS+secUsageGuide()+knvCtxNote()+knvAgendaNote(agenda)+calAskNote()+secDrillNote()+rag;
+    var cash=''; if(aisecPortal()==='customer'){ try{ cash=await knvCashNote(); }catch(e){} }
+    var sys=SEC_SYS+secUsageGuide()+knvCtxNote()+cash+knvAgendaNote(agenda)+calAskNote()+secDrillNote()+rag;
     var msgs=secApiMsgs();
     try{
       var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:msgs, model:model, max_tokens:1400 } });
@@ -15046,7 +15672,10 @@
       if(t && (!first || t<first)) first=t;
     });
     var annual=insImp+maSav;
-    if(!annual){ box.innerHTML=''; return; }                  // 実績が無いうちは何も出さない
+    //  金額が立つ前の数週間が、いちばん不安な時期になる。ここが空欄だと
+    //  「何にお金を払っているのか」だけが残る。何が、いつ届くのかを
+    //  約束として先に出す。空欄で待たせるより、期日を示すほうが待てる。
+    if(!annual){ await myPromiseCard(box); return; }
     var months=1;
     if(first){
       var el=(Date.now()-Date.parse(first))/(1000*60*60*24*30.44);
@@ -15070,6 +15699,49 @@
       +'<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="goSec(\'sec-ins\')">試算結果</span>と'
       +'<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="goSec(\'sec-reports\')">月次レポート</span>でご確認いただけます。</div>'
     +'</div>';
+  }
+
+  //  まだ成果の金額が立っていない顧客に、これから届くものを示す。
+  //  導入診断報告書の4つの成果物が、初期費用に対する最初の対価になる。
+  var OBR_DAYS=28;                                   // 登録から4週間を目安にする
+  async function myPromiseCard(box){
+    if(!box) return;
+    box.innerHTML='';
+    try{
+      var r=await Promise.all([
+        sb.from('profiles').select('created_at').eq('id',SCOPE).limit(1),
+        sb.from('onboarding_reports').select('status').eq('customer_id',SCOPE).limit(1)
+      ]);
+      //  もう報告書が公開されているなら、約束は役目を終えている
+      var obr=(r[1].error?[]:(r[1].data||[]))[0];
+      if(obr && obr.status==='published') return;
+      var prof=(r[0].error?[]:(r[0].data||[]))[0];
+      if(!prof || !prof.created_at) return;
+      var start=Date.parse(prof.created_at);
+      if(!isFinite(start)) return;
+      var days=Math.floor((Date.now()-start)/86400000);
+      //  半年たってなお何も無いなら、それは約束ではなく督促になる。出さない
+      if(days>180) return;
+      var due=new Date(start+OBR_DAYS*86400000);
+      var dueS=(due.getMonth()+1)+'月'+due.getDate()+'日';
+      var late=(days>OBR_DAYS);
+      var items=['企業価値診断書（いまの会社の値段）','資金繰り現状レポート',
+                 '保険・固定費の棚卸し','12ヶ月の改善ロードマップ'];
+      box.innerHTML='<div style="border:1.5px solid #CFE3D6;background:rgba(39,104,74,.07);border-radius:12px;padding:14px 16px;margin-top:12px;">'
+        +'<div style="font-size:13.5px;font-weight:700;color:#27684A;margin-bottom:7px;">これからお届けするもの</div>'
+        +'<div style="font-size:12px;color:#5A6981;line-height:1.85;margin-bottom:9px;">'
+        +(late
+          ? '担当パートナーが準備を進めています。お急ぎでしたら、<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="knvOpenMsg()">メッセージ</span>でお声がけください。'
+          : '<b style="color:#27684A;">'+esc(dueS)+'ごろまで</b>に、担当パートナーから次の4つをお渡しします。')
+        +'</div>'
+        +'<div style="font-size:12.5px;color:#18202E;line-height:2;">'
+        +items.map(function(t,i){ return '<div>'+(i+1)+'. '+esc(t)+'</div>'; }).join('')
+        +'</div>'
+        +'<div style="font-size:11px;color:var(--muted);line-height:1.75;margin-top:9px;">'
+        +'この4つが揃うと、削減できる費用や会社の値段が数字で見えるようになります。'
+        +'そのあとは、ここに「これまでに増えた現金」が出ます。</div>'
+      +'</div>';
+    }catch(e){ box.innerHTML=''; }
   }
 
   // ============================================================

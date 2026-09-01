@@ -137,20 +137,32 @@ async function runHeartbeat(sb: any) {
   // 毎週水曜は「M&Aクロスマッチング」：パートナー間の売り×買いを突合
   const matches = await maCrossMatch(sb, byPartner);
 
-  // 経営者にも毎朝の一手を届ける（担当パートナーがいる顧客のみ）
+  // 経営者には週に一度のひとことを届ける（担当パートナーがいる顧客のみ）
   const custBriefs = await customerBriefs(sb);
+
+  // 面談の前日は、曜日にかかわらず必ず届ける
+  const custEve = await customerMeetingEve(sb);
 
   // 毎週金曜は「今週のナレッジ便り」：パートナー間の知見をAIが編集して共有
   const digest = await knowledgeDigest(sb);
 
-  console.log(`heartbeat done: partners=${byPartner.size} generated=${generated} meeting_briefs=${briefed} mentored=${mentored} succession=${radar} report_drafts=${drafts} ma_matches=${matches} customer_briefs=${custBriefs} knowledge_digest=${digest}`);
-  return { partners: byPartner.size, generated, meeting_briefs: briefed, mentored, succession: radar, report_drafts: drafts, ma_matches: matches, customer_briefs: custBriefs, knowledge_digest: digest };
+  console.log(`heartbeat done: partners=${byPartner.size} generated=${generated} meeting_briefs=${briefed} mentored=${mentored} succession=${radar} report_drafts=${drafts} ma_matches=${matches} customer_briefs=${custBriefs} customer_meeting_eve=${custEve} knowledge_digest=${digest}`);
+  return { partners: byPartner.size, generated, meeting_briefs: briefed, mentored, succession: radar, report_drafts: drafts, ma_matches: matches, customer_briefs: custBriefs, customer_meeting_eve: custEve, knowledge_digest: digest };
 }
 
-// ---- 経営者向け 毎朝の一手 ----
-// 経営者自身のデータ（試算表・課題・面談・レポート）から、今日やるとよいことを1〜2個だけ。
-// パートナー向けと違い、負担にならない軽さを最優先にする。
+// ---- 経営者向け 今週のひとこと（週に一度・月曜の朝）----
+// もとは毎朝だった。しかし社長は毎朝アプリを開く人ではなく、毎朝届く
+// 通知は3週間で無視されるようになる。無視された通知は二度と読まれない。
+// 週に一度なら「月曜に来るもの」として居場所ができる。
+//
+// 経営者自身のデータ（試算表・課題・面談・レポート・手元資金）から、
+// 今週やるとよいことを1〜2個だけ。負担にならない軽さを最優先にする。
 async function customerBriefs(sb: any): Promise<number> {
+  //  月曜の朝に出す。ただし、まだ一度も受け取っていない方には曜日を
+  //  待たせない。登録した週にいちども便りが来ないのは、いちばん
+  //  期待されている時期に沈黙することになる。
+  const isMonday = new Date(Date.now() + 9 * 3600 * 1000).getUTCDay() === 1;
+
   const { data: custs } = await sb
     .from("profiles")
     .select("id, company_name")
@@ -167,23 +179,44 @@ async function customerBriefs(sb: any): Promise<number> {
 
   let made = 0;
   for (const c of custs) {
+    //  6日以内に出していれば、その週のぶんは済んでいる
     const { data: dup } = await sb
       .from("agent_insights").select("id")
-      .eq("user_id", c.id).eq("kind", "daily_brief")
-      .gte("created_at", daysAgo(0.8)).limit(1);
+      .eq("user_id", c.id).eq("kind", "weekly_brief")
+      .gte("created_at", daysAgo(6)).limit(1);
     if (dup?.length) continue;
+    if (!isMonday) {
+      const { data: ever } = await sb
+        .from("agent_insights").select("id")
+        .eq("user_id", c.id).eq("kind", "weekly_brief").limit(1);
+      if (ever?.length) continue;          // 初回だけは曜日を待たない
+    }
 
     const signals: string[] = [];
     const { data: fin } = await sb.from("financial_entries").select("id").eq("customer_id", c.id).eq("year_month", prevMonth).limit(1);
     if (!fin?.length) signals.push(`先月(${prevMonth})の試算表が未入力`);
     const { data: pd } = await sb.from("pdca_items").select("title, due_date").eq("customer_id", c.id).neq("status", "done").lt("due_date", today).limit(3);
     for (const p of pd ?? []) signals.push(`課題「${p.title}」が期日超過`);
-    const { data: mt } = await sb.from("meetings_scheduled").select("meet_at").eq("customer_id", c.id).eq("status", "scheduled")
-      .gte("meet_at", now().toISOString()).lte("meet_at", daysAhead(3)).limit(1);
-    if (mt?.length) signals.push(`${fmtDate(mt[0].meet_at)}にパートナーとの面談予定`);
     const { data: rp } = await sb.from("monthly_reports").select("report_month").eq("customer_id", c.id).eq("status", "published")
-      .gte("published_at", daysAgo(7)).limit(1);
+      .gte("published_at", daysAgo(8)).limit(1);
     if (rp?.length) signals.push(`新しい月次レポート(${rp[0].report_month})が届いている`);
+    //  担当から届いたまま、まだ返していないメッセージ
+    try {
+      const { data: lm } = await sb.from("chat_messages").select("sender_role, created_at")
+        .eq("customer_id", c.id).order("created_at", { ascending: false }).limit(1);
+      if (lm?.length && lm[0].sender_role === "consultant" && lm[0].created_at >= daysAgo(14)) {
+        signals.push("担当パートナーからのメッセージに、まだお返事がない");
+      }
+    } catch { /* 表が無い環境でも止めない */ }
+    //  手元資金。しばらく入っていなければ、ひと声かける（催促にはしない）
+    try {
+      const { data: cc } = await sb.from("cash_checkins").select("on_date, balance")
+        .eq("customer_id", c.id).order("on_date", { ascending: false }).limit(1);
+      if (!cc?.length) signals.push("手元資金がまだ一度も記録されていない");
+      else if (cc[0].on_date < daysAgo(14).slice(0, 10)) {
+        signals.push(`手元資金の記録が${cc[0].on_date}で止まっている（前回は${cc[0].balance}万円）`);
+      }
+    } catch { /* 表がまだ無い環境では触れない */ }
     //  ご自分で書いた「やること」。今日のぶんと、過ぎてしまったぶん。
     //  書いた本人に読み上げるので、催促にならない言い方で添える。
     const todos = await openTodos(sb, c.id, today);
@@ -192,37 +225,106 @@ async function customerBriefs(sb: any): Promise<number> {
         ? `ご自分で書いた「${t.title}」が${t.due_on}の予定のまま`
         : `今日やると書いていた「${t.title}」`);
     }
-    const agenda = await todayAgenda(sb, c.id, [c.id]);
-    // 予定が入っている日は、シグナルが無くても朝のひとことを届ける
+    const agenda = await weekAgenda(sb, c.id);
+    // 予定が入っている週は、ほかに何も無くてもひとことを届ける
     if (!signals.length && !agenda.length) continue;
 
     const sys =
-      "あなたは経営支援プラットフォーム「TsuguAi」のAIエージェント「継ナビくん」です。" +
-      "経営者ご本人に向けた、朝のひとことを作ります。" +
+      "あなたは経営支援プラットフォーム「TsuguAi -継-」のAIエージェント「継ナビくん」です。" +
+      "経営者ご本人に向けた、週に一度のひとことを作ります。月曜の朝に届きます。" +
       "ルール: お願いは1〜2個まで。忙しい経営者の負担にならない軽さで、労いから入る。" +
       "■ 書き方（スマホで読まれる）お願いが2つあるときは、あいだに1行あける。" +
       "1文は40字程度で切る。箇条書きの記号は「・」。詰まった文字の塊にしない。" +
-      "今日の予定は、本文の前に別枠で必ず表示される。だから本文で予定を並べ直さない。" +
-      "予定が詰まっている日は、お願いを1個に減らす。" +
-      "予定が無い日に「予定はありません」と書き添える必要はない（別枠に出ているため）。" +
+      "今週の予定は、本文の前に別枠で必ず表示される。だから本文で予定を並べ直さない。" +
+      "予定が詰まっている週は、お願いを1個に減らす。" +
+      "予定が無い週に「予定はありません」と書き添える必要はない（別枠に出ているため）。" +
       "面談準備や数字の入力はアプリのどの画面でやるかを一言添える。判断に迷う内容は担当パートナーへの相談を促す。" +
+      "手元資金の記録が止まっている場合は、責める言い方をせず「よろしければ」と添えて一言だけ触れる。" +
       '出力は次のJSONのみ: {"title":"見出し(20字以内)","body":"本文(Markdown可・250字以内)"}';
     const tj = jstToday();
-    const usr = `会社: ${c.company_name || ""}\n今日は${tj.label}です。\n`
-      + (agenda.length ? `今日の予定:\n${agenda.map((a) => "- " + a).join("\n")}\n` : "")
-      + (signals.length ? `\n今朝の状況:\n${signals.map((x) => "- " + x).join("\n")}` : "");
+    const usr = `会社: ${c.company_name || ""}\n今日は${tj.label}、今週のはじまりです。\n`
+      + (agenda.length ? `今週の予定:\n${agenda.map((a) => "- " + a).join("\n")}\n` : "")
+      + (signals.length ? `\n今週の状況:\n${signals.map((x) => "- " + x).join("\n")}` : "");
     const brief = await callClaudeJson(sys, usr, 700);
     if (!brief) continue;
-    brief.body = agendaBlock(agenda) + brief.body;
+    brief.body = weekBlock(agenda) + brief.body;
 
     const { error: insErr } = await sb.from("agent_insights").insert({
-      user_id: c.id, kind: "daily_brief",
+      user_id: c.id, kind: "weekly_brief",
       title: brief.title, body: brief.body,
       reason: [...signals, ...agenda.map((a) => "予定: " + a)].join(" / "), priority: signals.length ? 2 : 3,
     });
     if (!insErr) { made++; await deliver(sb, c.id, brief); }
   }
   return made;
+}
+
+// ---- 経営者向け 面談の前日 ----
+// 週の便りとは別に、面談の前日だけは必ず届ける。「明日だったのか」を
+// 当日の朝に思い出すのがいちばん困る。準備の要る予定は、前日に言う。
+async function customerMeetingEve(sb: any): Promise<number> {
+  //  日本時間の「明日」だけを見る
+  const j = new Date(Date.now() + 9 * 3600000);
+  const startUtc = Date.UTC(j.getUTCFullYear(), j.getUTCMonth(), j.getUTCDate()) - 9 * 3600000;
+  const from = new Date(startUtc + 24 * 3600000).toISOString();
+  const to = new Date(startUtc + 48 * 3600000).toISOString();
+
+  let mts: any[] = [];
+  try {
+    const { data } = await sb.from("meetings_scheduled")
+      .select("id, customer_id, meet_at, place")
+      .eq("status", "scheduled").gte("meet_at", from).lt("meet_at", to)
+      .order("meet_at", { ascending: true }).limit(20);
+    mts = data ?? [];
+  } catch { return 0; }
+  if (!mts.length) return 0;
+
+  const ids = [...new Set(mts.map((m) => m.customer_id))];
+  const names = new Map<string, string>();
+  const { data: ps } = await sb.from("profiles").select("id, company_name").in("id", ids);
+  for (const p of ps ?? []) names.set(p.id, p.company_name || "");
+
+  const today = jstToday().date;
+  let sent = 0;
+  for (const m of mts) {
+    //  同じ面談で二度出さない
+    const { data: dup } = await sb.from("agent_insights").select("id")
+      .eq("user_id", m.customer_id).eq("kind", "meeting_eve")
+      .gte("created_at", daysAgo(1.5)).limit(1);
+    if (dup?.length) continue;
+
+    //  持っていくとよいものを、その人の宿題から拾う
+    const bring: string[] = [];
+    try {
+      const { data: pd } = await sb.from("pdca_items").select("title")
+        .eq("customer_id", m.customer_id).neq("status", "done").limit(3);
+      for (const p of pd ?? []) bring.push(`取り組み中の課題「${p.title}」`);
+    } catch { /* 無ければ無いで進む */ }
+    const todos = await openTodos(sb, m.customer_id, today, 3);
+    for (const t of todos) bring.push(`ご自分で書いた「${t.title}」`);
+
+    const when = fmtDayTimeJst(m.meet_at);
+    const sys =
+      "あなたは経営支援プラットフォーム「TsuguAi -継-」のAIエージェント「継ナビくん」です。" +
+      "経営者ご本人に、明日の面談の前日のお知らせを書きます。" +
+      "ルール: まず日時と場所を伝える。次に、準備しておくとよいことを最大2つ。" +
+      "無ければ「特にご準備は要りません」と言い切る。無理に作らない。" +
+      "1文は40字程度。箇条書きの記号は「・」。150字以内。" +
+      '出力は次のJSONのみ: {"title":"見出し(20字以内)","body":"本文(Markdown可)"}';
+    const usr = `会社: ${names.get(m.customer_id) || ""}\n`
+      + `明日の面談: ${when}${m.place ? `（${m.place}）` : "（場所は未定）"}\n`
+      + (bring.length ? `いま抱えていること:\n${bring.map((x) => "- " + x).join("\n")}` : "特記事項なし");
+    const brief = await callClaudeJson(sys, usr, 500);
+    if (!brief) continue;
+
+    const { error: insErr } = await sb.from("agent_insights").insert({
+      user_id: m.customer_id, kind: "meeting_eve",
+      title: brief.title, body: brief.body,
+      reason: `明日の面談: ${when}`, priority: 1,
+    });
+    if (!insErr) { sent++; await deliver(sb, m.customer_id, brief); }
+  }
+  return sent;
 }
 
 // ---- 今週のナレッジ便り（毎週金曜）：パートナー間の知見共有をAIが編集 ----
@@ -994,6 +1096,14 @@ async function composeBrief(signals: Signal[], agenda: string[] = []): Promise<{
 //    ・入れ忘れに気づける。「あるはずだが」と思えるのは、出ているときだけ
 //  ただしAIの文章には書かせない。日によって言い回しが変わると、
 //  読み手が「毎朝ここを見る」癖をつけられないため、こちらで組み立てる。
+//  週の便りの頭に置く「今週の予定」。毎週おなじ場所に同じ形で出す。
+//  予定が無い週も出す。空だったという報告になるので、届いていない・
+//  壊れている、と区別がつく。
+function weekBlock(agenda: string[]): string {
+  const head = "**【今週の予定】**\n";
+  if (!agenda.length) return head + "　今週は予定が入っていません\n\n────────────\n\n";
+  return head + agenda.map((a) => "・" + a).join("\n") + "\n\n────────────\n\n";
+}
 function agendaBlock(agenda: string[]): string {
   //  LINEでは ** が落ちるため、【】そのもので見出しと分かるようにする。
   //  区切り線は、予定と本題のあいだに視線の切れ目を作るためのもの。
@@ -1020,6 +1130,23 @@ function jstToday(): { from: string; to: string; label: string; date: string } {
     //  前日になってしまう。
     date: j.toISOString().slice(0, 10),
   };
+}
+//  これから7日ぶん。週に一度の便りでは「今日」ではなく「今週」を出す。
+function jstWeek(): { from: string; to: string } {
+  const j = new Date(Date.now() + 9 * 3600000);
+  const startUtc = Date.UTC(j.getUTCFullYear(), j.getUTCMonth(), j.getUTCDate()) - 9 * 3600000;
+  return {
+    from: new Date(startUtc).toISOString(),
+    to: new Date(startUtc + 7 * 24 * 3600000).toISOString(),
+  };
+}
+//  日付まで添える。週の便りで「14:00 面談」とだけ書かれても、
+//  それが何曜日なのか分からない。
+function fmtDayTimeJst(iso: string, allDay?: boolean) {
+  const j = new Date(new Date(iso).getTime() + 9 * 3600000);
+  const w = "日月火水木金土"[j.getUTCDay()];
+  const d = `${j.getUTCMonth() + 1}月${j.getUTCDate()}日(${w})`;
+  return allDay ? `${d} 終日` : `${d} ${fmtTimeJst(iso)}`;
 }
 function fmtTimeJst(iso: string) {
   const j = new Date(new Date(iso).getTime() + 9 * 3600000);
@@ -1052,6 +1179,40 @@ async function openTodosForCustomers(sb: any, customerIds: string[], today: stri
     return ((data ?? []) as OpenTodo[]).filter((t) => t.priority === 1 || t.due_on < today);
   } catch { return []; }
 }
+//  今週の予定。経営者ご本人のカレンダーと、担当パートナーとの面談を混ぜる。
+async function weekAgenda(sb: any, customerId: string): Promise<string[]> {
+  const { from, to } = jstWeek();
+  const rows: { t: number; s: string }[] = [];
+  try {
+    const { data: ev } = await sb.from("agenda_events")
+      .select("title, starts_at, all_day, place")
+      .eq("owner_id", customerId)
+      .gte("starts_at", from).lt("starts_at", to)
+      .order("starts_at", { ascending: true }).limit(20);
+    for (const e of ev ?? []) {
+      rows.push({
+        t: new Date(e.starts_at).getTime(),
+        s: `${fmtDayTimeJst(e.starts_at, e.all_day)} ${e.title ?? "予定"}${e.place ? `（${e.place}）` : ""}`,
+      });
+    }
+  } catch { /* 表が無い環境でも止めない */ }
+  try {
+    const { data: mt } = await sb.from("meetings_scheduled")
+      .select("meet_at, place")
+      .eq("status", "scheduled").eq("customer_id", customerId)
+      .gte("meet_at", from).lt("meet_at", to)
+      .order("meet_at", { ascending: true }).limit(10);
+    for (const m of mt ?? []) {
+      rows.push({
+        t: new Date(m.meet_at).getTime(),
+        s: `${fmtDayTimeJst(m.meet_at)} 担当パートナーとの面談${m.place ? `（${m.place}）` : ""}`,
+      });
+    }
+  } catch { /* 同上 */ }
+  rows.sort((a, b) => a.t - b.t);
+  return rows.map((r) => r.s);
+}
+
 async function todayAgenda(sb: any, ownerId: string, customerIds?: string[]): Promise<string[]> {
   const { from, to } = jstToday();
   const rows: { t: number; s: string }[] = [];
