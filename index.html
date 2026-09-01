@@ -1323,7 +1323,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260901-04';
+  var APP_BUILD='20260901-05';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -7258,7 +7258,8 @@
         +'<button class="btn2" id="mycash-go" style="font-size:12.5px;padding:9px 18px;" onclick="cashSave()">'
           +(isToday?'記録を直す':'記録する')+'</button>'
       +'</div>'
-      +'<div id="mycash-msg" style="font-size:11.5px;margin-top:7px;min-height:15px;"></div>';
+      +'<div id="mycash-msg" style="font-size:11.5px;margin-top:7px;min-height:15px;"></div>'
+      +'<div id="mycash-advice"></div>';
 
     //  流れが見えると、入れる意味が伝わる。数字が2つ以上あるときだけ出す
     if(rows.length>1){
@@ -7269,6 +7270,191 @@
     }
     h+='</div>';
     box.innerHTML=h;
+    if(MYCASH) cashAdvice();
+  }
+
+  // ===== 入れたあと、何をすればよいかまで出す =====
+  //  数字を書かせて「はい終わり」では、不安な数字を見せただけになる。
+  //  むしろ入れる前より悪い。残高が薄いと分かったその場で、いま打てる手を
+  //  出す。ここがこの機能の本体で、入力欄はその入口にすぎない。
+  //
+  //  出し方は残高に見合わせる。余裕があるなら一行で終える。心配の要らない
+  //  人に危機を語ると、本当に薄いときの言葉が効かなくなる。
+  var CASH_VIEW=null;     // 直近の見立て（担当への連絡文にも使う）
+
+  async function cashAdvice(){
+    var box=$('mycash-advice'); if(!box||!MYCASH) return;
+    box.innerHTML='';
+    var bal=Number(MYCASH.balance)||0;
+    var pays=[], fin=[];
+    try{
+      var r=await Promise.all([
+        sb.from('upcoming_payments').select('title,due_date,amount').eq('customer_id',SCOPE)
+          .gte('due_date',jstToday()).order('due_date',{ascending:true}).limit(40),
+        sb.from('financial_entries').select('year_month,profit').eq('customer_id',SCOPE)
+          .order('year_month',{ascending:false}).limit(3)
+      ]);
+      pays=(r[0].error?[]:(r[0].data||[]));
+      fin=(r[1].error?[]:(r[1].data||[]));
+    }catch(e){ /* 読めなくても、下の連絡と相談は出せる */ }
+
+    //  月の増減。営業利益の平均をそのまま使う。粗いが、社長が
+    //  「毎月どれくらい減っているか」を掴むにはこの粒度で足りる。
+    var profs=fin.map(function(f){ return Number(f.profit); }).filter(function(v){ return isFinite(v); });
+    var monthly=profs.length?Math.round(profs.reduce(function(a,b){ return a+b; },0)/profs.length):null;
+
+    //  いちばん近い「払えない支払い」を探す。3か月先まで月ごとに見る。
+    var view={ bal:bal, monthly:monthly, short:null, nextPay:null, pay30:0, months:[] };
+    var t=new Date(jstToday()+'T00:00:00');
+    var run=bal;
+    for(var i=0;i<3;i++){
+      var mS=new Date(t.getFullYear(), t.getMonth()+i, 1);
+      var mE=new Date(t.getFullYear(), t.getMonth()+i+1, 0);
+      var sum=pays.filter(function(p){
+        return p.due_date>=ymdLocal(mS) && p.due_date<=ymdLocal(mE);
+      }).reduce(function(a,p){ return a+(Number(p.amount)||0); },0);
+      if(i===0) view.pay30=sum;
+      run=run+(monthly||0)-sum;
+      view.months.push({ lbl:(mS.getMonth()+1)+'月', bal:run, pay:sum });
+      if(view.short===null && run<0) view.short=(mS.getMonth()+1)+'月';
+    }
+    //  一件で残高を超える支払いは、月の合計より先に効く
+    for(var k=0;k<pays.length;k++){
+      if((Number(pays[k].amount)||0)>bal){ view.nextPay=pays[k]; break; }
+    }
+    CASH_VIEW=view;
+
+    //  段階を決める。
+    //   red     … 足りない見込みがはっきりしている
+    //   amber   … 今月のお支払いに対して薄い
+    //   ok      … 見立てる材料があって、足りている
+    //   unknown … 材料が無い。ここで「大丈夫です」と言ってはいけない
+    var lvl;
+    var broke=(bal<=0) || (monthly!==null && monthly<0 && bal<Math.abs(monthly));
+    if(view.short!==null || view.nextPay || broke) lvl='red';
+    else if(view.pay30>0 && bal<view.pay30*1.5) lvl='amber';
+    else if(pays.length) lvl='ok';
+    else lvl='unknown';
+
+    if(lvl==='ok'){
+      box.innerHTML='<div style="font-size:11.5px;color:#27684A;margin-top:9px;line-height:1.75;">'
+        +'いまのところ、直近のお支払いは足りている見込みです。'
+        +'（今月のお支払い予定 '+view.pay30.toLocaleString('ja-JP')+'万円）'
+        +'</div>';
+      return;
+    }
+    //  お支払い予定が登録されていなければ、足りるかどうかは言えない。
+    //  分からないことを「大丈夫」と言うと、本当に薄いときの言葉が効かなくなる。
+    if(lvl==='unknown'){
+      box.innerHTML='<div style="font-size:11.5px;color:#5A6981;margin-top:9px;line-height:1.8;">'
+        +'お支払いの予定がまだ登録されていないため、足りるかどうかの見立てはできません。'
+        +'借入の返済・納税・賞与などのご予定を担当パートナーにお伝えいただくと、'
+        +'不足しそうな月を先にお知らせできるようになります。'
+        +'<br><span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="cashAskNavi()">'
+        +'継ナビくんに、いまの資金繰りを相談する →</span></div>';
+      return;
+    }
+
+    var red=(lvl==='red');
+    var head;
+    if(!red){
+      head='今月のお支払い予定に対して、手元が薄くなっています。';
+    } else if(view.nextPay){
+      head='<b>'+esc(fmtMD(view.nextPay.due_date))+'の「'+esc(view.nextPay.title||'お支払い')+'」'
+        +Number(view.nextPay.amount).toLocaleString('ja-JP')+'万円</b>に、いまの残高では足りない見込みです。';
+    } else if(view.short!==null){
+      head='<b>'+esc(view.short)+'に資金が不足する見込み</b>です。';
+    } else {
+      //  支払予定も見通しも無いのにここへ来るのは、残高そのものが尽きた場合。
+      //  （持ち出しが残高を上回るときは、上の見通しが先に月を言い当てる）
+      head='<b>手元資金がほとんど残っていません。</b>';
+    }
+
+    var h='<div style="border:1.5px solid '+(red?'#E7C9C7':'#EAD9AC')+';background:'+(red?'#FCF4F3':'#FDFAF1')+';'
+      +'border-radius:11px;padding:13px 15px;margin-top:11px;">'
+      +'<div style="font-size:13px;font-weight:700;color:'+(red?'#A9403D':'#8A6A12')+';margin-bottom:6px;">'
+      +(red?'早めに手を打てる段階です':'少し注意が要ります')+'</div>'
+      +'<div style="font-size:12px;color:#18202E;line-height:1.85;margin-bottom:10px;">'+head
+      +(monthly!==null && monthly<0
+        ? '<br>直近の月次では、毎月およそ'+Math.abs(monthly).toLocaleString('ja-JP')+'万円の持ち出しになっています。'
+        : '')
+      +'</div>';
+
+    //  打てる手を、速い順に。ここは押せるボタンにする。
+    //  「相談してください」だけでは、押す先が無い。
+    h+='<div style="display:flex;gap:7px;flex-wrap:wrap;">'
+      +'<button class="btn2" style="font-size:12px;padding:8px 14px;" onclick="cashTellPartner()">'
+        +'担当パートナーに知らせる</button>'
+      +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;" '
+        +'onclick="cashAskNavi()">継ナビくんに手を聞く</button>'
+      +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;" '
+        +'onclick="goSec(\'sec-status\')">資金繰りの見通しを見る</button>'
+      +'</div>'
+      +'<div id="mycash-sent" style="font-size:11.5px;margin-top:7px;"></div>';
+
+    if(red){
+      //  何から相談すべきかを、こちらから並べる。「相談してください」だけでは
+      //  何を相談すればよいのか分からないまま終わる。
+      //  実行の可否は個々の事情によるので、担当と確かめる項目として出す。
+      h+='<div style="font-size:11.5px;color:#5A6981;line-height:1.9;margin-top:10px;'
+        +'border-top:1px dashed #E7C9C7;padding-top:9px;">'
+        +'<b style="color:#A9403D;">担当パートナーと確かめられること</b><br>'
+        +'・お支払いの繰り延べを、相手先に相談する<br>'
+        +'・入金の前倒しをお願いできる先がないか洗い出す<br>'
+        +'・税金・社会保険料には猶予の制度があります（要件の確認が要ります）<br>'
+        +'・当座貸越やつなぎの借入（銀行対応は担当がお手伝いします）<br>'
+        +'・今月から止められる支出を、金額の大きい順に見直す'
+        +'</div>';
+    }
+    h+='</div>';
+    box.innerHTML=h;
+  }
+
+  function fmtMD(d){
+    var p=String(d||'').split('-');
+    return p.length>2 ? (Number(p[1])+'月'+Number(p[2])+'日') : String(d||'');
+  }
+
+  //  担当パートナーへ、いまの数字ごと知らせる。ひと押しで届くことに意味がある。
+  //  不安なときに、何をどう書けばよいか考えるところから始めさせない。
+  async function cashTellPartner(){
+    var out=$('mycash-sent'); if(!CASH_VIEW) return;
+    var v=CASH_VIEW;
+    var body='【手元資金のお知らせ】\n'
+      +'いまの手元資金は '+v.bal.toLocaleString('ja-JP')+'万円です。\n'
+      +(MYCASH && MYCASH.note ? '（'+MYCASH.note+'）\n' : '')
+      +(v.nextPay
+        ? fmtMD(v.nextPay.due_date)+'の「'+(v.nextPay.title||'お支払い')+'」'
+          +Number(v.nextPay.amount).toLocaleString('ja-JP')+'万円に足りない見込みです。\n'
+        : (v.short ? v.short+'に資金が不足する見込みです。\n' : ''))
+      +'一度ご相談させてください。';
+    if(!confirm('担当パートナーに次の内容をお送りします。よろしいですか？\n\n'+body)) return;
+    if(out) out.innerHTML='<span style="color:#94A2B6;">お送りしています…</span>';
+    try{
+      var r=await sb.from('chat_messages').insert({
+        customer_id:SCOPE, sender_id:ME, sender_role:'customer', body:body });
+      if(r.error) throw new Error(r.error.message);
+    }catch(e){
+      if(out) out.innerHTML='<span style="color:#A9403D;">お送りできませんでした：'+esc(String((e&&e.message)||e))+'</span>';
+      return;
+    }
+    if(out) out.innerHTML='<span style="color:#27684A;">✓ 担当パートナーにお送りしました。'
+      +'<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="knvOpenMsg()">やりとりを開く</span></span>';
+  }
+
+  //  継ナビくんには、数字を入れた問いを渡す。空欄から書かせない。
+  function cashAskNavi(){
+    if(!CASH_VIEW) return;
+    var v=CASH_VIEW;
+    var q='いまの手元資金は'+v.bal.toLocaleString('ja-JP')+'万円です。'
+      +(v.monthly!==null && v.monthly<0 ? '毎月およそ'+Math.abs(v.monthly).toLocaleString('ja-JP')+'万円の持ち出しがあります。' : '')
+      +(v.nextPay
+        ? fmtMD(v.nextPay.due_date)+'に「'+(v.nextPay.title||'支払い')+'」'
+          +Number(v.nextPay.amount).toLocaleString('ja-JP')+'万円の支払いがあり、足りない見込みです。'
+        : (v.short ? v.short+'に資金が不足する見込みです。' : ''))
+      +'いまから打てる手を、早く効く順に具体的に教えてください。'
+      +'それぞれ、誰に何をお願いするところから始めればよいかまで書いてください。';
+    knvAsk(q);
   }
 
   async function cashSave(){
