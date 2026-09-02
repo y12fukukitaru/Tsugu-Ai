@@ -198,7 +198,8 @@ async function customerBriefs(sb: any): Promise<number> {
 
     const signals: string[] = [];
     const { data: fin } = await sb.from("financial_entries").select("id").eq("customer_id", c.id).eq("year_month", prevMonth).limit(1);
-    if (!fin?.length) signals.push(`先月(${prevMonth})の試算表が未入力`);
+    //  「未入力」と書くと、便りが「入力してください」に流れる。届いていない、が事実
+    if (!fin?.length) signals.push(`先月(${prevMonth})の試算表がまだ届いていない（担当パートナーが入力する。ご本人は税理士から届いたらメッセージで送るだけ）`);
     const { data: pd } = await sb.from("pdca_items").select("title, due_date").eq("customer_id", c.id).neq("status", "done").lt("due_date", today).limit(3);
     for (const p of pd ?? []) signals.push(`課題「${p.title}」が期日超過`);
     const { data: rp } = await sb.from("monthly_reports").select("report_month").eq("customer_id", c.id).eq("status", "published")
@@ -242,7 +243,16 @@ async function customerBriefs(sb: any): Promise<number> {
       "今週の予定は、本文の前に別枠で必ず表示される。だから本文で予定を並べ直さない。" +
       "予定が詰まっている週は、お願いを1個に減らす。" +
       "予定が無い週に「予定はありません」と書き添える必要はない（別枠に出ているため）。" +
-      "面談準備や数字の入力はアプリのどの画面でやるかを一言添える。判断に迷う内容は担当パートナーへの相談を促す。" +
+      //  数字の扱い。ここを曖昧にすると「レポート画面から入力してください」のように、
+      //  無い入力欄へ案内してしまう（2026-09-02 の初回配信で実際に起きた）。
+      "■ 数字について（守ること）経営者に試算表など月次の数字の入力を求めない。経営者の画面に入力欄は無く、担当パートナーが入力する。" +
+      "試算表がまだ届いていないときは「税理士から届いたら、メッセージで担当パートナーへ送ってください」と頼む。「入力してください」とは書かない。" +
+      "ご本人が入れるのは、ダッシュボード上部の「いまの手元資金」だけ（預金残高を数字ひとつ・30秒・任意）。" +
+      "■ 画面の名前（これ以外の画面名を作らない）ダッシュボード＝入口。上部に「いまの手元資金」の欄／" +
+      "月次レポート＝担当パートナーが承認した報告書を読む／経営課題＝取り組み中の課題／" +
+      "財務・資金繰り＝担当パートナーが入れた数字と支払予定を見る／企業価値・試算結果＝会社の値段と承継シミュレーション／" +
+      "継ナビくん＝画面右下。相談・担当パートナーとのメッセージ・お知らせ。" +
+      "どこで何をするかを書くときは、この名前をそのまま使う。判断に迷う内容は担当パートナーへの相談を促す。" +
       "手元資金の記録が止まっている場合は、責める言い方をせず「よろしければ」と添えて一言だけ触れる。" +
       '出力は次のJSONのみ: {"title":"見出し(20字以内)","body":"本文(Markdown可・250字以内)"}';
     const tj = jstToday();

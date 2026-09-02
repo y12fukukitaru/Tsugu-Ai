@@ -1083,6 +1083,40 @@
  </div>
 </div>
 
+<!-- ===== 担当パートナーの門（経営者・担当が未登録のあいだ） =====
+     このプラットフォームは、担当の認定パートナーが経営者へ成果物を納める形で
+     運営する。担当がいないまま中に入ると、相手のいない「メッセージであいさつ」が
+     並び、週の便りも届かない。担当が登録されるまでは、ここで待ってもらう。 -->
+<div id="pgate" class="gate hidden">
+ <div class="gatewrap">
+  <div class="card">
+    <div class="gate-navi-wrap"><span id="pgate-navi" class="gate-navi tsg-mado lg tsg-bow"></span></div>
+    <div style="text-align:center;">
+      <div class="brand">
+        <div class="name">TsuguAi<span class="logo-tsg">-継-</span></div>
+      </div>
+      <div style="font-family:var(--f-navi);font-size:13px;color:var(--muted);margin-top:8px;line-height:1.9;">継ナビくんです🌱<br>担当パートナーの登録を待っています。</div>
+    </div>
+    <div style="font-size:13px;color:var(--ink);line-height:1.95;margin:18px 0 6px;">
+      TsuguAi -継- は、<b>担当の認定パートナーが経営者へ成果物をお届けする</b>形で運営しています。<br>
+      まだ、あなたの担当パートナーが登録されていません。
+    </div>
+    <div style="border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin:12px 0;background:var(--soft);">
+      <div style="font-size:12px;font-weight:700;color:var(--navy);">担当パートナーから紹介を受けた方</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.85;margin-top:4px;">パートナーに、このメールアドレスを登録してもらってください。登録が済むと、この画面は開きます。</div>
+      <div id="pgate-email" style="font-size:14px;font-weight:700;color:var(--ink);margin-top:6px;word-break:break-all;"></div>
+    </div>
+    <div style="border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin:0 0 14px;">
+      <div style="font-size:12px;font-weight:700;color:var(--navy);">まだ担当パートナーがいない方</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.85;margin-top:4px;">運営がご紹介します。運営には毎朝、担当が未登録の方の一覧が届きますので、こちらからもご連絡いたします。</div>
+    </div>
+    <button class="btn" id="pgate-go" onclick="pgateRecheck()">もう一度確認する</button>
+    <div id="pgate-msg" class="msg"></div>
+    <div class="link" onclick="signOut()">ログアウト</div>
+  </div>
+ </div>
+</div>
+
 <!-- ===== APP ===== -->
 <div id="app" class="hidden">
   <aside class="sb">
@@ -1323,7 +1357,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260901-06';
+  var APP_BUILD='20260902-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -1447,7 +1481,7 @@
     // 初回ログイン（お名前・会社名が未設定）は、先に「はじめの設定」を出す。
     // ここでパートナーは登録コードを入れて、その場でパートナーとして使い始められる。
     if(needsOnboard(prof)){ showOnboard(prof, session.user.email); return; }
-    renderApp(prof, session.user.email);
+    await enterApp(prof, session.user.email);
   }
   // ===== はじめの設定（初回ログイン）=====
   // 運営が権限を切り替えるまで何もできない状態を作らないための入口。
@@ -1517,7 +1551,7 @@
       MYROLE=prof.role||'customer';
       var w=$('onb'); if(w) w.classList.add('hidden');
       await resolveScope();
-      renderApp(prof, ONB_EMAIL);
+      await enterApp(prof, ONB_EMAIL);
     }catch(e){ location.reload(); }
   }
   // 「あとで設定する」：経営者としてすぐ使い始める（設定は後からでも変えられる）
@@ -1525,7 +1559,60 @@
     try{ await sb.from('profiles').update({ onboarded:true }).eq('id',ME); }catch(e){}
     var w=$('onb'); if(w) w.classList.add('hidden');
     var prof=ONB_PROF||{role:'customer'};
-    renderApp(prof, ONB_EMAIL);
+    await enterApp(prof, ONB_EMAIL);
+  }
+
+  // ===== 担当パートナーの門（経営者）=====
+  // このプラットフォームは、担当の認定パートナーが経営者へ納める形で運営する。
+  // 担当がいないまま中に入ると「メッセージで担当にあいさつ」のように相手のいない
+  // 案内が並び、週の便りも届かない。担当が登録されるまで、門で待ってもらう。
+  //   経営者本人の会社（SCOPE===ME）で、consultant_id が空のときだけ止める。
+  //   閲覧メンバー・顧問税理士は他社を見ているので通す。運営・パートナーも通す。
+  //   読めなかったときは通す。止めるほうが、間違えたときの実害が大きい。
+  async function needsPartnerGate(prof){
+    if(!prof || (prof.role||'customer')!=='customer') return false;
+    if(SCOPE && SCOPE!==ME) return false;
+    try{
+      var r=await sb.from('profiles').select('consultant_id').eq('id',ME).maybeSingle();
+      if(r.error) return false;
+      return !(r.data && r.data.consultant_id);
+    }catch(e){ return false; }
+  }
+  function showPartnerGate(prof, email){
+    $('gate').classList.add('hidden'); $('app').classList.add('hidden');
+    var o=$('onb'); if(o) o.classList.add('hidden');
+    var w=$('pgate'); if(!w){ renderApp(prof, email); return; }
+    knvHideAll();
+    var em=$('pgate-email'); if(em) em.textContent=email||'';
+    var m=$('pgate-msg'); if(m) m.textContent='';
+    w.classList.remove('hidden');
+    tsgFill('pgate-navi');
+  }
+  //  「もう一度確認する」：パートナーが登録を済ませたら、そのまま中へ
+  async function pgateRecheck(){
+    var m=$('pgate-msg'), btn=$('pgate-go');
+    if(m){ m.style.color='#27684A'; m.textContent='確認しています…'; }
+    if(btn) btn.disabled=true;
+    try{
+      var q=await sb.from('profiles').select('*').eq('id',ME).maybeSingle();
+      var prof=(q&&q.data)||window.__prof||{role:'customer'};
+      if(prof.consultant_id){
+        var w=$('pgate'); if(w) w.classList.add('hidden');
+        await resolveScope();
+        renderApp(prof, window.__email||'');
+        return;
+      }
+      if(m){ m.style.color='#A9403D'; m.textContent='まだ担当パートナーが登録されていません。登録が済むと、ここが開きます。'; }
+    }catch(e){
+      if(m){ m.style.color='#A9403D'; m.textContent='確認できませんでした。しばらくしてからもう一度お試しください。'; }
+    }
+    if(btn) btn.disabled=false;
+  }
+  //  中に入る前に必ず通る入口。renderApp を直接呼ばず、ここを通す。
+  async function enterApp(prof, email){
+    window.__prof=prof; window.__email=email||'';
+    if(await needsPartnerGate(prof)){ showPartnerGate(prof, email); return; }
+    renderApp(prof, email);
   }
 
   function roleLabel(r){ return r==='consultant'?'パートナー':(r==='admin'?'運営':'顧客'); }
@@ -3105,7 +3192,7 @@
           +'<div id="cst-out" style="margin-top:4px;"></div>'
         +'</div>'
         +'<div class="panel" id="sec-cash"><div class="ph">財務・資金繰り（担当パートナーが入力します）</div>'
-          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;">月次の数値や支払予定は担当パートナーが入力・更新します。数値や資料は「メッセージ」でお送りいただくだけでOKです。修正のご希望もメッセージでどうぞ。</div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;">月次の数値や支払予定は担当パートナーが入力・更新します。数値や資料は「メッセージ」でお送りいただくだけでOKです。修正のご希望もメッセージでどうぞ。<br>ご自身で入れるのは、ダッシュボード上部の<b style="color:#1E3A66;">「いまの手元資金」</b>だけです（数字ひとつ・任意）。</div>'
           +'<div style="font-weight:600;font-size:14px;color:#1E3A66;margin:2px 0 6px;">① 月次財務メモ</div>'
           +'<div id="fin-list" style="margin-top:6px;">読み込み中...</div>'
           +'<div id="my-finreport"></div>'
@@ -7488,6 +7575,15 @@
     if(m2) m2.innerHTML='<span style="color:#27684A;">✓ 記録しました。ありがとうございます。</span>';
   }
 
+  //  「ようこそ」の①から、手元資金の欄まで連れていって入力欄に立つ。
+  //  ダッシュボードの上のほうにあるが、初めての人はどれのことか分からない。
+  function goCash(){
+    goSec('sec-flow');
+    setTimeout(function(){
+      var box=$('my-cash'); if(box) try{ box.scrollIntoView({ behavior:'smooth', block:'center' }); }catch(e){ box.scrollIntoView(); }
+      var i=$('mycash-v'); if(i) try{ i.focus(); }catch(e){}
+    }, 150);
+  }
   async function loadDashHero(){
     var box=$('dash-hero'); if(!box)return;
     var todayS=jstToday();
@@ -7514,10 +7610,12 @@
       h+='<div style="border:1px solid #E2E7EF;border-radius:12px;padding:14px 16px;background:#F8F9FC;">'
         +'<div style="font-size:14px;font-weight:700;color:#1E3A66;margin-bottom:8px;">ようこそ。まずはこの3つだけ</div>'
         +'<div style="font-size:13px;color:#18202E;line-height:2;">'
-        +'① <a onclick="goSec(\'sec-value\')" style="color:#2C5DA8;cursor:pointer;font-weight:600;">承継シミュレーション</a> を体験（「この会社を買ったら？」「いま譲るなら？」を30秒で試算）<br>'
-        +'② <a onclick="goSec(\'sec-chat\')" style="color:#2C5DA8;cursor:pointer;font-weight:600;">メッセージ</a> で担当パートナーにあいさつ・直近の売上を送る<br>'
-        +'③ <a onclick="goSec(\'sec-ai\')" style="color:#2C5DA8;cursor:pointer;font-weight:600;">AI自動化診断</a> を試す（タップするだけ）'
-        +'</div></div>';
+        +'① <a onclick="goCash()" style="color:#2C5DA8;cursor:pointer;font-weight:600;">いまの手元資金</a> を入れる（数字ひとつ・30秒。薄いかどうかが、その場で分かります）<br>'
+        +'② <a onclick="knvOpenAsk()" style="color:#2C5DA8;cursor:pointer;font-weight:600;">継ナビくん</a> に、いま気になっていることを一つ聞く（24時間・何でも）<br>'
+        +'③ <a onclick="goSec(\'sec-value\')" style="color:#2C5DA8;cursor:pointer;font-weight:600;">承継シミュレーション</a> を体験（「この会社を買ったら？」「いま譲るなら？」を30秒で試算）'
+        +'</div>'
+        +'<div style="font-size:11.5px;color:#5A6981;margin-top:8px;line-height:1.7;">試算表などの月次の数字は、担当パートナーが入力します。ご自身で入れるのは①だけです。</div>'
+        +'</div>';
       box.innerHTML=h; return;
     }
     var cur=fin[0]||null, prev=fin[1]||null;
@@ -10564,7 +10662,8 @@
     }
     return common
       +'【経営者ダッシュボードの画面ガイド】'
-      +'ダッシュボード=全体の入口／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=試算表の入力と資金繰りシミュレーター／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=業務の自動化診断／M&A活用=利益のM&A活用の提案／Tsugu投資・融資・M&A=マッチング掲載。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
+      +'【数字の扱い・必ず守る】経営者に試算表など月次の数字の入力を求めない。経営者の画面に入力欄は無く、担当パートナーが入力する。試算表が手元にあるなら「メッセージで担当パートナーへ送る」と案内する。ご本人が入れるのは「いまの手元資金」だけ。画面の名前は次の一覧の名前だけを使い、それ以外の画面名を作らない。'
+      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=業務の自動化診断／M&A活用=利益のM&A活用の提案／Tsugu投資・融資・M&A=マッチング掲載。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
@@ -11107,6 +11206,14 @@
     var p=$('knv-panel'); if(!p) return;
     if(p.classList.contains('hidden')) knvToggle(true);
     knvShowTab('kn');
+  }
+  //  「ようこそ」の②から、相談タブを開いて入力欄に立つ。
+  //  経営者がいちばん早く価値に触れられる入口なので、押した先で迷わせない。
+  function knvOpenAsk(){
+    var p=$('knv-panel'); if(!p) return;
+    if(p.classList.contains('hidden')) knvToggle(true);
+    knvShowTab('chat');
+    setTimeout(function(){ var i=$('knv-in')||document.querySelector('#knv-panel textarea,#knv-panel input[type=text]'); if(i) try{ i.focus(); }catch(e){} }, 250);
   }
   // ===== メッセージタブ：パートナー⇔顧客の送受信をパネル内で完結させる =====
   var KNV_MSG_CID=null, KNV_MSG_CNAME='';
@@ -16062,6 +16169,12 @@
     { sec:'sec-flow', find:function(){ return $('sec-flow'); },
       t:'経営者ダッシュボードへようこそ',
       b:'ここは、あなたの会社の状態がひと目で分かる画面です。1分ほどで、見かたをご案内します。' },
+    { sec:'sec-flow', find:function(){ var e=$('my-cash'); return (e && e.innerHTML) ? e : null; },
+      t:'いまの手元資金（ご自身で入れるのはここだけ）',
+      b:'いまの預金残高を、数字ひとつ入れるだけです。30秒で終わります。入れておくと、薄くなりそうなときに先にお知らせできます。任意ですが、これがいちばん役に立つ欄です。' },
+    { sec:'sec-flow', find:function(){ var e=$('my-obr'); return (e && e.innerHTML) ? e : null; },
+      t:'最初のひと月でお届けするもの',
+      b:'企業価値診断書・資金繰り現状レポート・保険と固定費の棚卸し・12ヶ月の改善ロードマップ。担当パートナーが最初の4週間で仕上げる4つの成果物と、その進み具合です。' },
     { sec:'sec-flow', find:function(){ var e=$('my-impact'); return (e && e.innerHTML) ? e : null; },
       t:'これまでに増えた現金',
       b:'保険の見直しやコスト削減で、実際にいくら現金が増えたかの累計です。単月の数字ではなく、積み上がった総額をここで確認できます。' },
@@ -16070,7 +16183,7 @@
       b:'いま資金がどうなっているかを、信号のように色でお知らせします。ここが赤や黄色になったときは、担当パートナーからもご連絡します。' },
     { sec:'sec-flow', find:function(){ return $('kpi-cards'); },
       t:'経営サマリー',
-      b:'売上・利益・現預金などの主要な数字です。数値の入力はすべて担当パートナーが代行しますので、あなたは確認するだけで大丈夫です。' },
+      b:'売上・利益などの主要な数字です。試算表などの月次の数値は担当パートナーが入力しますので、あなたは確認するだけで大丈夫です。ご自身で入れるのは、さきほどの「いまの手元資金」だけです。' },
     { sec:'sec-flow', find:function(){ return $('todo-list'); },
       t:'要対応アクション',
       b:'いま気にかけていただきたいことが並びます。ここが空なら、急ぎの対応はありません。' },
@@ -16091,7 +16204,7 @@
       b:'会社の値段の毎月の推移に加えて、「この会社を買ったら？」「いま譲るなら？」を30秒で試せる承継シミュレーションがあります。まだ先の話でも、未来の選択肢を数字で体験できます。' },
     { sec:'sec-flow', find:function(){ return $('knv-fab'); },
       t:'継ナビくん（右下にいつでも）',
-      b:'画面右下の継ナビくんは、24時間いつでも使える相談相手です。お知らせの確認や、LINE・スマホ通知の設定もここからできます。' },
+      b:'画面右下の継ナビくんは、24時間いつでも使える相談相手です。「この数字は良いのか」「銀行にどう説明するか」など、何でも聞けます。相談の続きは別の端末でも読めて、気に入った答えは担当パートナーにそのまま伝えられます。お知らせの確認や、LINE・スマホ通知の設定もここからです。' },
     { sec:'sec-flow', find:function(){
         var n=document.querySelector('#app-nav .ni');
         if(n && n.getBoundingClientRect().width>0) return n.parentNode;
