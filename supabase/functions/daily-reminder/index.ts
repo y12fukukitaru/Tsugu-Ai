@@ -42,11 +42,29 @@ Deno.serve(async (req) => {
   const now = Date.now();
   const DAY = 86400000;
 
+  // ---- 日数は日本時間の暦で数える ----
+  //  経過時間（24時間単位）で数えると、夜22時に届いたメッセージが翌朝まだ
+  //  「0日」になる。agent-heartbeat 側は暦日で数えているので、揃えておかないと
+  //  2つの便りで「3日」の指す範囲が食い違う。
+  const jstDayNum = (t: number) => {
+    const j = new Date(t + 9 * 3600000);
+    return Date.UTC(j.getUTCFullYear(), j.getUTCMonth(), j.getUTCDate()) / DAY;
+  };
+  const todayNum = jstDayNum(now);
+  //  時刻を持つ値（投稿時刻・登録日時）から今日までの日数
+  const daysSince = (iso: string) => {
+    const t = new Date(iso).getTime();
+    return isNaN(t) ? null : todayNum - jstDayNum(t);
+  };
+  //  'YYYY-MM-DD' は日付そのもの。時差でずらすと期日が1日前後する。
+  const dayDiff = (s: string) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s));
+    return m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) / DAY - todayNum : null;
+  };
+
   // ---- データ取得 ----
-  const [profs, chats, funds, pays] = await Promise.all([
-    sb.from('profiles').select('id,email,role,company_name,contact_name,consultant_id'),
-    sb.from('chat_messages').select('customer_id,sender_role,created_at')
-      .order('created_at', { ascending: false }).limit(2000),
+  const [profs, funds, pays] = await Promise.all([
+    sb.from('profiles').select('id,email,role,company_name,contact_name,consultant_id,created_at'),
     sb.from('funding_roadmap_items').select('customer_id,title,target_date,status'),
     sb.from('upcoming_payments').select('customer_id,title,due_date'),
   ]);
@@ -58,15 +76,24 @@ Deno.serve(async (req) => {
   const customers = rows.filter((r) => r.role === 'customer');
   const nameOf = (c: any) => c.company_name || c.contact_name || c.email;
 
-  // ---- 顧客ごとの最新メッセージ（新しい順に並んでいるので最初の1件）----
+  // ---- 顧客ごとの最新メッセージ ----
+  //  以前は chat_messages を全体で新しい順2000件だけ取り、そこから顧客ごとの
+  //  最新を拾っていた。やり取りが増えると、口数の少ない顧客の最終メッセージが
+  //  2000件の外へ落ち、現に会話している相手に「一度もやり取りがありません」と
+  //  言い出す。エラーにならず、黙って間違えるのが困る。
+  //  顧客ごとに最新1件だけを取れば、何万件たまっても正しい。
   const last: Record<string, any> = {};
-  for (const m of (chats.data || [])) {
-    if (!last[m.customer_id]) last[m.customer_id] = m;
+  const custIds = customers.map((c: any) => c.id);
+  for (let i = 0; i < custIds.length; i += 10) {   // 10件ずつ。一度に開きすぎない
+    await Promise.all(custIds.slice(i, i + 10).map(async (id: string) => {
+      const { data } = await sb.from('chat_messages')
+        .select('customer_id,sender_role,created_at')
+        .eq('customer_id', id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (data && data[0]) last[id] = data[0];
+    }));
   }
-  const dayDiff = (s: string) => {
-    const d = new Date(s);
-    return isNaN(d.getTime()) ? null : Math.floor((d.getTime() - now) / DAY);
-  };
 
   // ---- 顧客ごとの「要対応事項」を組み立て（アプリ内トリアージと同じ基準）----
   const items: Record<string, { p: number; text: string }[]> = {};
@@ -77,14 +104,18 @@ Deno.serve(async (req) => {
   for (const c of customers) {
     const lm = last[c.id];
     if (lm && lm.sender_role === 'customer') {
-      const days = Math.floor((now - new Date(lm.created_at).getTime()) / DAY);
-      if (days >= 2) add(c.id, 100 + days, `返信待ち ${days}日`);
+      const days = daysSince(lm.created_at);
+      if (days !== null && days >= 2) add(c.id, 100 + days, `返信待ち ${days}日`);
     }
     if (!lm) {
-      add(c.id, 40, '一度もやり取りがありません');
+      //  登録した翌朝に「要対応」と並ぶのは早すぎる。挨拶をする間もない。
+      //  3日は待ってから促す。登録日時が読めなければ、これまでどおり出す。
+      //  黙って知らせないより、早く出るほうがまだよい。
+      const since = c.created_at ? daysSince(c.created_at) : null;
+      if (since === null || since >= 3) add(c.id, 40, '一度もやり取りがありません');
     } else {
-      const silent = Math.floor((now - new Date(lm.created_at).getTime()) / DAY);
-      if (silent >= 30) add(c.id, 40, `${silent}日間やり取りなし`);
+      const silent = daysSince(lm.created_at);
+      if (silent !== null && silent >= 30) add(c.id, 40, `${silent}日間やり取りなし`);
     }
   }
   for (const f of (funds.data || [])) {
