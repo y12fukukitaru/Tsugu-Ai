@@ -118,7 +118,7 @@ async function runHeartbeat(sb: any) {
     });
     if (!insErr) {
       generated++;
-      await deliver(sb, partnerId, brief); // メール・プッシュで届ける（アプリ外への働きかけ）
+      await deliver(sb, partnerId, brief, "daily_brief"); // メール・プッシュで届ける（アプリ外への働きかけ）
     }
   }
 
@@ -254,7 +254,7 @@ async function customerBriefs(sb: any): Promise<number> {
       title: brief.title, body: brief.body,
       reason: [...signals, ...agenda.map((a) => "予定: " + a)].join(" / "), priority: signals.length ? 2 : 3,
     });
-    if (!insErr) { made++; await deliver(sb, c.id, brief); }
+    if (!insErr) { made++; await deliver(sb, c.id, brief, "weekly_brief"); }
   }
   return made;
 }
@@ -322,7 +322,7 @@ async function customerMeetingEve(sb: any): Promise<number> {
       title: brief.title, body: brief.body,
       reason: `明日の面談: ${when}`, priority: 1,
     });
-    if (!insErr) { sent++; await deliver(sb, m.customer_id, brief); }
+    if (!insErr) { sent++; await deliver(sb, m.customer_id, brief, "meeting_eve"); }
   }
   return sent;
 }
@@ -362,7 +362,7 @@ async function knowledgeDigest(sb: any): Promise<number> {
       title: brief.title, body: brief.body,
       reason: `今週承認されたナレッジ${items.length}件をAIが編集`, priority: 3,
     });
-    if (!insErr) { sent++; await deliver(sb, p.id, brief); }
+    if (!insErr) { sent++; await deliver(sb, p.id, brief, "knowledge_digest"); }
   }
   return sent;
 }
@@ -492,7 +492,7 @@ async function maCrossMatch(sb: any, byPartner: Map<string, Set<string>>): Promi
     });
     if (!insErr) {
       notified++;
-      await deliver(sb, partnerId, brief);
+      await deliver(sb, partnerId, brief, "ma_match");
     }
   }
   return notified;
@@ -540,7 +540,7 @@ async function mentorNewPartners(sb: any, byPartner: Map<string, Set<string>>): 
     });
     if (!insErr) {
       mentored++;
-      await deliver(sb, c.id, brief);
+      await deliver(sb, c.id, brief, "mentor");
     }
   }
   return mentored;
@@ -620,7 +620,7 @@ async function successionRadar(sb: any, byPartner: Map<string, Set<string>>): Pr
     });
     if (!insErr) {
       count++;
-      await deliver(sb, partnerId, brief);
+      await deliver(sb, partnerId, brief, "succession");
     }
   }
   return count;
@@ -698,7 +698,7 @@ async function prepareMeetingBriefs(sb: any, byPartner: Map<string, Set<string>>
       });
       if (!insErr) {
         briefed++;
-        await deliver(sb, partnerId, brief);
+        await deliver(sb, partnerId, brief, "meeting_prep");
       }
     }
   }
@@ -743,11 +743,13 @@ async function composeMeetingBrief(ctx: any, meeting: { meet_at: string; place?:
 
 // ---- Phase 2: ブリーフをメールとスマホ通知でも届ける ----
 // 配信失敗でブリーフ生成自体を失敗させないよう、すべて握りつぶしてログに残すだけにする。
-async function deliver(sb: any, partnerId: string, brief: { title: string; body: string }) {
+// 宛先はパートナーとは限らない（経営者にも届く）ので userId と呼ぶ。
+// kind は本文ではなく「見出しと結びの一文」を選ぶために使う。
+async function deliver(sb: any, userId: string, brief: { title: string; body: string }, kind = "daily_brief") {
   // メール（Resend）
   if (RESEND_KEY) {
     try {
-      const { data: prof } = await sb.from("profiles").select("email").eq("id", partnerId).maybeSingle();
+      const { data: prof } = await sb.from("profiles").select("email").eq("id", userId).maybeSingle();
       if (prof?.email) {
         const res = await fetch("https://api.resend.com/emails", {
           method: "POST",
@@ -756,7 +758,7 @@ async function deliver(sb: any, partnerId: string, brief: { title: string; body:
             from: MAIL_FROM,
             to: [prof.email],
             subject: `【継ナビくん】${brief.title}`,
-            html: emailHtml(brief),
+            html: emailHtml(brief, kind),
           }),
         });
         if (!res.ok) console.error("email send failed:", res.status, await res.text());
@@ -767,7 +769,7 @@ async function deliver(sb: any, partnerId: string, brief: { title: string; body:
   if (VAPID_PUBLIC && VAPID_PRIVATE) {
     try {
       webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
-      const { data: subs } = await sb.from("push_subscriptions").select("id, subscription").eq("user_id", partnerId);
+      const { data: subs } = await sb.from("push_subscriptions").select("id, subscription").eq("user_id", userId);
       for (const s of subs ?? []) {
         try {
           await webpush.sendNotification(s.subscription, JSON.stringify({
@@ -789,7 +791,7 @@ async function deliver(sb: any, partnerId: string, brief: { title: string; body:
   // LINE（Messaging API）
   if (LINE_TOKEN) {
     try {
-      const { data: link } = await sb.from("line_links").select("line_user_id").eq("user_id", partnerId).maybeSingle();
+      const { data: link } = await sb.from("line_links").select("line_user_id").eq("user_id", userId).maybeSingle();
       if (link?.line_user_id) {
         const res = await fetch("https://api.line.me/v2/bot/message/push", {
           method: "POST",
@@ -826,7 +828,41 @@ function excerpt(t: string, n: number) {
   return (at > n * 0.5 ? cut.slice(0, at) : cut) + "\n…（続きはアプリで）";
 }
 
-function emailHtml(brief: { title: string; body: string }) {
+//  誰に・どの周期で届くメールかは種類ごとに違う。見出しと結びの一文をそこに
+//  合わせる。経営者宛のメールに「担当顧客の状況をもとに毎朝」と書いてしまうと、
+//  受け取った側には意味の通らない文になる。
+const MAIL_NOTE: Record<string, { eyebrow: string; foot: string; cta?: string }> = {
+  weekly_brief: {
+    eyebrow: "✦ 継ナビくんから、今週のお便り",
+    foot: "毎週月曜の朝に自動でお送りしています。",
+    cta: "TsuguAiを開く →",
+  },
+  meeting_eve: {
+    eyebrow: "✦ 継ナビくんから、明日の面談について",
+    foot: "面談の前日に自動でお送りしています。",
+    cta: "TsuguAiを開く →",
+  },
+  knowledge_digest: {
+    eyebrow: "✦ 継ナビくんから、今週のナレッジ便り",
+    foot: "毎週金曜に、その週に承認された実例をまとめて自動でお送りしています。",
+  },
+  mentor: {
+    eyebrow: "✦ 継ナビくんから、次の一歩のご案内",
+    foot: "研修の進み具合と担当顧客の状況をもとに、自動でお送りしています。",
+  },
+  meeting_prep: {
+    eyebrow: "✦ 継ナビくんから、面談の準備メモ",
+    foot: "面談の前日に自動でお送りしています。",
+  },
+};
+//  daily_brief・ma_match・succession は、いずれもパートナー宛の毎朝の便り
+const MAIL_NOTE_DEFAULT = {
+  eyebrow: "✦ 継ナビくんからの提案（今日の一手）",
+  foot: "担当顧客の状況をもとに、毎朝自動でお送りしています。",
+  cta: "TsuguAiを開いて対応する →",
+};
+
+function emailHtml(brief: { title: string; body: string }, kind = "daily_brief") {
   // 万一Markdown記号が混ざっても崩れないよう、表示側でも綺麗に変換する
   const body = (brief.body || "")
     .split("\n")
@@ -845,12 +881,14 @@ function emailHtml(brief: { title: string; body: string }) {
     //  かえって「何も無い場所」に見える。線自体も薄すぎたので少し濃くする。
     .replace(/(?:<br>)*<div style="border-top:[^"]*"><\/div>(?:<br>)*/g,
              '<div style="border-top:1px solid #D8E0EC;margin:14px 0;"></div>');
+  const note = MAIL_NOTE[kind] ?? MAIL_NOTE_DEFAULT;
+  const cta = note.cta ?? MAIL_NOTE_DEFAULT.cta;
   return `<div style="font-family:'Hiragino Sans','Noto Sans JP',sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#18202E;">
-    <div style="font-size:13px;color:#C39B3F;font-weight:bold;">✦ 継ナビくんからの提案（今日の一手）</div>
+    <div style="font-size:13px;color:#C39B3F;font-weight:bold;">${note.eyebrow}</div>
     <h2 style="font-size:17px;color:#1E3A66;margin:8px 0 14px;">${brief.title}</h2>
     <div style="font-size:14px;line-height:1.9;background:#F8F9FC;border:1px solid #E2E7EF;border-radius:10px;padding:16px 18px;">${body}</div>
-    <div style="margin:18px 0;"><a href="${APP_URL}" style="display:inline-block;background:#1E3A66;color:#fff;text-decoration:none;font-size:13px;font-weight:bold;padding:11px 22px;border-radius:9px;">TsuguAiを開いて対応する →</a></div>
-    <div style="font-size:11px;color:#5A6981;line-height:1.7;">このメールは TsuguAi -継- の継ナビくんが、担当顧客の状況をもとに毎朝自動でお送りしています。</div>
+    <div style="margin:18px 0;"><a href="${APP_URL}" style="display:inline-block;background:#1E3A66;color:#fff;text-decoration:none;font-size:13px;font-weight:bold;padding:11px 22px;border-radius:9px;">${cta}</a></div>
+    <div style="font-size:11px;color:#5A6981;line-height:1.7;">このメールは TsuguAi -継- の継ナビくんが、${note.foot}</div>
   </div>`;
 }
 
