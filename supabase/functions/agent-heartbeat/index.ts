@@ -179,11 +179,15 @@ async function customerBriefs(sb: any): Promise<number> {
 
   let made = 0;
   for (const c of custs) {
-    //  6日以内に出していれば、その週のぶんは済んでいる
+    //  今週ぶんをもう出していれば、済んでいる。
+    //  日数（6日以内）で見てはいけない。初回免除で月曜以外に出すと、
+    //  次の月曜がその6日の中に入ってしまい、その週を丸ごと飛ばす。
+    //  9/2(水)に初回を出した場合、次は9/7(月)ではなく9/14(月)になり、
+    //  9/12のローンチをまたいで12日間だまることになる。
     const { data: dup } = await sb
       .from("agent_insights").select("id")
       .eq("user_id", c.id).eq("kind", "weekly_brief")
-      .gte("created_at", daysAgo(6)).limit(1);
+      .gte("created_at", jstWeekStart()).limit(1);
     if (dup?.length) continue;
     if (!isMonday) {
       const { data: ever } = await sb
@@ -1170,6 +1174,15 @@ function jstToday(): { from: string; to: string; label: string; date: string } {
   };
 }
 //  これから7日ぶん。週に一度の便りでは「今日」ではなく「今週」を出す。
+//  日本時間で「今週の月曜0時」。週の便りを二度出さないための区切りに使う。
+//  日数で数えると、初回を月曜以外に出したときに次の月曜を飛ばしてしまう。
+function jstWeekStart(): string {
+  const j = new Date(Date.now() + 9 * 3600000);
+  const dow = (j.getUTCDay() + 6) % 7;   // 月曜を0にする（日曜は6）
+  const startUtc = Date.UTC(j.getUTCFullYear(), j.getUTCMonth(), j.getUTCDate() - dow) - 9 * 3600000;
+  return new Date(startUtc).toISOString();
+}
+
 function jstWeek(): { from: string; to: string } {
   const j = new Date(Date.now() + 9 * 3600000);
   const startUtc = Date.UTC(j.getUTCFullYear(), j.getUTCMonth(), j.getUTCDate()) - 9 * 3600000;
