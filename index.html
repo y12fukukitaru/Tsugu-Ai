@@ -1323,7 +1323,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260901-05';
+  var APP_BUILD='20260901-06';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -5722,7 +5722,9 @@
       var mc=await sb.from('profiles').select('id').eq('consultant_id',ME);
       if(!mc.error) myClients=(mc.data||[]).length;
     }catch(e){}
-    var myRate=rankFeeRate((window.__prof||{}).fde_rank, myClients==null?undefined:myClients);
+    //  自分が EP-II に所属していれば 70% 上限
+    var myEp2=await ep2Members([ME]);
+    var myRate=rankFeeRate((window.__prof||{}).fde_rank, myClients==null?undefined:myClients, !!myEp2[ME]);
     var myEntity=(window.__prof||{}).entity_type||null;
     var rv=await sb.from('revenue_entries').select('customer_id,category,amount,occurred_on,description')
       .in('customer_id',custIds).gte('occurred_on',fromS).lt('occurred_on',toS)
@@ -14570,11 +14572,27 @@
   //  clients（顧問契約数）を渡すと、スケールメリット（プレミアム30社以上で80%）まで見る。
   //  渡さなかった・分からない場合は基本の率にとどめる。分からないときに上へ倒すと
   //  払い過ぎになるため。
-  function rankFeeRate(rankName, clients){
+  //  スケール（プレミアム30社以上で80%）は、個人の認定パートナーだけに効く。
+  //  EP-II（所属営業型）に所属している方は 70% が上限。本部が一律10%を
+  //  受け取る仕組みで、そのうえに80%を重ねると継の取り分が無くなるため。
+  //  noScale に true を渡すと、社数にかかわらず基本の率のままにする。
+  function rankFeeRate(rankName, clients, noScale){
     var L=pgLevelOf(rankName); if(!L) return null;
     var f=L.fee;
-    if(L.scale && typeof clients==='number' && clients>=L.scale.cl) f=L.scale.fee;
+    if(!noScale && L.scale && typeof clients==='number' && clients>=L.scale.cl) f=L.scale.fee;
     return pgPct(f);   // 「個別設定」は率が決まらないので null
+  }
+  //  誰が EP-II に所属しているか。所属していない人は素の個人なので
+  //  スケールが効く。表がまだ無い環境では空を返し、これまでどおりにする。
+  async function ep2Members(userIds){
+    var out={};
+    if(!userIds || !userIds.length) return out;
+    try{
+      var r=await sb.rpc('ep_affiliation',{ p_users:userIds });
+      if(r.error) return out;
+      (r.data||[]).forEach(function(x){ if(x.ep_kind==='EP2') out[x.user_id]=1; });
+    }catch(e){}
+    return out;
   }
   function yen(n){ return Math.round(n).toLocaleString('ja-JP')+' 円'; }
 
@@ -14655,6 +14673,8 @@
           if(r.consultant_id) payClients[r.consultant_id]=(payClients[r.consultant_id]||0)+1; });
       }catch(e){}
     }
+    //  EP-II に所属している方は 70% 上限。スケールを効かせない
+    var ep2=await ep2Members(pids);
     var asg={};
     try{
       var aa=await sb.from('partner_assignments').select('customer_id,main_id,sub_id,sub_email,main_share,sub_share')
@@ -14671,7 +14691,7 @@
     rows.forEach(function(r){
       var c=custs[r.customer_id]; if(!c || !c.consultant_id){ noPartner+=Number(r.amount)||0; return; }
       var p=partners[c.consultant_id]||{};
-      var rate=rankFeeRate(p.fde_rank, payClients[c.consultant_id]||0);
+      var rate=rankFeeRate(p.fde_rank, payClients[c.consultant_id]||0, !!ep2[c.consultant_id]);
       var amt=Number(r.amount)||0;
       //  外注費率は税抜の土台に掛ける。入金額にはお預かりの消費税が
       //  乗っているので、そこまで配分しないようにする。
@@ -16197,6 +16217,9 @@
     { lv:2, key:'Senior',          name:'シニア', cond:'初の顧問契約を獲得', need:{cl:1,hd:0}, fee:'50%' },
     { lv:3, key:'Executive',       name:'エグゼクティブ', cond:'顧問契約5件', need:{cl:5,hd:0}, fee:'60%' },
     //  プレミアムは基本70%。30社以上でスケールメリットとして80%になる。
+    //  ただし80%になるのは個人の認定パートナーだけで、EP-II（所属営業型）に
+    //  所属している方は70%が上限。本部が一律10%を受け取るためで、
+    //  そこに80%を重ねると継の取り分が無くなる。判定は rankFeeRate で行う。
     { lv:4, key:'Premium Partner', name:'プレミアム', cond:'顧問契約10件', need:{cl:10,hd:0}, fee:'70%', scale:{cl:30, fee:'80%'} }
   ];
   async function loadPartnerGrowth(){
