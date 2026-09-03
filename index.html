@@ -1357,7 +1357,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260903-04';
+  var APP_BUILD='20260903-05';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -8231,6 +8231,7 @@
     var r=await sb.from('cancel_requests').update({ status:'done', handled_at:new Date().toISOString(), handled_by:ME }).eq('id',id);
     if(r.error){ alert('更新できませんでした：'+r.error.message); return; }
     loadAdmCancels();
+    if(typeof knvAdminBadge==='function') knvAdminBadge();   // 右下の件数も減らす
   }
 
   // ===== アカウントの削除（運営）=====
@@ -8301,6 +8302,7 @@
     alert('削除しました：'+((d.deleted&&(d.deleted.company_name||d.deleted.email))||''));
     loadAdmCancels();
     loadAdmDeletions();
+    if(typeof knvAdminBadge==='function') knvAdminBadge();   // 右下の件数も減らす
   }
   //  削除の控え。消えたあとに「いつ、誰が、どなたを」を辿れるのはここだけ
   async function loadAdmDeletions(){
@@ -11399,9 +11401,29 @@
   async function knvAdminBadge(){
     try{
       var r=await sb.from('support_inquiries').select('id').eq('status','open');
-      window.__KNV_BELL=(r.error||!r.data)?0:r.data.length;
-      window.__KNV_UNREAD=0; window.__KNV_TODO=window.__KNV_BELL;
+      var todo=(r.error||!r.data)?0:r.data.length;
+      //  解約のご依頼も数える。数は少ないが、見逃したときにいちばん痛い。
+      //  開きに行かないと気づけない、という状態にはしない。
+      //  表がまだ無い環境では 0 のまま（ベルを鳴らさないほうがましなので止めない）。
+      var cx=0;
+      try{
+        var c=await sb.from('cancel_requests').select('id').eq('status','open');
+        if(!c.error && c.data) cx=c.data.length;
+      }catch(e){}
+      var was=window.__KNV_CANCEL||0;
+      window.__KNV_CANCEL=cx;
+      window.__KNV_BELL=todo+cx;
+      window.__KNV_UNREAD=0; window.__KNV_TODO=todo;
       knvBadgesRender();
+      //  サポートタブは一度組んだら作り直さない作りなので、件数が変わったときだけ
+      //  組み直す。数が届く前に開いていた人に、いつまでも 0 件の画面を見せない。
+      if(cx!==was){
+        var sp=$('knv-support');
+        if(sp && sp.getAttribute('data-ready')){
+          sp.removeAttribute('data-ready');
+          if(typeof knvRenderSupport==='function') knvRenderSupport();
+        }
+      }
     }catch(e){}
   }
   // PC版の拡大表示（⤢/⤡）。選んだ大きさは次回以降も記憶する
@@ -11979,6 +12001,15 @@
       }
     }else{
       // 運営：パートナーからの問い合わせ受信箱へ（回答作業は広いコンソール画面で行う）
+      //  解約のご依頼が来ているときは、問い合わせより先に、赤で出す。
+      //  数は少ないが、見逃したときにいちばん痛い。
+      var cx=window.__KNV_CANCEL||0;
+      if(cx) h+='<div style="border:1.5px solid #E8C4C2;background:#FDF6F5;border-radius:11px;padding:11px 13px;margin-bottom:10px;">'
+        +'<div style="font-size:12.5px;font-weight:700;color:#A9403D;">⚠ 解約のご依頼が '+cx+'件 届いています</div>'
+        +'<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-top:3px;">'
+        +'最終月のご請求と資料のお渡しを済ませてから、アカウントを削除してください。</div>'
+        +'<button class="btn2" style="font-size:12px;padding:7px 14px;margin-top:8px;" '
+        +'onclick="knvToggle(false);goSec(\'sec-support\')">ご依頼を開く →</button></div>';
       h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">🛟 パートナーからの問い合わせ</div>'
         +knvRow('📥','受信箱を開く','未対応の件数はお知らせタブとバッジに表示。回答はコンソールの広い画面で','knvToggle(false);goSec(\'sec-support\')');
       box.innerHTML=h;
@@ -12024,9 +12055,14 @@
   function knvSummaryRender(){
     var box=$('knv-summary'); if(!box) return;
     var un=window.__KNV_UNREAD||0, todo=window.__KNV_TODO||0;
+    var cx=window.__KNV_CANCEL||0;
     var ins=(typeof agentInsightsUnread==='function')?agentInsightsUnread():0;
-    if(!un && !todo && !ins){ box.classList.add('hidden'); return; }
+    if(!un && !todo && !cx && !ins){ box.classList.add('hidden'); return; }
     var h='', isAdmin=((window.__eff||'')==='admin');
+    //  解約のご依頼はいちばん前に、赤で出す。問い合わせと同じ扱いにすると、
+    //  件数の多い問い合わせに埋もれる。
+    if(cx && isAdmin) h+='<button style="border-color:#E8C4C2;color:#A9403D;font-weight:700;" '
+      +'onclick="knvToggle(false);goSec(\'sec-support\')">⚠ 解約のご依頼 <b>'+cx+'</b>件</button>';
     if(un)   h+='<button onclick="knvShowTab(\'notif\')">📩 未読 <b>'+un+'</b>件</button>';
     if(todo) h+=isAdmin
       ? '<button onclick="knvToggle(false);goSec(\'sec-support\')">🛟 未対応の問い合わせ <b>'+todo+'</b>件</button>'
