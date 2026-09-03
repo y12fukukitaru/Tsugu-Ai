@@ -1357,7 +1357,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260902-02';
+  var APP_BUILD='20260903-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -1813,7 +1813,11 @@
   // 本文パネルを「直前に現れたメニュー項目のパネル」に自動グルーピング。
   // ・メニューにない補助パネル（sec-todo / sec-status 等）は直前のセクションと一緒に表示
   // ・最初のセクションより前にあるパネル（プレビュー切替バー等）は常時表示
-  function showSection(id){
+  //  noScroll: 画面の切り替えだけを行い、スクロールはしない。
+  //  使い方ガイドのように、切り替えたあとで自分の狙った場所へ動かしたい呼び出しが
+  //  ある。ここで一度スクロールしてしまうと、そのあとの移動と合わせて二度動き、
+  //  「一旦ずれて止まり、それから目的地へ行く」ように見える。
+  function showSection(id, noScroll){
     if(!id) return;
     window.__CUR_SEC=id; // 継ナビくんの文脈ヘルプ用：いまどの画面を開いているか
     var role=currentRole();
@@ -1843,6 +1847,7 @@
     CURRENT_SEC=grp;
     setActiveNav(grp);
     try{ var p=loadPrefs(); p.lastSec=p.lastSec||{}; p.lastSec[currentRole()]=grp; savePrefs(p); }catch(e){}
+    if(noScroll) return;
     if(id!==grp && $(id)){ var t=$(id); setTimeout(function(){ try{ t.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){} },30); }
     else { try{ window.scrollTo({top:0,left:0,behavior:'auto'}); }catch(e){ window.scrollTo(0,0); } }
   }
@@ -7578,11 +7583,16 @@
   //  「ようこそ」の①から、手元資金の欄まで連れていって入力欄に立つ。
   //  ダッシュボードの上のほうにあるが、初めての人はどれのことか分からない。
   function goCash(){
-    goSec('sec-flow');
-    setTimeout(function(){
-      var box=$('my-cash'); if(box) try{ box.scrollIntoView({ behavior:'smooth', block:'center' }); }catch(e){ box.scrollIntoView(); }
-      var i=$('mycash-v'); if(i) try{ i.focus(); }catch(e){}
-    }, 150);
+    //  showSection のスクロールは止めて、こちらで一度だけ動かす。
+    //  両方に任せると、トップへ飛んでから手元資金へ動く二段階になる。
+    showSection('sec-flow', true);
+    var go=function(){
+      var box=$('my-cash');
+      if(box) try{ box.scrollIntoView({ behavior:'smooth', block:'center' }); }catch(e){ box.scrollIntoView(); }
+      var i=$('mycash-v'); if(i) try{ i.focus({ preventScroll:true }); }catch(e){ try{ i.focus(); }catch(_){} }
+    };
+    if(window.requestAnimationFrame){ requestAnimationFrame(function(){ requestAnimationFrame(go); }); }
+    else setTimeout(go,32);
   }
   async function loadDashHero(){
     var box=$('dash-hero'); if(!box)return;
@@ -16260,7 +16270,8 @@
     if(i<0) i=0;
     CT.i=i;
     var s=CT.steps[i];
-    if(s.sec && $(s.sec)) showSection(s.sec);
+    //  切り替えだけさせて、スクロールはこちらで一度だけ行う（下の doScroll）
+    if(s.sec && $(s.sec)) showSection(s.sec, true);
     var el=null; try{ el=s.find(); }catch(e){}
     if(!ctVisible(el)){
       // 開始後の再描画で対象が消えた場合。飛ばすだけだと「2 / 13」の次が「4 / 13」に
@@ -16271,8 +16282,6 @@
       return;
     }
     CT.el=el;
-    var big=el.getBoundingClientRect().height > window.innerHeight*0.7;
-    try{ el.scrollIntoView({behavior:'smooth', block:big?'start':'center'}); }catch(e){ el.scrollIntoView(); }
     var last=(i===CT.steps.length-1);
     $('ct-pop').innerHTML=
        '<div style="display:flex;gap:10px;align-items:flex-start;">'
@@ -16288,9 +16297,25 @@
         +(i>0?'<button class="bk" onclick="ctGo('+(i-1)+')">戻る</button>':'')
         +'<button class="btn2 nx" onclick="'+(last?'ctEnd(true)':'ctGo('+(i+1)+')')+'">'+(last?'はじめる':'次へ')+'</button>'
       +'</div>';
-    // scrollIntoView のアニメーション中も枠が追従するよう、少しの間なぞる
-    ctReposition();
-    var n=0, iv=setInterval(function(){ if(!CT||++n>18){ clearInterval(iv); return; } ctReposition(); },30);
+    //  ここで初めてスクロールする。順番に意味がある。
+    //   ① 吹き出しの中身を先に入れる（大きさが決まらないと置き場所を誤る）
+    //   ② セクションを切り替えた直後は配置がまだ定まっていないので、次の描画を待つ
+    //   ③ そのうえで一度だけ動かす
+    //  ②を待たずに動かすと、古い配置を目指して飛んでから改めて動くため、
+    //  「一旦ずれて止まり、それから目的地へ行く」ように見える。
+    var doScroll=function(){
+      if(!CT || CT.el!==el) return;               // その間に次へ進んでいたら何もしない
+      var big=el.getBoundingClientRect().height > window.innerHeight*0.7;
+      try{ el.scrollIntoView({behavior:'smooth', block:big?'start':'center'}); }
+      catch(e){ el.scrollIntoView(); }
+      // スクロールのアニメーション中も枠が追従するよう、少しの間なぞる
+      ctReposition();
+      var n=0, iv=setInterval(function(){ if(!CT||++n>18){ clearInterval(iv); return; } ctReposition(); },30);
+    };
+    ctReposition();                                // 待つあいだ、枠が前の位置に残らないように
+    if(window.requestAnimationFrame){
+      requestAnimationFrame(function(){ requestAnimationFrame(doScroll); });
+    }else{ setTimeout(doScroll,32); }
   }
   function ctReposition(){
     if(!CT||!CT.el) return;
