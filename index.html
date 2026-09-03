@@ -1357,7 +1357,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260903-01';
+  var APP_BUILD='20260903-04';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -1594,6 +1594,9 @@
     if(m){ m.style.color='#27684A'; m.textContent='確認しています…'; }
     if(btn) btn.disabled=true;
     try{
+      //  門で待っているあいだにパートナーが登録したかもしれない。
+      //  招待として入っていれば、ここで担当が付く
+      try{ await sb.rpc('claim_my_invite'); }catch(e){}
       var q=await sb.from('profiles').select('*').eq('id',ME).maybeSingle();
       var prof=(q&&q.data)||window.__prof||{role:'customer'};
       if(prof.consultant_id){
@@ -2476,8 +2479,10 @@
         +'<div style="margin-top:10px;"><button class="btn2" onclick="postAnnouncement()">配信する</button><span id="bc-msg" style="font-size:12px;margin-left:8px;"></span></div>'
         +'<div id="bc-list" style="margin-top:12px;">読み込み中...</div></div>'
       +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.8"/><path d="m5.6 5.6 3.7 3.7M14.7 14.7l3.7 3.7M14.7 9.3l3.7-3.7M5.6 18.4l3.7-3.7"/></svg>サポート管理'
-        +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
+        +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmCancels();loadAdmDeletions();loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
         +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.5 12.5H16l-1.8 2.8H9.8L8 12.5H2.5"/><path d="M5.6 5.1 2.5 12.5V18a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-5.5l-3.1-7.4A2 2 0 0 0 16.6 4H7.4a2 2 0 0 0-1.8 1.1z"/></svg>パートナーからの問い合わせ</span><span id="adm-inq-count" class="nbadge hidden">0</span></div>'
+        +'<div id="adm-cancels"></div>'
+        +'<div id="adm-deletions"></div>'
         +'<div id="adm-inq-list" style="margin-top:6px;">読み込み中...</div>'
         +'<div style="border-top:1px solid #EDF1F6;margin-top:16px;padding-top:14px;">'
           +'<div class="ph" style="font-size:13px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 19.2A2.8 2.8 0 0 1 6.8 16.4H20"/><path d="M6.8 3H20v18H6.8A2.8 2.8 0 0 1 4 18.2V5.8A2.8 2.8 0 0 1 6.8 3z"/></svg>サポートBotナレッジ（AIの回答ネタ）</span></div>'
@@ -3195,6 +3200,7 @@
             +'<button class="ghost" style="font-size:12px;border:1px solid #E2E7EF;border-radius:8px;padding:7px 12px;" onclick="cstCsv()">⬇ CSV保存</button>'
           +'</div>'
           +'<div id="cst-out" style="margin-top:4px;"></div>'
+          +'<div id="my-cancel"></div>'
         +'</div>'
         +'<div class="panel" id="sec-cash"><div class="ph">財務・資金繰り（担当パートナーが入力します）</div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;">月次の数値や支払予定は担当パートナーが入力・更新します。数値や資料は「メッセージ」でお送りいただくだけでOKです。修正のご希望もメッセージでどうぞ。<br>ご自身で入れるのは、ダッシュボード上部の<b style="color:#1E3A66;">「いまの手元資金」</b>だけです（数字ひとつ・任意）。</div>'
@@ -3357,12 +3363,13 @@
             +'<button class="btn2" style="padding:7px 14px;font-size:12px;" onclick="toggleAddClient()">＋ 顧客を追加</button>'
             +'</span></div>'
           +'<div id="cl-add" class="hidden" style="border:1px dashed #C9D6EA;border-radius:11px;padding:12px 14px;margin:8px 0 4px;background:#FBFCFE;">'
-            +'<div style="font-size:12px;color:#94A2B6;margin-bottom:8px;">顧客として登録済みのメールアドレスを入力すると、担当顧客として紐づきます。</div>'
+            +'<div style="font-size:12px;color:#94A2B6;margin-bottom:8px;">顧客のメールアドレスを入力してください。<b style="color:#1E3A66;">まだご登録前の方でも構いません。</b>その場合は招待として控え、そのアドレスでご登録された時点で自動的に担当顧客になります（経営者は待たされません）。</div>'
             +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
               +'<div style="flex:1;min-width:220px;"><label class="fl">顧客のメールアドレス</label><input id="cl-email" type="email" class="inp2" style="width:100%;" placeholder="customer@example.com"></div>'
               +'<button class="btn2" onclick="claimClient()">担当に追加</button>'
             +'</div><div id="cl-msg" style="font-size:12px;margin-top:8px;"></div>'
           +'</div>'
+          +'<div id="cl-invites"></div>'
           +'<div id="cl-hero" class="sumchips"></div>'
           +'<div style="font-size:11.5px;color:#94A2B6;margin:4px 0 6px;">💡 登録前のお客様との商談には <span style="color:#2C5DA8;font-weight:700;cursor:pointer;" onclick="salesGo()"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="2.5" width="7" height="4" rx="1.2"/><path d="M15.5 4.5H18a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2h2.5"/><path d="M8.5 11h7M8.5 15h4.5"/></svg>営業ツール（課題ヒアリング診断）→</span> が使えます。</div>'
           +'<input id="cl-search" class="searchbox" placeholder="🔍 会社名・メールアドレスで検索" oninput="renderClientList()">'
@@ -3638,7 +3645,7 @@
     window.__eff=eff;
     $('app-body').innerHTML=view;
     if(eff==='customer' && ACCESS==='finance'){ loadAcct(); }
-    else if(eff==='customer'){ loadDashHero(); loadMyCash(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); loadAgentInsights(); knvInit(); }
+    else if(eff==='customer'){ loadDashHero(); loadMyCash(); loadMyCancel(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); loadAgentInsights(); knvInit(); }
     else if(eff==='consultant'){ if(EP_ME) loadEp(); loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); loadAgentInsights(); knvInit(); }
     else {
       // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
@@ -3647,7 +3654,7 @@
       if(adminCanSee('sec-team')) loadSignupCodes();
       if(adminCanSee('sec-exec')){ loadExecFunding(); loadExecWeekly(); }
       if(adminCanSee('sec-billing')){ loadBillingAdminLinks(); loadPayout(); }
-      if(adminCanSee('sec-support')){ loadAdmInquiries(); loadSupportKB(); }
+      if(adminCanSee('sec-support')){ loadAdmCancels(); loadAdmDeletions(); loadAdmInquiries(); loadSupportKB(); }
       if(adminCanSee('sec-network')){ loadNetwork(); }
       if(adminCanSee('sec-subsidy')){ loadSubsidyAdmin(); }
       knvInit();
@@ -4297,9 +4304,72 @@
     if(!em){ msg.style.color='#A9403D'; msg.textContent='顧客のメールアドレスを入力してください'; return; }
     var res=await sb.rpc('claim_client', { p_email: em });
     if(res.error){ msg.style.color='#A9403D'; msg.textContent='エラー：'+res.error.message; return; }
-    if(typeof res.data==='string' && res.data.indexOf('error:')===0){ msg.style.color='#A9403D'; msg.textContent=res.data.replace('error:','').trim(); return; }
+    var d=res.data;
+    if(typeof d==='string' && d.indexOf('error:')===0){
+      //  「まだ登録していない方」だけは、招待として控える。
+      //  ほかの断り（権限が無い等）は、そのままお伝えする。取り違えて招待を
+      //  作ってしまうと、他のパートナーの顧客を横取りしかねない。
+      if(d.indexOf('見つかりません')>=0){ await inviteClient(em); return; }
+      msg.style.color='#A9403D'; msg.textContent=d.replace('error:','').trim(); return;
+    }
     msg.style.color='#27684A'; msg.textContent='担当顧客に追加しました'; $('cl-email').value='';
     loadClients();
+  }
+  //  まだ登録していない方を、先に控えておく（A案）。
+  //  本人がこのアドレスで登録した瞬間に claim_my_invite が担当を付けるので、
+  //  「担当パートナーの登録を待っています」の門は出ない。
+  async function inviteClient(em){
+    var msg=$('cl-msg');
+    var r=await sb.from('customer_invites').insert({ email:em, consultant_id:ME });
+    if(r.error){
+      var m=String(r.error.message||'');
+      if(/duplicate|unique/i.test(m)){
+        msg.style.color='#A9403D';
+        msg.textContent='このメールアドレスは、すでに招待されています（ご自身かほかのパートナーが登録済みです）。';
+      }else if(/relation|does not exist|schema cache/i.test(m)){
+        //  招待の表をまだ作っていない環境。これまでどおりの案内に戻す
+        msg.style.color='#A9403D';
+        msg.textContent='まだご登録がない方のようです。先に顧客としてご登録いただいてから、もう一度お試しください。';
+      }else{
+        msg.style.color='#A9403D'; msg.textContent='招待できませんでした：'+m;
+      }
+      return;
+    }
+    msg.style.color='#27684A';
+    msg.textContent='招待しました。このアドレスでご登録されると、自動的に担当顧客になります。';
+    $('cl-email').value='';
+    loadInvites();
+  }
+  //  登録待ちの招待。パートナーが「誰を待っているか」を見失わないように出す
+  async function loadInvites(){
+    var box=$('cl-invites'); if(!box) return;
+    var r;
+    try{
+      r=await sb.from('customer_invites').select('*').eq('consultant_id',ME)
+        .eq('status','pending').order('created_at',{ascending:false});
+    }catch(e){ r={error:1}; }
+    //  表がまだ無い環境では、空の枠すら出さない
+    if(!r || r.error){ box.innerHTML=''; return; }
+    var rows=r.data||[];
+    if(!rows.length){ box.innerHTML=''; return; }
+    var h='<div style="border:1px solid #EBDDB4;background:#FFFDF7;border-radius:11px;padding:11px 14px;margin:8px 0 4px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:#8A6A12;margin-bottom:6px;">ご登録をお待ちしている方（'+rows.length+'名）</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-bottom:8px;">このアドレスでご登録されると、自動的に担当顧客になります。まだご案内していなければ、登録のご案内をお送りください。</div>';
+    rows.forEach(function(x){
+      h+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid #F0E6CC;padding:7px 0;">'
+        +'<div style="flex:1;min-width:180px;font-size:12.5px;color:var(--ink);">'+esc(x.email||'')
+        +(x.company_name?'<span style="font-size:11px;color:var(--muted);">（'+esc(x.company_name)+'）</span>':'')+'</div>'
+        +'<span style="font-size:11px;color:var(--muted);">'+esc(jstDay(x.created_at))+' 招待</span>'
+        +'<button class="ghost" style="font-size:11px;border:1px solid #E2E7EF;border-radius:8px;padding:4px 10px;" onclick="cancelInvite(\''+x.id+'\')">取り消す</button>'
+      +'</div>';
+    });
+    box.innerHTML=h+'</div>';
+  }
+  async function cancelInvite(id){
+    if(!confirm('この招待を取り消します。よろしいですか？')) return;
+    var r=await sb.from('customer_invites').update({ status:'cancelled' }).eq('id',id);
+    if(r.error){ alert('取り消せませんでした：'+r.error.message); return; }
+    loadInvites();
   }
 
   // ===== パートナー：顧客管理（一覧・対応状況・未読を統合） =====
@@ -4310,6 +4380,7 @@
   function setClFilter(f,el){ CL_FILTER=f; var bar=$('cl-filterbar'); if(bar){ Array.prototype.forEach.call(bar.querySelectorAll('.sbtn'),function(b){ b.classList.remove('on'); }); } if(el) el.classList.add('on'); renderClientList(); }
   async function loadClients(){
     var box=$('cl-list'); if(!box)return;
+    loadInvites();   // 登録をお待ちしている方も、同じ画面で見えるように
     var cl=await sb.from('profiles').select('id,email,company_name,role,stage').eq('consultant_id',ME).eq('role','customer');
     if(cl.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(cl.error.message)+'</div>'; return; }
     var clients=cl.data||[];
@@ -8030,6 +8101,233 @@
   // パートナー⇔顧客のチャットUIは右下の継ナビくん「メッセージ」タブに一本化した（knvMsgLoad/knvMsgSend）
 
   // 担当パートナーの表示（ダッシュボード）
+  // ===== 解約のご依頼（経営者 → 運営）=====
+  //  言い出しにくい話ほど、押せる場所が要る。ただし押した瞬間に消えてよい
+  //  ものではないので、ここで預かるのは「ご依頼」まで。実際の解約と
+  //  アカウントの削除は運営が行う。
+  var MYCANCEL=null;
+  async function loadMyCancel(){
+    var box=$('my-cancel'); if(!box) return;
+    var r;
+    try{
+      r=await sb.from('cancel_requests').select('*').eq('customer_id',ME)
+        .order('created_at',{ascending:false}).limit(1);
+    }catch(e){ r={error:1}; }
+    //  表がまだ無い環境では何も出さない
+    if(!r || r.error){ box.innerHTML=''; return; }
+    var last=(r.data||[])[0]||null;
+    MYCANCEL=(last && last.status==='open') ? last : null;
+    if(MYCANCEL){
+      box.innerHTML='<div style="border:1.5px solid #EAD9AC;background:#FDFAF1;border-radius:11px;padding:13px 16px;margin-top:14px;">'
+        +'<div style="font-size:13px;font-weight:700;color:#8A6A12;">解約のご依頼を承りました</div>'
+        +'<div style="font-size:12px;color:#5A6981;line-height:1.85;margin-top:5px;">'
+        +esc(jstDay(MYCANCEL.created_at))+'にお申し出をいただいています。運営より、最終月のご請求と資料のお渡しについてご連絡いたします。'
+        +'いますぐ画面が使えなくなることはありません。</div>'
+        +'<button class="ghost" style="font-size:12px;border:1px solid #E2E7EF;border-radius:8px;padding:6px 12px;margin-top:9px;" onclick="cancelWithdraw()">取り下げる</button>'
+      +'</div>';
+      return;
+    }
+    box.innerHTML='<div style="border-top:1px solid #EDF1F6;margin-top:18px;padding-top:14px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">ご利用の終了について</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.85;margin-top:4px;">'
+      +'解約をご希望の場合は、こちらからお申し出ください。運営が承り、最終月のご請求と資料のお渡しについてご連絡いたします。'
+      +'<b style="color:var(--navy);">押してすぐに使えなくなることはありません。</b></div>'
+      +'<button class="ghost" style="font-size:12px;border:1px solid #E2E7EF;border-radius:8px;padding:7px 13px;margin-top:9px;" onclick="cancelOpen()">解約を依頼する</button>'
+    +'</div>';
+  }
+  function cancelOpen(){
+    var box=$('my-cancel'); if(!box) return;
+    box.innerHTML='<div style="border:1.5px solid #E2E7EF;border-radius:11px;padding:14px 16px;margin-top:14px;">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--navy);">解約のご依頼</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.85;margin:5px 0 10px;">'
+      +'運営が承り、ご連絡いたします。<b style="color:var(--navy);">このボタンでアカウントが消えることはありません。</b>'
+      +'最終月のご請求と、これまでの資料のお渡しを済ませてから手続きいたします。</div>'
+      +'<label class="fl">差し支えなければ、理由をお聞かせください（任意）</label>'
+      +'<select id="cxl-reason" class="inp2" style="width:100%;max-width:320px;">'
+        +'<option value="">選択しない</option>'
+        +'<option>費用の見直しのため</option>'
+        +'<option>社内で対応できるようになったため</option>'
+        +'<option>他のサービスを利用するため</option>'
+        +'<option>事業の承継・譲渡が完了したため</option>'
+        +'<option>期待した成果が得られなかったため</option>'
+        +'<option>その他</option>'
+      +'</select>'
+      +'<label class="fl" style="margin-top:9px;">お伝えしておきたいこと（任意）</label>'
+      +'<textarea id="cxl-note" class="inp2" rows="3" style="width:100%;" placeholder="引き継ぎのご希望など"></textarea>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">'
+        +'<button class="btn2" onclick="cancelSend()">この内容で依頼する</button>'
+        +'<button class="ghost" style="border:1px solid #E2E7EF;border-radius:9px;padding:8px 14px;" onclick="loadMyCancel()">やめる</button>'
+      +'</div><div id="cxl-msg" style="font-size:12px;margin-top:8px;"></div>'
+    +'</div>';
+  }
+  async function cancelSend(){
+    var msg=$('cxl-msg');
+    var reason=($('cxl-reason')||{}).value||null, note=(($('cxl-note')||{}).value||'').trim()||null;
+    if(!confirm('解約のご依頼を運営にお送りします。よろしいですか？\n（この操作でアカウントが消えることはありません）')) return;
+    if(msg){ msg.style.color='#27684A'; msg.textContent='送信しています…'; }
+    var r=await sb.from('cancel_requests').insert({ customer_id:ME, reason:reason, note:note });
+    if(r.error){
+      var m=String(r.error.message||'');
+      if(msg){
+        msg.style.color='#A9403D';
+        msg.textContent=/duplicate|unique/i.test(m)
+          ? 'すでにご依頼を承っています。'
+          : (/relation|does not exist|schema cache/i.test(m)
+              ? 'いまこの機能をご利用いただけません。お手数ですが、担当パートナーへメッセージでお知らせください。'
+              : '送信できませんでした：'+m);
+      }
+      return;
+    }
+    loadMyCancel();
+  }
+  async function cancelWithdraw(){
+    if(!MYCANCEL) return;
+    if(!confirm('解約のご依頼を取り下げます。よろしいですか？')) return;
+    var r=await sb.from('cancel_requests').update({ status:'withdrawn' }).eq('id',MYCANCEL.id);
+    if(r.error){ alert('取り下げできませんでした：'+r.error.message); return; }
+    loadMyCancel();
+  }
+
+  // ===== 解約のご依頼（運営）=====
+  async function loadAdmCancels(){
+    var box=$('adm-cancels'); if(!box) return;
+    var r;
+    try{
+      r=await sb.from('cancel_requests').select('*').eq('status','open')
+        .order('created_at',{ascending:true});
+    }catch(e){ r={error:1}; }
+    if(!r || r.error){ box.innerHTML=''; return; }
+    var rows=r.data||[];
+    if(!rows.length){ box.innerHTML=''; return; }
+    var nameOf={};
+    try{
+      var pr=await sb.from('profiles').select('id,company_name,contact_name,email');
+      (pr.data||[]).forEach(function(p){ nameOf[p.id]=(p.company_name||p.contact_name||p.email||''); });
+    }catch(e){}
+    var h='<div style="border:1.5px solid #E8C4C2;background:#FDF6F5;border-radius:11px;padding:13px 16px;margin:6px 0 14px;">'
+      +'<div style="font-size:13px;font-weight:700;color:#A9403D;">解約のご依頼（'+rows.length+'件）</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:4px;">'
+      +'最終月のご請求と資料のお渡しを<b>済ませてから</b>、アカウントを削除してください。'
+      +'削除すると、そのお客様の記録は紐づくものごと消え、<b style="color:#A9403D;">再登録は新規扱いになります。</b></div>';
+    rows.forEach(function(x){
+      var nm=nameOf[x.customer_id]||x.customer_id;
+      h+='<div style="border-top:1px solid #F0DEDC;padding:9px 0;">'
+        +'<div style="font-size:12.5px;font-weight:600;color:var(--ink);">'+esc(nm)+'</div>'
+        +'<div style="font-size:11px;color:var(--muted);margin-top:2px;">'+esc(jstDay(x.created_at))+' 受付'
+        +(x.reason?('　理由：'+esc(x.reason)):'')+'</div>'
+        +(x.note?('<div style="font-size:12px;color:var(--ink);white-space:pre-wrap;line-height:1.7;margin-top:4px;">'+esc(x.note)+'</div>'):'')
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">'
+        +'<button class="ghost" style="font-size:11px;border:1px solid #E2E7EF;border-radius:8px;padding:4px 10px;" onclick="admCancelDone(\''+x.id+'\')">対応済みにする</button>'
+        +'<button class="ghost" style="font-size:11px;border:1px solid #E8C4C2;color:#A9403D;border-radius:8px;padding:4px 10px;" '
+        +'onclick="admDelOpen(\''+x.customer_id+'\',\''+esc(nm).replace(/'/g,"&#39;")+'\',\''+x.id+'\')">アカウントを削除する…</button>'
+        +'</div>'
+        +'<div id="del-'+x.customer_id+'"></div>'
+      +'</div>';
+    });
+    box.innerHTML=h+'</div>';
+  }
+  async function admCancelDone(id){
+    if(!confirm('このご依頼を対応済みにします。よろしいですか？')) return;
+    var r=await sb.from('cancel_requests').update({ status:'done', handled_at:new Date().toISOString(), handled_by:ME }).eq('id',id);
+    if(r.error){ alert('更新できませんでした：'+r.error.message); return; }
+    loadAdmCancels();
+  }
+
+  // ===== アカウントの削除（運営）=====
+  //  取り消せない操作なので、押し間違いでは絶対に通らないようにする。
+  //  一覧のボタンを押しただけでは何も起きない。会社名をそのとおりに
+  //  打ち込んで、はじめて削除のボタンが押せるようになる。
+  //  同じ確認はサーバー側（admin-delete-user）でも行っている。
+  //  この画面の確認だけなら、画面を書き換えれば素通りできるため。
+  function admDelOpen(cid, nm, reqId){
+    var box=$('del-'+cid); if(!box) return;
+    if(box.innerHTML){ box.innerHTML=''; return; }   // もう一度押したら閉じる
+    box.innerHTML='<div style="border:1.5px solid #A9403D;background:#fff;border-radius:10px;padding:11px 13px;margin-top:8px;">'
+      +'<div style="font-size:12px;font-weight:700;color:#A9403D;">このアカウントを完全に削除します</div>'
+      +'<div style="font-size:11.5px;color:var(--ink);line-height:1.85;margin-top:5px;">'
+      +'試算表・ご相談・手元資金・月次レポートなど、この方に紐づくものがすべて消えます。'
+      +'<b style="color:#A9403D;">元には戻せません。</b><br>'
+      +'必要な資料は、削除の前にお渡しください。'
+      +'同じメールアドレスでご登録し直された場合は、新規のお客様として扱われます。</div>'
+      +'<div style="font-size:11.5px;color:var(--ink);margin-top:9px;">確認のため、<b>'+nm+'</b> と入力してください。</div>'
+      +'<input id="delc-'+cid+'" placeholder="'+nm+'" oninput="admDelCheck(\''+cid+'\')" '
+      +'style="width:100%;max-width:320px;margin-top:5px;padding:7px 9px;border:1px solid #E2E7EF;border-radius:8px;font-size:12px;">'
+      +'<div style="display:flex;gap:8px;align-items:center;margin-top:9px;flex-wrap:wrap;">'
+      +'<button id="delb-'+cid+'" disabled onclick="admDelRun(\''+cid+'\',\''+reqId+'\')" '
+      +'style="font-size:11.5px;border:none;border-radius:8px;padding:6px 13px;background:#D8D8D8;color:#fff;cursor:not-allowed;">削除する</button>'
+      +'<button class="ghost" style="font-size:11.5px;border:1px solid #E2E7EF;border-radius:8px;padding:6px 13px;" '
+      +'onclick="admDelOpen(\''+cid+'\')">やめる</button>'
+      +'<span id="delm-'+cid+'" style="font-size:11.5px;"></span>'
+      +'</div></div>';
+    var i=$('delc-'+cid); if(i) i.focus();
+  }
+  //  打ち込まれた名前が一致したときだけ、削除のボタンを生かす。
+  //  空白の違いは見逃す（「株式会社 え」と「株式会社え」で弾かれると、
+  //  確認としては厳しすぎて、かえって雑に流されやすい）
+  function admDelNorm(s){ return String(s==null?'':s).replace(/[\s　]+/g,''); }
+  function admDelCheck(cid){
+    var i=$('delc-'+cid), b=$('delb-'+cid); if(!i||!b) return false;
+    var want=admDelNorm(i.getAttribute('placeholder'));
+    var okNow=(want!=='' && admDelNorm(i.value)===want);
+    b.disabled=!okNow;
+    b.style.background=okNow?'#A9403D':'#D8D8D8';
+    b.style.cursor=okNow?'pointer':'not-allowed';
+    return okNow;
+  }
+  async function admDelRun(cid, reqId){
+    if(!admDelCheck(cid)) return;
+    var i=$('delc-'+cid), b=$('delb-'+cid), m=$('delm-'+cid);
+    if(!confirm('本当に削除します。元には戻せません。よろしいですか？')) return;
+    if(b){ b.disabled=true; b.textContent='削除しています…'; b.style.background='#D8D8D8'; }
+    if(m){ m.style.color='var(--muted)'; m.textContent=''; }
+    var res;
+    try{
+      res=await sb.functions.invoke('admin-delete-user',
+        { body:{ user_id:cid, confirm_name:(i?i.value:''), cancel_request_id:reqId||null } });
+    }catch(e){ res={ error:{ message:String(e&&e.message||e) } }; }
+    var d=res&&res.data;
+    //  関数が 4xx/5xx で返すと res.error が立つ。理由は本文にある
+    if(!d||!d.ok){
+      var why=(d&&d.error)||(res&&res.error&&res.error.message)||'削除できませんでした';
+      if(/Failed to send|not found|Function not found/i.test(String(why))){
+        why='削除の機能がまだ用意されていません（admin-delete-user のデプロイがお済みでない可能性があります）。'
+          +'Supabase の Authentication → Users からも削除できます。';
+      }
+      if(m){ m.style.color='#A9403D'; m.textContent=why; }
+      if(b){ b.textContent='削除する'; }
+      admDelCheck(cid);
+      return;
+    }
+    alert('削除しました：'+((d.deleted&&(d.deleted.company_name||d.deleted.email))||''));
+    loadAdmCancels();
+    loadAdmDeletions();
+  }
+  //  削除の控え。消えたあとに「いつ、誰が、どなたを」を辿れるのはここだけ
+  async function loadAdmDeletions(){
+    var box=$('adm-deletions'); if(!box) return;
+    var r;
+    try{
+      r=await sb.from('account_deletions').select('*').order('deleted_at',{ascending:false}).limit(30);
+    }catch(e){ r={error:1}; }
+    if(!r || r.error){ box.innerHTML=''; return; }
+    var rows=r.data||[];
+    if(!rows.length){ box.innerHTML=''; return; }
+    var h='<div style="border:1px solid #E2E7EF;background:#F8F9FC;border-radius:11px;padding:12px 15px;margin:0 0 14px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">削除したアカウント（'+rows.length+'件）</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin-top:3px;">元には戻せません。この控えだけが記録として残ります。</div>';
+    rows.forEach(function(x){
+      h+='<div style="border-top:1px solid #EDF1F6;padding:7px 0;font-size:11.5px;line-height:1.75;">'
+        +'<span style="color:#94A2B6;">'+esc(jstDay(x.deleted_at))+'</span>　'
+        +'<b>'+esc(x.company_name||x.contact_name||x.email||'')+'</b>'
+        +(x.email?('<span style="color:var(--muted);">（'+esc(x.email)+'）</span>'):'')
+        +(x.consultant_email?('<div style="color:var(--muted);">担当：'+esc(x.consultant_email)+'</div>'):'')
+        +(x.reason?('<div style="color:var(--muted);">理由：'+esc(x.reason)+'</div>'):'')
+        +'<div style="color:#94A2B6;">操作：'+esc(x.deleted_by_email||'—')+'</div>'
+      +'</div>';
+    });
+    box.innerHTML=h+'</div>';
+  }
+
   async function loadMyPartner(){
     var box=$('my-partner'); if(!box) return;
     try{
@@ -15083,6 +15381,10 @@
     var em=String(email).toLowerCase();
     try{ await sb.from('company_members').update({ member_id:ME }).is('member_id',null).ilike('member_email',em); }catch(e){}
     try{ await sb.from('partner_assignments').update({ sub_id:ME }).is('sub_id',null).ilike('sub_email',em); }catch(e){}
+    //  パートナーが先に登録しておいた招待があれば、ここで担当が付く。
+    //  これが効けば「担当パートナーの登録を待っています」の門は一度も出ない。
+    //  関数がまだ無い環境では黙って何もしない（門が出るだけで、壊れはしない）。
+    try{ await sb.rpc('claim_my_invite'); }catch(e){}
   }
   // いま見る会社を決める。閲覧メンバーとして招かれている場合はその会社を、
   // そうでなければ自分自身を指す。招かれていても自分が経営者なら自社を優先する。
