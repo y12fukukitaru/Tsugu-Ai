@@ -1357,7 +1357,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260903-02';
+  var APP_BUILD='20260903-03';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2479,8 +2479,9 @@
         +'<div style="margin-top:10px;"><button class="btn2" onclick="postAnnouncement()">配信する</button><span id="bc-msg" style="font-size:12px;margin-left:8px;"></span></div>'
         +'<div id="bc-list" style="margin-top:12px;">読み込み中...</div></div>'
       +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.8"/><path d="m5.6 5.6 3.7 3.7M14.7 14.7l3.7 3.7M14.7 9.3l3.7-3.7M5.6 18.4l3.7-3.7"/></svg>サポート管理'
-        +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
+        +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmCancels();loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
         +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.5 12.5H16l-1.8 2.8H9.8L8 12.5H2.5"/><path d="M5.6 5.1 2.5 12.5V18a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-5.5l-3.1-7.4A2 2 0 0 0 16.6 4H7.4a2 2 0 0 0-1.8 1.1z"/></svg>パートナーからの問い合わせ</span><span id="adm-inq-count" class="nbadge hidden">0</span></div>'
+        +'<div id="adm-cancels"></div>'
         +'<div id="adm-inq-list" style="margin-top:6px;">読み込み中...</div>'
         +'<div style="border-top:1px solid #EDF1F6;margin-top:16px;padding-top:14px;">'
           +'<div class="ph" style="font-size:13px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 19.2A2.8 2.8 0 0 1 6.8 16.4H20"/><path d="M6.8 3H20v18H6.8A2.8 2.8 0 0 1 4 18.2V5.8A2.8 2.8 0 0 1 6.8 3z"/></svg>サポートBotナレッジ（AIの回答ネタ）</span></div>'
@@ -3198,6 +3199,7 @@
             +'<button class="ghost" style="font-size:12px;border:1px solid #E2E7EF;border-radius:8px;padding:7px 12px;" onclick="cstCsv()">⬇ CSV保存</button>'
           +'</div>'
           +'<div id="cst-out" style="margin-top:4px;"></div>'
+          +'<div id="my-cancel"></div>'
         +'</div>'
         +'<div class="panel" id="sec-cash"><div class="ph">財務・資金繰り（担当パートナーが入力します）</div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;">月次の数値や支払予定は担当パートナーが入力・更新します。数値や資料は「メッセージ」でお送りいただくだけでOKです。修正のご希望もメッセージでどうぞ。<br>ご自身で入れるのは、ダッシュボード上部の<b style="color:#1E3A66;">「いまの手元資金」</b>だけです（数字ひとつ・任意）。</div>'
@@ -3642,7 +3644,7 @@
     window.__eff=eff;
     $('app-body').innerHTML=view;
     if(eff==='customer' && ACCESS==='finance'){ loadAcct(); }
-    else if(eff==='customer'){ loadDashHero(); loadMyCash(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); loadAgentInsights(); knvInit(); }
+    else if(eff==='customer'){ loadDashHero(); loadMyCash(); loadMyCancel(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); loadAgentInsights(); knvInit(); }
     else if(eff==='consultant'){ if(EP_ME) loadEp(); loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); loadAgentInsights(); knvInit(); }
     else {
       // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
@@ -3651,7 +3653,7 @@
       if(adminCanSee('sec-team')) loadSignupCodes();
       if(adminCanSee('sec-exec')){ loadExecFunding(); loadExecWeekly(); }
       if(adminCanSee('sec-billing')){ loadBillingAdminLinks(); loadPayout(); }
-      if(adminCanSee('sec-support')){ loadAdmInquiries(); loadSupportKB(); }
+      if(adminCanSee('sec-support')){ loadAdmCancels(); loadAdmInquiries(); loadSupportKB(); }
       if(adminCanSee('sec-network')){ loadNetwork(); }
       if(adminCanSee('sec-subsidy')){ loadSubsidyAdmin(); }
       knvInit();
@@ -8098,6 +8100,132 @@
   // パートナー⇔顧客のチャットUIは右下の継ナビくん「メッセージ」タブに一本化した（knvMsgLoad/knvMsgSend）
 
   // 担当パートナーの表示（ダッシュボード）
+  // ===== 解約のご依頼（経営者 → 運営）=====
+  //  言い出しにくい話ほど、押せる場所が要る。ただし押した瞬間に消えてよい
+  //  ものではないので、ここで預かるのは「ご依頼」まで。実際の解約と
+  //  アカウントの削除は運営が行う。
+  var MYCANCEL=null;
+  async function loadMyCancel(){
+    var box=$('my-cancel'); if(!box) return;
+    var r;
+    try{
+      r=await sb.from('cancel_requests').select('*').eq('customer_id',ME)
+        .order('created_at',{ascending:false}).limit(1);
+    }catch(e){ r={error:1}; }
+    //  表がまだ無い環境では何も出さない
+    if(!r || r.error){ box.innerHTML=''; return; }
+    var last=(r.data||[])[0]||null;
+    MYCANCEL=(last && last.status==='open') ? last : null;
+    if(MYCANCEL){
+      box.innerHTML='<div style="border:1.5px solid #EAD9AC;background:#FDFAF1;border-radius:11px;padding:13px 16px;margin-top:14px;">'
+        +'<div style="font-size:13px;font-weight:700;color:#8A6A12;">解約のご依頼を承りました</div>'
+        +'<div style="font-size:12px;color:#5A6981;line-height:1.85;margin-top:5px;">'
+        +esc(jstDay(MYCANCEL.created_at))+'にお申し出をいただいています。運営より、最終月のご請求と資料のお渡しについてご連絡いたします。'
+        +'いますぐ画面が使えなくなることはありません。</div>'
+        +'<button class="ghost" style="font-size:12px;border:1px solid #E2E7EF;border-radius:8px;padding:6px 12px;margin-top:9px;" onclick="cancelWithdraw()">取り下げる</button>'
+      +'</div>';
+      return;
+    }
+    box.innerHTML='<div style="border-top:1px solid #EDF1F6;margin-top:18px;padding-top:14px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">ご利用の終了について</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.85;margin-top:4px;">'
+      +'解約をご希望の場合は、こちらからお申し出ください。運営が承り、最終月のご請求と資料のお渡しについてご連絡いたします。'
+      +'<b style="color:var(--navy);">押してすぐに使えなくなることはありません。</b></div>'
+      +'<button class="ghost" style="font-size:12px;border:1px solid #E2E7EF;border-radius:8px;padding:7px 13px;margin-top:9px;" onclick="cancelOpen()">解約を依頼する</button>'
+    +'</div>';
+  }
+  function cancelOpen(){
+    var box=$('my-cancel'); if(!box) return;
+    box.innerHTML='<div style="border:1.5px solid #E2E7EF;border-radius:11px;padding:14px 16px;margin-top:14px;">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--navy);">解約のご依頼</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.85;margin:5px 0 10px;">'
+      +'運営が承り、ご連絡いたします。<b style="color:var(--navy);">このボタンでアカウントが消えることはありません。</b>'
+      +'最終月のご請求と、これまでの資料のお渡しを済ませてから手続きいたします。</div>'
+      +'<label class="fl">差し支えなければ、理由をお聞かせください（任意）</label>'
+      +'<select id="cxl-reason" class="inp2" style="width:100%;max-width:320px;">'
+        +'<option value="">選択しない</option>'
+        +'<option>費用の見直しのため</option>'
+        +'<option>社内で対応できるようになったため</option>'
+        +'<option>他のサービスを利用するため</option>'
+        +'<option>事業の承継・譲渡が完了したため</option>'
+        +'<option>期待した成果が得られなかったため</option>'
+        +'<option>その他</option>'
+      +'</select>'
+      +'<label class="fl" style="margin-top:9px;">お伝えしておきたいこと（任意）</label>'
+      +'<textarea id="cxl-note" class="inp2" rows="3" style="width:100%;" placeholder="引き継ぎのご希望など"></textarea>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">'
+        +'<button class="btn2" onclick="cancelSend()">この内容で依頼する</button>'
+        +'<button class="ghost" style="border:1px solid #E2E7EF;border-radius:9px;padding:8px 14px;" onclick="loadMyCancel()">やめる</button>'
+      +'</div><div id="cxl-msg" style="font-size:12px;margin-top:8px;"></div>'
+    +'</div>';
+  }
+  async function cancelSend(){
+    var msg=$('cxl-msg');
+    var reason=($('cxl-reason')||{}).value||null, note=(($('cxl-note')||{}).value||'').trim()||null;
+    if(!confirm('解約のご依頼を運営にお送りします。よろしいですか？\n（この操作でアカウントが消えることはありません）')) return;
+    if(msg){ msg.style.color='#27684A'; msg.textContent='送信しています…'; }
+    var r=await sb.from('cancel_requests').insert({ customer_id:ME, reason:reason, note:note });
+    if(r.error){
+      var m=String(r.error.message||'');
+      if(msg){
+        msg.style.color='#A9403D';
+        msg.textContent=/duplicate|unique/i.test(m)
+          ? 'すでにご依頼を承っています。'
+          : (/relation|does not exist|schema cache/i.test(m)
+              ? 'いまこの機能をご利用いただけません。お手数ですが、担当パートナーへメッセージでお知らせください。'
+              : '送信できませんでした：'+m);
+      }
+      return;
+    }
+    loadMyCancel();
+  }
+  async function cancelWithdraw(){
+    if(!MYCANCEL) return;
+    if(!confirm('解約のご依頼を取り下げます。よろしいですか？')) return;
+    var r=await sb.from('cancel_requests').update({ status:'withdrawn' }).eq('id',MYCANCEL.id);
+    if(r.error){ alert('取り下げできませんでした：'+r.error.message); return; }
+    loadMyCancel();
+  }
+
+  // ===== 解約のご依頼（運営）=====
+  async function loadAdmCancels(){
+    var box=$('adm-cancels'); if(!box) return;
+    var r;
+    try{
+      r=await sb.from('cancel_requests').select('*').eq('status','open')
+        .order('created_at',{ascending:true});
+    }catch(e){ r={error:1}; }
+    if(!r || r.error){ box.innerHTML=''; return; }
+    var rows=r.data||[];
+    if(!rows.length){ box.innerHTML=''; return; }
+    var nameOf={};
+    try{
+      var pr=await sb.from('profiles').select('id,company_name,contact_name,email');
+      (pr.data||[]).forEach(function(p){ nameOf[p.id]=(p.company_name||p.contact_name||p.email||''); });
+    }catch(e){}
+    var h='<div style="border:1.5px solid #E8C4C2;background:#FDF6F5;border-radius:11px;padding:13px 16px;margin:6px 0 14px;">'
+      +'<div style="font-size:13px;font-weight:700;color:#A9403D;">解約のご依頼（'+rows.length+'件）</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:4px;">'
+      +'最終月のご請求と資料のお渡しを済ませてから、Supabase の Authentication → Users でアカウントを削除してください。'
+      +'削除すると、そのお客様の記録は紐づくものごと消え、<b style="color:#A9403D;">再登録は新規扱いになります。</b></div>';
+    rows.forEach(function(x){
+      h+='<div style="border-top:1px solid #F0DEDC;padding:9px 0;">'
+        +'<div style="font-size:12.5px;font-weight:600;color:var(--ink);">'+esc(nameOf[x.customer_id]||x.customer_id)+'</div>'
+        +'<div style="font-size:11px;color:var(--muted);margin-top:2px;">'+esc(jstDay(x.created_at))+' 受付'
+        +(x.reason?('　理由：'+esc(x.reason)):'')+'</div>'
+        +(x.note?('<div style="font-size:12px;color:var(--ink);white-space:pre-wrap;line-height:1.7;margin-top:4px;">'+esc(x.note)+'</div>'):'')
+        +'<button class="ghost" style="font-size:11px;border:1px solid #E2E7EF;border-radius:8px;padding:4px 10px;margin-top:6px;" onclick="admCancelDone(\''+x.id+'\')">対応済みにする</button>'
+      +'</div>';
+    });
+    box.innerHTML=h+'</div>';
+  }
+  async function admCancelDone(id){
+    if(!confirm('このご依頼を対応済みにします。よろしいですか？')) return;
+    var r=await sb.from('cancel_requests').update({ status:'done', handled_at:new Date().toISOString(), handled_by:ME }).eq('id',id);
+    if(r.error){ alert('更新できませんでした：'+r.error.message); return; }
+    loadAdmCancels();
+  }
+
   async function loadMyPartner(){
     var box=$('my-partner'); if(!box) return;
     try{
