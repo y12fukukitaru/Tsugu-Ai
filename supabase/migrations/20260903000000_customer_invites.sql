@@ -48,6 +48,19 @@ create index if not exists customer_invites_consultant_idx
 
 alter table public.customer_invites enable row level security;
 
+-- ---- 権限（grant）----
+--  Supabase では既定で authenticated / service_role に権限が付くよう
+--  設定されているが、それに頼ると、その設定が変わった日に黙って動かなくなる。
+--  この SQL だけで完結するよう、必要なぶんを明示しておく。
+--  実際に何が見えるかは、この下の RLS が決める。
+grant select, insert, update on public.customer_invites to authenticated;
+do $do$ begin
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    execute 'grant all on public.customer_invites to service_role';
+  end if;
+end $do$;
+
+
 -- ---- パートナー：自分が招いたぶんだけ。他人の招待は見えない ----
 drop policy if exists "customer_invites own" on public.customer_invites;
 create policy "customer_invites own" on public.customer_invites

@@ -1357,7 +1357,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260903-03';
+  var APP_BUILD='20260903-04';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2479,9 +2479,10 @@
         +'<div style="margin-top:10px;"><button class="btn2" onclick="postAnnouncement()">配信する</button><span id="bc-msg" style="font-size:12px;margin-left:8px;"></span></div>'
         +'<div id="bc-list" style="margin-top:12px;">読み込み中...</div></div>'
       +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.8"/><path d="m5.6 5.6 3.7 3.7M14.7 14.7l3.7 3.7M14.7 9.3l3.7-3.7M5.6 18.4l3.7-3.7"/></svg>サポート管理'
-        +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmCancels();loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
+        +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmCancels();loadAdmDeletions();loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
         +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.5 12.5H16l-1.8 2.8H9.8L8 12.5H2.5"/><path d="M5.6 5.1 2.5 12.5V18a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-5.5l-3.1-7.4A2 2 0 0 0 16.6 4H7.4a2 2 0 0 0-1.8 1.1z"/></svg>パートナーからの問い合わせ</span><span id="adm-inq-count" class="nbadge hidden">0</span></div>'
         +'<div id="adm-cancels"></div>'
+        +'<div id="adm-deletions"></div>'
         +'<div id="adm-inq-list" style="margin-top:6px;">読み込み中...</div>'
         +'<div style="border-top:1px solid #EDF1F6;margin-top:16px;padding-top:14px;">'
           +'<div class="ph" style="font-size:13px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 19.2A2.8 2.8 0 0 1 6.8 16.4H20"/><path d="M6.8 3H20v18H6.8A2.8 2.8 0 0 1 4 18.2V5.8A2.8 2.8 0 0 1 6.8 3z"/></svg>サポートBotナレッジ（AIの回答ネタ）</span></div>'
@@ -3653,7 +3654,7 @@
       if(adminCanSee('sec-team')) loadSignupCodes();
       if(adminCanSee('sec-exec')){ loadExecFunding(); loadExecWeekly(); }
       if(adminCanSee('sec-billing')){ loadBillingAdminLinks(); loadPayout(); }
-      if(adminCanSee('sec-support')){ loadAdmCancels(); loadAdmInquiries(); loadSupportKB(); }
+      if(adminCanSee('sec-support')){ loadAdmCancels(); loadAdmDeletions(); loadAdmInquiries(); loadSupportKB(); }
       if(adminCanSee('sec-network')){ loadNetwork(); }
       if(adminCanSee('sec-subsidy')){ loadSubsidyAdmin(); }
       knvInit();
@@ -8206,15 +8207,21 @@
     var h='<div style="border:1.5px solid #E8C4C2;background:#FDF6F5;border-radius:11px;padding:13px 16px;margin:6px 0 14px;">'
       +'<div style="font-size:13px;font-weight:700;color:#A9403D;">解約のご依頼（'+rows.length+'件）</div>'
       +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:4px;">'
-      +'最終月のご請求と資料のお渡しを済ませてから、Supabase の Authentication → Users でアカウントを削除してください。'
+      +'最終月のご請求と資料のお渡しを<b>済ませてから</b>、アカウントを削除してください。'
       +'削除すると、そのお客様の記録は紐づくものごと消え、<b style="color:#A9403D;">再登録は新規扱いになります。</b></div>';
     rows.forEach(function(x){
+      var nm=nameOf[x.customer_id]||x.customer_id;
       h+='<div style="border-top:1px solid #F0DEDC;padding:9px 0;">'
-        +'<div style="font-size:12.5px;font-weight:600;color:var(--ink);">'+esc(nameOf[x.customer_id]||x.customer_id)+'</div>'
+        +'<div style="font-size:12.5px;font-weight:600;color:var(--ink);">'+esc(nm)+'</div>'
         +'<div style="font-size:11px;color:var(--muted);margin-top:2px;">'+esc(jstDay(x.created_at))+' 受付'
         +(x.reason?('　理由：'+esc(x.reason)):'')+'</div>'
         +(x.note?('<div style="font-size:12px;color:var(--ink);white-space:pre-wrap;line-height:1.7;margin-top:4px;">'+esc(x.note)+'</div>'):'')
-        +'<button class="ghost" style="font-size:11px;border:1px solid #E2E7EF;border-radius:8px;padding:4px 10px;margin-top:6px;" onclick="admCancelDone(\''+x.id+'\')">対応済みにする</button>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">'
+        +'<button class="ghost" style="font-size:11px;border:1px solid #E2E7EF;border-radius:8px;padding:4px 10px;" onclick="admCancelDone(\''+x.id+'\')">対応済みにする</button>'
+        +'<button class="ghost" style="font-size:11px;border:1px solid #E8C4C2;color:#A9403D;border-radius:8px;padding:4px 10px;" '
+        +'onclick="admDelOpen(\''+x.customer_id+'\',\''+esc(nm).replace(/'/g,"&#39;")+'\',\''+x.id+'\')">アカウントを削除する…</button>'
+        +'</div>'
+        +'<div id="del-'+x.customer_id+'"></div>'
       +'</div>';
     });
     box.innerHTML=h+'</div>';
@@ -8224,6 +8231,101 @@
     var r=await sb.from('cancel_requests').update({ status:'done', handled_at:new Date().toISOString(), handled_by:ME }).eq('id',id);
     if(r.error){ alert('更新できませんでした：'+r.error.message); return; }
     loadAdmCancels();
+  }
+
+  // ===== アカウントの削除（運営）=====
+  //  取り消せない操作なので、押し間違いでは絶対に通らないようにする。
+  //  一覧のボタンを押しただけでは何も起きない。会社名をそのとおりに
+  //  打ち込んで、はじめて削除のボタンが押せるようになる。
+  //  同じ確認はサーバー側（admin-delete-user）でも行っている。
+  //  この画面の確認だけなら、画面を書き換えれば素通りできるため。
+  function admDelOpen(cid, nm, reqId){
+    var box=$('del-'+cid); if(!box) return;
+    if(box.innerHTML){ box.innerHTML=''; return; }   // もう一度押したら閉じる
+    box.innerHTML='<div style="border:1.5px solid #A9403D;background:#fff;border-radius:10px;padding:11px 13px;margin-top:8px;">'
+      +'<div style="font-size:12px;font-weight:700;color:#A9403D;">このアカウントを完全に削除します</div>'
+      +'<div style="font-size:11.5px;color:var(--ink);line-height:1.85;margin-top:5px;">'
+      +'試算表・ご相談・手元資金・月次レポートなど、この方に紐づくものがすべて消えます。'
+      +'<b style="color:#A9403D;">元には戻せません。</b><br>'
+      +'必要な資料は、削除の前にお渡しください。'
+      +'同じメールアドレスでご登録し直された場合は、新規のお客様として扱われます。</div>'
+      +'<div style="font-size:11.5px;color:var(--ink);margin-top:9px;">確認のため、<b>'+nm+'</b> と入力してください。</div>'
+      +'<input id="delc-'+cid+'" placeholder="'+nm+'" oninput="admDelCheck(\''+cid+'\')" '
+      +'style="width:100%;max-width:320px;margin-top:5px;padding:7px 9px;border:1px solid #E2E7EF;border-radius:8px;font-size:12px;">'
+      +'<div style="display:flex;gap:8px;align-items:center;margin-top:9px;flex-wrap:wrap;">'
+      +'<button id="delb-'+cid+'" disabled onclick="admDelRun(\''+cid+'\',\''+reqId+'\')" '
+      +'style="font-size:11.5px;border:none;border-radius:8px;padding:6px 13px;background:#D8D8D8;color:#fff;cursor:not-allowed;">削除する</button>'
+      +'<button class="ghost" style="font-size:11.5px;border:1px solid #E2E7EF;border-radius:8px;padding:6px 13px;" '
+      +'onclick="admDelOpen(\''+cid+'\')">やめる</button>'
+      +'<span id="delm-'+cid+'" style="font-size:11.5px;"></span>'
+      +'</div></div>';
+    var i=$('delc-'+cid); if(i) i.focus();
+  }
+  //  打ち込まれた名前が一致したときだけ、削除のボタンを生かす。
+  //  空白の違いは見逃す（「株式会社 え」と「株式会社え」で弾かれると、
+  //  確認としては厳しすぎて、かえって雑に流されやすい）
+  function admDelNorm(s){ return String(s==null?'':s).replace(/[\s　]+/g,''); }
+  function admDelCheck(cid){
+    var i=$('delc-'+cid), b=$('delb-'+cid); if(!i||!b) return false;
+    var want=admDelNorm(i.getAttribute('placeholder'));
+    var okNow=(want!=='' && admDelNorm(i.value)===want);
+    b.disabled=!okNow;
+    b.style.background=okNow?'#A9403D':'#D8D8D8';
+    b.style.cursor=okNow?'pointer':'not-allowed';
+    return okNow;
+  }
+  async function admDelRun(cid, reqId){
+    if(!admDelCheck(cid)) return;
+    var i=$('delc-'+cid), b=$('delb-'+cid), m=$('delm-'+cid);
+    if(!confirm('本当に削除します。元には戻せません。よろしいですか？')) return;
+    if(b){ b.disabled=true; b.textContent='削除しています…'; b.style.background='#D8D8D8'; }
+    if(m){ m.style.color='var(--muted)'; m.textContent=''; }
+    var res;
+    try{
+      res=await sb.functions.invoke('admin-delete-user',
+        { body:{ user_id:cid, confirm_name:(i?i.value:''), cancel_request_id:reqId||null } });
+    }catch(e){ res={ error:{ message:String(e&&e.message||e) } }; }
+    var d=res&&res.data;
+    //  関数が 4xx/5xx で返すと res.error が立つ。理由は本文にある
+    if(!d||!d.ok){
+      var why=(d&&d.error)||(res&&res.error&&res.error.message)||'削除できませんでした';
+      if(/Failed to send|not found|Function not found/i.test(String(why))){
+        why='削除の機能がまだ用意されていません（admin-delete-user のデプロイがお済みでない可能性があります）。'
+          +'Supabase の Authentication → Users からも削除できます。';
+      }
+      if(m){ m.style.color='#A9403D'; m.textContent=why; }
+      if(b){ b.textContent='削除する'; }
+      admDelCheck(cid);
+      return;
+    }
+    alert('削除しました：'+((d.deleted&&(d.deleted.company_name||d.deleted.email))||''));
+    loadAdmCancels();
+    loadAdmDeletions();
+  }
+  //  削除の控え。消えたあとに「いつ、誰が、どなたを」を辿れるのはここだけ
+  async function loadAdmDeletions(){
+    var box=$('adm-deletions'); if(!box) return;
+    var r;
+    try{
+      r=await sb.from('account_deletions').select('*').order('deleted_at',{ascending:false}).limit(30);
+    }catch(e){ r={error:1}; }
+    if(!r || r.error){ box.innerHTML=''; return; }
+    var rows=r.data||[];
+    if(!rows.length){ box.innerHTML=''; return; }
+    var h='<div style="border:1px solid #E2E7EF;background:#F8F9FC;border-radius:11px;padding:12px 15px;margin:0 0 14px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">削除したアカウント（'+rows.length+'件）</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin-top:3px;">元には戻せません。この控えだけが記録として残ります。</div>';
+    rows.forEach(function(x){
+      h+='<div style="border-top:1px solid #EDF1F6;padding:7px 0;font-size:11.5px;line-height:1.75;">'
+        +'<span style="color:#94A2B6;">'+esc(jstDay(x.deleted_at))+'</span>　'
+        +'<b>'+esc(x.company_name||x.contact_name||x.email||'')+'</b>'
+        +(x.email?('<span style="color:var(--muted);">（'+esc(x.email)+'）</span>'):'')
+        +(x.consultant_email?('<div style="color:var(--muted);">担当：'+esc(x.consultant_email)+'</div>'):'')
+        +(x.reason?('<div style="color:var(--muted);">理由：'+esc(x.reason)+'</div>'):'')
+        +'<div style="color:#94A2B6;">操作：'+esc(x.deleted_by_email||'—')+'</div>'
+      +'</div>';
+    });
+    box.innerHTML=h+'</div>';
   }
 
   async function loadMyPartner(){

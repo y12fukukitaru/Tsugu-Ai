@@ -41,6 +41,19 @@ create index if not exists cancel_requests_status_idx
 
 alter table public.cancel_requests enable row level security;
 
+-- ---- 権限（grant）----
+--  Supabase では既定で authenticated / service_role に権限が付くよう
+--  設定されているが、それに頼ると、その設定が変わった日に黙って動かなくなる。
+--  この SQL だけで完結するよう、必要なぶんを明示しておく。
+--  実際に何が見えるかは、この下の RLS が決める。
+grant select, insert, update on public.cancel_requests to authenticated;
+do $do$ begin
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    execute 'grant all on public.cancel_requests to service_role';
+  end if;
+end $do$;
+
+
 -- ---- 経営者本人：自分の依頼を出す・見る・取り下げる ----
 --  取り下げは status を withdrawn にする更新で行う。行は消さない。
 --  「いつ申し出て、いつ取り下げたか」は、あとから双方が確かめられるほうがよい。
