@@ -1594,6 +1594,9 @@
     if(m){ m.style.color='#27684A'; m.textContent='確認しています…'; }
     if(btn) btn.disabled=true;
     try{
+      //  門で待っているあいだにパートナーが登録したかもしれない。
+      //  招待として入っていれば、ここで担当が付く
+      try{ await sb.rpc('claim_my_invite'); }catch(e){}
       var q=await sb.from('profiles').select('*').eq('id',ME).maybeSingle();
       var prof=(q&&q.data)||window.__prof||{role:'customer'};
       if(prof.consultant_id){
@@ -15083,6 +15086,10 @@
     var em=String(email).toLowerCase();
     try{ await sb.from('company_members').update({ member_id:ME }).is('member_id',null).ilike('member_email',em); }catch(e){}
     try{ await sb.from('partner_assignments').update({ sub_id:ME }).is('sub_id',null).ilike('sub_email',em); }catch(e){}
+    //  パートナーが先に登録しておいた招待があれば、ここで担当が付く。
+    //  これが効けば「担当パートナーの登録を待っています」の門は一度も出ない。
+    //  関数がまだ無い環境では黙って何もしない（門が出るだけで、壊れはしない）。
+    try{ await sb.rpc('claim_my_invite'); }catch(e){}
   }
   // いま見る会社を決める。閲覧メンバーとして招かれている場合はその会社を、
   // そうでなければ自分自身を指す。招かれていても自分が経営者なら自社を優先する。
