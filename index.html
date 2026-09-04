@@ -1357,7 +1357,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260903-05';
+  var APP_BUILD='20260904-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -3231,6 +3231,7 @@
         +'<div class="panel" id="sec-value"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 16.5 5.5-5.5 3.5 3.5L21 5"/><path d="M15 5h6v6"/></svg>企業価値（毎月の推移）</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">担当パートナーがEBITDA法で診断した、あなたの会社の推定企業価値です。利益（EBITDA）の改善と借入の圧縮が、そのまま会社の価値を押し上げます。※ 簡易試算であり、実際の譲渡・買収価格を保証するものではありません。</div>'
           +'<div id="my-value">読み込み中...</div>'
+          +'<div id="my-goal"></div>'
         +'</div>'
         +'<div class="panel"><div class="ph"><span class="ph-t">🔁 承継シミュレーション（買う・売る）</span></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">TsuguAi-継-の中枢機能です。「会社を買う」「会社を譲る」——まだ先の話でも、あなたの会社の数字で<b style="color:#1E3A66;">未知の選択肢を体験</b>できます。かかる時間は30秒。何度でも無料です。</div>'
@@ -3645,7 +3646,7 @@
     window.__eff=eff;
     $('app-body').innerHTML=view;
     if(eff==='customer' && ACCESS==='finance'){ loadAcct(); }
-    else if(eff==='customer'){ loadDashHero(); loadMyCash(); loadMyCancel(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); loadAgentInsights(); knvInit(); }
+    else if(eff==='customer'){ loadDashHero(); loadMyCash(); loadMyCancel(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyGoal(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); loadAgentInsights(); knvInit(); }
     else if(eff==='consultant'){ if(EP_ME) loadEp(); loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); loadAgentInsights(); knvInit(); }
     else {
       // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
@@ -8905,24 +8906,94 @@
     var c=$('cl-todo-freq'); if(c && CL_TODO_TABS[k]!==undefined) c.innerHTML=CL_TODO_TABS[k];
   }
   // ===== 顧客側：企業価値の月次推移表示 =====
-  function valChartSvg(rows){ // rows: ym昇順 [{ym,equity_value}]
+  //  ym（'2026-09'）を通し月数に。月をまたぐ引き算はこれ一本で行う
+  function ymNum(ym){
+    var m=/^(\d{4})-(\d{1,2})$/.exec(String(ym||'')); if(!m) return null;
+    return Number(m[1])*12 + (Number(m[2])-1);
+  }
+  function ymAdd(ym, n){
+    var v=ymNum(ym); if(v==null) return null; v+=n;
+    return String(Math.floor(v/12))+'-'+('0'+(v%12+1)).slice(-2);
+  }
+
+  // ===== 旗までの道筋 =====
+  //  企業価値 ＝ EBITDA×倍率 ＋ 現預金 − 有利子負債。
+  //  だから届かせる手立ては、突き詰めると二つしかない。
+  //    ① 利益（EBITDA）を上げる  ② 借入を圧縮する
+  //  そのどちらでも届く額をそれぞれ出す。現実はこの二つの間のどこかに落ちる。
+  //  「あと◯◯万円」とだけ言われても動けない。「月あたりいくら」まで
+  //  砕いて初めて、明日から何をするかの話になる。
+  function vgPath(cur, goal){
+    if(!cur || !goal) return null;
+    var mult=Number(cur.multiple)||5;
+    var ebitda=Number(cur.ebitda)||0;
+    var cash=Number(cur.cash)||0, debt=Number(cur.debt)||0;
+    var now=Number(cur.equity_value);
+    if(!isFinite(now)) now=ebitda*mult+cash-debt;
+    var target=Number(goal.target_equity)||0;
+
+    var months=null;
+    var a=ymNum(cur.ym), b=ymNum(goal.target_ym);
+    if(a!=null && b!=null) months=b-a;
+
+    var gap=target-now;
+    //  この倍率・この借入のままなら、EBITDAがいくら必要か
+    var needEbitda=(target-cash+debt)/mult;
+    var ebitdaGap=needEbitda-ebitda;
+
+    return {
+      now: now, target: target, gap: gap, reached: gap<=0,
+      months: months,
+      mult: mult, ebitda: ebitda, needEbitda: needEbitda, ebitdaGap: ebitdaGap,
+      //  年のEBITDAを ebitdaGap だけ上げるには、月々の利益をその1/12ずつ上げる
+      monthlyProfit: ebitdaGap/12,
+      //  利益が動かないなら、借入をこれだけ減らせば同じところに着く
+      debtCut: gap,
+      //  期日までに割り振ると、月あたりいくらの返済増になるか
+      monthlyDebtCut: (months && months>0) ? gap/months : null
+    };
+  }
+
+  function valChartSvg(rows, goal){ // rows: ym昇順 [{ym,equity_value}]
     if(rows.length<2) return '';
     var w=560,h=150,pl=10,pr=10,pt=14,pb=24;
+    //  旗があれば、目盛りと横幅にその先まで含める。含めないと旗が枠外に出る
+    var gv=null, gAt=null;
+    if(goal && Number(goal.target_equity)>0){
+      var last=ymNum(rows[rows.length-1].ym), tg=ymNum(goal.target_ym);
+      if(last!=null && tg!=null && tg>last){ gv=Number(goal.target_equity); gAt=tg-last; }
+    }
     var vs=rows.map(function(r){return Number(r.equity_value)||0;});
+    if(gv!=null) vs=vs.concat([gv]);
     var mn=Math.min.apply(null,vs), mx=Math.max.apply(null,vs);
     if(mn===mx){ mn=mn-1; mx=mx+1; }
-    var iw=(w-pl-pr)/(rows.length-1), ih=h-pt-pb;
-    var pts=rows.map(function(r,i){ var x=pl+iw*i; var y=pt+ih*(1-((Number(r.equity_value)||0)-mn)/(mx-mn)); return [x,y]; });
+    //  横軸は「実績の月数 ＋ 旗までの月数」。旗が遠いほど実績は左に詰まる
+    var span=(rows.length-1)+(gAt||0);
+    var iw=(w-pl-pr)/(span||1), ih=h-pt-pb;
+    var yOf=function(v){ return pt+ih*(1-(v-mn)/(mx-mn)); };
+    var pts=rows.map(function(r,i){ return [pl+iw*i, yOf(Number(r.equity_value)||0)]; });
     var line=pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ');
     var area='M'+pts[0][0].toFixed(1)+','+(h-pb)+' L'+line.replace(/ /g,' L')+' L'+pts[pts.length-1][0].toFixed(1)+','+(h-pb)+' Z';
     var dots=pts.map(function(p){ return '<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3.5" fill="#2C5DA8"/>'; }).join('');
-    var first=rows[0].ym.replace('-','/'), last=rows[rows.length-1].ym.replace('-','/');
+    //  旗までは点線。実績と同じ実線で引くと、まだ起きていないことが
+    //  起きたように見える
+    var flag='';
+    if(gv!=null){
+      var e=pts[pts.length-1], gx=pl+iw*span, gy=yOf(gv);
+      flag='<line x1="'+e[0].toFixed(1)+'" y1="'+e[1].toFixed(1)+'" x2="'+gx.toFixed(1)+'" y2="'+gy.toFixed(1)+'"'
+        +' stroke="#C8A24B" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round"/>'
+        +'<line x1="'+gx.toFixed(1)+'" y1="'+gy.toFixed(1)+'" x2="'+gx.toFixed(1)+'" y2="'+(gy-16).toFixed(1)+'" stroke="#C8A24B" stroke-width="1.5"/>'
+        +'<path d="M'+gx.toFixed(1)+','+(gy-16).toFixed(1)+' l-13,4 l13,4 z" fill="#C8A24B"/>'
+        +'<circle cx="'+gx.toFixed(1)+'" cy="'+gy.toFixed(1)+'" r="4" fill="#C8A24B"/>';
+    }
+    var first=rows[0].ym.replace('-','/');
+    var last2=(gv!=null?goal.target_ym:rows[rows.length-1].ym).replace('-','/');
     return '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:auto;display:block;" xmlns="http://www.w3.org/2000/svg">'
       +'<path d="'+area+'" fill="rgba(44,93,168,.08)"/>'
       +'<polyline points="'+line+'" fill="none" stroke="#2C5DA8" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'
-      +dots
+      +dots+flag
       +'<text x="'+pl+'" y="'+(h-6)+'" font-size="11" fill="#94A2B6">'+first+'</text>'
-      +'<text x="'+(w-pr)+'" y="'+(h-6)+'" font-size="11" fill="#94A2B6" text-anchor="end">'+last+'</text>'
+      +'<text x="'+(w-pr)+'" y="'+(h-6)+'" font-size="11" fill="'+(gv!=null?'#C8A24B':'#94A2B6')+'" text-anchor="end">'+last2+(gv!=null?' 🏁':'')+'</text>'
       +'</svg>';
   }
   // ===== 承継シミュレーション（買う・売る）：TsuguAi-継- の中枢機能 =====
@@ -9036,7 +9107,7 @@
     var h='<div style="background:var(--soft);border:1px solid var(--softline);border-radius:12px;padding:14px 16px;margin-bottom:10px;">'
       +'<div style="font-size:11px;color:#5A6981;">現在の推定企業価値（'+esc((cur.ym||'').replace('-','年'))+'月・EBITDA '+Math.round(ebitda).toLocaleString()+'万円 × '+mult+'倍）</div>'
       +'<div style="font-size:28px;font-weight:700;color:#1E3A66;margin-top:2px;">'+Math.round(eq).toLocaleString()+'<span style="font-size:14px;">万円</span>'+dHtml+'</div>'
-      +(rows.length>=2?('<div style="margin-top:10px;">'+valChartSvg(rows)+'</div>'):'')
+      +(rows.length>=2?('<div style="margin-top:10px;">'+valChartSvg(rows, MYGOAL)+'</div>'):'')
     +'</div>';
     h+='<div style="display:flex;gap:8px;flex-wrap:wrap;">'
       +'<div style="flex:1 1 220px;background:#EFF6F0;border:1px solid #BFE2CD;border-radius:11px;padding:12px 14px;">'
@@ -9050,6 +9121,195 @@
     +'</div>';
     box.innerHTML=h;
   }
+
+  // ===== 企業価値の目標（旗）=====
+  //  推移が出るだけでは、数字は動いても行き先が無い。
+  //  「3年後に1億で譲りたい」——その旗を立て、そこまでの道筋を並べる。
+  //
+  //  旗は経営者ひとりでは立たない。希望を出し、担当パートナーが数字を
+  //  確かめて旗にする。ひとりで決めた金額には根拠が無く、パートナーが
+  //  決めた金額は本人の願いではなくなる。その一往復を仕様にしてある。
+  var MYGOAL=null, MYGOAL_CUR=null;
+
+  function vgMan(n){ return (Math.round(Number(n)||0)).toLocaleString('ja-JP')+'万円'; }
+  function vgYm(ym){ return String(ym||'').replace('-','年')+'月'; }
+
+  //  道筋の内訳。二つの手立てを並べて、どちらでも届く額を出す
+  function vgPathHtml(p){
+    if(!p) return '';
+    if(p.reached){
+      return '<div style="background:#EFF6F0;border:1px solid #BFE2CD;border-radius:11px;padding:12px 14px;margin-top:10px;">'
+        +'<div style="font-size:12.5px;font-weight:700;color:#27684A;">🏁 目標に届いています</div>'
+        +'<div style="font-size:12px;color:#18202E;line-height:1.8;margin-top:3px;">'
+        +'いまの推定企業価値は '+vgMan(p.now)+'。目標の '+vgMan(p.target)+' を '
+        +vgMan(Math.abs(p.gap))+' 上回りました。次の旗を立てるときは、担当パートナーにご相談ください。</div></div>';
+    }
+    var mo=(p.months!=null && p.months>0) ? p.months : null;
+    var h='<div style="background:#FBF7EE;border:1px solid #E6D6AE;border-radius:11px;padding:12px 14px;margin-top:10px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:#8A6D2F;">旗まで あと '+vgMan(p.gap)
+      +(mo?('　／　残り '+mo+'ヶ月'):'')+'</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-top:4px;">'
+      +'企業価値は「EBITDA×'+p.mult+'倍 ＋ 現預金 − 有利子負債」で見ています。'
+      +'届かせる道は突き詰めると二つです。<b>どちらか一方でやり切る必要はありません</b>——実際は、この二つの間のどこかに落ち着きます。</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px;">';
+    //  ① 利益で届かせる
+    h+='<div style="flex:1 1 210px;background:#fff;border:1px solid #E6D6AE;border-radius:10px;padding:10px 12px;">'
+      +'<div style="font-size:11px;font-weight:700;color:#8A6D2F;">① 利益を上げて届かせる</div>'
+      +'<div style="font-size:18px;font-weight:700;color:#1E3A66;margin-top:3px;">月 +'+vgMan(p.monthlyProfit)+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:3px;">'
+      +'年のEBITDAを いま '+vgMan(p.ebitda)+' → <b>'+vgMan(p.needEbitda)+'</b> に'
+      +'（+'+vgMan(p.ebitdaGap)+'）。毎月の利益をこれだけ積み増すと届きます。</div></div>';
+    //  ② 借入圧縮で届かせる
+    h+='<div style="flex:1 1 210px;background:#fff;border:1px solid #E6D6AE;border-radius:10px;padding:10px 12px;">'
+      +'<div style="font-size:11px;font-weight:700;color:#8A6D2F;">② 借入を減らして届かせる</div>'
+      +'<div style="font-size:18px;font-weight:700;color:#1E3A66;margin-top:3px;">'+vgMan(p.debtCut)+' 圧縮</div>'
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:3px;">'
+      +'借入を1万円返すと、企業価値はそのまま1万円上がります。'
+      +(p.monthlyDebtCut?('残り'+mo+'ヶ月で割ると、月 <b>'+vgMan(p.monthlyDebtCut)+'</b> の返済増です。'):'利益が動かない前提の額です。')
+      +'</div></div>';
+    h+='</div>'
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:8px;">'
+      +'※ 倍率（'+p.mult+'倍）と現預金は、直近の診断のままで置いています。'
+      +'業種・成長性・取引条件で実際の評価は変わります。'
+      +(mo?'':'<b style="color:#A9403D;">目標の期日を過ぎています。</b>担当パートナーと旗を立て直しましょう。')
+      +'</div></div>';
+    return h;
+  }
+
+  async function loadMyGoal(){
+    var box=$('my-goal'); if(!box) return;
+    var g=null, cur=null;
+    try{
+      var r=await sb.from('value_goals').select('*').eq('customer_id',SCOPE)
+        .in('status',['wish','agreed']).limit(1);
+      if(r.error) throw r.error;
+      g=(r.data||[])[0]||null;
+    }catch(e){ box.innerHTML=''; return; }   // 表がまだ無い環境では何も出さない
+    try{
+      var v=await sb.from('valuation_snapshots').select('*').eq('customer_id',SCOPE)
+        .order('ym',{ascending:false}).limit(1);
+      cur=(v.error?null:((v.data||[])[0]||null));
+    }catch(e){}
+    var had=!!MYGOAL;
+    MYGOAL=g; MYGOAL_CUR=cur;
+    box.innerHTML=vgMyHtml(g, cur);
+    //  グラフは旗を知らずに描かれている。旗があるなら描き直して点線を足す。
+    //  旗が無いときは描き直さない（何も変わらないのに読み込むだけになる）
+    if(g && !had && typeof loadMyValuation==='function') loadMyValuation();
+  }
+
+  function vgMyHtml(g, cur){
+    //  まだ何も無い：誘い方をひとつに絞る。数字を並べても、先に
+    //  「どうしたいか」が無ければ答えられない
+    if(!g){
+      return '<div style="border:1px dashed #D9C79A;background:#FDFBF6;border-radius:12px;padding:14px 16px;margin-top:12px;">'
+        +'<div style="font-size:13px;font-weight:700;color:#8A6D2F;">🏁 この会社を、いつまでに、いくらにしたいですか</div>'
+        +'<div style="font-size:12px;color:var(--ink);line-height:1.85;margin-top:5px;">'
+        +'「引退までに1億で譲りたい」「あと3年で借金を返し切りたい」——'
+        +'ざっくりで構いません。<b>金額の根拠は、担当パートナーが一緒に確かめます。</b>'
+        +'旗が立つと、そこまでの道筋が毎月の数字と並んで見えるようになります。</div>'
+        +'<button class="btn2" style="font-size:12px;padding:7px 14px;margin-top:9px;" onclick="vgWishOpen()">目標を出してみる</button>'
+        +'<div id="vg-form"></div></div>';
+    }
+    var p=vgPath(cur, g);
+    var wish=(g.status==='wish');
+    var h='<div style="border:1.5px solid '+(wish?'#D9C79A':'#C8A24B')+';background:'+(wish?'#FDFBF6':'#FBF7EE')
+      +';border-radius:12px;padding:14px 16px;margin-top:12px;">'
+      +'<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">'
+      +'<span style="font-size:12px;font-weight:700;color:#8A6D2F;">'+(wish?'⏳ 担当パートナーの確認を待っています':'🏁 担当パートナーと合意した目標')+'</span></div>'
+      +'<div style="font-size:26px;font-weight:700;color:#1E3A66;margin-top:3px;">'+vgMan(g.target_equity)
+      +'<span style="font-size:13px;font-weight:600;color:#5A6981;margin-left:8px;">'+vgYm(g.target_ym)+'まで</span></div>'
+      +(g.wish_note?('<div style="font-size:12px;color:var(--ink);line-height:1.8;margin-top:5px;">'
+        +'<span style="color:var(--muted);">あなたの言葉：</span>'+esc(g.wish_note)+'</div>'):'')
+      +(g.partner_note?('<div style="font-size:12px;color:var(--ink);line-height:1.8;margin-top:3px;">'
+        +'<span style="color:var(--muted);">担当パートナーの見立て：</span>'+esc(g.partner_note)+'</div>'):'');
+    if(wish){
+      h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-top:6px;">'
+        +'担当パートナーが数字を確かめて、旗にします。それまでは金額を直せます。</div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">'
+        +'<button class="ghost" style="font-size:11.5px;border:1px solid #E2E7EF;border-radius:8px;padding:5px 11px;" onclick="vgWishOpen()">書き直す</button>'
+        +'<button class="ghost" style="font-size:11.5px;border:1px solid #E8C4C2;color:#A9403D;border-radius:8px;padding:5px 11px;" onclick="vgWithdraw()">取り下げる</button>'
+        +'</div>';
+    }
+    if(!cur){
+      h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-top:8px;">'
+        +'企業価値の診断がまだありません。担当パートナーが診断すると、ここに旗までの道筋が並びます。</div>';
+    }else{
+      h+=vgPathHtml(p);
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px;">'
+        +'<button class="ghost" style="font-size:11.5px;border:1px solid #E2E7EF;border-radius:8px;padding:5px 11px;" onclick="knvOpenAsk()">継ナビくんに相談する</button>';
+      if(!wish) h+='<button class="ghost" style="font-size:11.5px;border:1px solid #E8C4C2;color:#A9403D;border-radius:8px;padding:5px 11px;" onclick="vgWithdraw()">旗を下ろす</button>';
+      h+='</div>';
+    }
+    h+='<div id="vg-form"></div></div>';
+    return h;
+  }
+
+  function vgWishOpen(){
+    var box=$('vg-form'); if(!box) return;
+    if(box.innerHTML){ box.innerHTML=''; return; }
+    var g=MYGOAL;
+    var defYm=ymAdd((new Date()).toISOString().slice(0,7), 36) || '';
+    box.innerHTML='<div style="border-top:1px solid #E6D6AE;margin-top:11px;padding-top:11px;">'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+      +'<div><label class="fl">目標にしたい企業価値（万円）</label>'
+      +'<input id="vg-amt" type="number" class="inp2" placeholder="例 10000" value="'+(g?esc(String(Math.round(g.target_equity))):'')+'"></div>'
+      +'<div><label class="fl">いつまでに</label>'
+      +'<input id="vg-ym" type="month" class="inp2" value="'+esc(g?String(g.target_ym):defYm)+'"></div>'
+      +'</div>'
+      +'<div style="margin-top:8px;"><label class="fl">そう思う理由（任意）</label>'
+      +'<textarea id="vg-note" class="inp2" rows="2" style="width:100%;" placeholder="例：長男に継がせる前に、借入を返し切っておきたい">'+(g?esc(String(g.wish_note||'')):'')+'</textarea></div>'
+      +'<div style="display:flex;gap:8px;align-items:center;margin-top:9px;flex-wrap:wrap;">'
+      +'<button class="btn2" style="font-size:12px;padding:7px 14px;" onclick="vgWishSave()">担当パートナーに送る</button>'
+      +'<button class="ghost" style="font-size:11.5px;border:1px solid #E2E7EF;border-radius:8px;padding:6px 12px;" onclick="vgWishOpen()">やめる</button>'
+      +'<span id="vg-msg" style="font-size:11.5px;"></span></div></div>';
+    var a=$('vg-amt'); if(a) a.focus();
+  }
+
+  async function vgWishSave(){
+    var amt=Number(($('vg-amt')||{}).value), ym=(($('vg-ym')||{}).value||'').trim();
+    var note=(($('vg-note')||{}).value||'').trim();
+    var msg=$('vg-msg');
+    var say=function(t,c){ if(msg){ msg.style.color=c||'#A9403D'; msg.textContent=t; } };
+    if(!(amt>0)) return say('目標の金額を入れてください。');
+    if(!/^\d{4}-\d{2}$/.test(ym)) return say('いつまでに、を選んでください。');
+    //  過ぎた月を目標にはできない。立てた瞬間に期限切れの旗は、旗ではない
+    var nowYm=(new Date()).toISOString().slice(0,7);
+    if(ymNum(ym)<=ymNum(nowYm)) return say('来月より先の月を選んでください。');
+    say('送っています…','#5A6981');
+    var r;
+    if(MYGOAL && MYGOAL.status==='wish'){
+      r=await sb.from('value_goals').update({ target_equity:amt, target_ym:ym, wish_note:note||null,
+        updated_at:new Date().toISOString() }).eq('id',MYGOAL.id);
+    }else{
+      r=await sb.from('value_goals').insert({ customer_id:SCOPE, target_equity:amt, target_ym:ym,
+        wish_note:note||null, status:'wish', proposed_by:ME });
+    }
+    if(r.error){
+      var m=String(r.error.message||'');
+      //  合意済みの旗を書き換えようとした、が典型。権限の言葉のままでは伝わらない
+      if(/policy|permission|row-level/i.test(m)) return say('この目標はすでに担当パートナーと合意しています。変えるときは、いちど旗を下ろしてください。');
+      if(/duplicate|unique/i.test(m)) return say('すでに目標があります。画面を更新してからお試しください。');
+      return say('送れませんでした：'+m);
+    }
+    //  ここで「送りました」と書いても、次の行の描き直しで消える。
+    //  返事はカードそのもの——「⏳ 担当パートナーの確認を待っています」に
+    //  変わることで伝える。読めない文字を置いても仕方がない
+    await loadMyGoal();
+  }
+
+  async function vgWithdraw(){
+    if(!MYGOAL) return;
+    var agreed=(MYGOAL.status==='agreed');
+    if(!confirm(agreed
+      ? '旗を下ろします。もう一度立てるときは、あらためて担当パートナーの確認が要ります。よろしいですか？'
+      : 'この目標を取り下げます。よろしいですか？')) return;
+    var r=await sb.from('value_goals').update({ status:'archived', updated_at:new Date().toISOString() })
+      .eq('id',MYGOAL.id);
+    if(r.error){ alert('取り下げできませんでした：'+r.error.message); return; }
+    await loadMyGoal();
+  }
+
   // ===== 企業価値診断（EBITDA法）：診断→保存で顧客ダッシュボードに月次推移を表示 =====
   function evPrefill(){
     [['cf-op','ev-op'],['cf-dep','ev-dep'],['cf-cash','ev-cash'],['cf-debt','ev-debt']].forEach(function(p){
@@ -9107,6 +9367,151 @@
       +'</div>';
     }).join('');
   }
+
+  // ===== 企業価値の目標（旗）：パートナー側 =====
+  //  経営者から届いた希望を、数字を確かめて旗にする。
+  //  ここが「一緒に見据える」の一往復にあたるところ。金額を直せるのは
+  //  パートナーだけにしてある。合意したあとに片方が黙って動かせるなら、
+  //  合意した意味が無くなる。
+  var CLGOAL=null, CLGOAL_CUR=null;
+
+  async function loadClientGoal(custId){
+    var box=$('ev-goal'); if(!box) return;
+    var g=null, cur=null;
+    try{
+      var r=await sb.from('value_goals').select('*').eq('customer_id',custId)
+        .in('status',['wish','agreed']).limit(1);
+      if(r.error) throw r.error;
+      g=(r.data||[])[0]||null;
+    }catch(e){ box.innerHTML=''; return; }   // 表がまだ無い環境では何も出さない
+    try{
+      var v=await sb.from('valuation_snapshots').select('*').eq('customer_id',custId)
+        .order('ym',{ascending:false}).limit(1);
+      cur=(v.error?null:((v.data||[])[0]||null));
+    }catch(e){}
+    CLGOAL=g; CLGOAL_CUR=cur;
+    box.innerHTML=vgClientHtml(g, cur, custId);
+  }
+
+  function vgClientHtml(g, cur, custId){
+    var head='<div style="font-size:12px;font-weight:700;color:var(--navy);margin:14px 0 4px;">🏁 企業価値の目標（旗）</div>';
+    if(!g){
+      return head+'<div style="border:1px dashed #D9C79A;background:#FDFBF6;border-radius:11px;padding:11px 13px;">'
+        +'<div style="font-size:11.5px;color:var(--ink);line-height:1.8;">'
+        +'まだ目標がありません。<b>「いつまでに、いくらにしたいか」</b>を面談で伺って、ここに置いてください。'
+        +'旗が立つと、経営者の画面にも道筋（月あたりいくらの利益改善が要るか）が並びます。</div>'
+        +'<button class="btn2" style="font-size:11.5px;padding:6px 12px;margin-top:8px;" onclick="vgPartnerOpen(\''+custId+'\')">目標を立てる</button>'
+        +'<div id="vg-pform"></div></div>';
+    }
+    var p=vgPath(cur, g);
+    var wish=(g.status==='wish');
+    var h=head+'<div style="border:1.5px solid '+(wish?'#E8C4C2':'#C8A24B')+';background:'+(wish?'#FDF6F5':'#FBF7EE')
+      +';border-radius:11px;padding:11px 13px;">';
+    if(wish){
+      h+='<div style="font-size:12px;font-weight:700;color:#A9403D;">⏳ 経営者から希望が届いています（確認をお願いします）</div>';
+    }else{
+      h+='<div style="font-size:12px;font-weight:700;color:#8A6D2F;">🏁 合意済みの旗</div>';
+    }
+    h+='<div style="font-size:20px;font-weight:700;color:#1E3A66;margin-top:2px;">'+vgMan(g.target_equity)
+      +'<span style="font-size:12px;font-weight:600;color:#5A6981;margin-left:7px;">'+vgYm(g.target_ym)+'まで</span></div>'
+      +(g.wish_note?('<div style="font-size:11.5px;color:var(--ink);line-height:1.8;margin-top:4px;">'
+        +'<span style="color:var(--muted);">社長の言葉：</span>'+esc(g.wish_note)+'</div>'):'')
+      +(g.partner_note?('<div style="font-size:11.5px;color:var(--ink);line-height:1.8;margin-top:2px;">'
+        +'<span style="color:var(--muted);">あなたの見立て：</span>'+esc(g.partner_note)+'</div>'):'');
+    if(!cur){
+      h+='<div style="font-size:11.5px;color:#A9403D;line-height:1.75;margin-top:7px;">'
+        +'まだ企業価値診断がありません。<b>先に上のフォームで診断してください。</b>'
+        +'診断がないと、旗までの道筋（あと何万円・月いくら）が出せません。</div>';
+    }else{
+      h+=vgPathHtml(p);
+    }
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px;">';
+    if(wish) h+='<button class="btn2" style="font-size:11.5px;padding:6px 12px;" onclick="vgAgree(\''+custId+'\')">数字を確かめた・旗にする</button>';
+    h+='<button class="ghost" style="font-size:11.5px;border:1px solid #E2E7EF;border-radius:8px;padding:6px 12px;" onclick="vgPartnerOpen(\''+custId+'\')">'
+      +(wish?'金額・期日を直す':'旗を見直す')+'</button>'
+      +'<button class="ghost" style="font-size:11.5px;border:1px solid #E8C4C2;color:#A9403D;border-radius:8px;padding:6px 12px;" onclick="vgArchive(\''+custId+'\')">'
+      +(wish?'この希望を取り下げる':'旗を下ろす')+'</button>'
+      +'</div><div id="vg-pform"></div></div>';
+    return h;
+  }
+
+  function vgPartnerOpen(custId){
+    var box=$('vg-pform'); if(!box) return;
+    if(box.innerHTML){ box.innerHTML=''; return; }
+    var g=CLGOAL;
+    var defYm=ymAdd((new Date()).toISOString().slice(0,7), 36) || '';
+    box.innerHTML='<div style="border-top:1px solid var(--softline);margin-top:10px;padding-top:10px;">'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+      +'<div><label class="fl">目標の企業価値（万円）</label>'
+      +'<input id="vgp-amt" type="number" class="inp2" placeholder="例 10000" value="'+(g?esc(String(Math.round(g.target_equity))):'')+'"></div>'
+      +'<div><label class="fl">いつまでに</label>'
+      +'<input id="vgp-ym" type="month" class="inp2" value="'+esc(g?String(g.target_ym):defYm)+'"></div>'
+      +'</div>'
+      +'<div style="margin-top:8px;"><label class="fl">見立て（顧客にも見えます）</label>'
+      +'<textarea id="vgp-note" class="inp2" rows="2" style="width:100%;" placeholder="例：既存顧客の単価見直しで年+400万円、設備の借換えで返済を圧縮すれば届く見込み">'+(g?esc(String(g.partner_note||'')):'')+'</textarea></div>'
+      +'<div style="display:flex;gap:8px;align-items:center;margin-top:9px;flex-wrap:wrap;">'
+      +'<button class="btn2" style="font-size:11.5px;padding:6px 12px;" onclick="vgPartnerSave(\''+custId+'\')">保存する</button>'
+      +'<button class="ghost" style="font-size:11.5px;border:1px solid #E2E7EF;border-radius:8px;padding:6px 12px;" onclick="vgPartnerOpen(\''+custId+'\')">やめる</button>'
+      +'<span id="vgp-msg" style="font-size:11.5px;"></span></div></div>';
+    var a=$('vgp-amt'); if(a) a.focus();
+  }
+
+  async function vgPartnerSave(custId){
+    var amt=Number(($('vgp-amt')||{}).value), ym=(($('vgp-ym')||{}).value||'').trim();
+    var note=(($('vgp-note')||{}).value||'').trim();
+    var msg=$('vgp-msg');
+    var say=function(t,c){ if(msg){ msg.style.color=c||'#A9403D'; msg.textContent=t; } };
+    if(!(amt>0)) return say('目標の金額を入れてください。');
+    if(!/^\d{4}-\d{2}$/.test(ym)) return say('期日を選んでください。');
+    var nowYm=(new Date()).toISOString().slice(0,7);
+    if(ymNum(ym)<=ymNum(nowYm)) return say('来月より先の月を選んでください。');
+    say('保存しています…','#5A6981');
+    var r;
+    if(CLGOAL){
+      r=await sb.from('value_goals').update({ target_equity:amt, target_ym:ym, partner_note:note||null,
+        updated_at:new Date().toISOString() }).eq('id',CLGOAL.id);
+    }else{
+      //  面談の場で一緒に決めたなら、その場で旗にしてよい。希望を経由させると
+      //  「社長に出し直してもらう」ひと手間が挟まって、話が途切れる
+      r=await sb.from('value_goals').insert({ customer_id:custId, target_equity:amt, target_ym:ym,
+        partner_note:note||null, status:'agreed', proposed_by:ME, agreed_by:ME,
+        agreed_at:new Date().toISOString() });
+    }
+    if(r.error){
+      var m=String(r.error.message||'');
+      if(/duplicate|unique/i.test(m)) return say('すでに目標があります。画面を更新してからお試しください。');
+      return say('保存できませんでした：'+m);
+    }
+    //  経営者側と同じ理由で、ここでは書かない。描き直したカードが返事になる
+    await loadClientGoal(custId);
+  }
+
+  async function vgAgree(custId){
+    if(!CLGOAL) return;
+    if(!confirm('この目標を旗にします。\n\n'
+      +'旗にすると、経営者の画面に「担当パートナーと合意した目標」として出ます。\n'
+      +'以後、金額と期日を直せるのはあなただけになります。よろしいですか？')) return;
+    var note=(($('vgp-note')||{}).value||'').trim();
+    var patch={ status:'agreed', agreed_by:ME, agreed_at:new Date().toISOString(),
+      updated_at:new Date().toISOString() };
+    if(note) patch.partner_note=note;
+    var r=await sb.from('value_goals').update(patch).eq('id',CLGOAL.id);
+    if(r.error){ alert('旗にできませんでした：'+r.error.message); return; }
+    await loadClientGoal(custId);
+  }
+
+  async function vgArchive(custId){
+    if(!CLGOAL) return;
+    var agreed=(CLGOAL.status==='agreed');
+    if(!confirm(agreed
+      ? '旗を下ろします。経営者の画面からも消えます。よろしいですか？'
+      : 'この希望を取り下げます。経営者の画面からも消えます。よろしいですか？')) return;
+    var r=await sb.from('value_goals').update({ status:'archived', updated_at:new Date().toISOString() })
+      .eq('id',CLGOAL.id);
+    if(r.error){ alert('取り下げできませんでした：'+r.error.message); return; }
+    await loadClientGoal(custId);
+  }
+
   // ===== 進捗ステージ：登録データから自動判定（手入力による誤りを防止） =====
   // 判定ルール（上から優先）：
   //  5. 次の投資      … M&A案件、または投資・融資・M&Aの掲載/申請あり
@@ -9993,6 +10398,7 @@
       +'<div id="ev-result"><div style="font-size:12px;color:#94A2B6;">左の項目を入力して診断すると、売り手・買い手それぞれの目線での企業価値が表示されます。</div></div>'
       +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin:14px 0 4px;">診断履歴（月次）</div>'
       +'<div id="ev-history">読み込み中...</div>'
+      +'<div id="ev-goal"></div>'
       +'</div>'
       +'</div>'
       +'<div class="ph" id="cs-shindan" style="font-size:13px;margin-top:18px;"><span class="ph-t">'+icoSvg('trend')+'承継準備度スコア（事業承継健診）</span></div>'
@@ -10074,6 +10480,7 @@
     loadOnboard(custId);
     loadObr(custId);
     loadValHistory(custId);
+    loadClientGoal(custId);
     loadMeetingNotes(custId);
     loadDiagInterests(custId);
     loadNextMeeting(custId);
