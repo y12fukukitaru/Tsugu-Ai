@@ -146,8 +146,11 @@ async function runHeartbeat(sb: any) {
   // 毎週金曜は「今週のナレッジ便り」：パートナー間の知見をAIが編集して共有
   const digest = await knowledgeDigest(sb);
 
-  console.log(`heartbeat done: partners=${byPartner.size} generated=${generated} meeting_briefs=${briefed} mentored=${mentored} succession=${radar} report_drafts=${drafts} ma_matches=${matches} customer_briefs=${custBriefs} customer_meeting_eve=${custEve} knowledge_digest=${digest}`);
-  return { partners: byPartner.size, generated, meeting_briefs: briefed, mentored, succession: radar, report_drafts: drafts, ma_matches: matches, customer_briefs: custBriefs, customer_meeting_eve: custEve, knowledge_digest: digest };
+  // 運営には、受付中の解約のご依頼を毎朝知らせる（対応済みにするまで続く）
+  const cancels = await adminCancelAlerts(sb);
+
+  console.log(`heartbeat done: partners=${byPartner.size} generated=${generated} meeting_briefs=${briefed} mentored=${mentored} succession=${radar} report_drafts=${drafts} ma_matches=${matches} customer_briefs=${custBriefs} customer_meeting_eve=${custEve} knowledge_digest=${digest} cancel_alerts=${cancels}`);
+  return { partners: byPartner.size, generated, meeting_briefs: briefed, mentored, succession: radar, report_drafts: drafts, ma_matches: matches, customer_briefs: custBriefs, customer_meeting_eve: custEve, knowledge_digest: digest, cancel_alerts: cancels };
 }
 
 // ---- 経営者向け 今週のひとこと（週に一度・月曜の朝）----
@@ -377,6 +380,77 @@ async function knowledgeDigest(sb: any): Promise<number> {
       reason: `今週承認されたナレッジ${items.length}件をAIが編集`, priority: 3,
     });
     if (!insErr) { sent++; await deliver(sb, p.id, brief, "knowledge_digest"); }
+  }
+  return sent;
+}
+
+// ---- 運営向け 解約のご依頼のお知らせ（毎朝・受付中があるあいだ毎日）----
+//  解約は数が少ないぶん、見逃したときにいちばん痛い。画面の赤いバッジだけでは、
+//  その日コンソールを開かなかったら気づけない。だからメールでも知らせる。
+//
+//  受付中のあいだは毎朝届く。しつこいようだが、これは「対応済みにする」まで
+//  終わらない用件なので、消えないほうがいい。対応済みにすれば翌朝から止まる。
+//
+//  ここではAIを呼ばない。伝えるのは事実（誰が・いつ・なぜ）だけで、
+//  言い回しを考える余地がない。呼べば費用と、文面がぶれる余地が増えるだけ。
+async function adminCancelAlerts(sb: any): Promise<number> {
+  const { data: reqs, error } = await sb
+    .from("cancel_requests")
+    .select("customer_id, reason, note, created_at")
+    .eq("status", "open")
+    .order("created_at", { ascending: true })
+    .limit(50);
+  //  表がまだ無い環境では黙って何もしない。ほかの朝の便りは止めない
+  if (error || !reqs?.length) return 0;
+
+  const { data: admins } = await sb.from("profiles").select("id").eq("role", "admin");
+  if (!admins?.length) return 0;
+
+  //  会社名と担当パートナーを引く。id のまま並べても、誰のことか分からない
+  const ids = [...new Set(reqs.map((r: any) => r.customer_id))];
+  const { data: custs } = await sb
+    .from("profiles").select("id, company_name, contact_name, email, consultant_id").in("id", ids);
+  const cmap = new Map((custs ?? []).map((c: any) => [c.id, c]));
+  const pids = [...new Set((custs ?? []).map((c: any) => c.consultant_id).filter(Boolean))];
+  const { data: parts } = pids.length
+    ? await sb.from("profiles").select("id, company_name, contact_name, email").in("id", pids)
+    : { data: [] };
+  const pmap = new Map((parts ?? []).map((p: any) => [p.id, p]));
+  const nameOf = (p: any) => p ? (p.company_name || p.contact_name || p.email || "（不明）") : "（不明）";
+
+  const today = Date.now();
+  const lines = reqs.map((r: any) => {
+    const c = cmap.get(r.customer_id);
+    const days = Math.max(0, Math.floor((today - new Date(r.created_at).getTime()) / 86400000));
+    const waited = days === 0 ? "本日" : `${days}日前`;
+    const partner = c?.consultant_id ? nameOf(pmap.get(c.consultant_id)) : "担当なし";
+    const why = [r.reason, r.note].filter(Boolean).join(" / ");
+    return `- **${nameOf(c)}**（${waited}受付・担当：${partner}）` + (why ? `\n  理由：${why}` : "");
+  });
+
+  const brief = {
+    title: reqs.length === 1 ? "解約のご依頼が1件届いています" : `解約のご依頼が${reqs.length}件届いています`,
+    body:
+      lines.join("\n") +
+      "\n\n最終月のご請求と、お手元にお渡しする資料のご用意をお願いします。" +
+      "それが済んでから、サポート管理の画面でアカウントを削除してください。" +
+      "\n\n開き方：画面右下の継ナビくん →「サポート」→「受信箱を開く」",
+  };
+
+  let sent = 0;
+  for (const a of admins) {
+    //  同じ日に二重で送らない。翌朝はまた届く（受付中が残っているあいだは毎日）
+    const { data: dup } = await sb
+      .from("agent_insights").select("id")
+      .eq("user_id", a.id).eq("kind", "cancel_alert")
+      .gte("created_at", daysAgo(0.8)).limit(1);
+    if (dup?.length) continue;
+    const { error: insErr } = await sb.from("agent_insights").insert({
+      user_id: a.id, kind: "cancel_alert",
+      title: brief.title, body: brief.body,
+      reason: `受付中の解約のご依頼${reqs.length}件`, priority: 1,
+    });
+    if (!insErr) { sent++; await deliver(sb, a.id, brief, "cancel_alert"); }
   }
   return sent;
 }
@@ -867,6 +941,13 @@ const MAIL_NOTE: Record<string, { eyebrow: string; foot: string; cta?: string }>
   meeting_prep: {
     eyebrow: "✦ 継ナビくんから、面談の準備メモ",
     foot: "面談の前日に自動でお送りしています。",
+  },
+  //  運営宛。ほかの便りと違い、こちらから動かないと終わらない用件なので、
+  //  結びにも「対応済みにするまで届く」と書いておく。毎朝届く理由が分かる
+  cancel_alert: {
+    eyebrow: "⚠ 経営者から解約のご依頼が届いています",
+    foot: "受付中のご依頼があるあいだ、毎朝お送りしています（対応済みにすると止まります）。",
+    cta: "サポート管理を開く →",
   },
 };
 //  daily_brief・ma_match・succession は、いずれもパートナー宛の毎朝の便り
