@@ -1365,7 +1365,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260907-02';
+  var APP_BUILD='20260907-03';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2519,10 +2519,16 @@
         +'<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
           +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">パートナーからお預かりする利用料（円・税別）</div>'
           +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">'
-            +'配分とは別に、パートナーから継へお支払いいただくぶんです。担当者登録使用料はEP型（法人）のみで、EPのご負担になります。</div>'
+            +'配分とは別に、パートナーから継へお支払いいただくぶんです。'
+            +'<b style="color:var(--navy);">カードでは受け取りません。配分から差し引いてご精算します。</b><br>'
+            +'担当者登録使用料はEP型（法人）のみで、EPのご負担です。'
+            +'<b style="color:var(--navy);">1人ごとの額と、まとめ登録の定額のうち、安いほうで計算します。</b>'
+            +'（例：10人までは定額15,000円。31人なら 15,000×3＋3,000＝48,000円）</div>'
           +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
             +'<div><label class="fl">AI利用料（円/社・月）</label><input id="bl-ai" type="number" class="inp2" style="width:110px;" value="2000" oninput="renderAdmBilling();blRatesSave()"></div>'
             +'<div><label class="fl">担当者登録使用料（円/人・月）</label><input id="bl-seat" type="number" class="inp2" style="width:130px;" value="3000" oninput="renderAdmBilling();blRatesSave()"></div>'
+            +'<div><label class="fl">まとめ登録の定額（円/月）</label><input id="bl-seatpack" type="number" class="inp2" style="width:130px;" value="15000" oninput="renderAdmBilling();blRatesSave()"></div>'
+            +'<div><label class="fl">まとめ登録の人数（人まで）</label><input id="bl-seatpackn" type="number" class="inp2" style="width:130px;" value="10" oninput="renderAdmBilling();blRatesSave()"></div>'
           +'</div>'
           +'<div style="font-size:11px;color:#8A6A12;background:rgba(195,155,63,.10);border:1px solid rgba(195,155,63,.35);border-radius:8px;padding:8px 10px;margin-top:9px;line-height:1.7;">'
             +'ボリュームディスカウント（契約社数による割引）・HD化ボーナス・担当パートナーの階層付与は<b>すべて廃止</b>しました。'
@@ -3074,7 +3080,7 @@
   // ---- 料率・割引設定の保存（app_settings）：運営全員のコンソールで同じ値を使う ----
   //  割引の3種類（vol1/vol2/hd, snr/exe/prem, cap）は廃止したので保存対象から外した。
   //  すでに保存されている値が残っていても、読み込む先が無いので影響しない。
-  var BL_RATE_IDS=['bl-pbase','bl-pclient','bl-adv','bl-direct','bl-init','bl-ai','bl-seat'];
+  var BL_RATE_IDS=['bl-pbase','bl-pclient','bl-adv','bl-direct','bl-init','bl-ai','bl-seat','bl-seatpack','bl-seatpackn'];
   var BL_RATES_OK=false, BL_SAVE_T=null;
   function blRatesNote(t){ var el=$('bl-rates-note'); if(el) el.textContent=t?('　'+t):''; }
   async function blRatesLoad(){
@@ -15868,6 +15874,30 @@
     if(ex<=0) return { ex:0, inc:0 };
     return { ex:ex, inc:taxIn(ex) };
   }
+  // ===== EP（法人）の担当者ぶんの利用料 =====
+  //  1人ごとに 3,000円か、10人までまとめて定額 15,000円かを選べる。
+  //  どちらでもよいなら、お相手にとって安いほうで計算する。
+  //  高いほうで請求すると、取り過ぎたぶんを返すことになる。
+  //
+  //    10人ぶんの塊は、まとめたほうが必ず安い（15,000 < 3,000×10）ので
+  //    まず塊にする。あまりだけ、1人ごとと定額を比べる。
+  //      31人 → 15,000×3 ＋ min(3,000×1, 15,000) ＝ 48,000
+  //       6人 →            min(3,000×6, 15,000) ＝ 15,000
+  //       4人 →            min(3,000×4, 15,000) ＝ 12,000
+  //  返すのは税抜。
+  function epSeatFee(members, perHead, packYen, packN){
+    var n=Math.max(0, Math.floor(Number(members)||0));
+    var ph=Math.max(0, Number(perHead)||0);
+    var pk=Number(packYen); if(!isFinite(pk)||pk<0) pk=0;
+    var pn=Math.floor(Number(packN)||0);
+    if(n<=0) return { yen:0, packs:0, heads:0 };
+    //  まとめ登録が使えない設定なら、1人ごとだけで計算する
+    if(pn<=0 || pk<=0) return { yen:n*ph, packs:0, heads:n };
+    var packs=Math.floor(n/pn), rem=n-packs*pn;
+    var remByHead=rem*ph;
+    if(remByHead>pk){ packs+=1; rem=0; remByHead=pk; }   // あまりも定額のほうが安い
+    return { yen:packs*pk+(rem>0?remByHead:0), packs:packs, heads:rem };
+  }
   //  報酬から源泉徴収と利用料を引いた残り。
   //  マイナスのお振込みは起こせないので、足りないぶんは「ご請求」に分ける。
   //  ここを負のまま通すと、振込画面にマイナスの金額が並ぶ
@@ -16020,6 +16050,31 @@
       if(!b.acctOrg) return;
       if(!epG[b.acctId]){ epG[b.acctId]={ name:b.acctOrg, pay:0, who:[] }; epOrder.push(b.acctId); }
       epG[b.acctId].pay+=b.pay; epG[b.acctId].who.push(b.label); });
+    //  EP-I の利用料は法人がまとめてお支払いになる。担当者の人数と
+    //  顧客数から計算して、法人の振込額から差し引く。
+    //  数えるのはサーバ側の一か所（ep_billing_counts）に寄せてある。
+    //  画面ごとに数え方がずれると、ずれた数字がそのままご請求額になる
+    if(epOrder.length){
+      var uSeat=blRate('bl-seat',EP_SEAT_FEE);
+      var uPack=blRate('bl-seatpack',15000), uPackN=blRate('bl-seatpackn',10);
+      var epCnt=null;
+      try{
+        var ec=await sb.rpc('ep_billing_counts',{ p_eps:epOrder });
+        if(!ec.error){ epCnt={}; (ec.data||[]).forEach(function(x){ epCnt[x.ep_id]=x; }); }
+      }catch(e){}
+      epOrder.forEach(function(id){
+        var g=epG[id], c=epCnt&&epCnt[id];
+        //  数えられなかったら引かない。分からない数字でご請求は立てられない
+        if(!c){ g.unknown=true; g.payNet=g.pay; g.due=0; return; }
+        g.members=c.members; g.clients=c.clients;
+        g.seat=epSeatFee(c.members, uSeat, uPack, uPackN);
+        g.clientFee=(c.clients||0)*uCl;
+        g.useEx=g.seat.yen+g.clientFee;
+        g.use=taxIn(g.useEx);
+        var st=paySettle(g.pay, 0, g.use);
+        g.payNet=st.pay; g.due=st.due;
+      });
+    }
     var h='<div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:10px;">'
       +bizChip('対象の入金（税込）', yen(tG), keys.length+' 名ぶん', 'var(--navy)')
       +bizChip('税抜の土台', yen(tN), '消費税 '+yen(tG-tN)+' を外した額', 'var(--navy)')
@@ -16039,12 +16094,35 @@
         +'<b style="color:var(--navy);">振込はこの単位で起こしてください。</b>'
         +'下の一覧に出る担当者ごとの行は、その内訳です（担当者へ個別に振り込まないでください）。</div>'
         +epOrder.map(function(id){ var g=epG[id];
-          return '<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:7px 0;border-top:1px solid var(--softline);">'
-            +'<b style="font-size:13px;color:var(--ink);">'+esc(g.name)+'</b>'
-            +payAcctTag(payAcctEp, id)
-            +'<span style="font-size:11px;color:var(--muted);">内訳：'+esc(g.who.join('・'))+'</span>'
-            +'<span style="flex:1;"></span>'
-            +'<b style="font-size:13.5px;color:#27684A;">'+yen(g.pay)+'</b>'
+          return '<div style="padding:8px 0;border-top:1px solid var(--softline);">'
+            +'<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">'
+              +'<b style="font-size:13px;color:var(--ink);">'+esc(g.name)+'</b>'
+              +payAcctTag(payAcctEp, id)
+              +'<span style="flex:1;"></span>'
+              +(g.due>0
+                ? '<b style="font-size:13.5px;color:#C39B3F;">ご請求 '+yen(g.due)+'</b>'
+                : '<b style="font-size:13.5px;color:#27684A;">'+yen(g.payNet)+'</b>')
+            +'</div>'
+            +(g.unknown
+              //  数えられなかったことは必ず出す。黙って引かずに払うと、
+              //  その月の利用料を取りそこねる
+              ? '<div style="font-size:11.5px;color:#A9403D;line-height:1.75;margin-top:3px;">'
+                +'⚠ 担当者数・顧客数を数えられなかったため、<b>利用料を差し引いていません。</b>'
+                +'この金額のまま支払うと、この月の利用料をいただけません。'
+                +'Supabaseで「EPの利用料」のSQLを実行してください。</div>'
+              : '<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-top:3px;">'
+                +'配分 <b style="color:var(--ink);">'+yen(g.pay)+'</b>'
+                +'　− 利用料 <b style="color:#A9403D;">'+yen(g.use)+'</b>'
+                +(g.due>0
+                  ? '　＝ <b style="color:#C39B3F;">ご請求 '+yen(g.due)+'</b>'
+                  : '　＝ お振込 <b style="color:#27684A;">'+yen(g.payNet)+'</b>')
+                +'<br>担当者 '+g.members+'名 '
+                +(g.seat.packs>0 ? 'まとめ'+g.seat.packs+'口'+(g.seat.heads>0?'＋'+g.seat.heads+'名':'') : g.seat.heads+'名ぶん')
+                +' '+yen(g.seat.yen)
+                +' ＋ 顧問先 '+g.clients+'社 '+yen(g.clientFee)
+                +' ＝ '+yen(g.useEx)+'（税抜）→ '+yen(g.use)+'（税込）</div>')
+            +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:2px;">'
+              +'内訳：'+esc(g.who.join('・'))+'</div>'
           +'</div>'; }).join('')
       +'</div>';
     }
@@ -16156,7 +16234,9 @@
       +'※ 利用料は「課金・契約」タブの設定額（<b>税抜</b>）から計算し、<b>税込</b>で差し引いています。'
       +'報酬より利用料が大きい方は「ご請求」として出ます（マイナスのお振込みは起こしません）。'
       +'<b style="color:#8A6A12;">EP（法人）に所属している方の利用料は、ご本人からは引いていません。</b>'
-      +'法人単位のご請求の建て方が決まりましたら、ここに入れます。'
+      +'EP-I は上の「法人へまとめてお振込み」で、法人の担当者数と顧客数から計算して差し引いています'
+      +'（担当者ぶんは1人ごとの額とまとめ登録の定額のうち<b>安いほう</b>、顧問先加算は顧客数ぶん）。'
+      +'EP-II は本部への配分がこの画面に出ないため、利用料も差し引いていません。'
       +'相殺の税務上の取扱いは、顧問税理士にご確認ください。</div>';
     box.innerHTML=h;
   }
