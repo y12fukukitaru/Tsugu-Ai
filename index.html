@@ -995,6 +995,14 @@
 <body>
 
 <!-- ===== AUTH GATE（ログイン専用のシンプルな画面） ===== -->
+<!-- ===== 契約ページ（?c=トークン で開く。ログイン前に読む・同意する） ===== -->
+<div id="contract" class="hidden" style="min-height:100vh;background:#F4F6FA;padding:24px 16px;">
+  <div style="max-width:760px;margin:0 auto;">
+    <div style="text-align:center;font-size:15px;font-weight:700;color:#1E3A66;margin-bottom:14px;">TsuguAi<span style="color:#C8A24B;">-継-</span></div>
+    <div id="ct-body" style="background:#fff;border:1px solid #E2E7EF;border-radius:14px;padding:22px 24px;">読み込み中…</div>
+  </div>
+</div>
+
 <div id="gate" class="gate">
  <div class="gatewrap">
   <div class="card">
@@ -1357,7 +1365,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260904-02';
+  var APP_BUILD='20260905-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -1597,6 +1605,7 @@
       //  門で待っているあいだにパートナーが登録したかもしれない。
       //  招待として入っていれば、ここで担当が付く
       try{ await sb.rpc('claim_my_invite'); }catch(e){}
+      try{ await sb.rpc('contract_claim'); }catch(e){}
       var q=await sb.from('profiles').select('*').eq('id',ME).maybeSingle();
       var prof=(q&&q.data)||window.__prof||{role:'customer'};
       if(prof.consultant_id){
@@ -2479,9 +2488,10 @@
         +'<div style="margin-top:10px;"><button class="btn2" onclick="postAnnouncement()">配信する</button><span id="bc-msg" style="font-size:12px;margin-left:8px;"></span></div>'
         +'<div id="bc-list" style="margin-top:12px;">読み込み中...</div></div>'
       +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.8"/><path d="m5.6 5.6 3.7 3.7M14.7 14.7l3.7 3.7M14.7 9.3l3.7-3.7M5.6 18.4l3.7-3.7"/></svg>サポート管理'
-        +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmCancels();loadAdmDeletions();loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
+        +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmCancels();loadAdmDeletions();loadAdmContracts();loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
         +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.5 12.5H16l-1.8 2.8H9.8L8 12.5H2.5"/><path d="M5.6 5.1 2.5 12.5V18a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-5.5l-3.1-7.4A2 2 0 0 0 16.6 4H7.4a2 2 0 0 0-1.8 1.1z"/></svg>パートナーからの問い合わせ</span><span id="adm-inq-count" class="nbadge hidden">0</span></div>'
         +'<div id="adm-cancels"></div>'
+        +'<div id="adm-contracts"></div>'
         +'<div id="adm-deletions"></div>'
         +'<div id="adm-inq-list" style="margin-top:6px;">読み込み中...</div>'
         +'<div style="border-top:1px solid #EDF1F6;margin-top:16px;padding-top:14px;">'
@@ -3371,6 +3381,7 @@
             +'</div><div id="cl-msg" style="font-size:12px;margin-top:8px;"></div>'
           +'</div>'
           +'<div id="cl-invites"></div>'
+          +'<div id="cl-contracts"></div>'
           +'<div id="cl-hero" class="sumchips"></div>'
           +'<div style="font-size:11.5px;color:#94A2B6;margin:4px 0 6px;">💡 登録前のお客様との商談には <span style="color:#2C5DA8;font-weight:700;cursor:pointer;" onclick="salesGo()"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="2.5" width="7" height="4" rx="1.2"/><path d="M15.5 4.5H18a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2h2.5"/><path d="M8.5 11h7M8.5 15h4.5"/></svg>営業ツール（課題ヒアリング診断）→</span> が使えます。</div>'
           +'<input id="cl-search" class="searchbox" placeholder="🔍 会社名・メールアドレスで検索" oninput="renderClientList()">'
@@ -3655,7 +3666,7 @@
       if(adminCanSee('sec-team')) loadSignupCodes();
       if(adminCanSee('sec-exec')){ loadExecFunding(); loadExecWeekly(); }
       if(adminCanSee('sec-billing')){ loadBillingAdminLinks(); loadPayout(); }
-      if(adminCanSee('sec-support')){ loadAdmCancels(); loadAdmDeletions(); loadAdmInquiries(); loadSupportKB(); }
+      if(adminCanSee('sec-support')){ loadAdmCancels(); loadAdmDeletions(); loadAdmContracts(); loadAdmInquiries(); loadSupportKB(); }
       if(adminCanSee('sec-network')){ loadNetwork(); }
       if(adminCanSee('sec-subsidy')){ loadSubsidyAdmin(); }
       knvInit();
@@ -4382,6 +4393,7 @@
   async function loadClients(){
     var box=$('cl-list'); if(!box)return;
     loadInvites();   // 登録をお待ちしている方も、同じ画面で見えるように
+    loadMyContracts();   // 送った顧問契約の状況も
     var cl=await sb.from('profiles').select('id,email,company_name,role,stage').eq('consultant_id',ME).eq('role','customer');
     if(cl.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(cl.error.message)+'</div>'; return; }
     var clients=cl.data||[];
@@ -15983,6 +15995,10 @@
     //  これが効けば「担当パートナーの登録を待っています」の門は一度も出ない。
     //  関数がまだ無い環境では黙って何もしない（門が出るだけで、壊れはしない）。
     try{ await sb.rpc('claim_my_invite'); }catch(e){}
+    //  Web上で同意ずみの契約があれば、ここで結びつく。
+    //  パートナー契約なら役割が、顧客契約なら担当が付く。
+    //  関数がまだ無い環境では黙って何もしない
+    try{ await sb.rpc('contract_claim'); }catch(e){}
   }
   // いま見る会社を決める。閲覧メンバーとして招かれている場合はその会社を、
   // そうでなければ自分自身を指す。招かれていても自分が経営者なら自社を優先する。
@@ -17355,6 +17371,271 @@
     if(msg){msg.style.color='#27684A';msg.textContent='掲載しました。';}
     if($('amk-title'))$('amk-title').value=''; if($('amk-amount'))$('amk-amount').value=''; if($('amk-industry'))$('amk-industry').value=''; if($('amk-terms'))$('amk-terms').value=''; if($('amk-detail'))$('amk-detail').value='';
     loadMarketBroker();
+  }
+
+
+
+  // ===== 契約を送る・確かめる =====
+  //  トークンは推測できないこと。ここを短くすると、総当たりで他人の契約書が
+  //  読めてしまう。43文字（256ビット）にしてある
+  function ctNewToken(){
+    var a=new Uint8Array(32);
+    (window.crypto||window.msCrypto).getRandomValues(a);
+    var s=''; for(var i=0;i<a.length;i++) s+=String.fromCharCode(a[i]);
+    return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }
+  function ctUrl(tok){ return location.origin+location.pathname+'?c='+tok; }
+  function ctStatusTag(o){
+    if(o.status==='agreed') return '<span class="tag green">同意済み</span>';
+    if(o.status==='cancelled') return '<span class="tag gray">取り消し</span>';
+    if(o.expires_at && new Date(o.expires_at)<new Date()) return '<span class="tag red">期限切れ</span>';
+    return '<span class="tag gold">お返事待ち</span>';
+  }
+  function ctRowHtml(o, showWho){
+    var dt=(o.agreed_at||o.sent_at||'').slice(0,10).replace(/-/g,'/');
+    return '<div style="display:flex;gap:9px;align-items:flex-start;padding:8px 0;border-top:1px solid #EDF1F6;flex-wrap:wrap;">'
+      +'<div style="flex:1;min-width:160px;">'
+      +'<div style="font-size:12.5px;color:var(--ink);">'+esc(o.email)+'　'+ctStatusTag(o)+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin-top:2px;">'
+      +(o.kind==='partner'?'パートナー契約':'顧問契約')
+      +(o.monthly_fee!=null?('　月額 '+Number(o.monthly_fee).toLocaleString('ja-JP')+'円（税別）'):'')
+      +'　'+esc(dt)+(o.status==='agreed'?(' 同意　'+esc(o.agreed_name||'')):' 送信')
+      +(showWho&&o.claimed_user_id?'　<span class="tag blue" style="font-size:10px;">登録済み</span>':'')
+      +'</div></div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+      +'<button class="ghost" style="font-size:11px;border:1px solid #E2E7EF;border-radius:7px;padding:3px 9px;" onclick="ctCopy(\''+o.token+'\',this)">URLをコピー</button>'
+      +(o.status==='agreed'
+        ? '<button class="ghost" style="font-size:11px;border:1px solid #E2E7EF;border-radius:7px;padding:3px 9px;" onclick="ctShow(\''+o.id+'\')">契約書を見る</button>'
+        : '<button class="ghost" style="font-size:11px;border:1px solid #E8C4C2;color:#A9403D;border-radius:7px;padding:3px 9px;" onclick="ctCancel(\''+o.id+'\')">取り消す</button>')
+      +'</div></div>';
+  }
+  function ctCopy(tok, el){
+    var u=ctUrl(tok);
+    try{ navigator.clipboard.writeText(u); }catch(e){ window.prompt('このURLをお送りください', u); return; }
+    if(el){ var t=el.textContent; el.textContent='コピーしました'; setTimeout(function(){ el.textContent=t; },1400); }
+  }
+  var CT_CACHE={};
+  function ctShow(id){
+    var o=CT_CACHE[id]; if(!o) return;
+    var w=window.open('','_blank');
+    if(!w){ alert('別のタブを開けませんでした。ブラウザの設定をご確認ください。'); return; }
+    w.document.write('<!doctype html><meta charset="utf-8"><title>'+esc(o.title)+'</title>'
+      +'<div style="max-width:720px;margin:32px auto;padding:0 20px;font-family:system-ui,sans-serif;">'
+      +'<h1 style="font-size:17px;color:#1E3A66;">'+esc(o.title)+'</h1>'
+      +'<div style="font-size:12px;color:#5A6981;">'+esc(o.email)+' 様　'
+      +esc((o.agreed_at||'').slice(0,10).replace(/-/g,'/'))+' 同意　記名：'+esc(o.agreed_name||'')+'</div>'
+      +'<pre style="white-space:pre-wrap;font-size:12.5px;line-height:2;color:#18202E;font-family:inherit;'
+      +'border:1px solid #E2E7EF;border-radius:10px;padding:18px;margin-top:14px;">'
+      +esc(o.agreed_body||o.body||'')+'</pre></div>');
+    w.document.close();
+  }
+  async function ctCancel(id){
+    if(!confirm('この契約の送信を取り消します。URLは開けなくなります。よろしいですか？')) return;
+    var r=await sb.from('contract_offers').update({ status:'cancelled' }).eq('id',id);
+    if(r.error){ alert('取り消せませんでした：'+r.error.message); return; }
+    if($('cl-contracts')) loadMyContracts();
+    if($('adm-contracts')) loadAdmContracts();
+  }
+
+  //  送る本体。パートナー契約は運営だけ、顧問契約はパートナーだけが送れる
+  //  （権限側でも同じ縛りをかけている）
+  async function ctSend(kind, pfx){
+    var em=(($(pfx+'-email')||{}).value||'').trim();
+    var feeEl=$(pfx+'-fee');
+    var msg=$(pfx+'-msg');
+    var say=function(t,c){ if(msg){ msg.style.color=c||'#A9403D'; msg.textContent=t; } };
+    if(!em || em.indexOf('@')<0) return say('送り先のメールアドレスを入れてください。');
+    var fee=null;
+    if(kind==='customer'){
+      //  金額は選ばないと送れない。空のまま送れると、あとから
+      //  「いくらで合意したのか」でもめるもとになる
+      var v=feeEl?feeEl.value:'';
+      if(!v) return say('顧問料を選んでください。');
+      fee=Number(v);
+    }
+    say('契約書を用意しています…','#5A6981');
+    var t=await sb.from('contract_templates').select('*').eq('kind',kind).eq('active',true).limit(1);
+    var tpl=(t.error?null:((t.data||[])[0]||null));
+    if(!tpl) return say('公開中の契約書がありません。運営にお問い合わせください。');
+    var tok=ctNewToken();
+    var row={ kind:kind, token:tok, email:em, template_id:tpl.id, template_version:tpl.version,
+      title:tpl.title, body:tpl.body, offered_by:ME };
+    if(kind==='customer'){ row.monthly_fee=fee; row.consultant_id=ME; }
+    var r=await sb.from('contract_offers').insert(row);
+    if(r.error){
+      var m=String(r.error.message||'');
+      if(/policy|permission|row-level/i.test(m)) return say('この契約を送る権限がありません。');
+      return say('送れませんでした：'+m);
+    }
+    //  メールでお届けする。届かなくても契約自体は作れているので、
+    //  そのときはURLをコピーして送れるよう案内する
+    var sent=false, why='';
+    try{
+      var res=await sb.functions.invoke('contract-send',{ body:{ token:tok, url:ctUrl(tok) } });
+      sent = !!(res && res.data && res.data.ok);
+      why = (res&&res.data&&res.data.error) || (res&&res.error&&res.error.message) || '';
+    }catch(e){ why=String((e&&e.message)||e); }
+    if($(pfx+'-email')) $(pfx+'-email').value='';
+    if(feeEl) feeEl.value='';
+    if(sent){ say('契約書をメールでお送りしました。','#27684A'); }
+    else{
+      say('契約書は作成できましたが、メールを送れませんでした。下の一覧から「URLをコピー」してお送りください。'
+        +(why?('（'+why+'）'):''), '#A9403D');
+    }
+    if($('cl-contracts')) loadMyContracts();
+    if($('adm-contracts')) loadAdmContracts();
+  }
+
+  //  パートナー：自分が送った顧問契約
+  async function loadMyContracts(){
+    var box=$('cl-contracts'); if(!box) return;
+    var r;
+    try{ r=await sb.from('contract_offers').select('*').eq('offered_by',ME)
+      .order('created_at',{ascending:false}).limit(50); }
+    catch(e){ r={error:1}; }
+    if(!r || r.error){ box.innerHTML=''; return; }   // 表がまだ無い環境
+    var rows=r.data||[];
+    rows.forEach(function(o){ CT_CACHE[o.id]=o; });
+    var h='<div style="border:1px solid #E2E7EF;background:#F8F9FC;border-radius:11px;padding:12px 15px;margin:10px 0 0;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">📄 顧問契約を送る</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:3px;">'
+      +'メールアドレスに契約書のURLをお送りします。相手がURLを開いて記名・同意すると契約が成立し、'
+      +'そのままご登録いただくと<b>自動であなたの担当顧客になります。</b></div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:9px;">'
+      +'<div style="flex:1 1 200px;"><label class="fl">送り先のメールアドレス</label>'
+      +'<input id="ctp-email" class="inp2" style="width:100%;" placeholder="you@example.com"></div>'
+      +'<div><label class="fl">顧問料（必須）</label>'
+      +'<select id="ctp-fee" class="inp2"><option value="">選択してください</option>'
+      +'<option value="45000">月額 45,000円（税別）</option></select></div>'
+      +'<button class="btn2" style="font-size:12px;padding:7px 14px;" onclick="ctSend(\'customer\',\'ctp\')">契約書を送る</button>'
+      +'</div><div id="ctp-msg" style="font-size:11.5px;margin-top:6px;line-height:1.8;"></div>';
+    if(rows.length){
+      h+='<div style="font-size:12px;font-weight:700;color:var(--navy);margin-top:12px;">送った契約（'+rows.length+'件）</div>'
+        +rows.map(function(o){ return ctRowHtml(o,true); }).join('');
+    }
+    box.innerHTML=h+'</div>';
+  }
+
+  //  運営：パートナー契約を送る／すべての契約を確かめる
+  async function loadAdmContracts(){
+    var box=$('adm-contracts'); if(!box) return;
+    var r;
+    try{ r=await sb.from('contract_offers').select('*')
+      .order('created_at',{ascending:false}).limit(200); }
+    catch(e){ r={error:1}; }
+    if(!r || r.error){ box.innerHTML=''; return; }
+    var rows=r.data||[];
+    rows.forEach(function(o){ CT_CACHE[o.id]=o; });
+    var agreed=rows.filter(function(o){ return o.status==='agreed'; }).length;
+    var waiting=rows.filter(function(o){ return o.status==='sent'; }).length;
+    var h='<div style="border:1px solid #E2E7EF;background:#F8F9FC;border-radius:11px;padding:12px 15px;margin:0 0 14px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">📄 契約（'+rows.length+'件・同意済み '+agreed+'／お返事待ち '+waiting+'）</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:3px;">'
+      +'パートナー契約はここから送ります。顧問契約はパートナーが送ったものも含めて、すべてここに並びます。</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:9px;">'
+      +'<div style="flex:1 1 200px;"><label class="fl">パートナー契約を送る先</label>'
+      +'<input id="cta-email" class="inp2" style="width:100%;" placeholder="partner@example.com"></div>'
+      +'<button class="btn2" style="font-size:12px;padding:7px 14px;" onclick="ctSend(\'partner\',\'cta\')">契約書を送る</button>'
+      +'</div><div id="cta-msg" style="font-size:11.5px;margin-top:6px;line-height:1.8;"></div>';
+    if(rows.length){
+      h+='<div style="max-height:340px;overflow-y:auto;margin-top:10px;">'
+        +rows.map(function(o){ return ctRowHtml(o,true); }).join('')+'</div>';
+    }
+    box.innerHTML=h+'</div>';
+  }
+
+  // ===== Web上での契約締結 =====
+  //  URLを開く → 読む → 記名して同意 → そのまま登録。
+  //  同意は登録の前に行うので、この画面はログインしていなくても動く。
+  //  本文は関数（contract_open）から取る。表そのものには触らせていない。
+  function ctToken(){
+    var m=/[?&]c=([A-Za-z0-9_\-]{32,})/.exec(location.search||'');
+    return m?m[1]:null;
+  }
+  var CT_DATA=null;
+  async function ctOpen(){
+    var g=$('gate'), c=$('contract');
+    if(g) g.classList.add('hidden');
+    if(c) c.classList.remove('hidden');
+    var box=$('ct-body'); if(!box) return;
+    var r;
+    try{ r=await sb.rpc('contract_open',{ p_token: ctToken() }); }
+    catch(e){ r={ error:{ message:String((e&&e.message)||e) } }; }
+    if(r.error){ box.innerHTML=ctErrHtml('契約書を読み込めませんでした：'+esc(r.error.message)); return; }
+    var d=r.data||{};
+    if(!d.ok){ box.innerHTML=ctErrHtml(esc(d.error||'この契約書は開けません。')); return; }
+    CT_DATA=d;
+    box.innerHTML=ctHtml(d);
+  }
+  function ctErrHtml(msg){
+    return '<div style="font-size:13px;color:#A9403D;line-height:1.9;">'+msg+'</div>'
+      +'<div style="font-size:12px;color:var(--muted);line-height:1.8;margin-top:10px;">'
+      +'お心当たりがない場合は、送り主にお問い合わせください。</div>'
+      +'<button class="ghost" style="font-size:12px;border:1px solid #E2E7EF;border-radius:8px;padding:7px 14px;margin-top:12px;" onclick="ctToLogin()">ログイン画面へ</button>';
+  }
+  function ctToLogin(){
+    //  トークンを URL から外してから戻る。戻るたびに契約画面が出ると煩わしい
+    location.href = location.pathname;
+  }
+  function ctHtml(d){
+    var done=(d.status==='agreed');
+    var h='<div style="font-size:16px;font-weight:700;color:#1E3A66;line-height:1.6;">'+esc(d.title)+'</div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:4px;">'+esc(d.email)+' 様宛</div>';
+    //  合意した条件は、本文とは別に枠で出す。本文の中に埋もれると読み飛ばされる
+    if(d.monthly_fee!=null){
+      h+='<div style="border:1.5px solid #C8A24B;background:#FBF7EE;border-radius:10px;padding:11px 14px;margin-top:12px;">'
+        +'<div style="font-size:11.5px;color:#8A6D2F;font-weight:700;">ご契約の条件</div>'
+        +'<div style="font-size:14px;font-weight:700;color:#1E3A66;margin-top:3px;">顧問料　月額 '
+        +Number(d.monthly_fee).toLocaleString('ja-JP')+'円（税別）</div></div>';
+    }
+    h+='<div style="border:1px solid #E2E7EF;background:#FBFCFE;border-radius:10px;padding:16px 18px;margin-top:12px;'
+      +'max-height:46vh;overflow-y:auto;font-size:12.5px;color:#18202E;line-height:2;white-space:pre-wrap;">'
+      +esc(d.body)+'</div>';
+    if(done){
+      var dt=(d.agreed_at||'').slice(0,10).replace(/-/g,'/');
+      h+='<div style="border:1.5px solid #BFE2CD;background:#EFF6F0;border-radius:10px;padding:13px 16px;margin-top:14px;">'
+        +'<div style="font-size:13px;font-weight:700;color:#27684A;">✓ ご同意いただいています</div>'
+        +'<div style="font-size:12px;color:#18202E;line-height:1.9;margin-top:3px;">'
+        +esc(d.agreed_name||'')+' 様　'+esc(dt)+'</div>'
+        +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:6px;">'
+        +'この画面は、あとから同じURLで読み返せます。控えとして保存しておいてください。</div></div>'
+        +'<button class="btn" style="margin-top:14px;" onclick="ctToLogin()">'
+        +(d.kind==='partner'?'登録へ進む（認定パートナー）':'登録へ進む')+'</button>'
+        +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:8px;">'
+        +'このメールアドレス（'+esc(d.email)+'）でご登録ください。'
+        +'<b>別のアドレスで登録されると、この契約と結びつきません。</b></div>';
+      return h;
+    }
+    h+='<div style="border-top:1px solid #EDF1F6;margin-top:16px;padding-top:14px;">'
+      +'<div style="font-size:12.5px;color:#18202E;line-height:1.9;">'
+      +'上記の内容をご確認のうえ、<b>お名前をご記入ください。</b>'
+      +'記入して「同意して契約する」を押すと、この契約が成立します。</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:4px;">'
+      +'契約日はご同意いただいた日が自動で入ります。</div>'
+      +'<input id="ct-name" class="inp" style="margin-top:10px;" placeholder="例：継 太郎" autocomplete="name">'
+      +'<button class="btn" id="ct-btn" style="margin-top:10px;" onclick="ctAgree()">同意して契約する</button>'
+      +'<div id="ct-msg" style="font-size:12px;margin-top:8px;line-height:1.8;"></div></div>';
+    return h;
+  }
+  async function ctAgree(){
+    var nm=(($('ct-name')||{}).value||'').trim();
+    var msg=$('ct-msg'), btn=$('ct-btn');
+    var say=function(t,c){ if(msg){ msg.style.color=c||'#A9403D'; msg.textContent=t; } };
+    if(!nm) return say('お名前をご記入ください。');
+    if(!confirm('この内容で契約します。よろしいですか？\n\nご同意いただいた記録（お名前・日時・契約書の全文）が残ります。')) return;
+    if(btn){ btn.disabled=true; btn.textContent='送信しています…'; }
+    var r;
+    try{ r=await sb.rpc('contract_agree',{ p_token: ctToken(), p_name: nm,
+      p_ua: (navigator&&navigator.userAgent)||'' }); }
+    catch(e){ r={ error:{ message:String((e&&e.message)||e) } }; }
+    if(r.error || !r.data || !r.data.ok){
+      say((r.error&&r.error.message) || (r.data&&r.data.error) || '同意を記録できませんでした。');
+      if(btn){ btn.disabled=false; btn.textContent='同意して契約する'; }
+      return;
+    }
+    //  同意した書面を出し直す。「押したのに何も変わらない」がいちばん不安なので、
+    //  控えとしての姿にそのまま切り替える
+    await ctOpen();
   }
 
   var RECOVERING = /type=recovery/.test(location.hash) || /type=recovery/.test(location.search);
@@ -19202,6 +19483,9 @@
     appVerCheck();
     avatarRestore();
     tsgFill('gate-navi'); tsgFill('onb-navi');   // 出迎えの継ナビくんは通信を待たずに描く
+    //  契約のURLで来た人は、ログインの前に契約書を開く。
+    //  同意は登録より前に行うので、ここで止めてよい
+    if(ctToken()){ await ctOpen(); return; }
     if(RECOVERING){ showRecovery(); return; }
     var s=await sb.auth.getSession();
     if(s.data && s.data.session){ await routeFromSession(s.data.session); } else { showAuth(); }
