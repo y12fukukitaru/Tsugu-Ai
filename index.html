@@ -1365,7 +1365,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260905-01';
+  var APP_BUILD='20260906-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2488,10 +2488,11 @@
         +'<div style="margin-top:10px;"><button class="btn2" onclick="postAnnouncement()">配信する</button><span id="bc-msg" style="font-size:12px;margin-left:8px;"></span></div>'
         +'<div id="bc-list" style="margin-top:12px;">読み込み中...</div></div>'
       +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.8"/><path d="m5.6 5.6 3.7 3.7M14.7 14.7l3.7 3.7M14.7 9.3l3.7-3.7M5.6 18.4l3.7-3.7"/></svg>サポート管理'
-        +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmCancels();loadAdmDeletions();loadAdmContracts();loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
+        +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmCancels();loadAdmDeletions();loadAdmContracts();loadAdmTemplates();loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
         +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.5 12.5H16l-1.8 2.8H9.8L8 12.5H2.5"/><path d="M5.6 5.1 2.5 12.5V18a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-5.5l-3.1-7.4A2 2 0 0 0 16.6 4H7.4a2 2 0 0 0-1.8 1.1z"/></svg>パートナーからの問い合わせ</span><span id="adm-inq-count" class="nbadge hidden">0</span></div>'
         +'<div id="adm-cancels"></div>'
         +'<div id="adm-contracts"></div>'
+        +'<div id="adm-ctpl"></div>'
         +'<div id="adm-deletions"></div>'
         +'<div id="adm-inq-list" style="margin-top:6px;">読み込み中...</div>'
         +'<div style="border-top:1px solid #EDF1F6;margin-top:16px;padding-top:14px;">'
@@ -3666,7 +3667,7 @@
       if(adminCanSee('sec-team')) loadSignupCodes();
       if(adminCanSee('sec-exec')){ loadExecFunding(); loadExecWeekly(); }
       if(adminCanSee('sec-billing')){ loadBillingAdminLinks(); loadPayout(); }
-      if(adminCanSee('sec-support')){ loadAdmCancels(); loadAdmDeletions(); loadAdmContracts(); loadAdmInquiries(); loadSupportKB(); }
+      if(adminCanSee('sec-support')){ loadAdmCancels(); loadAdmDeletions(); loadAdmContracts(); loadAdmTemplates(); loadAdmInquiries(); loadSupportKB(); }
       if(adminCanSee('sec-network')){ loadNetwork(); }
       if(adminCanSee('sec-subsidy')){ loadSubsidyAdmin(); }
       knvInit();
@@ -17385,6 +17386,23 @@
     return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
   }
   function ctUrl(tok){ return location.origin+location.pathname+'?c='+tok; }
+  //  種別の呼び名は一箇所に集める。画面のあちこちに文字列で散らすと、
+  //  増えたときに片方だけ直し忘れる
+  var CT_KINDS=[
+    ['partner',      '認定パートナー（個人）'],
+    ['partner_ep1',  '法人パートナー EP-I（顧客基盤型）'],
+    ['partner_ep2',  '法人パートナー EP-II（所属営業型）'],
+    ['customer',     '顧問契約（経営者）']
+  ];
+  function ctKindName(k){
+    for(var i=0;i<CT_KINDS.length;i++) if(CT_KINDS[i][0]===k) return CT_KINDS[i][1];
+    return k;
+  }
+  function ctKindShort(k){
+    return k==='customer'?'顧問契約'
+      : k==='partner_ep1'?'EP-I'
+      : k==='partner_ep2'?'EP-II' : '認定パートナー';
+  }
   function ctStatusTag(o){
     if(o.status==='agreed') return '<span class="tag green">同意済み</span>';
     if(o.status==='cancelled') return '<span class="tag gray">取り消し</span>';
@@ -17397,7 +17415,7 @@
       +'<div style="flex:1;min-width:160px;">'
       +'<div style="font-size:12.5px;color:var(--ink);">'+esc(o.email)+'　'+ctStatusTag(o)+'</div>'
       +'<div style="font-size:11px;color:var(--muted);margin-top:2px;">'
-      +(o.kind==='partner'?'パートナー契約':'顧問契約')
+      +ctKindShort(o.kind)
       +(o.monthly_fee!=null?('　月額 '+Number(o.monthly_fee).toLocaleString('ja-JP')+'円（税別）'):'')
       +'　'+esc(dt)+(o.status==='agreed'?(' 同意　'+esc(o.agreed_name||'')):' 送信')
       +(showWho&&o.claimed_user_id?'　<span class="tag blue" style="font-size:10px;">登録済み</span>':'')
@@ -17486,6 +17504,16 @@
     if($('adm-contracts')) loadAdmContracts();
   }
 
+  //  運営：種類を選んでから送る。空のまま送れると、EP-I の相手に EP-II の
+  //  書面が飛ぶ。あとから差し替えても、一度読まれた書面は取り消せない
+  async function ctSendAdmin(){
+    var k=(($('cta-kind')||{}).value||'');
+    var msg=$('cta-msg');
+    if(!k){ if(msg){ msg.style.color='#A9403D'; msg.textContent='契約の種類を選んでください。'; } return; }
+    await ctSend(k, 'cta');
+    if($('cta-kind')) $('cta-kind').value='';
+  }
+
   //  パートナー：自分が送った顧問契約
   async function loadMyContracts(){
     var box=$('cl-contracts'); if(!box) return;
@@ -17516,6 +17544,126 @@
     box.innerHTML=h+'</div>';
   }
 
+
+  // ===== 契約書の編集（運営）=====
+  //  弁護士の確認が入ったとき、私を待たずに本文を差し替えられるようにする。
+  //  ただし直接は書き換えない。直すと「新しい版」として増える。
+  //  すでに同意された書面は送った時点の本文を写し取ってあるので動かないが、
+  //  それでも雛形の履歴が残るほうが、いつ何を変えたのか辿れる。
+  var CTPL={};      //  kind → 公開中の雛形
+  var CTPL_ALL={};  //  kind → 全部の版
+  var CTPL_OPEN=null;
+
+  async function loadAdmTemplates(){
+    var box=$('adm-ctpl'); if(!box) return;
+    var r;
+    try{ r=await sb.from('contract_templates').select('*')
+      .order('kind',{ascending:true}).order('version',{ascending:false}); }
+    catch(e){ r={error:1}; }
+    if(!r || r.error){ box.innerHTML=''; return; }   // 表がまだ無い環境
+    CTPL={}; CTPL_ALL={};
+    (r.data||[]).forEach(function(t){
+      if(!CTPL_ALL[t.kind]) CTPL_ALL[t.kind]=[];
+      CTPL_ALL[t.kind].push(t);
+      if(t.active) CTPL[t.kind]=t;
+    });
+    var h='<div style="border:1px solid #E2E7EF;background:#F8F9FC;border-radius:11px;padding:12px 15px;margin:0 0 14px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">📝 契約書の本文</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:3px;">'
+      +'直すと<b>新しい版</b>として公開されます。<b style="color:#A9403D;">すでに同意された書面は動きません</b>'
+      +'（送った時点の本文を写し取ってあるためです）。'
+      +'<b>専門家のご確認を受けた文面に差し替えてお使いください。</b></div>';
+    CT_KINDS.forEach(function(k){
+      var t=CTPL[k[0]], all=CTPL_ALL[k[0]]||[];
+      h+='<div style="border-top:1px solid #EDF1F6;padding:9px 0;">'
+        +'<div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;">'
+        +'<span style="font-size:12.5px;font-weight:600;color:var(--ink);flex:1;min-width:160px;">'+esc(k[1])+'</span>'
+        +(t?('<span class="tag gray" style="font-size:10px;">第'+t.version+'版</span>')
+           :'<span class="tag red" style="font-size:10px;">未設定</span>')
+        +(all.length>1?('<span style="font-size:10.5px;color:var(--muted);">これまで'+all.length+'版</span>'):'')
+        +'<button class="ghost" style="font-size:11px;border:1px solid #E2E7EF;border-radius:7px;padding:3px 9px;" '
+        +'onclick="ctplOpen(\''+k[0]+'\')">'+(t?'編集する':'作る')+'</button></div>'
+        +(t?('<div style="font-size:11px;color:var(--muted);margin-top:2px;">'+esc(t.title)+'</div>'):'')
+      +'</div>';
+    });
+    box.innerHTML=h+'<div id="ctpl-form"></div></div>';
+  }
+
+  function ctplOpen(kind){
+    var box=$('ctpl-form'); if(!box) return;
+    if(CTPL_OPEN===kind){ CTPL_OPEN=null; box.innerHTML=''; return; }
+    CTPL_OPEN=kind;
+    var t=CTPL[kind]||{ title:'', body:'', version:0 };
+    box.innerHTML='<div style="border:1.5px solid #C8A24B;background:#FBF7EE;border-radius:10px;padding:12px 14px;margin-top:10px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:#8A6D2F;">'+esc(ctKindName(kind))+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.9;margin-top:4px;">'
+      +'本文に次の書き方を入れておくと、送るときに差し込まれます。'
+      +'<br><code>{{法人名}}</code> <code>{{お名前}}</code> <code>{{メールアドレス}}</code> '
+      +'<code>{{契約日}}</code>'+(kind==='customer'?' <code>{{月額}}</code>':'')
+      +'<br>未記入のところは下線（＿＿＿）で出ます。</div>'
+      +'<div style="margin-top:9px;"><label class="fl">表題</label>'
+      +'<input id="ctpl-title" class="inp2" style="width:100%;" value="'+esc(t.title).replace(/"/g,'&quot;')+'"></div>'
+      +'<div style="margin-top:8px;"><label class="fl">本文</label>'
+      +'<textarea id="ctpl-body" class="inp2" rows="16" style="width:100%;font-family:ui-monospace,monospace;font-size:11.5px;line-height:1.8;">'
+      +esc(t.body)+'</textarea></div>'
+      +'<div style="display:flex;gap:8px;align-items:center;margin-top:9px;flex-wrap:wrap;">'
+      +'<button class="btn2" style="font-size:11.5px;padding:6px 12px;" onclick="ctplSave(\''+kind+'\')">'
+      +'第'+((Number(t.version)||0)+1)+'版として公開する</button>'
+      +'<button class="ghost" style="font-size:11.5px;border:1px solid #E2E7EF;border-radius:8px;padding:6px 12px;" onclick="ctplOpen(\''+kind+'\')">やめる</button>'
+      +'<span id="ctpl-msg" style="font-size:11.5px;"></span></div>'
+      +ctplHistoryHtml(kind)
+      +'</div>';
+  }
+
+  function ctplHistoryHtml(kind){
+    var all=(CTPL_ALL[kind]||[]).filter(function(t){ return !t.active; });
+    if(!all.length) return '';
+    return '<div style="border-top:1px solid #E6D6AE;margin-top:10px;padding-top:8px;">'
+      +'<div style="font-size:11.5px;font-weight:700;color:#8A6D2F;">これまでの版</div>'
+      +all.map(function(t){
+        return '<div style="font-size:11px;color:var(--muted);padding:3px 0;">'
+          +'第'+t.version+'版　'+esc((t.created_at||'').slice(0,10).replace(/-/g,'/'))+'　'+esc(t.title)+'</div>';
+      }).join('')
+      +'<div style="font-size:10.5px;color:var(--muted);line-height:1.7;margin-top:4px;">'
+      +'古い版は記録として残します。その版で同意された契約が、何にもとづくものかを辿れるようにするためです。</div></div>';
+  }
+
+  async function ctplSave(kind){
+    var title=(($('ctpl-title')||{}).value||'').trim();
+    var body=(($('ctpl-body')||{}).value||'').trim();
+    var msg=$('ctpl-msg');
+    var say=function(t,c){ if(msg){ msg.style.color=c||'#A9403D'; msg.textContent=t; } };
+    if(!title) return say('表題を入れてください。');
+    if(!body) return say('本文を入れてください。');
+    var cur=CTPL[kind];
+    //  会社として結ぶ契約なのに {{法人名}} が本文に無いと、必須で記入して
+    //  いただいたものが書面に出ない。止めはしないが、必ず知らせる
+    var needOrg=(kind!=='partner');
+    if(needOrg && body.indexOf('{{法人名}}')<0){
+      if(!confirm('本文に {{法人名}} が入っていません。\n\n'
+        +'この契約は法人名の記入を必須にしていますが、書面には出ません。\n'
+        +'このまま公開しますか？')) return;
+    }
+    say('公開しています…','#5A6981');
+    //  いまの版を下ろしてから、新しい版を公開する。公開中は種類ごとに
+    //  一つという制約があるので、順番を逆にすると弾かれる
+    if(cur){
+      var off=await sb.from('contract_templates').update({ active:false }).eq('id',cur.id);
+      if(off.error) return say('入れ替えられませんでした：'+off.error.message);
+    }
+    var ver=(Number(cur&&cur.version)||0)+1;
+    var r=await sb.from('contract_templates').insert({
+      kind:kind, version:ver, title:title, body:body, active:true, created_by:ME });
+    if(r.error){
+      //  新しい版を作れなかったら、下ろした版を戻す。片方だけ落ちて
+      //  「公開中の契約書がありません」になると、誰も契約を送れなくなる
+      if(cur) await sb.from('contract_templates').update({ active:true }).eq('id',cur.id);
+      return say('公開できませんでした：'+r.error.message);
+    }
+    CTPL_OPEN=null;
+    await loadAdmTemplates();
+  }
+
   //  運営：パートナー契約を送る／すべての契約を確かめる
   async function loadAdmContracts(){
     var box=$('adm-contracts'); if(!box) return;
@@ -17533,10 +17681,18 @@
       +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:3px;">'
       +'パートナー契約はここから送ります。顧問契約はパートナーが送ったものも含めて、すべてここに並びます。</div>'
       +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:9px;">'
-      +'<div style="flex:1 1 200px;"><label class="fl">パートナー契約を送る先</label>'
+      +'<div style="flex:1 1 190px;"><label class="fl">パートナー契約を送る先</label>'
       +'<input id="cta-email" class="inp2" style="width:100%;" placeholder="partner@example.com"></div>'
-      +'<button class="btn2" style="font-size:12px;padding:7px 14px;" onclick="ctSend(\'partner\',\'cta\')">契約書を送る</button>'
-      +'</div><div id="cta-msg" style="font-size:11.5px;margin-top:6px;line-height:1.8;"></div>';
+      +'<div><label class="fl">契約の種類（必須）</label>'
+      +'<select id="cta-kind" class="inp2"><option value="">選択してください</option>'
+      +CT_KINDS.filter(function(k){ return k[0]!=='customer'; })
+        .map(function(k){ return '<option value="'+k[0]+'">'+k[1]+'</option>'; }).join('')
+      +'</select></div>'
+      +'<button class="btn2" style="font-size:12px;padding:7px 14px;" onclick="ctSendAdmin()">契約書を送る</button>'
+      +'</div><div id="cta-msg" style="font-size:11.5px;margin-top:6px;line-height:1.8;"></div>'
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.8;margin-top:4px;">'
+      +'EP-I（顧客基盤型）と EP-II（所属営業型）は、報酬の形も責任の範囲も違うため、'
+      +'書面が分かれています。<b>種類を選ばないと送れません。</b></div>';
     if(rows.length){
       h+='<div style="max-height:340px;overflow-y:auto;margin-top:10px;">'
         +rows.map(function(o){ return ctRowHtml(o,true); }).join('')+'</div>';
@@ -17596,7 +17752,7 @@
       h+='<div style="border:1.5px solid #BFE2CD;background:#EFF6F0;border-radius:10px;padding:13px 16px;margin-top:14px;">'
         +'<div style="font-size:13px;font-weight:700;color:#27684A;">✓ ご同意いただいています</div>'
         +'<div style="font-size:12px;color:#18202E;line-height:1.9;margin-top:3px;">'
-        +esc(d.agreed_name||'')+' 様　'+esc(dt)+'</div>'
+        +(d.agreed_org?(esc(d.agreed_org)+'　'):'')+esc(d.agreed_name||'')+' 様　'+esc(dt)+'</div>'
         +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:6px;">'
         +'この画面は、あとから同じURLで読み返せます。控えとして保存しておいてください。</div></div>'
         +'<button class="btn" style="margin-top:14px;" onclick="ctToLogin()">'
@@ -17606,26 +17762,41 @@
         +'<b>別のアドレスで登録されると、この契約と結びつきません。</b></div>';
       return h;
     }
+    //  会社として結ぶ契約かどうかは、こちら（サーバー）が決めて返す。
+    //  画面側で種別を並べて判断すると、種別が増えたときに直し忘れる
+    var needOrg=!!d.org_required;
     h+='<div style="border-top:1px solid #EDF1F6;margin-top:16px;padding-top:14px;">'
       +'<div style="font-size:12.5px;color:#18202E;line-height:1.9;">'
-      +'上記の内容をご確認のうえ、<b>お名前をご記入ください。</b>'
+      +'上記の内容をご確認のうえ、'
+      +(needOrg?'<b>法人名とご担当者さまのお名前をご記入ください。</b>':'<b>お名前をご記入ください。</b>')
       +'記入して「同意して契約する」を押すと、この契約が成立します。</div>'
       +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:4px;">'
       +'契約日はご同意いただいた日が自動で入ります。</div>'
-      +'<input id="ct-name" class="inp" style="margin-top:10px;" placeholder="例：継 太郎" autocomplete="name">'
-      +'<button class="btn" id="ct-btn" style="margin-top:10px;" onclick="ctAgree()">同意して契約する</button>'
+      +'<label class="fl" style="margin-top:10px;display:block;">'
+      +(needOrg?'法人名（会社名）<span style="color:#A9403D;">＊必須</span>'
+              :'屋号・法人名（お持ちの場合）')+'</label>'
+      +'<input id="ct-org" class="inp" placeholder="'+(needOrg?'例：株式会社継':'例：継事務所（任意）')+'" autocomplete="organization">'
+      +'<label class="fl" style="margin-top:10px;display:block;">'
+      +(needOrg?'ご担当者さまのお名前':'お名前')+'<span style="color:#A9403D;">＊必須</span></label>'
+      +'<input id="ct-name" class="inp" placeholder="例：継 太郎" autocomplete="name">'
+      +'<button class="btn" id="ct-btn" style="margin-top:12px;" onclick="ctAgree()">同意して契約する</button>'
       +'<div id="ct-msg" style="font-size:12px;margin-top:8px;line-height:1.8;"></div></div>';
     return h;
   }
   async function ctAgree(){
     var nm=(($('ct-name')||{}).value||'').trim();
+    var og=(($('ct-org')||{}).value||'').trim();
+    var needOrg=!!(CT_DATA && CT_DATA.org_required);
     var msg=$('ct-msg'), btn=$('ct-btn');
     var say=function(t,c){ if(msg){ msg.style.color=c||'#A9403D'; msg.textContent=t; } };
-    if(!nm) return say('お名前をご記入ください。');
+    //  ここで止めるのは、押してから断られるより早いから。
+    //  サーバー側でも同じ判定をしている（画面だけの縛りは素通りできる）
+    if(needOrg && !og) return say('法人名（会社名）をご記入ください。');
+    if(!nm) return say(needOrg?'ご担当者さまのお名前をご記入ください。':'お名前をご記入ください。');
     if(!confirm('この内容で契約します。よろしいですか？\n\nご同意いただいた記録（お名前・日時・契約書の全文）が残ります。')) return;
     if(btn){ btn.disabled=true; btn.textContent='送信しています…'; }
     var r;
-    try{ r=await sb.rpc('contract_agree',{ p_token: ctToken(), p_name: nm,
+    try{ r=await sb.rpc('contract_agree',{ p_token: ctToken(), p_name: nm, p_org: og||null,
       p_ua: (navigator&&navigator.userAgent)||'' }); }
     catch(e){ r={ error:{ message:String((e&&e.message)||e) } }; }
     if(r.error || !r.data || !r.data.ok){
