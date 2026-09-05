@@ -1365,7 +1365,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260907-06';
+  var APP_BUILD='20260907-07';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -6101,6 +6101,14 @@
     }catch(e){}
     //  自分が EP-II に所属していれば 70% 上限
     var myEp2=await ep2Members([ME]);
+    //  運営の配分画面は報酬から利用料を差し引いてお振込額を出している。
+    //  ここで同じ式を使わないと、明細より少ない額が振り込まれることになる。
+    //  金額の食い違いは、説明しても納得しづらい
+    var myRates=null;
+    try{
+      var rr=await sb.rpc('my_billing_rates');
+      if(!rr.error && rr.data) myRates=rr.data;
+    }catch(e){}
     var myRate=rankFeeRate((window.__prof||{}).fde_rank, myClients==null?undefined:myClients, !!myEp2[ME]);
     var myEntity=(window.__prof||{}).entity_type||null;
     var rv=await sb.from('revenue_entries').select('customer_id,category,amount,occurred_on,description')
@@ -6127,9 +6135,16 @@
       rows.push({ on:r.occurred_on, cust:names[r.customer_id]||'', cat:r.category||'', desc:r.description||'',
                   amt:amt, net:net, rate:rate, role:role, share:share, fee:fee });
     });
-    return { rows:rows, entity:myEntity };
+    return { rows:rows, entity:myEntity, ep:(EP_AFFIL[ME]||null),
+             clients:(myClients==null?0:myClients), rates:myRates };
   }
-  function poTableHtml(rows, entity){
+  //  ご本人が負担する利用料。運営の配分画面とまったく同じ関数を使う。
+  //  別の式で書くと、いつか片方だけ直されて金額がずれる
+  function poUse(d){
+    if(!d || !d.rates) return null;
+    return payUsageFee(d.clients, d.ep, d.rates);
+  }
+  function poTableHtml(rows, entity, d){
     if(!rows.length) return '<div style="font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:11px 13px;">この期間には、担当顧客の入金記録がありません。</div>';
     var ta=0, tn=0, tf=0, unk=false;
     rows.forEach(function(r){ ta+=r.amt; tn+=(r.net==null?taxEx(r.amt):r.net); if(r.fee==null) unk=true; else tf+=r.fee; });
@@ -6154,19 +6169,44 @@
       +'<td style="padding:8px 9px;text-align:right;font-weight:700;color:var(--muted);">'+yen(tn)+'</td><td></td><td></td>'
       +'<td style="padding:8px 9px;text-align:right;font-weight:700;color:#27684A;">'+yen(tf)+'</td></tr>'
       +'</table></div>';
-    h+=poNetBox(tf, wh, ind, entity);
+    h+=poNetBox(tf, wh, ind, entity, poUse(d), (d&&d.ep)||null);
     if(unk) h+='<div style="font-size:11px;color:#8A6A12;margin-top:6px;">「未確定」はランク未設定・個別設定のため率が決まっていない明細です。運営にご確認ください。</div>';
     return h;
   }
-  //  報酬から源泉徴収を引いて、実際のお振込額を出す枠
-  function poNetBox(fee, wh, ind, entity){
+  //  報酬から源泉徴収と利用料を引いて、実際のお振込額を出す枠。
+  //  運営の配分画面と同じ引き方をする。ここが違うと、明細を見て待っていた
+  //  額より少ない額が振り込まれることになる
+  function poNetBox(fee, wh, ind, entity, u, ep){
+    var isEp1=!!(ep && ep.ep_kind==='EP1');
+    var use=(u&&!isEp1)?u.inc:0;
+    var net=fee-wh-use;
+    var st=paySettle(fee, wh, use);
     return '<div style="margin-top:9px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--soft);">'
       +'<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;padding:3px 0;">'
         +'<span>報酬（税抜 × 外注費率）</span><b>'+yen(fee)+'</b></div>'
       +'<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;padding:3px 0;color:'+(ind?'#A9403D':'#94A2B6')+';">'
         +'<span>源泉徴収'+(ind?'（10.21%）':'（'+esc(entityLabel(entity))+'のため対象外）')+'</span><b>'+(ind?'− '+yen(wh):'—')+'</b></div>'
+      +'<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;padding:3px 0;color:'+(use>0?'#A9403D':'#94A2B6')+';">'
+        +'<span>プラットフォーム利用料'+(isEp1?'（法人がまとめてご負担）':'')+'</span>'
+        +'<b>'+(isEp1?'—':(use>0?'− '+yen(use):(u?'—':'（読み込めませんでした）')))+'</b></div>'
+      +(u&&!isEp1&&u.ex>0
+        ? '<div style="font-size:11px;color:var(--muted);line-height:1.7;padding:0 0 3px;">'+esc(payUsageNote(u))+'</div>'
+        : '')
       +'<div style="display:flex;justify-content:space-between;gap:12px;font-size:13.5px;padding:6px 0 0;margin-top:4px;border-top:1px solid var(--line);">'
-        +'<b style="color:var(--navy);">お振込額（目安）</b><b style="color:#27684A;">'+yen(fee-wh)+'</b></div>'
+        +(st.due>0
+          ? '<b style="color:var(--navy);">ご請求（報酬より利用料が大きい月）</b><b style="color:#C39B3F;">'+yen(st.due)+'</b>'
+          : '<b style="color:var(--navy);">お振込額（目安）</b><b style="color:#27684A;">'+yen(st.pay)+'</b>')
+      +'</div>'
+      +(isEp1
+        ? '<div style="font-size:11px;color:var(--ink);margin-top:7px;line-height:1.7;">'
+          +'あなたは <b>'+esc(ep.ep_name||'')+'</b>（EP-I）の所属です。'
+          +'お振込みは<b>法人へまとめて</b>行います。上の金額は、法人へのお支払いに含まれるあなたの担当ぶんです。</div>'
+        : '')
+      +(!u
+        ? '<div style="font-size:11px;color:#8A6A12;margin-top:7px;line-height:1.7;">'
+          +'利用料の設定を読み込めなかったため、差し引かずに表示しています。'
+          +'実際のお振込額はこれより少なくなります。</div>'
+        : '')
       +(entity?'':'<div style="font-size:11px;color:#8A6A12;margin-top:7px;line-height:1.7;">'
         +'個人・法人の区別が未設定のため、源泉徴収を引かずに計算しています。'
         +'「設定」からご登録ください（個人の方は源泉徴収の対象になります）。</div>')
@@ -6181,8 +6221,9 @@
       var yy=+ym.slice(0,4), mm=+ym.slice(5,7);
       var toS=(mm===12?(yy+1)+'-01':yy+'-'+('0'+(mm+1)).slice(-2))+'-01';
       var d=await poFetch(ym+'-01', toS);
-      PO_CACHE.month={ label:yy+'年'+mm+'月', rows:d.rows, entity:d.entity };
-      out.innerHTML=poTableHtml(d.rows, d.entity);
+      PO_CACHE.month={ label:yy+'年'+mm+'月', rows:d.rows, entity:d.entity,
+                       ep:d.ep, clients:d.clients, rates:d.rates };
+      out.innerHTML=poTableHtml(d.rows, d.entity, d);
     }catch(e){ out.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みに失敗しました：'+esc(String((e&&e.message)||e))+'</div>'; }
   }
   async function poRenderYear(){
@@ -6196,7 +6237,8 @@
         var m=(r.on||'').slice(0,7); if(!byM[m]) byM[m]={amt:0,fee:0,unk:false};
         byM[m].amt+=r.amt; if(r.fee==null) byM[m].unk=true; else byM[m].fee+=r.fee;
       });
-      PO_CACHE.year={ label:y+'年', rows:d.rows, months:byM, entity:d.entity };
+      PO_CACHE.year={ label:y+'年', rows:d.rows, months:byM, entity:d.entity,
+                      ep:d.ep, clients:d.clients, rates:d.rates };
       //  源泉徴収は月ごとのお支払いに対して掛かるので、月単位で出す
       var ind=isIndiv(d.entity);
       var ta=0, tf=0, tw=0;
@@ -6218,6 +6260,12 @@
         +'<td style="padding:8px 9px;text-align:right;font-weight:700;color:'+(ind?'#A9403D':'#94A2B6')+';">'+(ind?'− '+yen(tw):'—')+'</td>'
         +'<td style="padding:8px 9px;text-align:right;font-weight:700;color:#27684A;">'+yen(tf-tw)+'</td></tr>'
         +'</table></div>';
+      //  年間表は報酬ベース。利用料は毎月引かれているので、この表の
+      //  「お振込額」と通帳の額は一致しない。黙っていると混乱のもとになる
+      h+='<div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.7;">'
+        +'この表は<b>報酬ベース</b>です。プラットフォーム利用料は毎月のお振込みから差し引いているため、'
+        +'<b>通帳の入金額とは一致しません</b>（各月の実額は「月次明細」でご確認ください）。'
+        +'確定申告では、報酬が収入・利用料が経費になります。</div>';
       if(!d.entity) h+='<div style="font-size:11px;color:#8A6A12;margin-top:6px;line-height:1.7;">個人・法人の区別が未設定のため、源泉徴収を引かずに計算しています。「設定」からご登録ください。</div>';
       out.innerHTML=h;
     }catch(e){ out.innerHTML='<div style="font-size:12px;color:#A9403D;">読み込みに失敗しました：'+esc(String((e&&e.message)||e))+'</div>'; }
@@ -6252,6 +6300,8 @@
     var note='※ 本明細は、認定ランクに基づく外注費率と2名体制の配分から計算した金額（目安）です。'
       +'外注費率は、入金額から消費税相当を外した<b>税抜</b>の額に対して掛けています。'
       +'源泉徴収は個人の方へのお支払いにのみ生じ（10.21%、100万円を超える部分は20.42%）、法人へのお支払いには生じません。'
+      +'プラットフォーム利用料は毎月のお振込みから差し引いてご精算します。'
+      +'年間明細の金額は<b>報酬ベース</b>です（利用料は経費として別に計上されるため、差し引いていません）。'
       +'実際の振込額と異なる場合は運営にお問い合わせください。';
     if(kind==='month'){
       var h='<table><tr><th>日付</th><th>顧客</th><th>区分</th><th class="r">入金額（税込）</th><th class="r">税抜</th><th class="r">率</th><th class="r">配分</th><th class="r">報酬（目安）</th></tr>';
@@ -6262,10 +6312,20 @@
           +'<td class="r">'+r.share+'%</td><td class="r">'+(r.fee==null?'—':yen(r.fee))+'</td></tr>'; });
       var ind1=isIndiv(c.entity), w1=withholdYen(tf, ind1);
       h+='<tr><th colspan="3">合計</th><th class="r">'+yen(ta)+'</th><th class="r">'+yen(tn)+'</th><th></th><th></th><th class="r">'+yen(tf)+'</th></tr></table>';
-      h+='<table style="margin-top:10px;max-width:340px;">'
+      //  画面と印刷で金額が違うと、どちらを信じてよいか分からなくなる。
+      //  同じ関数から同じ額を出す
+      var u1=poUse(c), ep1=c.ep||null, isEp1=!!(ep1&&ep1.ep_kind==='EP1');
+      var use1=(u1&&!isEp1)?u1.inc:0, st1=paySettle(tf, w1, use1);
+      h+='<table style="margin-top:10px;max-width:420px;">'
         +'<tr><th>報酬（税抜 × 外注費率）</th><th class="r">'+yen(tf)+'</th></tr>'
         +'<tr><td>源泉徴収'+(ind1?'（10.21%）':'（'+esc(entityLabel(c.entity))+'のため対象外）')+'</td><td class="r">'+(ind1?'△ '+yen(w1):'—')+'</td></tr>'
-        +'<tr><th>お振込額（目安）</th><th class="r">'+yen(tf-w1)+'</th></tr></table>';
+        +'<tr><td>プラットフォーム利用料'+(isEp1?'（法人がまとめてご負担）':(u1&&u1.ex>0?'<br><span style="font-size:10px;color:#5A6981;">'+esc(payUsageNote(u1))+'</span>':''))+'</td>'
+          +'<td class="r">'+(use1>0?'△ '+yen(use1):'—')+'</td></tr>'
+        +(st1.due>0
+          ? '<tr><th>ご請求（報酬より利用料が大きい月）</th><th class="r">'+yen(st1.due)+'</th></tr>'
+          : '<tr><th>お振込額（目安）</th><th class="r">'+yen(st1.pay)+'</th></tr>')
+        +(isEp1?'<tr><td colspan="2">お振込みは '+esc(ep1.ep_name||'')+'（EP-I）へまとめて行います。</td></tr>':'')
+        +'</table>';
       poDocOpen('外注費 支払明細書', '支払先', pname+' 様', c.label, h, note);
     }else{
       var y=parseInt(c.label,10);
