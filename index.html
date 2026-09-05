@@ -1365,7 +1365,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260907-03';
+  var APP_BUILD='20260907-04';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2521,9 +2521,10 @@
           +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">'
             +'配分とは別に、パートナーから継へお支払いいただくぶんです。'
             +'<b style="color:var(--navy);">カードでは受け取りません。配分から差し引いてご精算します。</b><br>'
-            +'担当者登録使用料はEP型（法人）のみで、EPのご負担です。'
-            +'<b style="color:var(--navy);">1人ごとの額と、まとめ登録の定額のうち、安いほうで計算します。</b>'
-            +'（例：10人までは定額15,000円。31人なら 15,000×3＋3,000＝48,000円）</div>'
+            +'担当者登録使用料は<b>EP-I は法人がまとめて</b>、'
+            +'<b style="color:var(--navy);">1人ごとの額と、まとめ登録の定額のうち、安いほう</b>で計算します'
+            +'（例：10人までは定額15,000円。31人なら 15,000×3＋3,000＝48,000円）。'
+            +'<b>EP-II は所属営業ご本人</b>が、登録料1人ぶん＋顧客加算をお支払いです（本部からは引きません）。</div>'
           +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
             +'<div><label class="fl">AI利用料（円/社・月）</label><input id="bl-ai" type="number" class="inp2" style="width:110px;" value="2000" oninput="renderAdmBilling();blRatesSave()"></div>'
             +'<div><label class="fl">担当者登録使用料（円/人・月）</label><input id="bl-seat" type="number" class="inp2" style="width:130px;" value="3000" oninput="renderAdmBilling();blRatesSave()"></div>'
@@ -15862,17 +15863,50 @@
   //  お支払いする額から差し引く。窓口をひとつにしておかないと、
   //  差し引いたうえにカードでも払われる二重払いが起きる。
   //
-  //  設定値（基本・顧問先加算・AI利用料）は税抜で置いてある。
-  //  実際にご負担いただくのは税込なので、そこまで計算して返す。
+  //  設定値は税抜で置いてある。実際にご負担いただくのは税込なので、
+  //  そこまで計算して返す。
   //
-  //  EP（法人）に所属している方のぶんは法人のご負担。ご本人から
-  //  引くと二重に取ることになるので、ここでは 0 を返す。
+  //  誰が負担するかは、EP の区分で変わる。
+  //
+  //    個人（EP に属さない認定パートナー）
+  //        基本 ＋（顧問先加算 ＋ AI利用料）× 担当社数
+  //
+  //    EP-I の所属       … 0。法人がまとめてお支払いになるので、
+  //                        ご本人から引くと二重に取ることになる
+  //
+  //    EP-II の所属営業  … 登録料 ＋ 顧客加算 × 担当社数。
+  //                        EP-II は本部ではなく所属営業ご本人が
+  //                        お支払いになるため、ここで差し引く。
+  //                        ここを 0 にすると、EP-II の方からは
+  //                        一年中いただけないまま終わる
   function payUsageFee(clients, ep, rates){
-    if(ep) return { ex:0, inc:0 };
-    var n=Math.max(0, Number(clients)||0);
-    var ex=(Number(rates.base)||0) + ((Number(rates.client)||0)+(Number(rates.ai)||0))*n;
-    if(ex<=0) return { ex:0, inc:0 };
-    return { ex:ex, inc:taxIn(ex) };
+    var kind=(ep&&ep.ep_kind)||'';
+    if(kind==='EP1') return { ex:0, inc:0, kind:'EP1', fixed:0, per:0, n:0 };
+    var n=Math.max(0, Math.floor(Number(clients)||0));
+    var fixed, per, k;
+    if(kind==='EP2'){
+      k='EP2';
+      fixed=Number(rates.seat)||0;                       // 登録料（1人ぶん）
+      per  =Number(rates.client)||0;                     // 顧客加算
+    } else {
+      k='solo';
+      fixed=Number(rates.base)||0;
+      per  =(Number(rates.client)||0)+(Number(rates.ai)||0);
+    }
+    var ex=fixed+per*n;
+    if(ex<=0) return { ex:0, inc:0, kind:k, fixed:fixed, per:per, n:n };
+    return { ex:ex, inc:taxIn(ex), kind:k, fixed:fixed, per:per, n:n };
+  }
+  //  何を引いたのかを一行で。見えない差し引きは、確かめようがない
+  function payUsageNote(u, rates){
+    if(!u || u.ex<=0) return '';
+    if(u.kind==='EP2'){
+      return '利用料の内訳：登録料 '+yen(u.fixed)+' ＋ 顧客加算 '+yen(rates.client)+' × '+u.n+'社'
+        +' ＝ '+yen(u.ex)+'（税抜）→ '+yen(u.inc)+'（税込）';
+    }
+    return '利用料の内訳：基本 '+yen(u.fixed)
+      +' ＋（顧問先加算 '+yen(rates.client)+' ＋ AI利用料 '+yen(rates.ai)+'）× '+u.n+'社'
+      +' ＝ '+yen(u.ex)+'（税抜）→ '+yen(u.inc)+'（税込）';
   }
   // ===== EP（法人）の担当者ぶんの利用料 =====
   //  1人ごとに 3,000円か、10人までまとめて定額 15,000円かを選べる。
@@ -16028,6 +16062,7 @@
     //  差し引く額が狂う。狂ったぶんはお相手のお金なので、先に読み直す
     try{ await blRatesLoad(); }catch(e){}
     var uBase=blRate('bl-pbase',3000), uCl=blRate('bl-pclient',2000), uAi=blRate('bl-ai',EP_AI_FEE);
+    var uRates={ base:uBase, client:uCl, ai:uAi, seat:blRate('bl-seat',EP_SEAT_FEE) };
     var tG=0,tN=0,tF=0,tM=0,tS=0,tW=0,tU=0,tPay=0,tDue=0;
     keys.forEach(function(k){ var b=acc[k];
       b.wh=withholdYen(b.fee, isIndiv(b.entity));       // 源泉徴収はその月の報酬合計に対して1回
@@ -16035,8 +16070,8 @@
       b.clients=payClients[k]||0;
       //  EP に所属している方の利用料は法人のご負担。ご本人から引くと
       //  二重に取ることになる。法人ぶんの内訳は下にまとめて出す
-      var u=payUsageFee(b.clients, b.ep, { base:uBase, client:uCl, ai:uAi });
-      b.useEx=u.ex; b.use=u.inc;
+      var u=payUsageFee(b.clients, b.ep, uRates);
+      b.useEx=u.ex; b.use=u.inc; b.useNote=payUsageNote(u, uRates);
       var st=paySettle(b.fee, b.wh, b.use);
       b.pay=st.pay; b.due=st.due;
       //  どの口座を見ればよいか。EP-I は法人、それ以外はご本人
@@ -16151,16 +16186,15 @@
           +'　− 源泉徴収 <b style="color:'+(isIndiv(b.entity)?'#A9403D':'#94A2B6')+';">'
           +(isIndiv(b.entity)?yen(b.wh):(b.entity?'対象外':'未設定のため引かず'))+'</b>'
           +'　− 利用料 <b style="color:'+(b.use>0?'#A9403D':'#94A2B6')+';">'
-          +(b.ep ? '法人へご請求' : yen(b.use))+'</b>'
+          //  EP-I だけが「法人へご請求」。EP-II の所属営業はご本人のご負担
+          +((b.ep && b.ep.ep_kind==='EP1') ? '法人へご請求' : yen(b.use))+'</b>'
           +(b.due>0
             ? '　＝ <b style="color:#C39B3F;">ご請求 '+yen(b.due)+'</b>'
             : '　＝ お振込 <b style="color:#27684A;">'+yen(b.pay)+'</b>')
           +'</div>'
         //  何を引いたのかが見えないと、引かれた側は確かめようがない
-        +(b.use>0
-          ? '<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:2px;">'
-            +'利用料の内訳：基本 '+yen(uBase)+' ＋（顧問先加算 '+yen(uCl)+' ＋ AI利用料 '+yen(uAi)+'）× '+b.clients+'社'
-            +' ＝ '+yen(b.useEx)+'（税抜）→ '+yen(b.use)+'（税込）</div>'
+        +(b.useNote
+          ? '<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:2px;">'+b.useNote+'</div>'
           : '')
         +(b.sub>0
           ? '<div style="font-size:12px;color:var(--ink);margin-top:5px;">メイン <b>'+yen(b.main)+'</b>　／　サブ（'+esc(b.subLabel||'')+'） <b style="color:#8F7230;">'+yen(b.sub)+'</b></div>'
@@ -16233,10 +16267,12 @@
       +'支払い確定後にランクや配分を変更すると、この画面の数字も変わります。確定額は運営の帳簿で管理してください。<br>'
       +'※ 利用料は「課金・契約」タブの設定額（<b>税抜</b>）から計算し、<b>税込</b>で差し引いています。'
       +'報酬より利用料が大きい方は「ご請求」として出ます（マイナスのお振込みは起こしません）。'
-      +'<b style="color:#8A6A12;">EP（法人）に所属している方の利用料は、ご本人からは引いていません。</b>'
-      +'EP-I は上の「法人へまとめてお振込み」で、法人の担当者数と顧客数から計算して差し引いています'
-      +'（担当者ぶんは1人ごとの額とまとめ登録の定額のうち<b>安いほう</b>、顧問先加算は顧客数ぶん）。'
-      +'EP-II は本部への配分がこの画面に出ないため、利用料も差し引いていません。'
+      +'利用料は<b>どなたのご負担かで差し引く先が変わります。</b>'
+      +'<b style="color:var(--navy);">個人</b>＝基本＋（顧問先加算＋AI利用料）×社数を、ご本人から。'
+      +'<b style="color:var(--navy);">EP-I</b>＝上の「法人へまとめてお振込み」で、法人の担当者数と顧客数から'
+      +'（担当者ぶんは1人ごとの額とまとめ登録の定額のうち<b>安いほう</b>）。'
+      +'<b style="color:var(--navy);">EP-II</b>＝登録料＋顧客加算×社数を、所属営業ご本人から'
+      +'（本部からは差し引きません）。'
       +'相殺の税務上の取扱いは、顧問税理士にご確認ください。</div>';
     box.innerHTML=h;
   }
