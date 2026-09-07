@@ -1365,7 +1365,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260908-01';
+  var APP_BUILD='20260908-02';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2518,6 +2518,16 @@
           +'<div><label class="fl">運営直接担当（円/月・一律）</label><input id="bl-direct" type="number" class="inp2" style="width:120px;" value="30000" oninput="renderAdmBilling();blRatesSave()"></div>'
           +'<div><label class="fl">初期登録料（円・初回）</label><input id="bl-init" type="number" class="inp2" style="width:130px;" value="100000" oninput="renderAdmBilling();blRatesSave()"></div>'
         +'</div>'
+        //  振込でお願いする請求は、振込先が画面に出ないと担当パートナーに
+        //  電話が行く。ここに入れておけば、請求のたびに書かずに済む
+        +'<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
+          +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;">お振込先（継が受け取る口座）</div>'
+          +'<div style="font-size:11px;color:#94A2B6;margin-bottom:7px;line-height:1.7;">'
+            +'銀行振込でご請求するとき、顧客の画面にそのまま表示されます。'
+            +'<b style="color:var(--navy);">口座振替でお引き落としする請求には出ません。</b>'
+            +'（当社が受け取る側の口座です。お客様・パートナーの口座はここには入れません）</div>'
+          +'<input id="bl-bank" class="inp2" style="width:100%;max-width:520px;" placeholder="例）〇〇銀行 本店営業部 普通 1234567 カ）ツグアイ" oninput="blRatesSave()">'
+        +'</div>'
         +'<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
           +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">パートナーからお預かりする利用料（円・税別）</div>'
           +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">'
@@ -2640,10 +2650,44 @@
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">'
           +'<div><label class="fl">対象の年月</label><select id="inv-month" class="inp2" onchange="loadInvoices()"></select></div>'
           +'<div><label class="fl">支払期日（日）</label><input id="inv-due" type="number" class="inp2" style="width:90px;" min="1" max="31" value="27"></div>'
+          +'<div><label class="fl">お支払い方法</label><select id="inv-method" class="inp2">'
+            +'<option value="bank">銀行振込</option><option value="transfer">口座振替（引き落とし）</option></select></div>'
           +'<button class="btn2" onclick="invGenerate()">この月の請求を立てる</button>'
           +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:9px 12px;" onclick="invReconcile()">入金と突き合わせる</button>'
         +'</div>'
+        //  口座振替に載せ替える途中は、振込の方と引き落としの方が混ざる。
+        //  引き落とす請求に「お振込ください」と書くと二重にいただいてしまう
+        +'<div style="font-size:11px;color:var(--muted);line-height:1.75;margin-bottom:10px;">'
+          +'お支払い方法は、顧客の画面の文言に出ます。'
+          +'<b style="color:var(--navy);">口座振替なら「お引き落としになります。お振込は不要です」</b>と表示し、'
+          +'銀行振込なら振込先をお見せします。あとから1件ずつ切り替えられます。</div>'
         +'<div id="inv-msg" style="font-size:11.5px;margin-bottom:8px;min-height:16px;line-height:1.7;"></div>'
+        //  ---- 単発の請求（FA手数料など）----
+        //  月次の顧問料しか立てられないと、いちばん金額の大きいFA手数料が
+        //  台帳に載らない。載らなければ未収一覧にも出ない
+        +'<div style="border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:12px;">'
+          +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;">単発の請求（M&AのFA手数料など）</div>'
+          +'<div style="font-size:11px;color:var(--muted);line-height:1.75;margin-bottom:8px;">'
+            +'その都度いただくぶんを、1件ずつ立てます。立てておけば、入金と突き合わせて'
+            +'<b style="color:var(--navy);">残ったものが未収として出ます。</b>'
+            +'顧問料はここではなく、上の「この月の請求を立てる」からどうぞ。</div>'
+          +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
+            +'<div style="flex:1 1 200px;min-width:180px;"><label class="fl">請求先</label>'
+              +'<select id="iva-cust" class="inp2" style="width:100%;"></select></div>'
+            +'<div><label class="fl">区分</label><select id="iva-kind" class="inp2">'
+              +'<option value="fa">M&AのFA手数料</option><option value="setup">初期導入費</option>'
+              +'<option value="other">その他</option></select></div>'
+            +'<div style="flex:1 1 220px;min-width:180px;"><label class="fl">件名（請求書にそのまま出ます）</label>'
+              +'<input id="iva-title" class="inp2" style="width:100%;" placeholder="例）M&A成功報酬（〇〇社 譲渡）"></div>'
+            +'<div><label class="fl">金額（円・税別）</label>'
+              +'<input id="iva-amt" type="number" class="inp2" style="width:130px;" min="1" oninput="ivaPreview()"></div>'
+            +'<div><label class="fl">お支払期日</label><input id="iva-due" type="date" class="inp2" style="width:150px;"></div>'
+            +'<div><label class="fl">お支払い方法</label><select id="iva-method" class="inp2">'
+              +'<option value="bank">銀行振込</option><option value="transfer">口座振替（引き落とし）</option></select></div>'
+            +'<button class="btn2" onclick="invAdd()">この請求を立てる</button>'
+          +'</div>'
+          +'<div id="iva-prev" style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.7;"></div>'
+        +'</div>'
         +'<div id="inv-list">読み込み中...</div>'
         +'<div class="ph" style="font-size:13px;margin-top:22px;display:flex;align-items:center;justify-content:space-between;">未収（期日を過ぎて入っていないもの）'
           +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadInvOverdue()">↺ 更新</span></div>'
@@ -3110,7 +3154,7 @@
   // ---- 料率・割引設定の保存（app_settings）：運営全員のコンソールで同じ値を使う ----
   //  割引の3種類（vol1/vol2/hd, snr/exe/prem, cap）は廃止したので保存対象から外した。
   //  すでに保存されている値が残っていても、読み込む先が無いので影響しない。
-  var BL_RATE_IDS=['bl-pbase','bl-pclient','bl-adv','bl-direct','bl-init','bl-ai','bl-seat','bl-seatpack','bl-seatpackn'];
+  var BL_RATE_IDS=['bl-pbase','bl-pclient','bl-adv','bl-direct','bl-init','bl-ai','bl-seat','bl-seatpack','bl-seatpackn','bl-bank'];
   var BL_RATES_OK=false, BL_SAVE_T=null;
   function blRatesNote(t){ var el=$('bl-rates-note'); if(el) el.textContent=t?('　'+t):''; }
   async function blRatesLoad(){
@@ -6448,32 +6492,80 @@
   async function loadUnpaid(where){
     var box=$(where==='customer'?'my-unpaid':'cl-unpaid'); if(!box) return;
     box.innerHTML='';
-    var rows=[];
+    var all=[];
     try{
       var r=await sb.from('invoices')
-        .select('id,customer_id,period,title,amount,paid_amount,due_on,status')
+        .select('id,customer_id,period,title,amount,paid_amount,due_on,status,method')
         .in('status',['open','partial']).order('due_on',{ascending:true}).limit(200);
       if(r.error) return;               // 表がまだ無い環境では黙って出さない
-      rows=r.data||[];
+      all=r.data||[];
     }catch(e){ return; }
-    //  期日を過ぎたものだけ。まだ期日前のものを赤く出すと、ただ不安にさせる
     var today=jstToday();
-    rows=rows.filter(function(x){ return String(x.due_on||'') < today; });
-    if(!rows.length) return;
+    //  期日を過ぎたものと、これからのもの。同じ赤で出すと、まだ期日前の方まで
+    //  責められているように見える。分けて、色も文言も変える
+    var rows=all.filter(function(x){ return String(x.due_on||'') < today; });
+    var soon=all.filter(function(x){ return String(x.due_on||'') >= today; });
     var t=0; rows.forEach(function(x){ t+=(Number(x.amount)||0)-(Number(x.paid_amount)||0); });
+
     if(where==='customer'){
-      box.innerHTML='<div style="border:1.5px solid #E8C4C2;background:#FDF6F5;border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
-        +'<div style="font-size:12.5px;font-weight:700;color:#A9403D;">お支払いの確認をお願いします</div>'
-        +'<div style="font-size:11.5px;color:var(--ink);line-height:1.85;margin-top:4px;">'
-        +'お支払期日を過ぎているものが <b>'+rows.length+'件（'+yen(t)+'）</b>あります。'
-        +'行き違いでしたら申し訳ありません。ご不明な点は担当パートナーまでお知らせください。</div>'
-        +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:6px;">'
-        +rows.map(function(x){
-            var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
-            return esc(x.title||'')+'　期日 '+esc(x.due_on||'')+'　<b style="color:#A9403D;">'+yen(rest)+'</b>'; }).join('<br>')
-        +'</div></div>';
+      if(!rows.length && !soon.length) return;
+      var h='';
+      if(rows.length){
+        h+='<div style="border:1.5px solid #E8C4C2;background:#FDF6F5;border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
+          +'<div style="font-size:12.5px;font-weight:700;color:#A9403D;">お支払いの確認をお願いします</div>'
+          +'<div style="font-size:11.5px;color:var(--ink);line-height:1.85;margin-top:4px;">'
+          +'お支払期日を過ぎているものが <b>'+rows.length+'件（'+yen(t)+'）</b>あります。'
+          +'行き違いでしたら申し訳ありません。ご不明な点は担当パートナーまでお知らせください。</div>'
+          +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:6px;">'
+          +rows.map(function(x){
+              var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
+              return esc(x.title||'')+'　期日 '+esc(x.due_on||'')
+                +'　'+invMethodTag(x.method)
+                +'　<b style="color:#A9403D;">'+yen(rest)+'</b>'; }).join('<br>')
+          +'</div></div>';
+      }
+      if(soon.length){
+        var ts=0; soon.forEach(function(x){ ts+=(Number(x.amount)||0)-(Number(x.paid_amount)||0); });
+        //  引き落としの方に振込先を出すと、二重にお支払いいただくことになる。
+        //  方法ごとに、書くことを変える
+        var anyBank=soon.some(function(x){ return (x.method||'bank')!=='transfer'; });
+        var anyDebit=soon.some(function(x){ return x.method==='transfer'; });
+        var bank='';
+        if(anyBank){
+          try{
+            var pi=await sb.rpc('invoice_pay_info');
+            if(!pi.error) bank=((pi.data||{}).bank)||'';
+          }catch(e){}
+        }
+        h+='<div style="border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
+          +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">これからのお支払い</div>'
+          +'<div style="font-size:11.5px;color:var(--muted);line-height:1.85;margin-top:4px;">'
+          +'<b style="color:var(--ink);">'+soon.length+'件（'+yen(ts)+'）</b>のご請求があります。</div>'
+          +'<div style="font-size:11.5px;color:var(--muted);line-height:1.9;margin-top:6px;">'
+          +soon.map(function(x){
+              var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
+              return esc(x.title||'')+'　期日 '+esc(x.due_on||'')
+                +'　'+invMethodTag(x.method)
+                +'　<b style="color:var(--ink);">'+yen(rest)+'</b>'; }).join('<br>')
+          +'</div>'
+          +(anyDebit
+            ? '<div style="font-size:11.5px;color:#27684A;background:rgba(39,104,74,.08);border-radius:8px;padding:8px 10px;line-height:1.8;margin-top:8px;">'
+              +'<b>口座振替のぶんは、ご登録の口座からお引き落としになります。お振込は不要です。</b>'
+              +'残高のご確認だけ、期日の前日までにお願いします。</div>'
+            : '')
+          +(anyBank
+            ? '<div style="font-size:11.5px;color:var(--ink);background:var(--soft);border-radius:8px;padding:8px 10px;line-height:1.8;margin-top:8px;">'
+              +'銀行振込のぶんは、下記へお振込ください。'
+              +(bank? '<br><b style="color:var(--navy);">'+esc(bank)+'</b>'
+                    : '<br><span style="color:var(--muted);">振込先は担当パートナーまでお問い合わせください。</span>')
+              +'<br><span style="color:var(--muted);">振込手数料はご負担をお願いしております。</span></div>'
+            : '')
+        +'</div>';
+      }
+      box.innerHTML=h;
       return;
     }
+    if(!rows.length) return;
     //  パートナー側。誰の未収かが分からないと動けないので、会社名を引く
     var nm={};
     try{
@@ -6508,6 +6600,18 @@
     var c={ open:'red', partial:'gold', paid:'gray', void:'gray' }[s]||'gray';
     return '<span class="tag '+c+'" style="font-size:10px;">'+invStatusLabel(s)+'</span>';
   }
+  //  方法が空のものは、口座振替を入れる前に立てた請求。振込として扱う
+  function invMethodLabel(m){
+    return { transfer:'口座振替', bank:'銀行振込', card:'カード', other:'その他' }[m]||'銀行振込';
+  }
+  function invMethodTag(m){
+    var c=(m==='transfer')?'green':'blue';
+    return '<span class="tag '+c+'" style="font-size:10px;">'+invMethodLabel(m)+'</span>';
+  }
+  function invKindLabel(k){
+    return { advisory:'顧問料', direct:'顧問料（運営直接）', fa:'FA手数料',
+             setup:'初期導入費', other:'その他' }[k]||'';
+  }
   function invInitMonths(){
     var sel=$('inv-month'); if(!sel || sel.options.length) return;
     //  既定は先月。当月ぶんは月末にならないと立てないことが多い
@@ -6525,7 +6629,7 @@
     if(!ym){ box.innerHTML='<div style="font-size:12px;color:var(--muted);">年月を選んでください。</div>'; return; }
     try{
       var r=await sb.from('invoices')
-        .select('id,customer_id,period,kind,title,amount,paid_amount,due_on,status,paid_on,void_reason')
+        .select('id,customer_id,period,kind,title,amount,paid_amount,due_on,status,paid_on,void_reason,method')
         .eq('period',ym).order('status',{ascending:true});
       if(r.error) INV_ERR=r.error.message; else INV_ROWS=r.data||[];
     }catch(e){ INV_ERR=String(e&&e.message||e); }
@@ -6569,6 +6673,7 @@
       return '<div style="border:1px solid var(--line);border-radius:11px;padding:10px 13px;margin-bottom:6px;">'
         +'<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">'
           +invStatusTag(x.status)
+          +(x.status==='void'?'':invMethodTag(x.method))
           +'<b style="font-size:13px;color:var(--ink);">'+esc(x.name||'')+'</b>'
           +'<span style="font-size:11px;color:var(--muted);">'+esc(x.title||'')+'　期日 '+esc(x.due_on||'')+'</span>'
           +'<span style="flex:1;"></span>'
@@ -6585,6 +6690,8 @@
           '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;">'
           +(x.status==='paid' ? '' :
             '<button class="ghost" style="font-size:11px;border:1px solid var(--line);border-radius:7px;padding:5px 10px;" onclick="invPaid(\''+esc(x.id)+'\')">入金済みにする</button>')
+          +'<button class="ghost" style="font-size:11px;border:1px solid var(--line);border-radius:7px;padding:5px 10px;" onclick="invMethod(\''+esc(x.id)+'\',\''+esc(x.method||'bank')+'\')">'
+            +((x.method==='transfer')?'銀行振込に変える':'口座振替に変える')+'</button>'
           +'<button class="ghost" style="font-size:11px;border:1px solid var(--line);border-radius:7px;padding:5px 10px;color:#A9403D;" onclick="invVoid(\''+esc(x.id)+'\')">取り消す</button>'
           +'</div>')
       +'</div>';
@@ -6595,19 +6702,103 @@
   async function invGenerate(){
     var ym=(($('inv-month')||{}).value)||'';
     var due=Number((($('inv-due')||{}).value)||27);
+    var mth=(($('inv-method')||{}).value)||'bank';
     if(!ym){ invMsg('年月を選んでください。','#A9403D'); return; }
-    if(!confirm(ym+' の請求を立てます。よろしいですか？\n\n（同じ月に二度立てても増えません）')) return;
+    if(!confirm(ym+' の請求を立てます。よろしいですか？\n\nお支払い方法：'+invMethodLabel(mth)
+      +'\n（同じ月に二度立てても増えません）')) return;
     invMsg('立てています…');
     var r;
-    try{ r=await sb.rpc('invoice_generate',{ p_period:ym, p_due_day:due }); }
+    try{ r=await sb.rpc('invoice_generate',{ p_period:ym, p_due_day:due, p_method:mth }); }
     catch(e){ r={ error:{ message:String(e&&e.message||e) } }; }
     if(r.error){ invMsg('できませんでした：'+esc(r.error.message),'#A9403D'); return; }
     var d=r.data||{};
     if(!d.ok){ invMsg(esc(d.error||'できませんでした'),'#A9403D'); return; }
     invMsg('<b>'+d.made+' 件</b>の請求を立てました'
       +(d.skipped>0?'（すでにある '+d.skipped+' 件はそのまま）':'')
-      +'。支払期日は '+esc(String(d.due_on||''))+' です。', '#27684A');
+      +'。支払期日は '+esc(String(d.due_on||''))+'、お支払い方法は '+esc(invMethodLabel(d.method))+' です。', '#27684A');
     await loadInvoices(); loadInvOverdue();
+  }
+  //  ---- 単発の請求（FA手数料など）----
+  function ivaPreview(){
+    var el=$('iva-prev'); if(!el) return;
+    var ex=Math.max(0, Math.floor(Number((($('iva-amt')||{}).value)||0)));
+    if(ex<=0){ el.textContent=''; return; }
+    var tax=Math.floor(ex*10/100);
+    el.innerHTML='税別 '+yen(ex)+' ＋ 消費税 '+yen(tax)+' ＝ <b style="color:var(--navy);">ご請求 '+yen(ex+tax)+'</b>';
+  }
+  async function ivaInit(){
+    var sel=$('iva-cust'); if(!sel) return;
+    //  顧客の一覧は運営画面がすでに持っている。二度引かない。
+    //  まだ読み込んでいなければ、ここで引く。空の選択肢だけが出て
+    //  「請求先を選んでください」と言われても、選びようがない
+    var cs=(ADM_CACHE&&ADM_CACHE.custs)||[];
+    if(!cs.length){
+      try{
+        var pr=await sb.from('profiles').select('id,company_name,contact_name,email,role').eq('role','customer');
+        if(!pr.error) cs=pr.data||[];
+      }catch(e){}
+    }
+    var cur=sel.value;
+    sel.innerHTML='<option value="">選んでください</option>'
+      +cs.map(function(c){
+          return '<option value="'+esc(c.id)+'">'
+            +esc(c.company_name||c.contact_name||c.email||'')+'</option>'; }).join('');
+    if(cur) sel.value=cur;
+    var due=$('iva-due');
+    //  既定は月末。空欄のまま押されて止まるより、埋まっているほうがよい
+    if(due && !due.value){
+      var d=new Date(); d.setMonth(d.getMonth()+1); d.setDate(0);
+      due.value=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+    }
+  }
+  async function invAdd(){
+    var cust=(($('iva-cust')||{}).value)||'';
+    var kind=(($('iva-kind')||{}).value)||'fa';
+    var title=((($('iva-title')||{}).value)||'').trim();
+    var ex=Math.floor(Number((($('iva-amt')||{}).value)||0));
+    var due=(($('iva-due')||{}).value)||'';
+    var mth=(($('iva-method')||{}).value)||'bank';
+    if(!cust){ invMsg('請求先を選んでください。','#A9403D'); return; }
+    if(!title){ invMsg('件名をご記入ください（請求書にそのまま出ます）。','#A9403D'); return; }
+    if(!(ex>0)){ invMsg('金額（税別）をご入力ください。','#A9403D'); return; }
+    if(!due){ invMsg('お支払期日をご指定ください。','#A9403D'); return; }
+    var tax=Math.floor(ex*10/100);
+    if(!confirm(title+'\n\nご請求 '+yen(ex+tax)+'（税別 '+yen(ex)+'）'
+      +'\n期日 '+due+'\nお支払い方法：'+invMethodLabel(mth)+'\n\nこの内容で立てます。よろしいですか？')) return;
+    invMsg('立てています…');
+    var r;
+    try{
+      r=await sb.rpc('invoice_add',{ p_customer:cust, p_kind:kind, p_title:title,
+        p_amount_ex:ex, p_due_on:due, p_period:null, p_method:mth, p_note:null });
+    }catch(e){ r={ error:{ message:String(e&&e.message||e) } }; }
+    if(r.error){ invMsg('できませんでした：'+esc(r.error.message),'#A9403D'); return; }
+    var d=r.data||{};
+    if(!d.ok){ invMsg(esc(d.error||'できませんでした'),'#A9403D'); return; }
+    invMsg('<b>'+esc(title)+'</b>（'+yen(d.amount)+'）を立てました。'
+      +'対象の年月は '+esc(String(d.period||''))+' です。', '#27684A');
+    if($('iva-title'))$('iva-title').value=''; if($('iva-amt'))$('iva-amt').value='';
+    ivaPreview();
+    //  立てた月と表示中の月が違うと「立ったのに出ない」と見えるので合わせる
+    var sel=$('inv-month');
+    if(sel && d.period && sel.value!==d.period){
+      var hit=false;
+      for(var i=0;i<sel.options.length;i++){ if(sel.options[i].value===d.period){ hit=true; break; } }
+      if(!hit){ var o=document.createElement('option'); o.value=d.period; o.textContent=d.period; sel.insertBefore(o, sel.firstChild); }
+      sel.value=d.period;
+    }
+    await loadInvoices(); loadInvOverdue();
+  }
+  async function invMethod(id, cur){
+    var to=(cur==='transfer')?'bank':'transfer';
+    if(!confirm('お支払い方法を「'+invMethodLabel(to)+'」に変えます。\n\n顧客の画面の文言も変わります。よろしいですか？')) return;
+    invMsg('変えています…');
+    var r;
+    try{ r=await sb.rpc('invoice_set_method',{ p_id:id, p_method:to }); }
+    catch(e){ r={ error:{ message:String(e&&e.message||e) } }; }
+    if(r.error){ invMsg('できませんでした：'+esc(r.error.message),'#A9403D'); return; }
+    if(!(r.data||{}).ok){ invMsg(esc((r.data||{}).error||'できませんでした'),'#A9403D'); return; }
+    invMsg('「'+esc(invMethodLabel(to))+'」に変えました。','#27684A');
+    await loadInvoices();
   }
   async function invReconcile(){
     var ym=(($('inv-month')||{}).value)||'';
@@ -6707,7 +6898,7 @@
     if(t==='links') loadBillingAdminLinks();
     if(t==='payments') loadAdmPayEvents();
     if(t==='revenue') loadAdmRevenue();
-    if(t==='invoices'){ invInitMonths(); loadInvoices(); loadInvOverdue(); }
+    if(t==='invoices'){ invInitMonths(); ivaInit(); loadInvoices(); loadInvOverdue(); }
   }
   function blLinkFilter(a){
     BL_LINK_AUD=a;
