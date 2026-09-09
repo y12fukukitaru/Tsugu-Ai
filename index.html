@@ -1365,7 +1365,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260908-01';
+  var APP_BUILD='20260908-03';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -1985,9 +1985,11 @@
   }
 
   // ===== お振込先（口座）=====
-  //  この機能のいちばんの約束は「口座番号をプラットホームに置かない」こと。
-  //  だから画面側にも、読み返すための道をつくらない。入れた番号は
-  //  送信したらそれきりで、戻ってくるのは銀行名と下4桁だけ。
+  //  以前は「口座番号をプラットホームに置かない」ことを約束していました。
+  //  銀行APIでの自動送金を採ったため、毎月こちらから口座情報を渡す
+  //  必要が生じ、お預かりする形に変えています。
+  //  ただし画面側に読み返す道をつくらないのは、これまでどおりです。
+  //  入れた番号は送信したらそれきりで、戻ってくるのは銀行名と下4桁だけ。
   //  控えを見せるのは、ご本人が「合っている」と確かめられるようにするため。
   var PAY_ACCT=null, PAY_ACCT_ERR=null, PAY_EP1=null;
   var PAY_TYPES=[['futsu','普通'],['touza','当座'],['chochiku','貯蓄']];
@@ -2027,7 +2029,15 @@
     }
     var isOrg=!!(PAY_EP1 && PAY_EP1.is_mgr);
     var a=PAY_ACCT;
-    if(a){
+    //  held … 口座情報をいまお預かりしているか。取り消したあとは false になり、
+    //  下4桁だけが控えとして残る。ここを見ずに status だけで書くと、
+    //  消したあとに「運営が確認中」と出て、待たせてしまう
+    var held=(a && a.held!==false);
+    if(a && !held){
+      now.innerHTML='<div style="font-size:11.5px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:9px 12px;line-height:1.75;">'
+        +'口座情報は<b>消してあります</b>（前回のご登録は '+esc(a.bank_name||'')+' ****'+esc(a.last4||'')+' でした）。'
+        +'<br><b>このままでは報酬をお振込みできません。</b>お振込みを再開するには、あらためて口座をご登録ください。</div>';
+    } else if(a){
       var done=(a.status==='registered');
       now.innerHTML='<div style="border:1.5px solid '+(done?'#CFE3D6':'#C9D6EA')+';background:'+(done?'rgba(39,104,74,.07)':'var(--soft)')+';border-radius:11px;padding:11px 13px;">'
         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
@@ -2037,8 +2047,15 @@
         +'</div>'
         +'<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-top:5px;">'
           +(done
-            ? '運営の振込先に登録が済んでいます。ご入力いただいた口座番号と名義は、<b style="color:var(--navy);">すでにこの画面から消えています。</b>'
-            : '運営が受け取って、銀行の振込先に登録するまでお待ちください。登録が済むと口座番号はここから消えます。')
+            ? 'この口座へお振込みします。ご入力いただいた口座番号と名義は、'
+              +'<b style="color:var(--navy);">暗号化してお預かりしています。</b>'
+              +'画面に出せるのは銀行名と下4桁までで、運営が確認のために開いたときは記録が残ります。'
+            : '運営が確認するまでお待ちください。確認が済むと、この口座へのお振込みが始まります。')
+          +'<br>ご登録を取り消したいときは、下の「登録を取り消す」からいつでも消せます。'
+          +'<b>消すとお振込みができなくなります</b>ので、そのときは新しい口座をご登録ください。'
+        +'</div>'
+        +'<div style="margin-top:8px;">'
+          +'<button class="ghost" style="font-size:11px;border:1px solid var(--line);border-radius:7px;padding:5px 10px;color:#A9403D;" onclick="payForget()">登録を取り消す（口座情報を消す）</button>'
         +'</div></div>';
     } else {
       now.innerHTML='<div style="font-size:11.5px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:9px 12px;line-height:1.7;">'
@@ -2049,7 +2066,9 @@
     }
     //  すでに登録がある方には、いきなり入力欄を出さない。
     //  開いたまま触ってしまい、確認待ちに戻る事故を防ぐ
-    if(a && !PAY_FORM_OPEN){
+    //  取り消したあとは、入力欄をそのまま出す。「変更する」を押させても
+    //  変更するものが無い
+    if(a && held && !PAY_FORM_OPEN){
       form.innerHTML='<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;" onclick="payFormOpen()">口座を変更する</button>';
       return;
     }
@@ -2089,6 +2108,25 @@
     +'</div>';
     form.innerHTML=h;
   }
+  //  お預かりする以上、ご本人がいつでも消せないといけない。
+  //  求められて消せないのでは、預かる資格がない
+  async function payForget(){
+    if(!confirm('ご登録の口座情報を消します。\n\n消すと報酬のお振込みができなくなります。'
+      +'お振込みを続けるには、あらためて口座をご登録ください。\n\nよろしいですか？')) return;
+    var m=$('set-pay-msg');
+    if(m){ m.style.color='var(--muted)'; m.textContent='消しています…'; }
+    var r;
+    try{ r=await sb.rpc('payout_account_forget_mine'); }
+    catch(e){ r={ error:{ message:String(e&&e.message||e) } }; }
+    if(r.error){ if(m){ m.style.color='#A9403D'; m.textContent='できませんでした：'+r.error.message; } return; }
+    var rr=String(r.data||'');
+    if(rr.indexOf('error:')===0){
+      if(m){ m.style.color='#A9403D'; m.textContent=rr.replace(/^error:\s*/,''); } return;
+    }
+    if(m){ m.style.color='#27684A'; m.textContent='消しました。お振込みを再開するには、あらためてご登録ください。'; }
+    PAY_FORM_OPEN=false;
+    await loadPayAcct();
+  }
   var PAY_FORM_OPEN=false;
   function payFormOpen(){ PAY_FORM_OPEN=true; renderPayAcct(); }
   function payFormClose(){ PAY_FORM_OPEN=false; var m=$('set-pay-msg'); if(m) m.textContent=''; renderPayAcct(); }
@@ -2127,7 +2165,7 @@
     if(btn) btn.disabled=false;
     PAY_FORM_OPEN=false;
     if(msg){ msg.style.color='#27684A';
-      msg.textContent='登録しました。運営が受け取ると、口座番号はこの画面から消えます。'; }
+      msg.textContent='登録しました。運営が確認すると、この口座へのお振込みが始まります。'; }
     await loadPayAcct();
   }
   // ===== 個人か法人か（源泉徴収の要否）=====
@@ -2518,6 +2556,16 @@
           +'<div><label class="fl">運営直接担当（円/月・一律）</label><input id="bl-direct" type="number" class="inp2" style="width:120px;" value="30000" oninput="renderAdmBilling();blRatesSave()"></div>'
           +'<div><label class="fl">初期登録料（円・初回）</label><input id="bl-init" type="number" class="inp2" style="width:130px;" value="100000" oninput="renderAdmBilling();blRatesSave()"></div>'
         +'</div>'
+        //  振込でお願いする請求は、振込先が画面に出ないと担当パートナーに
+        //  電話が行く。ここに入れておけば、請求のたびに書かずに済む
+        +'<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
+          +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;">お振込先（継が受け取る口座）</div>'
+          +'<div style="font-size:11px;color:#94A2B6;margin-bottom:7px;line-height:1.7;">'
+            +'銀行振込でご請求するとき、顧客の画面にそのまま表示されます。'
+            +'<b style="color:var(--navy);">口座振替でお引き落としする請求には出ません。</b>'
+            +'（当社が受け取る側の口座です。お客様・パートナーの口座はここには入れません）</div>'
+          +'<input id="bl-bank" class="inp2" style="width:100%;max-width:520px;" placeholder="例）〇〇銀行 本店営業部 普通 1234567 カ）ツグアイ" oninput="blRatesSave()">'
+        +'</div>'
         +'<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
           +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">パートナーからお預かりする利用料（円・税別）</div>'
           +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">'
@@ -2616,15 +2664,16 @@
           +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadPayout()">↺ 再計算</span></div>'
         +'<div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.75;">上で選んだ年月に<b style="color:var(--navy);">成約（入金記録）した案件</b>を、顧客の担当パートナーごとに集計し、ランクに応じた外注費率で報酬を算出します。2名体制が承認されている顧客は、メイン担当が決めた配分で分けて表示します。</div>'
         +'<div id="bl-payout">読み込み中...</div>'
-        +'<div class="ph" style="font-size:13px;margin-top:22px;display:flex;align-items:center;justify-content:space-between;">お振込先の受け取り'
+        +'<div class="ph" style="font-size:13px;margin-top:22px;display:flex;align-items:center;justify-content:space-between;">お振込先の確認'
           +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadPayInbox()">↺ 更新</span></div>'
         +'<div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.75;">'
-          +'パートナーが登録した口座を<b style="color:var(--navy);">ここで一度だけ受け取り</b>、'
-          +'ネットバンキングの振込先に登録してください。登録が済んだら「銀行に登録しました」を押します。'
-          +'<b style="color:#A9403D;">押した時点で、口座番号・名義・支店はこのプラットホームから消えます。</b>'
-          +'あとに残るのは銀行名と下4桁だけです。<br>'
-          +'消える前提の情報なので、<b style="color:var(--navy);">開いたことは記録に残ります</b>（誰が・いつ・誰の口座を）。'
-          +'必要なときだけ開いてください。</div>'
+          +'パートナーが登録した口座を確認し、<b style="color:var(--navy);">「確認しました」を押してください。</b>'
+          +'押すまでは、その口座へのお振込みは行いません（変更の途中かもしれないためです）。<br>'
+          +'口座情報は<b style="color:var(--navy);">暗号化してお預かりしています。</b>'
+          +'毎月の振込にこちらから渡す必要があるためで、確認しても消えません。'
+          +'<b style="color:#A9403D;">開いたことは記録に残ります</b>（誰が・いつ・誰の口座を）。必要なときだけ開いてください。<br>'
+          +'パートナーが辞められたときは、<b>「この口座を消す」</b>で消してください。'
+          +'使わない口座を持ち続ける理由はありません。</div>'
         +'<div id="bl-payinbox">読み込み中...</div>'
         +'</div>'
         // ---- タブ7：請求と未収 ----
@@ -2640,10 +2689,44 @@
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">'
           +'<div><label class="fl">対象の年月</label><select id="inv-month" class="inp2" onchange="loadInvoices()"></select></div>'
           +'<div><label class="fl">支払期日（日）</label><input id="inv-due" type="number" class="inp2" style="width:90px;" min="1" max="31" value="27"></div>'
+          +'<div><label class="fl">お支払い方法</label><select id="inv-method" class="inp2">'
+            +'<option value="bank">銀行振込</option><option value="transfer">口座振替（引き落とし）</option></select></div>'
           +'<button class="btn2" onclick="invGenerate()">この月の請求を立てる</button>'
           +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:9px 12px;" onclick="invReconcile()">入金と突き合わせる</button>'
         +'</div>'
+        //  口座振替に載せ替える途中は、振込の方と引き落としの方が混ざる。
+        //  引き落とす請求に「お振込ください」と書くと二重にいただいてしまう
+        +'<div style="font-size:11px;color:var(--muted);line-height:1.75;margin-bottom:10px;">'
+          +'お支払い方法は、顧客の画面の文言に出ます。'
+          +'<b style="color:var(--navy);">口座振替なら「お引き落としになります。お振込は不要です」</b>と表示し、'
+          +'銀行振込なら振込先をお見せします。あとから1件ずつ切り替えられます。</div>'
         +'<div id="inv-msg" style="font-size:11.5px;margin-bottom:8px;min-height:16px;line-height:1.7;"></div>'
+        //  ---- 単発の請求（FA手数料など）----
+        //  月次の顧問料しか立てられないと、いちばん金額の大きいFA手数料が
+        //  台帳に載らない。載らなければ未収一覧にも出ない
+        +'<div style="border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:12px;">'
+          +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;">単発の請求（M&AのFA手数料など）</div>'
+          +'<div style="font-size:11px;color:var(--muted);line-height:1.75;margin-bottom:8px;">'
+            +'その都度いただくぶんを、1件ずつ立てます。立てておけば、入金と突き合わせて'
+            +'<b style="color:var(--navy);">残ったものが未収として出ます。</b>'
+            +'顧問料はここではなく、上の「この月の請求を立てる」からどうぞ。</div>'
+          +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
+            +'<div style="flex:1 1 200px;min-width:180px;"><label class="fl">請求先</label>'
+              +'<select id="iva-cust" class="inp2" style="width:100%;"></select></div>'
+            +'<div><label class="fl">区分</label><select id="iva-kind" class="inp2">'
+              +'<option value="fa">M&AのFA手数料</option><option value="setup">初期導入費</option>'
+              +'<option value="other">その他</option></select></div>'
+            +'<div style="flex:1 1 220px;min-width:180px;"><label class="fl">件名（請求書にそのまま出ます）</label>'
+              +'<input id="iva-title" class="inp2" style="width:100%;" placeholder="例）M&A成功報酬（〇〇社 譲渡）"></div>'
+            +'<div><label class="fl">金額（円・税別）</label>'
+              +'<input id="iva-amt" type="number" class="inp2" style="width:130px;" min="1" oninput="ivaPreview()"></div>'
+            +'<div><label class="fl">お支払期日</label><input id="iva-due" type="date" class="inp2" style="width:150px;"></div>'
+            +'<div><label class="fl">お支払い方法</label><select id="iva-method" class="inp2">'
+              +'<option value="bank">銀行振込</option><option value="transfer">口座振替（引き落とし）</option></select></div>'
+            +'<button class="btn2" onclick="invAdd()">この請求を立てる</button>'
+          +'</div>'
+          +'<div id="iva-prev" style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.7;"></div>'
+        +'</div>'
         +'<div id="inv-list">読み込み中...</div>'
         +'<div class="ph" style="font-size:13px;margin-top:22px;display:flex;align-items:center;justify-content:space-between;">未収（期日を過ぎて入っていないもの）'
           +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadInvOverdue()">↺ 更新</span></div>'
@@ -3110,7 +3193,7 @@
   // ---- 料率・割引設定の保存（app_settings）：運営全員のコンソールで同じ値を使う ----
   //  割引の3種類（vol1/vol2/hd, snr/exe/prem, cap）は廃止したので保存対象から外した。
   //  すでに保存されている値が残っていても、読み込む先が無いので影響しない。
-  var BL_RATE_IDS=['bl-pbase','bl-pclient','bl-adv','bl-direct','bl-init','bl-ai','bl-seat','bl-seatpack','bl-seatpackn'];
+  var BL_RATE_IDS=['bl-pbase','bl-pclient','bl-adv','bl-direct','bl-init','bl-ai','bl-seat','bl-seatpack','bl-seatpackn','bl-bank'];
   var BL_RATES_OK=false, BL_SAVE_T=null;
   function blRatesNote(t){ var el=$('bl-rates-note'); if(el) el.textContent=t?('　'+t):''; }
   async function blRatesLoad(){
@@ -6448,32 +6531,80 @@
   async function loadUnpaid(where){
     var box=$(where==='customer'?'my-unpaid':'cl-unpaid'); if(!box) return;
     box.innerHTML='';
-    var rows=[];
+    var all=[];
     try{
       var r=await sb.from('invoices')
-        .select('id,customer_id,period,title,amount,paid_amount,due_on,status')
+        .select('id,customer_id,period,title,amount,paid_amount,due_on,status,method')
         .in('status',['open','partial']).order('due_on',{ascending:true}).limit(200);
       if(r.error) return;               // 表がまだ無い環境では黙って出さない
-      rows=r.data||[];
+      all=r.data||[];
     }catch(e){ return; }
-    //  期日を過ぎたものだけ。まだ期日前のものを赤く出すと、ただ不安にさせる
     var today=jstToday();
-    rows=rows.filter(function(x){ return String(x.due_on||'') < today; });
-    if(!rows.length) return;
+    //  期日を過ぎたものと、これからのもの。同じ赤で出すと、まだ期日前の方まで
+    //  責められているように見える。分けて、色も文言も変える
+    var rows=all.filter(function(x){ return String(x.due_on||'') < today; });
+    var soon=all.filter(function(x){ return String(x.due_on||'') >= today; });
     var t=0; rows.forEach(function(x){ t+=(Number(x.amount)||0)-(Number(x.paid_amount)||0); });
+
     if(where==='customer'){
-      box.innerHTML='<div style="border:1.5px solid #E8C4C2;background:#FDF6F5;border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
-        +'<div style="font-size:12.5px;font-weight:700;color:#A9403D;">お支払いの確認をお願いします</div>'
-        +'<div style="font-size:11.5px;color:var(--ink);line-height:1.85;margin-top:4px;">'
-        +'お支払期日を過ぎているものが <b>'+rows.length+'件（'+yen(t)+'）</b>あります。'
-        +'行き違いでしたら申し訳ありません。ご不明な点は担当パートナーまでお知らせください。</div>'
-        +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:6px;">'
-        +rows.map(function(x){
-            var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
-            return esc(x.title||'')+'　期日 '+esc(x.due_on||'')+'　<b style="color:#A9403D;">'+yen(rest)+'</b>'; }).join('<br>')
-        +'</div></div>';
+      if(!rows.length && !soon.length) return;
+      var h='';
+      if(rows.length){
+        h+='<div style="border:1.5px solid #E8C4C2;background:#FDF6F5;border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
+          +'<div style="font-size:12.5px;font-weight:700;color:#A9403D;">お支払いの確認をお願いします</div>'
+          +'<div style="font-size:11.5px;color:var(--ink);line-height:1.85;margin-top:4px;">'
+          +'お支払期日を過ぎているものが <b>'+rows.length+'件（'+yen(t)+'）</b>あります。'
+          +'行き違いでしたら申し訳ありません。ご不明な点は担当パートナーまでお知らせください。</div>'
+          +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:6px;">'
+          +rows.map(function(x){
+              var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
+              return esc(x.title||'')+'　期日 '+esc(x.due_on||'')
+                +'　'+invMethodTag(x.method)
+                +'　<b style="color:#A9403D;">'+yen(rest)+'</b>'; }).join('<br>')
+          +'</div></div>';
+      }
+      if(soon.length){
+        var ts=0; soon.forEach(function(x){ ts+=(Number(x.amount)||0)-(Number(x.paid_amount)||0); });
+        //  引き落としの方に振込先を出すと、二重にお支払いいただくことになる。
+        //  方法ごとに、書くことを変える
+        var anyBank=soon.some(function(x){ return (x.method||'bank')!=='transfer'; });
+        var anyDebit=soon.some(function(x){ return x.method==='transfer'; });
+        var bank='';
+        if(anyBank){
+          try{
+            var pi=await sb.rpc('invoice_pay_info');
+            if(!pi.error) bank=((pi.data||{}).bank)||'';
+          }catch(e){}
+        }
+        h+='<div style="border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
+          +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">これからのお支払い</div>'
+          +'<div style="font-size:11.5px;color:var(--muted);line-height:1.85;margin-top:4px;">'
+          +'<b style="color:var(--ink);">'+soon.length+'件（'+yen(ts)+'）</b>のご請求があります。</div>'
+          +'<div style="font-size:11.5px;color:var(--muted);line-height:1.9;margin-top:6px;">'
+          +soon.map(function(x){
+              var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
+              return esc(x.title||'')+'　期日 '+esc(x.due_on||'')
+                +'　'+invMethodTag(x.method)
+                +'　<b style="color:var(--ink);">'+yen(rest)+'</b>'; }).join('<br>')
+          +'</div>'
+          +(anyDebit
+            ? '<div style="font-size:11.5px;color:#27684A;background:rgba(39,104,74,.08);border-radius:8px;padding:8px 10px;line-height:1.8;margin-top:8px;">'
+              +'<b>口座振替のぶんは、ご登録の口座からお引き落としになります。お振込は不要です。</b>'
+              +'残高のご確認だけ、期日の前日までにお願いします。</div>'
+            : '')
+          +(anyBank
+            ? '<div style="font-size:11.5px;color:var(--ink);background:var(--soft);border-radius:8px;padding:8px 10px;line-height:1.8;margin-top:8px;">'
+              +'銀行振込のぶんは、下記へお振込ください。'
+              +(bank? '<br><b style="color:var(--navy);">'+esc(bank)+'</b>'
+                    : '<br><span style="color:var(--muted);">振込先は担当パートナーまでお問い合わせください。</span>')
+              +'<br><span style="color:var(--muted);">振込手数料はご負担をお願いしております。</span></div>'
+            : '')
+        +'</div>';
+      }
+      box.innerHTML=h;
       return;
     }
+    if(!rows.length) return;
     //  パートナー側。誰の未収かが分からないと動けないので、会社名を引く
     var nm={};
     try{
@@ -6508,6 +6639,18 @@
     var c={ open:'red', partial:'gold', paid:'gray', void:'gray' }[s]||'gray';
     return '<span class="tag '+c+'" style="font-size:10px;">'+invStatusLabel(s)+'</span>';
   }
+  //  方法が空のものは、口座振替を入れる前に立てた請求。振込として扱う
+  function invMethodLabel(m){
+    return { transfer:'口座振替', bank:'銀行振込', card:'カード', other:'その他' }[m]||'銀行振込';
+  }
+  function invMethodTag(m){
+    var c=(m==='transfer')?'green':'blue';
+    return '<span class="tag '+c+'" style="font-size:10px;">'+invMethodLabel(m)+'</span>';
+  }
+  function invKindLabel(k){
+    return { advisory:'顧問料', direct:'顧問料（運営直接）', fa:'FA手数料',
+             setup:'初期導入費', other:'その他' }[k]||'';
+  }
   function invInitMonths(){
     var sel=$('inv-month'); if(!sel || sel.options.length) return;
     //  既定は先月。当月ぶんは月末にならないと立てないことが多い
@@ -6525,7 +6668,7 @@
     if(!ym){ box.innerHTML='<div style="font-size:12px;color:var(--muted);">年月を選んでください。</div>'; return; }
     try{
       var r=await sb.from('invoices')
-        .select('id,customer_id,period,kind,title,amount,paid_amount,due_on,status,paid_on,void_reason')
+        .select('id,customer_id,period,kind,title,amount,paid_amount,due_on,status,paid_on,void_reason,method')
         .eq('period',ym).order('status',{ascending:true});
       if(r.error) INV_ERR=r.error.message; else INV_ROWS=r.data||[];
     }catch(e){ INV_ERR=String(e&&e.message||e); }
@@ -6569,6 +6712,7 @@
       return '<div style="border:1px solid var(--line);border-radius:11px;padding:10px 13px;margin-bottom:6px;">'
         +'<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">'
           +invStatusTag(x.status)
+          +(x.status==='void'?'':invMethodTag(x.method))
           +'<b style="font-size:13px;color:var(--ink);">'+esc(x.name||'')+'</b>'
           +'<span style="font-size:11px;color:var(--muted);">'+esc(x.title||'')+'　期日 '+esc(x.due_on||'')+'</span>'
           +'<span style="flex:1;"></span>'
@@ -6585,6 +6729,8 @@
           '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;">'
           +(x.status==='paid' ? '' :
             '<button class="ghost" style="font-size:11px;border:1px solid var(--line);border-radius:7px;padding:5px 10px;" onclick="invPaid(\''+esc(x.id)+'\')">入金済みにする</button>')
+          +'<button class="ghost" style="font-size:11px;border:1px solid var(--line);border-radius:7px;padding:5px 10px;" onclick="invMethod(\''+esc(x.id)+'\',\''+esc(x.method||'bank')+'\')">'
+            +((x.method==='transfer')?'銀行振込に変える':'口座振替に変える')+'</button>'
           +'<button class="ghost" style="font-size:11px;border:1px solid var(--line);border-radius:7px;padding:5px 10px;color:#A9403D;" onclick="invVoid(\''+esc(x.id)+'\')">取り消す</button>'
           +'</div>')
       +'</div>';
@@ -6595,19 +6741,103 @@
   async function invGenerate(){
     var ym=(($('inv-month')||{}).value)||'';
     var due=Number((($('inv-due')||{}).value)||27);
+    var mth=(($('inv-method')||{}).value)||'bank';
     if(!ym){ invMsg('年月を選んでください。','#A9403D'); return; }
-    if(!confirm(ym+' の請求を立てます。よろしいですか？\n\n（同じ月に二度立てても増えません）')) return;
+    if(!confirm(ym+' の請求を立てます。よろしいですか？\n\nお支払い方法：'+invMethodLabel(mth)
+      +'\n（同じ月に二度立てても増えません）')) return;
     invMsg('立てています…');
     var r;
-    try{ r=await sb.rpc('invoice_generate',{ p_period:ym, p_due_day:due }); }
+    try{ r=await sb.rpc('invoice_generate',{ p_period:ym, p_due_day:due, p_method:mth }); }
     catch(e){ r={ error:{ message:String(e&&e.message||e) } }; }
     if(r.error){ invMsg('できませんでした：'+esc(r.error.message),'#A9403D'); return; }
     var d=r.data||{};
     if(!d.ok){ invMsg(esc(d.error||'できませんでした'),'#A9403D'); return; }
     invMsg('<b>'+d.made+' 件</b>の請求を立てました'
       +(d.skipped>0?'（すでにある '+d.skipped+' 件はそのまま）':'')
-      +'。支払期日は '+esc(String(d.due_on||''))+' です。', '#27684A');
+      +'。支払期日は '+esc(String(d.due_on||''))+'、お支払い方法は '+esc(invMethodLabel(d.method))+' です。', '#27684A');
     await loadInvoices(); loadInvOverdue();
+  }
+  //  ---- 単発の請求（FA手数料など）----
+  function ivaPreview(){
+    var el=$('iva-prev'); if(!el) return;
+    var ex=Math.max(0, Math.floor(Number((($('iva-amt')||{}).value)||0)));
+    if(ex<=0){ el.textContent=''; return; }
+    var tax=Math.floor(ex*10/100);
+    el.innerHTML='税別 '+yen(ex)+' ＋ 消費税 '+yen(tax)+' ＝ <b style="color:var(--navy);">ご請求 '+yen(ex+tax)+'</b>';
+  }
+  async function ivaInit(){
+    var sel=$('iva-cust'); if(!sel) return;
+    //  顧客の一覧は運営画面がすでに持っている。二度引かない。
+    //  まだ読み込んでいなければ、ここで引く。空の選択肢だけが出て
+    //  「請求先を選んでください」と言われても、選びようがない
+    var cs=(ADM_CACHE&&ADM_CACHE.custs)||[];
+    if(!cs.length){
+      try{
+        var pr=await sb.from('profiles').select('id,company_name,contact_name,email,role').eq('role','customer');
+        if(!pr.error) cs=pr.data||[];
+      }catch(e){}
+    }
+    var cur=sel.value;
+    sel.innerHTML='<option value="">選んでください</option>'
+      +cs.map(function(c){
+          return '<option value="'+esc(c.id)+'">'
+            +esc(c.company_name||c.contact_name||c.email||'')+'</option>'; }).join('');
+    if(cur) sel.value=cur;
+    var due=$('iva-due');
+    //  既定は月末。空欄のまま押されて止まるより、埋まっているほうがよい
+    if(due && !due.value){
+      var d=new Date(); d.setMonth(d.getMonth()+1); d.setDate(0);
+      due.value=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+    }
+  }
+  async function invAdd(){
+    var cust=(($('iva-cust')||{}).value)||'';
+    var kind=(($('iva-kind')||{}).value)||'fa';
+    var title=((($('iva-title')||{}).value)||'').trim();
+    var ex=Math.floor(Number((($('iva-amt')||{}).value)||0));
+    var due=(($('iva-due')||{}).value)||'';
+    var mth=(($('iva-method')||{}).value)||'bank';
+    if(!cust){ invMsg('請求先を選んでください。','#A9403D'); return; }
+    if(!title){ invMsg('件名をご記入ください（請求書にそのまま出ます）。','#A9403D'); return; }
+    if(!(ex>0)){ invMsg('金額（税別）をご入力ください。','#A9403D'); return; }
+    if(!due){ invMsg('お支払期日をご指定ください。','#A9403D'); return; }
+    var tax=Math.floor(ex*10/100);
+    if(!confirm(title+'\n\nご請求 '+yen(ex+tax)+'（税別 '+yen(ex)+'）'
+      +'\n期日 '+due+'\nお支払い方法：'+invMethodLabel(mth)+'\n\nこの内容で立てます。よろしいですか？')) return;
+    invMsg('立てています…');
+    var r;
+    try{
+      r=await sb.rpc('invoice_add',{ p_customer:cust, p_kind:kind, p_title:title,
+        p_amount_ex:ex, p_due_on:due, p_period:null, p_method:mth, p_note:null });
+    }catch(e){ r={ error:{ message:String(e&&e.message||e) } }; }
+    if(r.error){ invMsg('できませんでした：'+esc(r.error.message),'#A9403D'); return; }
+    var d=r.data||{};
+    if(!d.ok){ invMsg(esc(d.error||'できませんでした'),'#A9403D'); return; }
+    invMsg('<b>'+esc(title)+'</b>（'+yen(d.amount)+'）を立てました。'
+      +'対象の年月は '+esc(String(d.period||''))+' です。', '#27684A');
+    if($('iva-title'))$('iva-title').value=''; if($('iva-amt'))$('iva-amt').value='';
+    ivaPreview();
+    //  立てた月と表示中の月が違うと「立ったのに出ない」と見えるので合わせる
+    var sel=$('inv-month');
+    if(sel && d.period && sel.value!==d.period){
+      var hit=false;
+      for(var i=0;i<sel.options.length;i++){ if(sel.options[i].value===d.period){ hit=true; break; } }
+      if(!hit){ var o=document.createElement('option'); o.value=d.period; o.textContent=d.period; sel.insertBefore(o, sel.firstChild); }
+      sel.value=d.period;
+    }
+    await loadInvoices(); loadInvOverdue();
+  }
+  async function invMethod(id, cur){
+    var to=(cur==='transfer')?'bank':'transfer';
+    if(!confirm('お支払い方法を「'+invMethodLabel(to)+'」に変えます。\n\n顧客の画面の文言も変わります。よろしいですか？')) return;
+    invMsg('変えています…');
+    var r;
+    try{ r=await sb.rpc('invoice_set_method',{ p_id:id, p_method:to }); }
+    catch(e){ r={ error:{ message:String(e&&e.message||e) } }; }
+    if(r.error){ invMsg('できませんでした：'+esc(r.error.message),'#A9403D'); return; }
+    if(!(r.data||{}).ok){ invMsg(esc((r.data||{}).error||'できませんでした'),'#A9403D'); return; }
+    invMsg('「'+esc(invMethodLabel(to))+'」に変えました。','#27684A');
+    await loadInvoices();
   }
   async function invReconcile(){
     var ym=(($('inv-month')||{}).value)||'';
@@ -6707,7 +6937,7 @@
     if(t==='links') loadBillingAdminLinks();
     if(t==='payments') loadAdmPayEvents();
     if(t==='revenue') loadAdmRevenue();
-    if(t==='invoices'){ invInitMonths(); loadInvoices(); loadInvOverdue(); }
+    if(t==='invoices'){ invInitMonths(); ivaInit(); loadInvoices(); loadInvOverdue(); }
   }
   function blLinkFilter(a){
     BL_LINK_AUD=a;
@@ -16605,10 +16835,11 @@
             : '')
           +(noAcct.length&&waitAcct.length?'<div style="height:6px;"></div>':'')
           +(waitAcct.length
-            ? '<b>受け取り待ち：</b>'+esc(waitAcct.join('・'))
-              +'<br><span style="color:var(--muted);">下の「お振込先の受け取り」で口座を受け取り、'
-              +'銀行の振込先に登録してください。口座を変更された方も、ここに出ます。'
-              +'<b style="color:#A9403D;">古い口座に振り込まないでください。</b></span>'
+            ? '<b>確認待ち：</b>'+esc(waitAcct.join('・'))
+              +'<br><span style="color:var(--muted);">下の「お振込先の確認」で内容を確かめ、'
+              +'「確認しました」を押してください。押すまでは振込の対象になりません。'
+              +'口座を変更された方も、ここに出ます。'
+              +'<b style="color:#A9403D;">古い口座に振り込まないための関所です。</b></span>'
             : '')
           +'</div></div>'+h;
       }
@@ -16653,14 +16884,15 @@
     if(!payAcct) return '';                       // 引けていない。決めつけない
     var a=payAcct[uid];
     if(!a) return '<span class="tag red" style="font-size:10px;">口座 未登録</span>';
-    if(a.status!=='registered') return '<span class="tag red" style="font-size:10px;">口座 受け取り待ち</span>';
+    if(a.status!=='registered') return '<span class="tag red" style="font-size:10px;">口座 確認待ち</span>';
     return '<span class="tag gray" style="font-size:10px;">'+esc(a.bank_name||'')+' ****'+esc(a.last4||'')+'</span>';
   }
 
-  // ===== お振込先の受け取り（運営）=====
-  //  ここが「預からない」を成り立たせている場所。受け取って、
-  //  銀行に登録して、消す。消すところまでを一つの操作にしてある。
-  //  「あとで消す」にすると、消されないまま残る
+  // ===== お振込先の確認（運営）=====
+  //  以前はここで受け取って消していました。銀行APIで毎月自動送金する
+  //  ようになったので、消すと翌月に振り込めません。いまは「確認する」
+  //  ところまでが仕事で、確認するまでは振込の対象になりません。
+  //  変更の途中の口座に振り込んでしまわないための関所です。
   var PAY_INBOX=[], PAY_INBOX_ERR=null, PAY_SHOWN={};
   async function loadPayInbox(){
     var box=$('bl-payinbox'); if(!box) return;
@@ -16680,7 +16912,7 @@
     }
     if(!PAY_INBOX.length){
       box.innerHTML='<div style="font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:11px;padding:12px 14px;line-height:1.8;">'
-        +'受け取り待ちの口座はありません。</div>';
+        +'確認待ちの口座はありません。</div>';
       return;
     }
     box.innerHTML=PAY_INBOX.map(function(x){
@@ -16714,10 +16946,12 @@
       +'<div>名義　　　<b>'+esc(d.holder_kana||'')+'</b></div>'
       +'</div>'
       +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:7px;">'
-        +'ネットバンキングの振込先に登録してから、下のボタンを押してください。'
-        +'<b style="color:#A9403D;">押すと、この口座番号はもう表示できなくなります。</b></div>'
-      +'<div style="margin-top:8px;">'
-        +'<button class="btn2" onclick="payCollect(\''+esc(d.user_id)+'\')">銀行に登録しました（この情報を消す）</button>'
+        +'内容に間違いがなければ、下のボタンを押してください。'
+        +'<b style="color:var(--navy);">押すと、この口座がお振込みの対象になります。</b>'
+        +'　口座情報はお預かりしたままです（毎月の振込に使います）。</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">'
+        +'<button class="btn2" onclick="payCollect(\''+esc(d.user_id)+'\')">確認しました（この口座へ振り込む）</button>'
+        +'<button class="ghost" style="font-size:11px;border:1px solid var(--line);border-radius:7px;padding:5px 10px;color:#A9403D;" onclick="payForgetAdm(\''+esc(d.user_id)+'\')">この口座を消す</button>'
       +'</div>';
   }
   async function payReveal(uid){
@@ -16734,10 +16968,30 @@
     var body=$('pi-body-'+uid); if(body) body.innerHTML=payInboxDetail(d);
     if(msg) msg.textContent='';
   }
-  async function payCollect(uid){
-    if(!confirm('銀行の振込先への登録は済みましたか？\n\nOKを押すと、口座番号・名義・支店はこのプラットホームから消えます。あとから見返すことはできません。')) return;
+  //  パートナーが辞めたら消す。持ち続ける理由が無くなった口座を
+  //  そのままにしておくのが、いちばん危ない
+  async function payForgetAdm(uid){
+    var why=prompt('この口座情報を消します。理由をご記入ください。\n（記録に残ります。消すとお振込みができなくなります）');
+    if(why===null) return;
+    if(!String(why).trim()){ alert('理由をご記入ください。'); return; }
     var msg=$('pi-msg-'+uid);
     if(msg){ msg.style.color='var(--muted)'; msg.textContent='消しています…'; }
+    var r;
+    try{ r=await sb.rpc('payout_account_forget',{ p_user:uid, p_reason:String(why) }); }
+    catch(e){ r={ error:{ message:String(e&&e.message||e) } }; }
+    if(r.error){ if(msg){ msg.style.color='#A9403D'; msg.textContent='できませんでした：'+r.error.message; } return; }
+    var rr=String(r.data||'');
+    if(rr.indexOf('error:')===0){
+      if(msg){ msg.style.color='#A9403D'; msg.textContent=rr.replace(/^error:\s*/,''); } return;
+    }
+    delete PAY_SHOWN[uid];
+    await loadPayInbox();
+    loadPayout();
+  }
+  async function payCollect(uid){
+    if(!confirm('この口座の内容を確認しましたか？\n\nOKを押すと、この口座がお振込みの対象になります。\n（口座情報はお預かりしたままです）')) return;
+    var msg=$('pi-msg-'+uid);
+    if(msg){ msg.style.color='var(--muted)'; msg.textContent='確認しています…'; }
     var r;
     try{ r=await sb.rpc('payout_account_collect',{ p_user:uid }); }
     catch(e){ r={ error:{ message:String(e&&e.message||e) } }; }
@@ -16748,7 +17002,7 @@
     }
     delete PAY_SHOWN[uid];
     await loadPayInbox();
-    loadPayout();          // 配分画面の「受け取り待ち」も消えるようにする
+    loadPayout();          // 配分画面の「確認待ち」も消えるようにする
   }
 
   // ============================================================
