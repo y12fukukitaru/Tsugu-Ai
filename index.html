@@ -1365,7 +1365,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260909-01';
+  var APP_BUILD='20260909-02';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -10270,6 +10270,369 @@
     await loadMyGoal();
   }
 
+  // ============================================================
+  // ===== 企業価値：3系統ぜんぶで見る（年買法・マルチプル・収益還元・時価純資産）
+  // ============================================================
+  //  EBITDA は「評価手法」ではなく「指標」です。年買法もマルチプルも、
+  //  EBITDA を入力の一部に使う、別々の手法にすぎません。
+  //  ここを分けて並べると、社長にとって全体が見えるようになります。
+  //
+  //    コスト（純資産）  … いまの資産価値 … 時価純資産法
+  //    インカム（収益）  … 将来の稼ぐ力   … 収益還元法
+  //    マーケット（比較）… 他社との比較   … EBITDAマルチプル
+  //    その折衷          … 実務で最多     … 年買法
+  //
+  //  ■ 相続税評価額は、ここでは金額を出しません
+  //    具体的に算定して示すのは税理士法52条の税務相談にあたるおそれが
+  //    あります。無償でも同じです。出すのは「簿価と実勢がこれだけ
+  //    ひらいている」という**算数**まで。そのうえで
+  //    「顧問税理士に確かめましょう」と問いを立てる側に回ります。
+  //    そのほうが価値もあります。社長がご自分の税理士に聞きに行き、
+  //    差の大きさに驚いて戻ってくるからです。
+  var VF_TAX = 0.34;                 // 実効税率の目安（収益還元法で使う）
+  var VF_DEF = { mult:5, years:3, capRate:20 };
+
+  function vfNum(v){ var n=Number(v); return isFinite(n)?n:0; }
+  function vfMan(n){
+    if(n===null||n===undefined||!isFinite(n)) return '—';
+    return (Math.round(n)||0).toLocaleString('ja-JP')+'万円';
+  }
+  //  打ち手を当てる前に写しを取る。元の入力を書き換えると、
+  //  画面の数字と保存する数字がずれる
+  function vfClone(d){
+    var o={}; for(var k in d){ if(Object.prototype.hasOwnProperty.call(d,k)) o[k]=d[k]; }
+    return o;
+  }
+
+  function vfEbitda(d){ return vfNum(d.op)+vfNum(d.dep); }
+
+  //  実質営業利益。空なら営業利益で代用する。
+  //  役員報酬の取り方だけで会社の値段が変わってしまうのを防ぐための数字なので、
+  //  入っているならそちらを優先する
+  function vfRealOp(d){
+    return (d.realOp==='' || d.realOp==null) ? vfNum(d.op) : vfNum(d.realOp);
+  }
+
+  //  ① 時価純資産（コスト）：決算書の純資産に、含み損益と未計上の債務を足し引き
+  function vfNetAsset(d){
+    return Math.round(vfNum(d.bsNet)+vfNum(d.adjEstate)+vfNum(d.adjIns)
+                     +vfNum(d.adjSec)-vfNum(d.adjRetire)+vfNum(d.adjOther));
+  }
+  //  ② 年買法（折衷・実務で最多）：時価純資産＋実質利益×年数
+  //     赤字のときに年数ぶんを引くと、時価純資産まで割り込んでしまう。
+  //     稼ぐ力がマイナスなら、上乗せは0として扱う
+  function vfNenbai(d){
+    var y=vfNum(d.years)||VF_DEF.years;
+    return Math.round(vfNetAsset(d)+Math.max(0, vfRealOp(d))*y);
+  }
+  //  ③ EBITDAマルチプル（マーケット）：EBITDA×倍率−純有利子負債
+  function vfMultiple(d){
+    var m=vfNum(d.mult)||VF_DEF.mult;
+    return Math.round(vfEbitda(d)*m+vfNum(d.cash)-vfNum(d.debt));
+  }
+  //  ④ 収益還元法（インカム・簡易）：税引後の実質利益÷資本還元率
+  //     中小は資本還元率が高く（＝リスクが大きく）出ます。既定20%は
+  //     「5年で元が取れる」に相当する、中小でよく使われる置き方
+  function vfIncome(d){
+    var r=vfNum(d.capRate)||VF_DEF.capRate;
+    if(r<=0) return null;
+    var after=Math.max(0, vfRealOp(d))*(1-VF_TAX);
+    return Math.round(after/(r/100)+vfNum(d.cash)-vfNum(d.debt));
+  }
+  //  ⑤ 清算価値：時価純資産−清算コスト。廃業は「価値がゼロ」ではない
+  function vfCloseVal(d){ return Math.round(vfNetAsset(d)-vfNum(d.closeCost)); }
+
+  function vfAll(d){
+    return { ebitda:vfEbitda(d), realOp:vfRealOp(d),
+             netAsset:vfNetAsset(d), nenbai:vfNenbai(d),
+             multiple:vfMultiple(d), income:vfIncome(d), close:vfCloseVal(d) };
+  }
+
+  //  簿価と実勢がどれだけ離れているか。ここが開いている会社ほど、
+  //  相続税評価との差も大きくなりやすい——ただし金額は出さない
+  function vfGap(d){
+    var bs=vfNum(d.bsNet), na=vfNetAsset(d), mk=vfNenbai(d);
+    return { bs:bs, netAsset:na, market:mk,
+             hidden:Math.round(na-bs),
+             ratio:(bs>0)? (mk/bs) : null };
+  }
+
+  // ---- 打ち手のカタログ ----
+  //  上げる（up）＝外に出すときの値段を上げる／銀行の見方をよくする
+  //  下げる（down）＝親族に渡しやすくする
+  //
+  //  ※ 下げる側は、いずれも一般に検討される打ち手を並べただけです。
+  //    個別の適否・金額・税務上の取扱いは顧問税理士の領分なので、
+  //    画面でも必ずそう伝えます。
+  var VF_ACTIONS=[
+    { id:'profit', dir:'up', label:'営業利益を増やす', unit:'年・万円', ph:'例 300',
+      why:'いちばん効きます。年買法・マルチプル・収益還元のすべての土台です',
+      apply:function(d,v){ d.op=vfNum(d.op)+v; if(d.realOp!=='' && d.realOp!=null) d.realOp=vfNum(d.realOp)+v; } },
+    { id:'cost', dir:'up', label:'固定費を減らす', unit:'年・万円', ph:'例 200',
+      why:'利益を増やすのと同じだけ効きます。実行しやすさが違うだけです',
+      apply:function(d,v){ d.op=vfNum(d.op)+v; if(d.realOp!=='' && d.realOp!=null) d.realOp=vfNum(d.realOp)+v; } },
+    { id:'repay', dir:'up', label:'手元資金で借入を返す', unit:'万円', ph:'例 1000',
+      why:'じつは株主価値は変わりません。現金が減って借入も減るので、差し引きが同じだからです。効くのは「利益で返したとき」です',
+      apply:function(d,v){ d.cash=vfNum(d.cash)-v; d.debt=vfNum(d.debt)-v; } },
+    { id:'mult', dir:'up', label:'社長依存を減らす・取引先を分散する', unit:'倍率', fixed:0.5,
+      why:'買い手が付ける倍率が上がる方向に働きます。ただし倍率は交渉で決まるもので、ここでの+0.5はあくまで目安です',
+      apply:function(d){ d.mult=vfNum(d.mult)+0.5; } },
+    { id:'idle', dir:'up', label:'遊休資産を売って、含み益を現金にする', unit:'含み益・万円', ph:'例 2000',
+      why:'時価純資産は変わりません（含み益が現金に変わるだけです）。それでもマルチプル法と収益還元法の株主価値は上がります。手元資金で借入を返しても価値が変わらないのと、ちょうど対照的です。※ 売却益には課税されるので、手取りは税引後になります',
+      apply:function(d,v){ d.cash=vfNum(d.cash)+v; d.bsNet=vfNum(d.bsNet)+v; d.adjEstate=vfNum(d.adjEstate)-v; } },
+    { id:'cleanup', dir:'up', label:'簿外債務・未払残業を認識して解消する', unit:'万円', ph:'例 500',
+      why:'いったん値段は下がります。それでもやる価値があるのは、M&Aの調査で見つかったときのほうが、はるかに大きく引かれるからです',
+      apply:function(d,v){ d.adjRetire=vfNum(d.adjRetire)+v; } },
+
+    { id:'retire', dir:'down', label:'役員退職金を支給する', unit:'万円', ph:'例 3000',
+      why:'純資産と現金が減ります。適正額の範囲は税務上の論点なので、必ず顧問税理士にご確認ください',
+      apply:function(d,v){ d.cash=vfNum(d.cash)-v; d.bsNet=vfNum(d.bsNet)-v; } },
+    { id:'insurance', dir:'down', label:'生命保険を活用する', unit:'万円', ph:'例 1000',
+      why:'資産計上額と解約返戻金の差のぶん、時価純資産が動きます',
+      warn:'保険をお勧めする場合は、募集人としてのお立場を必ず先に明示してください。顧問としての助言と、募集人としての勧誘は、同じ場で混ぜないでください',
+      apply:function(d,v){ d.adjIns=vfNum(d.adjIns)-v; } },
+    { id:'estate', dir:'down', label:'不動産を取得する', unit:'万円', ph:'例 5000',
+      why:'現金が不動産に変わります。評価と実勢の差については税理士の領分です',
+      apply:function(d,v){ d.cash=vfNum(d.cash)-v; d.adjEstate=vfNum(d.adjEstate)-v; } },
+    { id:'shokei', dir:'down', label:'事業承継税制（特例措置）を検討する', unit:'', fixed:0,
+      why:'この画面の数字は動きません。制度の適用には期限と継続要件があり、判断は税理士の領分です。話題として早めに出しておく価値があります',
+      apply:function(){} }
+  ];
+  function vfAction(id){
+    for(var i=0;i<VF_ACTIONS.length;i++) if(VF_ACTIONS[i].id===id) return VF_ACTIONS[i];
+    return null;
+  }
+  //  打ち手を順に当てる。picks は [{id, amount, when}]
+  function vfApply(d, picks){
+    var out=vfClone(d);
+    (picks||[]).forEach(function(p){
+      var a=vfAction(p.id); if(!a) return;
+      var v=(a.fixed!==undefined)?a.fixed:vfNum(p.amount);
+      a.apply(out, v);
+    });
+    return out;
+  }
+
+  // ---- マイルストーン：いつ何をすると、どこに着くか ----
+  var VF_STAGES=[['3m','3ヶ月'],['1y','1年'],['3y','3年']];
+  function vfTimeline(d, picks){
+    var cur=vfClone(d), out=[], done=[];
+    VF_STAGES.forEach(function(s){
+      var here=(picks||[]).filter(function(p){ return p.when===s[0]; });
+      cur=vfApply(cur, here);
+      done=done.concat(here);
+      out.push({ key:s[0], label:s[1], picks:here, all:done.slice(), d:vfClone(cur), v:vfAll(cur) });
+    });
+    return out;
+  }
+
+  // ---- どんな承継を考えているかで、見るべき値段が変わる ----
+  var VF_KINDS=[
+    ['family',   '親族内（お子さま・ご親族へ）'],
+    ['employee', '従業員へ（MBO／EBO）'],
+    ['ma',       '第三者へ（M&A）'],
+    ['close',    '廃業・清算'],
+    ['undecided','まだ決めていない']
+  ];
+  function vfKindName(k){
+    for(var i=0;i<VF_KINDS.length;i++) if(VF_KINDS[i][0]===k) return VF_KINDS[i][1];
+    return 'まだ決めていない';
+  }
+  //  main … その型でいちばん見るべき手法
+  //  notes … その型でつまずきやすいところ
+  function vfKindFocus(k){
+    if(k==='family') return { main:'netAsset',
+      lead:'親族へ渡すなら、まず見るのは<b>時価純資産</b>です。',
+      notes:['<b>相続税評価額は、この画面の数字とは別の計算方法（財産評価基本通達）で決まります。</b>連動しません。金額は税理士でなければ算定できません。',
+             '事業承継税制（特例措置）には期限と継続要件があります。使うつもりなら、早めに税理士へ。',
+             '<b>社長個人の連帯保証をどう外すか</b>が、実務ではいちばん重い論点になります。金融機関との話は早いほど有利です。'] };
+    if(k==='employee') return { main:'nenbai',
+      lead:'従業員へ渡すなら、見るのは<b>年買法</b>です。ただし——',
+      notes:['<b>値段を決めるのは会社の価値ではなく、買い手（従業員）が用意できる金額です。</b>いくら価値があっても、その方が借りられなければ成立しません。',
+             '個人保証の引継ぎが、いちばんの壁になります。引き受けられる方かどうかを先に確かめてください。',
+             '分割払い・持株会・種類株など、資金の壁を越える組み方があります。設計は専門家と。'] };
+    if(k==='ma') return { main:'nenbai',
+      lead:'第三者へ出すなら、<b>年買法</b>と<b>EBITDAマルチプル</b>の両方を見ます。',
+      notes:['実際の価格は、この試算からさらに<b>引かれる</b>ことが多いです。社長依存・許認可・簿外債務・未払残業が主な理由です。',
+             '買い手は必ず調査（デューデリジェンス）をします。<b>先に自分で見つけて直しておくほうが、必ず得です。</b>',
+             '倍率は業種と成長性で動きます。ここでの倍率は目安であって、相場の保証ではありません。'] };
+    if(k==='close') return { main:'close',
+      lead:'廃業なら、見るのは<b>清算価値</b>です。',
+      notes:['<b>廃業は「価値がゼロ」ではありません。</b>資産を売って債務を返した残りが手元に残ります。',
+             '退職金・原状回復・在庫処分・リースの解約——清算コストは思ったより大きく出ます。先に洗い出してください。',
+             '<b>廃業を決める前に、M&Aの値段を一度見てください。</b>清算価値より高いなら、譲る道のほうが従業員も残ります。'] };
+    return { main:'nenbai',
+      lead:'まだ決めていないなら、<b>三つの値段を並べて見る</b>ところから始めます。',
+      notes:['決めてから調べるのではなく、<b>知ってから決める</b>ほうが選べます。',
+             '同じ会社でも、渡す相手によって値段が変わります。それを知らないまま決めるのが、いちばんもったいない。',
+             'まずは「もし外に出すなら」「もし息子さんに渡すなら」を、数字で並べてみましょう。'] };
+  }
+
+  // ---- 画面：入力を集める / 描く ----
+  //  入力は4つのまとまりに分けます。ぜんぶ一度に並べると、
+  //  初回面談で「こんなに埋めるのか」と手が止まります。
+  //  埋まっていない欄は0として扱い、分かるところだけで動きます。
+  function vfRead(){
+    var g=function(id){ var e=$(id); return e?e.value:''; };
+    return {
+      op:vfNum(g('ev-op')), dep:vfNum(g('ev-dep')),
+      realOp:(g('ev-realop')===''?'':vfNum(g('ev-realop'))),
+      bsNet:vfNum(g('ev-bsnet')), cash:vfNum(g('ev-cash')), debt:vfNum(g('ev-debt')),
+      adjEstate:vfNum(g('ev-adj-estate')), adjIns:vfNum(g('ev-adj-ins')),
+      adjSec:vfNum(g('ev-adj-sec')), adjRetire:vfNum(g('ev-adj-retire')),
+      adjOther:vfNum(g('ev-adj-other')),
+      mult:vfNum(g('ev-mult'))||VF_DEF.mult,
+      years:vfNum(g('ev-years'))||VF_DEF.years,
+      capRate:vfNum(g('ev-caprate'))||VF_DEF.capRate,
+      closeCost:vfNum(g('ev-closecost')),
+      kind:g('ev-kind')||'undecided'
+    };
+  }
+  //  選ばれた打ち手を読む。金額が空のものは、まだ決めていないとみなして外す
+  function vfPicks(){
+    var out=[];
+    VF_ACTIONS.forEach(function(a){
+      var c=$('vfa-'+a.id); if(!c||!c.checked) return;
+      var amt=(a.fixed!==undefined)?a.fixed:vfNum(($('vfv-'+a.id)||{}).value);
+      if(a.fixed===undefined && amt<=0) return;
+      out.push({ id:a.id, amount:amt, when:(($('vfw-'+a.id)||{}).value)||'1y' });
+    });
+    return out;
+  }
+
+  //  ひとつの手法のカード。main に当たるものだけ濃く出す
+  function vfCard(title, val, note, main, tone){
+    var c = main ? (tone||'#1E3A66') : '#5A6981';
+    return '<div style="flex:1 1 165px;min-width:150px;background:'+(main?'#EFF3FB':'#F8F9FC')
+      +';border:'+(main?'1.5px solid #C9D6EA':'1px solid #E2E7EF')+';border-radius:11px;padding:11px 13px;">'
+      +'<div style="font-size:10.5px;color:'+c+';font-weight:700;">'+(main?'▶ ':'')+esc(title)+'</div>'
+      +'<div style="font-size:'+(main?'19px':'16px')+';font-weight:700;color:'+c+';margin-top:2px;">'+vfMan(val)+'</div>'
+      +'<div style="font-size:10px;color:#94A2B6;line-height:1.6;margin-top:3px;">'+note+'</div></div>';
+  }
+
+  function vfResultHtml(d){
+    var v=vfAll(d), f=vfKindFocus(d.kind), g=vfGap(d);
+    var h='<div style="border:1px solid #C9D6EA;background:#F8F9FC;border-radius:11px;padding:11px 13px;margin-bottom:10px;">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--navy);">'+esc(vfKindName(d.kind))+'</div>'
+      +'<div style="font-size:11.5px;color:#18202E;line-height:1.85;margin-top:3px;">'+f.lead+'</div>'
+      +'<ul style="margin:6px 0 0;padding-left:18px;font-size:11.5px;color:#5A6981;line-height:1.9;">'
+      +f.notes.map(function(x){ return '<li>'+x+'</li>'; }).join('')+'</ul></div>';
+
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">'
+      +vfCard('時価純資産法（コスト）', v.netAsset, '簿価純資産 ＋ 含み損益 − 未計上の債務', f.main==='netAsset', '#27684A')
+      +vfCard('年買法（折衷・実務で最多）', v.nenbai, '時価純資産 ＋ 実質利益 × '+(vfNum(d.years)||VF_DEF.years)+'年', f.main==='nenbai')
+      +vfCard('EBITDAマルチプル（マーケット）', v.multiple, 'EBITDA '+vfMan(v.ebitda)+' × '+(vfNum(d.mult)||VF_DEF.mult)+'倍 − 純有利子負債', f.main==='multiple')
+      +vfCard('収益還元法（インカム・簡易）', v.income, '税引後の実質利益 ÷ '+(vfNum(d.capRate)||VF_DEF.capRate)+'％ − 純有利子負債', f.main==='income')
+      +(d.kind==='close'||vfNum(d.closeCost)>0
+        ? vfCard('清算価値', v.close, '時価純資産 − 清算コスト', f.main==='close', '#8A6A12') : '')
+      +'</div>';
+
+    //  同じ会社に、値段は少なくとも三つ付く。ここを見せるのがこの画面の中身
+    h+='<div style="border:1.5px solid #E8C4C2;background:#FDF6F5;border-radius:11px;padding:11px 13px;margin-bottom:8px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:#A9403D;">同じ会社に、値段は少なくとも三つ付きます</div>'
+      +'<div style="font-size:11.5px;color:#18202E;line-height:1.95;margin-top:5px;">'
+      +'決算書の数字（簿価純資産）　<b>'+vfMan(g.bs)+'</b><br>'
+      +'いまの資産価値（時価純資産）<b>'+vfMan(g.netAsset)+'</b>'
+      +(g.hidden!==0?'　<span style="color:#A9403D;">（含み'+(g.hidden>0?'益':'損')+' '+vfMan(Math.abs(g.hidden))+'）</span>':'')+'<br>'
+      +'外に出すときの目安（年買法）<b>'+vfMan(g.market)+'</b>'
+      +(g.ratio!==null?'　<span style="color:#A9403D;">決算書の約'+(Math.round(g.ratio*10)/10)+'倍</span>':'')
+      +'</div>'
+      //  ★相続税評価額の金額は出さない。出すと税理士法52条の税務相談に
+      //    あたるおそれがある。ここでは問いを立てる側に回る
+      +'<div style="font-size:11.5px;color:#5A6981;line-height:1.9;margin-top:7px;border-top:1px dashed #E8C4C2;padding-top:7px;">'
+      +'そして<b style="color:#A9403D;">三つ目の値段があります。相続税評価額です。</b>'
+      +'ご親族に渡すときの税額を決めるのはこちらで、<b>財産評価基本通達という別の計算方法</b>で決まります。'
+      +'この画面の数字とは連動しません。<br>'
+      +'<b style="color:var(--navy);">金額は税理士でなければ算定できません。</b>'
+      +'この画面ではお出ししませんが、'+(g.ratio!==null&&g.ratio>=2?'決算書と実勢がこれだけひらいている会社は、相続税評価との差も大きくなりがちです。':'')
+      +'<b>顧問税理士に一度確かめておく価値があります。</b>'
+      +'<span style="color:#94A2B6;">（この画面は税務相談ではありません）</span></div></div>';
+
+    if(d.kind==='ma'||d.kind==='undecided'){
+      var r=evCalc(vfNum(d.op), vfNum(d.dep), vfNum(d.mult)||VF_DEF.mult, vfNum(d.cash), vfNum(d.debt), 0);
+      h+='<div style="font-size:11.5px;color:#5A6981;line-height:1.8;">'
+        +'参考：<b>買い手として</b>の譲受余力の目安は '+vfMan(r.buy)+'（自己資金の仮置き ＋ EBITDA×3の借入余力）です。</div>';
+    }
+    return h;
+  }
+
+  //  打ち手の一覧。上げる／下げるで分けて出す
+  function vfActionRow(a){
+    var amt=(a.fixed!==undefined)
+      ? '<span style="font-size:11px;color:#94A2B6;white-space:nowrap;">'+(a.fixed?('+'+a.fixed):'数字は動きません')+'</span>'
+      : '<input id="vfv-'+a.id+'" type="number" class="inp2" style="width:110px;" placeholder="'+esc(a.ph||'')+'">';
+    return '<div style="border-top:1px dashed var(--softline);padding:8px 2px;">'
+      +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
+      +'<label style="display:flex;gap:6px;align-items:center;flex:1;min-width:190px;font-size:12.5px;color:var(--ink);cursor:pointer;">'
+      +'<input id="vfa-'+a.id+'" type="checkbox" onchange="vfPlanRun()">'+esc(a.label)+'</label>'
+      +amt
+      +'<span style="font-size:10.5px;color:#94A2B6;">'+esc(a.unit||'')+'</span>'
+      +'<select id="vfw-'+a.id+'" class="inp2" style="width:88px;" onchange="vfPlanRun()">'
+      +VF_STAGES.map(function(s){ return '<option value="'+s[0]+'"'+(s[0]==='1y'?' selected':'')+'>'+s[1]+'</option>'; }).join('')
+      +'</select></div>'
+      +'<div style="font-size:11px;color:#5A6981;line-height:1.75;margin-top:3px;">'+esc(a.why)+'</div>'
+      +(a.warn?'<div style="font-size:11px;color:#A9403D;line-height:1.75;margin-top:3px;">⚠ '+esc(a.warn)+'</div>':'')
+      +'</div>';
+  }
+  function vfActionsHtml(){
+    var up=VF_ACTIONS.filter(function(a){ return a.dir==='up'; });
+    var dn=VF_ACTIONS.filter(function(a){ return a.dir==='down'; });
+    return '<div style="font-size:12.5px;font-weight:700;color:#27684A;margin:10px 0 0;">▲ 価値を上げる（外に出すとき・銀行の見方）</div>'
+      +up.map(vfActionRow).join('')
+      +'<div style="font-size:12.5px;font-weight:700;color:#8A6A12;margin:14px 0 0;">▼ 渡しやすくする（ご親族へ）</div>'
+      //  ここは税務の領分に触れるので、いちばん強い注意を先に置く
+      +'<div style="font-size:11px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:8px 11px;margin-top:5px;line-height:1.8;">'
+      +'ここに並ぶのは<b>一般に検討される打ち手</b>です。<b style="color:#A9403D;">個別の適否・金額・税務上の取扱いは、必ず顧問税理士にご確認ください。</b>'
+      +'実行の順序と時期を誤ると、かえって負担が増えることがあります。'
+      +'また、<b>下の数字が下がっても、相続税評価額が下がることを意味しません。</b>あちらは別の計算方法で決まります。</div>'
+      +dn.map(vfActionRow).join('');
+  }
+
+  //  こうしたら、こうなる。3ヶ月・1年・3年で並べる
+  function vfPlanHtml(d, picks){
+    if(!picks.length){
+      return '<div style="font-size:12px;color:#94A2B6;line-height:1.8;">'
+        +'上から打ち手を選び、金額と時期を入れると、<b>3ヶ月後・1年後・3年後に会社の値段がどうなるか</b>がここに並びます。</div>';
+    }
+    var f=vfKindFocus(d.kind), now=vfAll(d), tl=vfTimeline(d, picks);
+    var pick=function(v){ return v[f.main]; };
+    var h='<div style="font-size:11.5px;color:#5A6981;line-height:1.8;margin-bottom:6px;">'
+      +'<b style="color:var(--navy);">'+esc(vfKindName(d.kind))+'</b> なので、'
+      +'いちばん見るべき数字で並べています。ほかの手法の値も下に添えました。</div>';
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+    h+='<div style="flex:1 1 130px;background:#F8F9FC;border:1px solid #E2E7EF;border-radius:11px;padding:10px 12px;">'
+      +'<div style="font-size:10.5px;color:#94A2B6;font-weight:700;">いま</div>'
+      +'<div style="font-size:17px;font-weight:700;color:#5A6981;margin-top:2px;">'+vfMan(pick(now))+'</div></div>';
+    tl.forEach(function(t){
+      var diff=pick(t.v)-pick(now);
+      h+='<div style="flex:1 1 130px;background:'+(diff>=0?'#EFF6F0':'#FDF6F5')+';border:1px solid '+(diff>=0?'#BFE2CD':'#E8C4C2')+';border-radius:11px;padding:10px 12px;">'
+        +'<div style="font-size:10.5px;color:'+(diff>=0?'#27684A':'#A9403D')+';font-weight:700;">'+esc(t.label)+'後</div>'
+        +'<div style="font-size:17px;font-weight:700;color:'+(diff>=0?'#27684A':'#A9403D')+';margin-top:2px;">'+vfMan(pick(t.v))+'</div>'
+        +'<div style="font-size:10.5px;color:#5A6981;margin-top:2px;">'+(diff>=0?'+':'')+vfMan(diff).replace('万円','')+'万円</div>'
+        +'<div style="font-size:10px;color:#94A2B6;line-height:1.7;margin-top:4px;">'
+        +(t.picks.length? t.picks.map(function(p){ var a=vfAction(p.id); return a?esc(a.label):''; }).join('<br>') : '（この期間の打ち手なし）')
+        +'</div></div>';
+    });
+    h+='</div>';
+
+    var end=tl[tl.length-1].v;
+    h+='<div style="font-size:11.5px;color:#5A6981;line-height:1.9;margin-top:8px;border-top:1px dashed var(--softline);padding-top:7px;">'
+      +'3年後のほかの手法：時価純資産 <b>'+vfMan(end.netAsset)+'</b>／年買法 <b>'+vfMan(end.nenbai)+'</b>'
+      +'／マルチプル <b>'+vfMan(end.multiple)+'</b>／収益還元 <b>'+vfMan(end.income)+'</b></div>';
+    h+='<div style="font-size:11px;color:#94A2B6;line-height:1.8;margin-top:6px;">'
+      +'※ 打ち手がそのとおり実現した場合の試算です。実際の譲渡価格・買収価格を保証するものではありません。'
+      +'税務・法務の判断を含む打ち手は、実行前に必ず専門家にご確認ください。</div>';
+    return h;
+  }
+
+  //  入力か打ち手が変わるたびに引き直す。保存はしない（押したときだけ）
+  function vfPlanRun(){
+    var box=$('ev-plan'); if(!box) return;
+    var d=vfRead();
+    box.innerHTML=vfPlanHtml(d, vfPicks());
+    var r=$('ev-result'); if(r) r.innerHTML=vfResultHtml(d);
+  }
+
   // ===== 企業価値診断（EBITDA法）：診断→保存で顧客ダッシュボードに月次推移を表示 =====
   function evPrefill(){
     [['cf-op','ev-op'],['cf-dep','ev-dep'],['cf-cash','ev-cash'],['cf-debt','ev-debt']].forEach(function(p){
@@ -10293,20 +10656,55 @@
       +'</div>';
   }
   async function runValuation(custId){
-    var msg=$('ev-msg'); var box=$('ev-result');
+    var msg=$('ev-msg');
     var ymEl=$('ev-ym'); var ym=(ymEl&&ymEl.value)?ymEl.value:thisYM();
-    var op=Number(($('ev-op')||{}).value)||0, dep=Number(($('ev-dep')||{}).value)||0;
-    var mult=Number(($('ev-mult')||{}).value)||5;
-    var cash=Number(($('ev-cash')||{}).value)||0, debt=Number(($('ev-debt')||{}).value)||0;
+    var d=vfRead();
     var ownRaw=($('ev-own')||{}).value, own=Number(ownRaw)||0;
-    if(!op && !dep){ if(msg){msg.style.color='#A9403D';msg.textContent='営業利益または減価償却費を入力してください。';} return; }
-    var r=evCalc(op,dep,mult,cash,debt,own);
-    if(box) box.innerHTML=evResultHtml(r, mult, ownRaw!=='');
-    var row={ customer_id:custId, created_by:ME, ym:ym, op_profit:op, dep:dep, multiple:mult, cash:cash, debt:debt,
-      own_funds:(ownRaw===''?null:own), ebitda:r.ebitda, ev:r.ev, equity_value:r.equity, buy_power:r.buy };
-    var res=await sb.from('valuation_snapshots').upsert(row, {onConflict:'customer_id,ym'});
-    if(res.error){ if(msg){msg.style.color='#A9403D';msg.textContent='保存エラー：'+res.error.message+'（Supabaseで「Phase70」のSQL未実施の可能性があります）';} return; }
-    if(msg){msg.style.color='#27684A';msg.textContent=ym.replace('-','年')+'月分として保存しました。顧客ダッシュボードの「企業価値」に反映されます。';}
+    //  何も入っていないまま保存されると、履歴に0円の月が並びます。
+    //  稼ぐ力か財産か、どちらかは要る
+    if(!d.op && !d.dep && !d.bsNet){
+      if(msg){ msg.style.color='#A9403D';
+        msg.textContent='営業利益・減価償却費・簿価純資産のいずれかを入力してください。'; }
+      return;
+    }
+    var v=vfAll(d), picks=vfPicks();
+    var r=evCalc(d.op, d.dep, d.mult, d.cash, d.debt, own);
+    vfPlanRun();
+
+    //  equity_value は、これまでどおりマルチプル法の値を入れます。
+    //  顧客ダッシュボードの推移グラフと月次レポートが、この列を見ているので、
+    //  ここを別の手法に差し替えると過去の推移と地続きでなくなる
+    var row={ customer_id:custId, created_by:ME, ym:ym,
+      op_profit:d.op, dep:d.dep, multiple:d.mult, cash:d.cash, debt:d.debt,
+      own_funds:(ownRaw===''?null:own),
+      ebitda:v.ebitda, ev:v.ebitda*d.mult, equity_value:v.multiple, buy_power:r.buy };
+    //  足した列は、まだSQLを流していない環境だと保存に失敗します。
+    //  そのときは古い列だけで保存し直して、診断そのものは残す
+    var extra={ bs_net_assets:d.bsNet, adj_estate:d.adjEstate, adj_insurance:d.adjIns,
+      adj_securities:d.adjSec, adj_retire:d.adjRetire, adj_other:d.adjOther,
+      real_op_profit:(d.realOp===''?null:d.realOp),
+      nenbai_years:d.years, cap_rate:d.capRate, close_cost:d.closeCost,
+      val_net_asset:v.netAsset, val_nenbai:v.nenbai, val_multiple:v.multiple,
+      val_income:v.income, val_close:v.close,
+      succession_kind:d.kind, actions:(picks.length?picks:null) };
+    var full={}; for(var k in row) full[k]=row[k]; for(var k2 in extra) full[k2]=extra[k2];
+
+    var res=await sb.from('valuation_snapshots').upsert(full, {onConflict:'customer_id,ym'});
+    var partial=false;
+    if(res.error){
+      res=await sb.from('valuation_snapshots').upsert(row, {onConflict:'customer_id,ym'});
+      partial=!res.error;
+    }
+    if(res.error){
+      if(msg){ msg.style.color='#A9403D';
+        msg.textContent='保存エラー：'+res.error.message+'（Supabaseで「Phase70」のSQL未実施の可能性があります）'; }
+      return;
+    }
+    if(msg){
+      msg.style.color=partial?'#8A6A12':'#27684A';
+      msg.textContent=ym.replace('-','年')+'月分として保存しました。顧客ダッシュボードの「企業価値」に反映されます。'
+        +(partial?'　※ 含み損益・承継の型・打ち手は保存できませんでした。Supabaseで「企業価値（3系統）」のSQLを実行してください。':'');
+    }
     loadValHistory(custId);
   }
   async function loadValHistory(custId){
@@ -11339,26 +11737,68 @@
       +'<div class="ph" id="cs-pmi" style="font-size:13px;margin-top:18px;"><span class="ph-t">'+icoSvg('checks')+'PMI補助（統合100日チェックリスト）</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">M&A成立後の統合（PMI）を、<b style="color:#1E3A66;">買い手企業自身が進めるための進行管理ツール</b>です。標準チェックリスト（Day 1 → 30日 → 100日）を期限付きの課題として登録し、進み具合を見える化します。当プラットフォームおよびパートナーはPMIの実行を請け負いません。労務・法務・税務など個別の判断が必要な項目は、専門家ネットワークの専門家におつなぎします。</div>'
       +'<div id="pmi-body">読み込み中...</div>'
-      +'<div class="ph" id="cs-value" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 16.5 5.5-5.5 3.5 3.5L21 5"/><path d="M15 5h6v6"/></svg>企業価値診断（EBITDA法・毎月の推移を顧客と共有）</span></div>'
-      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">診断して保存すると、顧客ダッシュボードの「企業価値」に毎月の推移として表示されます。同じ月に再診断すると上書きされます。※ 簡易試算であり、実際の譲渡価格・買収価格を保証するものではありません。</div>'
+      +'<div class="ph" id="cs-value" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 16.5 5.5-5.5 3.5 3.5L21 5"/><path d="M15 5h6v6"/></svg>企業価値診断（3系統・毎月の推移を顧客と共有）</span></div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.75;">'
+        +'<b style="color:#1E3A66;">EBITDAは「評価手法」ではなく「指標」です。</b>年買法もマルチプルも、EBITDAを入力の一部に使う別々の手法にすぎません。'
+        +'ここでは<b>時価純資産法（コスト）・年買法（折衷）・EBITDAマルチプル（マーケット）・収益還元法（インカム）</b>を並べて出します。'
+        +'分かるところだけ入れれば動きます（空欄は0として扱います）。<br>'
+        +'診断して保存すると、顧客ダッシュボードの「企業価値」に毎月の推移として表示されます。同じ月に再診断すると上書きされます。'
+        +'※ 簡易試算であり、実際の譲渡価格・買収価格を保証するものではありません。</div>'
       +'<div class="cl-cols">'
       +'<div class="cl-col">'
       +'<div style="margin:0 0 8px;"><button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;" onclick="evPrefill()">↺ 資金繰りシミュレーターの値を取り込む</button></div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
-        +'<div><label class="fl">対象月</label><input id="ev-ym" type="month" class="inp2"></div>'
-        +'<div><label class="fl">営業利益（年・万円）</label><input id="ev-op" type="number" class="inp2" placeholder="例 1500"></div>'
-        +'<div><label class="fl">減価償却費（年・万円）</label><input id="ev-dep" type="number" class="inp2" placeholder="例 300"></div>'
-        +'<div><label class="fl">EV/EBITDA倍率</label><select id="ev-mult" class="inp2"><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option><option>8</option></select></div>'
-        +'<div><label class="fl">現預金（万円）</label><input id="ev-cash" type="number" class="inp2" placeholder="例 3000"></div>'
-        +'<div><label class="fl">有利子負債（万円）</label><input id="ev-debt" type="number" class="inp2" placeholder="例 6000"></div>'
-        +'<div><label class="fl">M&Aに使える自己資金（万円・任意）</label><input id="ev-own" type="number" class="inp2" placeholder="利益剰余金・余剰資金の目安"></div>'
+        +'<div><label class="fl">対象月</label><input id="ev-ym" type="month" class="inp2" onchange="vfPlanRun()"></div>'
+        +'<div style="flex:1 1 220px;min-width:200px;"><label class="fl">どんな承継をお考えですか</label>'
+          +'<select id="ev-kind" class="inp2" style="width:100%;" onchange="vfPlanRun()">'
+          +VF_KINDS.map(function(k){ return '<option value="'+k[0]+'"'+(k[0]==='undecided'?' selected':'')+'>'+k[1]+'</option>'; }).join('')
+          +'</select></div>'
       +'</div>'
+      //  ① 稼ぐ力。実質営業利益は、役員報酬の取り方で会社の値段が変わるのを防ぐ数字
+      +'<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin:12px 0 4px;">① 稼ぐ力</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+        +'<div><label class="fl">営業利益（年・万円）</label><input id="ev-op" type="number" class="inp2" placeholder="例 1500" oninput="vfPlanRun()"></div>'
+        +'<div><label class="fl">減価償却費（年・万円）</label><input id="ev-dep" type="number" class="inp2" placeholder="例 300" oninput="vfPlanRun()"></div>'
+        +'<div><label class="fl">実質営業利益（年・万円・任意）</label><input id="ev-realop" type="number" class="inp2" placeholder="役員報酬の適正化後" oninput="vfPlanRun()"></div>'
+      +'</div>'
+      +'<div style="font-size:10.5px;color:#94A2B6;line-height:1.7;margin-top:3px;">実質営業利益は、役員報酬の適正化と一時的な損益を除いた「ふだんの稼ぐ力」です。空欄なら営業利益で代用します。</div>'
+      //  ② 財産
+      +'<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin:12px 0 4px;">② 財産（決算書の数字）</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+        +'<div><label class="fl">簿価純資産（万円）</label><input id="ev-bsnet" type="number" class="inp2" placeholder="例 5000" oninput="vfPlanRun()"></div>'
+        +'<div><label class="fl">現預金（万円）</label><input id="ev-cash" type="number" class="inp2" placeholder="例 3000" oninput="vfPlanRun()"></div>'
+        +'<div><label class="fl">有利子負債（万円）</label><input id="ev-debt" type="number" class="inp2" placeholder="例 6000" oninput="vfPlanRun()"></div>'
+      +'</div>'
+      //  ③ 含み損益。ここが「決算書に出ていない値段」の正体
+      +'<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin:12px 0 4px;">③ 含み損益（決算書に出ていないぶん）</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+        +'<div><label class="fl">不動産（万円）</label><input id="ev-adj-estate" type="number" class="inp2" placeholder="＋で含み益" oninput="vfPlanRun()"></div>'
+        +'<div><label class="fl">保険（万円）</label><input id="ev-adj-ins" type="number" class="inp2" placeholder="解約返戻金−計上額" oninput="vfPlanRun()"></div>'
+        +'<div><label class="fl">有価証券（万円）</label><input id="ev-adj-sec" type="number" class="inp2" placeholder="＋で含み益" oninput="vfPlanRun()"></div>'
+        +'<div><label class="fl">未計上の退職金債務（万円）</label><input id="ev-adj-retire" type="number" class="inp2" placeholder="＋で入れて差し引く" oninput="vfPlanRun()"></div>'
+        +'<div><label class="fl">その他の調整（万円）</label><input id="ev-adj-other" type="number" class="inp2" placeholder="＋で加算" oninput="vfPlanRun()"></div>'
+      +'</div>'
+      //  ④ 前提。ここを変えると値段が動くことを、社長の前で見せられる
+      +'<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin:12px 0 4px;">④ 前提（動かすと値段が変わります）</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+        +'<div><label class="fl">EBITDA倍率</label><select id="ev-mult" class="inp2" onchange="vfPlanRun()"><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option><option>8</option></select></div>'
+        +'<div><label class="fl">年買法の年数</label><select id="ev-years" class="inp2" onchange="vfPlanRun()"><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>'
+        +'<div><label class="fl">資本還元率（％）</label><input id="ev-caprate" type="number" class="inp2" style="width:90px;" value="20" oninput="vfPlanRun()"></div>'
+        +'<div><label class="fl">清算コスト（万円・任意）</label><input id="ev-closecost" type="number" class="inp2" placeholder="退職金・原状回復など" oninput="vfPlanRun()"></div>'
+        +'<div><label class="fl">M&Aに使える自己資金（万円・任意）</label><input id="ev-own" type="number" class="inp2" placeholder="買い手側の試算用"></div>'
+      +'</div>'
+      +'<div style="font-size:10.5px;color:#94A2B6;line-height:1.7;margin-top:3px;">年買法の年数に理屈はありません（実務では2〜5年）。<b>「なぜ3年なのか」に答えられないのがこの手法の弱点</b>で、だからほかの手法と並べて見ます。</div>'
       +'<button class="btn2" style="margin-top:12px;" onclick="runValuation(\''+custId+'\')">診断して保存（顧客と共有）</button>'
       +'<div id="ev-msg" style="font-size:12px;margin-top:6px;"></div>'
+      //  ⑤ 打ち手とマイルストーン
+      +'<div class="ph" style="font-size:12.5px;margin-top:18px;"><span class="ph-t">🏁 こうしたら、こうなる（マイルストーン）</span></div>'
+      +vfActionsHtml()
       +'</div>'
       +'<div class="cl-col">'
       +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin:0 0 4px;">診断結果</div>'
-      +'<div id="ev-result"><div style="font-size:12px;color:#94A2B6;">左の項目を入力して診断すると、売り手・買い手それぞれの目線での企業価値が表示されます。</div></div>'
+      +'<div id="ev-result"><div style="font-size:12px;color:#94A2B6;">左の項目を入力すると、4つの手法の企業価値がここに並びます。</div></div>'
+      +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin:14px 0 4px;">打ち手を打つと、どうなるか</div>'
+      +'<div id="ev-plan"><div style="font-size:12px;color:#94A2B6;">左で打ち手を選ぶと、3ヶ月後・1年後・3年後の値段が並びます。</div></div>'
       +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin:14px 0 4px;">診断履歴（月次）</div>'
       +'<div id="ev-history">読み込み中...</div>'
       +'<div id="ev-goal"></div>'
