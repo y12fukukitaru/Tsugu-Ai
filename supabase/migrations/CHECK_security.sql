@@ -1,36 +1,36 @@
 -- =============================================================
--- 守りの点検（読むだけ。何も変えません）
+-- 守りの点検 v2（読むだけ。何も変えません）
 -- ---------------------------------------------------------------
---  マイグレーションに書いてある表は、こちらで確かめられます。
---  けれど Supabase の画面で先に作った表（profiles、chat_messages、
---  ai_shares、meetings_scheduled など）は、こちらからは見えません。
---  そこを見るための点検です。
+--  v1 は 552行 出てしまい、大事な行が埋もれました。原因は二つです。
 --
---  いちばん大事なこと：
---  このプラットフォームは静的なページなので、**公開鍵は誰でも読めます。**
---  ページのソースに載っているからです。それが正しい設計です。
---  ですから、守っているのは鍵ではなく **RLS（行の見張り）** だけです。
---  RLS の付いていない表が public に一つでもあれば、
---  **その表は登録した人全員に丸見えで、書き換えもできます。**
+--   ・anon への権限を全部数えていた。Supabase は既定で public の全表に
+--     anon と authenticated の権限を配ります。それが普通の姿で、
+--     守っているのは権限ではなく RLS です。**RLS が付いていれば
+--     anon に権限があっても入れません。**だから「権限がある」だけでは
+--     危なくない。危ないのは「RLS が無くて、権限がある」表です。
 --
---  結果は一枚の表で返します。**「気になる」の行が0件なら合格です。**
---  0件でなければ、その表をそのまま貼って教えてください。
+--   ・見張りの関数を知らなかった。is_company_member・is_sub_partner・
+--     ep_is_member・has_admin_perm などを「本人確認なし」と誤って
+--     数えていました。
+--
+--  v2 は、本当に危ないものだけを出します。**「合計」が0件なら合格です。**
 --
 -- 実行方法: Supabase Dashboard → SQL Editor に貼り付けて Run
 -- =============================================================
 with
 
--- ① RLS の付いていない表。ここが本丸
+--  ① RLS が付いていない表。ここが本丸。
+--     公開鍵はページのソースに載っているので、RLS が無い＝全員に見える
 no_rls as (
-  select '① 見張りの無い表' as "点検", c.relname::text as "対象",
-         '登録した人全員に見えます。すぐに直してください' as "何が起きるか"
+  select '① 見張りが無い' as "点検", c.relname::text as "対象",
+         '登録した人全員に丸見えです。すぐ直してください' as "何が起きるか"
     from pg_class c join pg_namespace n on n.oid = c.relnamespace
    where n.nspname='public' and c.relkind='r' and not c.relrowsecurity
 ),
 
--- ② RLS はあるが決まりが1つも無い。漏れないが画面が壊れる
+--  ② RLS はあるが決まりが1つも無い。漏れないが、画面が動かない
 no_policy as (
-  select '② 決まりの無い表', c.relname::text,
+  select '② 決まりが無い', c.relname::text,
          '誰にも見えません。この表を使う画面が動いていないはずです'
     from pg_class c join pg_namespace n on n.oid = c.relnamespace
    where n.nspname='public' and c.relkind='r' and c.relrowsecurity
@@ -38,64 +38,62 @@ no_policy as (
                       where p.schemaname='public' and p.tablename=c.relname)
 ),
 
--- ③ 未ログイン（anon）に開いている表
-anon_grant as (
-  select '③ 未ログインに開いた表',
-         table_name::text||'（'||privilege_type||'）',
-         '鍵さえあれば、ログインせずに触れます'
-    from information_schema.role_table_grants
-   where table_schema='public' and grantee='anon'
+--  ③ 誰でも通る決まり。条件がそのまま true のものだけ
+allow_all as (
+  select '③ 誰でも通る決まり',
+         schemaname||'.'||tablename||' / '||policyname||'（'||cmd||'）',
+         'いま：'||coalesce(qual, with_check)
+    from pg_policies
+   where schemaname in ('public','storage')
+     and btrim(coalesce(qual, with_check), '() ') = 'true'
 ),
 
--- ④ 条件がゆるい決まり。「ログインしていれば誰でも」は、
---    誰でも登録できるこのサービスでは全開と同じ
-loose as (
-  select '④ 条件のゆるい決まり',
+--  ④ 本人を一切見ていない決まり。関数呼び出しも auth も無いもの
+no_check as (
+  select '④ 本人を見ていない決まり',
          schemaname||'.'||tablename||' / '||policyname||'（'||cmd||'）',
-         'いま：'||left(coalesce(qual, with_check, '(なし)'), 120)
+         'いま：'||left(coalesce(qual, with_check), 90)
     from pg_policies
    where schemaname in ('public','storage')
      and coalesce(qual, with_check) is not null
-     and coalesce(qual, with_check) not like '%auth.uid()%'
-     and coalesce(qual, with_check) not like '%auth.jwt()%'
-     and coalesce(qual, with_check) not like '%_may(%'
-     and coalesce(qual, with_check) not like '%_can_see(%'
-     and coalesce(qual, with_check) not like '%is_admin%'
+     and btrim(coalesce(qual, with_check), '() ') <> 'true'
+     and coalesce(qual, with_check) not like '%auth.%'
+     and coalesce(qual, with_check) not like '%(%'
 ),
 
--- ⑤ 公開バケット。公開だと、URLを知る誰でもログイン無しで落とせる
+--  ⑤ 公開バケット。URLを知る誰でも、ログイン無しで落とせる
 pub_bucket as (
   select '⑤ 公開のバケット', id::text,
          'URLを知っていれば、ログイン無しで中身を落とせます'
     from storage.buckets where public
 ),
 
--- ⑥ 添付の決まりが、バケット名しか見ていない
-weak_storage as (
+--  ⑥ 添付の見張り。chat_att_may が入っていない決まりが残っていないか
+weak_att as (
   select '⑥ 添付の見張りが甘い', policyname||'（'||cmd||'）',
-         'いま：'||left(coalesce(qual, with_check,'(なし)'), 120)
+         'いま：'||left(coalesce(qual, with_check,'(なし)'), 90)
     from pg_policies
    where schemaname='storage' and tablename='objects'
+     and coalesce(qual, with_check) like '%chat-attach%'
      and coalesce(qual, with_check) not like '%chat_att_may%'
 ),
 
--- ⑦ 見張りを飛び越える関数で、呼ぶ人を絞っていないもの。
---    contract_open と contract_agree は、URLを知っている人が
---    ログイン無しで読む・同意するための入口なので、これでよい
+--  ⑦ 見張りを飛び越える関数のうち、中で誰も確かめていないもの。
+--     トリガ関数（handle_new_user など）は直接呼ぶものではないので除く。
+--     contract_open と contract_agree は、URLを知る人がログイン無しで
+--     読む・同意するための入口なので、これでよい
 open_fn as (
   select '⑦ 素通しの関数', p.proname::text||'()',
          '誰が呼んでもよい状態です。意図したものか確かめてください'
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
    where n.nspname='public' and p.prosecdef
+     and p.prorettype <> 'trigger'::regtype
      and p.proname not in ('contract_open','contract_agree')
-     and pg_get_functiondef(p.oid) not like '%auth.uid()%'
-     and pg_get_functiondef(p.oid) not like '%auth.jwt()%'
-     and pg_get_functiondef(p.oid) not like '%_is_admin%'
-     and pg_get_functiondef(p.oid) not like '%_can_see%'
+     and pg_get_functiondef(p.oid) not like '%auth.%'
      and has_function_privilege('authenticated', p.oid, 'execute')
 ),
 
--- ⑧ 契約が status 以外の列も書き換えられる状態か
+--  ⑧ 契約が status 以外も書き換えられる状態か
 contract_cols as (
   select '⑧ 契約の書き換え', column_name::text,
          'status 以外を書き換えられます。種別を partner に化けさせられます'
@@ -106,18 +104,34 @@ contract_cols as (
 ),
 
 all_rows as (
-  select * from no_rls      union all select * from no_policy
-  union all select * from anon_grant  union all select * from loose
-  union all select * from pub_bucket  union all select * from weak_storage
-  union all select * from open_fn     union all select * from contract_cols
+  select * from no_rls    union all select * from no_policy
+  union all select * from allow_all  union all select * from no_check
+  union all select * from pub_bucket union all select * from weak_att
+  union all select * from open_fn    union all select * from contract_cols
+),
+
+--  大事な表だけ、名指しで状態を出す。財務の話が載るのはこの4つ
+key_tables as (
+  select 'ⓘ 大事な表' as "点検", t.n as "対象",
+         case when to_regclass('public.'||t.n) is null then '表がありません'
+              when not (select relrowsecurity from pg_class
+                         where oid = to_regclass('public.'||t.n))
+                   then '⚠ 見張りが無い'
+              else '見張りあり／決まり '||
+                   (select count(*) from pg_policies
+                     where schemaname='public' and tablename=t.n)::text||'件'
+         end as "何が起きるか"
+    from (values ('profiles'),('chat_messages'),('valuation_snapshots'),
+                 ('ai_shares')) as t(n)
 )
 
 select "点検", "対象", "何が起きるか" from all_rows
+union all select * from key_tables
 union all
 select '── 合計 ──',
        case when (select count(*) from all_rows) = 0
-            then '気になる点はありません'
-            else (select count(*) from all_rows)::text || ' 件あります' end,
+            then '✅ 気になる点はありません'
+            else '⚠ '||(select count(*) from all_rows)::text||' 件あります' end,
        ''
  order by 1;
 -- =============================================================
