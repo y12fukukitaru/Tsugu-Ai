@@ -1380,7 +1380,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260910-02';
+  var APP_BUILD='20260910-03';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -3813,7 +3813,7 @@
           +'<div id="ma-form" class="hidden" style="border:1px dashed #C9D6EA;border-radius:11px;padding:12px 14px;margin:8px 0;background:#FBFCFE;">'
             +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
               +'<div style="flex:1;min-width:180px;"><label class="fl">顧客</label><select id="ma-cust" class="inp2" style="width:100%;"></select></div>'
-              +'<div><label class="fl">種類</label><select id="ma-type" class="inp2" style="width:120px;"><option>譲渡</option><option>譲受</option></select></div>'
+              +'<div><label class="fl">種類</label><select id="ma-type" class="inp2" style="width:120px;"><option>譲受</option><option>譲渡</option></select></div>'
               +'<div><label class="fl">想定価格（万円・任意）</label><input id="ma-price" type="number" class="inp2" style="width:160px;"></div>'
               +'<div><label class="fl">目標時期（任意）</label><input id="ma-date" type="date" class="inp2" style="width:170px;"></div>'
             +'</div>'
@@ -4922,9 +4922,16 @@
         var dd=daysBetween(d.target_date, now);
         if(dd!==null && dd>=0 && dd<=30) add(d.customer_id, 58, '<span class="tag gold">M&A目標日まであと'+dd+'日</span>');
       }
-      if(d.stage>=1 && d.stage<8 && d.updated_at){
+      //  停滞。検討・準備（stage 0）も含める。作っただけで動いていない案件が
+      //  いちばん忘れられやすい。どの段階で止まっているかを添え、
+      //  60日を超えたら灰色から金色に上げて、朝の便りで目に入るようにする
+      if(d.stage<8 && d.updated_at){
         var silent=Math.floor((now - new Date(d.updated_at))/(24*3600*1000));
-        if(silent>=30) add(d.customer_id, 45, '<span class="tag gray">M&A案件 '+silent+'日更新なし</span>');
+        if(silent>=30){
+          var stgN=(maStages(d)[d.stage]||{}).n||'';
+          add(d.customer_id, silent>=60?58:45,
+              '<span class="tag '+(silent>=60?'gold':'gray')+'">M&A案件 '+silent+'日停滞'+(stgN?'（'+esc(stgN)+'）':'')+'</span>');
+        }
       }
     });
     // ③ 支払予定（7日以内）
@@ -5412,6 +5419,29 @@
     {n:'完了', t:['PMI完了の確認','継続フォロー内容の合意']}
   ];
   var PMI_STAGE=7;
+  //  買い手（譲受）のための同じ9段階。
+  //  上の MA_STAGES は売り手の手順で書かれている。「ノンネームシートの作成」
+  //  「意向表明書の受領」「株式の引渡し」は、渡す側の動きだ。買い手は
+  //  受け取り、提出し、受領する。同じ段階でも、やることが逆向きになる。
+  //  ゴールは「顧問先が買い手になる」なので、こちらが主になる。
+  //
+  //  段階の名前と数は揃えてある。stage の数字を DB にそのまま持っていて、
+  //  PMI_STAGE=7 の判定も、進捗の割合も、両方の表で同じ位置を指すため。
+  //  変えるのは「やること」だけ
+  var MA_STAGES_BUY=[
+    {n:'検討・準備',     t:['買収の目的と希望条件（業種・規模・地域）の整理','自己資金と借入余力の確認（譲受余力の目安）','株主・ご家族の意向確認']},
+    {n:'企業価値評価',   t:['候補先の簡易評価（年買法・EBITDA倍率）','譲受余力との突き合わせ・上限価格の設定','シナジーと統合後の姿の仮置き']},
+    {n:'相手探し・打診', t:['ノンネームシートの受領・検討','候補先の絞り込み・打診','秘密保持契約（NDA）の締結']},
+    {n:'面談・交渉',     t:['トップ面談の実施','主要条件のすり合わせ','意向表明書の提出']},
+    {n:'基本合意',       t:['基本合意書（LOI）の締結','独占交渉期間の確保','金融機関への資金調達の打診']},
+    {n:'DD（買収調査）', t:['資料リストの提示・受領','財務・法務・労務DDの実施（専門家と）','検出事項の整理・条件調整']},
+    {n:'最終契約',       t:['最終条件の確定','株式譲渡契約（SPA）の締結','資金調達の実行・クロージング条件の確認']},
+    {n:'クロージング・PMI', t:['決済・株式の受領','従業員・取引先・金融機関への挨拶と開示','PMI 100日プランの開始']},
+    {n:'完了',           t:['PMI完了の確認','柱が一本増えたことの確認・次の一社への振り返り']}
+  ];
+  //  案件の種類で表を選ぶ。deal_type は作ったときに決まり、あとから変わらない。
+  //  done_tasks の鍵は「段階:番号」なので、途中で表が入れ替わると印がずれる
+  function maStages(d){ return (d && d.deal_type==='譲受') ? MA_STAGES_BUY : MA_STAGES; }
   var PMI_PLAN=[
     {p:'〜30日', t:['経営方針の説明会を実施','キーマン面談と引き留め策','主要取引先・金融機関への挨拶','給与・労務条件の現状維持を周知']},
     {p:'31〜60日', t:['業務フローの統合計画づくり','会計・システムの統合方針を決定','重複コストの洗い出し']},
@@ -5502,7 +5532,7 @@
     var m=$('ma-form-msg');
     var cid=($('ma-cust')||{}).value;
     if(!cid){ if(m){ m.style.color='#A9403D'; m.textContent='顧客を選択してください'; } return; }
-    var row={ customer_id:cid, deal_type:($('ma-type')||{}).value||'譲渡', stage:0,
+    var row={ customer_id:cid, deal_type:($('ma-type')||{}).value||'譲受', stage:0,
       expected_price:(($('ma-price')||{}).value===''?null:Number($('ma-price').value)),
       target_date:(($('ma-date')||{}).value||null) };
     var res=await sb.from('ma_deals').insert(row);
@@ -5536,10 +5566,11 @@
     if(!deals.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">進行中の案件はありません。「＋ 案件を追加」から登録すると、ステージ別チェックリストとPMIフォローが使えます。</div>'; return; }
     var h='';
     deals.forEach(function(d){
-      var st=MA_STAGES[d.stage]||MA_STAGES[0];
+      var STG=maStages(d);
+      var st=STG[d.stage]||STG[0];
       var done=d.done_tasks||[];
-      var prog=Math.round((d.stage)/(MA_STAGES.length-1)*100);
-      var stageOpts=MA_STAGES.map(function(x,i){ return '<option value="'+i+'"'+(i===d.stage?' selected':'')+'>'+(i+1)+'. '+x.n+'</option>'; }).join('');
+      var prog=Math.round((d.stage)/(STG.length-1)*100);
+      var stageOpts=STG.map(function(x,i){ return '<option value="'+i+'"'+(i===d.stage?' selected':'')+'>'+(i+1)+'. '+x.n+'</option>'; }).join('');
       var checks=st.t.map(function(t,i){
         var key=d.stage+':'+i, ok=done.indexOf(key)>=0;
         return '<label style="display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:#1E3A66;margin:5px 0;cursor:pointer;">'
@@ -5648,8 +5679,9 @@
     var answered=!pl.error && (pl.data||[]).length>0;
     var h='';
     (res.data||[]).forEach(function(d){
-      var st=MA_STAGES[d.stage]||MA_STAGES[0];
-      var prog=Math.round((d.stage)/(MA_STAGES.length-1)*100);
+      var STG=maStages(d);
+      var st=STG[d.stage]||STG[0];
+      var prog=Math.round((d.stage)/(STG.length-1)*100);
       h+='<div style="border:1px solid #EDF1F6;border-radius:11px;padding:12px 14px;margin-bottom:10px;background:#F8F9FC;">'
         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:13px;font-weight:700;color:#1E3A66;">M&Aの進捗（'+esc(d.deal_type)+'）</span><span class="tag blue">'+esc(st.n)+'</span></div>'
         +'<div style="display:flex;align-items:center;gap:10px;margin-top:8px;">'
@@ -19043,12 +19075,15 @@
     //  Lv.1 は顧問先を持たない在籍ステータス。料率は当たらない
     { lv:1, key:'Associate',       name:'アソシエイト', cond:'研修修了でスタート', need:{cl:0,hd:0}, fee:'—', off:'—' },
     { lv:2, key:'Senior',          name:'シニア', cond:'初の顧問契約を獲得', need:{cl:1,hd:0}, fee:'50%' },
-    { lv:3, key:'Executive',       name:'エグゼクティブ', cond:'顧問契約5件', need:{cl:5,hd:0}, fee:'60%' },
+    //  alt は「顧問先の成約（譲受）」で上がる別の道。顧問契約の件数か、
+    //  成約の件数か、どちらかを満たせばよい。ゴールは顧問先が買い手になること
+    //  なので、売り手の成約は数えない。件数はここだけで決めている
+    { lv:3, key:'Executive',       name:'エグゼクティブ', cond:'顧問契約5件、または顧問先の成約1件', need:{cl:5,hd:0}, alt:{hd:1}, fee:'60%' },
     //  プレミアムは基本70%。30社以上でスケールメリットとして80%になる。
     //  ただし80%になるのは個人の認定パートナーだけで、EP-II（所属営業型）に
     //  所属している方は70%が上限。本部が一律10%を受け取るためで、
     //  そこに80%を重ねると継の取り分が無くなる。判定は rankFeeRate で行う。
-    { lv:4, key:'Premium Partner', name:'プレミアム', cond:'顧問契約10件', need:{cl:10,hd:0}, fee:'70%', scale:{cl:30, fee:'80%'} }
+    { lv:4, key:'Premium Partner', name:'プレミアム', cond:'顧問契約10件、または顧問先の成約3件', need:{cl:10,hd:0}, alt:{hd:3}, fee:'70%', scale:{cl:30, fee:'80%'} }
   ];
   async function loadPartnerGrowth(){
     var box=$('pg-body'); if(!box) return;
@@ -19058,14 +19093,20 @@
       var ids=(pr.error?[]:(pr.data||[])).map(function(x){return x.id;});
       cl=ids.length;
       if(ids.length){
-        var md=await sb.from('ma_deals').select('customer_id,stage').in('customer_id',ids);
-        if(!md.error){ (md.data||[]).forEach(function(d){ if((d.stage||0)>=7) hd++; }); }
+        var md=await sb.from('ma_deals').select('customer_id,stage,deal_type').in('customer_id',ids);
+        //  成約＝クロージング以降（stage 7・8）。買い手（譲受）だけを数える。
+        //  顧問先が会社を売っても、ゴール「買い手になる」には近づいていない
+        if(!md.error){ (md.data||[]).forEach(function(d){ if((d.stage||0)>=7 && d.deal_type==='譲受') hd++; }); }
       }
     }catch(e){}
     window.__clientCount=cl;   // 「本業と連携」の母数チップで使う
     // 目安レベル判定
     var lv=1;
-    PG_LEVELS.forEach(function(L){ if(cl>=L.need.cl && hd>=L.need.hd) lv=Math.max(lv,L.lv); });
+    PG_LEVELS.forEach(function(L){
+      var byClients=(cl>=L.need.cl && hd>=L.need.hd);
+      var byDeals=!!(L.alt && hd>=L.alt.hd);
+      if(byClients || byDeals) lv=Math.max(lv,L.lv);
+    });
     var next = PG_LEVELS.filter(function(L){ return L.lv===lv+1; })[0]||null;
     function bar(label, v, tgt){
       if(!tgt) return '';
@@ -19083,7 +19124,12 @@
       var done=(L.lv<=lv), isCur=(L.lv===lv+1)||(lv===4&&L.lv===4);
       if(lv===4) { done=(L.lv<=4); isCur=false; }
       var inner='';
-      if(L.lv===lv+1){ inner = bar('顧問契約', cl, L.need.cl); }
+      if(L.lv===lv+1){
+        inner = bar('顧問契約', cl, L.need.cl);
+        //  もう一本の道。どちらかが満ちれば上がる、と見えるように並べる
+        if(L.alt) inner += '<div style="font-size:9.5px;color:#94A2B6;margin-top:4px;text-align:left;">または</div>'
+                        + bar('顧問先の成約（譲受）', hd, L.alt.hd);
+      }
       var st = done ? '<div style="font-size:9px;color:#fff;background:#27684A;border-radius:99px;padding:1px 8px;display:inline-block;margin-top:6px;">'+(L.lv===lv?'現在のレベル':'達成')+'</div>'
         : (isCur ? '<div style="font-size:9px;color:#fff;background:#C39B3F;border-radius:99px;padding:1px 8px;display:inline-block;margin-top:6px;">次の目標</div>'
         : '<div style="font-size:10px;color:#94A2B6;margin-top:6px;">今後</div>');
@@ -19119,11 +19165,14 @@
     // 次のレベルまでのサマリー
     if(next){
       var needCl=Math.max(0, next.need.cl-cl);
+      var needHd=next.alt ? Math.max(0, next.alt.hd-hd) : null;
       var parts=[];
       if(needCl>0) parts.push('顧問契約 あと'+needCl+'件');
+      //  成約の道があるなら並べて見せる。片方が0なら「条件達成」になる
+      if(needHd!==null && needHd>0 && needCl>0) parts.push('または 顧問先の成約 あと'+needHd+'件');
       h+='<div style="margin-top:12px;border:1.5px solid #C9D6EA;background:#F5F9FE;border-radius:11px;padding:12px 14px;font-size:13px;color:#1E3A66;">'
         +'<b>Lv.'+next.lv+' '+next.name+'</b> まで：'+(parts.length?parts.join('・'):'条件達成！運営の認定をお待ちください')
-        +'<span style="font-size:11px;color:#5A6981;">（現在：顧問契約 '+cl+'件）</span>'
+        +'<span style="font-size:11px;color:#5A6981;">（現在：顧問契約 '+cl+'件・顧問先の成約 '+hd+'件）</span>'
       +'</div>';
     } else {
       h+='<div style="margin-top:12px;border:1.5px solid #CFE3D6;background:#F2F8F4;border-radius:11px;padding:12px 14px;font-size:13px;color:#27684A;"><b>最高レベル（Lv.4 プレミアム）の条件を満たしています。</b>いつもありがとうございます！</div>';
