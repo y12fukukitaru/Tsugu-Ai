@@ -1380,7 +1380,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260910-03';
+  var APP_BUILD='20260911-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -3625,6 +3625,10 @@
         +'</div>'
         +'<div class="panel" id="sec-ma"><div class="ph">買い手になる</div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">厚くなった地盤を、次の一社を引き受ける力に変えます。会社・事業を譲り受ける方向性を担当パートナーがAIで検討し、ここにご提案します。進めたいと思われたら「メッセージ」でお知らせください。</div>'
+          +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin:2px 0 6px;">買いたい条件</div>'
+          +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">どんな会社を引き受けたいか。書いておくと、担当パートナーが案件を探す起点になります。担当が代わりに書くこともあります。</div>'
+          +'<div id="bc-box" style="margin-bottom:14px;">読み込み中...</div>'
+          +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin:2px 0 6px;">担当パートナーからの提案</div>'
           +'<div id="my-ma">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-market"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8h14l-3.5-3.5"/><path d="M21 16H7l3.5 3.5"/></svg>Tsugime -結- 投資・融資・M&A（プラットフォーム内マッチング）</span></div>'
@@ -4011,7 +4015,7 @@
     window.__eff=eff;
     $('app-body').innerHTML=view;
     if(eff==='customer' && ACCESS==='finance'){ loadAcct(); }
-    else if(eff==='customer'){ loadDashHero(); loadMyCash(); loadMyCancel(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyGoal(); loadMyReports(); loadMyObr(); loadMyMa(); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); loadUnpaid('customer'); loadAgentInsights(); knvInit(); }
+    else if(eff==='customer'){ loadDashHero(); loadMyCash(); loadMyCancel(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyGoal(); loadMyReports(); loadMyObr(); loadMyMa(); loadBuyCriteria(ME,'bc'); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); loadUnpaid('customer'); loadAgentInsights(); knvInit(); }
     else if(eff==='consultant'){ if(EP_ME) loadEp(); loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadUnpaid('partner'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); loadAgentInsights(); knvInit(); }
     else {
       // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
@@ -4806,12 +4810,17 @@
       var pd=await sb.from('pdca_items').select('customer_id,title,due_date,updated_at,status').eq('status','active').in('customer_id',ids);
       if(!pd.error) pdcaItems=pd.data||[];
     }
-    var maDeals=[], maPulses=[];
+    var maDeals=[], maPulses=[], interests=[];
     if(ids.length){
       var md=await sb.from('ma_deals').select('customer_id,stage,target_date,updated_at,deal_type').in('customer_id',ids);
       if(!md.error) maDeals=md.data||[];
       var mp=await sb.from('pmi_pulses').select('customer_id,ym,score').eq('ym',thisYM()).in('customer_id',ids);
       if(!mp.error) maPulses=mp.data||[];
+      //  顧客が Tsugime の案件に出した関心。朝の便りで拾う。表が無い環境では空のまま
+      try{
+        var mi=await sb.from('market_interests').select('from_id,listing_id,created_at').in('from_id',ids);
+        if(!mi.error) interests=mi.data||[];
+      }catch(e){}
     }
     var meets=[];
     if(ids.length){
@@ -4820,7 +4829,7 @@
     }
     var nextMeet={};
     meets.forEach(function(m){ if(!nextMeet[m.customer_id]) nextMeet[m.customer_id]=m; }); // 最も近い1件
-    CL_CACHE={clients:clients,cnt:cnt,lastMsg:lastMsg,unread:unread,funding:funding,pays:pays,repDrafts:repDrafts,maDeals:maDeals,maPulses:maPulses,pdca:pdcaItems,nextMeet:nextMeet,acctFin:acctFin};
+    CL_CACHE={clients:clients,cnt:cnt,lastMsg:lastMsg,unread:unread,funding:funding,pays:pays,repDrafts:repDrafts,maDeals:maDeals,maPulses:maPulses,interests:interests,pdca:pdcaItems,nextMeet:nextMeet,acctFin:acctFin};
     var totalUnread=0; clients.forEach(function(c){ totalUnread+=(unread[c.id]||0); });
     UNREAD.total=totalUnread; UNREAD.perClient=unread; applyNotifBadges();
     var sharesN=clients.filter(function(c){ return cnt[c.id]; }).length;
@@ -4933,6 +4942,14 @@
               '<span class="tag '+(silent>=60?'gold':'gray')+'">M&A案件 '+silent+'日停滞'+(stgN?'（'+esc(stgN)+'）':'')+'</span>');
         }
       }
+    });
+    // ③'''' 顧客が Tsugime の案件に関心を出した（14日以内）
+    //   経営者が自分で買う意思を表明した瞬間。ここで動かないと、せっかくの
+    //   一手が「メッセージで」の頃と変わらない。返信待ちの次に高く置く
+    (CL_CACHE.interests||[]).forEach(function(x){
+      if(!x.created_at) return;
+      var age=Math.floor((now - new Date(x.created_at))/(24*3600*1000));
+      if(age>=0 && age<=14) add(x.from_id, 72, '<span class="tag gold">案件に関心あり（'+(age===0?'今日':age+'日前')+'）→ 橋渡しを</span>');
     });
     // ③ 支払予定（7日以内）
     (CL_CACHE.pays||[]).forEach(function(pmt){
@@ -11791,6 +11808,11 @@
       +'<div id="mn-result" style="margin-top:10px;"></div>'
       +'<div id="mn-history" style="margin-top:14px;"></div>'
       +'<div class="ph" id="cs-mna" style="font-size:13px;margin-top:18px;">買い手になる提案（AI）</div>'
+      //  買いたい条件と、経営者が出した関心。AIの提案より先に置く。
+      //  経営者が何を望んでいるかを見てから提案を作る順にしたい
+      +'<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin:0 0 4px;">買いたい条件（経営者と共有・代行で書けます）</div>'
+      +'<div id="cbc-box" style="margin-bottom:12px;">読み込み中...</div>'
+      +'<div id="cbc-int" style="margin-bottom:12px;"></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">AIでこの顧客向けのM&A方向性を作成し、提案メモとして送れます。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
         +'<div><label class="fl">年間利益・余剰資金(万円)</label><input id="ma2-profit" type="number" class="inp2" placeholder="例 3000"></div>'
@@ -11940,6 +11962,7 @@
     reloadClientActions(custId);
     loadClientInterests(custId); loadClShares(custId); loadClCash(custId);
     loadClientMna(custId);
+    loadBuyCriteria(custId,'cbc'); loadClientBuyInterests(custId);
     loadClientInsurance(custId);
     loadClientDiag(custId);
     loadClientNotes(custId);
@@ -12878,7 +12901,7 @@
     return common
       +'【経営者ダッシュボードの画面ガイド】'
       +'【数字の扱い・必ず守る】経営者に試算表など月次の数字の入力を求めない。経営者の画面に入力欄は無く、担当パートナーが入力する。試算表が手元にあるなら「メッセージで担当パートナーへ送る」と案内する。ご本人が入れるのは「いまの手元資金」だけ。画面の名前は次の一覧の名前だけを使い、それ以外の画面名を作らない。'
-      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=業務の自動化診断／買い手になる=会社・事業を譲り受ける方向性の提案(担当パートナーがAIで検討)／Tsugime -結-（投資・融資・M&A）=マッチング掲載。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
+      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=業務の自動化診断／買い手になる=「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ／Tsugime -結-（投資・融資・M&A）=マッチング掲載。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
@@ -15891,6 +15914,7 @@
     var res=await sb.from('market_listings').select('*').eq('status','open').order('created_at',{ascending:false}).limit(100);
     if(res.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">'+esc(res.error.message)+'<br><span style="color:#94A2B6;">（Phase41のSQL未実施の可能性があります）</span></div>'; return; }
     MK_CACHE=(res.data||[]).filter(function(r){ return r.owner_id!==ME; });
+    await loadMyInterests();
     renderMarket();
   }
   function renderMarket(){
@@ -15906,11 +15930,113 @@
         +'<span class="tag gray">'+esc(mkKindLabel(r.kind))+'・'+esc(mkAmount(r.amount))+'</span></div>'
         +'<div style="font-size:11.5px;color:#94A2B6;margin-top:4px;">'+who+(r.rate?(' ／ 条件：'+esc(r.rate)):'')+'</div>'
         +(r.detail?'<div style="font-size:12px;color:#5A6981;margin-top:6px;line-height:1.6;">'+esc(r.detail)+'</div>':'')
-        +'<div style="font-size:11px;color:#94A2B6;margin-top:8px;">👉 この案件が気になる場合は「メッセージ」で担当パートナーにご連絡ください。担当が橋渡しします。</div>'
+        //  買う意思を表明する一手。これまでは「メッセージで」としか書かれておらず、
+        //  経営者は最後まで受け身だった。出した関心は担当パートナーの朝の便りに載る
+        +(MK_INT[r.id]
+          ? '<div style="font-size:12px;color:#27684A;background:#EBF2ED;border-radius:8px;padding:7px 10px;margin-top:8px;">✓ 関心を出しました。担当パートナーが橋渡しします。</div>'
+          : '<div id="mk-int-'+r.id+'" style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">'
+            +'<input id="mk-msg-'+r.id+'" class="inp2" style="flex:1;min-width:160px;font-size:12px;" placeholder="ひとこと（任意）例 詳しく聞きたい">'
+            +'<button class="btn2" style="padding:6px 13px;font-size:12px;white-space:nowrap;" onclick="sendInterest(\''+r.id+'\')">関心を出す</button>'
+            +'</div>')
       +'</div>';
     });
     box.innerHTML=h;
   }
+  // ===== 買いたい条件 =====
+  //  経営者が「買い手として何を探しているか」を置く場所。パートナーが案件を
+  //  探す起点になる。経営者本人が書いても、パートナーが代行で書いてもよい。
+  //  pfx は入力欄の id の頭。経営者画面は 'bc'、カルテは 'cbc'。同じ画面に
+  //  両方は出ないが、id が衝突しないよう分けておく
+  var BC_PURPOSES=['売上・シェア拡大','人材・技術の獲得','エリア拡大','川上・川下への統合','その他'];
+  function bcFormHtml(cid, pfx, d){
+    d=d||{};
+    var opts=BC_PURPOSES.map(function(p){ return '<option'+(d.purpose===p?' selected':'')+'>'+esc(p)+'</option>'; }).join('');
+    return '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
+      +'<div style="flex:1;min-width:160px;"><label class="fl">業種</label><input id="'+pfx+'-ind" class="inp2" style="width:100%;" value="'+escA(d.industries||'')+'" placeholder="例 製造業、建設業"></div>'
+      +'<div style="flex:1;min-width:120px;"><label class="fl">地域</label><input id="'+pfx+'-region" class="inp2" style="width:100%;" value="'+escA(d.region||'')+'" placeholder="例 関東"></div>'
+      +'<div style="flex:1;min-width:140px;"><label class="fl">年商・規模の目安</label><input id="'+pfx+'-size" class="inp2" style="width:100%;" value="'+escA(d.size_note||'')+'" placeholder="例 年商1〜3億円"></div>'
+      +'<div><label class="fl">予算（万円）</label><input id="'+pfx+'-budget" type="number" class="inp2" style="width:120px;" value="'+(d.budget_man==null?'':Number(d.budget_man))+'" placeholder="例 5000"></div>'
+      +'<div><label class="fl">目的</label><select id="'+pfx+'-purpose" class="inp2">'+opts+'</select></div>'
+      +'</div>'
+      +'<div style="margin-top:8px;"><label class="fl">メモ（任意）</label><input id="'+pfx+'-memo" class="inp2" style="width:100%;" value="'+escA(d.memo||'')+'" placeholder="例 後継者不在の会社を引き受けたい。従業員はそのまま"></div>'
+      +'<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">'
+      +'<button class="btn2" onclick="saveBuyCriteria(\''+cid+'\',\''+pfx+'\')">保存</button>'
+      +'<span id="'+pfx+'-msg" style="font-size:12px;"></span>'
+      +(d.updated_at?'<span style="font-size:11px;color:#94A2B6;">最終更新 '+esc(jstDay(d.updated_at))+'</span>':'')
+      +'</div>';
+  }
+  async function loadBuyCriteria(cid, pfx){
+    var box=$(pfx+'-box'); if(!box || !cid) return;
+    var r=await sb.from('buy_criteria').select('*').eq('customer_id',cid).maybeSingle();
+    if(r.error){
+      //  表がまだ無い環境では、静かに何も出さない。SQL未実施で画面が赤くならないように
+      if(/relation|does not exist|schema cache/i.test(String(r.error.message||''))){ box.innerHTML=''; return; }
+      box.innerHTML='<div style="font-size:12px;color:#A9403D;">'+esc(r.error.message)+'</div>'; return;
+    }
+    box.innerHTML=bcFormHtml(cid, pfx, r.data||{});
+  }
+  async function saveBuyCriteria(cid, pfx){
+    var m=$(pfx+'-msg');
+    var v=function(id){ var e=$(pfx+'-'+id); return e?String(e.value||'').trim():''; };
+    var budget=v('budget');
+    var row={ customer_id:cid, industries:v('ind')||null, region:v('region')||null, size_note:v('size')||null,
+              budget_man:(budget===''?null:Number(budget)), purpose:v('purpose')||null, memo:v('memo')||null,
+              updated_by:ME, updated_at:new Date().toISOString() };
+    var r=await sb.from('buy_criteria').upsert(row, { onConflict:'customer_id' });
+    if(r.error){ if(m){ m.style.color='#A9403D'; m.textContent='保存できませんでした：'+r.error.message; } return; }
+    if(m){ m.style.color='#27684A'; m.textContent=(pfx==='bc')?'保存しました。担当パートナーに届きます。':'保存しました。経営者の画面にも出ます。'; }
+  }
+  //  カルテ：この顧客が Tsugime の案件に出した関心。パートナーが橋渡しに動く起点。
+  //  loadClientInterests は別の用途で既にあるので、名前を分ける
+  async function loadClientBuyInterests(cid){
+    var box=$('cbc-int'); if(!box || !cid) return;
+    var r=await sb.from('market_interests').select('listing_id,message,created_at').eq('from_id',cid).order('created_at',{ascending:false}).limit(20);
+    if(r.error || !(r.data||[]).length){ box.innerHTML=''; return; }
+    var ids=r.data.map(function(x){ return x.listing_id; });
+    var titles={};
+    try{
+      var l=await sb.from('market_listings').select('id,title,status').in('id',ids);
+      if(!l.error) (l.data||[]).forEach(function(x){ titles[x.id]=x; });
+    }catch(e){}
+    var h='<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin:0 0 4px;">この顧客が関心を出した案件</div>';
+    r.data.forEach(function(x){
+      var t=titles[x.listing_id]||{};
+      h+='<div style="font-size:12px;color:#18202E;border:1px solid #EDF1F6;border-radius:9px;padding:7px 10px;margin:4px 0;background:#FBFCFE;">'
+        +'<b>'+esc(t.title||'（案件）')+'</b>'
+        +(t.status&&t.status!=='open'?' <span class="tag gray">'+esc(mkStatusLabel(t.status))+'</span>':'')
+        +'<span style="font-size:11px;color:#94A2B6;margin-left:6px;">'+esc(jstDay(x.created_at))+'</span>'
+        +(x.message?'<div style="font-size:11.5px;color:#5A6981;margin-top:2px;">「'+esc(x.message)+'」</div>':'')
+        +'</div>';
+    });
+    box.innerHTML=h;
+  }
+
+  // ===== 関心を出す =====
+  //  経営者が Tsugime の案件に、自分で関心を出す。これまでは「メッセージで
+  //  担当パートナーに」としか書かれておらず、買う意思を表明する一手が無かった
+  var MK_INT={};   // 自分が関心を出した案件の id
+  async function loadMyInterests(){
+    MK_INT={};
+    if(!ME) return;
+    try{
+      var r=await sb.from('market_interests').select('listing_id').eq('from_id',ME);
+      if(!r.error) (r.data||[]).forEach(function(x){ MK_INT[x.listing_id]=1; });
+    }catch(e){}
+  }
+  async function sendInterest(id){
+    var msgEl=$('mk-msg-'+id), out=$('mk-int-'+id);
+    var txt=msgEl?String(msgEl.value||'').trim():'';
+    var r=await sb.from('market_interests').insert({ listing_id:id, from_id:ME, message:(txt||null) });
+    if(r.error){
+      var em=String(r.error.message||'');
+      //  二度押し。もう出ているので、出た状態に描き直すだけでよい
+      if(/duplicate|unique/i.test(em)){ MK_INT[id]=1; renderMarket(); return; }
+      if(out){ out.innerHTML='<span style="font-size:12px;color:#A9403D;">送れませんでした：'+esc(em)+'</span>'; }
+      return;
+    }
+    MK_INT[id]=1; renderMarket();
+  }
+
   async function loadMarketBroker(){
     var box=$('market-broker'); if(!box)return;
     var res=await sb.from('market_listings').select('*').order('created_at',{ascending:false}).limit(200);
