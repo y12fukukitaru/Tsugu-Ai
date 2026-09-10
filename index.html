@@ -1380,7 +1380,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260910-01';
+  var APP_BUILD='20260910-02';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -1710,7 +1710,7 @@
   function navDefs(r){
     // 顧問税理士として招かれている場合は、数字の入力だけの画面にする
     if(r==='customer' && ACCESS==='finance') return [['sec-flow','月次数字の入力']];
-    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値・試算結果'],['sec-ai','AI自動化診断'],['sec-ma','M&A活用'],['sec-market','Tsugime -結-'],['sec-sec','継ナビくん']];
+    if(r==='customer') return [['sec-flow','ダッシュボード'],['sec-reports','月次レポート'],['sec-mypdca','経営課題'],['sec-billpay','お支払い'],['sec-cash','財務・資金繰り'],['sec-value','企業価値・試算結果'],['sec-ai','AI自動化診断'],['sec-ma','買い手になる'],['sec-market','Tsugime -結-'],['sec-sec','継ナビくん']];
     // 運営は admin_role で見えるメニューを絞る（未設定は owner 扱い）
     if(r==='admin') return adminNavAll().filter(function(it){ return adminCanSee(it[0]); });
     // 以降はパートナー
@@ -1743,9 +1743,23 @@
     if(r==='admin') return KNV_ABSORBED.filter(function(id){ return id!=='sec-support'; });
     return KNV_ABSORBED;
   }
+  //  メニューには出さないが、画面としては残すもの。goSec で開ける。
+  //
+  //  各種シミュレーター（相続・贈与／株対策／医療法人の持分／退職金／価格転嫁）は、
+  //  「顧問先が買い手になり、会社を買って柱を増やす」というゴールの道筋に
+  //  ありません。渡す側の道具です。メニューの一枠を使うほどではないので、
+  //  「本業と連携」の中から開く形に下げます。
+  //
+  //  KNV_ABSORBED に足さないのは、あちらが「継ナビくんのパネルに本体ごと
+  //  取り込んだもの」だからです。意味が違うものを一つの箱に混ぜると、
+  //  次に触る人が取り違えます。navDefs には残します。showSection が
+  //  パネルを束ねるのに要るためです。
+  var NAV_TUCKED={ consultant:['sec-sozoku'] };
+  function navTucked(r){ return NAV_TUCKED[r]||[]; }
   function effectiveNav(r){
     var ab=knvAbsorbed(r);
-    var all=navDefs(r).filter(function(it){ return ab.indexOf(it[0])<0; });
+    var tk=navTucked(r);
+    var all=navDefs(r).filter(function(it){ return ab.indexOf(it[0])<0 && tk.indexOf(it[0])<0; });
     var p=loadPrefs();
     var conf=(p.nav&&p.nav[r])||null;
     if(!conf) return all;
@@ -3609,8 +3623,8 @@
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">保険（事業保障・損害保険・養老保険）や相続・贈与などの試算は担当パートナーが行い、ここに共有されます。試算のご希望や前提条件の変更は「メッセージ」でお伝えください。</div>'
           +'<div id="my-ins" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
-        +'<div class="panel" id="sec-ma"><div class="ph">利益のM&A活用 提案</div>'
-          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">利益や余剰資金をM&A（会社・事業の買収）で活かす方向性を、担当パートナーがAIで検討し、ここにご提案します。ご関心・ご希望は「メッセージ」でお知らせください。</div>'
+        +'<div class="panel" id="sec-ma"><div class="ph">買い手になる</div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">厚くなった地盤を、次の一社を引き受ける力に変えます。会社・事業を譲り受ける方向性を担当パートナーがAIで検討し、ここにご提案します。進めたいと思われたら「メッセージ」でお知らせください。</div>'
           +'<div id="my-ma">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-market"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8h14l-3.5-3.5"/><path d="M21 16H7l3.5 3.5"/></svg>Tsugime -結- 投資・融資・M&A（プラットフォーム内マッチング）</span></div>'
@@ -3694,6 +3708,10 @@
                   +'ただし<b style="color:var(--navy);">実行の手順は現行の「認定パートナー 禁止行為ガイドライン」が優先します</b>。'
                   +'ご自身が有資格の場合の取り扱いは、実行の前に運営へご確認ください。')
             +'</div>'
+          //  各種シミュレーターの入口。左メニューから外したので、ここが唯一の扉。
+          //  本業（保険・不動産・士業）の相談で使う道具なので、この画面が居場所として自然
+          +'<div style="font-size:12px;color:var(--muted);margin:-6px 0 14px;line-height:1.8;">相続・贈与、株対策、医療法人の持分、退職金、価格転嫁の試算は '
+            +'<a onclick="goSec(\'sec-sozoku\')" style="color:#2C5DA8;cursor:pointer;font-weight:600;">各種シミュレーター</a> から開けます。</div>'
           +'<div id="biz-body">読み込み中...</div>'
         +'</div>'
         +(EP_ME?epPanelHtml(false):'')
@@ -8517,7 +8535,7 @@
         +'<div style="font-size:13px;color:#18202E;line-height:2;">'
         +'① <a onclick="goCash()" style="color:#2C5DA8;cursor:pointer;font-weight:600;">いまの手元資金</a> を入れる（数字ひとつ・30秒。薄いかどうかが、その場で分かります）<br>'
         +'② <a onclick="knvOpenAsk()" style="color:#2C5DA8;cursor:pointer;font-weight:600;">継ナビくん</a> に、いま気になっていることを一つ聞く（24時間・何でも）<br>'
-        +'③ <a onclick="goSec(\'sec-value\')" style="color:#2C5DA8;cursor:pointer;font-weight:600;">承継シミュレーション</a> を体験（「この会社を買ったら？」「いま譲るなら？」を30秒で試算）'
+        +'③ <a onclick="goSec(\'sec-value\')" style="color:#2C5DA8;cursor:pointer;font-weight:600;">承継シミュレーション</a> で「この会社を買ったら？」を体験（30秒。買い手としての余力が、数字で分かります）'
         +'</div>'
         +'<div style="font-size:11.5px;color:#5A6981;margin-top:8px;line-height:1.7;">試算表などの月次の数字は、担当パートナーが入力します。ご自身で入れるのは①だけです。</div>'
         +'</div>';
@@ -9220,7 +9238,7 @@
   }
   async function saveMaNote(custId){
     var msg=$('ma2-msg'); var txt=window.__maForText||''; if(!txt) return;
-    var note='【M&A活用のご提案】\n';
+    var note='【買い手になるためのご提案】\n';
     try{ var a=txt.indexOf('['), b=txt.lastIndexOf(']'); var arr=JSON.parse(txt.slice(a,b+1));
       arr.forEach(function(it,i){ note+=(i+1)+'. '+(it['方向性']||it['戦略']||'')+'\n　対象: '+(it['ターゲット像']||it['対象']||'')+'\n　シナジー: '+(it['期待シナジー']||it['期待効果']||'')+'\n　留意点: '+(it['留意点']||it['リスク']||'')+'\n'; });
     }catch(err){ note+=txt; }
@@ -11740,7 +11758,7 @@
       +'</div>'
       +'<div id="mn-result" style="margin-top:10px;"></div>'
       +'<div id="mn-history" style="margin-top:14px;"></div>'
-      +'<div class="ph" id="cs-mna" style="font-size:13px;margin-top:18px;">M&A活用提案（AI）</div>'
+      +'<div class="ph" id="cs-mna" style="font-size:13px;margin-top:18px;">買い手になる提案（AI）</div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">AIでこの顧客向けのM&A方向性を作成し、提案メモとして送れます。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
         +'<div><label class="fl">年間利益・余剰資金(万円)</label><input id="ma2-profit" type="number" class="inp2" placeholder="例 3000"></div>'
@@ -12443,7 +12461,7 @@
     h+=pcard('gr','③ 成長投資（余力を投資へ）','生まれた余力を成長に回す',[
       '設備・DX投資に補助金を活用（ものづくり／IT導入／省力化／事業再構築 補助金 等）',
       'AI・自動化で生産性向上（「AI自動化診断」の結果を実行へ）',
-      '余剰資金の運用・M&Aで成長（「M&A活用」パネル）'
+      '余剰資金の運用・M&Aで成長（「買い手になる」パネル）'
     ]);
     h+='<div style="font-size:11px;color:#94A2B6;margin-top:8px;line-height:1.7;">※ 金融機関へは資金繰り表・経営計画を示して対話を。認定経営革新等支援機関の関与も有効です。本診断は概算の目安であり、実際の調達可否・条件・税務上の取扱いは金融機関や専門家の確認が必要です。</div>';
     h+='<div style="border-top:1px dashed #E2E7EF;margin-top:14px;padding-top:12px;">'
@@ -12798,7 +12816,7 @@
     if(aisecPortal()==='consultant'){
       return common
         +'【パートナーポータルの画面ガイド】'
-        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全4章10レッスン)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介／営業ツール=課題ヒアリング診断(見込み客との商談用)／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（投資・融資・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／各種シミュレーター=事業承継・株対策/医療法人持分/退職金／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ)。'
+        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全4章10レッスン)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（投資・融資・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ)。'
         +'操作説明書は右下パネルの「サポート」タブから開けます。毎朝の「今日の一手」とお知らせは右下ボタンのバッジに届きます。';
     }
     //  運営がここに落ちていました。運営コンソールを開いている方に
@@ -12828,7 +12846,7 @@
     return common
       +'【経営者ダッシュボードの画面ガイド】'
       +'【数字の扱い・必ず守る】経営者に試算表など月次の数字の入力を求めない。経営者の画面に入力欄は無く、担当パートナーが入力する。試算表が手元にあるなら「メッセージで担当パートナーへ送る」と案内する。ご本人が入れるのは「いまの手元資金」だけ。画面の名前は次の一覧の名前だけを使い、それ以外の画面名を作らない。'
-      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=業務の自動化診断／M&A活用=利益のM&A活用の提案／Tsugime -結-（投資・融資・M&A）=マッチング掲載。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
+      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=業務の自動化診断／買い手になる=会社・事業を譲り受ける方向性の提案(担当パートナーがAIで検討)／Tsugime -結-（投資・融資・M&A）=マッチング掲載。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
@@ -16273,7 +16291,7 @@
   // ---- 疑似UI（ステージ）の部品。実画面の縮小再現なので、ダークモードでも色は固定 ----
   var TG_NAV=[['flow','ダッシュボード'],['growth','成長ロードマップ'],['training','研修プログラム'],
     ['sales','営業ツール'],['clients','顧客管理'],['pdca','課題PDCA'],['madeals','M&A案件'],
-    ['reports','レポート承認'],['knowledge','ナレッジ'],['sozoku','各種シミュレーター'],['sec','継ナビくん']];
+    ['reports','レポート承認'],['knowledge','ナレッジ'],['sec','継ナビくん']];
   // on＝選択中のナビキー、main＝右側の本文HTML
   function tgShell(on, main){
     var nav=TG_NAV.map(function(x){
@@ -19626,7 +19644,7 @@
       hint:'責めずに「皆さん同じです」と共感してから、「選択肢が多いうちに整理だけでも」と提案する。',
       sol:'承継・M&Aの選択肢づくり',
       solDesc:'親族承継・従業員承継・M&A・存続の道を整理し、御社に合ったロードマップを設計。相手探しはTsuguAiのマッチングの場につながります。',
-      feat:'M&A活用・TsuguAiマーケット' },
+      feat:'買い手になる・Tsugime -結-' },
     { cat:'人手・人件費', ic:'🤖',
       q:'人手不足や人件費について、「改善に取り組みたい」と感じていませんか？',
       sub:'請求書・シフト・日報などの毎月の作業は、AIと自動化で減らすことができます。',
