@@ -87,10 +87,23 @@ open_fn as (
          '誰が呼んでもよい状態です。意図したものか確かめてください'
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
    where n.nspname='public' and p.prosecdef
+     --  prokind='f' は「ふつうの関数」。集約や窓関数を混ぜると
+     --  pg_get_functiondef が落ちて、点検そのものが動かなくなる
+     and p.prokind = 'f'
      and p.prorettype <> 'trigger'::regtype
      and p.proname not in ('contract_open','contract_agree')
      and pg_get_functiondef(p.oid) not like '%auth.%'
      and has_function_privilege('authenticated', p.oid, 'execute')
+     --  中で別の関数に見張りを任せている場合がある。
+     --  invoice_* は invoice_is_admin() を、ep_affiliation は
+     --  ep_is_admin() を呼んでいて、その先で auth.uid() を見ている。
+     --  一段たどってから判断しないと、守っている関数まで並んでしまう
+     and not exists (
+       select 1 from pg_proc g join pg_namespace gn on gn.oid = g.pronamespace
+        where gn.nspname='public' and g.oid <> p.oid and g.prokind = 'f'
+          and pg_get_functiondef(p.oid) like '%'||g.proname||'(%'
+          and pg_get_functiondef(g.oid) like '%auth.%'
+     )
 ),
 
 --  ⑧ 契約が status 以外も書き換えられる状態か
