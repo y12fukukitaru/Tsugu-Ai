@@ -760,10 +760,14 @@
   .upd-bar button{font-family:inherit;font-size:12.5px;font-weight:700;border:none;border-radius:8px;
     padding:7px 15px;background:#C39B3F;color:#0E1B33;cursor:pointer;white-space:nowrap;}
   .upd-bar .x{background:none;color:rgba(255,255,255,.6);font-weight:400;padding:7px 6px;font-size:15px;}
-  .knv-fab{position:fixed;right:18px;bottom:18px;z-index:70;width:72px;height:72px;border-radius:50%;background:#0e2038;border:2.5px solid #cfa860;box-shadow:0 10px 30px rgba(6,12,24,.45);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;animation:knv-float 3.6s ease-in-out infinite;}
-  .knv-fab:hover{transform:scale(1.1) translateY(-2px);box-shadow:0 16px 38px rgba(6,12,24,.5);}
+  /* 呼び出し口の大きさと位置。PC版は 88px・端から32px。
+     画面の隅にぴたりと寄せると「閉じるボタン」に見えて押されないので、
+     少し内側に浮かせて、押していいものだと分かるようにしている。
+     小さい画面では場所を食うので、下の @media で 72px・18px に戻す */
+  .knv-fab{position:fixed;right:32px;bottom:32px;z-index:70;width:88px;height:88px;border-radius:50%;background:#0e2038;border:3px solid #cfa860;box-shadow:0 12px 34px rgba(6,12,24,.5),0 0 0 6px rgba(195,155,63,.13);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;animation:knv-float 3.6s ease-in-out infinite;}
+  .knv-fab:hover{transform:scale(1.1) translateY(-2px);box-shadow:0 18px 42px rgba(6,12,24,.55),0 0 0 9px rgba(195,155,63,.18);}
   .knv-fab:active{transform:scale(.94);}
-  .knv-fab svg{width:42px;height:42px;display:block;}
+  .knv-fab svg{width:52px;height:52px;display:block;}
   @keyframes knv-float{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
   /* 呼びかけたいとき（未読・提案があるとき）はぴょこんと跳ねる */
   .knv-fab.hop{animation:knv-hop 1.1s cubic-bezier(.28,.84,.42,1) 2;}
@@ -774,8 +778,12 @@
      週表示の中身は 514px 必要で、枠線2＋余白24＋縦スクロールバー約15を足すと
      555px。600px にして、1日あたり約72pxの余裕を持たせている。
      ここを狭めると土曜が切れて日付が読めなくなるので注意 */
-  .knv-panel{position:fixed;right:14px;bottom:14px;z-index:71;width:min(600px,calc(100vw - 24px));height:min(820px,calc(100vh - 60px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(6,12,24,.45);display:flex;flex-direction:column;overflow:hidden;
-    transform-origin:calc(100% - 22px) calc(100% + 8px);animation:knvOpen .34s cubic-bezier(.34,1.42,.5,1);}
+  /*  右下と下の余白は、継ナビくん（端から32px・大きさ88px）の真ん中が
+      パネルの角から56pxの位置に来るように合わせてある。
+      transform-origin をそこに置くと、パネルが継ナビくん自身から
+      膨らんで出てくるように見える。FABの大きさを変えたらここも直すこと */
+  .knv-panel{position:fixed;right:20px;bottom:20px;z-index:71;width:min(600px,calc(100vw - 24px));height:min(820px,calc(100vh - 60px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(6,12,24,.45);display:flex;flex-direction:column;overflow:hidden;
+    transform-origin:calc(100% - 56px) calc(100% - 56px);animation:knvOpen .34s cubic-bezier(.34,1.42,.5,1);}
   .knv-panel.max{width:min(920px,calc(100vw - 28px));height:calc(100vh - 24px);bottom:12px;}
   /* 開く：右下の継ナビくんの位置からふわっと膨らんで出てくる */
   @keyframes knvOpen{
@@ -821,7 +829,14 @@
   .knv-foot{padding:10px 12px;border-top:1px solid var(--line);background:var(--card);flex-shrink:0;}
   .knv-foot .ai-sugrow{margin-bottom:8px;max-height:56px;overflow:hidden;}
   body.dark .knv-panel{background:var(--card);}
-  @media(max-width:600px){ .knv-panel{right:8px;bottom:8px;width:calc(100vw - 16px);height:calc(100vh - 60px);} }
+  /*  小さい画面では、大きな呼び出し口が本文を隠してしまう。
+      元の 72px・端から18px に戻し、パネルもほぼ画面いっぱいに広げる */
+  @media(max-width:600px){
+    .knv-fab{right:18px;bottom:18px;width:72px;height:72px;border-width:2.5px;box-shadow:0 10px 30px rgba(6,12,24,.45);}
+    .knv-fab svg{width:42px;height:42px;}
+    .knv-panel{right:8px;bottom:8px;width:calc(100vw - 16px);height:calc(100vh - 60px);
+      transform-origin:calc(100% - 46px) calc(100% - 46px);}
+  }
   /* 継ナビくんの顔チップと名前ラベル（チャットの発言者表示） */
   .tsg-face{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:11px;background:#0e2038;flex:0 0 auto;margin-top:2px;}
   .tsg-face svg{width:26px;height:26px;display:block;}
@@ -1365,7 +1380,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260909-02';
+  var APP_BUILD='20260910-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -13233,6 +13248,7 @@
     knvShowTab('chat');
     knvMaxRestore();
     fab.classList.remove('hidden');
+    knvOutsideBind();
     knvAskPvClear(); knvAskBindPaste();
     renderSecLog();
     if((window.__eff||'')==='admin') knvAdminBadge();
@@ -13301,6 +13317,7 @@
     if(!p||!fab) return;
     if(KNV_CLOSE_T){ clearTimeout(KNV_CLOSE_T); KNV_CLOSE_T=null; }
     if(open){
+      KNV_OPEN_AT=Date.now();   // 外側を押したら閉じる仕掛けの見送り時間の起点
       // 継ナビくんはパネルへ吸い込まれるように消え、入れ替わりでパネルが膨らむ
       fab.classList.remove('back','hop');
       fab.classList.add('leaving');
@@ -13332,6 +13349,50 @@
       fab.classList.add('back');
       setTimeout(function(){ fab.classList.remove('back'); }, 520);
     }
+  }
+  // ===== 外側を押したら閉じる =====
+  //  開けっぱなしのパネルが画面をふさいだままになるのを防ぐ。×を探さなくても、
+  //  向こう側の画面をひと押しすれば戻れる、という当たり前の動きにする。
+  //
+  //  書きかけの質問は消えません。閉じるのはパネルを隠すだけで、
+  //  入力欄の中身はそのまま残り、開き直せば続きから書けます。
+  var KNV_OPEN_AT=0;
+  //  継ナビくんのパネル（71）より前に出るもの。ここを押しても閉じない。
+  //  予定の小窓（.cpk-bg・80）はパネルの中から開くので、これを外側と
+  //  みなすと、開いた予定を読もうとした瞬間に土台ごと消えてしまう
+  var KNV_KEEP_ID=['knv-panel','knv-fab','manual-modal'];
+  var KNV_KEEP_CLASS=['cpk-bg','upd-bar'];
+  //  押された場所が「閉じなくてよい側」か。closest() を使わずに親を辿るのは、
+  //  SVGの中を押されても確実に上まで行けるようにするため。
+  //  SVG要素の className は文字列ではないので、そこも見てから比べる
+  function knvKeepOpen(el){
+    for(var n=el; n && n!==document; n=n.parentNode){
+      if(n.id && KNV_KEEP_ID.indexOf(n.id)>=0) return true;
+      var c=n.className;
+      if(c && typeof c==='string'){
+        for(var i=0;i<KNV_KEEP_CLASS.length;i++){
+          if((' '+c+' ').indexOf(' '+KNV_KEEP_CLASS[i]+' ')>=0) return true;
+        }
+      }
+    }
+    return false;
+  }
+  function knvOutside(e){
+    var p=$('knv-panel');
+    if(!p || p.classList.contains('hidden') || p.classList.contains('closing')) return;
+    //  開いたその瞬間の押下で閉じてしまわないように見送る。
+    //  画面のあちこちから knvToggle(true) や knvAsk() で開けるので、
+    //  「押された場所が継ナビくんかどうか」だけでは守り切れない
+    if(Date.now()-KNV_OPEN_AT < 400) return;
+    if(knvKeepOpen(e.target)) return;
+    knvToggle(false);
+  }
+  //  click ではなく mousedown で拾う。click だと、開くきっかけになった
+  //  その一押しが document まで上がってきて、開いた直後に閉じてしまう
+  function knvOutsideBind(){
+    if(window.__KNV_OUTSIDE) return;
+    window.__KNV_OUTSIDE=1;
+    document.addEventListener('mousedown', knvOutside, true);
   }
   // 質問文を入れた状態で継ナビくんの窓口を開く
   function knvAsk(q){
