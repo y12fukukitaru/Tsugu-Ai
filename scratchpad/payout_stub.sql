@@ -1,3 +1,18 @@
+-- =============================================================
+-- ⛔ これは「試験用の土台」です。本番では絶対に実行しないでください。
+--    表を drop します。Supabase の SQL Editor に貼らないこと。
+--    使うのは、手元の PostgreSQL に本番の写しを組むときだけです。
+-- =============================================================
+--  間違えて本番に貼られたときの止め金。Supabase にしかいない役割が
+--  見つかったら、何もせずに止まります
+do $guard$ begin
+  if exists (select 1 from pg_roles
+              where rolname in ('supabase_admin','supabase_auth_admin','authenticator')) then
+    raise exception
+      '⛔ ここは本番です。このファイルは試験用の土台で、表を消します。実行しません。';
+  end if;
+end $guard$;
+
 -- 口座まわりの試験用の最小限の写し
 drop schema if exists auth cascade;
 create schema auth;
