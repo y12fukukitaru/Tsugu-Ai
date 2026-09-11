@@ -46,7 +46,7 @@ function takeVar(name) {
 }
 const base =
   'function esc(s){ return String(s==null?"":s).replace(/[&<>"\']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;","\'":"&#39;"}[c];}); }' +
-  takeFn('finFmt') + takeArr('JOURNEY_Q') + takeVar('JOURNEY_YEAR') + takeFn('journeyPhase') +
+  takeFn('finFmt') + takeArr('JOURNEY_Q') + takeFn('journeyYM') + takeFn('journeyPhase') +
   takeFn('meetingScript') + takeFn('meetingScriptHtml');
 const M = new Function(base + 'var asked=[]; function knvAsk(q){ asked.push(q); } var MSCRIPT_LAST=null;' + takeFn('meetingScriptAsk') +
   'return {script:meetingScript, html:meetingScriptHtml, ask:function(sc){ MSCRIPT_LAST=sc; meetingScriptAsk("c1"); return asked; }};')();
@@ -57,19 +57,19 @@ const ready = { score: 40, axes: [{ k: 'cash', l: '自己資金', score: 25 }, {
 // ① 節目ごとに見せる数字が変わる
 // ---------------------------------------------------------------
 {
-  const s1 = M.script({ days: 20, months: 3, m: { opRate: 8, debtYears: 6, cashMonths: 2.5 }, snap: { score: 70, runway: 5 }, pil: { count: 1, done: 0, next: null }, ready: ready, bc: {} });
+  const s1 = M.script({ pos: { mi: 0 }, months: 3, m: { opRate: 8, debtYears: 6, cashMonths: 2.5 }, snap: { score: 70, runway: 5 }, pil: { count: 1, done: 0, next: null }, ready: ready, bc: {} });
   is('第1：月次データ・資金のもち・現預金月商倍率', s1.numbers.map(x => x.l), ['月次データ', '手元資金のもち', '現預金の月商倍率']);
   is('第1の問いは資料と気になるお金', s1.questions[0], '試算表は毎月、税理士の先生からいつ届きますか？');
   ok('第1のつながりは「第2で現金を増やす」', /第2の節目で「現金を増やす」/.test(s1.link));
-  const s2 = M.script({ days: 120, months: 6, m: { opRate: 8, debtYears: 6, cashMonths: 2.5 }, snap: { score: 70, runway: 5 }, pil: { count: 1, done: 0, next: null }, ready: ready, bc: {} });
+  const s2 = M.script({ pos: { mi: 4 }, months: 6, m: { opRate: 8, debtYears: 6, cashMonths: 2.5 }, snap: { score: 70, runway: 5 }, pil: { count: 1, done: 0, next: null }, ready: ready, bc: {} });
   is('第2：資金のもち・営業利益率・現預金月商倍率', s2.numbers.map(x => x.l), ['手元資金のもち', '営業利益率', '現預金の月商倍率']);
   ok('第2のつながりは「自己資金」「借入余力」', /「自己資金」「借入余力」/.test(s2.link));
-  const s3 = M.script({ days: 200, months: 6, m: { opRate: 8, debtYears: 6, cashMonths: 2.5 }, snap: { score: 70, runway: 5 }, pil: { count: 1, done: 0, next: null }, ready: ready, bc: { purpose: 'x' } });
+  const s3 = M.script({ pos: { mi: 7 }, months: 6, m: { opRate: 8, debtYears: 6, cashMonths: 2.5 }, snap: { score: 70, runway: 5 }, pil: { count: 1, done: 0, next: null }, ready: ready, bc: { purpose: 'x' } });
   is('第3：債務償還年数・準備度・柱', s3.numbers.map(x => x.l), ['債務償還年数', '買い手になる準備度', '柱']);
   ok('第3の準備度は弱い軸を添える（null は除く）', /いちばん弱い軸は「自己資金」（25）/.test(s3.numbers[1].why));
   ok('第3の問いに弱い軸と買いたい条件', /どんな会社なら引き受けたいですか/.test(s3.questions.join('')) && /準備度でいちばん弱いのは「自己資金」/.test(s3.questions.join('')));
   ok('第3のつながりに弱い軸を課題に', /弱い軸「自己資金」を上げる一手を、課題に登録しましょう/.test(s3.link));
-  const s4 = M.script({ days: 300, months: 6, m: { opRate: 8, debtYears: 6, cashMonths: 2.5 }, snap: { score: 70, runway: 5 }, pil: { count: 2, done: 1, next: { name: '基本合意', prog: 50, stage: 4 } }, ready: ready, bc: { purpose: 'x', industries: 'y', budget_man: 3000 } });
+  const s4 = M.script({ pos: { mi: 10 }, months: 6, m: { opRate: 8, debtYears: 6, cashMonths: 2.5 }, snap: { score: 70, runway: 5 }, pil: { count: 2, done: 1, next: { name: '基本合意', prog: 50, stage: 4 } }, ready: ready, bc: { purpose: 'x', industries: 'y', budget_man: 3000 } });
   is('第4：準備度・柱・買いたい条件', s4.numbers.map(x => x.l), ['買い手になる準備度', '柱', '買いたい条件']);
   is('買いたい条件が揃えば「案件を見る番」', s4.numbers[2].why, '業種・地域・予算が揃っています。案件を見る番');
   ok('次の1社が止まっていれば先頭の問い', /次の1社は「基本合意」で止まっています/.test(s4.questions[0]));
@@ -81,27 +81,32 @@ const ready = { score: 40, axes: [{ k: 'cash', l: '自己資金', score: 25 }, {
 // ② 数字が語っていることが先頭に来る
 // ---------------------------------------------------------------
 {
-  const s = M.script({ days: 200, months: 6, m: { opRate: 3, debtYears: 14, cashMonths: 0.8 }, snap: { score: 30, runway: 1.5 }, pil: { count: 1, done: 0, next: null }, ready: null, bc: null });
+  const s = M.script({ pos: { mi: 7 }, months: 6, m: { opRate: 3, debtYears: 14, cashMonths: 0.8 }, snap: { score: 30, runway: 1.5 }, pil: { count: 1, done: 0, next: null }, ready: null, bc: null });
   is('資金のもちが3か月未満なら節目に関係なく先頭', s.numbers[0].l, '手元資金のもち');
   ok('資金の一言は「最優先」', /3か月を切っています。今月はここが最優先/.test(s.numbers[0].why));
   is('先頭の問いは来月の支払', s.questions[0], '来月の支払で、いちばん大きいものは何ですか？');
   ok('営業利益率5%未満の問い（値上げ）が入る', /値上げを最後にしたのはいつですか/.test(s.questions.join('')));
   ok('債務償還年数10年超の問い（銀行）が入る', /メインバンクとは、次の借入の話をしていますか/.test(s.questions.join('')));
   ok('債務償還年数の一言は「余地が狭い」', /10年を超えています。新しい借入の余地が狭い/.test(s.numbers.filter(x => x.l === '債務償還年数')[0].why));
-  const s0 = M.script({ days: 5, months: 0, m: {}, snap: null, pil: { count: 1, done: 0, next: null }, ready: null, bc: null });
+  const s0 = M.script({ pos: { mi: 0 }, months: 0, m: {}, snap: null, pil: { count: 1, done: 0, next: null }, ready: null, bc: null });
   is('データが無ければ 月次データ・資金・柱', s0.numbers.map(x => x.l), ['月次データ', '手元資金のもち', '柱']);
   is('月次ゼロの一言', s0.numbers[0].why, 'まず試算表3か月分をお預かりするところから');
   is('月次ゼロなら先頭の問いは資料', s0.questions[0], '試算表（直近3か月分）と保険証券を、いつお預かりできますか？');
   is('未診断は「未診断」', s0.numbers[1].v, '未診断');
-  is('準備度が未記録でも落ちない', M.script({ days: 200, months: 3, m: {}, snap: null, pil: { count: 1, done: 0, next: null }, ready: null, bc: null }).numbers[1].v, '未記録');
+  is('準備度が未記録でも落ちない', M.script({ pos: { mi: 7 }, months: 3, m: {}, snap: null, pil: { count: 1, done: 0, next: null }, ready: null, bc: null }).numbers[1].v, '未記録');
   is('空の ctx でも落ちない', M.script({}).numbers.length, 3);
+  //  土台が残ったまま第2に入ると、先頭の問いは土台の残り
+  const sr = M.script({ pos: { mi: 4 }, remain: ['1年の道筋が決まる'], months: 3, m: { opRate: 8, debtYears: 6, cashMonths: 2.5 }, snap: { score: 70, runway: 5 }, pil: { count: 1, done: 0, next: null }, ready: null, bc: null });
+  is('土台の残りが先頭の問い', sr.questions[0], '土台の「1年の道筋が決まる」がまだです。今月それを整えるのに、何をお預かりすればよいですか？');
+  ok('つながりにも「並行して進めます」', /土台の残り（1年の道筋が決まる）も並行して進めます/.test(sr.link));
+  no('第1のあいだは土台の残りを問いに出さない（土台の帯が担う）', /土台の「/.test(M.script({ pos: { mi: 1 }, remain: ['1年の道筋が決まる'], months: 3, m: {}, snap: null, pil: { count: 1, done: 0, next: null } }).questions.join('')));
 }
 
 // ---------------------------------------------------------------
 // ③ 描画と継ナビくんへの渡しかた
 // ---------------------------------------------------------------
 {
-  const sc = M.script({ days: 200, months: 6, m: { opRate: 8, debtYears: 6, cashMonths: 2.5 }, snap: { score: 70, runway: 5 }, pil: { count: 1, done: 0, next: null }, ready: ready, bc: {} });
+  const sc = M.script({ pos: { mi: 7 }, months: 6, m: { opRate: 8, debtYears: 6, cashMonths: 2.5 }, snap: { score: 70, runway: 5 }, pil: { count: 1, done: 0, next: null }, ready: ready, bc: {} });
   const h = M.html(sc, 'c1');
   ok('題と節目', /📋 今月の面談台本/.test(h) && /第3の節目「買い手の余力を測る」/.test(h));
   is('見せる数字は3行（開くボタン付き）', (h.match(/開く →<\/span>/g) || []).length, 3);
@@ -126,7 +131,8 @@ ok('viewClient で読む', /loadClientTodo\(custId\);\n    loadClientScript\(cus
   const f = takeFn('loadClientScript');
   ok('準備度は SHINDAN を差し替えて数え、必ず戻す', /var keep=SHINDAN;[\s\S]*SHINDAN=keep;/.test(f));
   ok('柱は pillarsOf で数える', /ctx\.pil=pillarsOf\(/.test(f));
-  ok('節目は契約日から', /ob90Days\(ob90Start\(prof\|\|\{\}\)\)/.test(f));
+  ok('節目は契約の翌月起点', /ctx\.pos=journeyPos\(journeyStart\(prof\|\|\{\}\)\);/.test(f));
+  ok('土台の残りを取ってナビと台本に渡す', /ctx\.remain=ob90Remain\(ob90Judge\(ctx\.d\)\);/.test(f) && /renderKarteNav\(ctx\);/.test(f));
 }
 {
   const f = takeFn('loadClientTodo');
