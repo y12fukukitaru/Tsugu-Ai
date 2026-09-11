@@ -1380,7 +1380,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260911-10';
+  var APP_BUILD='20260911-11';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2466,6 +2466,8 @@
         +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;">TsuguAi自体の成長ステージです。顧客・パートナー・調達の登録データから自動で現在地と進捗を表示します。目標の詳細は「経営計画」で管理します。</div>'
         //  今日の動き：新しく登録した顧客・担当未割当・新しいパートナー・確認待ちの口座。
         //  これまで運営は「顧客」「課金・契約」を開かないと気づけなかった
+        //  締結の知らせなど、継ナビくんのお知らせ（agent_insights）を運営にも出す
+        +'<div id="agent-insights-box"></div>'
         +'<div id="adm-moves"></div>'
         +'<div id="adm-roadmap">読み込み中...</div>'
       +'</div>'
@@ -2882,8 +2884,8 @@
   //  出せるのは「いつ登録したか」と「いま担当がいるか」まで。
   // ============================================================
   var ADM_MOVES_DAYS=7;
-  function admMovesHtml(rows, nameOf, pending, now){
-    now=now||new Date();
+  function admMovesHtml(rows, nameOf, pending, now, contracts, invites){
+    now=now||new Date(); contracts=contracts||[]; invites=invites||[];
     var since=now.getTime()-ADM_MOVES_DAYS*86400000;
     function recent(r){ var t=Date.parse(r.created_at||''); return isFinite(t) && t>=since; }
     var custs=rows.filter(function(r){ return r.role==='customer'; });
@@ -2891,6 +2893,11 @@
     var unassigned=custs.filter(function(r){ return !r.consultant_id; });
     var newFde=rows.filter(function(r){ return r.role==='consultant' && recent(r); });
     pending=pending||[];
+    //  締結した契約（同意画面を押した日時が agreed_at）。顧客の行にはこの日時を添える
+    var agreedBy={}; contracts.forEach(function(c){ if(c.email) agreedBy[String(c.email).toLowerCase()]=c; });
+    var newContracts=contracts.filter(function(c){ var t=Date.parse(c.agreed_at||''); return isFinite(t) && t>=since; })
+      .sort(function(a,b){ return String(b.agreed_at).localeCompare(String(a.agreed_at)); });
+    var pendInv=invites.filter(function(i){ return i.status==='pending'; });
     function chip(label, n, color, sec){
       return '<div onclick="goSec(\''+sec+'\')" style="cursor:pointer;flex:1 1 130px;min-width:130px;background:#F8F9FC;border:1px solid #EDF1F6;border-radius:11px;padding:10px 14px;">'
         +'<div style="font-size:11px;color:#5A6981;">'+label+'</div>'
@@ -2904,11 +2911,23 @@
         +chip('担当未割当の顧客', unassigned.length+'社', unassigned.length?'#A9403D':'#27684A', 'sec-cust')
         +chip('新しいパートナー', newFde.length+'名', newFde.length?'#1E3A66':'#94A2B6', 'sec-fde')
         +chip('確認待ちの口座', pending.length+'件', pending.length?'#C39B3F':'#27684A', 'sec-billing')
+        +chip('締結した契約', newContracts.length+'件', newContracts.length?'#27684A':'#94A2B6', 'sec-support')
+        +chip('招待中（登録待ち）', pendInv.length+'件', pendInv.length?'#1E3A66':'#94A2B6', 'sec-cust')
       +'</div>';
     var lines=[];
+    newContracts.slice(0,8).forEach(function(c){
+      var isCust=(c.kind==='customer');
+      var by=nameOf[c.offered_by]||'';
+      lines.push('<div style="display:flex;gap:8px;align-items:baseline;font-size:12px;padding:4px 0;border-top:1px dashed var(--softline);"><span style="color:var(--muted);white-space:nowrap;">'+esc(jstMin(c.agreed_at))+'</span><span class="tag green" style="font-size:10px;">'+(isCust?'顧問契約 締結':'パートナー契約 締結')+'</span><span style="flex:1;color:var(--ink);">'+esc((c.agreed_org?c.agreed_org+'　':'')+(c.agreed_name||'')+'（'+(c.email||'')+'）')+'</span><span style="font-size:11px;color:var(--muted);">'+(isCust?('担当：'+esc(nameOf[c.consultant_id]||by)):('送付：'+esc(by)))+'</span></div>');
+    });
     newCust.slice(0,8).forEach(function(c){
       var who=c.consultant_id?('担当：'+esc(nameOf[c.consultant_id]||'')):'<span style="color:#A9403D;">担当未割当</span>';
-      lines.push('<div style="display:flex;gap:8px;align-items:baseline;font-size:12px;padding:4px 0;border-top:1px dashed var(--softline);"><span style="color:var(--muted);white-space:nowrap;">'+esc(String(c.created_at||'').slice(0,10))+'</span><span class="tag blue" style="font-size:10px;">顧客</span><span style="flex:1;color:var(--ink);">'+esc(c.company_name||c.contact_name||c.email||'')+'</span><span style="font-size:11px;color:var(--muted);">'+who+'</span></div>');
+      var ag=agreedBy[String(c.email||'').toLowerCase()];
+      var when=ag?('締結 '+esc(jstMin(ag.agreed_at))):('登録 '+esc(String(c.created_at||'').slice(0,10)));
+      lines.push('<div style="display:flex;gap:8px;align-items:baseline;font-size:12px;padding:4px 0;border-top:1px dashed var(--softline);"><span style="color:var(--muted);white-space:nowrap;">'+when+'</span><span class="tag blue" style="font-size:10px;">顧客</span><span style="flex:1;color:var(--ink);">'+esc(c.company_name||c.contact_name||c.email||'')+'</span><span style="font-size:11px;color:var(--muted);">'+who+'</span></div>');
+    });
+    pendInv.slice(0,5).forEach(function(i){
+      lines.push('<div style="display:flex;gap:8px;align-items:baseline;font-size:12px;padding:4px 0;border-top:1px dashed var(--softline);"><span style="color:var(--muted);white-space:nowrap;">'+esc(String(i.created_at||'').slice(0,10))+'</span><span class="tag gray" style="font-size:10px;">招待中</span><span style="flex:1;color:var(--ink);">'+esc(i.company_name||i.email||'')+'</span><span style="font-size:11px;color:var(--muted);">招待：'+esc(nameOf[i.consultant_id]||'')+'（本人が登録した瞬間に担当が付きます）</span></div>');
     });
     newFde.slice(0,5).forEach(function(f){
       lines.push('<div style="display:flex;gap:8px;align-items:baseline;font-size:12px;padding:4px 0;border-top:1px dashed var(--softline);"><span style="color:var(--muted);white-space:nowrap;">'+esc(String(f.created_at||'').slice(0,10))+'</span><span class="tag gold" style="font-size:10px;">パートナー</span><span style="flex:1;color:var(--ink);">'+esc(f.full_name||f.contact_name||f.email||'')+'</span></div>');
@@ -2918,17 +2937,27 @@
     });
     if(lines.length) h+='<div style="margin-top:8px;">'+lines.join('')+'</div>';
     else h+='<div style="font-size:12px;color:#27684A;margin-top:8px;">新しい登録と確認待ちはありません。</div>';
-    h+='<div style="font-size:10.5px;color:var(--muted);line-height:1.7;margin-top:8px;">担当が付いた日時は記録していないため、「いつ担当に追加されたか」は出ません。登録日と、いま担当がいるかまでです。確認待ちの口座は、確認するまで振込の対象になりません。</div>'
+    h+='<div style="font-size:10.5px;color:var(--muted);line-height:1.7;margin-top:8px;">「締結」は契約書の同意画面を押した日時です。契約を経ずに登録した顧客は登録日で出ます。招待とWeb契約のどちらでも、本人が登録した瞬間に招いた人が担当になります。確認待ちの口座は、確認するまで振込の対象になりません。</div>'
       +'</div>';
     return h;
   }
   async function loadAdmMoves(rows, nameOf){
     var box=$('adm-moves'); if(!box) return;
-    var pending=[];
+    var pending=[], contracts=[], invites=[];
     if(adminCanSee('sec-billing')){
       try{ var r=await sb.rpc('payout_account_pending'); if(!r.error) pending=r.data||[]; }catch(e){}
     }
-    box.innerHTML=admMovesHtml(rows, nameOf, pending);
+    //  締結した契約（同意日時）と、招待中（登録待ち）。表が無い環境では空のまま
+    try{
+      var since=new Date(Date.now()-ADM_MOVES_DAYS*86400000).toISOString();
+      var c=await sb.from('contract_offers').select('kind,email,status,agreed_at,agreed_name,agreed_org,offered_by,consultant_id').eq('status','agreed').gte('agreed_at',since).order('agreed_at',{ascending:false}).limit(50);
+      if(!c.error) contracts=c.data||[];
+      //  顧客の行に締結日時を添えるため、7日より前の締結も引く（最近の登録に限る）
+      var c2=await sb.from('contract_offers').select('kind,email,agreed_at').eq('kind','customer').eq('status','agreed').order('agreed_at',{ascending:false}).limit(200);
+      if(!c2.error){ var seen={}; contracts.forEach(function(x){ seen[String(x.email).toLowerCase()]=1; }); (c2.data||[]).forEach(function(x){ if(!seen[String(x.email).toLowerCase()]){ contracts.push(x); seen[String(x.email).toLowerCase()]=1; } }); }
+    }catch(e){}
+    try{ var iv=await sb.from('customer_invites').select('email,company_name,consultant_id,created_at,status').eq('status','pending').order('created_at',{ascending:false}).limit(50); if(!iv.error) invites=iv.data||[]; }catch(e){}
+    box.innerHTML=admMovesHtml(rows, nameOf, pending, new Date(), contracts, invites);
   }
   async function loadAdmin(){
     var res=await sb.from('profiles').select('*');
@@ -4095,6 +4124,7 @@
     else {
       // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
       loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadAdmAssign();
+      loadAgentInsights();
       if(adminCanSee('sec-ep')) loadEp();
       if(adminCanSee('sec-team')) loadSignupCodes();
       if(adminCanSee('sec-exec')){ loadExecFunding(); loadExecWeekly(); }
