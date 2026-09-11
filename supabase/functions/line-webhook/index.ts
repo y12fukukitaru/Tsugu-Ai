@@ -61,6 +61,14 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      //  四半期アンケート（匿名）：1〜5 の数字5つ（「4 5 3 4 5」「45345」「4,5,3,4,5」）。
+      //  連携コードは6桁なので取り違えない
+      const compact = text.replace(/[\s,、，.．/／・]/g, "");
+      if (/^[1-5]{5}$/.test(compact)) {
+        await answerSurvey(sb, lineUserId, compact, ev.replyToken);
+        continue;
+      }
+
       const code = text.replace(/[^0-9]/g, "");
       if (/^\d{6}$/.test(code)) {
         const { data: row } = await sb
@@ -104,6 +112,25 @@ async function verifySignature(body: string, signature: string): Promise<boolean
     const expected = btoa(String.fromCharCode(...new Uint8Array(mac)));
     return expected === signature;
   } catch { return false; }
+}
+
+//  数字5つを、その人の分の答えとして受け付ける。答えは匿名の表に入り、
+//  「答えた」の印だけがその人に付く（survey_submit_for の中で分かれる）
+async function answerSurvey(sb: any, lineUserId: string, digits: string, replyToken: string) {
+  const { data: link } = await sb.from("line_links").select("user_id").eq("line_user_id", lineUserId).maybeSingle();
+  if (!link?.user_id) { await reply(replyToken, "まずアプリと連携してください。\n\n" + GUIDE); return; }
+  const { data: w, error: wErr } = await sb.rpc("survey_window");
+  if (wErr || !w?.open) { await reply(replyToken, "いまはアンケートの受付期間ではありません。次回は四半期の初めにお願いします。"); return; }
+  const answers = { q1: +digits[0], q2: +digits[1], q3: +digits[2], q4: +digits[3], q5: +digits[4] };
+  const { data: res, error } = await sb.rpc("survey_submit_for", { p_user: link.user_id, p_period: w.period, p_answers: answers, p_comment: null });
+  const r = error ? "error: " + error.message : String(res ?? "");
+  if (r === "ok") {
+    await reply(replyToken,
+      `✅ ありがとうございます。アンケートを匿名で受け付けました（${digits.split("").join(" ")}）。\n` +
+      `ひとことがあれば、アプリのアンケート欄からどうぞ → ${APP_URL}?survey=1`);
+  } else {
+    await reply(replyToken, r.replace(/^error:\s*/, ""));
+  }
 }
 
 async function reply(replyToken: string, text: string) {
