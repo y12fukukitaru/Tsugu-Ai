@@ -1382,7 +1382,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260911-12';
+  var APP_BUILD='20260911-13';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -1752,7 +1752,7 @@
   }
   //  メニューには出さないが、画面としては残すもの。goSec で開ける。
   //
-  //  各種シミュレーター（相続・贈与／株対策／医療法人の持分／退職金／価格転嫁）は、
+  //  各種シミュレーター（相続・贈与／株対策／医療法人の持分／退職金／価格転嫁／労働分配率）は、
   //  「顧問先が買い手になり、会社を買って柱を増やす」というゴールの道筋に
   //  ありません。渡す側の道具です。メニューの一枠を使うほどではないので、
   //  「本業と連携」の中から開く形に下げます。
@@ -3819,7 +3819,7 @@
             +'</div>'
           //  各種シミュレーターの入口。左メニューから外したので、ここが唯一の扉。
           //  本業（保険・不動産・士業）の相談で使う道具なので、この画面が居場所として自然
-          +'<div style="font-size:12px;color:var(--muted);margin:-6px 0 14px;line-height:1.8;">相続・贈与、株対策、医療法人の持分、退職金、価格転嫁の試算は '
+          +'<div style="font-size:12px;color:var(--muted);margin:-6px 0 14px;line-height:1.8;">相続・贈与、株対策、医療法人の持分、退職金、価格転嫁、労働分配率の試算は '
             +'<a onclick="goSec(\'sec-sozoku\')" style="color:#2C5DA8;cursor:pointer;font-weight:600;">各種シミュレーター</a> から開けます。</div>'
           +'<div id="biz-body">読み込み中...</div>'
         +'</div>'
@@ -4043,6 +4043,11 @@
               +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>価格転嫁シミュレーター</div>'
               +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.65;flex:1;">「何%の値上げで、月々いくら現金が残るか」「何%のお客様が離れたら効果が消えるか」を即答。値上げ分はコストが増えないため、ほぼそのまま利益になります。価格交渉・値付け相談の入口に。</div>'
               +'<button class="btn2" style="width:100%;" onclick="openPriceSim()">価格転嫁シミュレーターを開く</button>'
+            +'</div>'
+            +'<div style="border:1px solid #E5EEF8;border-radius:11px;padding:13px 15px;background:#fff;display:flex;flex-direction:column;">'
+              +'<div style="font-size:13px;font-weight:700;color:#1E3A66;margin-bottom:5px;"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 5h5M16 9h5M16 13h5"/></svg>労働分配率シミュレーター</div>'
+              +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:10px;line-height:1.65;flex:1;">時給を上げたとき、労働分配率（人件費÷粗利）をどこに保ち、利益を出し続けるか。業種ごとの目安と、労働時間の短縮・配置転換・値上げで必要な大きさを数字で。賃上げの相談の入口に。</div>'
+              +'<button class="btn2" style="width:100%;" onclick="openLaborSim()">労働分配率シミュレーターを開く</button>'
             +'</div>'
           +'</div>'
         +'</div>'
@@ -4278,6 +4283,8 @@
     { k:'ord_profit',  l:'経常利益',     g:'pl' },
     { k:'depreciation',l:'減価償却費',   g:'pl' },
     { k:'interest',    l:'支払利息',     g:'pl' },
+    //  労働分配率のため。役員報酬＋給料手当＋賞与＋法定福利費＋福利厚生費の合計
+    { k:'labor_cost',  l:'人件費（役員報酬＋給料手当＋賞与＋法定福利費＋福利厚生費の合計）', s:'人件費', g:'pl' },
     // 貸借対照表
     { k:'total_assets',      l:'総資産',       g:'bs' },
     { k:'current_assets',    l:'流動資産',     g:'bs' },
@@ -4308,7 +4315,10 @@
     ['payables',    /買掛金|支払手形|仕入債務/],
     ['short_debt',  /短期借入金|一年内返済|１年内返済/],
     ['long_debt',   /長期借入金/],
-    ['equity',      /純資産|自己資本|資本合計/]
+    ['equity',      /純資産|自己資本|資本合計/],
+    //  試算表の一行に「人件費」の合計が無いことが多い。合計行があるときだけ拾い、
+    //  無ければ手入力かAI取り込み（合計させる）に任せる
+    ['labor_cost',  /人件費|労務費合計|人件費合計/]
   ];
   function finFieldKey(text){
     var s=String(text||'');
@@ -4330,6 +4340,10 @@
     var ebitdaM=(pro==null&&dep==null)?null:((pro||0)+(dep||0));   // 月次EBITDA
     var m={};
     m.grossRate   = (rev&&cogs!=null) ? (rev-cogs)/rev*100 : null;
+    m.gross       = (rev!=null&&cogs!=null) ? (rev-cogs) : null;                 // 粗利（付加価値の近似）
+    var labor=nOr(e.labor_cost);
+    m.laborShare  = (labor!=null && m.gross!=null && m.gross>0) ? Math.round(labor/m.gross*10000)/100 : null;   // 労働分配率（対粗利・小数2桁）
+    m.laborRate   = (labor!=null && rev) ? labor/rev*100 : null;                  // 人件費率（対売上）
     m.opRate      = div(pro,rev)!=null ? div(pro,rev)*100 : null;
     m.dsoDays     = div(recv,rev)!=null ? div(recv,rev)*30 : null;   // 売上債権回転日数
     m.dioDays     = div(inv,cogs)!=null ? div(inv,cogs)*30 : null;   // 棚卸資産回転日数
@@ -4361,9 +4375,25 @@
     return Number(v).toLocaleString('ja-JP',{minimumFractionDigits:d,maximumFractionDigits:d})+(unit||'');
   }
   // 財務レポート（顧客・パートナー共通）
-  function finReportHtml(e){
+  //  いま見ている会社の業種。カルテなら会社情報の欄、経営者なら自分のプロフィール
+  function finIndustry(){
+    var sel=$('cpi-industry'); if(sel && sel.value) return sel.value;
+    return (window.__prof && window.__prof.industry) || '';
+  }
+  //  労働分配率の箱。業種の目安を添える。人件費が入っているときだけ出す
+  function laborBox(v, industry){
+    var b=laborBench(industry), j=laborJudge(v, industry);
+    var col=j==='good'?'#27684A':(j==='bad'?'#A9403D':(j==='mid'?'#8A6A12':'var(--navy)'));
+    return '<div style="flex:1 1 145px;min-width:145px;background:var(--soft);border:1px solid var(--softline);border-radius:10px;padding:9px 12px;">'
+      +'<div style="font-size:10.5px;color:var(--muted);">労働分配率（対粗利）</div>'
+      +'<div style="font-size:17px;font-weight:700;color:'+col+';line-height:1.35;margin-top:1px;">'+finFmt(v,'%')+'</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+esc(industry||'その他')+'の目安 '+b.lo+'〜'+b.hi+'%</div>'
+    +'</div>';
+  }
+  function finReportHtml(e, industry){
     if(!e) return '';
     var m=finMetrics(e); if(!m) return '';
+    industry=industry||finIndustry();
     var any=['equityRate','currentRate','debtMonths','debtYears','ccc','grossRate'].some(function(k){ return m[k]!=null; });
     if(!any) return '<div style="font-size:11.5px;color:var(--muted);line-height:1.8;">詳細項目が未入力のため、財務力と支払サイトは算出できません。試算表を取り込むと自動で埋まります。</div>';
     function box(label, txt, key, v, sub){
@@ -4395,6 +4425,7 @@
       +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
       +box('粗利率', finFmt(m.grossRate,'%'), null, m.grossRate, '')
       +box('営業利益率', finFmt(m.opRate,'%'), 'opRate', m.opRate, '5%以上が目安')
+      +(m.laborShare!=null?laborBox(m.laborShare, industry):'')
       +box('EBITDA（年換算）', finFmt(m.ebitdaY,'万円',0), null, m.ebitdaY, '営業利益＋減価償却')
       +box('ネット有利子負債', finFmt(m.netDebt,'万円',0), null, m.netDebt, '借入−現預金')
       +box('企業価値の目安', finFmt(m.ev,'万円',0), null, m.ev, 'EBITDA×3−純有利子負債')
@@ -12119,6 +12150,8 @@
     var tabFin='<div id="ctab-fin">'
       +'<div class="ph" id="cs-mreport" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>月次レポート</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientReports(\''+custId+'\')">↺ 更新</span></div>'
       +'<div id="knav-fin"></div>'
+      //  賃上げの相談は、この会社の数字で。最新の月次データと業種を入れて開く
+      +'<div style="margin:0 0 10px;"><button class="ghost" style="font-size:11.5px;border:1px solid #C9D6EA;border-radius:8px;padding:6px 12px;" onclick="openLaborSimFor(\''+custId+'\')">💴 労働分配率シミュレーター（この会社の数字で）</button></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">この顧客の月次レポートです。数字は自動生成されるので、コメントとひとことを添えてから<b style="color:#1E3A66;">「承認して公開」</b>を押してください。公開すると経営者ダッシュボードに表示されます。</div>'
       +'<div id="clrep-body">読み込み中...</div>'
       +'<div class="ph" id="cs-cash" style="font-size:13px;">社長からの手元資金（本人の申告）</div>'
@@ -13365,7 +13398,7 @@
     if(aisecPortal()==='consultant'){
       return common
         +'【パートナーポータルの画面ガイド】'
-        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全4章10レッスン)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内。カルテの「やること」の下に「今月の面談台本」(その会社の数字から見せる数字3つ・問い3つ・買い手の基盤へのつながり)と「継ナビくんのナビ」(土台→現金→余力→条件の順番と、済／次／あと)。各道具の見出しの下に「なぜ今・やると分かること・次の一手」の案内と「結果を継ナビくんと読む」ボタン。伴走の1年は契約の翌月1日を起点に暦の月で3か月ずつ、土台が整わなければ次の四半期も並行、四半期の終わりに検証)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（投資・融資・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ)。'
+        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全4章10レッスン)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁/労働分配率=時給を上げたとき人件費÷粗利をどこに保ち利益を出し続けるか。業種別の目安と、時短・配置転換・値上げで要る大きさ。カルテの月次レポートの上からその会社の数字で開ける)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内。カルテの「やること」の下に「今月の面談台本」(その会社の数字から見せる数字3つ・問い3つ・買い手の基盤へのつながり)と「継ナビくんのナビ」(土台→現金→余力→条件の順番と、済／次／あと)。各道具の見出しの下に「なぜ今・やると分かること・次の一手」の案内と「結果を継ナビくんと読む」ボタン。伴走の1年は契約の翌月1日を起点に暦の月で3か月ずつ、土台が整わなければ次の四半期も並行、四半期の終わりに検証)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（投資・融資・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ)。'
         +'操作説明書は右下パネルの「サポート」タブから開けます。毎朝の「今日の一手」とお知らせは右下ボタンのバッジに届きます。';
     }
     //  運営がここに落ちていました。運営コンソールを開いている方に
@@ -13561,6 +13594,10 @@
         ['初回面談の組み立て','初回面談の準備をしています。相手は◯◯業・年商約◯◯万円・社長は◯◯歳です。ヒアリング項目と面談の流れを組み立ててください。'],
         ['面談後のフォロー設計','面談で「◯◯」という課題が出ました。次回面談までのフォローと宿題の設計を手伝ってください。'],
         ['言いにくいことの伝え方','顧客に◯◯（値上げ提案／リスク指摘など）を伝えたいです。経営者に響く伝え方に整えてください。']]},
+      {t:'💴 賃上げ・労働分配率', subs:[
+        ['賃上げと利益の両立','担当顧客（◯◯業）で時給を◯%上げる話が出ています。労働分配率はいま◯%（人件費◯万円÷粗利◯万円）。労働時間の短縮・配置転換・値上げのどれから始めるべきか、この業種の例と、経営者への説明のしかたを教えてください。'],
+        ['労働分配率の説明のしかた','経営者に労働分配率（人件費÷粗利）を初めて説明します。業種は◯◯、いま◯%です。専門用語を使わず、社長の日々の感覚（月末の残高・人手のやりくり）に置き換えた言い方を3通り作ってください。'],
+        ['配置転換の進めかた','◯◯業で、付加価値の低い作業（◯◯）に人時が偏っています。配置転換で高い仕事へ移すとき、現場の反発を避ける順番と、3か月で確かめる指標を教えてください。']]},
       {t:'📋 今月の面談', subs:[
         ['今月の面談で何を話すか','担当顧客の今月の面談台本を作ってください。伴走の1年は第◯の節目。見せる数字：資金のもち◯か月・営業利益率◯%・債務償還年数◯年・柱◯本・準備度◯点。経営者に響く問いを3つと、それが買い手の基盤（自己資金・借入余力・経営陣・PMI・目的）のどこにつながるかを整理してください。'],
         ['数字の説明のしかた','経営者に「◯◯」（債務償還年数／営業利益率／現預金の月商倍率など）を説明したいです。数字は◯◯です。専門用語を使わず、社長の日々の感覚に置き換えた言い方を3通り作ってください。']]},
@@ -21323,6 +21360,302 @@
       if(!r[2].error) SHINDAN.bc=r[2].data||null;
     }catch(e){}
     renderShindan();
+  }
+
+  // ============================================================
+  // ===== 労働分配率シミュレーター =====
+  // 賃金はこれから上がり続ける。時給を上げたとき、労働分配率をどこに保ち、
+  // 利益を出し続けるか。答えは「人を減らす」ではなく、
+  //   ・労働時間の短縮（同じ粗利を、少ない時間で出す）
+  //   ・配置転換（付加価値の低い時間を、高い仕事へ移す）
+  //   ・値上げ（付加価値そのものを上げる）
+  // の組み合わせ。業種で目安も打ち手も違うので、業種ごとに出す。
+  //
+  //  労働分配率 ＝ 人件費 ÷ 付加価値。ここでは付加価値を粗利（売上−売上原価）で
+  //  近似する（中小企業の実務でいちばん使われる近似）。人件費は
+  //  役員報酬＋給料手当＋賞与＋法定福利費＋福利厚生費の合計。
+  //  月次データに「人件費」を入れると、財務レポートにも同じ率が出る。
+  // ============================================================
+  //  業種別の目安（対粗利、%）。中小企業の実態調査などから丸めた幅で、
+  //  年度・定義で動く。「目安」であって「正解」ではない。
+  //  levers は、その業種で時短・配置転換がどこに効きやすいかの例
+  var LABOR_BENCH={
+    '製造業':            { lo:45, hi:55, levers:['段取り替えの短縮と多能工化で、待ち時間を減らす','検査・搬送・日報を自動化し、人を加工と改善に回す','小ロットの受注は値上げか集約で、粗利の薄い時間を減らす'] },
+    '建設業':            { lo:50, hi:60, levers:['現場の待ち・手戻りを工程表とチャットで減らす','書類・写真整理をアプリ化し、監督を現場に戻す','材料の先行手配で、職人の手待ちを無くす'] },
+    '飲食業':            { lo:55, hi:65, levers:['ピークにシフトを寄せ、アイドルタイムの人時を減らす','仕込みの集約・セントラル化で調理の人時を減らす','券売機・モバイルオーダーで注文と会計の時間を外す'] },
+    '小売業':            { lo:45, hi:55, levers:['セルフレジ・キャッシュレスでレジの人時を減らす','発注の自動化で棚卸し・発注の時間を外す','売れ筋への売場と人の集中で、粗利の高い売上を増やす'] },
+    '卸売業':            { lo:40, hi:55, levers:['受発注のEDI・自動化で入力の人時を減らす','配送ルートの見直しと共同配送で走行時間を減らす','粗利の薄い得意先は条件見直しか集約'] },
+    '運送・物流業':      { lo:60, hi:70, levers:['配車・ルートの最適化で空走と待機を減らす','荷待ち時間の料金化（適正化）を荷主と交渉','積み下ろしの機械化・パレット化で拘束時間を減らす'] },
+    '医療（病院・診療所）': { lo:55, hi:65, levers:['予約・問診・会計のデジタル化で事務の人時を減らす','タスクシフト（看護→事務・補助）で専門職を診療に戻す','稼働の低い時間帯を見直し、人員配置を需要に合わせる'] },
+    '歯科医院':          { lo:45, hi:55, levers:['予約とリコールの自動化で受付の人時を減らす','衛生士の担当制で、医師をより付加価値の高い処置に','自費診療の比率を上げ、粗利そのものを厚くする'] },
+    '調剤薬局':          { lo:50, hi:60, levers:['調剤の機械化（分包・監査）で人時を減らす','在宅・かかりつけの加算で粗利を厚くする','事務のタスクシフトで薬剤師を対人業務に'] },
+    '介護・福祉施設':    { lo:65, hi:75, levers:['記録・請求のICT化で間接業務の人時を減らす','送迎の共同化・ルート最適化で運転時間を減らす','加算の取得（体制・処遇改善）で粗利を厚くする'] },
+    '動物病院':          { lo:45, hi:55, levers:['予約・会計・薬の在庫をデジタル化','看護師の担当制で医師を診療に集中','予防・自費メニューで粗利を厚くする'] },
+    'IT・通信':          { lo:55, hi:65, levers:['定型作業のツール化・自動化で工数を減らす','単価の低い案件を絞り、上流の仕事へ配置転換','保守・サブスクで安定した粗利を作る'] },
+    '士業・専門サービス': { lo:55, hi:65, levers:['入力・照合の自動化で補助業務の人時を減らす','顧問料の見直し（値上げ）と低単価先の整理','専門性の高い業務へ人を寄せ、単価を上げる'] },
+    '不動産業':          { lo:30, hi:45, levers:['内見・契約手続きのオンライン化で移動と待ちを減らす','管理業務のアプリ化で入力の人時を減らす','仲介から管理・サブリースへ、安定した粗利へ'] },
+    '宿泊・観光':        { lo:55, hi:65, levers:['予約・チェックインの自動化でフロントの人時を減らす','清掃の外部化・動線の見直しで人時を減らす','繁閑に合わせた料金で粗利を厚くする'] },
+    '美容・理容・エステ': { lo:55, hi:65, levers:['予約・会計のアプリ化で受付の時間を外す','アシスタントの担当制で施術者を施術に集中','店販・メニュー単価で粗利を厚くする'] },
+    '教育・学習塾':      { lo:50, hi:60, levers:['映像・教材の共通化で準備の人時を減らす','事務・問い合わせの自動化','少人数の高単価コースへ配置転換'] },
+    '自動車整備・販売':  { lo:50, hi:60, levers:['整備の予約・工程管理で待ちを減らす','車検・点検の定型化と設備投資で作業時間を短縮','部品・用品の粗利を厚くする'] },
+    'クリーニング':      { lo:55, hi:65, levers:['集配ルートの最適化で運転時間を減らす','工場の設備更新で仕上げの人時を減らす','付加価値サービス（保管・撥水）で粗利を厚くする'] },
+    '警備・ビルメンテナンス': { lo:70, hi:80, levers:['機械警備・ロボット清掃で巡回の人時を減らす','契約単価の見直し（適正化）を発注者と交渉','シフトの最適化で待機の時間を減らす'] },
+    '印刷業':            { lo:50, hi:60, levers:['入稿・校正のオンライン化で手戻りを減らす','段取り替えの短縮と設備の自動化','企画・デザインなど上流の仕事へ配置転換'] },
+    '農林水産業':        { lo:45, hi:60, levers:['機械化・スマート農業で作業の人時を減らす','加工・直販で粗利を厚くする','繁忙期の応援体制で通年の人時を平準化'] },
+    'その他':            { lo:50, hi:60, levers:['定型作業の自動化で人時を減らす','付加価値の高い仕事へ人を寄せる','値上げで粗利を厚くする'] }
+  };
+  function laborBench(industry){ return LABOR_BENCH[industry]||LABOR_BENCH['その他']; }
+  //  目安の幅の中か下なら良、少し上なら普、大きく上なら要注意
+  function laborJudge(v, industry){
+    if(v==null||!isFinite(v)) return null;
+    var b=laborBench(industry);
+    //  55.00000000000001 のような浮動小数の誤差で境目を跨がないように、わずかに緩める
+    return v<=b.hi+1e-9?'good':(v<=b.hi+5+1e-9?'mid':'bad');
+  }
+  //  計算だけ。画面と分けて試験できるようにする
+  //  i: rev 月商(万円)／gr 粗利率(%)／labor 人件費(万円/月)／hours 総労働時間(時間/月・任意)／
+  //     up 時給の引上げ率(%)／target 守りたい分配率(%・空なら「いまの率」)／industry 業種
+  function laborSimCalc(i){
+    i=i||{};
+    var rev=Number(i.rev)||0, gr=Math.min(100,Math.max(0,Number(i.gr)||0))/100;
+    var labor=Number(i.labor)||0, hours=Number(i.hours)||0, up=Math.max(0,Number(i.up)||0)/100;
+    var gp=rev*gr;
+    var bench=laborBench(i.industry);
+    if(gp<=0||labor<=0) return { ok:false, gp:gp, bench:bench };
+    var ls=labor/gp, labor2=labor*(1+up), ls2=labor2/gp;
+    var target=(i.target!=null && String(i.target)!=='' && Number(i.target)>0)?Number(i.target)/100:ls;
+    var dProfit=-(labor2-labor);
+    var wage=hours>0?labor*10000/hours:null, wage2=(wage!=null)?wage*(1+up):null;
+    var hourGp=hours>0?gp*10000/hours:null;
+    //  引上げ後の率が守りたい率の内側なら、打ち手は要らない
+    var need=(ls2>target+1e-9);
+    var needGp=need?labor2/target:gp;
+    var gpUp=need?(needGp/gp-1):0;                 // 粗利（人時生産性）の必要向上率。時間据え置き
+    var priceUp=need?((needGp-gp)/rev):0;          // 必要な値上げ率。値上げは粗利にそのまま乗る
+    var hoursCut=need?(1-(target*gp)/labor2):0;    // 必要な時間削減率。粗利据え置き
+    var hours2=hours>0?hours*(1-hoursCut):null;
+    var gHalf=gpUp/2, hHalf=need?Math.max(0,1-target*gp*(1+gHalf)/labor2):0;   // 半々の組み合わせ
+    return { ok:true, gp:gp, ls:ls, ls2:ls2, labor2:labor2, dProfit:dProfit, dProfitY:dProfit*12,
+      wage:wage, wage2:wage2, hourGp:hourGp, bench:bench, target:target, need:need,
+      needGp:needGp, gpUp:gpUp, priceUp:priceUp, hoursCut:hoursCut, hours2:hours2, gHalf:gHalf, hHalf:hHalf,
+      judge:laborJudge(ls*100,i.industry), judge2:laborJudge(ls2*100,i.industry) };
+  }
+  var LS_KEY='tsugu.laborsim.v1';
+  var LS_FIELDS=['ls-ind','ls-rev','ls-gr','ls-labor','ls-hours','ls-up','ls-target'];
+  function laborSimStore(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||'{}')||{}; }catch(e){ return {}; } }
+  function laborSimWrite(o){ try{ localStorage.setItem(LS_KEY, JSON.stringify(o)); return true; }catch(e){ return false; } }
+  function laborSimValues(){ var v={}; LS_FIELDS.forEach(function(id){ v[id]=(($(id)||{}).value)||''; }); return v; }
+  function laborSimApply(v){ if(!v) return; LS_FIELDS.forEach(function(id){ var el=$(id); if(el && v[id]!=null && v[id]!=='') el.value=v[id]; }); }
+  function laborSimRemember(){ var s=laborSimStore(); s.last=laborSimValues(); laborSimWrite(s); }
+  function laborSimSay(t, ok){
+    var m=$('ls-msg'); if(!m) return;
+    m.style.color = ok===false ? '#A9403D' : '#27684A'; m.textContent=t;
+    setTimeout(function(){ if(m.textContent===t) m.textContent=''; }, 4000);
+  }
+  function openLaborSim(pre){
+    if(!$('labor-modal')){
+      var d=document.createElement('div');
+      d.id='labor-modal'; d.className='modal-back hidden';
+      d.onclick=function(ev){ if(ev.target===d) closeLaborSim(); };
+      d.innerHTML='<div class="modal" style="max-width:720px;">'
+        +'<div class="modal-head"><span class="mt">労働分配率シミュレーター</span><span style="flex:1;"></span><button class="modal-close" onclick="closeLaborSim()" aria-label="閉じる">×</button></div>'
+        +'<div class="modal-body">'
+        +'<div style="font-size:11.5px;color:#94A2B6;line-height:1.75;margin-bottom:12px;">賃金はこれから上がり続けます。時給を上げたとき、<b style="color:#1E3A66;">労働分配率（人件費÷粗利）をどこに保ち、利益を出し続けるか</b>。答えは人を減らすことではなく、<b style="color:#1E3A66;">労働時間の短縮・配置転換・値上げ</b>の組み合わせです。業種ごとの目安と、必要な打ち手の大きさを数字で出します。</div>'
+        +'<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+          +'<div><label class="fl">業種</label><select id="ls-ind" class="inp2" style="width:190px;" onchange="laborSimCalcUI()">'+industryOptions()+'</select></div>'
+          +'<div><label class="fl">月商（万円）</label><input id="ls-rev" type="number" class="inp2" style="width:110px;" value="1000" oninput="laborSimCalcUI()"></div>'
+          +'<div><label class="fl">粗利率（%）</label><input id="ls-gr" type="number" class="inp2" style="width:100px;" value="40" oninput="laborSimCalcUI()"></div>'
+          +'<div><label class="fl">人件費（万円/月）</label><input id="ls-labor" type="number" class="inp2" style="width:120px;" value="220" oninput="laborSimCalcUI()"></div>'
+          +'<div><label class="fl">総労働時間（時間/月・任意）</label><input id="ls-hours" type="number" class="inp2" style="width:150px;" placeholder="例 1600" oninput="laborSimCalcUI()"></div>'
+          +'<div><label class="fl">時給の引上げ率（%）</label><input id="ls-up" type="number" class="inp2" style="width:130px;" value="5" oninput="laborSimCalcUI()"></div>'
+          +'<div><label class="fl">守りたい分配率（%・空欄＝いまの率）</label><input id="ls-target" type="number" class="inp2" style="width:170px;" placeholder="例 55" oninput="laborSimCalcUI()"></div>'
+        +'</div>'
+        +'<div style="font-size:10px;color:#94A2B6;margin-top:4px;line-height:1.6;">人件費＝役員報酬＋給料手当＋賞与＋法定福利費＋福利厚生費。粗利＝売上−売上原価（付加価値の近似）。総労働時間＝全員の月の労働時間の合計（人数×1人あたり時間）。</div>'
+        +'<div id="ls-result" style="margin-top:12px;"></div>'
+        +'<div style="border-top:1px solid var(--softline);margin-top:14px;padding-top:12px;">'
+          +'<div style="display:flex;gap:7px;align-items:flex-end;flex-wrap:wrap;">'
+            +'<div style="flex:1;min-width:170px;"><label class="fl">この試算に名前を付けて保存</label>'
+              +'<input id="ls-name" class="inp2" style="width:100%;" placeholder="例：山田製作所 時給+5%" onkeydown="if(event.key===\'Enter\')laborSimSave()"></div>'
+            +'<button class="btn2" style="font-size:12px;padding:8px 15px;" onclick="laborSimSave()">保存</button>'
+            +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;" onclick="laborSimCopy()">結果をコピー</button>'
+            +'<button class="ghost" style="font-size:12px;border:1px solid #EBDDB4;border-radius:9px;padding:7px 13px;color:#8A6A12;" onclick="laborSimAsk()">🌱 継ナビくんと次の一手</button>'
+            +'<span id="ls-msg" style="font-size:11.5px;"></span>'
+          +'</div>'
+          +'<div id="ls-saved" style="margin-top:10px;"></div>'
+        +'</div>'
+        +'<div style="font-size:10.5px;color:#94A2B6;margin-top:10px;line-height:1.75;">※ 概算の試算です。業種の目安は統計から丸めた幅で、年度・定義で動きます。労働時間の短縮は「同じ粗利を少ない時間で出す」前提であり、人員整理を勧めるものではありません。賃金・労働時間の変更は労働法令の順守が前提で、具体的な人事の判断は社会保険労務士等にご相談ください。</div>'
+        +'</div></div>';
+      document.body.appendChild(d);
+    }
+    $('labor-modal').classList.remove('hidden');
+    laborSimApply(laborSimStore().last);
+    if(pre){
+      if(pre.industry && $('ls-ind')) $('ls-ind').value=pre.industry;
+      if(pre.rev!=null && $('ls-rev')) $('ls-rev').value=Math.round(pre.rev);
+      if(pre.gr!=null && $('ls-gr')) $('ls-gr').value=Math.round(pre.gr*10)/10;
+      if(pre.labor!=null && $('ls-labor')) $('ls-labor').value=Math.round(pre.labor);
+      if(pre.hours!=null && $('ls-hours')) $('ls-hours').value=Math.round(pre.hours);
+    }
+    laborSimList();
+    laborSimCalcUI();
+  }
+  function closeLaborSim(){ var d=$('labor-modal'); if(d) d.classList.add('hidden'); }
+  //  カルテから：この会社の最新の月次データと業種を入れて開く
+  async function openLaborSimFor(custId){
+    var pre={};
+    try{
+      var r=await Promise.all([
+        sb.from('financial_entries').select('year_month,revenue,cogs,labor_cost').eq('customer_id',custId).order('year_month',{ascending:false}).limit(1),
+        sb.from('profiles').select('industry').eq('id',custId).maybeSingle()
+      ]);
+      var e=(r[0].error?null:((r[0].data||[])[0]||null));
+      if(e){
+        var rev=nOr(e.revenue), cogs=nOr(e.cogs), lab=nOr(e.labor_cost);
+        if(rev!=null) pre.rev=rev;
+        if(rev && cogs!=null) pre.gr=(rev-cogs)/rev*100;
+        if(lab!=null) pre.labor=lab;
+      }
+      if(!r[1].error && r[1].data && r[1].data.industry) pre.industry=r[1].data.industry;
+    }catch(e){}
+    openLaborSim(pre);
+  }
+  var LS_LAST=null;
+  function laborSimCalcUI(){
+    var box=$('ls-result'); if(!box) return;
+    var inp={ industry:(($('ls-ind')||{}).value)||'', rev:($('ls-rev')||{}).value, gr:($('ls-gr')||{}).value,
+      labor:($('ls-labor')||{}).value, hours:($('ls-hours')||{}).value, up:($('ls-up')||{}).value, target:($('ls-target')||{}).value };
+    var r=laborSimCalc(inp); LS_LAST={ inp:inp, r:r };
+    box.innerHTML=laborSimHtml(inp, r);
+    try{ laborSimRemember(); }catch(e){}
+  }
+  function laborSimHtml(inp, r){
+    function pct(x, d){ return (x==null||!isFinite(x))?'—':finFmt(x*100,'%',d==null?1:d); }
+    function yen(x){ return Number(Math.round(x)).toLocaleString('ja-JP')+'万円'; }
+    function cell(label, val, sub, color){
+      return '<div style="flex:1 1 140px;min-width:140px;border:1px solid #E2E7EF;border-radius:9px;padding:9px 12px;background:#fff;">'
+        +'<div style="font-size:10.5px;color:#94A2B6;">'+esc(label)+'</div>'
+        +'<div style="font-size:17px;font-weight:700;color:'+(color||'#1E3A66')+';line-height:1.35;margin-top:1px;">'+val+'</div>'
+        +(sub?'<div style="font-size:10px;color:#94A2B6;margin-top:1px;">'+esc(sub)+'</div>':'')
+      +'</div>';
+    }
+    var b=r.bench, ind=inp.industry||'その他';
+    if(!r.ok) return '<div style="font-size:12px;color:#94A2B6;">月商・粗利率・人件費を入れると、労働分配率と打ち手が出ます。</div>';
+    function jc(j){ return j==='good'?'#27684A':(j==='mid'?'#8A6A12':'#A9403D'); }
+    var up=Number(inp.up)||0;
+    var h='<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      +cell('いまの労働分配率', pct(r.ls), '人件費 '+yen(Number(inp.labor))+' ÷ 粗利 '+yen(r.gp), jc(r.judge))
+      +cell('時給 +'+up+'% のあと', pct(r.ls2), '人件費 '+yen(r.labor2)+'（粗利は同じ）', jc(r.judge2))
+      +cell('利益への影響', (r.dProfit>=0?'+':'')+yen(r.dProfit)+'／月', '年 '+(r.dProfitY>=0?'+':'')+yen(r.dProfitY)+'（何もしなければ）', r.dProfit<0?'#A9403D':'#27684A')
+      +(r.wage!=null?cell('実質時給', Math.round(r.wage).toLocaleString('ja-JP')+'円 → '+Math.round(r.wage2).toLocaleString('ja-JP')+'円', '人件費÷総労働時間'):'')
+      +(r.hourGp!=null?cell('人時生産性', Math.round(r.hourGp).toLocaleString('ja-JP')+'円/時', '粗利÷総労働時間。これを上げるのが本筋'):'')
+      +'</div>'
+      +'<div style="font-size:12px;color:#18202E;line-height:1.8;margin-top:8px;">'+esc(ind)+'の目安は <b>'+b.lo+'〜'+b.hi+'%</b>（対粗利）。いまは <b style="color:'+jc(r.judge)+';">'+pct(r.ls)+'</b>、引上げ後は <b style="color:'+jc(r.judge2)+';">'+pct(r.ls2)+'</b>。'
+      +(r.judge==='good'?'目安の内側です。':(r.judge==='mid'?'目安をやや超えています。':'目安を大きく超えています。人件費が粗利を食っている状態です。'))+'</div>';
+    if(!r.need){
+      h+='<div style="font-size:12.5px;color:#27684A;background:#EBF2ED;border-radius:10px;padding:10px 13px;margin-top:10px;">引上げ後も守りたい率（'+pct(r.target,0)+'）の内側です。打ち手は要りません。増えた人件費 '+yen(r.labor2-Number(inp.labor))+'／月を、利益の中から出せます。</div>';
+    } else {
+      var lev=b.levers||[];
+      h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin:12px 0 6px;">分配率を '+pct(r.target,0)+' に保つ打ち手（どれか一つ、または組み合わせ）</div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+        +'<div style="flex:1 1 200px;min-width:200px;border:1px solid #C9D6EA;border-radius:10px;padding:10px 12px;background:#F8FAFF;">'
+          +'<div style="font-size:12px;font-weight:700;color:var(--navy);">① 労働時間の短縮</div>'
+          +'<div style="font-size:18px;font-weight:700;color:#1E3A66;margin:2px 0;">−'+pct(r.hoursCut,1)+'</div>'
+          +'<div style="font-size:11px;color:#5A6981;line-height:1.7;">同じ粗利を、'+(r.hours2!=null?('月 '+Math.round(r.hours2).toLocaleString('ja-JP')+' 時間'):('いまの '+pct(1-r.hoursCut,0)))+'で出す。人時生産性を '+pct(1/(1-r.hoursCut)-1,1)+' 上げるのと同じ。'+(lev[0]?'<br>例：'+esc(lev[0]):'')+'</div>'
+        +'</div>'
+        +'<div style="flex:1 1 200px;min-width:200px;border:1px solid #C9D6EA;border-radius:10px;padding:10px 12px;background:#F8FAFF;">'
+          +'<div style="font-size:12px;font-weight:700;color:var(--navy);">② 配置転換で粗利を増やす</div>'
+          +'<div style="font-size:18px;font-weight:700;color:#1E3A66;margin:2px 0;">+'+pct(r.gpUp,1)+'</div>'
+          +'<div style="font-size:11px;color:#5A6981;line-height:1.7;">時間はそのまま、粗利を月 '+yen(r.needGp)+' へ。付加価値の低い時間を高い仕事へ移す。'+(lev[1]?'<br>例：'+esc(lev[1]):'')+'</div>'
+        +'</div>'
+        +'<div style="flex:1 1 200px;min-width:200px;border:1px solid #C9D6EA;border-radius:10px;padding:10px 12px;background:#F8FAFF;">'
+          +'<div style="font-size:12px;font-weight:700;color:var(--navy);">③ 値上げ</div>'
+          +'<div style="font-size:18px;font-weight:700;color:#1E3A66;margin:2px 0;">+'+pct(r.priceUp,1)+'</div>'
+          +'<div style="font-size:11px;color:#5A6981;line-height:1.7;">値上げは粗利にそのまま乗る。増えた人件費をお客様の値段で受け止める分。'+(lev[2]?'<br>例：'+esc(lev[2]):'')+'</div>'
+        +'</div>'
+        +'</div>'
+        +'<div style="font-size:12px;color:#5C4A17;background:#FDFAF1;border:1px solid #EBDDB4;border-radius:9px;padding:8px 11px;margin-top:8px;line-height:1.75;"><b>組み合わせの例：</b>時間を '+pct(r.hHalf,1)+' 減らし、粗利を '+pct(r.gHalf,1)+' 増やす。どれか一つで全部を賄うより、現場は動きやすい。</div>';
+    }
+    //  コピー用（画面には出さない）
+    var lines=['【労働分配率の試算】'+ind,
+      '月商 '+yen(Number(inp.rev))+'／粗利率 '+Number(inp.gr)+'%（粗利 '+yen(r.gp)+'）／人件費 '+yen(Number(inp.labor))+'／時給 +'+up+'%',
+      '',
+      '・いまの労働分配率：'+pct(r.ls)+'（'+ind+'の目安 '+b.lo+'〜'+b.hi+'%）',
+      '・引上げ後：'+pct(r.ls2)+'（人件費 '+yen(r.labor2)+'）',
+      '・利益への影響：月 '+(r.dProfit>=0?'+':'')+yen(r.dProfit)+'／年 '+(r.dProfitY>=0?'+':'')+yen(r.dProfitY)];
+    if(r.wage!=null) lines.push('・実質時給：'+Math.round(r.wage).toLocaleString('ja-JP')+'円 → '+Math.round(r.wage2).toLocaleString('ja-JP')+'円／人時生産性 '+Math.round(r.hourGp).toLocaleString('ja-JP')+'円/時');
+    if(r.need){
+      lines.push('', '分配率を '+pct(r.target,0)+' に保つ打ち手：',
+        '・労働時間の短縮：−'+pct(r.hoursCut,1)+(r.hours2!=null?('（月 '+Math.round(r.hours2)+' 時間へ）'):''),
+        '・配置転換で粗利を増やす：+'+pct(r.gpUp,1)+'（月 '+yen(r.needGp)+' へ）',
+        '・値上げ：+'+pct(r.priceUp,1),
+        '・組み合わせの例：時間 −'+pct(r.hHalf,1)+' ＋ 粗利 +'+pct(r.gHalf,1));
+    } else {
+      lines.push('', '・引上げ後も守りたい率の内側。打ち手は不要');
+    }
+    lines.push('', '※ 概算の試算です。業種の目安は統計から丸めた幅です。人事の判断は社会保険労務士等にご相談ください。');
+    LS_SUMMARY=lines.join('\n');
+    return h;
+  }
+  var LS_SUMMARY='';
+  function laborSimSave(){
+    var nm=((($('ls-name')||{}).value)||'').trim();
+    if(!nm){ laborSimSay('名前を入れてください', false); return; }
+    var s=laborSimStore(); var list=s.cases||[];
+    var v=laborSimValues(); v.name=nm; v.at=new Date().toISOString();
+    var hit=-1; list.forEach(function(x,i){ if(x.name===nm) hit=i; });
+    if(hit>=0) list[hit]=v; else list.unshift(v);
+    if(list.length>30) list=list.slice(0,30);
+    s.cases=list; s.last=laborSimValues();
+    if(!laborSimWrite(s)){ laborSimSay('保存できませんでした（ブラウザの設定をご確認ください）', false); return; }
+    var el=$('ls-name'); if(el) el.value='';
+    laborSimSay(hit>=0 ? '「'+nm+'」を上書きしました' : '「'+nm+'」を保存しました');
+    laborSimList();
+  }
+  function laborSimLoad(i){
+    var list=laborSimStore().cases||[]; var v=list[i]; if(!v) return;
+    laborSimApply(v); laborSimRemember(); laborSimCalcUI();
+    laborSimSay('「'+v.name+'」を読み込みました');
+  }
+  function laborSimDelete(i){
+    var s=laborSimStore(); var list=s.cases||[]; var v=list[i]; if(!v) return;
+    if(!confirm('「'+v.name+'」を削除します。よろしいですか？')) return;
+    list.splice(i,1); s.cases=list; laborSimWrite(s);
+    laborSimList(); laborSimSay('削除しました');
+  }
+  function laborSimList(){
+    var box=$('ls-saved'); if(!box) return;
+    var list=laborSimStore().cases||[];
+    if(!list.length){
+      box.innerHTML='<div style="font-size:11px;color:#94A2B6;line-height:1.7;">保存した試算はまだありません。名前を付けて保存すると、ここから呼び戻せます（この端末の中にだけ残ります）。</div>';
+      return;
+    }
+    box.innerHTML='<div style="font-size:11px;color:#94A2B6;margin-bottom:5px;">保存した試算（'+list.length+'件）</div>'
+      +list.map(function(v,i){
+        return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--softline);flex-wrap:wrap;">'
+          +'<span style="flex:1;min-width:130px;font-size:12.5px;color:var(--ink);">'+esc(v.name||'（無題）')+'</span>'
+          +'<span style="font-size:11px;color:var(--muted);white-space:nowrap;">'+esc(v['ls-ind']||'')+'／人件費'+esc(v['ls-labor']||'-')+'／時給+'+esc(v['ls-up']||'-')+'%</span>'
+          +'<span style="font-size:10.5px;color:#94A2B6;white-space:nowrap;">'+esc(jstDay(v.at||''))+'</span>'
+          +'<button class="ghost" style="font-size:11px;padding:3px 9px;border:1px solid var(--line);border-radius:7px;" onclick="laborSimLoad('+i+')">呼び出す</button>'
+          +'<button class="ghost" style="font-size:11px;padding:3px 8px;color:#A9403D;" onclick="laborSimDelete('+i+')">削除</button>'
+        +'</div>';
+      }).join('');
+  }
+  function laborSimCopy(){
+    var t=LS_SUMMARY||'';
+    if(!t){ laborSimSay('先に試算してください', false); return; }
+    try{
+      navigator.clipboard.writeText(t).then(function(){ laborSimSay('コピーしました'); },
+        function(){ laborSimSay('コピーできませんでした', false); });
+    }catch(e){ laborSimSay('コピーできませんでした', false); }
+  }
+  //  数字と業種を埋めて継ナビくんに渡す。◯◯を残さない
+  function laborSimAsk(){
+    if(!LS_LAST || !LS_LAST.r || !LS_LAST.r.ok){ knvAsk('労働分配率の考え方と、賃上げの中で利益を出し続ける打ち手を、業種ごとの例で教えて'); return; }
+    var i=LS_LAST.inp, r=LS_LAST.r, b=r.bench;
+    var p=function(x){ return finFmt(x*100,'%',1); };
+    knvAsk('労働分配率の試算を一緒に読んで、次の一手を考えて。業種：'+(i.industry||'その他')+'。月商'+i.rev+'万円・粗利率'+i.gr+'%・人件費'+i.labor+'万円/月'+(Number(i.hours)?('・総労働時間'+i.hours+'時間/月'):'')+'。いまの労働分配率'+p(r.ls)+'（業種の目安'+b.lo+'〜'+b.hi+'%）、時給を'+(Number(i.up)||0)+'%上げると'+p(r.ls2)+'、利益は月'+Math.round(r.dProfit)+'万円の減少。'
+      +(r.need?('分配率を'+p(r.target)+'に保つには、労働時間−'+p(r.hoursCut)+'か、配置転換で粗利+'+p(r.gpUp)+'か、値上げ+'+p(r.priceUp)+'。'):'引上げ後も守りたい率の内側。')
+      +'この業種で、時短と配置転換をどこから始めるか、経営者への説明のしかた、3か月で確かめる指標を教えて');
   }
 
   // ============================================================
