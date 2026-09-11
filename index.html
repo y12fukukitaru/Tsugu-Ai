@@ -1382,7 +1382,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260911-13';
+  var APP_BUILD='20260911-14';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2626,6 +2626,24 @@
             +'（当社が受け取る側の口座です。お客様・パートナーの口座はここには入れません）</div>'
           +'<input id="bl-bank" class="inp2" style="width:100%;max-width:520px;" placeholder="例）〇〇銀行 本店営業部 普通 1234567 カ）ツグアイ" oninput="blRatesSave()">'
         +'</div>'
+        //  総合振込ファイル（全銀フォーマット）の先頭に入る「委託者」。
+        //  銀行から交付される委託者コードと、振込元にする継の口座。
+        //  ここも当社の口座であって、お客様・パートナーの口座ではない
+        +'<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
+          +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;">総合振込の委託者情報（パートナーへ振り込む継の口座）</div>'
+          +'<div style="font-size:11px;color:#94A2B6;margin-bottom:7px;line-height:1.7;">'
+            +'「支払い」の画面で作る<b style="color:var(--navy);">総合振込ファイル（全銀フォーマット）</b>の先頭に入ります。'
+            +'委託者コードは、ネットバンキングの総合振込の画面で確認できる10桁の番号です（無い銀行は 0 のまま）。'
+            +'委託者名は半角カナで、法人格は「ｶ)」のように略します。</div>'
+          +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
+            +'<div><label class="fl">委託者コード（10桁）</label><input id="bl-sc" class="inp2" style="width:130px;" inputmode="numeric" placeholder="0000000000" oninput="blRatesSave()"></div>'
+            +'<div style="flex:1 1 200px;min-width:180px;"><label class="fl">委託者名（カナ）</label><input id="bl-sname" class="inp2" style="width:100%;" placeholder="ｶ)ﾂｸﾞｱｲ" oninput="blRatesSave()"></div>'
+            +'<div><label class="fl">銀行コード（4桁）</label><input id="bl-sbank" class="inp2" style="width:90px;" inputmode="numeric" placeholder="0310" oninput="blRatesSave()"></div>'
+            +'<div><label class="fl">支店コード（3桁）</label><input id="bl-sbranch" class="inp2" style="width:90px;" inputmode="numeric" placeholder="101" oninput="blRatesSave()"></div>'
+            +'<div><label class="fl">種別</label><select id="bl-stype" class="inp2" onchange="blRatesSave()"><option value="1">普通</option><option value="2">当座</option></select></div>'
+            +'<div><label class="fl">口座番号（7桁）</label><input id="bl-sacct" class="inp2" style="width:110px;" inputmode="numeric" placeholder="1234567" oninput="blRatesSave()"></div>'
+          +'</div>'
+        +'</div>'
         +'<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
           +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">パートナーからお預かりする利用料（円・税別）</div>'
           +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">'
@@ -3341,7 +3359,10 @@
   // ---- 料率・割引設定の保存（app_settings）：運営全員のコンソールで同じ値を使う ----
   //  割引の3種類（vol1/vol2/hd, snr/exe/prem, cap）は廃止したので保存対象から外した。
   //  すでに保存されている値が残っていても、読み込む先が無いので影響しない。
-  var BL_RATE_IDS=['bl-pbase','bl-pclient','bl-adv','bl-direct','bl-init','bl-ai','bl-seat','bl-seatpack','bl-seatpackn','bl-bank'];
+  //  bl-s*（委託者情報）は総合振込ファイルの先頭に入る「継の口座」。
+  //  Edge Function（payout-file）が app_settings.billing_rates から読む
+  var BL_RATE_IDS=['bl-pbase','bl-pclient','bl-adv','bl-direct','bl-init','bl-ai','bl-seat','bl-seatpack','bl-seatpackn','bl-bank',
+                   'bl-sc','bl-sname','bl-sbank','bl-sbranch','bl-stype','bl-sacct'];
   var BL_RATES_OK=false, BL_SAVE_T=null;
   function blRatesNote(t){ var el=$('bl-rates-note'); if(el) el.textContent=t?('　'+t):''; }
   async function blRatesLoad(){
@@ -7000,6 +7021,40 @@
     }
     renderInvoices();
   }
+  //  集金の方式ごとに、未入金の残りを数える。取消は除く。
+  //  method の無い古い請求は「銀行振込」に寄せる（画面の既定と同じ）
+  function invMethodSummary(rows){
+    var m={ transfer:{ n:0, amt:0 }, bank:{ n:0, amt:0 } };
+    (rows||[]).forEach(function(x){
+      if(x.status==='void' || x.status==='paid') return;
+      var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
+      if(rest<=0) return;
+      var k=(x.method==='transfer')?'transfer':'bank';
+      m[k].n++; m[k].amt+=rest;
+    });
+    return m;
+  }
+  //  集金代行へ渡す「誰に・いくら・いつ」。口座はここに無い
+  function invCsvRows(rows, method){
+    var out=[['顧客ID','会社名','件名','対象月','金額（円・税込）','支払期日','状態']];
+    (rows||[]).forEach(function(x){
+      if(x.status==='void' || x.status==='paid') return;
+      var k=(x.method==='transfer')?'transfer':'bank';
+      if(k!==method) return;
+      var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
+      if(rest<=0) return;
+      out.push([x.customer_id||'', x.name||'', x.title||'', x.period||'', String(Math.round(rest)), x.due_on||'',
+                x.status==='partial'?'一部入金':'未入金']);
+    });
+    return out;
+  }
+  function invCsv(method){
+    if(!INV_ROWS.length){ alert('この月の請求がありません。先に年月を選んでください。'); return; }
+    var lines=invCsvRows(INV_ROWS, method);
+    if(lines.length<2){ alert((method==='transfer'?'口座振替':'銀行振込')+'で未入金の請求はありません。'); return; }
+    var ym=(($('inv-month')||{}).value)||'';
+    csvDl((method==='transfer'?'kouza_furikae_':'ginkou_furikomi_')+ym+'.csv', lines);
+  }
   function renderInvoices(){
     var box=$('inv-list'); if(!box) return;
     if(INV_ERR){
@@ -7018,10 +7073,23 @@
       tA+=Number(x.amount)||0; tP+=Number(x.paid_amount)||0;
       if(x.status!=='paid') tOpen++;
     });
+    var m=invMethodSummary(INV_ROWS);
     var h='<div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:10px;">'
       +bizChip('請求 合計', yen(tA), INV_ROWS.length+' 件', 'var(--navy)')
       +bizChip('入金済み', yen(tP), '突合の結果', '#27684A')
       +bizChip('未入金の残り', yen(tA-tP), tOpen+' 件', tA-tP>0?'#A9403D':'#94A2B6')
+      //  集金の方式ごとの内訳。口座振替に載せる相手が何件・いくらか、
+      //  振込でお願いする相手が何件・いくらかが、ここで分かる
+      +bizChip('口座振替', yen(m.transfer.amt), m.transfer.n+' 件（引き落とし）', 'var(--navy)')
+      +bizChip('銀行振込', yen(m.bank.amt), m.bank.n+' 件（お振込み）', 'var(--navy)')
+    +'</div>'
+    //  集金代行（口座振替）へ渡す請求データと、振込のご案内に使う一覧。
+    //  お客様の口座はこのシステムに無いので、渡すのは「誰に・いくら・いつ」だけ。
+    //  口座は集金代行の側でお預かりいただき、こちらの顧客IDでひも付ける
+    +'<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">'
+      +'<button class="ghost" style="font-size:11px;border:1px solid var(--line);border-radius:7px;padding:6px 10px;" onclick="invCsv(\'transfer\')">口座振替の請求データ（CSV）</button>'
+      +'<button class="ghost" style="font-size:11px;border:1px solid var(--line);border-radius:7px;padding:6px 10px;" onclick="invCsv(\'bank\')">銀行振込の請求一覧（CSV）</button>'
+      +'<span style="font-size:10.5px;color:var(--muted);line-height:1.6;">未入金のぶんだけ出ます。口座振替は集金代行の請求データに、銀行振込はご案内と督促に。</span>'
     +'</div>';
     h+=INV_ROWS.map(function(x){
       var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
@@ -17803,11 +17871,19 @@
     var net=(Number(fee)||0)-(Number(wh)||0)-(Number(use)||0);
     return { pay: net>0? net:0, due: net<0? -net:0 };
   }
+  //  相殺のあとに「ご請求」が残る相手の数。個人はご本人、EP-I は法人で数える
+  function payDueCount(acc, keys, epG, epOrder){
+    var n=0;
+    (keys||[]).forEach(function(k){ var b=acc[k]; if(b && !b.acctOrg && b.due>0) n++; });
+    (epOrder||[]).forEach(function(id){ var g=epG[id]; if(g && g.due>0) n++; });
+    return n;
+  }
   //  entity_type から「源泉徴収の対象か」を返す。未設定は対象外（引かない）
   function isIndiv(entityType){ return String(entityType||'')==='individual'; }
   function entityLabel(t){ return t==='individual'?'個人':(t==='corporate'?'法人':'未設定'); }
   async function loadPayout(){
     var box=$('bl-payout'); if(!box) return;
+    PAY_FILE=null;   // 前の月の「誰にいくら」を引きずらない
     var ym=(($('bl-pay-month')||{}).value)||'';
     if(!ym){ box.innerHTML='<div style="font-size:12px;color:var(--muted);">年月を選ぶと、その月の配分を計算します。</div>'; return; }
     var yy=+ym.slice(0,4), mm=+ym.slice(5,7);
@@ -17984,7 +18060,9 @@
       +bizChip('源泉徴収 合計', yen(tW), '個人の方のみ', '#A9403D')
       +bizChip('利用料の相殺 合計', yen(tU), '基本＋顧問先加算＋AI（税込）', '#A9403D')
       +bizChip('お振込額 合計', yen(tPay), '報酬 − 源泉徴収 − 利用料', '#27684A')
-      +(tDue>0?bizChip('ご請求 合計', yen(tDue), '相殺しきれなかったぶん', '#C39B3F'):'')
+      //  何名から集金することになるかは、口座振替を組むかどうかの判断材料。
+      //  金額だけだと「1人が大きい」のか「大勢が少しずつ」なのか分からない
+      +(tDue>0?bizChip('ご請求 合計', yen(tDue), payDueCount(acc, keys, epG, epOrder)+' 件・相殺しきれなかったぶん', '#C39B3F'):'')
       +bizChip('うちサブ担当ぶん', yen(tS), '2名体制の配分', '#8F7230')
     +'</div>';
     //  EP-I は法人へまとめる。下の行は内訳で、実際に起こす振込はこの単位
@@ -18142,7 +18220,93 @@
       +'<b style="color:var(--navy);">EP-II</b>＝登録料＋AI利用料×社数を、所属営業ご本人から'
       +'（本部からは差し引きません）。'
       +'相殺の税務上の取扱いは、顧問税理士にご確認ください。</div>';
+    // ===== 総合振込ファイル =====
+    //  ここまでの計算を「誰にいくら」に落として持っておく。EP-I は法人へ1本、
+    //  それ以外はご本人へ。利用料を引けなかった法人と、ご請求になる方は
+    //  入れない（振り込んではいけない額だから）。口座はここには無い。
+    //  ファイルにするのはサーバー側（payout-file）で、取り出した記録が残る
+    var fileItems=[], fileSkip=[];
+    epOrder.forEach(function(id){ var g=epG[id];
+      if(g.unknown){ fileSkip.push(g.name+'（利用料を引けていない）'); return; }
+      if(g.payNet>0) fileItems.push({ kind:'ep', id:id, amount:Math.round(g.payNet), label:g.name }); });
+    keys.forEach(function(k){ var b=acc[k];
+      if(b.acctOrg) return;
+      if(b.pay>0) fileItems.push({ kind:'user', id:k, amount:Math.round(b.pay), label:b.label }); });
+    PAY_FILE={ ym:ym, items:fileItems };
+    h+=payFileBoxHtml(fileItems, fileSkip, EP2_LOOKUP_FAILED);
     box.innerHTML=h;
+  }
+  //  「支払い」の下の箱。押すと Edge Function が全銀フォーマットと確認用CSVを返す
+  var PAY_FILE=null;
+  function payFileBoxHtml(items, skip, blocked){
+    var total=0; items.forEach(function(x){ total+=x.amount; });
+    var h='<div style="border:1.5px solid #C9D6EA;background:var(--soft);border-radius:11px;padding:12px 14px;margin-top:12px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">総合振込ファイルを作る（全銀フォーマット）</div>'
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.75;margin:3px 0 8px;">'
+        +'上の計算のうち、<b style="color:var(--navy);">お振込みになる '+items.length+' 件・合計 '+yen(total)+'</b> を、'
+        +'銀行の「総合振込 ファイルアップロード」にそのまま上げられる形（全銀協フォーマット・固定長・Shift_JIS）にします。'
+        +'目で確かめるための CSV も一緒に保存します。口座番号は画面に出さず、サーバー側で入れます（取り出した記録が残ります）。'
+        +(skip.length?'<br><b style="color:#A9403D;">入れないもの：</b>'+esc(skip.join('・')):'')
+      +'</div>';
+    if(blocked){
+      h+='<div style="font-size:11.5px;color:#A9403D;line-height:1.7;">EP-II かどうかを確かめられていないため、ファイルは作れません。画面を開き直してください。</div>';
+    }else if(!items.length){
+      h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.7;">この月にお振込みになる方はいません。</div>';
+    }else{
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
+        +'<div><label class="fl">振込指定日</label><input id="pf-date" type="date" class="inp2" style="width:150px;"></div>'
+        +'<button class="btn2" onclick="payFileMake()">ファイルを作って保存</button>'
+      +'</div>'
+      +'<div style="font-size:10.5px;color:var(--muted);line-height:1.7;margin-top:6px;">'
+        +'初回は<b>1件だけの月で試す</b>か、銀行の画面で内容を確かめてから承認してください。'
+        +'銀行名・支店名は空欄で作ります（コードから銀行側が補います）。'
+        +'口座が未登録・確認待ち・銀行コード未登録の方はファイルに入らず、下に理由が出ます。</div>';
+    }
+    h+='<div id="pf-msg" style="font-size:11.5px;margin-top:6px;line-height:1.75;"></div></div>';
+    return h;
+  }
+  function bytesDl(fname, b64s, mime){
+    var bin=atob(b64s), arr=new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+    var blob=new Blob([arr],{type:mime||'application/octet-stream'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=fname;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{ URL.revokeObjectURL(a.href); a.remove(); }catch(e){} },500);
+  }
+  function textDl(fname, text, mime){
+    var blob=new Blob([text],{type:mime||'text/plain;charset=utf-8'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=fname;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{ URL.revokeObjectURL(a.href); a.remove(); }catch(e){} },500);
+  }
+  async function payFileMake(){
+    var msg=$('pf-msg');
+    var say=function(t,c){ if(msg){ msg.style.color=c||'#A9403D'; msg.innerHTML=t; } };
+    if(!PAY_FILE || !PAY_FILE.items.length) return say('お振込みの対象がありません。');
+    var d=(($('pf-date')||{}).value||'');
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(d)) return say('振込指定日を選んでください。');
+    var mmdd=d.slice(5,7)+d.slice(8,10);
+    var total=0; PAY_FILE.items.forEach(function(x){ total+=x.amount; });
+    if(!confirm('総合振込ファイルを作ります。\n\n'+PAY_FILE.items.length+'件・合計 '+yen(total)+'\n振込指定日 '+d
+      +'\n\n口座を取り出した記録が残ります。よろしいですか？')) return;
+    say('作成しています…','var(--muted)');
+    var res;
+    try{ res=await sb.functions.invoke('payout-file',{ body:{ ym:PAY_FILE.ym, date:mmdd, items:PAY_FILE.items } }); }
+    catch(e){ res={ error:e }; }
+    var r=res&&res.data;
+    var skipped=function(list){ return (list&&list.length)
+      ? '<br><b style="color:#A9403D;">入らなかった方：</b>'+list.map(function(s){ return esc(s.label)+'（'+esc(s.why)+'）'; }).join('　') : ''; };
+    if(!r || !r.ok){
+      return say('作れませんでした：'+esc((r&&r.error)||(res&&res.error&&res.error.message)||'')+skipped(r&&r.skipped));
+    }
+    bytesDl('sogo_furikomi_'+PAY_FILE.ym+'_'+mmdd+'.txt', r.zengin_b64, 'text/plain');
+    textDl('sogo_furikomi_'+PAY_FILE.ym+'_'+mmdd+'_kakunin.csv', r.csv, 'text/csv;charset=utf-8');
+    say('✓ '+r.count+'件・合計 '+yen(r.total)+' のファイルを保存しました（全銀フォーマットの .txt と、確認用の .csv）。'
+      +'銀行の総合振込にアップロードし、CSV と突き合わせてから承認してください。'
+      +skipped(r.skipped)
+      +((r.warnings&&r.warnings.length)?'<br><b style="color:#8A6A12;">注意：</b>'+r.warnings.map(esc).join('　'):''), '#27684A');
   }
 
   //  行そのものにも印を出す。上の注意を読み飛ばしても、
@@ -20286,6 +20450,11 @@
       say((r.error&&r.error.message) || (r.data&&r.data.error) || '同意を記録できませんでした。');
       if(btn){ btn.disabled=false; btn.textContent='同意して契約する'; }
       return;
+    }
+    //  送った人・担当・運営へ、メールと LINE でも知らせる。アプリ内のお知らせは
+    //  DB が同意と同時に書いている。ここは外へ運ぶだけで、届かなくても契約は成立している
+    if(!r.data.already){
+      try{ sb.functions.invoke('contract-send',{ body:{ token: ctToken(), action:'agreed' } }).then(null,function(){}); }catch(e){}
     }
     //  同意した書面を出し直す。「押したのに何も変わらない」がいちばん不安なので、
     //  控えとしての姿にそのまま切り替える
