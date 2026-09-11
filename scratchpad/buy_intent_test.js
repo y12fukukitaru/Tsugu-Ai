@@ -213,7 +213,9 @@ async function runSave(fields, pfx) {
     ok('カルテを開いたら両方読む', /loadBuyCriteria\(custId,'cbc'\); loadClientBuyInterests\(custId\);/.test(SRC));
     ok('パートナーの控えに関心が入る', /interests:interests,pdca:pdcaItems/.test(SRC));
     ok('関心の取得は表が無くても落ちない（try で包む）', /try\{\s*\n\s*var mi=await sb\.from\('market_interests'\)/.test(SRC));
-    ok('継ナビくんの案内に「買いたい条件」', /買い手になる=「買いたい条件」/.test(SRC));
+    //  ⑦で「柱」の絵の一言が先頭に入った。「買い手になる=」の項に
+    //  「買いたい条件」が入っていればよい
+    ok('継ナビくんの案内に「買いたい条件」', /買い手になる=[^／]*「買いたい条件」/.test(SRC));
     ok('継ナビくんの案内に「関心を出す」', /「関心を出す」ボタンでご本人が関心を出せる/.test(SRC));
     ok('説明書にも両方', /「買いたい条件」/.test(MANC) && /「関心を出す」/.test(MANC));
 

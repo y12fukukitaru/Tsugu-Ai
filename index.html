@@ -1380,7 +1380,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260911-01';
+  var APP_BUILD='20260911-02';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -3625,6 +3625,7 @@
         +'</div>'
         +'<div class="panel" id="sec-ma"><div class="ph">買い手になる</div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;">厚くなった地盤を、次の一社を引き受ける力に変えます。会社・事業を譲り受ける方向性を担当パートナーがAIで検討し、ここにご提案します。進めたいと思われたら「メッセージ」でお知らせください。</div>'
+          +'<div id="my-pillar"></div>'
           +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin:2px 0 6px;">買いたい条件</div>'
           +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">どんな会社を引き受けたいか。書いておくと、担当パートナーが案件を探す起点になります。担当が代わりに書くこともあります。</div>'
           +'<div id="bc-box" style="margin-bottom:14px;">読み込み中...</div>'
@@ -4836,9 +4837,12 @@
     var unreadN=clients.filter(function(c){ return unread[c.id]; }).length;
     var todoN=0; try{ todoN=Object.keys(buildTodos()).length; }catch(e){}
     var hero=$('fde-hero');
+    //  顧問先全体で増えた柱。ゴールの進み具合を帯の一番目立つ所に
+    var pilAdd=0; clients.forEach(function(c){ pilAdd+=pillarsOf(maDeals.filter(function(d){ return d.customer_id===c.id; })).done; });
     if(hero){
       hero.innerHTML=heroChipTo('sec-todo','今日やること', todoN+'件', todoN?'#A9403D':'#27684A')
         +heroChip('担当顧客', clients.length+'社', '#1E3A66')
+        +heroChip('増えた柱', pilAdd+'本', pilAdd?'#27684A':'#94A2B6')
         +heroChip('未読メッセージ', unreadN+'社', unreadN?'#A9403D':'#27684A')
         +heroChip('共有あり', sharesN+'社', sharesN?'#C39B3F':'#94A2B6');
     }
@@ -5459,6 +5463,51 @@
   //  案件の種類で表を選ぶ。deal_type は作ったときに決まり、あとから変わらない。
   //  done_tasks の鍵は「段階:番号」なので、途中で表が入れ替わると印がずれる
   function maStages(d){ return (d && d.deal_type==='譲受') ? MA_STAGES_BUY : MA_STAGES; }
+  //  「柱」の数えかた。ここ一か所で数え、経営者の帯・「買い手になる」・
+  //  パートナーのカルテ・顧客一覧・パートナーの帯に同じ数を出す。
+  //    柱 = 本業の1本 ＋ 譲受でクロージング（stage 7）まで行った会社
+  //  線引きはパートナーのレベル判定（成約 hd）と同じにしてある。
+  //  画面ごとに数えかたが違うと、経営者とパートナーで柱の本数が食い違う
+  function pillarsOf(deals){
+    var done=0, active=0, next=null;
+    (deals||[]).forEach(function(d){
+      if(!d || d.deal_type!=='譲受') return;
+      var s=Number(d.stage||0);
+      if(s>=PMI_STAGE){ done++; return; }
+      active++;
+      if(!next || s>next.stage){
+        var STG=maStages(d);
+        next={stage:s, name:(STG[s]||STG[0]).n, prog:Math.round(s/(STG.length-1)*100)};
+      }
+    });
+    return {count:1+done, done:done, active:active, next:next};
+  }
+  //  柱の一言。「次の1社」が動いていればその段階、動いていなければ次へ誘う
+  function pillarSub(p){
+    if(p.next) return '次の1社：'+esc(p.next.name)+' '+p.next.prog+'%';
+    return p.done ? '次の1社へ' : '本業の1本。次の1社へ';
+  }
+  //  柱の絵。太い1本が本業、続く本数が譲り受けた会社、点線が進行中の次の1社
+  function pillarHtml(p, who){
+    var bars='';
+    for(var i=0;i<p.count;i++){
+      bars+='<span title="'+(i===0?'本業':'譲り受けた会社')+'" style="display:inline-block;width:'+(i===0?18:14)+'px;height:'+(i===0?36:30)+'px;border-radius:4px 4px 0 0;background:'+(i===0?'#1E3A66':'#2C5DA8')+';margin-right:6px;vertical-align:bottom;"></span>';
+    }
+    if(p.next) bars+='<span title="次の1社（'+esc(p.next.name)+'）" style="display:inline-block;width:14px;height:'+(10+Math.round(p.next.prog/100*20))+'px;border-radius:4px 4px 0 0;background:#DCE6F5;border:1.5px dashed #5B84C4;margin-right:6px;vertical-align:bottom;box-sizing:border-box;"></span>';
+    var lead = who==='partner'
+      ? (p.done ? '柱が'+p.done+'本増えました。' : 'まだ本業の1本です。')
+      : (p.done ? '柱が'+p.done+'本増えました。' : 'いまは本業の1本です。');
+    var tail = p.next
+      ? '次の1社は「'+esc(p.next.name)+'」の段階（'+p.next.prog+'%）。'
+      : (who==='partner' ? '次の1社を探す起点は、下の「買いたい条件」です。' : '次の1社を引き受ける準備は「買いたい条件」から。');
+    return '<div id="pillar-card" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:1px solid #EDF1F6;border-radius:11px;padding:12px 14px;margin-bottom:12px;background:#fff;">'
+      +'<div style="display:flex;align-items:flex-end;height:40px;border-bottom:2px solid #C9D6EA;padding:0 4px;">'+bars+'</div>'
+      +'<div style="flex:1;min-width:160px;"><div style="font-size:11px;color:#5A6981;">柱</div>'
+        +'<div style="font-size:18px;font-weight:700;color:'+(p.done?'#27684A':'#1E3A66')+';line-height:1.2;">'+p.count+'本</div>'
+        +'<div style="font-size:11.5px;color:#5A6981;margin-top:3px;line-height:1.6;">'+lead+tail+'</div>'
+      +'</div>'
+    +'</div>';
+  }
   var PMI_PLAN=[
     {p:'〜30日', t:['経営方針の説明会を実施','キーマン面談と引き留め策','主要取引先・金融機関への挨拶','給与・労務条件の現状維持を周知']},
     {p:'31〜60日', t:['業務フローの統合計画づくり','会計・システムの統合方針を決定','重複コストの洗い出し']},
@@ -5690,6 +5739,8 @@
   async function loadMyMa(){
     var box=$('my-ma'); if(!box)return;
     var res=await sb.from('ma_deals').select('*').eq('customer_id',SCOPE).order('created_at',{ascending:false});
+    //  柱の絵は案件が無くても出す。「いまは本業の1本」から始まるのがゴールの起点
+    var pb=$('my-pillar'); if(pb) pb.innerHTML=pillarHtml(pillarsOf(res.error?[]:(res.data||[])),'me');
     if(res.error || !(res.data||[]).length){ box.innerHTML=''; return; }
     var ym=thisYM();
     var pl=await sb.from('pmi_pulses').select('*').eq('customer_id',SCOPE).eq('ym',ym);
@@ -6068,6 +6119,9 @@
       var lm=CL_CACHE.lastMsg[c.id];
       var tags=(SUB_IDS[c.id]?'<span class="tag blue">サブ担当</span>':'')
         +'<span class="tag gray">ステージ'+(c.stage||1)+'・'+(STAGE_NAMES[c.stage||1]||'')+'</span>';
+      //  柱。増えていれば金、次の1社が動いていれば青、本業だけなら灰
+      var pil=pillarsOf((CL_CACHE.maDeals||[]).filter(function(d){ return d.customer_id===c.id; }));
+      tags+='<span class="tag '+(pil.done?'gold':(pil.next?'blue':'gray'))+'">柱 '+pil.count+'本'+(pil.next?'・次 '+pil.next.prog+'%':'')+'</span>';
       if(k.auto) tags+='<span class="tag blue">自動化 '+k.auto+'</span>';
       if(k.mna) tags+='<span class="tag gold">M&A '+k.mna+'</span>';
       if(k.ins) tags+='<span class="tag green">保険 '+k.ins+'</span>';
@@ -6089,6 +6143,12 @@
     box.innerHTML=h;
   }
 
+  //  カルテの柱の絵。経営者の画面と同じ pillarsOf で数える
+  async function loadClientPillars(custId){
+    var box=$('cpil-box'); if(!box)return;
+    var res=await sb.from('ma_deals').select('deal_type,stage').eq('customer_id',custId);
+    box.innerHTML=pillarHtml(pillarsOf(res.error?[]:(res.data||[])),'partner');
+  }
   async function loadClientNotes(custId){
     var box=$('cl-notes'); if(!box)return;
     var res=await sb.from('fde_notes').select('*').eq('customer_id',custId).order('created_at',{ascending:false});
@@ -8565,10 +8625,12 @@
       sb.from('upcoming_payments').select('amount,due_date').eq('customer_id',SCOPE),
       sb.from('action_items').select('status,due_date').eq('customer_id',SCOPE),
       sb.from('fde_notes').select('created_at').eq('customer_id',SCOPE).order('created_at',{ascending:false}).limit(1),
-      sb.from('chat_messages').select('sender_role,created_at').eq('customer_id',SCOPE).order('created_at',{ascending:false}).limit(1)
+      sb.from('chat_messages').select('sender_role,created_at').eq('customer_id',SCOPE).order('created_at',{ascending:false}).limit(1),
+      sb.from('ma_deals').select('deal_type,stage').eq('customer_id',SCOPE)
     ]);
     var fin=(r[0].data||[]), snap=(r[1].data&&r[1].data[0])||null, pays=(r[2].error?[]:(r[2].data||[]));
     var acts=(r[3].data||[]), note=(r[4].data&&r[4].data[0])||null, lastMsg=(r[5].data&&r[5].data[0])||null;
+    var pil=pillarsOf(r[6].error?[]:(r[6].data||[]));
     function chip(label, value, color, target, sub){
       return '<div onclick="goSec(\''+target+'\')" style="cursor:pointer;flex:1 1 130px;min-width:130px;background:#F8F9FC;border:1px solid #EDF1F6;border-radius:11px;padding:10px 14px;">'
         +'<div style="font-size:11px;color:#5A6981;">'+label+'</div>'
@@ -8617,6 +8679,8 @@
     var over=open.filter(function(a){ return a.due_date && a.due_date<todayS; });
     h+=chip('要対応', open.length+'件', over.length?'#A9403D':(open.length?'#C39B3F':'#27684A'), 'sec-act', over.length?('期限超過 '+over.length+'件'):'');
     if(over.length) alerts.push(['#A9403D','期限を過ぎた課題が <b>'+over.length+'件</b> あります。','sec-act']);
+    //  ゴール「柱を増やす」を帯にも出す。数えかたは pillarsOf 一か所
+    h+=chip('柱', pil.count+'本', pil.done?'#27684A':'#1E3A66', 'sec-ma', pillarSub(pil));
     var d7=7*86400000;
     if(lastMsg && lastMsg.sender_role!=='customer' && (new Date()-new Date(lastMsg.created_at))<d7) alerts.push(['#2C5DA8','パートナーから新しいメッセージが届いています。','sec-chat']);
     else if(note && (new Date()-new Date(note.created_at))<d7) alerts.push(['#2C5DA8','パートナーから新しい提案が届いています。','sec-flow']);
@@ -11808,8 +11872,9 @@
       +'<div id="mn-result" style="margin-top:10px;"></div>'
       +'<div id="mn-history" style="margin-top:14px;"></div>'
       +'<div class="ph" id="cs-mna" style="font-size:13px;margin-top:18px;">買い手になる提案（AI）</div>'
-      //  買いたい条件と、経営者が出した関心。AIの提案より先に置く。
+      //  柱の絵→買いたい条件→関心→AIの提案の順。
       //  経営者が何を望んでいるかを見てから提案を作る順にしたい
+      +'<div id="cpil-box"></div>'
       +'<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin:0 0 4px;">買いたい条件（経営者と共有・代行で書けます）</div>'
       +'<div id="cbc-box" style="margin-bottom:12px;">読み込み中...</div>'
       +'<div id="cbc-int" style="margin-bottom:12px;"></div>'
@@ -11962,7 +12027,7 @@
     reloadClientActions(custId);
     loadClientInterests(custId); loadClShares(custId); loadClCash(custId);
     loadClientMna(custId);
-    loadBuyCriteria(custId,'cbc'); loadClientBuyInterests(custId);
+    loadBuyCriteria(custId,'cbc'); loadClientBuyInterests(custId); loadClientPillars(custId);
     loadClientInsurance(custId);
     loadClientDiag(custId);
     loadClientNotes(custId);
@@ -12901,7 +12966,7 @@
     return common
       +'【経営者ダッシュボードの画面ガイド】'
       +'【数字の扱い・必ず守る】経営者に試算表など月次の数字の入力を求めない。経営者の画面に入力欄は無く、担当パートナーが入力する。試算表が手元にあるなら「メッセージで担当パートナーへ送る」と案内する。ご本人が入れるのは「いまの手元資金」だけ。画面の名前は次の一覧の名前だけを使い、それ以外の画面名を作らない。'
-      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=業務の自動化診断／買い手になる=「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ／Tsugime -結-（投資・融資・M&A）=マッチング掲載。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
+      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=業務の自動化診断／買い手になる=上に「柱」の絵(本業の1本＋譲り受けた会社。ダッシュボードの帯にも同じ本数)。「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ／Tsugime -結-（投資・融資・M&A）=マッチング掲載。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
