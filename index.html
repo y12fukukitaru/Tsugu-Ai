@@ -1380,7 +1380,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260911-04';
+  var APP_BUILD='20260911-09';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -3675,6 +3675,8 @@
           : '')
         +'<div id="fde-hero" style="display:flex;gap:8px;flex-wrap:wrap;">読み込み中...</div></div>'
         +'<div id="my-annc"></div>'
+        //  顧客が0社のあいだだけ出る道筋。loadClients が描く
+        +'<div id="assoc-start"></div>'
         +'<div class="panel" id="sec-todo">'
           +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 16.5V22"/><path d="M8.5 3h7l-1 6 2.8 3.2v1.3H6.7v-1.3L9.5 9z"/></svg>今日やること'
             +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClients()">↺ 更新</span></div>'
@@ -3771,6 +3773,7 @@
               +'<button class="ghost" style="font-size:12px;border:1px solid #EBDDB4;border-radius:8px;padding:6px 12px;" onclick="knvAsk(\'明日のデモ商談の準備。相手は◯◯業・年商◯◯万円・社長は◯◯歳。刺さりそうな承継の切り口と、シミュレーションに入れる数字の例を教えて\')">📝 明日の商談の準備を頼む</button>'
             +'</div>'
           +'</div>'
+          +'<div id="prospect-box">'+prospectSectionHtml()+'</div>'
           +'<div id="sales-stage">'+salesIntroHtml()+'</div>'
         +'</div>'
         +'<div class="panel" id="sec-pdca">'
@@ -4759,7 +4762,7 @@
     var box=$('cl-list'); if(!box)return;
     loadInvites();   // 登録をお待ちしている方も、同じ画面で見えるように
     loadMyContracts();   // 送った顧問契約の状況も
-    var cl=await sb.from('profiles').select('id,email,company_name,role,stage').eq('consultant_id',ME).eq('role','customer');
+    var cl=await sb.from('profiles').select('id,email,company_name,role,stage,created_at').eq('consultant_id',ME).eq('role','customer');
     if(cl.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(cl.error.message)+'</div>'; return; }
     var clients=cl.data||[];
     // 承認済みのサブ担当としてついている顧客を合流させる（Phase68）。
@@ -4860,6 +4863,7 @@
     }
     renderClientList();
     renderTodos();
+    renderAssocStart(clients.length);
   }
   // ===== トリアージ：今日やることリスト =====
   function daysBetween(dateStr, now){
@@ -4990,7 +4994,23 @@
       .map(function(id){ return {c:byId[id], score:todos[id].score, tags:todos[id].tags}; })
       .sort(function(a,b){ return b.score-a.score; }).slice(0,20);
     if(!rows.length){
-      box.innerHTML='<div style="font-size:13px;color:#27684A;background:#EBF2ED;border-radius:10px;padding:12px 14px;">✅ 今日対応が必要な顧客はありません。すべて順調です。</div>';
+      var h0='<div style="font-size:13px;color:#27684A;background:#EBF2ED;border-radius:10px;padding:12px 14px;">✅ 今日対応が必要な顧客はありません。すべて順調です。</div>';
+      //  空のときこそ「今月の伴走」。顧客が1〜2社の頃は、ここが毎朝空になる。
+      //  節目（伴走の1年）ごとのやることを1つ添えて、手が止まらないようにする
+      var cs=(CL_CACHE.clients||[]);
+      if(cs.length){
+        h0+='<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin:12px 0 4px;">今月の伴走（節目ごとの一手）</div>';
+        cs.slice(0,8).forEach(function(c){
+          var ph=journeyPhase(journeyPos(journeyStart(c)));
+          h0+='<div class="clcard" onclick="viewClient(\''+c.id+'\',\''+escJ(c.email)+'\',\''+escJ(c.company_name||'')+'\')">'
+            +'<div class="cl-top"><span class="cl-nm">'+esc(c.company_name||c.email)+'</span>'
+            +'<span style="margin-left:auto;color:#2C5DA8;font-size:11px;white-space:nowrap;">カルテの台本へ →</span></div>'
+            +'<div class="cl-tags"><span class="tag '+(ph.qi===0?'blue':'gray')+'">'+(ph.year>1?ph.year+'年目・':'')+'第'+ph.q+' '+esc(ph.title)+'</span>'
+            +'<span style="font-size:11.5px;color:#5A6981;line-height:1.6;">'+esc(ph.partner[0])+'</span></div>'
+          +'</div>';
+        });
+      }
+      box.innerHTML=h0;
       return;
     }
     var h='';
@@ -6125,6 +6145,8 @@
       var lm=CL_CACHE.lastMsg[c.id];
       var tags=(SUB_IDS[c.id]?'<span class="tag blue">サブ担当</span>':'')
         +'<span class="tag gray">ステージ'+(c.stage||1)+'・'+(STAGE_NAMES[c.stage||1]||'')+'</span>';
+      //  伴走の1年のどこにいるか。契約からの日数で決まる（経営者の画面と同じ言葉）
+      if(c.created_at){ var jp=journeyPhase(journeyPos(journeyStart(c))); tags+='<span class="tag '+(jp.qi===0?'blue':'gray')+'">'+(jp.year>1?jp.year+'年目・':'')+'第'+jp.q+' '+esc(jp.title)+'</span>'; }
       //  柱。増えていれば金、次の1社が動いていれば青、本業だけなら灰
       var pil=pillarsOf((CL_CACHE.maDeals||[]).filter(function(d){ return d.customer_id===c.id; }));
       tags+='<span class="tag '+(pil.done?'gold':(pil.next?'blue':'gray'))+'">柱 '+pil.count+'本'+(pil.next?'・次 '+pil.next.prog+'%':'')+'</span>';
@@ -9540,6 +9562,7 @@
   function insTabHtml(custId){
     function pill(k,label,on){ return '<button class="sbtn'+(on?' on':'')+'" data-k="'+k+'" style="font-size:11.5px;padding:7px 13px;" onclick="insTab(\''+k+'\')">'+label+'</button>'; }
     return '<div class="ph" id="cs-ins" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21.5s7.5-3.8 7.5-9.5V5.2L12 2.5 4.5 5.2v6.8c0 5.7 7.5 9.5 7.5 9.5z"/><path d="m9 11.6 2.1 2.1 4-4.3"/></svg>保険シミュレーター</span></div>'
+      +'<div id="knav-ins"></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">目的別に3つの診断と、既存契約の最適化ができます。各診断の結果は個別に顧客へ共有できます。※ 一般的な計算による情報提供であり、特定の保険商品の勧誘（保険募集）を行うものではありません。契約の実行は募集人資格を有する担当者にお繋ぎください。</div>'
       +'<div>'
       +'<div id="ins-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">'
@@ -9712,6 +9735,290 @@
       +(done?'<span style="font-size:11px;color:#27684A;white-space:nowrap;">済み</span>':'<span class="ghost" style="font-size:11px;white-space:nowrap;" onclick="'+go+'">'+label+' →</span>')
     +'</div>';
   }
+  // ===== カルテのナビ（継ナビくんが順番と「なぜ・何が分かる・次の一手」を示す） =====
+  // カルテには道具が並んでいるが、専門家ではない伴走者には「どれから」
+  // 「なぜ今」「やると何が分かる」「終わったら次は」が無かった。
+  // 順番は土台→現金→余力→条件の並びで、実データから済／次／あとを判定する。
+  // 各道具の見出しの下にも同じ言葉の短い案内を置き、計算のあとは
+  // 「結果を継ナビくんと読む」で、数字を埋めた状態で分析と次の一手を頼める。
+  // ============================================================
+  var KARTE_NAV=[
+    { id:'fin', sec:'cs-mreport', t:'試算表の取り込み（3か月分）',
+      why:'すべての数字の土台です。これが無いと、何も測れません。',
+      learn:'売上・利益・現預金の推移と、財務力（自己資本比率・債務償還年数）',
+      next:'資金繰りシミュレーターへ',
+      done:function(c){ return c.months>=3; }, part:function(c){ return c.months>0; },
+      ask:function(c){ return c.months>=3
+        ? '試算表'+c.months+'か月分を取り込みました。営業利益率'+finFmt(c.m.opRate,'%')+'・自己資本比率'+finFmt(c.m.equityRate,'%')+'・債務償還年数'+finFmt(c.m.debtYears,'年')+'。この数字から見える経営課題を3つと、経営者への伝え方、次の一手を教えて'
+        : '試算表の取り込みをこれから始めます（いま'+c.months+'か月分）。経営者にどう切り出し、税理士の先生にどう頼めばよいか、必要な資料と一緒に教えて'; } },
+    { id:'cashsim', sec:'cs-cash', t:'資金繰りシミュレーター',
+      why:'手元資金が何か月もつかを数字で知ります。第1の節目「数字が見える」の半分です。',
+      learn:'資金スコア・手元資金のもち・6か月の残高見通し・薄くなる月',
+      next:'保険・固定費の棚卸しへ',
+      done:function(c){ return !!c.snap; },
+      ask:function(c){ return c.snap
+        ? '資金繰りシミュレーターの結果を一緒に読んで。資金スコア'+c.snap.score+'点、手元資金のもち'+(c.snap.runway>=99?'十分':c.snap.runway.toFixed(1)+'か月')+'。何が分かったか、経営者にどう伝えるか、次の一手を3つ'
+        : '資金繰りシミュレーターをこれから実行します。なぜ今やるべきか、入力に必要な数字（現預金・月の入出金・返済）をどう集めるか、経営者への説明を教えて'; } },
+    { id:'ins', sec:'cs-ins', t:'保険・固定費の棚卸し',
+      why:'毎月出ていくお金の中で、いちばん見直し余地が大きいところです。第1の節目「お金の流れが分かる」の半分。',
+      learn:'見直した場合に、年間いくら現金が残るか',
+      next:'支払予定の登録へ',
+      done:function(c){ return c.d && c.d.ins>0; },
+      ask:function(c){ return (c.d && c.d.ins>0)
+        ? '保険・固定費の棚卸しの結果を一緒に読んで。年間の改善額を経営者にどう伝えるか（募集人としての立場を先に明示すること）、実行は有資格者に取り次ぐ前提で、次の一手を3つ'
+        : '保険・固定費の棚卸しをこれから始めます。保険証券をどう集めるか、契約を批判せずに整理する言い方、有資格者への取り次ぎまでの流れを教えて'; } },
+    { id:'pay', sec:'cs-pay', t:'支払予定の登録',
+      why:'資金繰りの見通しに、実際の支払日を乗せます。薄くなる月が見えます。',
+      learn:'30日以内の支払と、残高が薄くなる月',
+      next:'導入診断報告書へ',
+      done:function(c){ return c.d && c.d.pay>0; },
+      ask:function(c){ return '支払予定の登録について。借入返済・税金・賞与など、経営者から聞き出すべき支払を一覧にして、聞き方も教えて'; } },
+    { id:'obr', sec:'cs-report', t:'導入診断報告書（12か月の道筋）',
+      why:'土台の仕上げです。経営者と1年の打ち手を合意し、第2の節目に入ります。',
+      learn:'企業価値・資金繰り・保険と固定費・12か月のロードマップが1枚に',
+      next:'第2の節目「現金を増やす」へ',
+      done:function(c){ return c.d && c.d.obr>0; },
+      ask:function(c){ return '導入診断報告書の初回報告面談を組み立てて。4つの成果物をどの順に見せ、12か月の道筋をどう合意するか、30分の流れで'; } },
+    { id:'val', sec:'cs-value', t:'企業価値診断',
+      why:'「今いくらの会社か」と「買い手としての余力」を知ります。第3の節目の入口です。',
+      learn:'推定企業価値（EBITDA×倍率）と、譲受余力の目安',
+      next:'買い手になる準備度へ',
+      done:function(c){ return c.val>0; },
+      ask:function(c){ return c.val>0
+        ? '企業価値診断の結果を一緒に読んで。売り手としての企業価値と、買い手としての譲受余力の目安が出ています。経営者にどう伝えるか、値段を上げる打ち手と、次の1社の上限価格の考え方を教えて'
+        : '企業価値診断をこれから行います。なぜ今やるべきか、経営者にどう切り出すか（「会社の値段を出せますか」）、必要な数字を教えて'; } },
+    { id:'ready', sec:'cs-shindan', t:'買い手になる準備度',
+      why:'次の1社を引き受けられる会社かを、五つの軸で確かめます。',
+      learn:'弱い軸と、それを上げるための次の一手',
+      next:'弱い軸を課題に登録 → 買いたい条件へ',
+      done:function(c){ return !!(c.ready && c.readyN>0); },
+      ask:function(c){ return (c.ready && c.readyN>0)
+        ? '買い手になる準備度が'+c.ready.score+'点でした。弱い軸は「'+(c.weak?c.weak.l:'—')+'」。この軸を3か月で上げる一手を3つと、経営者への伝え方を教えて'
+        : '買い手になる準備度をこれから面談で確かめます。五つの軸（自己資金・借入余力・経営陣の余裕・PMI体制・目的の明確さ）を、経営者に自然に聞く順番と聞き方を教えて'; } },
+    { id:'bc', sec:'cs-mna', t:'買いたい条件',
+      why:'案件を探す起点です。目的が言葉になります。第4の節目の入口。',
+      learn:'業種・地域・規模・予算・目的',
+      next:'Tsugime -結- の案件を一緒に見て、関心を出す',
+      done:function(c){ return c.bcN===3; }, part:function(c){ return c.bcN>0; },
+      ask:function(c){ return c.bcN===3
+        ? '買いたい条件（目的・業種か地域・予算）が揃いました。Tsugime -結- の案件をどう見て、どの案件に関心を出すべきか、経営者と一緒に見るときの進め方を教えて'
+        : '買いたい条件をこれから一緒に書きます（いま'+c.bcN+'／3）。「どんな会社なら引き受けたいか」を経営者から引き出す問いを5つ教えて'; } },
+    { id:'ai', sec:'cs-ai', t:'AI自動化診断', opt:true,
+      why:'人手の作業を減らし、買った後に人と時間を割ける体制にします。準備度の「経営陣の余裕」「PMI体制」に効きます。',
+      learn:'自動化しやすい業務と、優先順位',
+      next:'課題に登録して回す',
+      done:function(c){ return c.ai>0; },
+      ask:function(c){ return c.ai>0 ? 'AI自動化診断の結果から、最初に取り組む1つを選ぶ基準と、課題への落とし込み方を教えて' : 'AI自動化診断をこれから行います。経営者に「一番負担な作業」を聞き出す聞き方を教えて'; } },
+    { id:'bank', sec:'cs-bank', t:'銀行提出パッケージ', opt:true,
+      why:'借入余力を、銀行の目で確かめます。譲受の資金調達の下地です。',
+      learn:'債務償還年数・自己資本比率・返済原資と、調達後の姿',
+      next:'メインバンクに譲受の意向を伝える',
+      done:null,
+      ask:function(c){ return '銀行提出パッケージを使って、メインバンクに「会社を譲り受ける意向」を伝える面談を組み立てて。債務償還年数'+finFmt(c.m.debtYears,'年')+'・自己資本比率'+finFmt(c.m.equityRate,'%')+'。銀行が見る点と、伝え方を教えて'; } }
+  ];
+  var KARTE_CTX=null;
+  function karteState(step, c){
+    if(!step.done) return 'free';
+    if(step.done(c)) return 'done';
+    if(step.part && step.part(c)) return 'part';
+    return 'todo';
+  }
+  //  順番の一覧。「次はこれ」＝任意でない項目のうち、済んでいない最初のもの
+  function karteNavHtml(c){
+    var nextId=null;
+    KARTE_NAV.forEach(function(st){ if(!nextId && !st.opt && karteState(st,c)!=='done') nextId=st.id; });
+    var h='<div style="border:1.5px solid #C9D6EA;background:#F8FAFF;border-radius:12px;padding:12px 14px;margin:0 0 14px;">'
+      +'<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">'
+        +'<b style="font-size:13px;color:var(--navy);">🧭 継ナビくんのナビ ― この会社でやる順番</b>'
+        +'<span style="font-size:11px;color:var(--muted);">土台 → 現金 → 余力 → 条件。済んだものは自動で✓</span>'
+      +'</div>';
+    KARTE_NAV.forEach(function(st){
+      var s=karteState(st,c), isNext=(st.id===nextId);
+      var mark=s==='done'?'<span style="color:#27684A;font-weight:700;">✓</span>':(s==='part'?'<span style="color:#8A6A12;font-weight:700;">△</span>':'<span style="color:#C2CCDA;">○</span>');
+      h+='<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:1px dashed var(--softline);'+(isNext?'background:#FDFAF1;margin:0 -6px;padding-left:6px;padding-right:6px;border-radius:7px;':'')+'">'
+        +'<span style="width:16px;flex-shrink:0;text-align:center;font-size:13px;">'+mark+'</span>'
+        +'<div style="flex:1;min-width:0;">'
+          +'<div style="font-size:12.5px;'+(s==='done'?'color:var(--muted);':'color:var(--ink);font-weight:'+(isNext?'700':'500')+';')+'">'+esc(st.t)
+            +(isNext?'<span class="tag gold" style="margin-left:6px;">次はこれ</span>':'')+(st.opt?'<span style="font-size:10.5px;color:var(--muted);margin-left:6px;">任意</span>':'')+'</div>'
+          +(isNext?'<div style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:2px;"><b style="color:var(--navy);">なぜ今：</b>'+esc(st.why)+'<br><b style="color:var(--navy);">分かること：</b>'+esc(st.learn)+'</div>':'')
+        +'</div>'
+        +'<span class="ghost" style="font-size:11px;white-space:nowrap;" onclick="clNav(\''+st.sec+'\')">'+(s==='done'?'見る':'開く')+' →</span>'
+      +'</div>';
+    });
+    h+='</div>';
+    return h;
+  }
+  //  各道具の見出しの下の短い案内。計算の前は「なぜ・何が分かる」、後は「次の一手」を前に
+  function karteStripHtml(st, c){
+    var s=karteState(st,c);
+    var doneS=(s==='done');
+    return '<div style="display:flex;gap:9px;align-items:flex-start;border-left:3px solid '+(doneS?'#27684A':'#C39B3F')+';background:'+(doneS?'#F2F8F4':'#FDFAF1')+';border-radius:0 9px 9px 0;padding:8px 11px;margin:0 0 10px;">'
+      +'<span style="font-size:14px;flex-shrink:0;">🌱</span>'
+      +'<div style="flex:1;min-width:0;font-size:11.5px;color:var(--ink);line-height:1.7;">'
+        +(doneS
+          ? '<b style="color:#27684A;">済んでいます。</b>分かったこと：'+esc(st.learn)+'　→ <b>次の一手：</b>'+esc(st.next)
+          : '<b style="color:#8A6A12;">なぜ今：</b>'+esc(st.why)+'<br><b style="color:#8A6A12;">やると分かること：</b>'+esc(st.learn)+'　→ 終わったら '+esc(st.next))
+      +'</div>'
+      +'<button class="ghost" style="font-size:11px;border:1px solid '+(doneS?'#CFE3D6':'#EBDDB4')+';border-radius:8px;padding:5px 9px;white-space:nowrap;flex-shrink:0;" onclick="karteAsk(\''+st.id+'\')">'+(doneS?'結果を継ナビくんと読む':'進め方を聞く')+'</button>'
+    +'</div>';
+  }
+  function karteAsk(id){
+    var st=null; KARTE_NAV.forEach(function(x){ if(x.id===id) st=x; });
+    if(!st){ return; }
+    var c=KARTE_CTX||{ m:{}, months:0, snap:null, d:null, val:0, ai:0, ready:null, readyN:0, bcN:0, weak:null };
+    var q=st.ask(c);
+    if(c.company) q='担当顧客（'+c.company+'）について。'+q;
+    knvAsk(q);
+  }
+  function renderKarteNav(c){
+    KARTE_CTX=c;
+    var box=$('cl-nav'); if(box) box.innerHTML=karteNavHtml(c);
+    KARTE_NAV.forEach(function(st){ var el=$('knav-'+st.id); if(el) el.innerHTML=karteStripHtml(st,c); });
+  }
+
+  // ===== 今月の面談台本（カルテ） =====
+  // 「今日やること」は作業を並べる。ここは「今月この会社のどの数字を見て、
+  // 経営者と何を話し、それがどう買い手の基盤につながるか」を組み立てる。
+  // M&Aの専門家ではない伴走者が、面談で手が止まらないように。
+  //
+  //  材料はすべて既にある数字：財務（finMetrics）・資金繰り・柱（pillarsOf）・
+  //  買い手になる準備度（shindanScore）・買いたい条件・伴走の1年の節目。
+  //  組み立ては meetingScript（純粋な関数）に寄せ、描画と分けて試験できるようにする。
+  // ============================================================
+  function meetingScript(ctx){
+    ctx=ctx||{};
+    var ph=journeyPhase(ctx.pos||{mi:0});
+    var remain=ctx.remain||[];
+    var m=ctx.m||{}, months=ctx.months||0, snap=ctx.snap||null, pil=ctx.pil||{count:1,done:0,next:null};
+    var ready=ctx.ready||null, bc=ctx.bc||{};
+    var cashM=(m.cashMonths!=null)?m.cashMonths:null;
+    var runway=(snap && snap.runway!=null)?snap.runway:null;
+    var bcN=[!!bc.purpose, !!(bc.industries||bc.region), !!bc.budget_man].filter(Boolean).length;
+    var weak=null;
+    if(ready && ready.axes){ ready.axes.forEach(function(a){ if(a.score==null) return; if(!weak || a.score<weak.score) weak=a; }); }
+    function fmtPct(v){ return finFmt(v,'%'); }
+    //  候補の数字。鍵で選ぶ
+    var N={
+      fin:  { l:'月次データ', v:months+'か月分', why:(months>=3?'3か月そろっています。推移で話せます':'まず試算表3か月分をお預かりするところから'), sec:'cs-mreport' },
+      cash: { l:'手元資金のもち', v:(runway==null?'未診断':(runway>=99?'十分':runway.toFixed(1)+'か月')), why:(runway==null?'資金繰りシミュレーターで診断すると出ます':(runway<3?'3か月を切っています。今月はここが最優先':'月商の何か月分の現金があるか。買い手の自己資金の土台')), sec:'cs-cash' },
+      cashM:{ l:'現預金の月商倍率', v:(cashM==null?'—':cashM.toFixed(1)+'か月分'), why:'2か月分が目安。自己資金の仮置きは現預金の半分', sec:'cs-mreport' },
+      op:   { l:'営業利益率', v:fmtPct(m.opRate), why:(m.opRate!=null&&m.opRate<5?'5%を下回っています。値付けとコストの話を':'本業の余裕。買った後に人と時間を割けるか'), sec:'cs-mreport' },
+      debt: { l:'債務償還年数', v:finFmt(m.debtYears,'年'), why:(m.debtYears!=null&&m.debtYears>10?'10年を超えています。新しい借入の余地が狭い':'10年以内なら銀行は次の借入の話に乗りやすい'), sec:'cs-bank' },
+      pil:  { l:'柱', v:pil.count+'本', why:(pil.next?'次の1社は「'+pil.next.name+'」の段階（'+pil.next.prog+'%）':(pil.done?'増えた柱を確かめ、次の1社へ':'本業の1本。次の1社を引き受ける準備を')), sec:'cs-mna' },
+      ready:{ l:'買い手になる準備度', v:(ready?ready.score+'点':'未記録'), why:(weak?'いちばん弱い軸は「'+weak.l+'」（'+weak.score+'）':'五つの軸を面談で確かめると出ます'), sec:'cs-shindan' },
+      bc:   { l:'買いたい条件', v:bcN+'／3 記入', why:(bcN===3?'業種・地域・予算が揃っています。案件を見る番':'目的・業種か地域・予算を一緒に書くと、案件を探せます'), sec:'cs-mna' }
+    };
+    var order=[['fin','cash','cashM'],['cash','op','cashM'],['debt','ready','pil'],['ready','pil','bc']][ph.qi];
+    if(months===0) order=['fin','cash','pil'];
+    if(runway!=null && runway<3 && order.indexOf('cash')!==0) order=['cash'].concat(order.filter(function(k){ return k!=='cash'; })).slice(0,3);
+    var numbers=order.map(function(k){ return N[k]; });
+    //  問い。節目の3つを土台に、数字が語っていることを先頭に差し込む
+    var baseQ=[
+      ['試算表は毎月、税理士の先生からいつ届きますか？','保険証券は全部で何本ありますか？','いま、いちばん気になっているお金の話は何ですか？'],
+      ['保険と固定費の見直しで、先月いくら残りましたか？','値付けを最後に見直したのはいつですか？','毎月の返済は、月商の何割くらいの感覚ですか？'],
+      ['いま会社を買うとしたら、自己資金はいくらまで出せますか？','メインバンクに「買う話」をしたことはありますか？','社長が1か月いなくても、現場は回りますか？'],
+      ['どんな会社なら引き受けたいですか？業種・地域・規模で言うと？','なぜ買うのか、一言で言うと？','株主とご家族は「会社を買う」方針に賛同していますか？']
+    ][ph.qi];
+    var pre=[];
+    if(months===0) pre.push('試算表（直近3か月分）と保険証券を、いつお預かりできますか？');
+    //  土台が整わないまま次の四半期に入っていれば、並行して続ける分を先頭に
+    if(remain.length && ph.qi>0) pre.push('土台の「'+remain[0]+'」がまだです。今月それを整えるのに、何をお預かりすればよいですか？');
+    if(runway!=null && runway<3) pre.push('来月の支払で、いちばん大きいものは何ですか？');
+    if(m.opRate!=null && m.opRate<5) pre.push('値上げを最後にしたのはいつですか？何%なら通りそうですか？');
+    if(m.debtYears!=null && m.debtYears>10) pre.push('メインバンクとは、次の借入の話をしていますか？');
+    if(pil.next) pre.push('次の1社は「'+pil.next.name+'」で止まっています。進めるのに何が要りますか？');
+    if(ph.qi>=2 && bcN<3) pre.push('どんな会社なら引き受けたいですか？業種・地域・予算で言うと？');
+    if(weak && ph.qi>=2) pre.push('準備度でいちばん弱いのは「'+weak.l+'」です。ここを上げるのに、今月できることは何ですか？');
+    var questions=[]; pre.concat(baseQ).forEach(function(q){ if(questions.length<3 && questions.indexOf(q)<0) questions.push(q); });
+    //  買い手の基盤へのつながり
+    var link=[
+      '土台が整うと、第2の節目で「現金を増やす」打ち手を数字で選べます。今月の話は、その材料集めです。',
+      '増えた現金はそのまま自己資金になります。準備度の「自己資金」「借入余力」が、ここで上がります。',
+      '余力が分かると、次の1社の上限価格が決まります。'+(weak?'弱い軸「'+weak.l+'」を上げる一手を、課題に登録しましょう。':'準備度の五つの軸を面談で確かめましょう。'),
+      '条件が書けたら、案件を一緒に見て関心を出す番です。柱が1本増える周回の入口です。'
+    ][ph.qi];
+    if(remain.length && ph.qi>0) link+='　土台の残り（'+remain.join('・')+'）も並行して進めます。';
+    return { phase:ph, numbers:numbers, questions:questions, link:link, weak:weak, remain:remain };
+  }
+  function meetingScriptHtml(sc, custId){
+    var h='<div style="border:1.5px solid #EBDDB4;background:#FDFAF1;border-radius:12px;padding:13px 15px;margin:10px 0 14px;">'
+      +'<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">'
+        +'<b style="font-size:13px;color:#8A6A12;">📋 今月の面談台本</b>'
+        +'<span style="font-size:11px;color:var(--muted);">'+esc(sc.phase.label)+'</span>'
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin:3px 0 8px;">この会社の数字から組み立てています。見せる数字→問い→買い手の基盤へのつながり、の順で。</div>'
+      +'<div class="cl-cols"><div class="cl-col">'
+        +'<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">見せる数字（3つ）</div>'
+        +sc.numbers.map(function(x){
+          return '<div style="display:flex;gap:8px;align-items:baseline;padding:5px 0;border-top:1px dashed var(--softline);font-size:12px;">'
+            +'<span style="min-width:8.5em;color:var(--ink);">'+esc(x.l)+'</span>'
+            +'<b style="color:var(--navy);white-space:nowrap;">'+esc(x.v)+'</b>'
+            +'<span style="flex:1;color:var(--muted);font-size:11px;line-height:1.6;">'+esc(x.why)+'</span>'
+            +'<span class="ghost" style="font-size:11px;white-space:nowrap;" onclick="clNav(\''+x.sec+'\')">開く →</span>'
+          +'</div>';
+        }).join('')
+      +'</div><div class="cl-col">'
+        +'<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">問い（3つ）</div>'
+        +'<ol style="margin:0;padding-left:20px;font-size:12.5px;line-height:1.9;color:var(--ink);">'
+        +sc.questions.map(function(q){ return '<li>'+esc(q)+'</li>'; }).join('')+'</ol>'
+      +'</div></div>'
+      +'<div style="font-size:12px;color:#5C4A17;background:#fff;border:1px solid #EBDDB4;border-radius:9px;padding:8px 11px;margin-top:8px;line-height:1.75;"><b>買い手の基盤へ：</b>'+esc(sc.link)+'</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px;">'
+        +'<button class="ghost" style="font-size:12px;border:1px solid #EBDDB4;border-radius:8px;padding:6px 12px;" onclick="meetingScriptAsk(\''+custId+'\')">🎭 継ナビくんに台本を仕上げてもらう</button>'
+        +'<button class="ghost" style="font-size:12px;border:1px solid #EBDDB4;border-radius:8px;padding:6px 12px;" onclick="clNav(\'cs-meet\')">議事録へ</button>'
+      +'</div>'
+    +'</div>';
+    return h;
+  }
+  var MSCRIPT_LAST=null;
+  //  数字を埋めて継ナビくんに渡す。◯◯を残さない
+  function meetingScriptAsk(custId){
+    var sc=MSCRIPT_LAST; if(!sc){ knvAsk('今月の面談台本を作って'); return; }
+    var nums=sc.numbers.map(function(x){ return x.l+'='+x.v; }).join('、');
+    knvAsk('今月の面談台本を仕上げて。相手は担当顧客（'+esc(sc.company||'')+'）、伴走の1年は'+sc.phase.label+'。見せる数字：'+nums+'。問い：'+sc.questions.join('／')+'。ねらい：'+sc.link+'　この材料で、30分の面談の流れ（最初の5分・数字を見せる10分・問いと合意10分・次回までの宿題5分）を、経営者に響く言葉で組み立てて');
+  }
+  async function loadClientScript(custId){
+    var box=$('cl-script'); if(!box) return;
+    var ctx={ pos:{mi:0}, remain:[], m:{}, months:0, snap:null, pil:pillarsOf([]), ready:null, bc:null, d:null };
+    try{
+      var r=await Promise.all([
+        sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false}).limit(12),
+        sb.from('cashflow_snapshots').select('*').eq('customer_id',custId).order('created_at',{ascending:false}).limit(1),
+        sb.from('ma_deals').select('deal_type,stage').eq('customer_id',custId),
+        sb.from('succession_checks').select('answers').eq('customer_id',custId).maybeSingle(),
+        sb.from('buy_criteria').select('industries,region,purpose,budget_man').eq('customer_id',custId).maybeSingle(),
+        sb.from('profiles').select('created_at,onboard_start,company_name').eq('id',custId).maybeSingle(),
+        sb.from('valuation_snapshots').select('ym').eq('customer_id',custId).limit(1),
+        sb.from('ai_proposals').select('id').eq('customer_id',custId).eq('source','automation').limit(1)
+      ]);
+      var fin=(r[0].error?[]:(r[0].data||[]));
+      ctx.val=(r[6].error?[]:(r[6].data||[])).length; ctx.ai=(r[7].error?[]:(r[7].data||[])).length;
+      ctx.months=fin.length;
+      if(fin.length){ ctx.m=finMetrics(fin[0])||{}; var c=nOr(fin[0].cash), rv=nOr(fin[0].revenue); ctx.m.cashMonths=(c!=null&&rv)?c/rv:null; }
+      var snap=(r[1].error?null:((r[1].data||[])[0]||null));
+      if(snap){ var out=Number(snap.monthly_out||0)+Number(snap.monthly_repay||0); ctx.snap={ score:Number(snap.score||0), runway:(out>0?Number(snap.cash||0)/out:99) }; }
+      ctx.pil=pillarsOf(r[2].error?[]:(r[2].data||[]));
+      var ans={}; if(!r[3].error && r[3].data && r[3].data.answers){ try{ ans=JSON.parse(r[3].data.answers)||{}; }catch(e){} }
+      ctx.bc=(r[4].error?null:(r[4].data||null));
+      //  準備度は SHINDAN を通して数える。いまのカルテの値を壊さないよう、計算のあいだだけ差し替える
+      var keep=SHINDAN;
+      try{ SHINDAN={ cust:custId, ans:ans, fin:fin, bc:ctx.bc }; ctx.ready=shindanScore(); }catch(e){ ctx.ready=null; }
+      ctx.readyN=Object.keys(ans).length;
+      ctx.bcN=[!!(ctx.bc&&ctx.bc.purpose), !!(ctx.bc&&(ctx.bc.industries||ctx.bc.region)), !!(ctx.bc&&ctx.bc.budget_man)].filter(Boolean).length;
+      SHINDAN=keep;
+      var prof=(r[5].error?null:(r[5].data||null));
+      ctx.pos=journeyPos(journeyStart(prof||{}));
+      //  土台の残り（並行して続けるぶん）。台本の問いと、カルテのナビに使う
+      ctx.d=await ob90Fetch(custId); ctx.remain=ob90Remain(ob90Judge(ctx.d));
+      ctx.company=(prof&&prof.company_name)||'';
+    }catch(e){}
+    var sc=meetingScript(ctx); sc.company=ctx.company||'';
+    MSCRIPT_LAST=sc;
+    box.innerHTML=meetingScriptHtml(sc, custId);
+    ctx.weak=sc.weak;
+    renderKarteNav(ctx);
+  }
+
   async function loadClientTodo(custId){
     var box=$('cl-todo-body'); if(!box) return;
     var now=new Date(), ym=thisYM(), monthStart=ym+'-01';
@@ -9719,7 +10026,7 @@
     var pd=new Date(now.getFullYear(), now.getMonth()-1, 1);
     var pym=pd.getFullYear()+'-'+('0'+(pd.getMonth()+1)).slice(-2);
     var rows=[], done={fin:false, meet:false, note:false, rep:false}, meetInfo=null;
-    var sig={msgOk:true, pdcaOk:true, dueOk:true, hasMa7:false, pmiDone:false, cash90:false, ins90:false, ai90:false};
+    var sig={msgOk:true, pdcaOk:true, dueOk:true, hasMa7:false, pmiDone:false, cash90:false, ins90:false, ai90:false, ready90:false, bc90:false};
     function within(dstr,days){ if(!dstr) return false; return (now - new Date(dstr))/(24*3600*1000) <= days; }
     try{
       var rs=await Promise.all([
@@ -9735,7 +10042,10 @@
         sb.from('pmi_pulses').select('score').eq('customer_id',custId).eq('ym',ym).limit(1),
         sb.from('cashflow_snapshots').select('created_at').eq('customer_id',custId).order('created_at',{ascending:false}).limit(1),
         sb.from('insurance_diagnoses').select('created_at').eq('customer_id',custId).order('created_at',{ascending:false}).limit(1),
-        sb.from('ai_proposals').select('created_at').eq('customer_id',custId).eq('source','automation').order('created_at',{ascending:false}).limit(1)
+        sb.from('ai_proposals').select('created_at').eq('customer_id',custId).eq('source','automation').order('created_at',{ascending:false}).limit(1),
+        //  買い手の側の定型：準備度の記録と買いたい条件の見直し（3か月ごと）
+        sb.from('succession_checks').select('updated_at').eq('customer_id',custId).limit(1),
+        sb.from('buy_criteria').select('updated_at').eq('customer_id',custId).limit(1)
       ]);
       var d=function(i){ return (!rs[i].error && rs[i].data)?rs[i].data:[]; };
       // --- メッセージ：未読＋返信滞留 ---
@@ -9798,6 +10108,8 @@
       sig.cash90=!!(d(10)[0]&&within(d(10)[0].created_at,90));
       sig.ins90=!!(d(11)[0]&&within(d(11)[0].created_at,90));
       sig.ai90=!!(d(12)[0]&&within(d(12)[0].created_at,90));
+      sig.ready90=!!(d(13)[0]&&within(d(13)[0].updated_at,90));
+      sig.bc90=!!(d(14)[0]&&within(d(14)[0].updated_at,90));
     }catch(e){}
     var left='';
     if(rows.length) left+=rows.join('');
@@ -9813,11 +10125,13 @@
       +(sig.hasMa7?clCheckRow(sig.pmiDone, 'PMIパルスの回収（M&A統合後の状況確認）', "clNav(\'cs-mna\')", '確認する'):'');
     var quarterly=clCheckRow(sig.cash90, '資金繰りシミュレーターの更新（90日以内）', "clNav(\'cs-cash\')", '実行する')
       +clCheckRow(sig.ins90, '保険最適化の見直し（90日以内）', "clNav(\'cs-ins\')", '実行する')
-      +clCheckRow(sig.ai90, 'AI自動化診断の見直し・提案（90日以内）', "clNav(\'cs-ai\')", '実行する');
+      +clCheckRow(sig.ai90, 'AI自動化診断の見直し・提案（90日以内）', "clNav(\'cs-ai\')", '実行する')
+      +clCheckRow(sig.ready90, '買い手になる準備度の記録（90日以内）', "clNav(\'cs-shindan\')", '記録する')
+      +clCheckRow(sig.bc90, '買いたい条件の見直し（90日以内）', "clNav(\'cs-mna\')", '見直す');
     CL_TODO_TABS={ d:daily, w:weekly, m:monthly, q:quarterly };
     var pend={ d:(sig.msgOk?0:1), w:(sig.pdcaOk?0:1)+(sig.dueOk?0:1),
       m:(done.fin?0:1)+(done.rep?0:1)+(done.note?0:1)+(done.meet?0:1)+((sig.hasMa7&&!sig.pmiDone)?1:0),
-      q:(sig.cash90?0:1)+(sig.ins90?0:1)+(sig.ai90?0:1) };
+      q:(sig.cash90?0:1)+(sig.ins90?0:1)+(sig.ai90?0:1)+(sig.ready90?0:1)+(sig.bc90?0:1) };
     function tb(k,label){ var n=pend[k]||0; return '<button class="sbtn'+(k===CL_TODO_CUR?' on':'')+'" data-k="'+k+'" style="font-size:11.5px;padding:6px 12px;" onclick="clTodoFreq(\''+k+'\',this)">'+label+(n?' <span class="clnb" style="position:static;margin-left:2px;">'+n+'</span>':'')+'</button>'; }
     var right='<div style="font-size:12px;font-weight:700;color:var(--navy);margin:0 0 6px;">定型作業（期間別・'+esc(ym.replace('-','年'))+'月）</div>'
       +'<div id="cl-todo-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">'+tb('d','毎日')+tb('w','毎週')+tb('m','毎月')+tb('q','3か月ごと')+'</div>'
@@ -11653,12 +11967,15 @@
       +'<div class="ph" id="cs-todo" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 16.5V22"/><path d="M8.5 3h7l-1 6 2.8 3.2v1.3H6.7v-1.3L9.5 9z"/></svg>やること（この顧客の対応状況）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientTodo(\''+custId+'\')">↺ 更新</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">対応が必要な項目と、今月の定型作業のチェックです。このリストは<b>パートナー専用</b>で、顧客には表示されません。</div>'
       +'<div id="cl-todo-body">読み込み中...</div>'
+      +'<div id="cl-script"></div>'
+      +'<div id="cl-nav"></div>'
       +'<div class="ph" id="cs-onboard" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 6.5 1.5 1.5L7.5 5"/><path d="m3 13 1.5 1.5L7.5 11.5"/><path d="m3 19.5 1.5 1.5L7.5 18"/><path d="M11 6.5h10M11 13h10M11 19.5h10"/></svg>導入チェックリスト（Phase 0）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadOnboard(\''+custId+'\')">↺ 更新</span></div>'
-      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">導入初期費用に対応する導入作業（資料受領 → データ整備 → 初期診断 → 報告）の進捗管理です。すべて完了すると「導入診断報告書」の4つの成果物が揃います。</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">導入初期費用に対応する導入作業（資料受領 → データ整備 → 初期診断 → 報告）の進捗管理です。期限は「はじめの90日（土台づくり）」に合わせて12週で組みます。すべて完了すると「導入診断報告書」の4つの成果物が揃います。</div>'
       +'<div id="cl-onboard90"></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin:14px 0 6px;line-height:1.6;">以下は運用側の作業チェックリストです（顧客には表示されません）。</div>'
       +'<div id="cl-onboard-body">読み込み中...</div>'
       +'<div class="ph" id="cs-report" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 19.2A2.8 2.8 0 0 1 6.8 16.4H20"/><path d="M6.8 3H20v18H6.8A2.8 2.8 0 0 1 4 18.2V5.8A2.8 2.8 0 0 1 6.8 3z"/></svg>導入診断報告書</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadObr(\''+custId+'\')">↺ 更新</span></div>'
+      +'<div id="knav-obr"></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">導入フェーズの4つの成果物（①企業価値診断 ②資金繰り現状 ③保険・固定費の棚卸し ④12ヶ月改善ロードマップ）をまとめる、初回報告面談用の報告書です。<b>「公開」にすると顧客ポータルの「月次レポート」欄にも表示されます。</b>印刷（PDF）は報告書全体・4項目の個別どちらも可能です。</div>'
       +'<div id="obr-body">読み込み中...</div>'
       +'<div class="ph" id="cs-company" style="font-size:13px;">会社情報（代行入力）</div>'
@@ -11704,6 +12021,7 @@
     // ---- タブ2：財務・支払・課題 ----
     var tabFin='<div id="ctab-fin">'
       +'<div class="ph" id="cs-mreport" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>月次レポート</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientReports(\''+custId+'\')">↺ 更新</span></div>'
+      +'<div id="knav-fin"></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">この顧客の月次レポートです。数字は自動生成されるので、コメントとひとことを添えてから<b style="color:#1E3A66;">「承認して公開」</b>を押してください。公開すると経営者ダッシュボードに表示されます。</div>'
       +'<div id="clrep-body">読み込み中...</div>'
       +'<div class="ph" id="cs-cash" style="font-size:13px;">社長からの手元資金（本人の申告）</div>'
@@ -11740,6 +12058,7 @@
       +'</div>'
       +'</div>'
       +'<div class="ph" id="cs-pay" style="font-size:13px;margin-top:18px;">今後の支払予定（代行入力）</div>'
+      +'<div id="knav-pay"></div>'
       +'<div class="cl-cols">'
       +'<div class="cl-col">'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">借入返済・納税・賞与・大口仕入など。顧客の「資金繰りステータス」の残高見通しに反映されます。</div>'
@@ -11757,6 +12076,7 @@
       +'</div>'
       +'</div>'
       +'<div class="ph" id="cs-cash" style="font-size:13px;margin-top:18px;">資金繰りシミュレーター（実行すると顧客のダッシュボードに反映）</div>'
+      +'<div id="knav-cashsim"></div>'
       +'<div class="cl-cols">'
       +'<div class="cl-col">'
       +'<div style="margin:4px 0 8px;"><button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:5px 10px;" onclick="cfPrefillFor(\''+custId+'\')">↺ 月次財務メモから取り込む</button></div>'
@@ -11837,6 +12157,7 @@
     // ---- タブ3：AIツール・試算 ----
     var tabTools='<div id="ctab-tools">'
       +'<div class="ph" id="cs-ai" style="font-size:13px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="5" width="14" height="14" rx="2.5"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9.5 2v3M14.5 2v3M9.5 19v3M14.5 19v3M2 9.5h3M2 14.5h3M19 9.5h3M19 14.5h3"/></svg>AI自動化診断</span></div>'
+      +'<div id="knav-ai"></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">顧客が送った「気になる業務」を踏まえ、AIが業務フロー・ボトルネック・ツール構成・実装手順・削減時間と金額・投資回収まで踏み込んで診断します。結果を確認し、必要なら各施策を「深掘り」して、顧客にフィードバック・提案できます。</div>'
       +'<div id="diag-interests" style="margin-bottom:8px;"></div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
@@ -11878,6 +12199,7 @@
       +'<div id="mn-result" style="margin-top:10px;"></div>'
       +'<div id="mn-history" style="margin-top:14px;"></div>'
       +'<div class="ph" id="cs-mna" style="font-size:13px;margin-top:18px;">買い手になる提案（AI）</div>'
+      +'<div id="knav-bc"></div>'
       //  柱の絵→買いたい条件→関心→AIの提案の順。
       //  経営者が何を望んでいるかを見てから提案を作る順にしたい
       +'<div id="cpil-box"></div>'
@@ -11896,6 +12218,7 @@
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">M&A成立後の統合（PMI）を、<b style="color:#1E3A66;">買い手企業自身が進めるための進行管理ツール</b>です。標準チェックリスト（Day 1 → 30日 → 100日）を期限付きの課題として登録し、進み具合を見える化します。当プラットフォームおよびパートナーはPMIの実行を請け負いません。労務・法務・税務など個別の判断が必要な項目は、専門家ネットワークの専門家におつなぎします。</div>'
       +'<div id="pmi-body">読み込み中...</div>'
       +'<div class="ph" id="cs-value" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 16.5 5.5-5.5 3.5 3.5L21 5"/><path d="M15 5h6v6"/></svg>企業価値診断（3系統・毎月の推移を顧客と共有）</span></div>'
+      +'<div id="knav-val"></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.75;">'
         +'<b style="color:#1E3A66;">EBITDAは「評価手法」ではなく「指標」です。</b>年買法もマルチプルも、EBITDAを入力の一部に使う別々の手法にすぎません。'
         +'ここでは<b>時価純資産法（コスト）・年買法（折衷）・EBITDAマルチプル（マーケット）・収益還元法（インカム）</b>を並べて出します。'
@@ -11963,12 +12286,14 @@
       +'</div>'
       +'</div>'
       +'<div class="ph" id="cs-shindan" style="font-size:13px;margin-top:18px;"><span class="ph-t">'+icoSvg('trend')+'買い手になる準備度（譲受準備度）</span></div>'
+      +'<div id="knav-ready"></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">「次の1社を引き受けられる会社か」を、<b style="color:#1E3A66;">自己資金・借入余力・経営陣の余裕・PMI体制・目的の明確さ</b>の五つの軸で測ります。財務データからの自動評価と、面談で確かめる項目の組み合わせです。点数を上げる取り組みが、そのまま地盤を固める＝企業価値の向上になります。買う予定がまだなくても、経営改善の羅針盤としてお使いください。</div>'
       +'<div id="shindan-body">読み込み中...</div>'
       +'<div class="ph" id="cs-subsidy" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="8.5" width="18" height="12.5" rx="2"/><path d="M3 13h18M12 8.5V21"/><path d="M12 8.5S10.5 3 8 3a2.5 2.5 0 0 0 0 5.5zM12 8.5S13.5 3 16 3a2.5 2.5 0 0 1 0 5.5z"/></svg>補助金ナビ</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">運営が登録した制度に、この顧客の<b style="color:#1E3A66;">業種・年商・資金使途</b>を照らして候補を出します。返済不要のため、融資より先に検討する価値があります。ここでの役割は<b style="color:#1E3A66;">制度のご案内（情報提供）まで</b>です。申請書類の作成・提出の代行は行わず、申請支援が必要な場合は専門家ネットワークの専門家におつなぎします。</div>'
       +'<div id="subn-body">読み込み中...</div>'
       +'<div class="ph" id="cs-bank" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 21h18"/><path d="M4 10h16"/><path d="M5 10v11M9 10v11M15 10v11M19 10v11"/><path d="m12 3 9 5H3z"/></svg>銀行提出パッケージ</span></div>'
+      +'<div id="knav-bank"></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">登録済みの試算表データから、<b style="color:#1E3A66;">金融機関が実際に見る数字</b>（債務償還年数・自己資本比率・返済原資）を1枚にまとめた提出用資料を作成します。調達希望額を入れると、<b style="color:#1E3A66;">借入後の債務償還年数</b>も試算します。作成後は印刷・PDF保存ができます。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
         +'<div><label class="fl">調達希望額（万円）</label><input id="bk-amt" type="number" class="inp2" style="width:140px;" placeholder="例 1000"></div>'
@@ -12039,6 +12364,7 @@
     loadClientNotes(custId);
     autoStageFor(custId);
     loadClientTodo(custId);
+    loadClientScript(custId);
     loadOnboard(custId);
     loadObr(custId);
     loadValHistory(custId);
@@ -12942,7 +13268,7 @@
     if(aisecPortal()==='consultant'){
       return common
         +'【パートナーポータルの画面ガイド】'
-        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全4章10レッスン)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（投資・融資・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ)。'
+        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全4章10レッスン)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内。カルテの「やること」の下に「今月の面談台本」(その会社の数字から見せる数字3つ・問い3つ・買い手の基盤へのつながり)と「継ナビくんのナビ」(土台→現金→余力→条件の順番と、済／次／あと)。各道具の見出しの下に「なぜ今・やると分かること・次の一手」の案内と「結果を継ナビくんと読む」ボタン。伴走の1年は契約の翌月1日を起点に暦の月で3か月ずつ、土台が整わなければ次の四半期も並行、四半期の終わりに検証)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（投資・融資・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ)。'
         +'操作説明書は右下パネルの「サポート」タブから開けます。毎朝の「今日の一手」とお知らせは右下ボタンのバッジに届きます。';
     }
     //  運営がここに落ちていました。運営コンソールを開いている方に
@@ -12972,7 +13298,7 @@
     return common
       +'【経営者ダッシュボードの画面ガイド】'
       +'【数字の扱い・必ず守る】経営者に試算表など月次の数字の入力を求めない。経営者の画面に入力欄は無く、担当パートナーが入力する。試算表が手元にあるなら「メッセージで担当パートナーへ送る」と案内する。ご本人が入れるのは「いまの手元資金」だけ。画面の名前は次の一覧の名前だけを使い、それ以外の画面名を作らない。'
-      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=業務の自動化診断／買い手になる=上に「柱」の絵(本業の1本＋譲り受けた会社。ダッシュボードの帯にも同じ本数)。「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ。同じ画面の下半分が Tsugime -結-（投資・融資・M&A）=マッチング掲載(左メニューには無い。「案件を見る」の文字を押すか、下にたどる)。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
+      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)。その下に「はじめの90日（土台づくり）」＝契約の翌月から3か月は成果を急がず土台を整える期間で、1か月目「数字が見える」・2か月目「お金の流れが分かる」・3か月目「1年の道筋が決まる」の3つの節目(資料をお預かりしてからの目安。3か月で整わなければ次の四半期も並行して続ける。契約から翌月までは準備期間)と、「伴走の1年」＝第1 土台づくり／第2 現金を増やす／第3 買い手の余力を測る／第4 次の1社の条件を決める、の四半期の帯(暦の月で3か月ずつ。いまどこにいるか・四半期の終わりに何を振り返るかが出る)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=業務の自動化診断／買い手になる=上に「柱」の絵(本業の1本＋譲り受けた会社。ダッシュボードの帯にも同じ本数)。「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ。同じ画面の下半分が Tsugime -結-（投資・融資・M&A）=マッチング掲載(左メニューには無い。「案件を見る」の文字を押すか、下にたどる)。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
@@ -13138,6 +13464,13 @@
         ['初回面談の組み立て','初回面談の準備をしています。相手は◯◯業・年商約◯◯万円・社長は◯◯歳です。ヒアリング項目と面談の流れを組み立ててください。'],
         ['面談後のフォロー設計','面談で「◯◯」という課題が出ました。次回面談までのフォローと宿題の設計を手伝ってください。'],
         ['言いにくいことの伝え方','顧客に◯◯（値上げ提案／リスク指摘など）を伝えたいです。経営者に響く伝え方に整えてください。']]},
+      {t:'📋 今月の面談', subs:[
+        ['今月の面談で何を話すか','担当顧客の今月の面談台本を作ってください。伴走の1年は第◯の節目。見せる数字：資金のもち◯か月・営業利益率◯%・債務償還年数◯年・柱◯本・準備度◯点。経営者に響く問いを3つと、それが買い手の基盤（自己資金・借入余力・経営陣・PMI・目的）のどこにつながるかを整理してください。'],
+        ['数字の説明のしかた','経営者に「◯◯」（債務償還年数／営業利益率／現預金の月商倍率など）を説明したいです。数字は◯◯です。専門用語を使わず、社長の日々の感覚に置き換えた言い方を3通り作ってください。']]},
+      {t:'🧲 見込み客', subs:[
+        ['見込み客の見つけ方','まだ担当顧客がいません。私の既契約者・顧問先は主に◯◯業で、◯◯人ほどです。「堅い本業・厚い現預金」「隣の廃業を見ている」「通帳の残高が気になる」の3つの型で、誰から声をかけるべきか、見分け方と最初の一言を一緒に整理してください。'],
+        ['断り文句への返し','商談で「◯◯」（顧問税理士がいる／今は忙しい／M&Aは考えていない／費用／AIは信用できない）と言われました。相手の懸念に正直に答える返しを、私の言葉で3通り作ってください。'],
+        ['最初の1社を決める','見込み客が◯人います。それぞれ◯◯（業種・年商・社長の年齢・後継者）です。最初にお願いする1社をどう選ぶか、順番の付け方を教えてください。']]},
       {t:'📝 提案・商談', subs:[
         ['提案の壁打ち','「◯◯」という提案を考えています。相手の状況は◯◯です。提案の切り口と、想定される反論への備えを壁打ちしてください。'],
         ['決算書からの課題抽出','決算書を預かりました。売上◯◯万円・営業利益◯◯万円・借入◯◯万円です。経営課題を洗い出す観点を教えてください。']]},
@@ -16591,21 +16924,23 @@
             '<div style="display:flex;gap:4px;align-items:stretch;" data-t="lvrow">'
             +lv(1,'アソシエイト','研修修了でスタート','個別設定','—','now')
             +lv(2,'シニア','初の顧問契約','50%','','next')
-            +lv(3,'エグゼクティブ','顧問契約5件','60%','','')
-            +lv(4,'プレミアム','顧問契約10件','70%','','')
+            +lv(3,'エグゼクティブ','顧問契約5件 または 顧問先の成約1件','60%','','')
+            +lv(4,'プレミアム','顧問契約10件 または 成約3件','70%','','')
             +'</div>','lvcard')
           +tgCard('実績は自動集計されます',
             tgRow('顧問契約数　＝ 担当顧客として登録されている社数','<span class="tg-btn o">顧客管理</span>','agg1')
+            +tgRow('成約　＝ 顧問先が譲り受けてクロージングまで行った件数','<span class="tg-btn o">M&A案件</span>','agg2')
             ,'aggcard'));
       },
       scenes:[
         { t:5, chip:'全体像', focus:'lvcard', cap:'パートナーのランクは4段階です。上がるほど外注費率が高くなります。' },
         { t:6, chip:'Lv.1', focus:'lv1', click:true, cap:'Lv.1 アソシエイトは、この研修を修了した時点からスタートです。いまご覧いただいているレッスンがそれにあたります。' },
         { t:5, chip:'Lv.2', focus:'lv2', click:true, cap:'Lv.2 シニアは、初めての顧問契約を獲得すると到達します。ここから外注費率50%です。' },
-        { t:6, chip:'Lv.3', focus:'lv3', click:true, cap:'Lv.3 エグゼクティブは顧問契約5件です。ここから外注費率60%になります。' },
-        { t:5, chip:'Lv.4', focus:'lv4', click:true, cap:'Lv.4 プレミアムで外注費率70%。さらに顧問契約30社以上になると、スケールメリットとして80%になります。' },
+        { t:6, chip:'Lv.3', focus:'lv3', click:true, cap:'Lv.3 エグゼクティブは顧問契約5件、または顧問先が会社を1社譲り受けて成約すると到達します。ここから外注費率60%になります。' },
+        { t:5, chip:'Lv.4', focus:'lv4', click:true, cap:'Lv.4 プレミアムは顧問契約10件、または顧問先の成約3件で、外注費率70%。さらに顧問契約30社以上になると、スケールメリットとして80%になります。' },
         { t:7, chip:'自動集計', focus:'aggcard', cap:'これらの実績は、あなたの担当データから自動で集計されます。別途の申請は不要です。ただし正式なレベル認定と外注費率の適用は運営が行います。' },
         { t:5, chip:'顧問契約数', focus:'agg1', click:true, cap:'顧問契約数は「顧客管理」に登録されている担当顧客の数です。登録漏れがあると実績に反映されません。' },
+        { t:5, chip:'成約', focus:'agg2', click:true, cap:'成約は、顧問先が会社を譲り受けてクロージングまで行った件数です。「M&A案件」のステージを進めていないと数えられません。売る側の成約は数えません。' },
         { t:6, chip:'外注費率', focus:'lvcard', click:false, cap:'外注費率は運営が正式に適用します。相違があれば運営サポートへ。案件の進捗更新を忘れないでください。' }
       ] },
     { id:'t1-3', title:'認定パートナー 禁止行為ガイドライン（必読）', min:8, kind:'link',
@@ -16723,11 +17058,11 @@
       note:'読み終えたら、この画面に戻って「読了にする」を押してください。' },
     { id:'t5-2', title:'譲る側 ― 何を準備し、どう決めるか', min:12, kind:'doc',
       file:'ma-course.html#c2',
-      desc:'私たちが日常的に接するのは、ほとんどが譲る側です。動機のほどき方、磨き上げ、従業員へ伝える順番、手取りの考え方まで。第2章です。',
-      note:'磨き上げは、承継の話が具体化する何年も前から始められます。日々の顧問業務がそのまま準備になる、という視点で読んでください。' },
+      desc:'相手の会社（譲る側）を理解して初めて、顧問先が買い手として動けます。動機のほどき方、磨き上げ、従業員へ伝える順番、手取りの考え方まで。第2章です。',
+      note:'磨き上げは、承継の話が具体化する何年も前から始められます。顧問先が買い手として相手を見るとき、ここに書いてあることが「相手のどこを見るか」になります。' },
     { id:'t5-3', title:'譲り受ける側 ― 買い手は何を見ているか', min:8, kind:'doc',
       file:'ma-course.html#c3',
-      desc:'買い手の関心が分かると、譲る側への助言の質が上がります。「買い手はここを見ます」と言えるからです。第3章です。',
+      desc:'私たちのゴールは「顧問先が買い手になる」ことです。買い手が何を見ているかを知ると、顧問先と一緒に相手の会社を見られます。第3章です。',
       note:'読み終えたら、この画面に戻って「読了にする」を押してください。' },
     { id:'t5-4', title:'数字の見方 ― いくらになるのか', min:12, kind:'doc',
       file:'ma-course.html#c4',
@@ -18733,7 +19068,10 @@
     //  金額が立つ前の数週間が、いちばん不安な時期になる。ここが空欄だと
     //  「何にお金を払っているのか」だけが残る。何が、いつ届くのかを
     //  約束として先に出す。空欄で待たせるより、期日を示すほうが待てる。
-    if(!annual){ await myPromiseCard(box); return; }
+    //  金額が立つ前は何も出さない。すぐ上の「はじめの90日（土台づくり）」と
+    //  「伴走の1年」が、何がいつ整うかを示している。ここに別の約束を重ねると
+    //  二つの期日が並んで食い違う（以前は「4週間で4つ」がここに出ていた）
+    if(!annual){ box.innerHTML=''; return; }
     var months=1;
     if(first){
       var el=(Date.now()-Date.parse(first))/(1000*60*60*24*30.44);
@@ -18757,49 +19095,6 @@
       +'<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="goSec(\'sec-ins\')">試算結果</span>と'
       +'<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="goSec(\'sec-reports\')">月次レポート</span>でご確認いただけます。</div>'
     +'</div>';
-  }
-
-  //  まだ成果の金額が立っていない顧客に、これから届くものを示す。
-  //  導入診断報告書の4つの成果物が、初期費用に対する最初の対価になる。
-  var OBR_DAYS=28;                                   // 登録から4週間を目安にする
-  async function myPromiseCard(box){
-    if(!box) return;
-    box.innerHTML='';
-    try{
-      var r=await Promise.all([
-        sb.from('profiles').select('created_at').eq('id',SCOPE).limit(1),
-        sb.from('onboarding_reports').select('status').eq('customer_id',SCOPE).limit(1)
-      ]);
-      //  もう報告書が公開されているなら、約束は役目を終えている
-      var obr=(r[1].error?[]:(r[1].data||[]))[0];
-      if(obr && obr.status==='published') return;
-      var prof=(r[0].error?[]:(r[0].data||[]))[0];
-      if(!prof || !prof.created_at) return;
-      var start=Date.parse(prof.created_at);
-      if(!isFinite(start)) return;
-      var days=Math.floor((Date.now()-start)/86400000);
-      //  半年たってなお何も無いなら、それは約束ではなく督促になる。出さない
-      if(days>180) return;
-      var due=new Date(start+OBR_DAYS*86400000);
-      var dueS=(due.getMonth()+1)+'月'+due.getDate()+'日';
-      var late=(days>OBR_DAYS);
-      var items=['企業価値診断書（いまの会社の値段）','資金繰り現状レポート',
-                 '保険・固定費の棚卸し','12ヶ月の改善ロードマップ'];
-      box.innerHTML='<div style="border:1.5px solid #CFE3D6;background:rgba(39,104,74,.07);border-radius:12px;padding:14px 16px;margin-top:12px;">'
-        +'<div style="font-size:13.5px;font-weight:700;color:#27684A;margin-bottom:7px;">これからお届けするもの</div>'
-        +'<div style="font-size:12px;color:#5A6981;line-height:1.85;margin-bottom:9px;">'
-        +(late
-          ? '担当パートナーが準備を進めています。お急ぎでしたら、<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="knvOpenMsg()">メッセージ</span>でお声がけください。'
-          : '<b style="color:#27684A;">'+esc(dueS)+'ごろまで</b>に、担当パートナーから次の4つをお渡しします。')
-        +'</div>'
-        +'<div style="font-size:12.5px;color:#18202E;line-height:2;">'
-        +items.map(function(t,i){ return '<div>'+(i+1)+'. '+esc(t)+'</div>'; }).join('')
-        +'</div>'
-        +'<div style="font-size:11px;color:var(--muted);line-height:1.75;margin-top:9px;">'
-        +'この4つが揃うと、削減できる費用や会社の値段が数字で見えるようになります。'
-        +'そのあとは、ここに「これまでに増えた現金」が出ます。</div>'
-      +'</div>';
-    }catch(e){ box.innerHTML=''; }
   }
 
   // ============================================================
@@ -19104,8 +19399,8 @@
       t:'いまの手元資金（ご自身で入れるのはここだけ）',
       b:'いまの預金残高を、数字ひとつ入れるだけです。30秒で終わります。入れておくと、薄くなりそうなときに先にお知らせできます。任意ですが、これがいちばん役に立つ欄です。' },
     { sec:'sec-flow', find:function(){ var e=$('my-obr'); return (e && e.innerHTML) ? e : null; },
-      t:'最初のひと月でお届けするもの',
-      b:'企業価値診断書・資金繰り現状レポート・保険と固定費の棚卸し・12ヶ月の改善ロードマップ。担当パートナーが最初の4週間で仕上げる4つの成果物と、その進み具合です。' },
+      t:'導入診断報告書',
+      b:'はじめの90日（土台づくり）の仕上げとして、担当パートナーがお渡しする報告書です。①企業価値 ②資金繰り ③保険・固定費の棚卸し ④12か月の改善ロードマップ。ここから伴走の1年が始まります。' },
     { sec:'sec-flow', find:function(){ var e=$('my-impact'); return (e && e.innerHTML) ? e : null; },
       t:'これまでに増えた現金',
       b:'保険の見直しやコスト削減で、実際にいくら現金が増えたかの累計です。単月の数字ではなく、積み上がった総額をここで確認できます。' },
@@ -19869,6 +20164,145 @@
 
   // ===== 営業ツール（課題ヒアリング診断）=====
   // 「こんな問題を抱えていませんか？」→「TsuguAiならこう解決」→ クロージングの営業動線
+  // ===== 見込み客の型と、顧客ゼロの「はじめの30日」 =====
+  // 認定パートナーの多くは M&A の専門家ではない。研修を終えた翌朝、
+  // 顧客が0社だと「今日やること」は空で、営業ツールはあっても
+  // 「誰に・どこで・何と言って」が無かった。ここに書く。
+  //
+  //  ペルソナは「顧問先が買い手になる」というゴールから逆算した3つ。
+  //  最初の一言は、売り込みではなく問いにする（課題ヒアリング診断と同じ流儀）。
+  //  金額・成果の約束はしない。料金は運営の料金表のとおりに伝える。
+  // ============================================================
+  var PROSPECT_PERSONAS=[
+    { k:'solid', ic:'🏭', name:'堅い本業、厚い現預金',
+      who:'本業が黒字で、現預金が月商2か月分より厚い。社長は50〜60代。後継者は決まっているか、迷っている。',
+      where:'既契約者・顧問先の中にいます。決算書を見せてもらえる関係が、そのまま入口です。',
+      signs:['銀行から「借りてほしい」と言われている','設備投資や新しい拠点の話が出る','同業の廃業や後継者不在を口にする'],
+      first:'社長、いま「会社の値段を出せ」と言われたら、出せますか？',
+      show:'企業価値かんたん診断（3分）→ 承継シミュレーションで「この会社を買ったら？」',
+      link:'いちばん買い手に近い人です。柱を増やす主役。土台づくりのあと、第3の節目（買い手の余力）へ最短で進めます。' },
+    { k:'next',  ic:'🏘️', name:'隣の廃業を見ている',
+      who:'同業や取引先の後継者不在を身近で見ている。「誰か引き受けないのか」と口にしたことがある。',
+      where:'同業の会合・商工会・取引先の紹介。既契約者に「そういう話、周りにありませんか」と聞くだけでも出てきます。',
+      signs:['「うちが取れば、人も設備も生きる」と言う','取引先の廃業で仕入や販路に困った経験がある','後継者はいるが、会社をもう一回り大きくしたい'],
+      first:'あの会社を引き受けるとしたら、いくらまでなら、と考えたことはありますか？',
+      show:'承継シミュレーション「この会社を買ったら？」→ 買いたい条件（業種・地域・規模・予算・目的）',
+      link:'買い手としての目的がはっきりしている人です。準備度の「目的の明確さ」が最初から高い。土台づくりと並行して、買いたい条件を一緒に書けます。' },
+    { k:'cash',  ic:'💰', name:'通帳の残高が気になる',
+      who:'利益は出ているのに手元が薄い。借入の返済と固定費が重い。買い手になる前の、土台を固める段階。',
+      where:'既契約者の中で、保険料が売上比で重い会社、返済の話が出る会社。試算表は届くが読んでいない社長。',
+      signs:['月末に通帳の残高が気になる月がある','保険は何年も見直していない','試算表のどこを見ればいいか分からない'],
+      first:'利益は出ているのに、月末に通帳が気になる月はありますか？',
+      show:'課題ヒアリング診断の第1問 → 財務・資金繰りの見える化',
+      link:'第2の節目「現金を増やす」から入る人です。1年かけて余力を作り、買い手の側に回ります。売り込みではなく、現金が増えるところから。' }
+  ];
+  //  よくある断り文句と返し。言い負かすためではなく、相手の懸念に正直に答えるための型
+  var PROSPECT_OBJECTIONS=[
+    { q:'顧問税理士がいるから',
+      a:'税理士の先生は「過去の数字を正しく」、私たちは「これからの現金と、次の一社」を見ます。役割がぶつかりません。月次の数字は先生から直接いただく仕組みがあるので、先生の手間も増えません。' },
+    { q:'今は忙しい',
+      a:'お願いするのは資料（試算表3か月分・保険証券・借入一覧）だけです。最初の90日は土台づくりで、社長のお時間は月1回、30分の面談で足ります。' },
+    { q:'M&Aは考えていない',
+      a:'売る話ではありません。「次の1社を引き受けられる会社か」を数字で確かめるだけです。買うかどうかを考えるのは1年後で構いません。それまでは現金を増やすことに集中します。' },
+    { q:'費用に見合うのか',
+      a:'判断は90日でしていただけます。数字が見える・お金の流れが分かる・1年の道筋が決まる、の3つが揃ったところで、続けるかお決めください。増える金額の約束はしません。それは誠実ではないので。' },
+    { q:'AIは信用できない',
+      a:'AIは下書きと、24時間の相談窓口です。判断と説明は担当の私がします。税務・法務・保険の実行は有資格者に繋ぎます。AIが社長に代わって何かを決めることはありません。' }
+  ];
+  //  「Yes」の形。ここまで来たら、次の一手は決まっている
+  var PROSPECT_YES=[
+    '「では、まず試算表3か月分と保険証券をお預かりして、90日で土台を整えましょう」と締める',
+    '料金は運営の料金表のとおりに伝える（増える金額・成果の約束はしない）',
+    '顧客のメールアドレスを聞き、「顧客管理 → ＋ 顧客を追加」に登録する（登録前でも招待として控えられる）',
+    '契約書は運営から届く。届いたら「はじめの90日（土台づくり）」が顧客の画面に出る'
+  ];
+  //  顧客ゼロの「はじめの30日」。①④は実データで判定、②③はご本人が印を付ける（この端末に保存）
+  var ASSOC_STEPS=[
+    { k:'train', t:'研修を修了する（Lv.1 アソシエイト）', auto:true, sec:'sec-growth', go:'研修へ' },
+    { k:'p10',   t:'見込み客を10人書き出す（既契約者・顧問先から。上の3つの型で見分ける）', auto:false, sec:'sec-sales', go:'型を見る' },
+    { k:'d3',    t:'3人に課題ヒアリング診断をする（画面でも紙でも）', auto:false, sec:'sec-sales', go:'診断へ' },
+    { k:'c1',    t:'1社を「顧客管理」に登録する（Lv.2 シニアへ）', auto:true, sec:'sec-clients', go:'顧客管理へ' }
+  ];
+  function assocKey(){ return 'tsugu_assoc_'+(ME||'guest'); }
+  function assocLoad(){ try{ return JSON.parse(localStorage.getItem(assocKey())||'{}')||{}; }catch(e){ return {}; } }
+  function assocTick(k,on){ var s=assocLoad(); s[k]=!!on; try{ localStorage.setItem(assocKey(), JSON.stringify(s)); }catch(e){} renderAssocStart(((CL_CACHE||{}).clients||[]).length); }
+  function assocDone(step, clientsN){
+    if(step.k==='train'){ try{ return trIsComplete(); }catch(e){ return false; } }
+    if(step.k==='c1') return clientsN>0;
+    return !!assocLoad()[step.k];
+  }
+  //  ダッシュボード。顧客が0社のときだけ出す。1社登録された朝に、この枠は消える
+  function renderAssocStart(clientsN){
+    var box=$('assoc-start'); if(!box) return;
+    if(clientsN>0){ box.innerHTML=''; return; }
+    var doneN=0;
+    var rows=ASSOC_STEPS.map(function(st,i){
+      var ok=assocDone(st, clientsN); if(ok) doneN++;
+      return '<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--softline);">'
+        +(st.auto
+          ? '<span style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:'+(ok?'#27684A':'var(--line)')+';color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px;">'+(ok?'✓':(i+1))+'</span>'
+          : '<input type="checkbox" '+(ok?'checked':'')+' onchange="assocTick(\''+st.k+'\',this.checked)" style="margin-top:4px;width:18px;height:18px;flex-shrink:0;">')
+        +'<div style="flex:1;min-width:0;font-size:12.5px;line-height:1.7;color:'+(ok?'var(--muted)':'var(--ink)')+';'+(ok?'text-decoration:line-through;':'')+'">'+esc(st.t)
+          +(st.auto?'<span style="font-size:10.5px;color:var(--muted);margin-left:6px;">自動で確認</span>':'')+'</div>'
+        +(ok?'':'<span class="ghost" style="font-size:11px;white-space:nowrap;" onclick="goSec(\''+st.sec+'\')">'+esc(st.go)+' →</span>')
+      +'</div>';
+    }).join('');
+    box.innerHTML='<div class="panel" style="border:1.5px solid #C9D6EA;background:linear-gradient(135deg,#F6FAFF 0%,#FDFAF2 100%);">'
+      +'<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">'
+        +'<b style="font-size:14px;color:var(--navy);">はじめの30日 ― 最初の1社まで</b>'
+        +'<span style="font-size:11.5px;color:var(--muted);">'+doneN+' / '+ASSOC_STEPS.length+'</span>'
+      +'</div>'
+      +'<div style="font-size:12px;color:var(--muted);line-height:1.8;margin:4px 0 8px;">まだ担当顧客がいない方の道筋です。M&Aの知識は要りません。<b style="color:var(--navy);">見込み客は、いまの既契約者・顧問先の中にいます。</b>3つの型で見分けて、問いから入ります。</div>'
+      +rows
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">'
+        +'<button class="btn2" style="font-size:12.5px;padding:8px 14px;" onclick="goSec(\'sec-sales\')">見込み客の3つの型を見る</button>'
+        +'<button class="ghost" style="font-size:12px;border:1px solid #C9D6EA;border-radius:8px;padding:7px 12px;" onclick="prospectPractice(0)">🎭 継ナビくんと商談練習</button>'
+      +'</div>'
+    +'</div>';
+  }
+  //  継ナビくんを経営者役にして練習する。断り文句を一つ混ぜてもらう
+  function prospectPractice(i){
+    var p=PROSPECT_PERSONAS[i]||PROSPECT_PERSONAS[0];
+    var ob=PROSPECT_OBJECTIONS[i%PROSPECT_OBJECTIONS.length];
+    knvAsk('デモ商談の練習相手になって。私がパートナー役、あなたは「'+p.name+'」の経営者役（'+p.who+'）。私の最初の一言「'+p.first+'」から15分の商談を再現して。途中で一度、断り文句「'+ob.q+'」を言ってください。最後に、私の問いかけと返しについてフィードバックをください');
+  }
+  //  営業ツールの中に置く「見込み客の型」。ペルソナ→断り文句→Yesの形
+  function prospectSectionHtml(){
+    var h='<div style="border:1.5px solid #C9D6EA;background:#F8FAFF;border-radius:12px;padding:13px 15px;margin-bottom:12px;">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;">🧲 見込み客の3つの型 ― 誰に・どこで・何と言って</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-bottom:8px;">ゴール「顧問先が買い手になり、柱を増やす」から逆算した型です。<b style="color:var(--navy);">見込み客は既契約者・顧問先の中にいます。</b>最初の一言は売り込みではなく問いにします。</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      +PROSPECT_PERSONAS.map(function(p,i){
+        return '<div id="persona-'+p.k+'" style="flex:1 1 220px;min-width:0;background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 12px;">'
+          +'<div style="font-size:13px;font-weight:700;color:var(--navy);">'+p.ic+' '+esc(p.name)+'</div>'
+          +'<div style="font-size:11.5px;color:var(--ink);line-height:1.7;margin-top:4px;">'+esc(p.who)+'</div>'
+          +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:6px;"><b style="color:var(--navy);">どこで：</b>'+esc(p.where)+'</div>'
+          +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:4px;"><b style="color:var(--navy);">見分け方：</b>'+p.signs.map(esc).join('／')+'</div>'
+          +'<div style="font-size:12px;color:#8A6A12;background:#FDFAF1;border:1px solid #EBDDB4;border-radius:8px;padding:7px 9px;margin-top:8px;line-height:1.7;"><b>最初の一言：</b>「'+esc(p.first)+'」</div>'
+          +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:6px;"><b style="color:var(--navy);">見せるもの：</b>'+esc(p.show)+'</div>'
+          +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:4px;"><b style="color:var(--navy);">ゴールへの筋：</b>'+esc(p.link)+'</div>'
+          +'<button class="ghost" style="font-size:11.5px;border:1px solid #EBDDB4;border-radius:8px;padding:5px 10px;margin-top:8px;" onclick="prospectPractice('+i+')">🎭 この型と商談練習</button>'
+        +'</div>';
+      }).join('')
+      +'</div>'
+      +'<details style="margin-top:10px;"><summary style="font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;">よくある断り文句と、返しかた（5つ）</summary>'
+        +'<div style="font-size:11px;color:var(--muted);margin:6px 0 2px;line-height:1.6;">言い負かすためではなく、相手の懸念に正直に答えるための型です。</div>'
+        +PROSPECT_OBJECTIONS.map(function(o){
+          return '<div style="border-top:1px dashed var(--softline);padding:8px 0;">'
+            +'<div style="font-size:12.5px;font-weight:700;color:#A9403D;">「'+esc(o.q)+'」</div>'
+            +'<div style="font-size:12px;color:var(--ink);line-height:1.8;margin-top:3px;">'+esc(o.a)+'</div>'
+          +'</div>';
+        }).join('')
+      +'</details>'
+      +'<details style="margin-top:6px;"><summary style="font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;">「Yes」の形 ― ここまで来たら次の一手は決まっている</summary>'
+        +'<ol style="margin:6px 0 0;padding-left:20px;font-size:12px;line-height:1.9;color:var(--ink);">'
+        +PROSPECT_YES.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')
+        +'</ol>'
+      +'</details>'
+    +'</div>';
+    return h;
+  }
+
   var SALES_QS=[
     { cat:'資金繰り', ic:'💰',
       q:'「利益は出ているはずなのに、月末になると通帳の残高が気になる」——そんなことはありませんか？',
@@ -20973,41 +21407,162 @@
   }
 
   // ============================================================
-  // ===== 導入90日プログラム（Phase77）=====
+  // ===== はじめの90日（土台づくり）と、伴走の1年 =====
   // 顧客がいちばん解約しやすいのは、成果が出る前の最初の3ヶ月。
-  // 「いつまでに何を受け取れるか」を顧客の画面に成果物として出し、
-  // 達成は実データから自動判定する（手動チェックだと形骸化する）。
-  // 保守上の原則：約束するのは「成果物（こちらの行動）」であって
-  // 「業績（結果）」ではない。削減額・現金増を保証する表現は使わない。
+  // 以前は「90日で3つの成果物」「4週間で4つの成果物」の二つの約束が
+  // 画面に同居していた。短すぎるうえに食い違っていた。
+  //
+  //  約束はこう一本化する：
+  //    はじめの90日 ＝ 土台づくり。「数字が見える」「お金の流れが分かる」
+  //                   「1年の道筋が決まる」の3つの節目。成果物ではなく状態。
+  //    伴走の1年   ＝ 四半期ごとの節目。価値は半年から1年かけて積み上がる。
+  //
+  //  ■ 起点は「翌月の1日」
+  //    契約は月中にも月末にもある。起算を契約日にすると「1か月目」が人に
+  //    よって20日だったり3日だったりする。翌月1日を起点にして、四半期を
+  //    暦の月で数える（1〜3か月目・4〜6か月目…）。契約から翌月までは
+  //    「準備期間」で、資料をお預かりする。
+  //
+  //  ■ 土台は、できるまで続ける（次の工程と並行）
+  //    経営状況はさまざまで、3か月で土台が整わない会社もある。整わなければ
+  //    次の四半期も土台づくりを続け、同時に次の節目の工程も進める。
+  //    四半期は暦で進み、土台の帯は3つが整うまで消えない。
+  //
+  //  ■ 四半期の終わりに検証する
+  //    節目ごとに「検証すること」を持ち、次の四半期の入口で一緒に確かめる。
+  //
+  //  節目の達成は実データから自動判定する（手動チェックだと形骸化する）。
+  //  3つの節目の中身（可視化・棚卸し・報告書）は以前と同じなので、
+  //  規約の「返金は成果物の未提供に限る」の根拠は変わらない。
+  //
+  // 保守上の原則：約束するのは「こちらの行動」であって「業績（結果）」ではない。
+  // 削減額・現金増を保証する表現は使わない。
   // また、資料未提供の遅れをパートナーの不履行に見せない（waitで区別）。
   // ============================================================
   var ONBOARD90=[
-    { key:'visualize', day:30, title:'現状の可視化',
-      lead:'毎月の数字と資金繰りが、画面で見えるようになります',
+    { key:'visualize', month:1, title:'数字が見える',
+      lead:'毎月の売上・利益・現預金と、資金繰りの見通しが画面で見えるようになります',
       detail:'決算書と試算表をもとに、売上・利益・現預金の推移と資金繰りの見通しを整えます。',
       hint:'月次データ3ヶ月分と資金繰り診断が入ると達成になります',
       wait:'試算表（直近3ヶ月分）のご提供をお待ちしています' },
-    { key:'cost', day:60, title:'コスト構造の棚卸し',
-      lead:'保険と固定費の見直し余地を試算してお示しします',
+    { key:'cost', month:2, title:'お金の流れが分かる',
+      lead:'保険と固定費を棚卸しし、見直した場合の資金への影響を試算します',
       detail:'加入中の保険と毎月の固定費を洗い出し、見直した場合の資金への影響を試算します。',
       hint:'保険の試算と支払予定の登録が入ると達成になります',
       wait:'保険証券・固定費のわかる資料のご提供をお待ちしています' },
-    { key:'roadmap', day:90, title:'12ヶ月改善ロードマップ',
-      lead:'現金を増やすための12ヶ月の道筋をお渡しします',
+    { key:'roadmap', month:3, title:'1年の道筋が決まる',
+      lead:'導入診断報告書をお渡しし、これから12か月の打ち手と目標を合意します',
       detail:'ここまでの診断をまとめた報告書をお渡しし、今後12ヶ月の打ち手と目標を合意します。',
       hint:'導入診断報告書を公開すると達成になります',
-      wait:'前の2つの成果物が揃うと作成に入ります' }
+      wait:'前の2つの節目が揃うと作成に入ります' }
   ];
-  var OB90_WINDOW=150;   // 契約からこの日数を過ぎたら導入期間の表示を終える
-  function ob90Start(prof){
+  //  伴走の1年。ここ一か所で定め、経営者の画面・カルテ・顧客一覧で同じ言葉を使う。
+  //  四半期ごとに「何が起きるか」「四半期の終わりに検証すること」を持つ
+  var JOURNEY_Q=[
+    { q:1, title:'土台づくり',
+      cust:'資料をお預けいただき、会社の現在地を数字で確かめます',
+      partner:['資料を預かる（試算表3か月・保険証券・借入一覧）','数字を整え、資金繰りの現状を診断する','導入診断報告書で12か月の道筋を合意する'],
+      review:['土台の3つの節目が整ったか（整っていなければ次の四半期も並行して続ける）','試算表が毎月届く流れができたか','12か月の道筋に経営者が合意したか'] },
+    { q:2, title:'現金を増やす',
+      cust:'保険・固定費・値付けを見直し、増えた現金を積み上げます',
+      partner:['棚卸しで見つけた見直しを実行に移す（有資格者へ取り次ぐ）','毎月のレポートで増えた現金を確かめる','課題を1つずつ期日つきで回す'],
+      review:['増えた現金の年額（保険・固定費・値付け）','課題の完了数と、止まっている課題','手元資金のもち（月数）が改善したか'] },
+    { q:3, title:'買い手の余力を測る',
+      cust:'会社の値段と、次の1社を引き受ける余力を数字で知ります',
+      partner:['企業価値診断で「今いくらの会社か」を出す','買い手になる準備度の五つの軸を面談で確かめる','弱い軸の「次の一手」を課題に登録する'],
+      review:['企業価値（今いくらの会社か）を出したか','買い手になる準備度の点と、弱い軸','弱い軸の一手を課題に登録したか'] },
+    { q:4, title:'次の1社の条件を決める',
+      cust:'買いたい条件を固め、案件を見て、関心を出します',
+      partner:['買いたい条件（業種・地域・規模・予算・目的）を一緒に書く','Tsugime -結- の案件を一緒に見て、関心を出す','2年目の目標（柱を1本増やす）を合意する'],
+      review:['買いたい条件が3つ揃ったか','見た案件の数と、出した関心の数','2年目の目標（柱を1本増やす）に合意したか'] }
+  ];
+  //  起点＝契約日（created_at か onboard_start）の翌月1日。'YYYY-MM-01' で返す
+  function journeyStart(prof){
     var s=(prof&&(prof.onboard_start||prof.created_at))||null;
-    return s?String(s).slice(0,10):null;
-  }
-  function ob90Days(startStr){
-    if(!startStr) return null;
-    var t=Date.parse(startStr+'T00:00:00');
+    if(!s) return null;
+    var t=Date.parse(String(s).slice(0,10)+'T00:00:00');
     if(!isFinite(t)) return null;
-    return Math.floor((Date.now()-t)/86400000);
+    var d=new Date(t);
+    var y=d.getFullYear(), m=d.getMonth()+1;   // 翌月
+    if(m>11){ y+=1; m=0; }
+    return y+'-'+String(m+1).padStart(2,'0')+'-01';
+  }
+  //  起点からの位置。mi＝何か月目（0始まり。起点前は -1）。四半期は暦の月で数える
+  function journeyPos(startStr, today){
+    today=today||new Date();
+    if(!startStr) return { mi:0, pre:false, start:null };
+    var sy=Number(startStr.slice(0,4)), sm=Number(startStr.slice(5,7))-1;
+    var mi=(today.getFullYear()-sy)*12+(today.getMonth()-sm);
+    if(mi<0) return { mi:-1, pre:true, start:startStr };
+    return { mi:mi, pre:false, start:startStr };
+  }
+  function journeyYM(startStr, addMonths){
+    var sy=Number(startStr.slice(0,4)), sm=Number(startStr.slice(5,7))-1+addMonths;
+    var d=new Date(sy, sm, 1);
+    return d.getFullYear()+'年'+(d.getMonth()+1)+'月';
+  }
+  //  位置から節目を出す。起点前は第1（準備期間）。1年を過ぎたら2年目の四半期を同じ順で回す
+  function journeyPhase(pos){
+    if(pos==null || typeof pos!=='object') pos={ mi:0, pre:false, start:null };
+    var mi=Math.max(0, pos.mi||0);
+    var year=Math.floor(mi/12)+1;
+    var inYear=mi-(year-1)*12;
+    var qi=Math.floor(inYear/3);
+    var q=JOURNEY_Q[qi];
+    var out={ year:year, qi:qi, q:q.q, title:q.title, cust:q.cust, partner:q.partner, review:q.review,
+              mi:mi, monthInQ:(inYear%3)+1, pre:!!pos.pre, start:pos.start||null,
+              label:(year>1?year+'年目・':'')+'第'+q.q+'の節目「'+q.title+'」' };
+    if(pos.start){
+      var from=(year-1)*12+qi*3;
+      out.range=journeyYM(pos.start, from)+'〜'+journeyYM(pos.start, from+2);
+    }
+    return out;
+  }
+  //  伴走の1年の帯。audience: 'customer'／'partner'。
+  //  remain＝土台でまだ整っていない節目の題（並行して続けるぶん）
+  function journeyHtml(pos, audience, remain){
+    remain=remain||[];
+    var ph=journeyPhase(pos);
+    var where=ph.pre
+      ? '準備期間（'+(ph.start?journeyYM(ph.start,0)+'から':'翌月から')+'第1の節目）'
+      : (ph.year>1?ph.year+'年目・':'')+'いまは '+esc(ph.title)+'（'+ph.monthInQ+'か月目'+(ph.range?'・'+ph.range:'')+'）';
+    var h='<div style="border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-top:10px;background:#fff;">'
+      +'<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px;">'
+        +'<b style="font-size:13px;color:var(--navy);">伴走の1年</b>'
+        +'<span style="font-size:11.5px;color:var(--muted);">'+where+'</span>'
+        +(remain.length && ph.qi>0 ? '<span class="tag gold">土台づくり 継続中（並行）</span>' : '')
+      +'</div>'
+      +'<div style="display:flex;gap:4px;">'
+      +JOURNEY_Q.map(function(x,i){
+        var on=(i===ph.qi && !ph.pre), done=(i<ph.qi);
+        return '<div style="flex:1;min-width:0;border-radius:7px;padding:7px 6px;text-align:center;'
+          +'background:'+(on?'#1E3A66':(done?'#DCE6F5':'#F3F6FA'))+';color:'+(on?'#fff':(done?'#1E3A66':'#94A2B6'))+';">'
+          +'<div style="font-size:9.5px;opacity:.85;">第'+x.q+'</div>'
+          +'<div style="font-size:11px;font-weight:700;line-height:1.35;">'+esc(x.title)+'</div>'
+        +'</div>';
+      }).join('')
+      +'</div>';
+    if(ph.pre){
+      h+='<div style="font-size:12px;color:var(--ink);line-height:1.8;margin-top:9px;">'
+        +(audience==='partner'
+          ? '起点は翌月の1日です。それまでに資料（試算表3か月・保険証券・借入一覧）をお預かりし、キックオフ面談を済ませておきます。'
+          : '翌月から3か月ずつ、四半期の節目で進めます。それまでに必要な資料をお預かりします。')+'</div>';
+    } else if(audience==='partner'){
+      h+='<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin:10px 0 3px;">この節目でやること</div>'
+        +'<ul style="margin:0;padding-left:18px;font-size:12px;line-height:1.85;color:var(--ink);">'
+        +(remain.length && ph.qi>0 ? '<li><b>土台の残り：</b>'+remain.map(esc).join('・')+'（並行して続ける）</li>' : '')
+        +ph.partner.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ul>'
+        +'<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin:9px 0 3px;">この四半期の終わりに検証すること</div>'
+        +'<ul style="margin:0;padding-left:18px;font-size:12px;line-height:1.85;color:var(--muted);">'
+        +ph.review.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ul>';
+    } else {
+      h+='<div style="font-size:12px;color:var(--ink);line-height:1.8;margin-top:9px;">'+esc(ph.cust)
+        +(remain.length && ph.qi>0 ? '<br><span style="color:#8A6A12;">土台づくり（'+remain.map(esc).join('・')+'）も、この四半期に並行して続けます。</span>' : '')+'</div>'
+        +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:6px;">四半期の終わりに、担当パートナーと一緒に振り返ります：'+esc(ph.review[0])+'</div>';
+    }
+    h+='<div style="font-size:10.5px;color:var(--muted);line-height:1.7;margin-top:7px;">価値は半年から1年かけて積み上がります。3か月ごとに検証し、次の3か月を走ります。</div>'
+      +'</div>';
+    return h;
   }
   // 実データから達成を判定する
   function ob90Judge(d){
@@ -21017,6 +21572,7 @@
       roadmap:   (d.obr>=1)
     };
   }
+  function ob90Remain(judge){ return ONBOARD90.filter(function(m){ return !judge[m.key]; }).map(function(m){ return m.title; }); }
   // 「顧客からの資料待ち」かどうか。待ちの間は期限超過（赤）を出さない。
   // 資料未提供の遅れがパートナーの不履行に見えると、返金・解約の根拠にされてしまうため。
   function ob90Waits(judge, d){
@@ -21046,38 +21602,44 @@
     }catch(e){}
     return out;
   }
-  // audience: 'customer'（お渡し予定として見せる）／'partner'（進捗管理として見せる）
-  function ob90Html(days, judge, audience, waits){
+  // audience: 'customer'（これから整うものとして見せる）／'partner'（進捗管理として見せる）
+  function ob90Html(pos, judge, audience, waits){
     waits=waits||{};
+    var ph=journeyPhase(pos);
     var doneN=ONBOARD90.filter(function(m){ return judge[m.key]; }).length;
     var all=(doneN===ONBOARD90.length);
     var pct=Math.round(doneN/ONBOARD90.length*100);
+    var cont=(!all && !ph.pre && ph.mi>=3);   // 最初の3か月を過ぎても整っていない＝並行して続ける
     var h='<div style="border:1.5px solid '+(all?'#CFE3D6':'#C9D6EA')+';background:'+(all?'rgba(39,104,74,.07)':'var(--soft)')+';border-radius:12px;padding:14px 16px;margin-top:12px;">'
       +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">'
-        +'<b style="font-size:13.5px;color:'+(all?'#27684A':'var(--navy)')+';">'+(all?'導入プログラム 完了':'導入90日プログラム')+'</b>'
-        +(all?'':'<span style="font-size:11.5px;color:var(--muted);">開始から '+days+' 日目</span>')
+        +'<b style="font-size:13.5px;color:'+(all?'#27684A':'var(--navy)')+';">'+(all?'土台づくり 完了':(cont?'土台づくり（継続中）':'はじめの90日（土台づくり）'))+'</b>'
+        +(all?'':'<span style="font-size:11.5px;color:var(--muted);">'+(ph.pre?'準備期間'+(ph.start?'（'+journeyYM(ph.start,0)+'から）':''):(ph.mi+1)+'か月目')+'</span>')
         +'<span style="flex:1;"></span>'
         +'<span style="font-size:11.5px;color:var(--muted);">'+doneN+' / '+ONBOARD90.length+'</span>'
       +'</div>'
       +'<div class="tr-bar" style="margin-bottom:10px;"><i style="width:'+pct+'%;'+(all?'background:#27684A;':'')+'"></i></div>';
     if(all){
-      h+='<div style="font-size:12px;color:var(--muted);line-height:1.85;">3つの成果物をすべてお渡ししました。ここからは月次レポートで改善の進み具合をご確認いただけます。</div>';
+      h+='<div style="font-size:12px;color:var(--muted);line-height:1.85;">3つの節目がすべて整いました。ここからは伴走の1年です。毎月のレポートと四半期の節目で、進み具合を一緒に確かめます。</div>';
     } else {
       h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-bottom:10px;">'
         +(audience==='customer'
-          ? '必要な資料（試算表・保険証券など）をお預かりしてから、<b style="color:var(--navy);">90日を目安</b>に次の3つをお渡しします。担当パートナーが準備を進めています。'
-          : 'この顧客にお渡し予定の3つの成果物です。<b style="color:var(--navy);">同じ内容が顧客の画面にも表示されています。</b>資料が未提供の項目は「ご提供待ち」と表示され、期限超過にはなりません。')
+          ? (cont
+              ? '最初の3か月で整わなかった節目は、<b style="color:var(--navy);">次の四半期も並行して</b>整えていきます。会社の状況によって時間のかかるところは違います。急がず、抜けなく。'
+              : '最初の3か月は、成果を急ぐ期間ではなく<b style="color:var(--navy);">土台を整える期間</b>です。必要な資料（試算表・保険証券など）をお預かりし、<b style="color:var(--navy);">翌月から3か月</b>を目安に次の3つの節目を整えます。担当パートナーが準備を進めています。')
+          : (cont
+              ? '最初の3か月で整わなかった節目です。<b style="color:var(--navy);">次の四半期の工程と並行して</b>続けます。同じ内容が顧客の画面にも表示されています。'
+              : 'この顧客の土台の3つの節目です。<b style="color:var(--navy);">同じ内容が顧客の画面にも表示されています。</b>成果を急がず、翌月から3か月で土台を整えます。資料が未提供の項目は「ご提供待ち」と表示され、期限超過にはなりません。'))
         +'</div>';
       h+=ONBOARD90.map(function(m){
         var ok=judge[m.key];
         var wait=(!ok && !!waits[m.key]);
-        var over=(!ok && !wait && days!=null && days>m.day);
+        var over=(!ok && !wait && !ph.pre && ph.mi>=m.month);
         var col=ok?'#27684A':(over?'#A9403D':(wait?'#8A6A12':'var(--navy)'));
         return '<div style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--softline);">'
-          +'<span style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:'+(ok?'#27684A':(over?'#A9403D':(wait?'#C39B3F':'var(--line)')))+';color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px;">'+(ok?'✓':m.day)+'</span>'
+          +'<span style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:'+(ok?'#27684A':(over?'#A9403D':(wait?'#C39B3F':'var(--line)')))+';color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px;">'+(ok?'✓':m.month)+'</span>'
           +'<div style="flex:1;min-width:0;">'
             +'<div style="font-size:13px;font-weight:700;color:'+col+';">'+esc(m.title)
-              +'<span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px;">'+(ok?'お渡し済み':(over?'お渡し予定の'+m.day+'日を過ぎています':(wait?'ご提供待ち':m.day+'日目まで')))+'</span></div>'
+              +'<span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px;">'+(ok?'整いました':(over?'目安の'+m.month+'か月目を過ぎています（続けます）':(wait?'ご提供待ち':m.month+'か月目まで')))+'</span></div>'
             +'<div style="font-size:12px;color:var(--ink);line-height:1.75;margin-top:1px;">'+esc(m.lead)+'</div>'
             +(wait?'<div style="font-size:10.5px;color:#8A6A12;line-height:1.6;margin-top:2px;">'+esc(m.wait||'資料のご提供をお待ちしています')+'</div>':'')
             +(audience==='partner'&&!ok?'<div style="font-size:10.5px;color:var(--muted);line-height:1.6;margin-top:2px;">'+esc(m.hint)+'</div>':'')
@@ -21088,36 +21650,39 @@
     h+='</div>';
     return h;
   }
-  // 顧客ポータル
+  // 顧客ポータル：土台（整うまで）＋伴走の1年（ずっと）
   async function loadOnboard90(){
     var box=$('my-onboard'); if(!box) return;
     var prof=window.__prof||{};
-    var start=ob90Start(prof), days=ob90Days(start);
-    if(days==null){ box.innerHTML=''; return; }
+    var start=journeyStart(prof);
+    if(!start){ box.innerHTML=''; return; }
+    var pos=journeyPos(start);
     var d=await ob90Fetch(SCOPE);
     var judge=ob90Judge(d);
     var all=ONBOARD90.every(function(m){ return judge[m.key]; });
-    // 導入期間を過ぎた顧客や、完了して日が経った顧客には出さない
-    if(days>OB90_WINDOW || (all && days>OB90_WINDOW/2)){ box.innerHTML=''; return; }
-    box.innerHTML=ob90Html(days, judge, 'customer', ob90Waits(judge, d));
+    // 土台の帯は、3つが整うまで消えない（並行して続ける）。整ったあとは第1四半期のあいだだけ「完了」を出す
+    var showSetup=!all || (pos.mi<3);
+    box.innerHTML=(showSetup?ob90Html(pos, judge, 'customer', ob90Waits(judge, d)):'')+journeyHtml(pos,'customer',ob90Remain(judge));
   }
   // パートナーのカルテ
   async function loadOnboard90Client(custId){
     var box=$('cl-onboard90'); if(!box) return;
     var prof={};
     try{ var p=await sb.from('profiles').select('*').eq('id',custId).maybeSingle(); if(!p.error&&p.data) prof=p.data; }catch(e){}
-    var days=ob90Days(ob90Start(prof));
+    var pos=journeyPos(journeyStart(prof));
     var d=await ob90Fetch(custId);
     var judge=ob90Judge(d);
-    box.innerHTML=ob90Html(days==null?0:days, judge, 'partner', ob90Waits(judge, d));
+    box.innerHTML=ob90Html(pos, judge, 'partner', ob90Waits(judge, d))+journeyHtml(pos,'partner',ob90Remain(judge));
   }
 
   var ONBOARD_PREFIX='【導入】';
   var ONBOARD_STEPS=[
-    ['STEP 1｜資料の受領（1週目）',7,['キックオフ面談（進め方・サービス範囲の説明）','決算書2〜3期分の受領','保険証券・共済契約一覧の受領','借入一覧（返済予定表）の受領']],
-    ['STEP 2｜データ整備（1〜2週目）',14,['月次財務データの入力（直近12ヶ月）','支払予定・固定費の登録']],
-    ['STEP 3｜初期診断（2〜3週目）',21,['企業価値のかんたん診断（初回）の実施','保険・固定費の棚卸しシミュレーション','AI自動化診断の実施','資金繰りシミュレーターの初期設定']],
-    ['STEP 4｜報告・運用開始（4週目）',28,['導入診断報告書の作成・初回報告面談','12ヶ月改善ロードマップの合意・課題への登録']]
+    //  期限は「はじめの90日（土台づくり）」に合わせて12週で組む。以前は4週で
+    //  組んでいて、顧客の画面の「90日」と食い違っていた。成果を急がず土台を整える
+    ['STEP 1｜資料の受領（〜2週）',14,['キックオフ面談（進め方・サービス範囲の説明）','決算書2〜3期分の受領','保険証券・共済契約一覧の受領','借入一覧（返済予定表）の受領']],
+    ['STEP 2｜データ整備（〜4週）',28,['月次財務データの入力（直近12ヶ月）','支払予定・固定費の登録']],
+    ['STEP 3｜初期診断（〜8週）',56,['企業価値のかんたん診断（初回）の実施','保険・固定費の棚卸しシミュレーション','AI自動化診断の実施','資金繰りシミュレーターの初期設定']],
+    ['STEP 4｜報告・運用開始（〜12週）',84,['導入診断報告書の作成・初回報告面談','12ヶ月改善ロードマップの合意・課題への登録']]
   ];
   function onboardStdTitles(){ var a=[]; ONBOARD_STEPS.forEach(function(st){ st[2].forEach(function(t){ a.push(t); }); }); return a; }
   async function loadOnboard(custId){
@@ -21174,7 +21739,7 @@
   }
   async function onboardSeed(){
     if(!CURRENT_CLIENT || !CURRENT_CLIENT.id){ alert('顧客が選択されていません'); return; }
-    if(!confirm('導入チェックリストの標準12項目を、期限付きの課題として一括登録します。\n期限は本日から STEP1:1週間後 → STEP4:4週間後 で自動設定されます。\n（登録済みの項目はスキップされます）\nよろしいですか？')) return;
+    if(!confirm('導入チェックリストの標準12項目を、期限付きの課題として一括登録します。\n期限は本日から STEP1:2週間後 → STEP4:12週間後（はじめの90日）で自動設定されます。\n（登録済みの項目はスキップされます）\nよろしいですか？')) return;
     var custId=CURRENT_CLIENT.id;
     var chk=await sb.from('action_items').select('title').eq('customer_id',custId);
     if(chk.error){ alert('確認エラー：'+chk.error.message); return; }
