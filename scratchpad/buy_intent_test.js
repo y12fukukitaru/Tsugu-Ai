@@ -102,6 +102,8 @@ async function runSave(fields, pfx) {
   const mod = new Function(
     'calls', 'dom',
     'var ME="me-1";' +
+    //  ⑨で、カルテから書いたときは準備度を読み直すようになった。呼ばれた記録だけ取る
+    'function loadShindan(cid){ calls.push({t:"loadShindan",cid:cid}); }' +
     'function $(id){ return dom[id]||null; }' +
     'var sb={ from:function(t){ return { upsert:function(row,opt){ calls.push({t,row,opt}); return Promise.resolve({error:null}); } }; } };' +
     takeFn('saveBuyCriteria') +
@@ -123,6 +125,9 @@ async function runSave(fields, pfx) {
   const r2 = await runSave({ ind: 'x', region: '', size: '', budget: '', purpose: 'その他', memo: '' }, 'cbc');
   is('予算が空なら null', r2.calls[0].row.budget_man, null);
   ok('パートナーには「経営者の画面にも出る」と言う', /経営者の画面にも出ます/.test(r2.msg));
+  //  ⑨：カルテで書いたら準備度（目的の明確さ）を読み直す。経営者側では呼ばない
+  is('カルテからの保存後に準備度を読み直す', r2.calls.filter(c => c.t === 'loadShindan').map(c => c.cid), ['cust-9']);
+  is('経営者の保存では準備度を読み直さない', r.calls.filter(c => c.t === 'loadShindan').length, 0);
 
   // ---------------------------------------------------------------
   // ④ 関心を出す

@@ -1380,7 +1380,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260911-02';
+  var APP_BUILD='20260911-03';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -11289,7 +11289,7 @@
   //  なる ＝ 画面が統合される。
   //    月次レポート ← 月次財務メモ
   //    M&A提案     ← PMI補助
-  //    企業価値診断 ← 承継準備度スコア
+  //    企業価値診断 ← 買い手になる準備度
   //    銀行提出パッケージ ← 経営者保証ナビ・事業計画書
   var CL_SPY_IDS=['cs-todo','cs-onboard','cs-report','cs-mreport','cs-subsidy','cs-bank','cs-company','cs-msg','cs-pay','cs-cash','cs-fund','cs-market','cs-act','cs-ai','cs-loan','cs-meet','cs-mna','cs-value','cs-ins','cs-shared'];
   var CL_TAB_WRAPS=['ctab-msg','ctab-fin','ctab-tools','ctab-shared'];
@@ -11326,7 +11326,7 @@
   //    月次レポート・財務メモ  数字を入れて、そのまま報告書にする
   //    銀行対応                銀行に持っていく資料を作る3画面
   //    M&A・PMI                成約の前と後
-  //    企業価値・承継準備      「今いくらの会社か」と「いつでも継げるか」
+  //    企業価値・承継準備      「今いくらの会社か」と「次の1社を引き受けられるか」
   //
   //  ［id, アイコン, 表示名, 組］
   var CL_GROUPS=['基本','導入','月次の運営','資金・銀行','企業価値・承継','その他の診断'];
@@ -11956,8 +11956,8 @@
       +'<div id="ev-goal"></div>'
       +'</div>'
       +'</div>'
-      +'<div class="ph" id="cs-shindan" style="font-size:13px;margin-top:18px;"><span class="ph-t">'+icoSvg('trend')+'承継準備度スコア（事業承継健診）</span></div>'
-      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">「いつでも継げる会社か」を、財務データの自動評価とチェックリストでスコア化します。<b style="color:#1E3A66;">点数を上げること自体が磨き上げ＝企業価値の向上</b>につながります。承継の予定がまだなくても、経営改善の羅針盤としてお使いください。</div>'
+      +'<div class="ph" id="cs-shindan" style="font-size:13px;margin-top:18px;"><span class="ph-t">'+icoSvg('trend')+'買い手になる準備度（譲受準備度）</span></div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">「次の1社を引き受けられる会社か」を、<b style="color:#1E3A66;">自己資金・借入余力・経営陣の余裕・PMI体制・目的の明確さ</b>の五つの軸で測ります。財務データからの自動評価と、面談で確かめる項目の組み合わせです。点数を上げる取り組みが、そのまま地盤を固める＝企業価値の向上になります。買う予定がまだなくても、経営改善の羅針盤としてお使いください。</div>'
       +'<div id="shindan-body">読み込み中...</div>'
       +'<div class="ph" id="cs-subsidy" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="8.5" width="18" height="12.5" rx="2"/><path d="M3 13h18M12 8.5V21"/><path d="M12 8.5S10.5 3 8 3a2.5 2.5 0 0 0 0 5.5zM12 8.5S13.5 3 16 3a2.5 2.5 0 0 1 0 5.5z"/></svg>補助金ナビ</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">運営が登録した制度に、この顧客の<b style="color:#1E3A66;">業種・年商・資金使途</b>を照らして候補を出します。返済不要のため、融資より先に検討する価値があります。ここでの役割は<b style="color:#1E3A66;">制度のご案内（情報提供）まで</b>です。申請書類の作成・提出の代行は行わず、申請支援が必要な場合は専門家ネットワークの専門家におつなぎします。</div>'
@@ -16050,6 +16050,8 @@
     var r=await sb.from('buy_criteria').upsert(row, { onConflict:'customer_id' });
     if(r.error){ if(m){ m.style.color='#A9403D'; m.textContent='保存できませんでした：'+r.error.message; } return; }
     if(m){ m.style.color='#27684A'; m.textContent=(pfx==='bc')?'保存しました。担当パートナーに届きます。':'保存しました。経営者の画面にも出ます。'; }
+    //  カルテで書いたときは、準備度の「目的の明確さ」がその場で動くように
+    if(pfx==='cbc') loadShindan(cid);
   }
   //  カルテ：この顧客が Tsugime の案件に出した関心。パートナーが橋渡しに動く起点。
   //  loadClientInterests は別の用途で既にあるので、名前を分ける
@@ -20593,10 +20595,19 @@
   }
 
   // ============================================================
-  // ===== 承継準備度スコア（Phase81）=====
-  // 「継」の中核機能。財務データの自動評価＋パートナーのチェックで
-  // 承継準備度をスコア化し、磨き上げの打ち手とM&A・ロードマップに接続する。
-  // チェックの回答は succession_checks（Phase81 SQL）に保存する。
+  // ===== 買い手になる準備度（譲受準備度）=====
+  // もとは「承継準備度スコア」（いつでも継げる会社か）だった。
+  // ゴールを「顧問先が買い手になり、柱を増やす」に定めたので、
+  // 「次の1社を引き受けられる会社か」を測る向きに改めた。
+  //
+  //  五つの軸：自己資金・借入余力・経営陣の余裕・PMI体制・目的の明確さ
+  //  各軸は「財務データからの自動評価」と「面談で確かめる項目」を
+  //  混ぜて 0〜100 にし、総合はその平均（軸ごとの重みは同じ）。
+  //
+  //  回答は従来どおり succession_checks.answers（JSON）に保存する。
+  //  同じ意味の項目（右腕・マニュアル・経営者保証）は従来の鍵をそのまま
+  //  使い、保存済みの答えを引き継ぐ。新しい項目は b_ で始める。
+  //  継がせる側の9項目は消さず、たたんだ中に残す（売る顧問先もいる）。
   // ============================================================
   var SHINDAN_CHECKS=[
     ['deputy','経営者が1ヶ月不在でも現場が回る体制がある（右腕・番頭がいる）'],
@@ -20609,35 +20620,97 @@
     ['offbalance','簿外債務・個人的な保証・係争がない'],
     ['guarantee','経営者保証の解除に向けた相談を始めている']
   ];
-  var SHINDAN={ cust:null, ans:{}, fin:[] };
-  function shindanAutoItems(){
-    var m=SHINDAN.fin.length?(finMetrics(SHINDAN.fin[0])||{}):{};
+  //  買い手の五軸。checks の鍵が SHINDAN_CHECKS と同じものは、同じ答えを共有する
+  var BUY_AXES=[
+    { k:'cash', l:'自己資金',
+      checks:[['b_own','譲受に充てられる自己資金の額を、経営者と決めている']] },
+    { k:'debt', l:'借入余力',
+      checks:[['b_bank','メインバンクに譲受の意向を伝え、融資の感触を得ている'],
+              ['guarantee','経営者保証の解除に向けた相談を始めている']] },
+    { k:'team', l:'経営陣の余裕',
+      checks:[['deputy','経営者が1ヶ月不在でも現場が回る体制がある（右腕・番頭がいる）'],
+              ['b_lead','譲り受けた会社を任せられる人（社内か外部）に当てがある']] },
+    { k:'pmi', l:'PMI体制',
+      checks:[['manual','主要業務の手順が文書化・マニュアル化されている'],
+              ['b_sys','会計・給与・システムを相手先と揃える段取りがある（顧問税理士と話せている）'],
+              ['b_100','PMI 100日プラン（Day1・30日・100日）を経営者が理解している']] },
+    { k:'aim', l:'目的の明確さ',
+      checks:[['b_why','なぜ買うか（売上・人材・エリア・川上川下）を経営者が一言で言える'],
+              ['b_family','株主・ご家族が「会社を買う」方針に賛同している']] }
+  ];
+  var SHINDAN={ cust:null, ans:{}, fin:[], bc:null };
+  //  軸ごとの自動評価。j は good／mid／bad／null（データなし）
+  function shindanAutoItems(axis){
+    var e=SHINDAN.fin.length?SHINDAN.fin[0]:null;
+    var m=e?(finMetrics(e)||{}):{};
     var months=SHINDAN.fin.length;
-    return [
-      { l:'自己資本比率', j:finJudge('equityRate',m.equityRate), v:finFmt(m.equityRate,'%'), fix:'利益の内部留保を積み、自己資本比率を高める' },
-      { l:'債務償還年数', j:finJudge('debtYears',m.debtYears), v:finFmt(m.debtYears,'年'), fix:'借入の圧縮・収益改善で債務償還年数を10年以内へ' },
-      { l:'営業利益率', j:finJudge('opRate',m.opRate), v:finFmt(m.opRate,'%'), fix:'価格とコスト構造を見直し、営業利益率を高める' },
-      { l:'経営の見える化（月次データ）', j:(months>=3?'good':(months>=1?'mid':'bad')), v:months+'ヶ月分', fix:'試算表の取り込みを続け、月次の見える化を定着させる' }
-    ];
+    if(axis==='cash'){
+      //  現預金が月商の何か月分あるか。2か月で良、1か月で普
+      var cash=e?nOr(e.cash):null, rev=e?nOr(e.revenue):null;
+      var cm=(cash!=null && rev)?cash/rev:null;
+      var own=(cash!=null)?Math.round(cash*0.5):null;   // 承継シミュレーションと同じ仮置き
+      return [
+        { l:'現預金の月商倍率', j:(cm==null?null:(cm>=2?'good':(cm>=1?'mid':'bad'))), v:finFmt(cm,'か月分'), fix:'現預金を月商2か月分まで積む（自己資金の土台）' },
+        { l:'自己資金の仮置き（現預金の50%）', j:null, v:(own==null?'—':own.toLocaleString('ja-JP')+'万円'), fix:null }
+      ];
+    }
+    if(axis==='debt'){
+      return [
+        { l:'債務償還年数', j:finJudge('debtYears',m.debtYears), v:finFmt(m.debtYears,'年'), fix:'借入の圧縮・収益改善で債務償還年数を10年以内へ（新たな借入の余地を作る）' },
+        { l:'自己資本比率', j:finJudge('equityRate',m.equityRate), v:finFmt(m.equityRate,'%'), fix:'利益の内部留保を積み、自己資本比率を高める' }
+      ];
+    }
+    if(axis==='team'){
+      return [
+        { l:'営業利益率（本業の余裕）', j:finJudge('opRate',m.opRate), v:finFmt(m.opRate,'%'), fix:'価格とコスト構造を見直し、本業の利益を厚くする' }
+      ];
+    }
+    if(axis==='pmi'){
+      return [
+        { l:'経営の見える化（月次データ）', j:(months>=3?'good':(months>=1?'mid':'bad')), v:months+'ヶ月分', fix:'試算表の取り込みを続け、月次の見える化を定着させる（相手先も同じ形で見られるように）' }
+      ];
+    }
+    if(axis==='aim'){
+      var b=SHINDAN.bc||{};
+      var has=[!!(b.purpose), !!(b.industries||b.region), !!(b.budget_man)];
+      var n=has.filter(Boolean).length;
+      return [
+        { l:'買いたい条件（目的・業種か地域・予算）', j:(n===3?'good':(n>0?'mid':'bad')), v:n+'／3 記入', fix:'「買いたい条件」の目的・業種か地域・予算を埋める（下の欄で代行できます）' }
+      ];
+    }
+    return [];
   }
+  //  一つの軸の点。自動評価は good=2／mid=1／bad=0（データなしは母数に入れない）、
+  //  面談項目は 2／0。母数がゼロなら null
+  function shindanAxisScore(axis){
+    var auto=shindanAutoItems(axis.k);
+    var pts=0, max=0;
+    auto.forEach(function(a){ if(a.j==null) return; max+=2; pts+=(a.j==='good'?2:(a.j==='mid'?1:0)); });
+    axis.checks.forEach(function(c){ max+=2; if(SHINDAN.ans[c[0]]) pts+=2; });
+    return { k:axis.k, l:axis.l, auto:auto, score:(max?Math.round(pts/max*100):null), pts:pts, max:max };
+  }
+  //  総合＝軸の平均。軸ごとの重みは同じにしてある
   function shindanScore(){
-    var auto=shindanAutoItems();
-    var aPts=0; auto.forEach(function(a){ aPts+=(a.j==='good'?2:(a.j==='mid'?1:0)); });
-    var cN=0; SHINDAN_CHECKS.forEach(function(c){ if(SHINDAN.ans[c[0]]) cN++; });
-    var total=auto.length*2 + SHINDAN_CHECKS.length*2;
-    return { score:Math.round((aPts+cN*2)/total*100), auto:auto, cN:cN };
+    var axes=BUY_AXES.map(shindanAxisScore);
+    var vals=axes.filter(function(a){ return a.score!=null; }).map(function(a){ return a.score; });
+    var score=vals.length?Math.round(vals.reduce(function(s,x){ return s+x; },0)/vals.length):0;
+    return { score:score, axes:axes };
   }
   function renderShindan(){
     var box=$('shindan-body'); if(!box) return;
     var s=shindanScore();
-    var tier=(s.score>=75)?['#27684A','承継の準備が進んでいます']
-      :(s.score>=45)?['#8A6A12','基礎は整いつつあります']
-      :['#A9403D','これから整えていく段階です'];
+    var tier=(s.score>=75)?['#27684A','次の1社を引き受ける準備が整っています']
+      :(s.score>=45)?['#8A6A12','土台はできつつあります']
+      :['#A9403D','まず地盤を固める段階です'];
     function mark(j){ return j==='good'?'<b style="color:#27684A;">○</b>':(j==='bad'?'<b style="color:#A9403D;">×</b>':(j==='mid'?'<b style="color:#8A6A12;">△</b>':'<span style="color:#94A2B6;">—</span>')); }
-    // 次の一手：自動評価の弱点 → 未チェック項目 の順で最大4つ
+    function col(v){ return v==null?'#94A2B6':(v>=75?'#27684A':(v>=45?'#8A6A12':'#A9403D')); }
+    //  次の一手：弱い軸から順に、自動評価の弱点 → 未チェック項目。最大4つ
     var todo=[];
-    s.auto.forEach(function(a){ if(a.j&&a.j!=='good') todo.push(a.fix); });
-    SHINDAN_CHECKS.forEach(function(c){ if(!SHINDAN.ans[c[0]]) todo.push(c[1]); });
+    s.axes.slice().sort(function(a,b){ return (a.score==null?101:a.score)-(b.score==null?101:b.score); }).forEach(function(a){
+      a.auto.forEach(function(x){ if(x.j && x.j!=='good' && x.fix) todo.push('【'+a.l+'】'+x.fix); });
+      var ax=BUY_AXES.filter(function(z){ return z.k===a.k; })[0];
+      ax.checks.forEach(function(c){ if(!SHINDAN.ans[c[0]]) todo.push('【'+a.l+'】'+c[1]); });
+    });
     todo=todo.slice(0,4);
     var h='<div class="cl-cols"><div class="cl-col">'
       +'<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">'
@@ -20645,31 +20718,53 @@
         +'<b style="font-size:12.5px;color:'+tier[0]+';">'+tier[1]+'</b>'
       +'</div>'
       +'<div class="tr-bar" style="margin:6px 0 12px;"><i style="width:'+s.score+'%;background:'+tier[0]+';"></i></div>'
-      +'<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">財務データからの自動評価</div>'
-      +s.auto.map(function(a){ return '<div style="display:flex;gap:8px;font-size:12px;line-height:1.8;">'+mark(a.j)+'<div><b style="color:#18202E;">'+esc(a.l)+'</b>　<span style="color:#5A6981;">'+esc(a.v)+'</span></div></div>'; }).join('')
-      +(todo.length?('<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin:12px 0 4px;">スコアを上げる次の一手</div>'
+      +'<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">五つの軸</div>'
+      +s.axes.map(function(a){
+        return '<div id="shx-'+a.k+'" style="margin-bottom:7px;">'
+          +'<div style="display:flex;align-items:baseline;gap:8px;font-size:12px;"><b style="color:#18202E;min-width:7em;">'+esc(a.l)+'</b>'
+            +'<span style="flex:1;height:7px;background:#EDF1F6;border-radius:99px;overflow:hidden;"><i style="display:block;height:100%;width:'+(a.score||0)+'%;background:'+col(a.score)+';"></i></span>'
+            +'<span style="min-width:3em;text-align:right;font-weight:700;color:'+col(a.score)+';">'+(a.score==null?'—':a.score)+'</span></div>'
+          +a.auto.map(function(x){ return '<div style="display:flex;gap:8px;font-size:11.5px;line-height:1.7;padding-left:6px;">'+mark(x.j)+'<div><span style="color:#18202E;">'+esc(x.l)+'</span>　<span style="color:#5A6981;">'+esc(x.v)+'</span></div></div>'; }).join('')
+        +'</div>';
+      }).join('')
+      +(todo.length?('<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin:12px 0 4px;">準備度を上げる次の一手</div>'
         +'<ul style="margin:0;padding-left:18px;font-size:12px;line-height:1.9;color:#18202E;">'+todo.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ul>'):'')
       +'</div><div class="cl-col">'
-      +'<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">チェックリスト（面談で確認して記録）</div>'
-      +SHINDAN_CHECKS.map(function(c){
-        return '<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:1.7;padding:4px 0;cursor:pointer;">'
-          +'<input type="checkbox" '+(SHINDAN.ans[c[0]]?'checked':'')+' onchange="shindanTick(\''+c[0]+'\',this.checked)" style="margin-top:3px;">'
-          +'<span>'+esc(c[1])+'</span></label>';
+      +'<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">面談で確かめて記録（軸ごと）</div>'
+      +BUY_AXES.map(function(ax){
+        return '<div style="font-size:11px;color:#5A6981;margin:8px 0 2px;">'+esc(ax.l)+'</div>'
+          +ax.checks.map(function(c){
+            return '<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:1.7;padding:3px 0;cursor:pointer;">'
+              +'<input type="checkbox" '+(SHINDAN.ans[c[0]]?'checked':'')+' onchange="shindanTick(\''+c[0]+'\',this.checked)" style="margin-top:3px;">'
+              +'<span>'+esc(c[1])+'</span></label>';
+          }).join('');
       }).join('')
-      +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;">'
-        +'<button class="btn2" style="padding:7px 16px;font-size:12px;" onclick="shindanSave()">スコアを保存</button>'
+      +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;">'
+        +'<button class="btn2" style="padding:7px 16px;font-size:12px;" onclick="shindanSave()">記録を保存</button>'
         +'<span id="shindan-msg" style="font-size:11.5px;"></span>'
       +'</div>'
+      //  継がせる側の項目。消さずにたたんでおく（売る側に回る顧問先もいる）。
+      //  右腕・マニュアル・経営者保証は上と同じ答えを共有する
+      +'<details style="margin-top:12px;"><summary style="font-size:11.5px;color:#5A6981;cursor:pointer;">継がせる側の準備（従来の承継準備度・9項目）も記録する</summary>'
+        +'<div style="font-size:10.5px;color:#94A2B6;margin:6px 0 2px;line-height:1.6;">「いつでも継げる会社か」の項目です。点数には入れません。右腕・マニュアル・経営者保証は上の軸と同じ答えです。</div>'
+        +SHINDAN_CHECKS.map(function(c){
+          return '<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:1.7;padding:3px 0;cursor:pointer;">'
+            +'<input type="checkbox" '+(SHINDAN.ans[c[0]]?'checked':'')+' onchange="shindanTick(\''+c[0]+'\',this.checked)" style="margin-top:3px;">'
+            +'<span>'+esc(c[1])+'</span></label>';
+        }).join('')
+        +'<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:6px 12px;font-size:11.5px;margin-top:6px;" onclick="openKnowledgePage(\'tsugu-succession-form.html\')">事業承継・株対策シミュレーターへ ↗</button>'
+      +'</details>'
       +'</div></div>'
       +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;">'
-        +'<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:6px 12px;font-size:11.5px;" onclick="openKnowledgePage(\'tsugu-succession-form.html\')">事業承継・株対策シミュレーターへ ↗</button>'
-        +'<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:6px 12px;font-size:11.5px;" onclick="shindanGoMna()">M&A提案の検討へ</button>'
+        +'<button class="btn2" style="padding:7px 14px;font-size:11.5px;" onclick="shindanGoMna()">次の1社を探す（買いたい条件・提案へ）</button>'
+        +'<button class="ghost" style="border:1px solid #E2E7EF;border-radius:8px;padding:6px 12px;font-size:11.5px;" onclick="shindanGoValue()">譲受余力を試算する（承継シミュレーション）</button>'
       +'</div>'
-      +'<div style="font-size:10.5px;color:#94A2B6;margin-top:8px;line-height:1.75;">※ スコアは準備状況を整理するための目安であり、承継やM&Aの成立・企業価値を保証するものではありません。株式・税務・法務の個別具体的な判断は、専門家ネットワークの専門家におつなぎします。</div>';
+      +'<div style="font-size:10.5px;color:#94A2B6;margin-top:8px;line-height:1.75;">※ 準備度は、次の1社を引き受ける前に整えることを並べるための目安であり、M&Aの成立・融資の可否・企業価値を保証するものではありません。株式・税務・法務の個別具体的な判断は、専門家ネットワークの専門家におつなぎします。</div>';
     box.innerHTML=h;
   }
   function shindanTick(k,on){ SHINDAN.ans[k]=!!on; renderShindan(); }
   function shindanGoMna(){ var t=$('cs-mna'); if(t){ try{ t.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){} } }
+  function shindanGoValue(){ var t=$('cs-value'); if(t){ try{ t.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){} } }
   async function shindanSave(){
     var msg=$('shindan-msg'); if(msg){ msg.style.color='var(--muted)'; msg.textContent='保存中...'; }
     var payload={ customer_id:SHINDAN.cust, answers:JSON.stringify(SHINDAN.ans), updated_at:new Date().toISOString() };
@@ -20679,14 +20774,16 @@
   }
   async function loadShindan(custId){
     var box=$('shindan-body'); if(!box) return;
-    SHINDAN={ cust:custId, ans:{}, fin:[] };
+    SHINDAN={ cust:custId, ans:{}, fin:[], bc:null };
     try{
       var r=await Promise.all([
         sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false}).limit(12),
-        sb.from('succession_checks').select('answers').eq('customer_id',custId).maybeSingle()
+        sb.from('succession_checks').select('answers').eq('customer_id',custId).maybeSingle(),
+        sb.from('buy_criteria').select('industries,region,purpose,budget_man').eq('customer_id',custId).maybeSingle()
       ]);
       if(!r[0].error) SHINDAN.fin=r[0].data||[];
       if(!r[1].error && r[1].data && r[1].data.answers){ try{ SHINDAN.ans=JSON.parse(r[1].data.answers)||{}; }catch(e){} }
+      if(!r[2].error) SHINDAN.bc=r[2].data||null;
     }catch(e){}
     renderShindan();
   }
