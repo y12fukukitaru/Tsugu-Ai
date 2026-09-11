@@ -81,7 +81,7 @@ ok('何も無ければその旨', /新しい登録と確認待ちはありませ
 ok('created_at が無くても落ちない', /今日の動き/.test(M([{ id: 'z', role: 'customer' }], {}, [], now)));
 
 // ③ 置き場と読み込み
-ok('運営ダッシュボードの成長ロードマップの前に置き場', /id="adm-moves"><\/div>'\s*\n\s*\+'<div id="adm-roadmap">/.test(SRC));
+ok('運営ダッシュボードの成長ロードマップの前に置き場（アンケートの集計を挟む）', /id="adm-moves"><\/div>'\s*\n\s*\+'<div id="adm-survey"><\/div>'\s*\n\s*\+'<div id="adm-roadmap">/.test(SRC));
 ok('loadAdmin が描く', /clientCount\[c\.consultant_id\]\|\|0\)\+1; \}\);\n\s*loadAdmMoves\(rows, nameOf\);/.test(SRC));
 {
   const f = takeFn('loadAdmMoves');

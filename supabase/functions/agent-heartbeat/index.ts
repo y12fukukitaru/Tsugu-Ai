@@ -149,8 +149,91 @@ async function runHeartbeat(sb: any) {
   // 運営には、受付中の解約のご依頼を毎朝知らせる（対応済みにするまで続く）
   const cancels = await adminCancelAlerts(sb);
 
-  console.log(`heartbeat done: partners=${byPartner.size} generated=${generated} meeting_briefs=${briefed} mentored=${mentored} succession=${radar} report_drafts=${drafts} ma_matches=${matches} customer_briefs=${custBriefs} customer_meeting_eve=${custEve} knowledge_digest=${digest} cancel_alerts=${cancels}`);
-  return { partners: byPartner.size, generated, meeting_briefs: briefed, mentored, succession: radar, report_drafts: drafts, ma_matches: matches, customer_briefs: custBriefs, customer_meeting_eve: custEve, knowledge_digest: digest, cancel_alerts: cancels };
+  // 四半期アンケート（匿名）：受付が開いている朝にお願いし、7日後に一度だけ思い出していただく
+  const surveys = await surveyInvites(sb);
+
+  console.log(`heartbeat done: partners=${byPartner.size} generated=${generated} meeting_briefs=${briefed} mentored=${mentored} succession=${radar} report_drafts=${drafts} ma_matches=${matches} customer_briefs=${custBriefs} customer_meeting_eve=${custEve} knowledge_digest=${digest} cancel_alerts=${cancels} surveys=${surveys}`);
+  return { partners: byPartner.size, generated, meeting_briefs: briefed, mentored, succession: radar, report_drafts: drafts, ma_matches: matches, customer_briefs: custBriefs, customer_meeting_eve: custEve, knowledge_digest: digest, cancel_alerts: cancels, surveys };
+}
+
+// ---- 四半期アンケート（匿名）のお願い ----
+//  受付期間（survey_window）が開いている朝に、まだ答えていない経営者と
+//  パートナーへ一度だけお願いし、7日たっても答えていなければ一度だけ思い出して
+//  いただく。誰が答えたかは survey_done（印）でしか分からず、答えとは結ばれない。
+//  問いの文は index.html の SURVEY_Q と同じにしておく（LINE では本文の問いを
+//  見て数字で答えるため）。
+const SURVEY_Q: Record<string, string[]> = {
+  customer: [
+    "会社の数字が、前より見えるようになった",
+    "手元の現金を増やす見通しが立ってきた",
+    "担当パートナーとの面談は、経営の役に立っている",
+    "顧問料に見合う価値を受け取っている",
+    "「買い手になる」準備が進んでいる実感がある",
+  ],
+  consultant: [
+    "継ナビくんのナビ（今月の面談台本・カルテの次の一手）は役に立っている",
+    "経営者に数字を説明する自信が、前より上がった",
+    "顧問契約を取る動線（見込み客の型・はじめの30日）は使えた",
+    "利用料と報酬のバランスに納得している",
+    "運営のサポートは十分だった",
+  ],
+};
+function surveyPeriodLabel(p: string): string {
+  const m = /^(\d{4})-Q([1-4])$/.exec(p);
+  return m ? `${m[1]}年${(+m[2] - 1) * 3 + 1}〜${+m[2] * 3}月` : p;
+}
+export function surveyBrief(role: string, period: string, until: string, remind: boolean): { title: string; body: string } {
+  const who = role === "customer" ? "経営者" : "パートナー";
+  const label = surveyPeriodLabel(period);
+  const qs = (SURVEY_Q[role] ?? SURVEY_Q.customer).map((q, i) => `${i + 1}. ${q}`).join("\n");
+  const title = remind
+    ? `🗳 3分アンケート（匿名）は ${until} までです`
+    : `🗳 3分アンケート（匿名）にご協力ください：${label}`;
+  const body =
+    (remind
+      ? `先日お願いした${label}のアンケートが、まだ届いていないようです。\n`
+      : `四半期に一度、${who}のみなさまの声で TsuguAi を直しています。\n`) +
+    `5つの問いに 1〜5（1=そう思わない … 5=そう思う）で答えて、最後にひとこと。3分で終わります。${until} まで。\n\n` +
+    `🔒 回答は匿名です。誰が答えたかは記録されず、運営には集計と文章だけが届きます。\n\n` +
+    `問い：\n${qs}\n\n` +
+    `答え方：\n・アプリを開くと、いちばん上に出ます → ${APP_URL}?survey=1\n` +
+    `・LINE 連携の方は、このトークに「4 5 3 4 5」のように5つの数字を返信するだけでも答えられます（ひとことはアプリから）`;
+  return { title, body };
+}
+async function surveyInvites(sb: any): Promise<number> {
+  const { data: w, error } = await sb.rpc("survey_window");
+  if (error || !w?.open) return 0;          // SQL 未実行・期間外は何もしない
+  const period = String(w.period);
+  const until = String(w.until ?? "");
+  const { data: people } = await sb.from("profiles").select("id, role").in("role", ["customer", "consultant"]).limit(1000);
+  if (!people?.length) return 0;
+  const { data: done } = await sb.from("survey_done").select("user_id").eq("period", period);
+  const doneSet = new Set((done ?? []).map((d: any) => d.user_id));
+  const { data: sent } = await sb.from("agent_insights").select("user_id, kind, created_at")
+    .in("kind", ["survey_invite", "survey_remind"]).eq("reason", "survey:" + period);
+  const invited = new Map<string, string>();
+  const reminded = new Set<string>();
+  for (const s of sent ?? []) {
+    if (s.kind === "survey_invite") invited.set(s.user_id, s.created_at);
+    else reminded.add(s.user_id);
+  }
+  let n = 0;
+  for (const p of people) {
+    if (doneSet.has(p.id)) continue;
+    const inv = invited.get(p.id);
+    let kind: string | null = null;
+    if (!inv) kind = "survey_invite";
+    else if (!reminded.has(p.id) && Date.now() - new Date(inv).getTime() >= 7 * DAY) kind = "survey_remind";
+    if (!kind) continue;
+    const brief = surveyBrief(p.role, period, until, kind === "survey_remind");
+    const { error: insErr } = await sb.from("agent_insights").insert({
+      user_id: p.id, kind, title: brief.title, body: brief.body, reason: "survey:" + period, priority: 2,
+    });
+    if (insErr) continue;
+    await deliver(sb, p.id, brief, "survey");
+    n++;
+  }
+  return n;
 }
 
 // ---- 経営者向け 今週のひとこと（週に一度・月曜の朝）----
@@ -410,7 +493,7 @@ async function adminCancelAlerts(sb: any): Promise<number> {
   const ids = [...new Set(reqs.map((r: any) => r.customer_id))];
   const { data: custs } = await sb
     .from("profiles").select("id, company_name, contact_name, email, consultant_id").in("id", ids);
-  const cmap = new Map((custs ?? []).map((c: any) => [c.id, c]));
+  const cmap = new Map<string, any>((custs ?? []).map((c: any) => [c.id, c]));
   const pids = [...new Set((custs ?? []).map((c: any) => c.consultant_id).filter(Boolean))];
   const { data: parts } = pids.length
     ? await sb.from("profiles").select("id, company_name, contact_name, email").in("id", pids)
@@ -919,7 +1002,15 @@ function excerpt(t: string, n: number) {
 //  誰に・どの周期で届くメールかは種類ごとに違う。見出しと結びの一文をそこに
 //  合わせる。経営者宛のメールに「担当顧客の状況をもとに毎朝」と書いてしまうと、
 //  受け取った側には意味の通らない文になる。
-const MAIL_NOTE: Record<string, { eyebrow: string; foot: string; cta?: string }> = {
+const MAIL_NOTE: Record<string, { eyebrow: string; foot: string; cta?: string; link?: string }> = {
+  //  アンケートは、ボタンの先を回答欄の真上にする（?survey=1）。
+  //  トップに飛ばすと、探しているうちに閉じられる
+  survey: {
+    eyebrow: "🗳 継ナビくんから、3分アンケートのお願い（匿名）",
+    foot: "四半期に一度、受付が始まった朝と、7日後に一度だけお送りしています。",
+    cta: "アンケートに答える →",
+    link: APP_URL + "?survey=1",
+  },
   weekly_brief: {
     eyebrow: "✦ 継ナビくんから、今週のお便り",
     foot: "毎週月曜の朝に自動でお送りしています。",
@@ -978,11 +1069,12 @@ function emailHtml(brief: { title: string; body: string }, kind = "daily_brief")
              '<div style="border-top:1px solid #D8E0EC;margin:14px 0;"></div>');
   const note = MAIL_NOTE[kind] ?? MAIL_NOTE_DEFAULT;
   const cta = note.cta ?? MAIL_NOTE_DEFAULT.cta;
+  const link = note.link ?? APP_URL;
   return `<div style="font-family:'Hiragino Sans','Noto Sans JP',sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#18202E;">
     <div style="font-size:13px;color:#C39B3F;font-weight:bold;">${note.eyebrow}</div>
     <h2 style="font-size:17px;color:#1E3A66;margin:8px 0 14px;">${brief.title}</h2>
     <div style="font-size:14px;line-height:1.9;background:#F8F9FC;border:1px solid #E2E7EF;border-radius:10px;padding:16px 18px;">${body}</div>
-    <div style="margin:18px 0;"><a href="${APP_URL}" style="display:inline-block;background:#1E3A66;color:#fff;text-decoration:none;font-size:13px;font-weight:bold;padding:11px 22px;border-radius:9px;">${cta}</a></div>
+    <div style="margin:18px 0;"><a href="${link}" style="display:inline-block;background:#1E3A66;color:#fff;text-decoration:none;font-size:13px;font-weight:bold;padding:11px 22px;border-radius:9px;">${cta}</a></div>
     <div style="font-size:11px;color:#5A6981;line-height:1.7;">このメールは TsuguAi -継- の継ナビくんが、${note.foot}</div>
   </div>`;
 }
