@@ -1380,7 +1380,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260911-04';
+  var APP_BUILD='20260911-05';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -4759,7 +4759,7 @@
     var box=$('cl-list'); if(!box)return;
     loadInvites();   // 登録をお待ちしている方も、同じ画面で見えるように
     loadMyContracts();   // 送った顧問契約の状況も
-    var cl=await sb.from('profiles').select('id,email,company_name,role,stage').eq('consultant_id',ME).eq('role','customer');
+    var cl=await sb.from('profiles').select('id,email,company_name,role,stage,created_at').eq('consultant_id',ME).eq('role','customer');
     if(cl.error){ box.innerHTML='<div style="color:#A9403D;font-size:12px;">読み込みエラー：'+esc(cl.error.message)+'</div>'; return; }
     var clients=cl.data||[];
     // 承認済みのサブ担当としてついている顧客を合流させる（Phase68）。
@@ -6125,6 +6125,8 @@
       var lm=CL_CACHE.lastMsg[c.id];
       var tags=(SUB_IDS[c.id]?'<span class="tag blue">サブ担当</span>':'')
         +'<span class="tag gray">ステージ'+(c.stage||1)+'・'+(STAGE_NAMES[c.stage||1]||'')+'</span>';
+      //  伴走の1年のどこにいるか。契約からの日数で決まる（経営者の画面と同じ言葉）
+      if(c.created_at){ var jp=journeyPhase(ob90Days(String(c.created_at).slice(0,10))); tags+='<span class="tag '+(jp.qi===0?'blue':'gray')+'">'+(jp.year>1?jp.year+'年目・':'')+'第'+jp.q+' '+esc(jp.title)+'</span>'; }
       //  柱。増えていれば金、次の1社が動いていれば青、本業だけなら灰
       var pil=pillarsOf((CL_CACHE.maDeals||[]).filter(function(d){ return d.customer_id===c.id; }));
       tags+='<span class="tag '+(pil.done?'gold':(pil.next?'blue':'gray'))+'">柱 '+pil.count+'本'+(pil.next?'・次 '+pil.next.prog+'%':'')+'</span>';
@@ -11654,7 +11656,7 @@
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">対応が必要な項目と、今月の定型作業のチェックです。このリストは<b>パートナー専用</b>で、顧客には表示されません。</div>'
       +'<div id="cl-todo-body">読み込み中...</div>'
       +'<div class="ph" id="cs-onboard" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 6.5 1.5 1.5L7.5 5"/><path d="m3 13 1.5 1.5L7.5 11.5"/><path d="m3 19.5 1.5 1.5L7.5 18"/><path d="M11 6.5h10M11 13h10M11 19.5h10"/></svg>導入チェックリスト（Phase 0）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadOnboard(\''+custId+'\')">↺ 更新</span></div>'
-      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">導入初期費用に対応する導入作業（資料受領 → データ整備 → 初期診断 → 報告）の進捗管理です。すべて完了すると「導入診断報告書」の4つの成果物が揃います。</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">導入初期費用に対応する導入作業（資料受領 → データ整備 → 初期診断 → 報告）の進捗管理です。期限は「はじめの90日（土台づくり）」に合わせて12週で組みます。すべて完了すると「導入診断報告書」の4つの成果物が揃います。</div>'
       +'<div id="cl-onboard90"></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin:14px 0 6px;line-height:1.6;">以下は運用側の作業チェックリストです（顧客には表示されません）。</div>'
       +'<div id="cl-onboard-body">読み込み中...</div>'
@@ -12972,7 +12974,7 @@
     return common
       +'【経営者ダッシュボードの画面ガイド】'
       +'【数字の扱い・必ず守る】経営者に試算表など月次の数字の入力を求めない。経営者の画面に入力欄は無く、担当パートナーが入力する。試算表が手元にあるなら「メッセージで担当パートナーへ送る」と案内する。ご本人が入れるのは「いまの手元資金」だけ。画面の名前は次の一覧の名前だけを使い、それ以外の画面名を作らない。'
-      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=業務の自動化診断／買い手になる=上に「柱」の絵(本業の1本＋譲り受けた会社。ダッシュボードの帯にも同じ本数)。「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ。同じ画面の下半分が Tsugime -結-（投資・融資・M&A）=マッチング掲載(左メニューには無い。「案件を見る」の文字を押すか、下にたどる)。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
+      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)。その下に「はじめの90日（土台づくり）」＝最初の3か月は成果を急がず土台を整える期間で、30日「数字が見える」・60日「お金の流れが分かる」・90日「1年の道筋が決まる」の3つの節目(資料をお預かりしてからの目安)と、「伴走の1年」＝第1 土台づくり／第2 現金を増やす／第3 買い手の余力を測る／第4 次の1社の条件を決める、の四半期の帯(いまどこにいるかが出る)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=業務の自動化診断／買い手になる=上に「柱」の絵(本業の1本＋譲り受けた会社。ダッシュボードの帯にも同じ本数)。「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ。同じ画面の下半分が Tsugime -結-（投資・融資・M&A）=マッチング掲載(左メニューには無い。「案件を見る」の文字を押すか、下にたどる)。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し、パネルは5タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
@@ -18733,7 +18735,10 @@
     //  金額が立つ前の数週間が、いちばん不安な時期になる。ここが空欄だと
     //  「何にお金を払っているのか」だけが残る。何が、いつ届くのかを
     //  約束として先に出す。空欄で待たせるより、期日を示すほうが待てる。
-    if(!annual){ await myPromiseCard(box); return; }
+    //  金額が立つ前は何も出さない。すぐ上の「はじめの90日（土台づくり）」と
+    //  「伴走の1年」が、何がいつ整うかを示している。ここに別の約束を重ねると
+    //  二つの期日が並んで食い違う（以前は「4週間で4つ」がここに出ていた）
+    if(!annual){ box.innerHTML=''; return; }
     var months=1;
     if(first){
       var el=(Date.now()-Date.parse(first))/(1000*60*60*24*30.44);
@@ -18757,49 +18762,6 @@
       +'<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="goSec(\'sec-ins\')">試算結果</span>と'
       +'<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="goSec(\'sec-reports\')">月次レポート</span>でご確認いただけます。</div>'
     +'</div>';
-  }
-
-  //  まだ成果の金額が立っていない顧客に、これから届くものを示す。
-  //  導入診断報告書の4つの成果物が、初期費用に対する最初の対価になる。
-  var OBR_DAYS=28;                                   // 登録から4週間を目安にする
-  async function myPromiseCard(box){
-    if(!box) return;
-    box.innerHTML='';
-    try{
-      var r=await Promise.all([
-        sb.from('profiles').select('created_at').eq('id',SCOPE).limit(1),
-        sb.from('onboarding_reports').select('status').eq('customer_id',SCOPE).limit(1)
-      ]);
-      //  もう報告書が公開されているなら、約束は役目を終えている
-      var obr=(r[1].error?[]:(r[1].data||[]))[0];
-      if(obr && obr.status==='published') return;
-      var prof=(r[0].error?[]:(r[0].data||[]))[0];
-      if(!prof || !prof.created_at) return;
-      var start=Date.parse(prof.created_at);
-      if(!isFinite(start)) return;
-      var days=Math.floor((Date.now()-start)/86400000);
-      //  半年たってなお何も無いなら、それは約束ではなく督促になる。出さない
-      if(days>180) return;
-      var due=new Date(start+OBR_DAYS*86400000);
-      var dueS=(due.getMonth()+1)+'月'+due.getDate()+'日';
-      var late=(days>OBR_DAYS);
-      var items=['企業価値診断書（いまの会社の値段）','資金繰り現状レポート',
-                 '保険・固定費の棚卸し','12ヶ月の改善ロードマップ'];
-      box.innerHTML='<div style="border:1.5px solid #CFE3D6;background:rgba(39,104,74,.07);border-radius:12px;padding:14px 16px;margin-top:12px;">'
-        +'<div style="font-size:13.5px;font-weight:700;color:#27684A;margin-bottom:7px;">これからお届けするもの</div>'
-        +'<div style="font-size:12px;color:#5A6981;line-height:1.85;margin-bottom:9px;">'
-        +(late
-          ? '担当パートナーが準備を進めています。お急ぎでしたら、<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="knvOpenMsg()">メッセージ</span>でお声がけください。'
-          : '<b style="color:#27684A;">'+esc(dueS)+'ごろまで</b>に、担当パートナーから次の4つをお渡しします。')
-        +'</div>'
-        +'<div style="font-size:12.5px;color:#18202E;line-height:2;">'
-        +items.map(function(t,i){ return '<div>'+(i+1)+'. '+esc(t)+'</div>'; }).join('')
-        +'</div>'
-        +'<div style="font-size:11px;color:var(--muted);line-height:1.75;margin-top:9px;">'
-        +'この4つが揃うと、削減できる費用や会社の値段が数字で見えるようになります。'
-        +'そのあとは、ここに「これまでに増えた現金」が出ます。</div>'
-      +'</div>';
-    }catch(e){ box.innerHTML=''; }
   }
 
   // ============================================================
@@ -19104,8 +19066,8 @@
       t:'いまの手元資金（ご自身で入れるのはここだけ）',
       b:'いまの預金残高を、数字ひとつ入れるだけです。30秒で終わります。入れておくと、薄くなりそうなときに先にお知らせできます。任意ですが、これがいちばん役に立つ欄です。' },
     { sec:'sec-flow', find:function(){ var e=$('my-obr'); return (e && e.innerHTML) ? e : null; },
-      t:'最初のひと月でお届けするもの',
-      b:'企業価値診断書・資金繰り現状レポート・保険と固定費の棚卸し・12ヶ月の改善ロードマップ。担当パートナーが最初の4週間で仕上げる4つの成果物と、その進み具合です。' },
+      t:'導入診断報告書',
+      b:'はじめの90日（土台づくり）の仕上げとして、担当パートナーがお渡しする報告書です。①企業価値 ②資金繰り ③保険・固定費の棚卸し ④12か月の改善ロードマップ。ここから伴走の1年が始まります。' },
     { sec:'sec-flow', find:function(){ var e=$('my-impact'); return (e && e.innerHTML) ? e : null; },
       t:'これまでに増えた現金',
       b:'保険の見直しやコスト削減で、実際にいくら現金が増えたかの累計です。単月の数字ではなく、積み上がった総額をここで確認できます。' },
@@ -20973,32 +20935,96 @@
   }
 
   // ============================================================
-  // ===== 導入90日プログラム（Phase77）=====
+  // ===== はじめの90日（土台づくり）と、伴走の1年 =====
   // 顧客がいちばん解約しやすいのは、成果が出る前の最初の3ヶ月。
-  // 「いつまでに何を受け取れるか」を顧客の画面に成果物として出し、
-  // 達成は実データから自動判定する（手動チェックだと形骸化する）。
-  // 保守上の原則：約束するのは「成果物（こちらの行動）」であって
-  // 「業績（結果）」ではない。削減額・現金増を保証する表現は使わない。
+  // 以前は「90日で3つの成果物」「4週間で4つの成果物」の二つの約束が
+  // 画面に同居していた。短すぎるうえに食い違っていた。
+  //
+  //  約束はこう一本化する：
+  //    はじめの90日 ＝ 土台づくり。「数字が見える」「お金の流れが分かる」
+  //                   「1年の道筋が決まる」の3つの節目。成果物ではなく状態。
+  //    伴走の1年   ＝ 四半期ごとの節目。価値は半年から1年かけて積み上がる。
+  //  節目の達成は実データから自動判定する（手動チェックだと形骸化する）。
+  //  3つの節目の中身（可視化・棚卸し・報告書）は以前と同じなので、
+  //  規約の「返金は成果物の未提供に限る」の根拠は変わらない。
+  //
+  // 保守上の原則：約束するのは「こちらの行動」であって「業績（結果）」ではない。
+  // 削減額・現金増を保証する表現は使わない。
   // また、資料未提供の遅れをパートナーの不履行に見せない（waitで区別）。
   // ============================================================
   var ONBOARD90=[
-    { key:'visualize', day:30, title:'現状の可視化',
-      lead:'毎月の数字と資金繰りが、画面で見えるようになります',
+    { key:'visualize', day:30, title:'数字が見える',
+      lead:'毎月の売上・利益・現預金と、資金繰りの見通しが画面で見えるようになります',
       detail:'決算書と試算表をもとに、売上・利益・現預金の推移と資金繰りの見通しを整えます。',
       hint:'月次データ3ヶ月分と資金繰り診断が入ると達成になります',
       wait:'試算表（直近3ヶ月分）のご提供をお待ちしています' },
-    { key:'cost', day:60, title:'コスト構造の棚卸し',
-      lead:'保険と固定費の見直し余地を試算してお示しします',
+    { key:'cost', day:60, title:'お金の流れが分かる',
+      lead:'保険と固定費を棚卸しし、見直した場合の資金への影響を試算します',
       detail:'加入中の保険と毎月の固定費を洗い出し、見直した場合の資金への影響を試算します。',
       hint:'保険の試算と支払予定の登録が入ると達成になります',
       wait:'保険証券・固定費のわかる資料のご提供をお待ちしています' },
-    { key:'roadmap', day:90, title:'12ヶ月改善ロードマップ',
-      lead:'現金を増やすための12ヶ月の道筋をお渡しします',
+    { key:'roadmap', day:90, title:'1年の道筋が決まる',
+      lead:'導入診断報告書をお渡しし、これから12か月の打ち手と目標を合意します',
       detail:'ここまでの診断をまとめた報告書をお渡しし、今後12ヶ月の打ち手と目標を合意します。',
       hint:'導入診断報告書を公開すると達成になります',
-      wait:'前の2つの成果物が揃うと作成に入ります' }
+      wait:'前の2つの節目が揃うと作成に入ります' }
   ];
-  var OB90_WINDOW=150;   // 契約からこの日数を過ぎたら導入期間の表示を終える
+  //  伴走の1年。ここ一か所で定め、経営者の画面・カルテ・顧客一覧で同じ言葉を使う。
+  //  四半期ごとに「何が起きるか」を経営者向けとパートナー向けの両方で持つ
+  var JOURNEY_Q=[
+    { q:1, title:'土台づくり',
+      cust:'資料をお預けいただき、会社の現在地を数字で確かめます',
+      partner:['資料を預かる（試算表3か月・保険証券・借入一覧）','数字を整え、資金繰りの現状を診断する','導入診断報告書で12か月の道筋を合意する'] },
+    { q:2, title:'現金を増やす',
+      cust:'保険・固定費・値付けを見直し、増えた現金を積み上げます',
+      partner:['棚卸しで見つけた見直しを実行に移す（有資格者へ取り次ぐ）','毎月のレポートで増えた現金を確かめる','課題を1つずつ期日つきで回す'] },
+    { q:3, title:'買い手の余力を測る',
+      cust:'会社の値段と、次の1社を引き受ける余力を数字で知ります',
+      partner:['企業価値診断で「今いくらの会社か」を出す','買い手になる準備度の五つの軸を面談で確かめる','弱い軸の「次の一手」を課題に登録する'] },
+    { q:4, title:'次の1社の条件を決める',
+      cust:'買いたい条件を固め、案件を見て、関心を出します',
+      partner:['買いたい条件（業種・地域・規模・予算・目的）を一緒に書く','Tsugime -結- の案件を一緒に見て、関心を出す','2年目の目標（柱を1本増やす）を合意する'] }
+  ];
+  var JOURNEY_YEAR=365;
+  //  何日目かから「N年目・第Qの節目」を出す。1年を過ぎたら2年目の四半期を同じ順で回す
+  function journeyPhase(days){
+    if(days==null || !isFinite(days) || days<0) days=0;
+    var year=Math.floor(days/JOURNEY_YEAR)+1;
+    var inYear=days-(year-1)*JOURNEY_YEAR;
+    var qi=Math.min(3, Math.floor(inYear/(JOURNEY_YEAR/4)));
+    var q=JOURNEY_Q[qi];
+    return { year:year, qi:qi, q:q.q, title:q.title, cust:q.cust, partner:q.partner, days:days, label:(year>1?year+'年目・':'')+'第'+q.q+'の節目「'+q.title+'」' };
+  }
+  //  伴走の1年の帯。audience: 'customer'／'partner'
+  function journeyHtml(days, audience){
+    var ph=journeyPhase(days);
+    var h='<div style="border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-top:10px;background:#fff;">'
+      +'<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px;">'
+        +'<b style="font-size:13px;color:var(--navy);">伴走の1年</b>'
+        +'<span style="font-size:11.5px;color:var(--muted);">'+(ph.year>1?ph.year+'年目・':'')+'いまは '+esc(ph.title)+'（開始から '+ph.days+' 日目）</span>'
+      +'</div>'
+      +'<div style="display:flex;gap:4px;">'
+      +JOURNEY_Q.map(function(x,i){
+        var on=(i===ph.qi), done=(i<ph.qi);
+        return '<div style="flex:1;min-width:0;border-radius:7px;padding:7px 6px;text-align:center;'
+          +'background:'+(on?'#1E3A66':(done?'#DCE6F5':'#F3F6FA'))+';color:'+(on?'#fff':(done?'#1E3A66':'#94A2B6'))+';">'
+          +'<div style="font-size:9.5px;opacity:.85;">第'+x.q+'</div>'
+          +'<div style="font-size:11px;font-weight:700;line-height:1.35;">'+esc(x.title)+'</div>'
+        +'</div>';
+      }).join('')
+      +'</div>';
+    if(audience==='partner'){
+      h+='<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin:10px 0 3px;">この節目でやること</div>'
+        +'<ul style="margin:0;padding-left:18px;font-size:12px;line-height:1.85;color:var(--ink);">'
+        +ph.partner.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ul>';
+    } else {
+      h+='<div style="font-size:12px;color:var(--ink);line-height:1.8;margin-top:9px;">'+esc(ph.cust)+'</div>';
+    }
+    h+='<div style="font-size:10.5px;color:var(--muted);line-height:1.7;margin-top:7px;">価値は半年から1年かけて積み上がります。四半期ごとに節目を一緒に確かめます。</div>'
+      +'</div>';
+    return h;
+  }
+  var OB90_WINDOW=150;   // 契約からこの日数を過ぎたら「はじめの90日」の表示を終える（伴走の1年は出し続ける）
   function ob90Start(prof){
     var s=(prof&&(prof.onboard_start||prof.created_at))||null;
     return s?String(s).slice(0,10):null;
@@ -21046,7 +21072,7 @@
     }catch(e){}
     return out;
   }
-  // audience: 'customer'（お渡し予定として見せる）／'partner'（進捗管理として見せる）
+  // audience: 'customer'（これから整うものとして見せる）／'partner'（進捗管理として見せる）
   function ob90Html(days, judge, audience, waits){
     waits=waits||{};
     var doneN=ONBOARD90.filter(function(m){ return judge[m.key]; }).length;
@@ -21054,19 +21080,19 @@
     var pct=Math.round(doneN/ONBOARD90.length*100);
     var h='<div style="border:1.5px solid '+(all?'#CFE3D6':'#C9D6EA')+';background:'+(all?'rgba(39,104,74,.07)':'var(--soft)')+';border-radius:12px;padding:14px 16px;margin-top:12px;">'
       +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">'
-        +'<b style="font-size:13.5px;color:'+(all?'#27684A':'var(--navy)')+';">'+(all?'導入プログラム 完了':'導入90日プログラム')+'</b>'
+        +'<b style="font-size:13.5px;color:'+(all?'#27684A':'var(--navy)')+';">'+(all?'土台づくり 完了':'はじめの90日（土台づくり）')+'</b>'
         +(all?'':'<span style="font-size:11.5px;color:var(--muted);">開始から '+days+' 日目</span>')
         +'<span style="flex:1;"></span>'
         +'<span style="font-size:11.5px;color:var(--muted);">'+doneN+' / '+ONBOARD90.length+'</span>'
       +'</div>'
       +'<div class="tr-bar" style="margin-bottom:10px;"><i style="width:'+pct+'%;'+(all?'background:#27684A;':'')+'"></i></div>';
     if(all){
-      h+='<div style="font-size:12px;color:var(--muted);line-height:1.85;">3つの成果物をすべてお渡ししました。ここからは月次レポートで改善の進み具合をご確認いただけます。</div>';
+      h+='<div style="font-size:12px;color:var(--muted);line-height:1.85;">3つの節目がすべて整いました。ここからは伴走の1年です。毎月のレポートと四半期の節目で、進み具合を一緒に確かめます。</div>';
     } else {
       h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-bottom:10px;">'
         +(audience==='customer'
-          ? '必要な資料（試算表・保険証券など）をお預かりしてから、<b style="color:var(--navy);">90日を目安</b>に次の3つをお渡しします。担当パートナーが準備を進めています。'
-          : 'この顧客にお渡し予定の3つの成果物です。<b style="color:var(--navy);">同じ内容が顧客の画面にも表示されています。</b>資料が未提供の項目は「ご提供待ち」と表示され、期限超過にはなりません。')
+          ? '最初の3か月は、成果を急ぐ期間ではなく<b style="color:var(--navy);">土台を整える期間</b>です。必要な資料（試算表・保険証券など）をお預かりしてから、<b style="color:var(--navy);">90日を目安</b>に次の3つの節目を整えます。担当パートナーが準備を進めています。'
+          : 'この顧客の土台の3つの節目です。<b style="color:var(--navy);">同じ内容が顧客の画面にも表示されています。</b>成果を急がず、90日で土台を整えます。資料が未提供の項目は「ご提供待ち」と表示され、期限超過にはなりません。')
         +'</div>';
       h+=ONBOARD90.map(function(m){
         var ok=judge[m.key];
@@ -21077,7 +21103,7 @@
           +'<span style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:'+(ok?'#27684A':(over?'#A9403D':(wait?'#C39B3F':'var(--line)')))+';color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px;">'+(ok?'✓':m.day)+'</span>'
           +'<div style="flex:1;min-width:0;">'
             +'<div style="font-size:13px;font-weight:700;color:'+col+';">'+esc(m.title)
-              +'<span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px;">'+(ok?'お渡し済み':(over?'お渡し予定の'+m.day+'日を過ぎています':(wait?'ご提供待ち':m.day+'日目まで')))+'</span></div>'
+              +'<span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:6px;">'+(ok?'整いました':(over?'目安の'+m.day+'日を過ぎています':(wait?'ご提供待ち':m.day+'日目まで')))+'</span></div>'
             +'<div style="font-size:12px;color:var(--ink);line-height:1.75;margin-top:1px;">'+esc(m.lead)+'</div>'
             +(wait?'<div style="font-size:10.5px;color:#8A6A12;line-height:1.6;margin-top:2px;">'+esc(m.wait||'資料のご提供をお待ちしています')+'</div>':'')
             +(audience==='partner'&&!ok?'<div style="font-size:10.5px;color:var(--muted);line-height:1.6;margin-top:2px;">'+esc(m.hint)+'</div>':'')
@@ -21088,7 +21114,7 @@
     h+='</div>';
     return h;
   }
-  // 顧客ポータル
+  // 顧客ポータル：はじめの90日（期間内）＋伴走の1年（ずっと）
   async function loadOnboard90(){
     var box=$('my-onboard'); if(!box) return;
     var prof=window.__prof||{};
@@ -21097,9 +21123,9 @@
     var d=await ob90Fetch(SCOPE);
     var judge=ob90Judge(d);
     var all=ONBOARD90.every(function(m){ return judge[m.key]; });
-    // 導入期間を過ぎた顧客や、完了して日が経った顧客には出さない
-    if(days>OB90_WINDOW || (all && days>OB90_WINDOW/2)){ box.innerHTML=''; return; }
-    box.innerHTML=ob90Html(days, judge, 'customer', ob90Waits(judge, d));
+    // 土台の帯は、期間を過ぎた顧客や、完了して日が経った顧客には出さない。伴走の1年は出し続ける
+    var showSetup=!(days>OB90_WINDOW || (all && days>OB90_WINDOW/2));
+    box.innerHTML=(showSetup?ob90Html(days, judge, 'customer', ob90Waits(judge, d)):'')+journeyHtml(days,'customer');
   }
   // パートナーのカルテ
   async function loadOnboard90Client(custId){
@@ -21109,15 +21135,17 @@
     var days=ob90Days(ob90Start(prof));
     var d=await ob90Fetch(custId);
     var judge=ob90Judge(d);
-    box.innerHTML=ob90Html(days==null?0:days, judge, 'partner', ob90Waits(judge, d));
+    box.innerHTML=ob90Html(days==null?0:days, judge, 'partner', ob90Waits(judge, d))+journeyHtml(days==null?0:days,'partner');
   }
 
   var ONBOARD_PREFIX='【導入】';
   var ONBOARD_STEPS=[
-    ['STEP 1｜資料の受領（1週目）',7,['キックオフ面談（進め方・サービス範囲の説明）','決算書2〜3期分の受領','保険証券・共済契約一覧の受領','借入一覧（返済予定表）の受領']],
-    ['STEP 2｜データ整備（1〜2週目）',14,['月次財務データの入力（直近12ヶ月）','支払予定・固定費の登録']],
-    ['STEP 3｜初期診断（2〜3週目）',21,['企業価値のかんたん診断（初回）の実施','保険・固定費の棚卸しシミュレーション','AI自動化診断の実施','資金繰りシミュレーターの初期設定']],
-    ['STEP 4｜報告・運用開始（4週目）',28,['導入診断報告書の作成・初回報告面談','12ヶ月改善ロードマップの合意・課題への登録']]
+    //  期限は「はじめの90日（土台づくり）」に合わせて12週で組む。以前は4週で
+    //  組んでいて、顧客の画面の「90日」と食い違っていた。成果を急がず土台を整える
+    ['STEP 1｜資料の受領（〜2週）',14,['キックオフ面談（進め方・サービス範囲の説明）','決算書2〜3期分の受領','保険証券・共済契約一覧の受領','借入一覧（返済予定表）の受領']],
+    ['STEP 2｜データ整備（〜4週）',28,['月次財務データの入力（直近12ヶ月）','支払予定・固定費の登録']],
+    ['STEP 3｜初期診断（〜8週）',56,['企業価値のかんたん診断（初回）の実施','保険・固定費の棚卸しシミュレーション','AI自動化診断の実施','資金繰りシミュレーターの初期設定']],
+    ['STEP 4｜報告・運用開始（〜12週）',84,['導入診断報告書の作成・初回報告面談','12ヶ月改善ロードマップの合意・課題への登録']]
   ];
   function onboardStdTitles(){ var a=[]; ONBOARD_STEPS.forEach(function(st){ st[2].forEach(function(t){ a.push(t); }); }); return a; }
   async function loadOnboard(custId){
@@ -21174,7 +21202,7 @@
   }
   async function onboardSeed(){
     if(!CURRENT_CLIENT || !CURRENT_CLIENT.id){ alert('顧客が選択されていません'); return; }
-    if(!confirm('導入チェックリストの標準12項目を、期限付きの課題として一括登録します。\n期限は本日から STEP1:1週間後 → STEP4:4週間後 で自動設定されます。\n（登録済みの項目はスキップされます）\nよろしいですか？')) return;
+    if(!confirm('導入チェックリストの標準12項目を、期限付きの課題として一括登録します。\n期限は本日から STEP1:2週間後 → STEP4:12週間後（はじめの90日）で自動設定されます。\n（登録済みの項目はスキップされます）\nよろしいですか？')) return;
     var custId=CURRENT_CLIENT.id;
     var chk=await sb.from('action_items').select('title').eq('customer_id',custId);
     if(chk.error){ alert('確認エラー：'+chk.error.message); return; }
