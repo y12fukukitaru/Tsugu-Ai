@@ -1380,7 +1380,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260911-07';
+  var APP_BUILD='20260911-08';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -4994,7 +4994,23 @@
       .map(function(id){ return {c:byId[id], score:todos[id].score, tags:todos[id].tags}; })
       .sort(function(a,b){ return b.score-a.score; }).slice(0,20);
     if(!rows.length){
-      box.innerHTML='<div style="font-size:13px;color:#27684A;background:#EBF2ED;border-radius:10px;padding:12px 14px;">✅ 今日対応が必要な顧客はありません。すべて順調です。</div>';
+      var h0='<div style="font-size:13px;color:#27684A;background:#EBF2ED;border-radius:10px;padding:12px 14px;">✅ 今日対応が必要な顧客はありません。すべて順調です。</div>';
+      //  空のときこそ「今月の伴走」。顧客が1〜2社の頃は、ここが毎朝空になる。
+      //  節目（伴走の1年）ごとのやることを1つ添えて、手が止まらないようにする
+      var cs=(CL_CACHE.clients||[]);
+      if(cs.length){
+        h0+='<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin:12px 0 4px;">今月の伴走（節目ごとの一手）</div>';
+        cs.slice(0,8).forEach(function(c){
+          var ph=journeyPhase(c.created_at?ob90Days(String(c.created_at).slice(0,10)):0);
+          h0+='<div class="clcard" onclick="viewClient(\''+c.id+'\',\''+escJ(c.email)+'\',\''+escJ(c.company_name||'')+'\')">'
+            +'<div class="cl-top"><span class="cl-nm">'+esc(c.company_name||c.email)+'</span>'
+            +'<span style="margin-left:auto;color:#2C5DA8;font-size:11px;white-space:nowrap;">カルテの台本へ →</span></div>'
+            +'<div class="cl-tags"><span class="tag '+(ph.qi===0?'blue':'gray')+'">'+(ph.year>1?ph.year+'年目・':'')+'第'+ph.q+' '+esc(ph.title)+'</span>'
+            +'<span style="font-size:11.5px;color:#5A6981;line-height:1.6;">'+esc(ph.partner[0])+'</span></div>'
+          +'</div>';
+        });
+      }
+      box.innerHTML=h0;
       return;
     }
     var h='';

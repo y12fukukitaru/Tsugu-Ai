@@ -147,6 +147,39 @@ ok('第4にはゴールの言葉（買いたい条件・関心・柱）', /買�
 }
 
 // ---------------------------------------------------------------
+// ③' 今日やることが空のとき「今月の伴走」
+// ---------------------------------------------------------------
+{
+  const rt = takeFn('renderTodos');
+  const els = {};
+  const d100 = new Date(Date.now() - 100 * 86400000).toISOString();
+  const mod = new Function(
+    base +
+    'var CL_CACHE={clients:[{id:"a",email:"a@x",company_name:"A社",created_at:' + JSON.stringify(d100) + '},{id:"b",email:"b@x",company_name:"B社"}]};' +
+    'function buildTodos(){ return {}; }' +
+    'var els=arguments[0]; function $(id){ return els[id]||(els[id]={innerHTML:""}); }' +
+    'function escJ(s){return String(s||"");}' +
+    rt + 'renderTodos(); return els["todo-list"].innerHTML;'
+  );
+  const html = mod(els);
+  ok('順調の一文は残る', /今日対応が必要な顧客はありません/.test(html));
+  ok('空のときは「今月の伴走」が続く', /今月の伴走（節目ごとの一手）/.test(html));
+  ok('A社は第2の節目と、その最初のやること', /A社[\s\S]*第2 現金を増やす[\s\S]*棚卸しで見つけた見直しを実行に移す/.test(html));
+  ok('契約日が無いB社は第1（0日目扱い）', /B社[\s\S]*第1 土台づくり[\s\S]*資料を預かる/.test(html));
+  is('顧客ごとに1枚', (html.match(/カルテの台本へ →/g) || []).length, 2);
+  //  対応があるときは従来どおり（今月の伴走は出さない）
+  const mod2 = new Function(
+    base +
+    'var CL_CACHE={clients:[{id:"a",email:"a@x",company_name:"A社"}]};' +
+    'function buildTodos(){ return {a:{score:80,tags:["<span>未読</span>"]}}; }' +
+    'var els=arguments[0]; function $(id){ return els[id]||(els[id]={innerHTML:""}); }' +
+    'function escJ(s){return String(s||"");}' +
+    rt + 'renderTodos(); return els["todo-list"].innerHTML;'
+  );
+  no('対応があるときは今月の伴走を出さない', /今月の伴走/.test(mod2({})));
+}
+
+// ---------------------------------------------------------------
 // ④ 約束の一本化：4週間の約束を消す
 // ---------------------------------------------------------------
 no('お約束カード（4週間で4つ）の関数が無い', /function myPromiseCard\(/.test(SRC));
