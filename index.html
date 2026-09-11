@@ -1380,7 +1380,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260911-06';
+  var APP_BUILD='20260911-07';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -9718,6 +9718,136 @@
       +(done?'<span style="font-size:11px;color:#27684A;white-space:nowrap;">済み</span>':'<span class="ghost" style="font-size:11px;white-space:nowrap;" onclick="'+go+'">'+label+' →</span>')
     +'</div>';
   }
+  // ===== 今月の面談台本（カルテ） =====
+  // 「今日やること」は作業を並べる。ここは「今月この会社のどの数字を見て、
+  // 経営者と何を話し、それがどう買い手の基盤につながるか」を組み立てる。
+  // M&Aの専門家ではない伴走者が、面談で手が止まらないように。
+  //
+  //  材料はすべて既にある数字：財務（finMetrics）・資金繰り・柱（pillarsOf）・
+  //  買い手になる準備度（shindanScore）・買いたい条件・伴走の1年の節目。
+  //  組み立ては meetingScript（純粋な関数）に寄せ、描画と分けて試験できるようにする。
+  // ============================================================
+  function meetingScript(ctx){
+    ctx=ctx||{};
+    var ph=journeyPhase(ctx.days);
+    var m=ctx.m||{}, months=ctx.months||0, snap=ctx.snap||null, pil=ctx.pil||{count:1,done:0,next:null};
+    var ready=ctx.ready||null, bc=ctx.bc||{};
+    var cashM=(m.cashMonths!=null)?m.cashMonths:null;
+    var runway=(snap && snap.runway!=null)?snap.runway:null;
+    var bcN=[!!bc.purpose, !!(bc.industries||bc.region), !!bc.budget_man].filter(Boolean).length;
+    var weak=null;
+    if(ready && ready.axes){ ready.axes.forEach(function(a){ if(a.score==null) return; if(!weak || a.score<weak.score) weak=a; }); }
+    function fmtPct(v){ return finFmt(v,'%'); }
+    //  候補の数字。鍵で選ぶ
+    var N={
+      fin:  { l:'月次データ', v:months+'か月分', why:(months>=3?'3か月そろっています。推移で話せます':'まず試算表3か月分をお預かりするところから'), sec:'cs-mreport' },
+      cash: { l:'手元資金のもち', v:(runway==null?'未診断':(runway>=99?'十分':runway.toFixed(1)+'か月')), why:(runway==null?'資金繰りシミュレーターで診断すると出ます':(runway<3?'3か月を切っています。今月はここが最優先':'月商の何か月分の現金があるか。買い手の自己資金の土台')), sec:'cs-cash' },
+      cashM:{ l:'現預金の月商倍率', v:(cashM==null?'—':cashM.toFixed(1)+'か月分'), why:'2か月分が目安。自己資金の仮置きは現預金の半分', sec:'cs-mreport' },
+      op:   { l:'営業利益率', v:fmtPct(m.opRate), why:(m.opRate!=null&&m.opRate<5?'5%を下回っています。値付けとコストの話を':'本業の余裕。買った後に人と時間を割けるか'), sec:'cs-mreport' },
+      debt: { l:'債務償還年数', v:finFmt(m.debtYears,'年'), why:(m.debtYears!=null&&m.debtYears>10?'10年を超えています。新しい借入の余地が狭い':'10年以内なら銀行は次の借入の話に乗りやすい'), sec:'cs-bank' },
+      pil:  { l:'柱', v:pil.count+'本', why:(pil.next?'次の1社は「'+pil.next.name+'」の段階（'+pil.next.prog+'%）':(pil.done?'増えた柱を確かめ、次の1社へ':'本業の1本。次の1社を引き受ける準備を')), sec:'cs-mna' },
+      ready:{ l:'買い手になる準備度', v:(ready?ready.score+'点':'未記録'), why:(weak?'いちばん弱い軸は「'+weak.l+'」（'+weak.score+'）':'五つの軸を面談で確かめると出ます'), sec:'cs-shindan' },
+      bc:   { l:'買いたい条件', v:bcN+'／3 記入', why:(bcN===3?'業種・地域・予算が揃っています。案件を見る番':'目的・業種か地域・予算を一緒に書くと、案件を探せます'), sec:'cs-mna' }
+    };
+    var order=[['fin','cash','cashM'],['cash','op','cashM'],['debt','ready','pil'],['ready','pil','bc']][ph.qi];
+    if(months===0) order=['fin','cash','pil'];
+    if(runway!=null && runway<3 && order.indexOf('cash')!==0) order=['cash'].concat(order.filter(function(k){ return k!=='cash'; })).slice(0,3);
+    var numbers=order.map(function(k){ return N[k]; });
+    //  問い。節目の3つを土台に、数字が語っていることを先頭に差し込む
+    var baseQ=[
+      ['試算表は毎月、税理士の先生からいつ届きますか？','保険証券は全部で何本ありますか？','いま、いちばん気になっているお金の話は何ですか？'],
+      ['保険と固定費の見直しで、先月いくら残りましたか？','値付けを最後に見直したのはいつですか？','毎月の返済は、月商の何割くらいの感覚ですか？'],
+      ['いま会社を買うとしたら、自己資金はいくらまで出せますか？','メインバンクに「買う話」をしたことはありますか？','社長が1か月いなくても、現場は回りますか？'],
+      ['どんな会社なら引き受けたいですか？業種・地域・規模で言うと？','なぜ買うのか、一言で言うと？','株主とご家族は「会社を買う」方針に賛同していますか？']
+    ][ph.qi];
+    var pre=[];
+    if(months===0) pre.push('試算表（直近3か月分）と保険証券を、いつお預かりできますか？');
+    if(runway!=null && runway<3) pre.push('来月の支払で、いちばん大きいものは何ですか？');
+    if(m.opRate!=null && m.opRate<5) pre.push('値上げを最後にしたのはいつですか？何%なら通りそうですか？');
+    if(m.debtYears!=null && m.debtYears>10) pre.push('メインバンクとは、次の借入の話をしていますか？');
+    if(pil.next) pre.push('次の1社は「'+pil.next.name+'」で止まっています。進めるのに何が要りますか？');
+    if(ph.qi>=2 && bcN<3) pre.push('どんな会社なら引き受けたいですか？業種・地域・予算で言うと？');
+    if(weak && ph.qi>=2) pre.push('準備度でいちばん弱いのは「'+weak.l+'」です。ここを上げるのに、今月できることは何ですか？');
+    var questions=[]; pre.concat(baseQ).forEach(function(q){ if(questions.length<3 && questions.indexOf(q)<0) questions.push(q); });
+    //  買い手の基盤へのつながり
+    var link=[
+      '土台が整うと、第2の節目で「現金を増やす」打ち手を数字で選べます。今月の話は、その材料集めです。',
+      '増えた現金はそのまま自己資金になります。準備度の「自己資金」「借入余力」が、ここで上がります。',
+      '余力が分かると、次の1社の上限価格が決まります。'+(weak?'弱い軸「'+weak.l+'」を上げる一手を、課題に登録しましょう。':'準備度の五つの軸を面談で確かめましょう。'),
+      '条件が書けたら、案件を一緒に見て関心を出す番です。柱が1本増える周回の入口です。'
+    ][ph.qi];
+    return { phase:ph, numbers:numbers, questions:questions, link:link, weak:weak };
+  }
+  function meetingScriptHtml(sc, custId){
+    var h='<div style="border:1.5px solid #EBDDB4;background:#FDFAF1;border-radius:12px;padding:13px 15px;margin:10px 0 14px;">'
+      +'<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">'
+        +'<b style="font-size:13px;color:#8A6A12;">📋 今月の面談台本</b>'
+        +'<span style="font-size:11px;color:var(--muted);">'+esc(sc.phase.label)+'</span>'
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin:3px 0 8px;">この会社の数字から組み立てています。見せる数字→問い→買い手の基盤へのつながり、の順で。</div>'
+      +'<div class="cl-cols"><div class="cl-col">'
+        +'<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">見せる数字（3つ）</div>'
+        +sc.numbers.map(function(x){
+          return '<div style="display:flex;gap:8px;align-items:baseline;padding:5px 0;border-top:1px dashed var(--softline);font-size:12px;">'
+            +'<span style="min-width:8.5em;color:var(--ink);">'+esc(x.l)+'</span>'
+            +'<b style="color:var(--navy);white-space:nowrap;">'+esc(x.v)+'</b>'
+            +'<span style="flex:1;color:var(--muted);font-size:11px;line-height:1.6;">'+esc(x.why)+'</span>'
+            +'<span class="ghost" style="font-size:11px;white-space:nowrap;" onclick="clNav(\''+x.sec+'\')">開く →</span>'
+          +'</div>';
+        }).join('')
+      +'</div><div class="cl-col">'
+        +'<div style="font-size:11.5px;font-weight:700;color:var(--navy);margin-bottom:4px;">問い（3つ）</div>'
+        +'<ol style="margin:0;padding-left:20px;font-size:12.5px;line-height:1.9;color:var(--ink);">'
+        +sc.questions.map(function(q){ return '<li>'+esc(q)+'</li>'; }).join('')+'</ol>'
+      +'</div></div>'
+      +'<div style="font-size:12px;color:#5C4A17;background:#fff;border:1px solid #EBDDB4;border-radius:9px;padding:8px 11px;margin-top:8px;line-height:1.75;"><b>買い手の基盤へ：</b>'+esc(sc.link)+'</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px;">'
+        +'<button class="ghost" style="font-size:12px;border:1px solid #EBDDB4;border-radius:8px;padding:6px 12px;" onclick="meetingScriptAsk(\''+custId+'\')">🎭 継ナビくんに台本を仕上げてもらう</button>'
+        +'<button class="ghost" style="font-size:12px;border:1px solid #EBDDB4;border-radius:8px;padding:6px 12px;" onclick="clNav(\'cs-meet\')">議事録へ</button>'
+      +'</div>'
+    +'</div>';
+    return h;
+  }
+  var MSCRIPT_LAST=null;
+  //  数字を埋めて継ナビくんに渡す。◯◯を残さない
+  function meetingScriptAsk(custId){
+    var sc=MSCRIPT_LAST; if(!sc){ knvAsk('今月の面談台本を作って'); return; }
+    var nums=sc.numbers.map(function(x){ return x.l+'='+x.v; }).join('、');
+    knvAsk('今月の面談台本を仕上げて。相手は担当顧客（'+esc(sc.company||'')+'）、伴走の1年は'+sc.phase.label+'。見せる数字：'+nums+'。問い：'+sc.questions.join('／')+'。ねらい：'+sc.link+'　この材料で、30分の面談の流れ（最初の5分・数字を見せる10分・問いと合意10分・次回までの宿題5分）を、経営者に響く言葉で組み立てて');
+  }
+  async function loadClientScript(custId){
+    var box=$('cl-script'); if(!box) return;
+    var ctx={ days:0, m:{}, months:0, snap:null, pil:pillarsOf([]), ready:null, bc:null };
+    try{
+      var r=await Promise.all([
+        sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false}).limit(12),
+        sb.from('cashflow_snapshots').select('*').eq('customer_id',custId).order('created_at',{ascending:false}).limit(1),
+        sb.from('ma_deals').select('deal_type,stage').eq('customer_id',custId),
+        sb.from('succession_checks').select('answers').eq('customer_id',custId).maybeSingle(),
+        sb.from('buy_criteria').select('industries,region,purpose,budget_man').eq('customer_id',custId).maybeSingle(),
+        sb.from('profiles').select('created_at,onboard_start,company_name').eq('id',custId).maybeSingle()
+      ]);
+      var fin=(r[0].error?[]:(r[0].data||[]));
+      ctx.months=fin.length;
+      if(fin.length){ ctx.m=finMetrics(fin[0])||{}; var c=nOr(fin[0].cash), rv=nOr(fin[0].revenue); ctx.m.cashMonths=(c!=null&&rv)?c/rv:null; }
+      var snap=(r[1].error?null:((r[1].data||[])[0]||null));
+      if(snap){ var out=Number(snap.monthly_out||0)+Number(snap.monthly_repay||0); ctx.snap={ score:Number(snap.score||0), runway:(out>0?Number(snap.cash||0)/out:99) }; }
+      ctx.pil=pillarsOf(r[2].error?[]:(r[2].data||[]));
+      var ans={}; if(!r[3].error && r[3].data && r[3].data.answers){ try{ ans=JSON.parse(r[3].data.answers)||{}; }catch(e){} }
+      ctx.bc=(r[4].error?null:(r[4].data||null));
+      //  準備度は SHINDAN を通して数える。いまのカルテの値を壊さないよう、計算のあいだだけ差し替える
+      var keep=SHINDAN;
+      try{ SHINDAN={ cust:custId, ans:ans, fin:fin, bc:ctx.bc }; ctx.ready=shindanScore(); }catch(e){ ctx.ready=null; }
+      SHINDAN=keep;
+      var prof=(r[5].error?null:(r[5].data||null));
+      var days=ob90Days(ob90Start(prof||{})); ctx.days=(days==null?0:days);
+      ctx.company=(prof&&prof.company_name)||'';
+    }catch(e){}
+    var sc=meetingScript(ctx); sc.company=ctx.company||'';
+    MSCRIPT_LAST=sc;
+    box.innerHTML=meetingScriptHtml(sc, custId);
+  }
+
   async function loadClientTodo(custId){
     var box=$('cl-todo-body'); if(!box) return;
     var now=new Date(), ym=thisYM(), monthStart=ym+'-01';
@@ -9725,7 +9855,7 @@
     var pd=new Date(now.getFullYear(), now.getMonth()-1, 1);
     var pym=pd.getFullYear()+'-'+('0'+(pd.getMonth()+1)).slice(-2);
     var rows=[], done={fin:false, meet:false, note:false, rep:false}, meetInfo=null;
-    var sig={msgOk:true, pdcaOk:true, dueOk:true, hasMa7:false, pmiDone:false, cash90:false, ins90:false, ai90:false};
+    var sig={msgOk:true, pdcaOk:true, dueOk:true, hasMa7:false, pmiDone:false, cash90:false, ins90:false, ai90:false, ready90:false, bc90:false};
     function within(dstr,days){ if(!dstr) return false; return (now - new Date(dstr))/(24*3600*1000) <= days; }
     try{
       var rs=await Promise.all([
@@ -9741,7 +9871,10 @@
         sb.from('pmi_pulses').select('score').eq('customer_id',custId).eq('ym',ym).limit(1),
         sb.from('cashflow_snapshots').select('created_at').eq('customer_id',custId).order('created_at',{ascending:false}).limit(1),
         sb.from('insurance_diagnoses').select('created_at').eq('customer_id',custId).order('created_at',{ascending:false}).limit(1),
-        sb.from('ai_proposals').select('created_at').eq('customer_id',custId).eq('source','automation').order('created_at',{ascending:false}).limit(1)
+        sb.from('ai_proposals').select('created_at').eq('customer_id',custId).eq('source','automation').order('created_at',{ascending:false}).limit(1),
+        //  買い手の側の定型：準備度の記録と買いたい条件の見直し（3か月ごと）
+        sb.from('succession_checks').select('updated_at').eq('customer_id',custId).limit(1),
+        sb.from('buy_criteria').select('updated_at').eq('customer_id',custId).limit(1)
       ]);
       var d=function(i){ return (!rs[i].error && rs[i].data)?rs[i].data:[]; };
       // --- メッセージ：未読＋返信滞留 ---
@@ -9804,6 +9937,8 @@
       sig.cash90=!!(d(10)[0]&&within(d(10)[0].created_at,90));
       sig.ins90=!!(d(11)[0]&&within(d(11)[0].created_at,90));
       sig.ai90=!!(d(12)[0]&&within(d(12)[0].created_at,90));
+      sig.ready90=!!(d(13)[0]&&within(d(13)[0].updated_at,90));
+      sig.bc90=!!(d(14)[0]&&within(d(14)[0].updated_at,90));
     }catch(e){}
     var left='';
     if(rows.length) left+=rows.join('');
@@ -9819,11 +9954,13 @@
       +(sig.hasMa7?clCheckRow(sig.pmiDone, 'PMIパルスの回収（M&A統合後の状況確認）', "clNav(\'cs-mna\')", '確認する'):'');
     var quarterly=clCheckRow(sig.cash90, '資金繰りシミュレーターの更新（90日以内）', "clNav(\'cs-cash\')", '実行する')
       +clCheckRow(sig.ins90, '保険最適化の見直し（90日以内）', "clNav(\'cs-ins\')", '実行する')
-      +clCheckRow(sig.ai90, 'AI自動化診断の見直し・提案（90日以内）', "clNav(\'cs-ai\')", '実行する');
+      +clCheckRow(sig.ai90, 'AI自動化診断の見直し・提案（90日以内）', "clNav(\'cs-ai\')", '実行する')
+      +clCheckRow(sig.ready90, '買い手になる準備度の記録（90日以内）', "clNav(\'cs-shindan\')", '記録する')
+      +clCheckRow(sig.bc90, '買いたい条件の見直し（90日以内）', "clNav(\'cs-mna\')", '見直す');
     CL_TODO_TABS={ d:daily, w:weekly, m:monthly, q:quarterly };
     var pend={ d:(sig.msgOk?0:1), w:(sig.pdcaOk?0:1)+(sig.dueOk?0:1),
       m:(done.fin?0:1)+(done.rep?0:1)+(done.note?0:1)+(done.meet?0:1)+((sig.hasMa7&&!sig.pmiDone)?1:0),
-      q:(sig.cash90?0:1)+(sig.ins90?0:1)+(sig.ai90?0:1) };
+      q:(sig.cash90?0:1)+(sig.ins90?0:1)+(sig.ai90?0:1)+(sig.ready90?0:1)+(sig.bc90?0:1) };
     function tb(k,label){ var n=pend[k]||0; return '<button class="sbtn'+(k===CL_TODO_CUR?' on':'')+'" data-k="'+k+'" style="font-size:11.5px;padding:6px 12px;" onclick="clTodoFreq(\''+k+'\',this)">'+label+(n?' <span class="clnb" style="position:static;margin-left:2px;">'+n+'</span>':'')+'</button>'; }
     var right='<div style="font-size:12px;font-weight:700;color:var(--navy);margin:0 0 6px;">定型作業（期間別・'+esc(ym.replace('-','年'))+'月）</div>'
       +'<div id="cl-todo-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">'+tb('d','毎日')+tb('w','毎週')+tb('m','毎月')+tb('q','3か月ごと')+'</div>'
@@ -11659,6 +11796,7 @@
       +'<div class="ph" id="cs-todo" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 16.5V22"/><path d="M8.5 3h7l-1 6 2.8 3.2v1.3H6.7v-1.3L9.5 9z"/></svg>やること（この顧客の対応状況）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClientTodo(\''+custId+'\')">↺ 更新</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">対応が必要な項目と、今月の定型作業のチェックです。このリストは<b>パートナー専用</b>で、顧客には表示されません。</div>'
       +'<div id="cl-todo-body">読み込み中...</div>'
+      +'<div id="cl-script"></div>'
       +'<div class="ph" id="cs-onboard" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 6.5 1.5 1.5L7.5 5"/><path d="m3 13 1.5 1.5L7.5 11.5"/><path d="m3 19.5 1.5 1.5L7.5 18"/><path d="M11 6.5h10M11 13h10M11 19.5h10"/></svg>導入チェックリスト（Phase 0）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadOnboard(\''+custId+'\')">↺ 更新</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">導入初期費用に対応する導入作業（資料受領 → データ整備 → 初期診断 → 報告）の進捗管理です。期限は「はじめの90日（土台づくり）」に合わせて12週で組みます。すべて完了すると「導入診断報告書」の4つの成果物が揃います。</div>'
       +'<div id="cl-onboard90"></div>'
@@ -12045,6 +12183,7 @@
     loadClientNotes(custId);
     autoStageFor(custId);
     loadClientTodo(custId);
+    loadClientScript(custId);
     loadOnboard(custId);
     loadObr(custId);
     loadValHistory(custId);
@@ -13144,6 +13283,9 @@
         ['初回面談の組み立て','初回面談の準備をしています。相手は◯◯業・年商約◯◯万円・社長は◯◯歳です。ヒアリング項目と面談の流れを組み立ててください。'],
         ['面談後のフォロー設計','面談で「◯◯」という課題が出ました。次回面談までのフォローと宿題の設計を手伝ってください。'],
         ['言いにくいことの伝え方','顧客に◯◯（値上げ提案／リスク指摘など）を伝えたいです。経営者に響く伝え方に整えてください。']]},
+      {t:'📋 今月の面談', subs:[
+        ['今月の面談で何を話すか','担当顧客の今月の面談台本を作ってください。伴走の1年は第◯の節目。見せる数字：資金のもち◯か月・営業利益率◯%・債務償還年数◯年・柱◯本・準備度◯点。経営者に響く問いを3つと、それが買い手の基盤（自己資金・借入余力・経営陣・PMI・目的）のどこにつながるかを整理してください。'],
+        ['数字の説明のしかた','経営者に「◯◯」（債務償還年数／営業利益率／現預金の月商倍率など）を説明したいです。数字は◯◯です。専門用語を使わず、社長の日々の感覚に置き換えた言い方を3通り作ってください。']]},
       {t:'🧲 見込み客', subs:[
         ['見込み客の見つけ方','まだ担当顧客がいません。私の既契約者・顧問先は主に◯◯業で、◯◯人ほどです。「堅い本業・厚い現預金」「隣の廃業を見ている」「通帳の残高が気になる」の3つの型で、誰から声をかけるべきか、見分け方と最初の一言を一緒に整理してください。'],
         ['断り文句への返し','商談で「◯◯」（顧問税理士がいる／今は忙しい／M&Aは考えていない／費用／AIは信用できない）と言われました。相手の懸念に正直に答える返しを、私の言葉で3通り作ってください。'],
