@@ -1380,7 +1380,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260911-05';
+  var APP_BUILD='20260911-06';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -3675,6 +3675,8 @@
           : '')
         +'<div id="fde-hero" style="display:flex;gap:8px;flex-wrap:wrap;">読み込み中...</div></div>'
         +'<div id="my-annc"></div>'
+        //  顧客が0社のあいだだけ出る道筋。loadClients が描く
+        +'<div id="assoc-start"></div>'
         +'<div class="panel" id="sec-todo">'
           +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 16.5V22"/><path d="M8.5 3h7l-1 6 2.8 3.2v1.3H6.7v-1.3L9.5 9z"/></svg>今日やること'
             +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadClients()">↺ 更新</span></div>'
@@ -3771,6 +3773,7 @@
               +'<button class="ghost" style="font-size:12px;border:1px solid #EBDDB4;border-radius:8px;padding:6px 12px;" onclick="knvAsk(\'明日のデモ商談の準備。相手は◯◯業・年商◯◯万円・社長は◯◯歳。刺さりそうな承継の切り口と、シミュレーションに入れる数字の例を教えて\')">📝 明日の商談の準備を頼む</button>'
             +'</div>'
           +'</div>'
+          +'<div id="prospect-box">'+prospectSectionHtml()+'</div>'
           +'<div id="sales-stage">'+salesIntroHtml()+'</div>'
         +'</div>'
         +'<div class="panel" id="sec-pdca">'
@@ -4860,6 +4863,7 @@
     }
     renderClientList();
     renderTodos();
+    renderAssocStart(clients.length);
   }
   // ===== トリアージ：今日やることリスト =====
   function daysBetween(dateStr, now){
@@ -13140,6 +13144,10 @@
         ['初回面談の組み立て','初回面談の準備をしています。相手は◯◯業・年商約◯◯万円・社長は◯◯歳です。ヒアリング項目と面談の流れを組み立ててください。'],
         ['面談後のフォロー設計','面談で「◯◯」という課題が出ました。次回面談までのフォローと宿題の設計を手伝ってください。'],
         ['言いにくいことの伝え方','顧客に◯◯（値上げ提案／リスク指摘など）を伝えたいです。経営者に響く伝え方に整えてください。']]},
+      {t:'🧲 見込み客', subs:[
+        ['見込み客の見つけ方','まだ担当顧客がいません。私の既契約者・顧問先は主に◯◯業で、◯◯人ほどです。「堅い本業・厚い現預金」「隣の廃業を見ている」「通帳の残高が気になる」の3つの型で、誰から声をかけるべきか、見分け方と最初の一言を一緒に整理してください。'],
+        ['断り文句への返し','商談で「◯◯」（顧問税理士がいる／今は忙しい／M&Aは考えていない／費用／AIは信用できない）と言われました。相手の懸念に正直に答える返しを、私の言葉で3通り作ってください。'],
+        ['最初の1社を決める','見込み客が◯人います。それぞれ◯◯（業種・年商・社長の年齢・後継者）です。最初にお願いする1社をどう選ぶか、順番の付け方を教えてください。']]},
       {t:'📝 提案・商談', subs:[
         ['提案の壁打ち','「◯◯」という提案を考えています。相手の状況は◯◯です。提案の切り口と、想定される反論への備えを壁打ちしてください。'],
         ['決算書からの課題抽出','決算書を預かりました。売上◯◯万円・営業利益◯◯万円・借入◯◯万円です。経営課題を洗い出す観点を教えてください。']]},
@@ -16593,21 +16601,23 @@
             '<div style="display:flex;gap:4px;align-items:stretch;" data-t="lvrow">'
             +lv(1,'アソシエイト','研修修了でスタート','個別設定','—','now')
             +lv(2,'シニア','初の顧問契約','50%','','next')
-            +lv(3,'エグゼクティブ','顧問契約5件','60%','','')
-            +lv(4,'プレミアム','顧問契約10件','70%','','')
+            +lv(3,'エグゼクティブ','顧問契約5件 または 顧問先の成約1件','60%','','')
+            +lv(4,'プレミアム','顧問契約10件 または 成約3件','70%','','')
             +'</div>','lvcard')
           +tgCard('実績は自動集計されます',
             tgRow('顧問契約数　＝ 担当顧客として登録されている社数','<span class="tg-btn o">顧客管理</span>','agg1')
+            +tgRow('成約　＝ 顧問先が譲り受けてクロージングまで行った件数','<span class="tg-btn o">M&A案件</span>','agg2')
             ,'aggcard'));
       },
       scenes:[
         { t:5, chip:'全体像', focus:'lvcard', cap:'パートナーのランクは4段階です。上がるほど外注費率が高くなります。' },
         { t:6, chip:'Lv.1', focus:'lv1', click:true, cap:'Lv.1 アソシエイトは、この研修を修了した時点からスタートです。いまご覧いただいているレッスンがそれにあたります。' },
         { t:5, chip:'Lv.2', focus:'lv2', click:true, cap:'Lv.2 シニアは、初めての顧問契約を獲得すると到達します。ここから外注費率50%です。' },
-        { t:6, chip:'Lv.3', focus:'lv3', click:true, cap:'Lv.3 エグゼクティブは顧問契約5件です。ここから外注費率60%になります。' },
-        { t:5, chip:'Lv.4', focus:'lv4', click:true, cap:'Lv.4 プレミアムで外注費率70%。さらに顧問契約30社以上になると、スケールメリットとして80%になります。' },
+        { t:6, chip:'Lv.3', focus:'lv3', click:true, cap:'Lv.3 エグゼクティブは顧問契約5件、または顧問先が会社を1社譲り受けて成約すると到達します。ここから外注費率60%になります。' },
+        { t:5, chip:'Lv.4', focus:'lv4', click:true, cap:'Lv.4 プレミアムは顧問契約10件、または顧問先の成約3件で、外注費率70%。さらに顧問契約30社以上になると、スケールメリットとして80%になります。' },
         { t:7, chip:'自動集計', focus:'aggcard', cap:'これらの実績は、あなたの担当データから自動で集計されます。別途の申請は不要です。ただし正式なレベル認定と外注費率の適用は運営が行います。' },
         { t:5, chip:'顧問契約数', focus:'agg1', click:true, cap:'顧問契約数は「顧客管理」に登録されている担当顧客の数です。登録漏れがあると実績に反映されません。' },
+        { t:5, chip:'成約', focus:'agg2', click:true, cap:'成約は、顧問先が会社を譲り受けてクロージングまで行った件数です。「M&A案件」のステージを進めていないと数えられません。売る側の成約は数えません。' },
         { t:6, chip:'外注費率', focus:'lvcard', click:false, cap:'外注費率は運営が正式に適用します。相違があれば運営サポートへ。案件の進捗更新を忘れないでください。' }
       ] },
     { id:'t1-3', title:'認定パートナー 禁止行為ガイドライン（必読）', min:8, kind:'link',
@@ -16725,11 +16735,11 @@
       note:'読み終えたら、この画面に戻って「読了にする」を押してください。' },
     { id:'t5-2', title:'譲る側 ― 何を準備し、どう決めるか', min:12, kind:'doc',
       file:'ma-course.html#c2',
-      desc:'私たちが日常的に接するのは、ほとんどが譲る側です。動機のほどき方、磨き上げ、従業員へ伝える順番、手取りの考え方まで。第2章です。',
-      note:'磨き上げは、承継の話が具体化する何年も前から始められます。日々の顧問業務がそのまま準備になる、という視点で読んでください。' },
+      desc:'相手の会社（譲る側）を理解して初めて、顧問先が買い手として動けます。動機のほどき方、磨き上げ、従業員へ伝える順番、手取りの考え方まで。第2章です。',
+      note:'磨き上げは、承継の話が具体化する何年も前から始められます。顧問先が買い手として相手を見るとき、ここに書いてあることが「相手のどこを見るか」になります。' },
     { id:'t5-3', title:'譲り受ける側 ― 買い手は何を見ているか', min:8, kind:'doc',
       file:'ma-course.html#c3',
-      desc:'買い手の関心が分かると、譲る側への助言の質が上がります。「買い手はここを見ます」と言えるからです。第3章です。',
+      desc:'私たちのゴールは「顧問先が買い手になる」ことです。買い手が何を見ているかを知ると、顧問先と一緒に相手の会社を見られます。第3章です。',
       note:'読み終えたら、この画面に戻って「読了にする」を押してください。' },
     { id:'t5-4', title:'数字の見方 ― いくらになるのか', min:12, kind:'doc',
       file:'ma-course.html#c4',
@@ -19831,6 +19841,145 @@
 
   // ===== 営業ツール（課題ヒアリング診断）=====
   // 「こんな問題を抱えていませんか？」→「TsuguAiならこう解決」→ クロージングの営業動線
+  // ===== 見込み客の型と、顧客ゼロの「はじめの30日」 =====
+  // 認定パートナーの多くは M&A の専門家ではない。研修を終えた翌朝、
+  // 顧客が0社だと「今日やること」は空で、営業ツールはあっても
+  // 「誰に・どこで・何と言って」が無かった。ここに書く。
+  //
+  //  ペルソナは「顧問先が買い手になる」というゴールから逆算した3つ。
+  //  最初の一言は、売り込みではなく問いにする（課題ヒアリング診断と同じ流儀）。
+  //  金額・成果の約束はしない。料金は運営の料金表のとおりに伝える。
+  // ============================================================
+  var PROSPECT_PERSONAS=[
+    { k:'solid', ic:'🏭', name:'堅い本業、厚い現預金',
+      who:'本業が黒字で、現預金が月商2か月分より厚い。社長は50〜60代。後継者は決まっているか、迷っている。',
+      where:'既契約者・顧問先の中にいます。決算書を見せてもらえる関係が、そのまま入口です。',
+      signs:['銀行から「借りてほしい」と言われている','設備投資や新しい拠点の話が出る','同業の廃業や後継者不在を口にする'],
+      first:'社長、いま「会社の値段を出せ」と言われたら、出せますか？',
+      show:'企業価値かんたん診断（3分）→ 承継シミュレーションで「この会社を買ったら？」',
+      link:'いちばん買い手に近い人です。柱を増やす主役。土台づくりのあと、第3の節目（買い手の余力）へ最短で進めます。' },
+    { k:'next',  ic:'🏘️', name:'隣の廃業を見ている',
+      who:'同業や取引先の後継者不在を身近で見ている。「誰か引き受けないのか」と口にしたことがある。',
+      where:'同業の会合・商工会・取引先の紹介。既契約者に「そういう話、周りにありませんか」と聞くだけでも出てきます。',
+      signs:['「うちが取れば、人も設備も生きる」と言う','取引先の廃業で仕入や販路に困った経験がある','後継者はいるが、会社をもう一回り大きくしたい'],
+      first:'あの会社を引き受けるとしたら、いくらまでなら、と考えたことはありますか？',
+      show:'承継シミュレーション「この会社を買ったら？」→ 買いたい条件（業種・地域・規模・予算・目的）',
+      link:'買い手としての目的がはっきりしている人です。準備度の「目的の明確さ」が最初から高い。土台づくりと並行して、買いたい条件を一緒に書けます。' },
+    { k:'cash',  ic:'💰', name:'通帳の残高が気になる',
+      who:'利益は出ているのに手元が薄い。借入の返済と固定費が重い。買い手になる前の、土台を固める段階。',
+      where:'既契約者の中で、保険料が売上比で重い会社、返済の話が出る会社。試算表は届くが読んでいない社長。',
+      signs:['月末に通帳の残高が気になる月がある','保険は何年も見直していない','試算表のどこを見ればいいか分からない'],
+      first:'利益は出ているのに、月末に通帳が気になる月はありますか？',
+      show:'課題ヒアリング診断の第1問 → 財務・資金繰りの見える化',
+      link:'第2の節目「現金を増やす」から入る人です。1年かけて余力を作り、買い手の側に回ります。売り込みではなく、現金が増えるところから。' }
+  ];
+  //  よくある断り文句と返し。言い負かすためではなく、相手の懸念に正直に答えるための型
+  var PROSPECT_OBJECTIONS=[
+    { q:'顧問税理士がいるから',
+      a:'税理士の先生は「過去の数字を正しく」、私たちは「これからの現金と、次の一社」を見ます。役割がぶつかりません。月次の数字は先生から直接いただく仕組みがあるので、先生の手間も増えません。' },
+    { q:'今は忙しい',
+      a:'お願いするのは資料（試算表3か月分・保険証券・借入一覧）だけです。最初の90日は土台づくりで、社長のお時間は月1回、30分の面談で足ります。' },
+    { q:'M&Aは考えていない',
+      a:'売る話ではありません。「次の1社を引き受けられる会社か」を数字で確かめるだけです。買うかどうかを考えるのは1年後で構いません。それまでは現金を増やすことに集中します。' },
+    { q:'費用に見合うのか',
+      a:'判断は90日でしていただけます。数字が見える・お金の流れが分かる・1年の道筋が決まる、の3つが揃ったところで、続けるかお決めください。増える金額の約束はしません。それは誠実ではないので。' },
+    { q:'AIは信用できない',
+      a:'AIは下書きと、24時間の相談窓口です。判断と説明は担当の私がします。税務・法務・保険の実行は有資格者に繋ぎます。AIが社長に代わって何かを決めることはありません。' }
+  ];
+  //  「Yes」の形。ここまで来たら、次の一手は決まっている
+  var PROSPECT_YES=[
+    '「では、まず試算表3か月分と保険証券をお預かりして、90日で土台を整えましょう」と締める',
+    '料金は運営の料金表のとおりに伝える（増える金額・成果の約束はしない）',
+    '顧客のメールアドレスを聞き、「顧客管理 → ＋ 顧客を追加」に登録する（登録前でも招待として控えられる）',
+    '契約書は運営から届く。届いたら「はじめの90日（土台づくり）」が顧客の画面に出る'
+  ];
+  //  顧客ゼロの「はじめの30日」。①④は実データで判定、②③はご本人が印を付ける（この端末に保存）
+  var ASSOC_STEPS=[
+    { k:'train', t:'研修を修了する（Lv.1 アソシエイト）', auto:true, sec:'sec-growth', go:'研修へ' },
+    { k:'p10',   t:'見込み客を10人書き出す（既契約者・顧問先から。上の3つの型で見分ける）', auto:false, sec:'sec-sales', go:'型を見る' },
+    { k:'d3',    t:'3人に課題ヒアリング診断をする（画面でも紙でも）', auto:false, sec:'sec-sales', go:'診断へ' },
+    { k:'c1',    t:'1社を「顧客管理」に登録する（Lv.2 シニアへ）', auto:true, sec:'sec-clients', go:'顧客管理へ' }
+  ];
+  function assocKey(){ return 'tsugu_assoc_'+(ME||'guest'); }
+  function assocLoad(){ try{ return JSON.parse(localStorage.getItem(assocKey())||'{}')||{}; }catch(e){ return {}; } }
+  function assocTick(k,on){ var s=assocLoad(); s[k]=!!on; try{ localStorage.setItem(assocKey(), JSON.stringify(s)); }catch(e){} renderAssocStart(((CL_CACHE||{}).clients||[]).length); }
+  function assocDone(step, clientsN){
+    if(step.k==='train'){ try{ return trIsComplete(); }catch(e){ return false; } }
+    if(step.k==='c1') return clientsN>0;
+    return !!assocLoad()[step.k];
+  }
+  //  ダッシュボード。顧客が0社のときだけ出す。1社登録された朝に、この枠は消える
+  function renderAssocStart(clientsN){
+    var box=$('assoc-start'); if(!box) return;
+    if(clientsN>0){ box.innerHTML=''; return; }
+    var doneN=0;
+    var rows=ASSOC_STEPS.map(function(st,i){
+      var ok=assocDone(st, clientsN); if(ok) doneN++;
+      return '<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--softline);">'
+        +(st.auto
+          ? '<span style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:'+(ok?'#27684A':'var(--line)')+';color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px;">'+(ok?'✓':(i+1))+'</span>'
+          : '<input type="checkbox" '+(ok?'checked':'')+' onchange="assocTick(\''+st.k+'\',this.checked)" style="margin-top:4px;width:18px;height:18px;flex-shrink:0;">')
+        +'<div style="flex:1;min-width:0;font-size:12.5px;line-height:1.7;color:'+(ok?'var(--muted)':'var(--ink)')+';'+(ok?'text-decoration:line-through;':'')+'">'+esc(st.t)
+          +(st.auto?'<span style="font-size:10.5px;color:var(--muted);margin-left:6px;">自動で確認</span>':'')+'</div>'
+        +(ok?'':'<span class="ghost" style="font-size:11px;white-space:nowrap;" onclick="goSec(\''+st.sec+'\')">'+esc(st.go)+' →</span>')
+      +'</div>';
+    }).join('');
+    box.innerHTML='<div class="panel" style="border:1.5px solid #C9D6EA;background:linear-gradient(135deg,#F6FAFF 0%,#FDFAF2 100%);">'
+      +'<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">'
+        +'<b style="font-size:14px;color:var(--navy);">はじめの30日 ― 最初の1社まで</b>'
+        +'<span style="font-size:11.5px;color:var(--muted);">'+doneN+' / '+ASSOC_STEPS.length+'</span>'
+      +'</div>'
+      +'<div style="font-size:12px;color:var(--muted);line-height:1.8;margin:4px 0 8px;">まだ担当顧客がいない方の道筋です。M&Aの知識は要りません。<b style="color:var(--navy);">見込み客は、いまの既契約者・顧問先の中にいます。</b>3つの型で見分けて、問いから入ります。</div>'
+      +rows
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">'
+        +'<button class="btn2" style="font-size:12.5px;padding:8px 14px;" onclick="goSec(\'sec-sales\')">見込み客の3つの型を見る</button>'
+        +'<button class="ghost" style="font-size:12px;border:1px solid #C9D6EA;border-radius:8px;padding:7px 12px;" onclick="prospectPractice(0)">🎭 継ナビくんと商談練習</button>'
+      +'</div>'
+    +'</div>';
+  }
+  //  継ナビくんを経営者役にして練習する。断り文句を一つ混ぜてもらう
+  function prospectPractice(i){
+    var p=PROSPECT_PERSONAS[i]||PROSPECT_PERSONAS[0];
+    var ob=PROSPECT_OBJECTIONS[i%PROSPECT_OBJECTIONS.length];
+    knvAsk('デモ商談の練習相手になって。私がパートナー役、あなたは「'+p.name+'」の経営者役（'+p.who+'）。私の最初の一言「'+p.first+'」から15分の商談を再現して。途中で一度、断り文句「'+ob.q+'」を言ってください。最後に、私の問いかけと返しについてフィードバックをください');
+  }
+  //  営業ツールの中に置く「見込み客の型」。ペルソナ→断り文句→Yesの形
+  function prospectSectionHtml(){
+    var h='<div style="border:1.5px solid #C9D6EA;background:#F8FAFF;border-radius:12px;padding:13px 15px;margin-bottom:12px;">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;">🧲 見込み客の3つの型 ― 誰に・どこで・何と言って</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-bottom:8px;">ゴール「顧問先が買い手になり、柱を増やす」から逆算した型です。<b style="color:var(--navy);">見込み客は既契約者・顧問先の中にいます。</b>最初の一言は売り込みではなく問いにします。</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      +PROSPECT_PERSONAS.map(function(p,i){
+        return '<div id="persona-'+p.k+'" style="flex:1 1 220px;min-width:0;background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 12px;">'
+          +'<div style="font-size:13px;font-weight:700;color:var(--navy);">'+p.ic+' '+esc(p.name)+'</div>'
+          +'<div style="font-size:11.5px;color:var(--ink);line-height:1.7;margin-top:4px;">'+esc(p.who)+'</div>'
+          +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:6px;"><b style="color:var(--navy);">どこで：</b>'+esc(p.where)+'</div>'
+          +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:4px;"><b style="color:var(--navy);">見分け方：</b>'+p.signs.map(esc).join('／')+'</div>'
+          +'<div style="font-size:12px;color:#8A6A12;background:#FDFAF1;border:1px solid #EBDDB4;border-radius:8px;padding:7px 9px;margin-top:8px;line-height:1.7;"><b>最初の一言：</b>「'+esc(p.first)+'」</div>'
+          +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:6px;"><b style="color:var(--navy);">見せるもの：</b>'+esc(p.show)+'</div>'
+          +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:4px;"><b style="color:var(--navy);">ゴールへの筋：</b>'+esc(p.link)+'</div>'
+          +'<button class="ghost" style="font-size:11.5px;border:1px solid #EBDDB4;border-radius:8px;padding:5px 10px;margin-top:8px;" onclick="prospectPractice('+i+')">🎭 この型と商談練習</button>'
+        +'</div>';
+      }).join('')
+      +'</div>'
+      +'<details style="margin-top:10px;"><summary style="font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;">よくある断り文句と、返しかた（5つ）</summary>'
+        +'<div style="font-size:11px;color:var(--muted);margin:6px 0 2px;line-height:1.6;">言い負かすためではなく、相手の懸念に正直に答えるための型です。</div>'
+        +PROSPECT_OBJECTIONS.map(function(o){
+          return '<div style="border-top:1px dashed var(--softline);padding:8px 0;">'
+            +'<div style="font-size:12.5px;font-weight:700;color:#A9403D;">「'+esc(o.q)+'」</div>'
+            +'<div style="font-size:12px;color:var(--ink);line-height:1.8;margin-top:3px;">'+esc(o.a)+'</div>'
+          +'</div>';
+        }).join('')
+      +'</details>'
+      +'<details style="margin-top:6px;"><summary style="font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;">「Yes」の形 ― ここまで来たら次の一手は決まっている</summary>'
+        +'<ol style="margin:6px 0 0;padding-left:20px;font-size:12px;line-height:1.9;color:var(--ink);">'
+        +PROSPECT_YES.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')
+        +'</ol>'
+      +'</details>'
+    +'</div>';
+    return h;
+  }
+
   var SALES_QS=[
     { cat:'資金繰り', ic:'💰',
       q:'「利益は出ているはずなのに、月末になると通帳の残高が気になる」——そんなことはありませんか？',
