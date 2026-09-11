@@ -783,12 +783,14 @@
       transform-origin をそこに置くと、パネルが継ナビくん自身から
       膨らんで出てくるように見える。FABの大きさを変えたらここも直すこと */
   .knv-panel{position:fixed;right:20px;bottom:20px;z-index:71;width:min(600px,calc(100vw - 24px));height:min(820px,calc(100vh - 60px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(6,12,24,.45);display:flex;flex-direction:column;overflow:hidden;
-    transform-origin:calc(100% - 56px) calc(100% - 56px);animation:knvOpen .34s cubic-bezier(.34,1.42,.5,1);}
+    transform-origin:calc(100% - 56px) calc(100% - 56px);animation:knvOpen .24s cubic-bezier(.3,.6,.6,1);}
   .knv-panel.max{width:min(920px,calc(100vw - 28px));height:calc(100vh - 24px);bottom:12px;}
-  /* 開く：右下の継ナビくんの位置からふわっと膨らんで出てくる */
+  /* 開く：右下の継ナビくんの位置から膨らんで出てくる。
+     閉じる（.24s・吸い込まれる）と同じ速さの鏡写しにしてある。以前は
+     .34s の弾む動きだったが、跳ねの分だけ最初の膨らみが速く、閉じるより
+     せわしなく見えた */
   @keyframes knvOpen{
-    0%{opacity:0;transform:scale(.28) translateY(24px);}
-    55%{opacity:1;transform:scale(1.03) translateY(-4px);}
+    0%{opacity:0;transform:scale(.26) translateY(26px);}
     100%{opacity:1;transform:scale(1) translateY(0);}
   }
   /* 閉じる：継ナビくんの手元へすっと吸い込まれる（閉じ切ってから hidden にする） */
@@ -1380,7 +1382,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260911-11';
+  var APP_BUILD='20260911-12';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
