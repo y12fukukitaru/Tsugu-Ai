@@ -240,6 +240,20 @@ ok('開いたときに起点の時刻を入れている', /KNV_OPEN_AT=Date\.now
 }
 
 // ---------------------------------------------------------------
+// ---------------------------------------------------------------
+// 開く・閉じるの速さは同じ（鏡写し）
+// ---------------------------------------------------------------
+{
+  const op = /animation:knvOpen (\.\d+)s cubic-bezier\(([^)]*)\)/.exec(SRC);
+  const cl = /animation:knvClose (\.\d+)s cubic-bezier\(([^)]*)\)/.exec(SRC);
+  ok('開くと閉じるの秒数が同じ', op && cl && op[1] === cl[1]);
+  is('どちらも .24s', [op && op[1], cl && cl[1]], ['.24', '.24']);
+  const kf = /@keyframes knvOpen\{([\s\S]*?)\n  \}/.exec(SRC);
+  no('開くに跳ね（途中の scale 1.03）が無い', kf && /1\.03/.test(kf[1]));
+  ok('開くの始点は閉じるの終点と同じ（scale .26・26px）', kf && /0%\{opacity:0;transform:scale\(\.26\) translateY\(26px\);\}/.test(kf[1]));
+  ok('閉じるの終点', /100%\{opacity:0;transform:scale\(\.26\) translateY\(26px\);\}/.test(SRC));
+}
+
 console.log('試験 ' + n + '件');
 if (bad.length) {
   console.log('\n合わないもの ' + bad.length + '件:');
