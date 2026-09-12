@@ -1241,7 +1241,6 @@
   </div>
   <div id="knv-summary" class="knv-summary hidden"></div>
   <div id="knv-body" class="knv-body">
-    <div id="knv-insights"></div>
     <div id="knv-log"></div>
   </div>
   <div id="knv-cal" class="knv-body hidden"></div>
@@ -1382,7 +1381,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260912-01';
+  var APP_BUILD='20260912-02';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -9088,7 +9087,9 @@
     // 出力先：継ナビくんパネルの「お知らせ」タブ（旧・通知センターのモーダルが残っていればそちらにも）
     var targets=['knv-notif','notif-body'].map(function(id){ return $(id); }).filter(Boolean);
     if(!targets.length) return;
-    function write(html){ targets.forEach(function(b){ b.innerHTML=html; }); }
+    //  今日の一手（継ナビくんからの提案）は、このタブの先頭に置く
+    var insH=(typeof agentInsightsHtml==='function')?agentInsightsHtml():'';
+    function write(html){ targets.forEach(function(b){ b.innerHTML=insH+html; }); }
     // 運営：パートナーからの未対応問い合わせを案内
     if((window.__eff||'')==='admin'){
       var na=window.__KNV_BELL||0, ah;
@@ -13835,7 +13836,11 @@
   }
   function renderAgentInsights(){
     var h=agentInsightsHtml();
-    ['agent-insights-box','knv-insights'].forEach(function(id){ var box=$(id); if(box) box.innerHTML=h; });
+    //  今日の一手は、ダッシュボードと継ナビくんの「お知らせ」タブに置く。
+    //  相談タブには置かない（メール・LINE で朝に届いているものを、相談を
+    //  始めるたびに読まされるのは重い。取りに行けば、お知らせにある）
+    var box=$('agent-insights-box'); if(box) box.innerHTML=h;
+    var nt=$('knv-notif'); if(nt && !nt.classList.contains('hidden') && typeof renderNotifCenter==='function') renderNotifCenter();
     // 右下の継ナビくんボタンのバッジを更新（お知らせ件数＋今日の一手）
     if(typeof knvBadgesRender==='function') knvBadgesRender();
   }
@@ -14627,12 +14632,8 @@
     if(t==='msg') knvRenderMsg();
     if(t==='kn') knvRenderKn();
     if(t==='notif') knvLoadNotif();
-    //  提案は開いたら既読にする。1件ずつ押して回らないと数字が減らないのは
-    //  手間が重い。既読にしても消えず、薄い表示で7日間は読み返せる。
-    //  ※ お知らせタブは同じことをしてはいけない。あの一覧は「未読のもの」から
-    //    組み立てているので、開いた瞬間に既読にすると中身が空になり、誰から
-    //    来ていたのかが読めなくなる。あちらは「すべて既読」ボタンで畳む。
-    if(t==='chat') try{ agentInsightReadAll(); }catch(e){}
+    //  提案（今日の一手）は相談タブに出さないので、開いても既読にしない。
+    //  お知らせタブで「既読にする」「すべて既読」を押したときだけ減る
     if(t==='setup') knvRenderSetup();
     if(t==='support') knvRenderSupport();
   }
@@ -15167,7 +15168,7 @@
     var b=$('knv-badge');
     if(b){ b.textContent=total>9?'9+':total; b.classList.toggle('hidden', !total); }
     var tb=$('knv-tbadge');
-    if(tb){ tb.textContent=bell>9?'9+':bell; tb.classList.toggle('hidden', !bell); }
+    if(tb){ tb.textContent=total>9?'9+':total; tb.classList.toggle('hidden', !total); }   // 提案もお知らせタブに居るので合計
     // 新しい知らせが増えたときだけ、右下の継ナビくんがぴょこんと跳ねて教えてくれる
     if(total>(window.__KNV_LAST||0)) knvHop();
     window.__KNV_LAST=total;
@@ -15196,7 +15197,7 @@
     if(todo) h+=isAdmin
       ? '<button onclick="knvToggle(false);goSec(\'sec-support\')">🛟 未対応の問い合わせ <b>'+todo+'</b>件</button>'
       : '<button onclick="knvShowTab(\'notif\')">📌 期日・対応 <b>'+todo+'</b>件</button>';
-    if(ins)  h+='<button class="gold" onclick="knvShowTab(\'chat\')">✦ 継ナビくんの提案 <b>'+ins+'</b>件</button>';
+    if(ins)  h+='<button class="gold" onclick="knvShowTab(\'notif\')">✦ 継ナビくんの提案 <b>'+ins+'</b>件</button>';
     box.innerHTML=h; box.classList.remove('hidden');
   }
   // 画面内の継ナビくん要素（チップ・バナー）は廃止。継ナビくんは右下に一本化。
@@ -15325,15 +15326,28 @@
   // 輪が回っている間は必ず「考え中…」を添える。時間のかかる処理では hint に所要時間の目安だけを渡す
   function tsgLoad(hint){ return '<div class="tsg-load">'+tsgSpin(false)+'<div class="hint"><b style="color:#8A6A12;">考え中…</b>'+(hint?'<br>'+esc(hint):'')+'</div></div>'; }
   function tsgThinking(){ return '<span style="display:inline-flex;align-items:center;gap:8px;">'+tsgSpin(true)+'<span style="font-size:12px;color:#94A2B6;">考え中…</span></span>'; }
+  //  最初のひとこと。朝一に「こんにちは」では違和感がある。時間帯と曜日で
+  //  変え、名前で呼ぶ。now は日本時間に寄せた Date（getUTCHours で読む）
+  function knvGreeting(prof, role, now){
+    var d=now||new Date(Date.now()+JST_MS);
+    var h=d.getUTCHours(), wd=d.getUTCDay();
+    var hello=(h<5)?'夜遅くまでお疲れさまです':(h<11)?'おはようございます':(h<18)?'こんにちは':'こんばんは';
+    prof=prof||{};
+    var person=String(prof.contact_name||prof.full_name||'').trim();
+    var name=person ? person+'さん' : (String(prof.company_name||'').trim() ? String(prof.company_name).trim()+'さま' : '');
+    var day=(wd===1)?'今週もよろしくお願いします。':(wd===5)?'今週もお疲れさまでした。':(wd===0||wd===6)?'お休みの日もありがとうございます。':'';
+    return { hello:hello, name:name, day:day, text:hello+(name?'、'+name:'')+'。継ナビくんです🌱'+(day?' '+day:'') };
+  }
   function renderSecLog(){
     // 検索モード：ローカル保存の会話履歴からヒットした発言だけを表示する
     if(SEC_QUERY){ renderSecSearch(); return; }
     var h;
     if(!SEC_MSGS.length){
+      var g=knvGreeting(window.__prof, window.__eff||window.__role||'');
       h='<div style="display:flex;gap:8px;align-items:flex-start;">'
         +'<span class="tsg-face">'+tsgNaviSvg()+'</span>'
         +'<div style="min-width:0;"><div class="tsg-name">継ナビくん</div>'
-        +'<div class="ai-bubble">こんにちは、継ナビくんです🌱<br>経営の相談も、TsuguAiの使い方も、なんでもどうぞ。資金繰り・税務・労務・採用・値上げ・資金調達・事業承継／M&amp;A まで、そのままの言葉でご相談ください。<br>迷ったら、下の「🧭 質問ガイド」から選ぶだけでもOKです。</div>'
+        +'<div class="ai-bubble">'+esc(g.text)+'<br>経営の相談も、TsuguAiの使い方も、なんでもどうぞ。資金繰り・税務・労務・採用・値上げ・資金調達・事業承継／M&amp;A まで、そのままの言葉でご相談ください。<br>迷ったら、下の「🧭 質問ガイド」から選ぶだけでもOKです。</div>'
         +'</div></div>';
     }else{
       h='';
