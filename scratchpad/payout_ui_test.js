@@ -98,7 +98,7 @@ const M = new Function(base + 'return {due:payDueCount, sum:invMethodSummary, cs
 // ⑤ 版・SQL・説明書
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260911-16', '20260911-16']);
+  is('版が揃う', [build, VER.build], ['20260912-01', '20260912-01']);
   ok('SQL は列を足すだけで期待値1', /add column if not exists notified_at timestamptz/.test(SQL) && /期待値：1/.test(SQL));
   ok('SQL にデプロイの手順', /supabase functions deploy contract-send --no-verify-jwt/.test(SQL));
   ok('運営説明書：総合振込ファイル', /総合振込ファイル/.test(MANA) && /委託者情報/.test(MANA) && /全銀フォーマット/.test(MANA));

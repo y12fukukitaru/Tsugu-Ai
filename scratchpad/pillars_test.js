@@ -50,6 +50,7 @@ function takeVar(name) {
 
 const base =
   'function esc(s){ return String(s==null?"":s).replace(/[&<>"\']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;","\'":"&#39;"}[c];}); }' +
+  'function planOf(p){ return (p&&p.plan==="seller")?"seller":"buyer"; } function planTag(p){ return ""; } var window={__prof:{}};' +
   takeArr('MA_STAGES') + takeArr('MA_STAGES_BUY') + takeVar('PMI_STAGE') +
   takeFn('maStages') + takeFn('pillarsOf') + takeFn('pillarSub') + takeFn('pillarHtml');
 const M = new Function(base + 'return {pillarsOf:pillarsOf,pillarSub:pillarSub,pillarHtml:pillarHtml,PMI_STAGE:PMI_STAGE};')();
