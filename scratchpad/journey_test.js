@@ -49,7 +49,8 @@ function takeVar(name) {
 }
 const base =
   'function esc(s){ return String(s==null?"":s).replace(/[&<>"\']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;","\'":"&#39;"}[c];}); }' +
-  takeArr('ONBOARD90') + takeArr('JOURNEY_Q') +
+  'function planOf(p){ return (p&&p.plan==="seller")?"seller":"buyer"; } function planTag(p){ return ""; } var window={__prof:{}};' +
+  takeArr('ONBOARD90') + takeArr('JOURNEY_Q') + takeArr('JOURNEY_Q_SELLER') +
   takeFn('journeyStart') + takeFn('journeyPos') + takeFn('journeyYM') + takeFn('journeyPhase') + takeFn('journeyHtml') +
   takeFn('ob90Judge') + takeFn('ob90Remain') + takeFn('ob90Waits') + takeFn('ob90Html');
 const M = new Function(base + 'return {ONBOARD90:ONBOARD90,JOURNEY_Q:JOURNEY_Q,journeyStart:journeyStart,journeyPos:journeyPos,journeyPhase:journeyPhase,journeyHtml:journeyHtml,ob90Judge:ob90Judge,ob90Remain:ob90Remain,ob90Waits:ob90Waits,ob90Html:ob90Html};')();
@@ -160,14 +161,14 @@ ok('第4にはゴールの言葉（買いたい条件・関心・柱）', /買�
 // ---------------------------------------------------------------
 {
   const f = takeFn('loadOnboard90');
-  ok('経営者：土台の帯は整うまで（整えば第1のあいだだけ）、伴走の1年はずっと', /var showSetup=!all \|\| \(pos\.mi<3\);/.test(f) && /\(showSetup\?ob90Html\(pos, judge, 'customer', ob90Waits\(judge, d\)\):''\)\+journeyHtml\(pos,'customer',ob90Remain\(judge\)\)/.test(f));
+  ok('経営者：土台の帯は整うまで（整えば第1のあいだだけ）、伴走の1年はずっと', /var showSetup=!all \|\| \(pos\.mi<3\);/.test(f) && /\(showSetup\?ob90Html\(pos, judge, 'customer', ob90Waits\(judge, d\)\):''\)\+journeyHtml\(pos,'customer',ob90Remain\(judge\),planOf\(prof\)\)/.test(f));
   ok('経営者：起点は journeyStart', /var start=journeyStart\(prof\);/.test(f));
   const g = takeFn('loadOnboard90Client');
-  ok('カルテ：土台＋伴走の1年（パートナー向け・土台の残りつき）', /ob90Html\(pos, judge, 'partner', ob90Waits\(judge, d\)\)\+journeyHtml\(pos,'partner',ob90Remain\(judge\)\)/.test(g));
+  ok('カルテ：土台＋伴走の1年（パートナー向け・土台の残りつき）', /ob90Html\(pos, judge, 'partner', ob90Waits\(judge, d\)\)\+journeyHtml\(pos,'partner',ob90Remain\(judge\),planOf\(prof\)\)/.test(g));
   //  顧客一覧の札
   const rl = takeFn('renderClientList');
-  ok('顧客一覧は契約日の翌月起点で節目の札を付ける', /journeyPhase\(journeyPos\(journeyStart\(c\)\)\)/.test(rl));
-  ok('一覧の読み込みで created_at を取る', /select\('id,email,company_name,role,stage,created_at'\)\.eq\('consultant_id',ME\)/.test(SRC));
+  ok('顧客一覧は契約日の翌月起点で節目の札を付ける', /journeyPhase\(journeyPos\(journeyStart\(c\)\), planOf\(c\)\)/.test(rl));
+  ok('一覧の読み込みで created_at を取る', /select\('id,email,company_name,role,stage,created_at,plan'\)\.eq\('consultant_id',ME\)/.test(SRC));
   //  実際に描かせる
   const els = {};
   //  5か月前の契約→翌月起点で4か月目＝第2

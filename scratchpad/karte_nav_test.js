@@ -35,7 +35,7 @@ function takeArr(name) {
 const base =
   'function esc(s){ return String(s==null?"":s).replace(/[&<>"\']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;","\'":"&#39;"}[c];}); }' +
   takeFn('finFmt') + takeArr('KARTE_NAV') + '\n  var KARTE_CTX=null;' +
-  takeFn('karteState') + takeFn('karteNavHtml') + takeFn('karteStripHtml') + takeFn('karteAsk') + takeFn('renderKarteNav');
+  takeFn('karteState') + takeFn('karteOpt') + takeFn('karteNavHtml') + takeFn('karteStripHtml') + takeFn('karteAsk') + takeFn('renderKarteNav');
 function make() {
   const els = {}; const asked = [];
   const M = new Function(
@@ -47,17 +47,17 @@ function make() {
 }
 const empty = { m: {}, months: 0, snap: null, d: { fin: 0, cash: 0, ins: 0, pay: 0, obr: 0 }, val: 0, ai: 0, ready: null, readyN: 0, bcN: 0, weak: null };
 const mid = { m: { opRate: 8, equityRate: 40, debtYears: 6 }, months: 3, snap: { score: 70, runway: 5 }, d: { fin: 3, cash: 1, ins: 1, pay: 0, obr: 0 }, val: 0, ai: 0, ready: null, readyN: 0, bcN: 1, weak: null, company: '山田製作所' };
-const full = { m: { opRate: 8, equityRate: 40, debtYears: 6 }, months: 6, snap: { score: 70, runway: 5 }, d: { fin: 6, cash: 1, ins: 1, pay: 1, obr: 1 }, val: 1, ai: 1, ready: { score: 55 }, readyN: 4, bcN: 3, weak: { l: '自己資金', score: 25 }, company: '山田製作所' };
+const full = { m: { opRate: 8, equityRate: 40, debtYears: 6 }, months: 6, snap: { score: 70, runway: 5 }, d: { fin: 6, cash: 1, ins: 1, pay: 1, obr: 1 }, val: 1, ai: 1, ready: { score: 55 }, readyN: 4, bcN: 3, weak: { l: '自己資金', score: 25 }, company: '山田製作所', exit: { exit_type: 'buyer', target_year: 2028 } };
 
 // ---------------------------------------------------------------
 // ① 順番と状態
 // ---------------------------------------------------------------
 {
   const { M } = make();
-  is('道具は10', M.NAV.map(x => x.id), ['fin', 'cashsim', 'ins', 'pay', 'obr', 'val', 'ready', 'bc', 'ai', 'bank']);
+  is('道具は11（出口の設計は企業価値の次）', M.NAV.map(x => x.id), ['fin', 'cashsim', 'ins', 'pay', 'obr', 'val', 'exit', 'ready', 'bc', 'ai', 'bank']);
   ok('全部に なぜ今・分かること・次・行き先 がある', M.NAV.every(x => x.why && x.learn && x.next && x.sec && typeof x.ask === 'function'));
   is('任意は AI自動化診断と銀行提出パッケージ', M.NAV.filter(x => x.opt).map(x => x.id), ['ai', 'bank']);
-  is('空なら全部「あと」（銀行は判定なし＝free）', M.NAV.map(x => M.state(x, empty)), ['todo', 'todo', 'todo', 'todo', 'todo', 'todo', 'todo', 'todo', 'todo', 'free']);
+  is('空なら全部「あと」（銀行は判定なし＝free）', M.NAV.map(x => M.state(x, empty)), ['todo', 'todo', 'todo', 'todo', 'todo', 'todo', 'todo', 'todo', 'todo', 'todo', 'free']);
   is('途中：試算表と資金と保険は済、支払は未、条件は△', ['fin', 'cashsim', 'ins', 'pay', 'bc'].map(id => M.state(M.NAV.filter(x => x.id === id)[0], mid)), ['done', 'done', 'done', 'todo', 'part']);
   is('全部そろえば済', M.NAV.filter(x => x.done).map(x => M.state(x, full)).every(s => s === 'done'), true);
   is('試算表1か月分は△', M.state(M.NAV[0], Object.assign({}, empty, { months: 1 })), 'part');
@@ -70,7 +70,7 @@ const full = { m: { opRate: 8, equityRate: 40, debtYears: 6 }, months: 6, snap: 
   const { M } = make();
   const h = M.nav(mid);
   ok('題', /🧭 継ナビくんのナビ ― この会社でやる順番/.test(h));
-  is('行は10', (h.match(/→<\/span>\s*<\/div>/g) || []).length, 10);
+  is('行は11（出口の設計を含む）', (h.match(/→<\/span>\s*<\/div>/g) || []).length, 11);
   ok('「次はこれ」は最初の未了（支払予定の登録）', /支払予定の登録<span class="tag gold"[^>]*>次はこれ<\/span>/.test(h));
   is('「次はこれ」は1つだけ', (h.match(/次はこれ/g) || []).length, 1);
   ok('次にだけ「なぜ今」「分かること」が添う', /なぜ今：<\/b>資金繰りの見通しに、実際の支払日を乗せます/.test(h) && (h.match(/なぜ今：/g) || []).length === 1);

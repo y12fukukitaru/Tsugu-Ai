@@ -85,7 +85,7 @@ const M = new Function(base + 'return {Q:SURVEY_Q, label:surveyPeriodLabel, html
 // ④ 配線
 {
   ok('経営者・パートナーのダッシュボードの先頭に枠', (SRC.match(/id="survey-box"/g) || []).length === 2);
-  ok('起動時に読む', /loadAgentInsights\(\); loadSurvey\('customer'\); knvInit\(\);/.test(SRC) && /loadAgentInsights\(\); loadSurvey\('consultant'\); knvInit\(\);/.test(SRC));
+  ok('起動時に読む', /loadAgentInsights\(\); loadSurvey\('customer'\); loadExitPlan\(ME,'customer'\); knvInit\(\);/.test(SRC) && /loadAgentInsights\(\); loadSurvey\('consultant'\); knvInit\(\);/.test(SRC));
   ok('運営ダッシュボードに集計', /id="adm-survey"/.test(SRC) && /loadAdmMoves\(rows, nameOf\);\n    loadAdmSurvey\(\);/.test(SRC));
   const ls = takeFn('loadSurvey');
   ok('受付期間はサーバーに聞く', /rpc\('survey_window'\)/.test(ls));
@@ -131,7 +131,7 @@ const M = new Function(base + 'return {Q:SURVEY_Q, label:surveyPeriodLabel, html
   ok('パートナー説明書：初期導入費の説明のしかた', /初期導入費の説明は/.test(MANP) && /第2条の2/.test(MANP));
   ok('経営者向け pitch と説明書：初期導入費の定義', /はじめの90日（土台づくり）で担当パートナーと運営が動くぶんの費用/.test(PITC) && /はじめの90日（土台づくり）で担当パートナーと運営が動くぶんの費用/.test(MANC));
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260911-16', '20260911-16']);
+  is('版が揃う', [build, VER.build], ['20260912-01', '20260912-01']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

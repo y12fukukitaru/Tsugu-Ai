@@ -51,7 +51,8 @@ function menuFor(role, prefs) {
     'function loadPrefs(){ return ' + JSON.stringify(prefs || {}) + '; }' +
     takeVar('KNV_ABSORBED') +
     takeVar('NAV_TUCKED') +
-    takeFn('navDefs') +
+    'function planOf(p){ return (p&&p.plan==="seller")?"seller":"buyer"; } function planTag(p){ return ""; } var window={__prof:{}};' +
+  takeFn('navDefs') +
     takeFn('knvAbsorbed') +
     takeFn('navTucked') +
     takeFn('effectiveNav') +

@@ -42,6 +42,7 @@ const NAV = new Function(
   'function adminNavAll(){ return [["sec-flow","ダッシュボード"]]; } function adminCanSee(){ return true; }' +
   'function loadPrefs(){ return {}; }' +
   takeVar('KNV_ABSORBED') + takeVar('NAV_TUCKED') +
+  'function planOf(p){ return (p&&p.plan==="seller")?"seller":"buyer"; } function planTag(p){ return ""; } var window={__prof:{}};' +
   takeFn('navDefs') + takeFn('knvAbsorbed') + takeFn('navTucked') + takeFn('effectiveNav') +
   'return { navDefs:navDefs, effectiveNav:effectiveNav };'
 )();
@@ -54,8 +55,8 @@ const shown = NAV.effectiveNav('customer').map(x => x[0]);
 no('経営者の navDefs に Tsugime の枠が無い', cust.indexOf('sec-market') >= 0);
 no('経営者の左メニューにも無い', shown.indexOf('sec-market') >= 0);
 ok('「買い手になる」は残っている', cust.indexOf('sec-ma') >= 0);
-is('経営者のメニューは9項目（継ナビくん含む）', cust.length, 9);
-is('経営者のメニューの並び', cust, ['sec-flow', 'sec-reports', 'sec-mypdca', 'sec-billpay', 'sec-cash', 'sec-value', 'sec-ai', 'sec-ma', 'sec-sec']);
+is('経営者のメニューは10項目（出口の設計・継ナビくん含む。買い手プラン）', cust.length, 10);
+is('経営者のメニューの並び（出口の設計は買い手になるの前）', cust, ['sec-flow', 'sec-reports', 'sec-mypdca', 'sec-billpay', 'sec-cash', 'sec-value', 'sec-ai', 'sec-exit', 'sec-ma', 'sec-sec']);
 ok('パートナーの Tsugime は残っている（申請する側）', NAV.navDefs('consultant').map(x => x[0]).indexOf('sec-market') >= 0);
 ok('顧問税理士の入力画面は変えていない', JSON.stringify(new Function(
   'var ACCESS="finance";var EP_ME=null;' + takeFn('navDefs') + 'return navDefs("customer");'

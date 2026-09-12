@@ -81,13 +81,13 @@ ok('何も無ければその旨', /新しい登録と確認待ちはありませ
 ok('created_at が無くても落ちない', /今日の動き/.test(M([{ id: 'z', role: 'customer' }], {}, [], now)));
 
 // ③ 置き場と読み込み
-ok('運営ダッシュボードの成長ロードマップの前に置き場（アンケートの集計を挟む）', /id="adm-moves"><\/div>'\s*\n\s*\+'<div id="adm-survey"><\/div>'\s*\n\s*\+'<div id="adm-roadmap">/.test(SRC));
+ok('運営ダッシュボードの成長ロードマップの前に置き場（アンケートの集計を挟む）', /id="adm-moves"><\/div>'\s*\n\s*\+'<div id="adm-survey"><\/div>'\s*\n\s*\+'<div id="adm-plans"><\/div>'\s*\n\s*\+'<div id="adm-roadmap">/.test(SRC));
 ok('loadAdmin が描く', /clientCount\[c\.consultant_id\]\|\|0\)\+1; \}\);\n\s*loadAdmMoves\(rows, nameOf\);/.test(SRC));
 {
   const f = takeFn('loadAdmMoves');
   ok('口座は課金・契約の権限があるときだけ読む', /if\(adminCanSee\('sec-billing'\)\)\{[\s\S]*payout_account_pending/.test(f));
   ok('締結した契約と招待中を読む', /sb\.from\('contract_offers'\)\.select\('kind,email,status,agreed_at,agreed_name,agreed_org,offered_by,consultant_id'\)\.eq\('status','agreed'\)/.test(f) && /sb\.from\('customer_invites'\)\.select\('email,company_name,consultant_id,created_at,status'\)\.eq\('status','pending'\)/.test(f));
-  ok('運営もお知らせ（agent_insights）を読む', /\n\s*loadAgentInsights\(\);\n\s*if\(adminCanSee\('sec-ep'\)\) loadEp\(\);/.test(SRC) && /id="agent-insights-box"><\/div>'\s*\n\s*\+'<div id="adm-moves">/.test(SRC));
+  ok('運営もお知らせ（agent_insights）を読む', /\n\s*loadAgentInsights\(\);\n\s*loadPlanRates\(\);[^\n]*\n\s*if\(adminCanSee\('sec-ep'\)\) loadEp\(\);/.test(SRC) && /id="agent-insights-box"><\/div>'\s*\n\s*\+'<div id="adm-moves">/.test(SRC));
 }
 {
   const SQL = fs.readFileSync(__dirname + '/../supabase/migrations/20260911010000_contract_notify.sql', 'utf8');
