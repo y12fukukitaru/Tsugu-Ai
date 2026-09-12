@@ -131,7 +131,7 @@ const M = new Function(base + 'return {Q:SURVEY_Q, label:surveyPeriodLabel, html
   ok('パートナー説明書：初期導入費の説明のしかた', /初期導入費の説明は/.test(MANP) && /第2条の2/.test(MANP));
   ok('経営者向け pitch と説明書：初期導入費の定義', /はじめの90日（土台づくり）で担当パートナーと運営が動くぶんの費用/.test(PITC) && /はじめの90日（土台づくり）で担当パートナーと運営が動くぶんの費用/.test(MANC));
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260912-01', '20260912-01']);
+  is('版が揃う', [build, VER.build], ['20260912-02', '20260912-02']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
