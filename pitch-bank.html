@@ -89,6 +89,7 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
 </style>
 <link rel="stylesheet" href="tsugu-wa.css">
 <link rel="stylesheet" href="pitch-wa.css">
+<link rel="stylesheet" href="pitch-demo.css">
 </head>
 <body>
 <button id="backbtn" onclick="parent.postMessage({tsugu:'closeManual'},'*')">✕ プラットフォームに戻る</button>
@@ -136,6 +137,31 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
   </div>
 </section>
 
+<section class="slide dm" data-t="画面で見ると">
+  <div class="eyebrow">画面で見ると</div>
+  <h2>経営者が押すのは3か所。あとはAIと担当パートナーが動きます</h2>
+  <div class="demo one">
+    <div class="dmap" style="margin-top:4px;">
+      <div class="st" style="padding:12px 12px 10px;"><i class="n mk">1</i>
+        <div class="t">いまの手元資金を、ひとつ入れる</div>
+        <div class="scr nosb" style="margin:6px 0 8px;box-shadow:none;"><div class="scr-body" style="min-height:0;"><div class="scr-main"><div class="scr-panel"><div class="scr-ph">いまの手元資金</div><div class="scr-row end"><span class="scr-inp">1,200</span><span style="font-size:9px;color:#5A6981;">万円</span><span class="scr-btn sm hot">記録する</span></div><div class="scr-note r" style="margin-top:5px;"><b>早めに手を打てる段階です</b><br>9/25の賞与800万円に足りない見込み。</div><div class="scr-row"><span class="scr-btn sm">担当パートナーに知らせる</span><span class="scr-btn ghost sm">継ナビくんに手を聞く</span></div></div></div></div></div>
+        <div class="w"><b>分かる：</b>支払予定と直近の利益から、薄くなる月がその場で出る。<br><b>そのあと：</b>ひと押しで担当に届き、繰り延べ・前倒し・つなぎ借入を一緒に確かめる。</div>
+      </div>
+      <div class="st" style="padding:12px 12px 10px;"><i class="n mk">2</i>
+        <div class="t">「この会社を買ったら？」を試す</div>
+        <div class="scr nosb" style="margin:6px 0 8px;box-shadow:none;"><div class="scr-body" style="min-height:0;"><div class="scr-main"><div class="scr-panel"><div class="scr-ph">🔁 承継シミュレーション</div><div class="scr-row"><span class="scr-sbtn on">🏢 買う側</span><span class="scr-sbtn">🌱 譲る側</span></div><div class="scr-row end"><span class="scr-inp">運送業</span><span class="scr-inp">年商 8,000</span><span class="scr-inp">利益 600</span></div><div class="scr-row"><span class="scr-btn ai sm hot">この会社を買ったら？を試算する</span></div><div class="scr-card l4 gold"><div class="d">価格の目安 2,400〜3,600万／返済 月28万／手元 2.1→1.4か月分</div></div></div></div></div></div>
+        <div class="w"><b>分かる：</b>価格の目安と、自社のキャッシュの動き（30秒）。<br><b>そのあと：</b>「担当に相談する」で人へ。譲る側なら「いま譲るなら？ 2年磨けば？」。</div>
+      </div>
+      <div class="st" style="padding:12px 12px 10px;"><i class="n mk">3</i>
+        <div class="t">継ナビくんに聞き、伝えたいものだけ担当へ</div>
+        <div class="scr nosb" style="margin:6px 0 8px;box-shadow:none;"><div class="scr-body" style="min-height:0;"><div class="scr-main" style="padding:6px;"><div class="scr-knv" style="box-shadow:none;"><div class="hd"><span>継ナビくん<small>24時間・会話は本人だけ</small></span></div><div class="bd-body"><div class="scr-bub me">賞与800万、手元1,200万で大丈夫？</div><div class="scr-bub"><span class="who">継ナビくん</span>10月中旬に残高300万を切る見込み。早く効く順に3つ…</div><div class="scr-row" style="margin-top:0;"><span class="scr-btn ghost sm hot">✉️ 担当パートナーに伝える</span></div></div></div></div></div></div>
+        <div class="w"><b>分かる：</b>手元資金・試算表・予定を踏まえた答えが、夜でも休日でも。<br><b>そのあと：</b>押したぶんだけ担当に届き、次の面談の材料に。毎朝は「今日の一手」がメール・LINEで。</div>
+      </div>
+    </div>
+    <div class="dsay" style="margin-top:10px;">試算表などの数字の入力は<b>担当パートナーが代行</b>します。経営者ご自身が入れるのは①の数字ひとつだけ。毎月、会社の値段・財務力・労働分配率までそろい、月次レポートは銀行への説明資料にもそのまま使えます。</div>
+  </div>
+</section>
+
 <section class="slide" data-t="ご紹介の流れ">
   <div class="eyebrow">役割分担</div>
   <h2>御行にお願いすることは、つないでいただくことだけです</h2>
@@ -173,12 +199,12 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
   <h2>初期費用と月額の2本立て。追加料金はありません</h2>
   <p class="sub">御行にご負担いただくものはありません。</p>
   <table class="kv">
-    <tr><th>導入初期費用</th><td>100,000円（初回のみ）</td></tr>
-    <tr><th>月額</th><td>50,000円</td></tr>
+    <tr><th>初期導入費</th><td>100,000円（税別・初回のみ）</td></tr>
+    <tr><th>月額（税別）</th><td>買い手プラン（成長）<b>45,000円</b>／売り手プラン（譲渡準備）<b>30,000円</b></td></tr>
     <tr><th>含まれるもの</th><td>認定パートナーの月次伴走、企業価値の試算、資金繰りの見通し、月次レポート、承継後の課題管理</td></tr>
     <tr><th>M&Aが成約した場合</th><td>別途、成功報酬をいただきます。金額は案件ごとにご説明します。</td></tr>
   </table>
-  <div class="note" style="margin-top:16px;"><b>プランは1つだけです。</b>会社の規模で値段は変えません。</div>
+  <div class="note" style="margin-top:16px;"><b>プランは2つ（買い手・売り手）。</b>会社の規模で値段は変えません。顧問契約が1年以上の会社は、M&amp;Aの FA 報酬に優遇（最低報酬なし・継続年数×10%、最大50%）があります。</div>
 </section>
 
 <section class="slide" data-t="はじめ方">

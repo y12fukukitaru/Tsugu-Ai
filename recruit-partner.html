@@ -71,6 +71,7 @@ h2{font-size:24px;font-weight:600;color:var(--navy);margin:0 0 10px;line-height:
 }
 </style>
 <link rel="stylesheet" href="tsugu-wa.css">
+<link rel="stylesheet" href="pitch-demo.css">
 <style>
 /* 上から下へ読む案内なので、地も紙の色にする（操作説明書と同じ扱い）。
    一枚ずつ見せるスライドではないため、舞台を暗くする必要がない。 */
@@ -124,15 +125,15 @@ body{background-color:var(--washi);background-image:var(--wa-asanoha-paper);}
   <div class="eyebrow">INCOME</div>
   <h2>収入は「ストック」＋「承継の成功報酬」の二段構え</h2>
   <div class="grid g2">
-    <div class="card"><h3>💼 顧問料ストック</h3><p>担当顧客の顧問料から、認定レベルに応じた<b>外注費率（50〜70%）</b>があなたの報酬になります。顧客が増えるほど、毎月の安定収入が積み上がります。</p></div>
+    <div class="card"><h3>💼 顧問料ストック</h3><p>担当顧客の顧問料から、認定レベルに応じた<b>外注費率（50〜80%）</b>があなたの報酬になります。顧客が増えるほど、毎月の安定収入が積み上がります。</p></div>
     <div class="card w"><h3>🤝 M&A成功報酬の可能性</h3><p>担当顧客の承継・M&Aが成約（HD化）まで進むと、<b>成功報酬の配分</b>と認定レベルの昇格につながります。1件の成約が、ストック収入とは桁の違う成果になり得ます。</p></div>
   </div>
   <div style="margin-top:14px;"></div>
   <div class="lv">
-    <div><span class="n">Lv.1</span><div class="t">アソシエイト</div><div class="c">研修修了で認定</div><div class="f">外注費率 <b>個別設定</b></div></div>
+    <div><span class="n">Lv.1</span><div class="t">アソシエイト</div><div class="c">研修修了で認定</div><div class="f">外注費率 <b>—</b>（顧問先を持つまで）</div></div>
     <div><span class="n">Lv.2</span><div class="t">シニア</div><div class="c">初回顧問契約の獲得</div><div class="f">外注費率 <b>50%</b></div></div>
-    <div><span class="n">Lv.3</span><div class="t">エグゼクティブ</div><div class="c">顧問契約10件</div><div class="f">外注費率 <b>60%</b></div></div>
-    <div><span class="n">Lv.4</span><div class="t">プレミアム</div><div class="c">顧問契約20件</div><div class="f">外注費率 <b>70%</b><br><span style="font-size:11px;">30社以上で <b>80%</b></span></div></div>
+    <div><span class="n">Lv.3</span><div class="t">エグゼクティブ</div><div class="c">顧問契約10件 または 顧問先の成約1件</div><div class="f">外注費率 <b>60%</b></div></div>
+    <div><span class="n">Lv.4</span><div class="t">プレミアム</div><div class="c">顧問契約20件 または 成約3件</div><div class="f">外注費率 <b>70%</b><br><span style="font-size:11px;">30社以上で <b>80%</b></span></div></div>
   </div>
   <div class="note" style="margin-top:14px;"><b>本業にも還ります。</b>保険・不動産・士業・M&Aアドバイザーなど、あなたの本業とTsuguAiは競合しません。顧問として会社の内側に入り課題を先に見つけることで、<b>本業の案件があなたのところに戻ってくる</b>設計です。成功報酬の詳細な配分・適用条件は、認定時に運営からご説明します。</div>
 </section>
@@ -145,6 +146,31 @@ body{background-color:var(--washi);background-image:var(--wa-asanoha-paper);}
     <div class="card"><h3>🌱 継ナビくん（AIエージェント）</h3><p>切り出し方の台本づくり、壁の突破法、専門家への引き継ぎ時期——迷ったら24時間いつでも相談。毎朝は「今日の一手」があなたに届きます。</p></div>
     <div class="card"><h3>📊 経営の見える化一式</h3><p>資金繰り・企業価値の毎月の推移・月次レポート・経営課題PDCA。承継の土台になる「会社の現在地」を、AIと一緒に整えられます。</p></div>
     <div class="card"><h3>🧭 M&A伴走ガイド</h3><p>案件管理画面には、初めてでも迷わない伴走ガイドとチェックリストを常設。検討からPMI（統合後）まで、ステージごとにやることが分かります。</p></div>
+  </div>
+</section>
+
+<section class="slide dm" data-t="画面で見ると">
+  <div class="eyebrow">画面で見ると</div>
+  <h2>経営者が押すのは3か所。あとはAIと担当パートナーが動きます</h2>
+  <div class="demo one">
+    <div class="dmap" style="margin-top:4px;">
+      <div class="st" style="padding:12px 12px 10px;"><i class="n mk">1</i>
+        <div class="t">いまの手元資金を、ひとつ入れる</div>
+        <div class="scr nosb" style="margin:6px 0 8px;box-shadow:none;"><div class="scr-body" style="min-height:0;"><div class="scr-main"><div class="scr-panel"><div class="scr-ph">いまの手元資金</div><div class="scr-row end"><span class="scr-inp">1,200</span><span style="font-size:9px;color:#5A6981;">万円</span><span class="scr-btn sm hot">記録する</span></div><div class="scr-note r" style="margin-top:5px;"><b>早めに手を打てる段階です</b><br>9/25の賞与800万円に足りない見込み。</div><div class="scr-row"><span class="scr-btn sm">担当パートナーに知らせる</span><span class="scr-btn ghost sm">継ナビくんに手を聞く</span></div></div></div></div></div>
+        <div class="w"><b>分かる：</b>支払予定と直近の利益から、薄くなる月がその場で出る。<br><b>そのあと：</b>ひと押しで担当に届き、繰り延べ・前倒し・つなぎ借入を一緒に確かめる。</div>
+      </div>
+      <div class="st" style="padding:12px 12px 10px;"><i class="n mk">2</i>
+        <div class="t">「この会社を買ったら？」を試す</div>
+        <div class="scr nosb" style="margin:6px 0 8px;box-shadow:none;"><div class="scr-body" style="min-height:0;"><div class="scr-main"><div class="scr-panel"><div class="scr-ph">🔁 承継シミュレーション</div><div class="scr-row"><span class="scr-sbtn on">🏢 買う側</span><span class="scr-sbtn">🌱 譲る側</span></div><div class="scr-row end"><span class="scr-inp">運送業</span><span class="scr-inp">年商 8,000</span><span class="scr-inp">利益 600</span></div><div class="scr-row"><span class="scr-btn ai sm hot">この会社を買ったら？を試算する</span></div><div class="scr-card l4 gold"><div class="d">価格の目安 2,400〜3,600万／返済 月28万／手元 2.1→1.4か月分</div></div></div></div></div></div>
+        <div class="w"><b>分かる：</b>価格の目安と、自社のキャッシュの動き（30秒）。<br><b>そのあと：</b>「担当に相談する」で人へ。譲る側なら「いま譲るなら？ 2年磨けば？」。</div>
+      </div>
+      <div class="st" style="padding:12px 12px 10px;"><i class="n mk">3</i>
+        <div class="t">継ナビくんに聞き、伝えたいものだけ担当へ</div>
+        <div class="scr nosb" style="margin:6px 0 8px;box-shadow:none;"><div class="scr-body" style="min-height:0;"><div class="scr-main" style="padding:6px;"><div class="scr-knv" style="box-shadow:none;"><div class="hd"><span>継ナビくん<small>24時間・会話は本人だけ</small></span></div><div class="bd-body"><div class="scr-bub me">賞与800万、手元1,200万で大丈夫？</div><div class="scr-bub"><span class="who">継ナビくん</span>10月中旬に残高300万を切る見込み。早く効く順に3つ…</div><div class="scr-row" style="margin-top:0;"><span class="scr-btn ghost sm hot">✉️ 担当パートナーに伝える</span></div></div></div></div></div></div>
+        <div class="w"><b>分かる：</b>手元資金・試算表・予定を踏まえた答えが、夜でも休日でも。<br><b>そのあと：</b>押したぶんだけ担当に届き、次の面談の材料に。毎朝は「今日の一手」がメール・LINEで。</div>
+      </div>
+    </div>
+    <div class="dsay" style="margin-top:10px;">試算表などの数字の入力は<b>担当パートナーが代行</b>します。経営者ご自身が入れるのは①の数字ひとつだけ。毎月、会社の値段・財務力・労働分配率までそろい、月次レポートは銀行への説明資料にもそのまま使えます。</div>
   </div>
 </section>
 

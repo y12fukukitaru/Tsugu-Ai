@@ -1,0 +1,196 @@
+/* =============================================================
+   画面で見せる ― 商談スライド・説明書の「画面の写し」の設え
+   ---------------------------------------------------------------
+   本物の画面を貼ると、次の週には古くなる。ここでは本体（index.html）と
+   同じ語彙（紺の左メニュー・白い札・金の罫・右下の継ナビくん）で
+   「画面の写し」を HTML で描き、押す場所に番号を打つ。
+
+     .scr        … 一枚の画面（上のバー・左メニュー・中身）
+     .scr-panel  … 本体の .panel と同じ白い札
+     .mk         … 押す場所の番号（金の丸）
+     .hot        … 押す場所そのもの（金の輪で囲む）
+     .dsteps     … 右に並べる「押す → 分かる → そのあと」
+
+   16:9 の一枚に収めるため、画面の中の文字は小さめ（10〜11px）。
+   説明書（縦に読む）では .demo.tall で少し大きくする。
+
+   読み込む順番： tsugu-wa.css → pitch-wa.css（または manual-wa.css）→ pitch-demo.css
+   ============================================================= */
+
+/* ===== 一枚の並び：左に画面、右に手順 ===== */
+.demo{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;align-items:start;margin-top:10px;}
+.demo.one{grid-template-columns:1fr;}
+.demo.wide{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);}
+@media(max-width:820px){ .demo,.demo.wide{grid-template-columns:1fr;} }
+
+/* ===== 画面の写し ===== */
+.scr{
+  position:relative;border:1px solid #D9DFE8;border-radius:12px;overflow:hidden;
+  background:#F5F7FA;box-shadow:0 8px 26px rgba(14,27,51,.14);
+  font-family:'Noto Sans JP',sans-serif;font-size:10.5px;line-height:1.55;color:#18202E;
+}
+.scr *{box-sizing:border-box;}
+.scr-top{
+  height:26px;background:#fff;border-bottom:1px solid #E2E7EF;display:flex;align-items:center;gap:8px;padding:0 10px;
+  font-size:10px;font-weight:600;color:#1E3A66;
+}
+.scr-top .dt{margin-left:auto;font-size:9px;font-weight:400;color:#5A6981;background:#F5F7FA;border:1px solid #E2E7EF;border-radius:99px;padding:1px 7px;}
+.scr-body{display:flex;min-height:200px;}
+.scr-sb{width:96px;flex:0 0 96px;background:#0E1B33;color:rgba(255,255,255,.72);padding:8px 6px;font-size:9px;}
+.scr-sb .lg{font-family:'DM Sans','Noto Sans JP',sans-serif;font-size:11px;color:#fff;letter-spacing:.03em;padding:2px 6px 6px;}
+.scr-sb .lg i{font-style:normal;color:#C39B3F;font-size:8px;margin-left:3px;}
+.scr-sb .co{font-size:8.5px;color:#fff;padding:0 6px 6px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.scr-sb .ni{display:flex;align-items:center;gap:5px;padding:3px 5px;border-radius:7px;margin-bottom:1px;white-space:nowrap;overflow:hidden;}
+.scr-sb .ni b{width:14px;height:14px;border-radius:4px;background:rgba(255,255,255,.08);flex:0 0 14px;font-size:8px;display:flex;align-items:center;justify-content:center;font-weight:400;}
+.scr-sb .ni.on{background:rgba(255,255,255,.12);color:#fff;font-weight:600;}
+.scr-sb .ni.on b{background:#C39B3F;}
+.scr-sb .ni.dim{opacity:.55;}
+.scr-main{flex:1;min-width:0;padding:8px;display:flex;flex-direction:column;gap:6px;}
+.scr.nosb .scr-sb{display:none;}
+.scr.narrow .scr-sb{width:80px;flex-basis:80px;}
+
+/* 白い札（本体の .panel） */
+.scr-panel{background:#fff;border:1px solid #E2E7EF;border-radius:9px;padding:7px 9px;position:relative;}
+.scr-ph{font-size:10.5px;font-weight:700;color:#1E3A66;margin-bottom:4px;padding-left:7px;position:relative;letter-spacing:.02em;}
+.scr-ph::before{content:'';position:absolute;left:0;top:.2em;bottom:.2em;width:2px;border-radius:2px;background:#C39B3F;}
+.scr-sub{font-size:9px;color:#5A6981;line-height:1.5;margin-bottom:5px;}
+.scr-row{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:4px;}
+.scr-row.end{align-items:flex-end;}
+
+/* ダッシュボードの札（数字のチップ） */
+.scr-chips{display:flex;gap:5px;flex-wrap:wrap;}
+.scr-chip{flex:1 1 70px;min-width:66px;background:#F8F9FC;border:1px solid #EDF1F6;border-radius:8px;padding:5px 8px;}
+.scr-chip .l{font-size:8.5px;color:#5A6981;}
+.scr-chip .v{font-size:12.5px;font-weight:700;color:#1E3A66;line-height:1.2;margin-top:1px;}
+.scr-chip .v.g{color:#27684A;} .scr-chip .v.r{color:#A9403D;} .scr-chip .v.w{color:#C39B3F;}
+.scr-chip .s{font-size:8px;color:#94A2B6;margin-top:1px;}
+
+/* 入力欄・ボタン */
+.scr-lab{display:block;font-size:8.5px;color:#5A6981;margin-bottom:2px;}
+.scr-inp{display:inline-block;min-width:70px;padding:4px 7px;border:1px solid #E2E7EF;border-radius:7px;background:#fff;font-size:9.5px;color:#18202E;white-space:nowrap;}
+.scr-inp.ph{color:#94A2B6;}
+.scr-inp.wide{min-width:150px;}
+.scr-sel::after{content:' ▾';color:#5A6981;}
+.scr-btn{display:inline-block;padding:5px 10px;border-radius:7px;background:#1E3A66;color:#fff;font-size:9.5px;font-weight:600;letter-spacing:.03em;white-space:nowrap;}
+.scr-btn.ghost{background:#fff;color:#2C5DA8;border:1px solid #E2E7EF;font-weight:500;}
+.scr-btn.ai{background:linear-gradient(135deg,#1E3A66,#2C5DA8);}
+.scr-btn.sm{padding:3px 8px;font-size:9px;}
+.scr-sbtn{display:inline-block;padding:4px 9px;border:1px solid #E2E7EF;border-radius:7px;background:#fff;color:#5A6981;font-size:9.5px;white-space:nowrap;}
+.scr-sbtn.on{background:#2C5DA8;border-color:#2C5DA8;color:#fff;font-weight:600;}
+.scr-tag{display:inline-block;font-size:8.5px;font-weight:600;padding:1px 7px;border-radius:99px;background:#EDF1F6;color:#5A6981;white-space:nowrap;}
+.scr-tag.red{background:#F9EDED;color:#A9403D;} .scr-tag.gold{background:#FBF3DF;color:#8A6A12;} .scr-tag.green{background:#EBF2ED;color:#27684A;} .scr-tag.blue{background:#E8EFFA;color:#2C5DA8;}
+.scr-link{color:#2C5DA8;font-weight:600;}
+.scr-note{border-left:2px solid #C39B3F;background:#FFFDF7;border-radius:0 7px 7px 0;padding:5px 8px;font-size:9px;color:#5A6981;line-height:1.55;}
+.scr-note.r{border-left-color:#A9403D;background:#FCF4F3;color:#18202E;}
+.scr-note.r b{color:#A9403D;}
+.scr-note.g{border-left-color:#27684A;background:#F7FBF8;}
+.scr-card{border:1px solid #E2E7EF;border-radius:8px;padding:6px 8px;background:#fff;margin-top:4px;}
+.scr-card.l4{border-left-width:4px;}
+.scr-card.gold{border-left-color:#C39B3F;} .scr-card.green{border-left-color:#27684A;} .scr-card.blue{border-left-color:#2C5DA8;}
+.scr-card .t{font-size:10px;font-weight:700;color:#18202E;}
+.scr-card .d{font-size:9px;color:#5A6981;line-height:1.5;margin-top:1px;}
+.scr-list{margin:0;padding:0;list-style:none;}
+.scr-list li{display:flex;gap:6px;align-items:center;padding:3px 0;border-top:1px solid #EDF1F6;font-size:9.5px;}
+.scr-list li:first-child{border-top:none;}
+.scr-list li .nm{font-weight:600;color:#18202E;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.scr-list li .to{color:#2C5DA8;font-size:8.5px;white-space:nowrap;}
+.scr-tbl{width:100%;border-collapse:collapse;font-size:9px;}
+.scr-tbl th,.scr-tbl td{padding:3px 4px;border-top:1px solid #EDF1F6;text-align:right;white-space:nowrap;}
+.scr-tbl th{color:#5A6981;font-weight:500;border-top:none;}
+.scr-tbl td:first-child,.scr-tbl th:first-child{text-align:left;}
+.scr-tbl .g{color:#27684A;font-weight:600;} .scr-tbl .r{color:#A9403D;font-weight:600;}
+.scr-bar{height:6px;border-radius:99px;background:#EDF1F6;overflow:hidden;margin-top:3px;}
+.scr-bar i{display:block;height:100%;background:#27684A;border-radius:99px;}
+.scr-bar.gold i{background:#C39B3F;}
+.scr-steps{display:flex;gap:3px;margin-top:3px;}
+.scr-steps span{flex:1;font-size:8px;text-align:center;padding:3px 2px;border-radius:5px;background:#EDF1F6;color:#5A6981;white-space:nowrap;overflow:hidden;}
+.scr-steps span.on{background:#1E3A66;color:#fff;font-weight:600;}
+.scr-steps span.done{background:#EBF2ED;color:#27684A;}
+
+/* 右下の継ナビくん（丸いボタン） */
+.scr-fab{position:absolute;right:10px;bottom:10px;width:34px;height:34px;border-radius:50%;background:#0E2038;border:2px solid #C39B3F;box-shadow:0 6px 16px rgba(6,12,24,.4),0 0 0 4px rgba(195,155,63,.14);display:flex;align-items:center;justify-content:center;}
+.scr-fab svg{width:22px;height:22px;}
+.scr-fab .bd{position:absolute;top:-4px;right:-4px;min-width:14px;height:14px;border-radius:99px;background:#A9403D;color:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;border:1.5px solid #fff;}
+
+/* 継ナビくんのパネル（開いた状態） */
+.scr-knv{border:1px solid #E2E7EF;border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 10px 30px rgba(6,12,24,.22);}
+.scr-knv .hd{background:#0E1B33;color:#fff;padding:6px 9px;display:flex;align-items:center;gap:7px;font-size:10px;font-weight:700;}
+.scr-knv .hd small{display:block;font-size:8px;font-weight:400;color:#CFAD62;}
+.scr-knv .hd .x{margin-left:auto;color:rgba(255,255,255,.6);font-weight:400;}
+.scr-knv .tabs{display:flex;background:#0E1B33;border-top:1px solid rgba(255,255,255,.08);}
+.scr-knv .tabs span{flex:1;text-align:center;font-size:8px;color:#8FA3C4;padding:4px 1px 5px;border-bottom:2px solid transparent;white-space:nowrap;position:relative;}
+.scr-knv .tabs span.on{color:#fff;border-bottom-color:#C39B3F;font-weight:600;}
+.scr-knv .tabs span .bd{position:absolute;top:1px;right:4px;min-width:11px;height:11px;border-radius:99px;background:#A9403D;color:#fff;font-size:7px;display:flex;align-items:center;justify-content:center;}
+.scr-knv .bd-body{padding:7px 8px;display:flex;flex-direction:column;gap:5px;background:#F8F9FC;}
+.scr-bub{max-width:92%;background:#fff;border:1px solid #E2E7EF;border-radius:3px 10px 10px 10px;padding:5px 8px;font-size:9.5px;line-height:1.55;font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif;}
+.scr-bub.me{align-self:flex-end;background:#1E3A66;color:#fff;border-color:#1E3A66;border-radius:10px 3px 10px 10px;font-family:'Noto Sans JP',sans-serif;}
+.scr-bub .who{display:block;font-size:8px;color:#8A6A12;font-weight:700;margin-bottom:1px;}
+.scr-knv .inp{display:flex;gap:5px;align-items:center;padding:6px 8px;border-top:1px solid #E2E7EF;background:#fff;}
+.scr-knv .inp .scr-inp{flex:1;}
+
+/* ===== 押す場所の番号と輪 ===== */
+.mk{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#C39B3F;color:#0E1B33;font-family:'DM Sans','Noto Sans JP',sans-serif;font-size:9.5px;font-weight:700;font-style:normal;vertical-align:middle;margin:0 3px 0 0;box-shadow:0 1px 4px rgba(14,27,51,.25);flex:0 0 auto;}
+.mk.ab{position:absolute;top:-7px;left:-7px;z-index:2;}
+.hot{position:relative;outline:2px solid #C39B3F;outline-offset:2px;border-radius:7px;box-shadow:0 0 0 5px rgba(195,155,63,.16);}
+.scr-panel.hot{outline-offset:0;}
+
+/* ===== 手順：押す → 分かる → そのあと ===== */
+.dsteps{display:flex;flex-direction:column;gap:9px;}
+.dstep{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--line,#E2E7EF);border-radius:11px;padding:9px 12px 9px 10px;background:#fff;}
+.dstep .mk{width:22px;height:22px;font-size:12px;margin-top:1px;}
+.dstep > div{flex:1;min-width:0;}
+.dstep .act{display:block;font-size:13.5px;font-weight:700;color:#1E3A66;line-height:1.5;}
+.dstep .see,.dstep .then{display:block;font-size:11.5px;color:#18202E;line-height:1.7;margin-top:3px;padding-left:44px;position:relative;}
+.dstep .see::before,.dstep .then::before{position:absolute;left:0;top:3px;font-size:9px;font-weight:700;letter-spacing:.06em;padding:1px 6px;border-radius:99px;}
+.dstep .see::before{content:'分かる';background:#E8EFFA;color:#2C5DA8;}
+.dstep .then::before{content:'そのあと';background:#FBF3DF;color:#8A6A12;}
+.dstep .see b,.dstep .then b{color:#1E3A66;}
+.dstep.g{border-color:#CFE3D6;background:#F7FBF8;}
+.dstep.w{border-color:#EBDDB4;background:#FFFDF7;}
+.dsay{font-size:11px;color:#5A6981;line-height:1.75;border-left:3px solid #C39B3F;background:#FFFDF7;border-radius:0 9px 9px 0;padding:7px 11px;}
+.dsay b{color:#1E3A66;}
+.dsay .q{display:block;font-family:'Shippori Mincho','Noto Serif JP',serif;font-size:12.5px;color:#18202E;margin-bottom:2px;}
+
+/* 一枚の中の見取り図（どの画面をどの順で見せるか） */
+.dmap{display:flex;gap:6px;align-items:stretch;flex-wrap:wrap;margin-top:8px;}
+.dmap .st{flex:1 1 120px;min-width:0;border:1px solid #E2E7EF;border-radius:11px;padding:10px 12px;background:#fff;position:relative;}
+.dmap .st .n{position:absolute;top:-9px;left:10px;}
+.dmap .st .n.mk{width:20px;height:20px;font-size:11px;}
+.dmap .st .t{font-size:13px;font-weight:700;color:#1E3A66;margin:2px 0 3px;}
+.dmap .st .w{font-size:10.5px;color:#5A6981;line-height:1.6;}
+.dmap .st .w b{color:#18202E;}
+.dmap .st .m{font-size:9.5px;color:#8A6A12;margin-top:5px;}
+
+/* ===== 説明書（縦に読む）で使うとき：少し大きく ===== */
+.demo.tall .scr{font-size:11.5px;}
+.demo.tall .scr-sb{width:112px;flex-basis:112px;font-size:10px;}
+.demo.tall .dstep .act{font-size:14.5px;}
+.demo.tall .dstep .see,.demo.tall .dstep .then{font-size:12.5px;}
+
+/* 16:9 の一枚に収めるための余白の詰め */
+.slide .demo h3{font-size:14px;margin:0 0 6px;color:#1E3A66;font-family:var(--f-head,'Shippori Mincho',serif);}
+.demo .cap{font-size:10px;color:#5A6981;margin-top:5px;line-height:1.6;}
+.demo .cap b{color:#1E3A66;}
+
+/* ===== 中扉（デモの章の入口）― 表紙と同じく、地が意匠 ===== */
+.slide.divider.on{display:flex!important;flex-direction:column;justify-content:center;}
+.divider h1{color:#fff;}
+.divider .sub{color:rgba(255,255,255,.85);}
+.divider .mark{font-family:'DM Sans','Noto Sans JP',sans-serif;font-size:21px;letter-spacing:.14em;color:#9FD8B8;margin-bottom:24px;}
+
+@media print{
+  .scr{box-shadow:none;}
+  .hot{box-shadow:none;}
+  .slide.divider{display:block!important;}
+}
+
+/* ===== デモの一枚は、中身に合わせて伸びる =====
+   16:9 に固定して overflow:hidden のままだと、画面の写しの下が切れる。
+   デモの一枚（.dm）は縦に伸ばし、印刷ではページの高さを最低に保つ。 */
+.slide.dm{aspect-ratio:auto;min-height:0;padding:34px 44px 34px;}
+.slide.dm h2{font-size:25px;margin-bottom:6px;}
+.slide.dm .eyebrow{margin-bottom:6px;}
+.scr-tbl .scr-inp{padding:2px 5px;}
+@media print{ .slide.dm{height:auto;min-height:100vh;} }
+/* 説明書の中では、画面の写しを紙いっぱいに広げない（横に伸びると本物と印象が変わる） */
+.demo.tall .scr{max-width:840px;}
