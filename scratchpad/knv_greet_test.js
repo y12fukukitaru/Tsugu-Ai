@@ -64,7 +64,7 @@ const at = (y, mo, d, h) => new Date(Date.UTC(y, mo - 1, d, h, 0));   // 日本�
   ok('内訳の「提案」ボタンはお知らせタブへ', /onclick="knvShowTab\(\\'notif\\'\)">✦ 継ナビくんの提案/.test(ks));
   ok('説明書：今日の一手はお知らせタブの先頭', /「お知らせ」タブの先頭<\/b>にあります（相談タブには出ません）/.test(MANP));
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260912-02', '20260912-02']);
+  is('版が揃う', [build, VER.build], ['20260913-01', '20260913-01']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
