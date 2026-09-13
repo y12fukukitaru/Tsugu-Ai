@@ -1383,7 +1383,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260914-01';
+  var APP_BUILD='20260914-02';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -3764,7 +3764,7 @@
         //  出口の設計（全員）。買い手には「買い手になる」が足され、売り手には
         //  案件（sec-market）が出口の設計の下に束ねられる（navDefs の仕組み）
         +'<div class="panel" id="sec-exit"><div class="ph">出口の設計</div>'
-          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">どの会社にも出口があります。譲る・継ぐ・畳む・買い手になる。どれへ、いつまでに、どの数字を。担当パートナーと一緒に決め、四半期ごとに差を見ます。</div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">どの会社にも出口があります。譲る・継ぐ・畳む・買い手になる。どれへ、いつまでに、どの数字を。担当パートナーと一緒に決め、四半期ごとに差を見ます。早く決めておくほど、そのときの<b style="color:#1E3A66;">交渉力</b>が変わります。期限に追われてからでは、条件は相手が決めます。</div>'
           +'<div id="my-exit">読み込み中...</div>'
         +'</div>'
         +(planOf(prof)==='buyer' ? (''
