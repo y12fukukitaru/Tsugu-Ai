@@ -104,7 +104,7 @@ const M = new Function(base + 'return {cats:AFTER_CATS, ind:AFTER_IND, topics:AF
   ok('SQL：表と RLS', /create table if not exists public\.buyer_prep/.test(SQL) && /customer_may\(customer_id\)/.test(SQL) && /期待値：表=1/.test(SQL));
   ok('説明書：経営者・パートナー', /<h3>買った後に備える<\/h3>/.test(MANC) && /<h3>買った後に備える<\/h3>/.test(MANP));
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260913-01', '20260913-01']);
+  is('版が揃う', [build, VER.build], ['20260913-02', '20260913-02']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
