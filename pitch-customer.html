@@ -89,6 +89,7 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
 </style>
 <link rel="stylesheet" href="tsugu-wa.css">
 <link rel="stylesheet" href="pitch-wa.css">
+<link rel="stylesheet" href="pitch-demo.css">
 </head>
 <body>
 <button id="backbtn" onclick="parent.postMessage({tsugu:'closeManual'},'*')">✕ プラットフォームに戻る</button>
@@ -200,17 +201,289 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
   </div>
 </section>
 
-<section class="slide" data-t="料金">
+<section class="slide divider" data-t="画面で見る">
+  <div class="mark">DEMO</div>
+  <h1>ここからは、画面でお見せします。</h1>
+  <p class="sub">どこを押すと、何が分かり、そのあと何が起きるか。<br>実際の画面と同じ並びで、8つ。御社の数字が入れば、そのまま御社の話になります。</p>
+</section>
+
+<section class="slide" data-t="デモの地図">
+  <div class="eyebrow">DEMO 0 — 見せる順番</div>
+  <h2>8つの画面を、この順に。所要10分。</h2>
+  <p class="sub" style="margin-bottom:6px;">左メニューの上から下へ、そのまま進みます。<b>①だけは社長ご自身が数字を入れる場所</b>で、あとは見るだけです。</p>
+  <div class="dmap">
+    <div class="st"><i class="n mk">1</i><div class="t">ダッシュボード</div><div class="w"><b>いまの手元資金</b>を一つ入れる → 薄いかどうかが、その場で分かる</div><div class="m">30秒・社長が入れるのはここだけ</div></div>
+    <div class="st"><i class="n mk">2</i><div class="t">承継シミュレーション</div><div class="w"><b>買う側／譲る側</b>を体験 → 価格の目安と、キャッシュの動き</div><div class="m">30秒・何度でも</div></div>
+    <div class="st"><i class="n mk">3</i><div class="t">継ナビくん</div><div class="w">右下のボタン → そのまま質問 → <b>担当に伝える</b>ボタンで人へ</div><div class="m">24時間・会話は本人だけ</div></div>
+    <div class="st"><i class="n mk">4</i><div class="t">出口の設計</div><div class="w">5つの出口から選ぶ → <b>目標の年と数字</b>、いまとの差</div><div class="m">四半期ごとに見直す</div></div>
+    <div class="st"><i class="n mk">5</i><div class="t">買い手になる</div><div class="w"><b>柱</b>の絵と買いたい条件 → 案件に<b>関心を出す</b></div><div class="m">買い手プランだけ</div></div>
+    <div class="st"><i class="n mk">6</i><div class="t">買った後に備える</div><div class="w">待ち受けること24項目 → <b>自社では</b>どうか → 学ぶ・準備する</div><div class="m">買い手プランだけ</div></div>
+    <div class="st"><i class="n mk">7</i><div class="t">月次レポート・財務</div><div class="w">試算表を送るだけ → <b>会社の値段・財務力・労働分配率</b>まで自動</div><div class="m">毎月届く</div></div>
+    <div class="st"><i class="n mk">8</i><div class="t">契約から90日</div><div class="w">URLで<b>同意して契約する</b> → 登録で自動的に担当が付く → 土台づくり</div><div class="m">入力はすべて代行</div></div>
+  </div>
+  <div class="dsay" style="margin-top:10px;"><span class="q">「この画面、いま御社の数字でお見せできます」</span>デモは順番より<b>①と②</b>が肝心です。時間が無ければ①②③だけで構いません。</div>
+</section>
+
+<section class="slide dm" data-t="①ダッシュボード">
+  <div class="eyebrow">DEMO 1 — ダッシュボード</div>
+  <h2>数字を一つ入れると、薄いかどうかが、その場で分かる</h2>
+  <div class="demo">
+    <div class="scr">
+      <div class="scr-top">経営者ダッシュボード<span class="dt">2026年9月13日</span></div>
+      <div class="scr-body">
+        <div class="scr-sb"><div class="lg">TsuguAi<i>-継-</i></div><div class="co">株式会社継</div>
+          <div class="ni on"><b>▦</b>ダッシュボード</div><div class="ni"><b>▤</b>月次レポート</div><div class="ni"><b>✓</b>経営課題</div><div class="ni"><b>¥</b>お支払い</div><div class="ni"><b>≈</b>財務・資金繰り</div><div class="ni"><b>◆</b>企業価値・試算結果</div><div class="ni"><b>⚙</b>AI自動化診断</div><div class="ni"><b>⇢</b>出口の設計</div><div class="ni"><b>▣</b>買い手になる</div><div class="ni"><b>☰</b>買った後に備える</div><div class="ni"><b>🌱</b>継ナビくん</div></div>
+        <div class="scr-main">
+          <div class="scr-panel" style="padding:6px 9px;"><div class="scr-row"><span class="scr-tag">顧客ポータル</span><b style="font-size:11px;">株式会社継</b><span class="scr-btn ghost sm">▶ 使い方ガイド（1分）</span></div></div>
+          <div class="scr-note" style="border-left-color:#C39B3F;"><b style="color:#8A6A12;">📝 3分アンケート（匿名）</b>　5問＋ひとこと。答えは匿名で、運営には集計だけが届きます。<span class="scr-link">答える →</span></div>
+          <div class="scr-chips"><div class="scr-chip"><div class="l">売上（2026-08）</div><div class="v">2,400万 <span style="color:#27684A;font-size:9px;">▲</span></div></div><div class="scr-chip"><div class="l">営業利益</div><div class="v">180万</div></div><div class="scr-chip"><div class="l">資金スコア</div><div class="v w">58点</div><div class="s">手元資金 2.1か月分</div></div><div class="scr-chip"><div class="l">柱</div><div class="v">1本</div><div class="s">本業のみ</div></div></div>
+          <div class="scr-panel hot"><i class="mk ab">1</i><div class="scr-ph">いまの手元資金（ご自身で入れるのはここだけ）</div>
+            <div class="scr-row end"><div><span class="scr-lab">いまの手元資金</span><span class="scr-inp">1,200</span> <span style="font-size:9px;color:#5A6981;">万円</span></div><div style="flex:1;"><span class="scr-lab">ひと言（任意）</span><span class="scr-inp ph wide">例：来週に大きな支払いがあります</span></div><span class="scr-btn">記録する</span></div>
+            <div class="scr-note r" style="margin-top:6px;"><b>早めに手を打てる段階です</b><br>9月25日の「賞与」800万円に、いまの残高では足りない見込みです。直近の月次では、毎月およそ50万円の持ち出しになっています。</div>
+            <div class="scr-row"><span class="scr-btn sm hot"><i class="mk" style="width:13px;height:13px;font-size:8px;">2</i>担当パートナーに知らせる</span><span class="scr-btn ghost sm">継ナビくんに手を聞く</span><span class="scr-btn ghost sm">資金繰りの見通しを見る</span></div>
+          </div>
+          <div class="scr-panel"><div class="scr-ph">資金繰りステータス</div><div class="scr-row"><span class="scr-tag gold">🟡 注意</span><span style="font-size:9px;color:#5A6981;">残高が薄くなる月：9月・12月　← 支払予定と直近の利益から</span></div></div>
+        </div>
+      </div>
+      <div class="scr-fab"><svg viewBox="0 -4 64 64" aria-hidden="true"><path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/><rect x="9.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="49.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="14" y="23" width="36" height="30" rx="10" fill="#fff" stroke="#cfa860" stroke-width="1.6"/><circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/><path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/></svg><span class="bd">2</span></div>
+    </div>
+    <div class="dsteps">
+      <div class="dstep"><i class="mk">1</i><div><span class="act">「いまの手元資金」に、いまの預金残高を入れて「記録する」</span><span class="see">支払予定と直近の利益から見通しが立ち、<b>足りない月があればその場で出ます</b>。余裕があるときは一行で終わります。</span><span class="then">継ナビくんがこの数字で答えるようになり、担当パートナーの画面にも前回からの増減つきで出ます。</span></div></div>
+      <div class="dstep"><i class="mk">2</i><div><span class="act">足りない見込みなら「担当パートナーに知らせる」</span><span class="see">残高と足りない見込みが文面に入った状態で、<b>送る前に中身が見えます</b>。</span><span class="then">担当が2〜3営業日以内に返信。お支払いの繰り延べ、入金の前倒し、つなぎの借入などを一緒に確かめます。</span></div></div>
+      <div class="dstep g"><i class="mk">✓</i><div><span class="act">上の数字（売上・営業利益・資金スコア・柱）は、見るだけ</span><span class="see">試算表は担当パートナーが入力します。<b>社長が入れるのは①だけ</b>です。</span><span class="then">四半期の最初の3週間は、いちばん上に匿名の3分アンケートが出ます。</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide dm" data-t="②承継シミュレーション">
+  <div class="eyebrow">DEMO 2 — 企業価値・試算結果 ＞ 承継シミュレーション</div>
+  <h2>「この会社を買ったら？」が、30秒で数字になる</h2>
+  <div class="demo">
+    <div class="scr">
+      <div class="scr-top">経営者ダッシュボード<span class="dt">企業価値・試算結果</span></div>
+      <div class="scr-body">
+        <div class="scr-sb"><div class="lg">TsuguAi<i>-継-</i></div><div class="co">株式会社継</div>
+          <div class="ni"><b>▦</b>ダッシュボード</div><div class="ni"><b>▤</b>月次レポート</div><div class="ni"><b>✓</b>経営課題</div><div class="ni"><b>¥</b>お支払い</div><div class="ni"><b>≈</b>財務・資金繰り</div><div class="ni on hot"><i class="mk ab" style="left:-9px;">1</i><b>◆</b>企業価値・試算結果</div><div class="ni"><b>⚙</b>AI自動化診断</div><div class="ni"><b>⇢</b>出口の設計</div><div class="ni"><b>▣</b>買い手になる</div><div class="ni"><b>☰</b>買った後に備える</div><div class="ni"><b>🌱</b>継ナビくん</div></div>
+        <div class="scr-main">
+          <div class="scr-panel"><div class="scr-ph">企業価値（推定）</div><div class="scr-chips"><div class="scr-chip"><div class="l">推定企業価値</div><div class="v">1億2,400万</div><div class="s">EBITDA法・8月時点</div></div><div class="scr-chip"><div class="l">前月比</div><div class="v g">＋320万</div></div><div class="scr-chip"><div class="l">旗（目標）</div><div class="v">2億円 / 2028</div><div class="s">月あたり利益 +45万で届く</div></div></div></div>
+          <div class="scr-panel"><div class="scr-ph">🔁 承継シミュレーション（買う・売る）</div>
+            <div class="scr-row"><span class="scr-sbtn on hot"><i class="mk" style="width:13px;height:13px;font-size:8px;">2</i>🏢 買う側を体験</span><span class="scr-sbtn">🌱 譲る側を体験</span></div>
+            <div class="scr-row end" style="margin-top:6px;"><div><span class="scr-lab">相手の業種</span><span class="scr-inp">運送業</span></div><div><span class="scr-lab">相手の年商（万円）</span><span class="scr-inp">8,000</span></div><div><span class="scr-lab">相手の営業利益（万円）</span><span class="scr-inp">600</span></div><div><span class="scr-lab">想定価格（万円・任意）</span><span class="scr-inp ph">空欄なら目安を提案</span></div></div>
+            <div class="scr-row"><span class="scr-btn ghost sm" style="border-style:dashed;">📄 相手の決算書を添付（任意・精度UP）</span></div>
+            <div class="scr-row"><span class="scr-btn ai hot"><i class="mk" style="width:13px;height:13px;font-size:8px;">3</i>この会社を買ったら？を試算する</span></div>
+            <div class="scr-card l4 gold" style="margin-top:7px;"><div class="t">🌱 継ナビくんの試算</div><div class="d"><b>価格の目安：</b>2,400〜3,600万円（営業利益の4〜6倍）<br><b>御社のキャッシュ：</b>自己資金1,000万＋借入2,000万なら、返済は月28万。手元資金は 2.1か月分 → 1.4か月分に薄くなるので、<b>先に運転資金の枠を確保</b>。<br><b>買ったあと：</b>営業利益は年 180万 → 780万（統合コストを除く）。</div></div>
+            <div class="scr-row"><span class="scr-btn ghost sm hot"><i class="mk" style="width:13px;height:13px;font-size:8px;">4</i>✉️ この結果を担当パートナーに相談する</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dsteps">
+      <div class="dstep"><i class="mk">1</i><div><span class="act">左メニュー「企業価値・試算結果」を開く</span><span class="see">会社の値段の毎月の推移と、旗（目標）までの道筋。<b>ここが「会社の値段」の答え</b>です。</span></div></div>
+      <div class="dstep"><i class="mk">2</i><div><span class="act">「🏢 買う側を体験」を押し、相手の業種・年商・営業利益を入れる</span><span class="see">価格は空欄でよく、目安を継ナビくんが提案します。決算書を添付すれば読み取って精度が上がります。</span></div></div>
+      <div class="dstep"><i class="mk">3</i><div><span class="act">「この会社を買ったら？を試算する」</span><span class="see"><b>価格の目安・御社のキャッシュの動き・買ったあとの利益</b>が、御社の数字で出ます。</span><span class="then">「🌱 譲る側を体験」なら「いま譲るなら？ 2年磨けば？」。売る予定がなくても健康診断として。</span></div></div>
+      <div class="dstep w"><i class="mk">4</i><div><span class="act">「✉️ この結果を担当パートナーに相談する」</span><span class="then">本格的に検討するときは、担当パートナーと専門家（運営がおつなぎ）が伴走します。AIの試算は目安で、価格を保証するものではありません。</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide dm" data-t="③継ナビくん">
+  <div class="eyebrow">DEMO 3 — 継ナビくん（画面右下）</div>
+  <h2>夜中の「ちょっと」に答え、伝えたいものだけ人へ渡す</h2>
+  <div class="demo">
+    <div class="scr" style="background:#F5F7FA;">
+      <div class="scr-top">経営者ダッシュボード<span class="dt">どの画面からでも</span></div>
+      <div class="scr-body" style="min-height:0;">
+        <div class="scr-main" style="padding:8px 8px 8px 8px;">
+          <div class="scr-knv">
+            <div class="hd"><span style="width:16px;height:16px;border-radius:5px;border:1px solid #cfa860;display:inline-block;"></span><span>継ナビくん<small>困ったときは、いつでもどうぞ</small></span><span class="x">⤢　×</span></div>
+            <div class="tabs"><span class="on hot" style="outline-offset:-2px;"><i class="mk" style="width:12px;height:12px;font-size:8px;">2</i>💬 相談</span><span>📅 予定</span><span>✉️ メッセージ<i class="bd">1</i></span><span>🔔 お知らせ<i class="bd">3</i></span><span>🔗 連携</span><span>📖 サポート</span></div>
+            <div class="bd-body">
+              <div class="scr-bub"><span class="who">継ナビくん</span>おはようございます、継 太郎さん。継ナビくんです🌱 今週もよろしくお願いします。</div>
+              <div class="scr-bub me">来月、賞与800万の支払いがある。手元1,200万で大丈夫？</div>
+              <div class="scr-bub"><span class="who">継ナビくん</span>いまの手元資金1,200万円と、9/25の賞与800万円、直近の持ち出し月50万円で見ると、<b>10月中旬に残高が300万円を切る見込み</b>です。早く効く順に3つ：①9月末の入金2件（計420万）の前倒しを先方に相談 ②10月の仕入の支払サイトを1か月延ばす相談 ③銀行の当座貸越の枠を確認。まず①から、担当の山田さんと一緒に当たりましょう。</div>
+              <div class="scr-row" style="margin-top:0;"><span class="scr-btn ghost sm hot"><i class="mk" style="width:13px;height:13px;font-size:8px;">3</i>✉️ 担当パートナーに伝える</span><span class="scr-btn ghost sm">👍</span><span class="scr-btn ghost sm">🧭 質問ガイド</span></div>
+            </div>
+            <div class="inp"><span class="scr-btn ghost sm">📎</span><span class="scr-inp ph">そのままの言葉で。画面の写しも貼れます</span><span class="scr-btn sm">送る</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="scr-fab hot" style="border-radius:50%;"><i class="mk ab" style="left:-8px;top:-8px;">1</i><svg viewBox="0 -4 64 64" aria-hidden="true"><path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/><rect x="9.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="49.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="14" y="23" width="36" height="30" rx="10" fill="#fff" stroke="#cfa860" stroke-width="1.6"/><circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/><path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/></svg><span class="bd">4</span></div>
+    </div>
+    <div class="dsteps">
+      <div class="dstep"><i class="mk">1</i><div><span class="act">画面右下の丸いボタンを押す</span><span class="see">どの画面からでも開きます。バッジの数は、未読のメッセージと今日の一手の合計。</span></div></div>
+      <div class="dstep"><i class="mk">2</i><div><span class="act">「相談」タブに、そのままの言葉で書く</span><span class="see">最初のひとことは<b>時間帯・曜日・お名前</b>で変わります。手元資金・試算表・予定を踏まえて答えます。画面の写しやPDFを貼っても読めます。</span><span class="then">会話はご本人だけのもの。担当にも運営にも見えず、端末をまたいで続きから読めます。</span></div></div>
+      <div class="dstep"><i class="mk">3</i><div><span class="act">答えの下の「✉️ 担当パートナーに伝える」</span><span class="see">その質問と答えだけが担当に届きます。<b>押さないかぎり、誰にも見えません。</b></span><span class="then">担当の画面「顧客からの共有」に入り、次の面談の材料になります。</span></div></div>
+      <div class="dstep g"><i class="mk">4</i><div><span class="act">「お知らせ」タブの先頭に、毎朝の「今日の一手」</span><span class="see">メール・LINEで届いたものと同じ。「予定」タブに入れた予定は、答えにも毎朝の便りにも反映されます。</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide dm" data-t="④出口の設計">
+  <div class="eyebrow">DEMO 4 — 出口の設計</div>
+  <h2>どの出口へ、いつまでに、どの数字を。差が毎月出る</h2>
+  <div class="demo">
+    <div class="scr">
+      <div class="scr-top">経営者ダッシュボード<span class="dt">出口の設計</span></div>
+      <div class="scr-body">
+        <div class="scr-sb narrow"><div class="lg">TsuguAi<i>-継-</i></div><div class="co">株式会社継</div>
+          <div class="ni"><b>▦</b>ダッシュボード</div><div class="ni dim"><b>▤</b>月次レポート</div><div class="ni dim"><b>✓</b>経営課題</div><div class="ni dim"><b>¥</b>お支払い</div><div class="ni dim"><b>≈</b>財務・資金繰り</div><div class="ni dim"><b>◆</b>企業価値・試算結果</div><div class="ni dim"><b>⚙</b>AI自動化診断</div><div class="ni on"><b>⇢</b>出口の設計</div><div class="ni dim"><b>▣</b>買い手になる</div><div class="ni dim"><b>☰</b>買った後に備える</div><div class="ni dim"><b>🌱</b>継ナビくん</div></div>
+        <div class="scr-main">
+          <div class="scr-panel"><div class="scr-ph">出口の設計</div>
+            <div class="scr-row"><div class="scr-card" style="flex:1;margin-top:0;"><div class="t">いまのプラン：買い手プラン（成長）45,000円／月（税別）</div><div class="d">毎月の数字で柱を増やす伴走です。買い手の部品が足されます。切替は担当パートナーにお申し出ください。</div></div><div class="scr-card green l4" style="flex:1;margin-top:0;"><div class="t">M&amp;A の優遇（顧問先だけ）：伴走 1年目</div><div class="d">1年を過ぎた月から、FA報酬に最低報酬なし・継続年数×10%（最大50%）の割引。</div></div></div>
+            <div style="font-size:9.5px;font-weight:700;color:#1E3A66;margin:6px 0 3px;">どの出口へ</div>
+            <div class="scr-row" style="margin-top:0;"><span class="scr-sbtn">🤝 第三者へ譲る</span><span class="scr-sbtn">🏠 親族へ継ぐ</span><span class="scr-sbtn">👥 従業員へ継ぐ</span><span class="scr-sbtn">🏁 畳む（清算）</span><span class="scr-sbtn on hot"><i class="mk" style="width:13px;height:13px;font-size:8px;">1</i>🏗️ 続けて、買い手になる</span></div>
+            <div class="scr-row end"><div><span class="scr-lab">目標の年</span><span class="scr-inp scr-sel hot"><i class="mk" style="width:13px;height:13px;font-size:8px;">2</i>2029年（3年後）</span></div><span style="font-size:9px;color:#5A6981;">柱を増やし、自分が引き受ける側に</span></div>
+            <table class="scr-tbl" style="margin-top:5px;"><tr><th>見る数字</th><th>いま</th><th>目標</th><th>差</th></tr><tr><td>営業利益（年）</td><td>1,800万</td><td><span class="scr-inp" style="min-width:50px;">3,000</span></td><td class="r">−1,200万</td></tr><tr><td>現預金（月商の何か月分）</td><td>2.1か月</td><td><span class="scr-inp" style="min-width:50px;">4</span></td><td class="r">−1.9か月</td></tr><tr><td>借入（年商比）</td><td>0.6倍</td><td><span class="scr-inp" style="min-width:50px;">0.4</span></td><td class="g">−0.2倍</td></tr><tr><td>柱の本数</td><td>1本</td><td><span class="scr-inp" style="min-width:50px;">2</span></td><td class="r">−1本</td></tr></table>
+            <div style="font-size:9.5px;font-weight:700;color:#1E3A66;margin:6px 0 2px;">この出口で整えること（残り 3）</div>
+            <div style="font-size:9px;color:#5A6981;line-height:1.6;">□ 経営者保証の解除の相談　□ 右腕（No.2）の育成　□ 買いたい条件を書く</div>
+            <div class="scr-row"><span class="scr-btn sm">保存する</span><span class="scr-btn ghost sm">🌱 この出口について継ナビくんに聞く</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dsteps">
+      <div class="dstep"><i class="mk">1</i><div><span class="act">5つの出口から、いちばん近いものを押す</span><span class="see">第三者へ譲る／親族へ継ぐ／従業員へ継ぐ／畳む／続けて買い手になる。決めきれなくてよく、<b>四半期ごとに見直せます</b>。</span></div></div>
+      <div class="dstep"><i class="mk">2</i><div><span class="act">目標の年を選び、その出口で見る数字に目標を入れる</span><span class="see">「いま」は企業価値診断と試算表から自動で入り、<b>差</b>が赤・緑で出ます。整えること（承継チェックの残り）も並びます。</span><span class="then">毎月の数字が入るたびに差が更新され、担当パートナーの面談台本にも同じ表が出ます。</span></div></div>
+      <div class="dstep w"><i class="mk">!</i><div><span class="act">親族・従業員へ継ぐ出口では「持株会社の検討」の合図</span><span class="see">企業価値が1億円超、1年で20%以上上昇、経営者保証や株主の整理が未了——のとき。株の持ち方を専門家と検討する時期の知らせで、<b>税額は計算しません</b>。</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide dm" data-t="⑤買い手になる">
+  <div class="eyebrow">DEMO 5 — 買い手になる（買い手プラン）</div>
+  <h2>柱を増やす。条件を書き、案件に関心を出すだけ</h2>
+  <div class="demo">
+    <div class="scr">
+      <div class="scr-top">経営者ダッシュボード<span class="dt">買い手になる</span></div>
+      <div class="scr-body">
+        <div class="scr-sb"><div class="lg">TsuguAi<i>-継-</i></div><div class="co">株式会社継</div>
+          <div class="ni dim"><b>▦</b>ダッシュボード</div><div class="ni dim"><b>▤</b>月次レポート</div><div class="ni dim"><b>✓</b>経営課題</div><div class="ni dim"><b>¥</b>お支払い</div><div class="ni dim"><b>≈</b>財務・資金繰り</div><div class="ni dim"><b>◆</b>企業価値・試算結果</div><div class="ni dim"><b>⚙</b>AI自動化診断</div><div class="ni dim"><b>⇢</b>出口の設計</div><div class="ni on"><b>▣</b>買い手になる</div><div class="ni dim"><b>☰</b>買った後に備える</div><div class="ni dim"><b>🌱</b>継ナビくん</div></div>
+        <div class="scr-main">
+          <div class="scr-panel"><div class="scr-ph">買い手になる　<span class="scr-link" style="font-weight:500;font-size:9px;">案件を見る（Tsugime -結-）↓</span></div>
+            <div class="scr-row" style="align-items:flex-end;gap:10px;"><div style="display:flex;gap:3px;align-items:flex-end;height:30px;"><span style="width:16px;height:30px;background:#1E3A66;border-radius:3px 3px 0 0;"></span><span style="width:12px;height:16px;background:#C39B3F;border-radius:3px 3px 0 0;opacity:.35;border:1px dashed #C39B3F;"></span></div><div style="font-size:9px;color:#5A6981;line-height:1.5;"><b style="color:#1E3A66;">柱 1本</b>（本業）。次の1本が、ここから。<br>買い手になる準備度 <b style="color:#27684A;">7／10</b></div></div>
+            <div style="font-size:9.5px;font-weight:700;color:#1E3A66;margin:6px 0 2px;">買いたい条件</div>
+            <div class="scr-row end hot" style="padding:4px;"><i class="mk ab">1</i><div><span class="scr-lab">業種</span><span class="scr-inp">運送業・倉庫</span></div><div><span class="scr-lab">地域</span><span class="scr-inp">県内・隣県</span></div><div><span class="scr-lab">規模（年商）</span><span class="scr-inp">5,000〜1億</span></div><div><span class="scr-lab">予算</span><span class="scr-inp">3,000万</span></div><div><span class="scr-lab">目的</span><span class="scr-inp">配送網を持つ</span></div></div>
+            <div style="font-size:9.5px;font-weight:700;color:#1E3A66;margin:6px 0 2px;">担当パートナーからの提案</div>
+            <div class="scr-card l4 blue"><div class="t">同業（運送）の譲受で、配送を内製化する案</div><div class="d">山田：買い手の余力（借入余力 2,000万・返済月28万まで）の範囲で、年商5,000万前後の会社を候補に。まず Tsugime の案件2件を一緒に見ましょう。</div></div>
+          </div>
+          <div class="scr-panel"><div class="scr-ph">Tsugime -結- 投資・融資・M&amp;A（プラットフォーム内マッチング）</div>
+            <div class="scr-card"><div class="scr-row" style="margin-top:0;"><span class="scr-tag blue">譲渡</span><span class="t" style="font-size:10px;font-weight:700;">運送業（県内）年商 6,800万・営業利益 520万</span><span style="flex:1;"></span><span class="scr-btn sm hot"><i class="mk" style="width:13px;height:13px;font-size:8px;">2</i>関心を出す</span></div><div class="d">後継者不在。ドライバー12名、車両18台。希望価格は応相談。掲載は運営が審査済み。</div></div>
+            <div class="scr-card"><div class="scr-row" style="margin-top:0;"><span class="scr-tag blue">譲渡</span><span class="t" style="font-size:10px;font-weight:700;">倉庫業（隣県）年商 4,200万</span><span style="flex:1;"></span><span class="scr-btn sm">関心を出す</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dsteps">
+      <div class="dstep"><i class="mk">1</i><div><span class="act">「買いたい条件」に、業種・地域・規模・予算・目的を書く</span><span class="see">ざっくりで構いません。担当が代わりに書くこともあります。上の「柱」の絵は、本業の1本＋譲り受けた会社の本数。</span><span class="then">担当パートナーが案件を探す起点になり、「担当パートナーからの提案」に案が並びます。</span></div></div>
+      <div class="dstep"><i class="mk">2</i><div><span class="act">気になる案件の「関心を出す」を押す</span><span class="see">その場で担当パートナーに届きます。<b>相手に直接は届きません。</b></span><span class="then">担当が橋渡しし、進める案件は「M&amp;A案件」として専門家と運営が伴走。成約すると柱が1本増え、顧問1年以上なら<b>FA報酬の優遇</b>が効きます。</span></div></div>
+      <div class="dstep g"><i class="mk">✓</i><div><span class="act">買い手になる準備度は、自動で点になる</span><span class="see">承継チェック・財務力・買い手の余力から。「第3｜買い手の余力を測る」の節目で、担当と一緒に読みます。</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide dm" data-t="⑥買った後に備える">
+  <div class="eyebrow">DEMO 6 — 買った後に備える（買い手プラン）</div>
+  <h2>買った後に待ち受けることを、御社の状況で先に学ぶ</h2>
+  <div class="demo">
+    <div class="scr">
+      <div class="scr-top">経営者ダッシュボード<span class="dt">買った後に備える</span></div>
+      <div class="scr-body">
+        <div class="scr-sb"><div class="lg">TsuguAi<i>-継-</i></div><div class="co">株式会社継</div>
+          <div class="ni dim"><b>▦</b>ダッシュボード</div><div class="ni dim"><b>▤</b>月次レポート</div><div class="ni dim"><b>✓</b>経営課題</div><div class="ni dim"><b>¥</b>お支払い</div><div class="ni dim"><b>≈</b>財務・資金繰り</div><div class="ni dim"><b>◆</b>企業価値・試算結果</div><div class="ni dim"><b>⚙</b>AI自動化診断</div><div class="ni dim"><b>⇢</b>出口の設計</div><div class="ni dim"><b>▣</b>買い手になる</div><div class="ni on"><b>☰</b>買った後に備える</div><div class="ni dim"><b>🌱</b>継ナビくん</div></div>
+        <div class="scr-main">
+          <div class="scr-panel"><div class="scr-ph">買った後に備える</div>
+            <div class="scr-row"><span class="scr-tag">準備した 2／学んだ 5／全 24</span><div class="scr-bar" style="flex:1;min-width:60px;"><i style="width:29%;"></i></div><span class="scr-btn ghost sm hot"><i class="mk" style="width:13px;height:13px;font-size:8px;">4</i>🌱 買った後の1年を、継ナビくんと想像する</span></div>
+            <div class="scr-row end hot" style="padding:4px;margin-top:6px;"><i class="mk ab">1</i><div><span class="scr-lab">想定する形</span><span class="scr-inp scr-sel">株式譲渡（会社ごと引き受ける）</span></div><div><span class="scr-lab">責任者の想定</span><span class="scr-inp scr-sel">自分が兼務する</span></div><div><span class="scr-lab">対象の業種</span><span class="scr-inp scr-sel">買いたい条件から（運送業）</span></div></div>
+            <div class="scr-row"><span class="scr-sbtn">すべて</span><span class="scr-sbtn on">自社に効く 6</span><span class="scr-sbtn">📄 事務・法務 6</span><span class="scr-sbtn">💴 お金・銀行 4</span><span class="scr-sbtn">👥 人・責任者 5</span><span class="scr-sbtn">🤝 取引先・対外 5</span><span class="scr-sbtn">🏭 業界特有 1</span><span class="scr-sbtn">🧭 統合の進め方 3</span></div>
+            <div class="scr-card l4 gold"><div class="scr-row" style="margin-top:0;"><span style="font-size:9px;color:#5A6981;">👥 人・責任者</span><span class="t">責任者を誰にするか</span><span class="scr-tag">契約前</span><span class="scr-tag gold">自社に効く</span></div>
+              <div class="d"><b style="color:#1E3A66;">待ち受けること：</b>買った会社を誰が日々見るか。決めないまま買うと、社長が二社を兼務して両方が薄くなる。<br><b style="color:#27684A;">いま準備できること：</b>右腕候補を一人決め、いまの会社で一部門を任せて試す。</div>
+              <div style="font-size:9px;color:#8A6A12;background:#FDFAF1;border-radius:6px;padding:4px 7px;margin-top:3px;"><b>自社では：</b>右腕がまだいないのに「自分が兼務する」想定です。承継チェックの「No.2の育成」が未着手。兼務するなら、いまの会社側の代理を先に決めてください。</div>
+              <div class="scr-row"><span class="scr-btn ghost sm hot"><i class="mk" style="width:13px;height:13px;font-size:8px;">2</i>🌱 学ぶ（継ナビくんに聞く）</span><span class="scr-sbtn hot"><i class="mk" style="width:13px;height:13px;font-size:8px;">3</i>未着手</span><span class="scr-sbtn">学んだ</span><span class="scr-sbtn">準備した</span><span class="scr-inp ph" style="flex:1;">メモ（誰に聞く・いつまでに）</span></div></div>
+            <div class="scr-card l4 gold" style="opacity:.7;"><div class="scr-row" style="margin-top:0;"><span style="font-size:9px;color:#5A6981;">🏭 業界特有</span><span class="t">運送業：許可の承継と運行管理者</span><span class="scr-tag">契約前</span><span class="scr-tag gold">自社に効く</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dsteps">
+      <div class="dstep"><i class="mk">1</i><div><span class="act">想定を3つ選ぶ：形／責任者／対象の業種</span><span class="see">株式譲渡か事業譲渡か、誰が経営するか、どの業界か。変えると下の<b>「自社では」</b>が変わります。買いたい条件・承継チェック・試算表・企業価値診断の数字を使っています。</span></div></div>
+      <div class="dstep"><i class="mk">2</i><div><span class="act">気になる項目の「学ぶ（継ナビくんに聞く）」</span><span class="see">御社の状況を渡した上で、<b>起きやすい場面3つ・準備の順番・誰に何を聞くか</b>を答えます。税額の計算はしません。</span></div></div>
+      <div class="dstep"><i class="mk">3</i><div><span class="act">「未着手／学んだ／準備した」を押し、メモを残して保存</span><span class="see">進み具合が上の帯に出ます。担当パートナーのカルテにも同じ画面があり、面談で一緒に埋められます。</span><span class="then">成約すると、M&amp;A案件の PMI（統合）タスクに引き継がれます。</span></div></div>
+      <div class="dstep g"><i class="mk">4</i><div><span class="act">「買った後の1年を、継ナビくんと想像する」</span><span class="see">契約前・当日・最初の1週間・100日・半年・1年で、事務・お金・人・対外・業界に何が起きるかを月ごとに描きます。</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide dm" data-t="⑦月次レポート・財務">
+  <div class="eyebrow">DEMO 7 — 月次レポート／財務・資金繰り</div>
+  <h2>試算表を送るだけ。会社の値段も、財務力も、毎月そろう</h2>
+  <div class="demo">
+    <div class="scr">
+      <div class="scr-top">経営者ダッシュボード<span class="dt">月次レポート</span></div>
+      <div class="scr-body">
+        <div class="scr-sb"><div class="lg">TsuguAi<i>-継-</i></div><div class="co">株式会社継</div>
+          <div class="ni dim"><b>▦</b>ダッシュボード</div><div class="ni on"><b>▤</b>月次レポート</div><div class="ni dim"><b>✓</b>経営課題</div><div class="ni dim"><b>¥</b>お支払い</div><div class="ni on" style="background:none;color:rgba(255,255,255,.72);"><b style="background:#C39B3F;">≈</b>財務・資金繰り</div><div class="ni dim"><b>◆</b>企業価値・試算結果</div><div class="ni dim"><b>⚙</b>AI自動化診断</div><div class="ni dim"><b>⇢</b>出口の設計</div><div class="ni dim"><b>▣</b>買い手になる</div><div class="ni dim"><b>☰</b>買った後に備える</div><div class="ni dim"><b>🌱</b>継ナビくん</div></div>
+        <div class="scr-main">
+          <div class="scr-panel hot"><i class="mk ab">1</i><div class="scr-row" style="margin-top:0;"><span class="scr-ph" style="margin:0;">月次レポート</span><span class="scr-inp scr-sel" style="min-width:60px;">2026-08</span><span style="flex:1;"></span><span class="scr-btn ghost sm">🖨 印刷</span><span class="scr-btn ghost sm">PDFで保存</span></div>
+            <div class="scr-note" style="margin-top:5px;"><b style="color:#8A6A12;">担当パートナー 山田より</b>　8月は売上が前年比+6%。賞与月の資金は薄いので、9月は入金の前倒しを一緒に当たります。</div>
+            <div class="scr-chips" style="margin-top:5px;"><div class="scr-chip"><div class="l">売上</div><div class="v">2,400万</div><div class="s">前年比 +6%</div></div><div class="scr-chip"><div class="l">営業利益</div><div class="v">180万</div><div class="s">利益率 7.5%</div></div><div class="scr-chip"><div class="l">現預金</div><div class="v w">1,200万</div><div class="s">月商 2.1か月分</div></div><div class="scr-chip"><div class="l">これまでに増えた現金</div><div class="v g">443万</div><div class="s">年 380万ペース</div></div></div>
+          </div>
+          <div class="scr-panel"><div class="scr-ph">財務・資金繰り　<span style="font-weight:400;font-size:9px;color:#5A6981;">入力は担当パートナーが行います</span></div>
+            <div class="scr-chips"><div class="scr-chip hot"><i class="mk ab">2</i><div class="l">自己資本比率</div><div class="v">28%</div><div class="s">目安 30%</div></div><div class="scr-chip"><div class="l">債務償還年数</div><div class="v">6.2年</div><div class="s">10年超で注意</div></div><div class="scr-chip"><div class="l">支払サイト</div><div class="v">42日</div></div><div class="scr-chip hot"><i class="mk ab">3</i><div class="l">労働分配率</div><div class="v w">58%</div><div class="s">業種の目安 50%</div></div></div>
+            <div class="scr-note g" style="margin-top:5px;">賃上げしても利益を出し続ける打ち手：①労働時間の短縮 ②配置転換で粗利を増やす ③値上げ ― 数字で試せます。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dsteps">
+      <div class="dstep"><i class="mk">1</i><div><span class="act">「月次レポート」を開く（承認済みだけが並ぶ）</span><span class="see">数字と、担当パートナーの<b>冒頭のひとこと</b>。「印刷」「PDFで保存」で、<b>銀行や税理士への説明資料</b>にそのまま。</span><span class="then">社長がすることは、試算表をメッセージで送るか、顧問税理士に直接入力をお願いするだけ。</span></div></div>
+      <div class="dstep"><i class="mk">2</i><div><span class="act">「財務・資金繰り」で財務力を見る</span><span class="see">試算表17項目から<b>自己資本比率・債務償還年数・支払サイト・企業価値</b>まで自動で出ます。</span></div></div>
+      <div class="dstep"><i class="mk">3</i><div><span class="act">労働分配率（人件費÷粗利）を業種の目安と並べる</span><span class="see">賃上げの相談の材料。<b>時給を上げても利益を出し続ける3つの打ち手</b>を数字で試せます。</span><span class="then">導入診断報告書（企業価値診断書／資金繰り現状レポート／保険・固定費の棚卸し／12ヶ月の改善ロードマップ）が揃うと、「これまでに増えた現金」が積み上がり始めます。</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide dm" data-t="⑧契約から90日">
+  <div class="eyebrow">DEMO 8 — ご契約から、はじめの90日</div>
+  <h2>URLを開いて同意するだけ。登録すると、担当が自動で付く</h2>
+  <div class="demo wide">
+    <div class="scr nosb">
+      <div class="scr-top">顧問契約書<span class="dt">担当パートナーから届いたURL</span></div>
+      <div class="scr-body">
+        <div class="scr-main">
+          <div class="scr-panel"><div class="scr-ph">TsuguAi -継- 顧問契約書</div>
+            <div style="font-size:9px;color:#5A6981;line-height:1.6;">第2条（顧問料）　プラン：<b style="color:#1E3A66;">買い手プラン（成長）　月額 45,000円（税別）</b>。プランを切り替えたときは、翌月の請求から切替後の金額を請求します。<br>第2条の2（初期導入費）　100,000円（税別・初回のみ）。はじめの90日で担当パートナーと運営が動くぶんの費用です。<br>第2条の3（M&amp;Aの報酬と、顧問先の優遇）　顧問契約1年以上で最低報酬なし、継続年数×10%（最大50%）の割引。</div>
+            <div class="scr-row end" style="margin-top:6px;"><div><span class="scr-lab">法人名（必須）</span><span class="scr-inp">株式会社継</span></div><div><span class="scr-lab">ご担当者さまのお名前</span><span class="scr-inp">継 太郎</span></div><div><span class="scr-lab">契約日</span><span class="scr-inp ph">自動で入ります</span></div></div>
+            <div class="scr-row"><span class="scr-btn hot"><i class="mk" style="width:13px;height:13px;font-size:8px;">1</i>同意して契約する</span><span style="font-size:9px;color:#5A6981;">同意後は同じURLでいつでも読み返せます</span></div>
+          </div>
+          <div class="scr-row" style="gap:6px;">
+            <div class="scr-card l4 green" style="flex:1;margin-top:0;"><div class="t">✉️ 締結のお知らせ（メール・LINE）</div><div class="d">担当パートナーと運営に、締結が即時に届きます。</div></div>
+            <div class="scr-card l4 blue hot" style="flex:1;margin-top:0;"><i class="mk ab">2</i><div class="t">契約書のメールアドレスで新規登録</div><div class="d"><b>自動で担当パートナーが付きます。</b>別のアドレスだと結びつきません。</div></div>
+          </div>
+          <div class="scr-panel hot"><i class="mk ab">3</i><div class="scr-ph">はじめの90日（土台づくり）　<span style="font-weight:400;font-size:9px;color:#5A6981;">起点：ご契約の翌月1日</span></div>
+            <div class="scr-steps"><span class="done">1か月目｜数字が見える</span><span class="on">2か月目｜お金の流れが分かる</span><span>3か月目｜1年の道筋が決まる</span></div>
+            <div style="font-size:9px;color:#5A6981;line-height:1.6;margin-top:4px;">お願いしたいのは資料だけ：試算表3か月分・保険証券・借入一覧。「ご提供待ち」の項目は届き次第着手。整わなかった節目は次の3か月も並行して続けます。</div>
+            <div class="scr-steps" style="margin-top:5px;"><span class="on">第1｜土台づくり</span><span>第2｜現金を増やす</span><span>第3｜買い手の余力を測る</span><span>第4｜次の1社の条件を決める</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dsteps">
+      <div class="dstep"><i class="mk">1</i><div><span class="act">届いたURLを開き、法人名とお名前を書いて「同意して契約する」</span><span class="see">プランと金額、初期導入費、M&amp;Aの優遇が本文に書かれています。<b>契約日は自動で入ります。</b></span><span class="then">担当パートナーと運営に、締結の知らせがメール・LINEで即時に届きます。</span></div></div>
+      <div class="dstep"><i class="mk">2</i><div><span class="act">契約書と同じメールアドレスで新規登録</span><span class="see">ログインした瞬間から御社の画面になり、<b>担当パートナーが自動で付きます</b>。</span><span class="then">ダッシュボードの先頭に「まずはこの3つだけ」の案内。①手元資金 ②継ナビくんに一つ聞く ③承継シミュレーション。</span></div></div>
+      <div class="dstep g"><i class="mk">3</i><div><span class="act">翌月1日から「はじめの90日」</span><span class="see">数字が見える → お金の流れが分かる → 1年の道筋が決まる。<b>成果を急がない期間</b>です。</span><span class="then">そこから四半期ごとに、伴走の1年（土台づくり → 現金を増やす → 買い手の余力を測る → 次の1社の条件を決める）。柱が1本増えるまでが、ひとつの周回。</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide dm" data-t="料金">
   <div class="eyebrow">料金</div>
   <h2>顧問料に、ぜんぶ含まれます</h2>
   <div class="grid g2" style="margin-top:16px;">
     <div class="card soft"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8h20l10 10v38H18z"/><path d="M38 8v10h10"/><path d="M25 30h14M25 38h14"/><path stroke="#C39B3F" d="M25 46h8"/></svg></div><h3>含まれるもの</h3><p>✔ 承継シミュレーション（何度でも）<br>✔ 資金繰り・企業価値の見える化<br>✔ 月次レポート・課題の伴走<br>✔ 継ナビくん（24時間AI）<br>✔ AI自動化診断・マッチング掲載</p></div>
-    <div class="card w"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 30 30 10h22v22L32 52z"/><circle cx="44" cy="18" r="3"/><text x="26" y="40" font-size="17" font-weight="700" fill="#C39B3F" stroke="none" font-family="inherit">¥</text></svg></div><h3>割引制度</h3><p>✔ 複数社契約：2〜4社 <b>3%</b>／5社〜 <b>5%</b><br>✔ M&A成約（HD化）：<b>5%</b><br>✔ 担当パートナーのランク：最大 <b>10%</b><br>→ 合算で<b>最大10%OFF</b></p></div>
+    <div class="card w"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 30 30 10h22v22L32 52z"/><circle cx="44" cy="18" r="3"/><text x="26" y="40" font-size="17" font-weight="700" fill="#C39B3F" stroke="none" font-family="inherit">¥</text></svg></div><h3>2つのプラン（税別・月額）</h3><p>✔ <b>買い手プラン（成長）45,000円</b>：毎月の数字で柱を増やす<br>✔ <b>売り手プラン（譲渡準備）30,000円</b>：数年先の出口へ準備する<br>✔ 初期導入費 <b>100,000円</b>（初回のみ）：はじめの90日（土台づくり）で担当パートナーと運営が動くぶんの費用<br>✔ 顧問1年以上で <b>M&amp;Aの優遇</b>（最低報酬なし・年10%ずつ最大50%引き）</p></div>
   </div>
-  <div class="note" style="margin-top:16px;">顧問料は<b>2つのプラン</b>から選びます。<b>買い手プラン（成長）45,000円</b>／月（税別）は、毎月の数字で柱を増やす伴走。<b>売り手プラン（譲渡準備）30,000円</b>／月（税別）は、数年先の出口へ準備する伴走です。土台（財務・資金繰り・出口の設計）は共通で、買い手には買い手の部品が足されます。切替は担当パートナーを通じて運営に申し出、翌月の請求から変わります。</div>
-  <div class="note" style="margin-top:10px;"><b>顧問先だけの M&amp;A の優遇</b>：顧問契約が1年以上なら、譲渡・譲受の FA 報酬に<b>最低報酬を設けず、継続年数1年につき10%（最大50%）</b>を割り引きます。顧問料は出口の報酬の先払いでもあります。同じ案件で相手も顧問先のときは、利益相反を事前に説明し同意を得てから関与します。</div>
-  <div class="note" style="margin-top:10px;">初期導入費（100,000円・税別・初回のみ）は、<b>はじめの90日（土台づくり）で担当パートナーと運営が動くぶんの費用</b>です。試算表3か月分・保険証券・借入一覧をお預かりし、数字が見える状態まで整えます。月額の顧問料には含まれません。</div>
-  <div class="note" style="margin-top:10px;">払う理由は「相談相手」ではなく、<b>買収判断のインフラと、会社の値段を上げる伴走</b>を持つためです。</div>
+  <div class="note" style="margin-top:16px;">土台（財務・資金繰り・出口の設計・継ナビくん）は<b>両プラン共通</b>で、買い手プランには「買い手になる」「買った後に備える」が足されます。<b>切替は担当パートナーを通じて運営に申し出、翌月の請求から変わります。</b>会社の規模で値段は変えません。割引制度はありません。</div>
+  <div class="note" style="margin-top:10px;"><b>M&amp;Aの優遇</b>は顧問契約1年以上から。同じ案件で相手も顧問先のときは、利益相反を事前に説明し同意を得てから関与します。払う理由は「相談相手」ではなく、<b>買収判断のインフラと、会社の値段を上げる伴走</b>を持つためです。</div>
 </section>
 
 <section class="slide" data-t="次の一歩">
