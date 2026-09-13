@@ -87,5 +87,20 @@ const IDX = R('index.html');
   ok('運営説明書：総合振込ファイルと請求と未収の手順', /総合振込ファイル/.test(MANA) && /請求と未収/.test(MANA) && /この月の請求を立てる/.test(MANA));
   no('運営説明書：「保存されません」', /試算用で、保存されません/.test(MANA));
 }
+// ⑥ 画面に合わせる（真ん中に・大きく）と、位置づけの一文
+{
+  const FIT = R('pitch-fit.js'), WA = R('pitch-wa.css');
+  ok('pitch-fit.js：表示中の一枚を測って --fit を置く', /setProperty\('--fit'/.test(FIT) && /window\.show=function\(i\)\{ _show\(i\); fit\(\); \}/.test(FIT));
+  ok('pitch-wa.css：deck は中央寄せ、slide は zoom var(--fit)', /\.deck\{[^}]*justify-content:center/.test(WA) && /\.slide\{zoom:var\(--fit,1\);\}/.test(WA) && /@media print\{ \.deck\{[^}]*\} \.slide\{zoom:1;\} \}/.test(WA));
+  ok('印刷では隠さない（screen だけで隠す）', /@media screen\{ \.slide:not\(\.on\)\{display:none!important;\} \}/.test(WA));
+  [['pitch-customer', PITC], ['pitch-partner', PITP], ['pitch-general', PITG], ['pitch-bank', PITB], ['pitch-finance', PITF]].forEach(function (x) {
+    ok(x[0] + ' が pitch-fit.js を読む（インラインの script のあと）', /<\/script>\n<script src="pitch-fit.js"><\/script>\n<\/body>/.test(x[1]));
+  });
+  const POS = '明確な出口（ゴール）を経営者と一緒に決め、管理しながら伴走するプラットフォーム';
+  [['pitch-customer', PITC], ['pitch-partner', PITP], ['pitch-general', PITG], ['pitch-bank', PITB], ['recruit-partner', REC]].forEach(function (x) {
+    ok(x[0] + ' に位置づけの一文', x[1].indexOf(POS) >= 0);
+    ok(x[0] + ' に「交渉前から交渉後まで」の一文', x[1].indexOf('交渉前の準備から交渉中、交渉後もずっと一緒にいます。') >= 0);
+  });
+}
 console.log(bad.length ? bad.join('\n') : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
