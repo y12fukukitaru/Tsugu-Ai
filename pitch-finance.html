@@ -56,7 +56,6 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
 .bar button:hover{background:rgba(255,255,255,.22);}
 .bar .pos{font-family:'DM Sans',sans-serif;color:#B7C4D6;font-size:13px;min-width:66px;text-align:center;}
 .bar .ttl{color:#fff;font-size:13px;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-#backbtn{position:fixed;top:12px;right:14px;z-index:30;font-family:inherit;font-size:12.5px;background:rgba(14,27,51,.85);color:#fff;border:1px solid rgba(207,173,98,.5);border-radius:9px;padding:8px 14px;cursor:pointer;display:none;}
 
 /* ===== ピクトグラム（イラスト） ===== */
 .cico{display:flex;justify-content:center;margin-bottom:10px;}
@@ -82,7 +81,7 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
   .q{font-size:16px;} .big{font-size:20px;}
 }
 @media print{
-  body{background:#fff;} .bar,#backbtn{display:none!important;} .deck{padding:0;}
+  body{background:#fff;} .bar, .deck{padding:0;}
   .slide,.slide:not(.on){display:block!important;box-shadow:none;border-radius:0;margin:0;max-width:none;width:100%;aspect-ratio:auto;height:100vh;page-break-after:always;}
   @page{size:A4 landscape;margin:0;}
 }
@@ -91,7 +90,6 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
 <link rel="stylesheet" href="pitch-wa.css">
 </head>
 <body>
-<button id="backbtn" onclick="parent.postMessage({tsugu:'closeManual'},'*')">✕ プラットフォームに戻る</button>
 <div class="deck">
 <section class="slide cover on" data-t="表紙">
   <div class="hx">
@@ -226,7 +224,6 @@ document.addEventListener('keydown',function(e){
   if(e.key==='ArrowLeft'){ e.preventDefault(); mv(-1); }
 });
 S.forEach(function(s){ s.addEventListener('click',function(e){ if(e.target.tagName!=='A') mv(1); }); });
-if(window.parent!==window){ document.getElementById('backbtn').style.display='block'; }
 show(0);
 </script>
 <script src="pitch-fit.js"></script>

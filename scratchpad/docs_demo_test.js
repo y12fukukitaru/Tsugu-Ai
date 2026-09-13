@@ -102,5 +102,37 @@ const IDX = R('index.html');
     ok(x[0] + ' に「交渉前から交渉後まで」の一文', x[1].indexOf('交渉前の準備から交渉中、交渉後もずっと一緒にいます。') >= 0);
   });
 }
+// ⑦ 全画面・スワイプ・右上の操作（ウェビナー／プレゼン用）
+{
+  const FIT = R('pitch-fit.js'), WA = R('pitch-wa.css');
+  ok('全画面：入る・出る・切り替える', /function enter\(/.test(FIT) && /function leave\(/.test(FIT) && /function toggle\(/.test(FIT) && /requestFullscreen/.test(FIT) && /webkitRequestFullscreen/.test(FIT));
+  ok('全画面が使えない端末でも、見立ての全画面に落とす', /body\.classList\.add\('pf-on'\)/.test(FIT));
+  ok('ブラウザ側で解除されたときも見た目を合わせる', /fullscreenchange/.test(FIT) && /webkitfullscreenchange/.test(FIT));
+  ok('スワイプ：横だけ・45px 以上', /touchstart/.test(FIT) && /touchend/.test(FIT) && /Math\.abs\(dx\)>45/.test(FIT) && /Math\.abs\(dx\)>Math\.abs\(dy\)/.test(FIT));
+  ok('スワイプ直後の click は握りつぶす（二重に進まない）', /if\(swiped\)\{ swiped=false; e\.stopPropagation\(\); e\.preventDefault\(\); \}/.test(FIT));
+  ok('右上：全画面と戻るの2つ、全画面中は戻るを出さない', /aria-label', on\?'全画面を解除':'全画面で表示'/.test(FIT) && /btnBack\.style\.display = \(on\|\|window\.parent===window\) \? 'none' : ''/.test(FIT));
+  ok('右上の印は線で描く（端末で形が変わらないように）', /SVG_OPEN=/.test(FIT) && /SVG_CLOSE=/.test(FIT) && /SVG_X=/.test(FIT));
+  ok('戻るは枠の親に合図を送る', /parent\.postMessage\(\{tsugu:'closeManual'\}/.test(FIT));
+  ok('全画面のあいだ、操作が途切れたらバーを退かせる', /body\.classList\.add\('pf-ui'\)/.test(FIT) && /body\.pf-on \.bar\{transform:translateY\(115%\)/.test(WA) && /body\.pf-on\.pf-ui \.bar\{transform:none;\}/.test(WA));
+  ok('右上は普段うすく、近づくと濃い', /\.pf-top\{[^}]*opacity:\.22/.test(WA) && /\.pf-top:hover,body\.pf-ui \.pf-top\{opacity:1;\}/.test(WA) && /body\.pf-hint \.pf-top\{opacity:\.85;\}/.test(WA));
+  ok('触る端末では hover が無いので、常に見える濃さ', /@media\(hover:none\)\{ \.pf-top\{opacity:\.5;\} \}/.test(WA));
+  ok('印刷では右上を隠す', /\.bar,\.pf-top\{display:none!important;\}/.test(WA));
+  [['pitch-customer', PITC], ['pitch-partner', PITP], ['pitch-general', PITG], ['pitch-bank', PITB], ['pitch-finance', PITF]].forEach(function (x) {
+    no(x[0] + '：古い戻るボタンは残っていない', /backbtn/.test(x[1]));
+  });
+  ok('枠（iframe）の中でも全画面が使えるようにしてある', /<iframe id="manual-frame" allow="fullscreen" allowfullscreen/.test(IDX));
+  ok('パートナー説明書に、資料の見せかた', /右上の<b>⛶<\/b>で<b>全画面<\/b>/.test(MANP) && /指で左右にスワイプ/.test(MANP));
+  ok('継ナビくんの案内にも、資料の見せかた', /右上の⛶で全画面/.test(IDX) && /指で左右にスワイプ/.test(IDX));
+}
+// ⑧ 今日の一手のボタンは「読んだ」の一つだけ
+{
+  no('本体：役に立った／不要のボタンは無い', />👍 役に立った<\/button>|>不要（表示しない）<\/button>/.test(IDX));
+  no('本体：使われていなかった feedback の書き込みは残さない', /agentInsightMark/.test(IDX));
+  ok('本体：読んだ のボタンと、読み返せる案内', /✓ 読んだ<\/button>/.test(IDX) && /今日のうちは、ここで読み返せます/.test(IDX));
+  [['manual-customer', MANC], ['manual-partner', MANP], ['pitch-partner', PITP]].forEach(function (x) {
+    no(x[0] + '：役に立った／不要は書かない', /👍 役に立った|不要（表示しない）|「役に立った／不要」/.test(x[1]));
+  });
+  ok('説明書：読んだら薄くなって残る、と書いてある', /「✓ 読んだ」<\/b>を押すと薄くなり/.test(MANC) && /「✓ 読んだ」<\/b>を押すと薄くなり/.test(MANP));
+}
 console.log(bad.length ? bad.join('\n') : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
