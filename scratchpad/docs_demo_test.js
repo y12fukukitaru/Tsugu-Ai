@@ -143,5 +143,12 @@ const IDX = R('index.html');
   ok('本体：出口の設計の案内にも交渉力', /早く決めておくほど、そのときの<b style="color:#1E3A66;">交渉力<\/b>が変わります/.test(IDX));
   ok('経営者説明書：早く決めるほど交渉力が変わる', /早く決めておくほど、そのときの交渉力が変わります。/.test(MANC));
 }
+// ⑩ 買う相手を狭めない（同業に限らない）
+{
+  ok('3つ目の問いは「会社を買う」', /<span class="n">3<\/span>会社を「買う」ことを、考えたことはありますか？/.test(PITC));
+  no('顧客向け資料に「同業の」は残っていない', /同業/.test(PITC));
+  no('経営者説明書にも「同業の」は残っていない', /同業/.test(MANC));
+  ok('本体の承継シミュレーションは相手を広く取る', /気になる会社（同業・取引先・近隣など）/.test(IDX));
+}
 console.log(bad.length ? bad.join('\n') : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
