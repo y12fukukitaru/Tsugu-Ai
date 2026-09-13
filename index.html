@@ -1214,7 +1214,9 @@
 
 <!-- 操作説明書ビューア：別タブを開かず、プラットフォーム内で閲覧する -->
 <div id="manual-modal" class="hidden" style="position:fixed;inset:0;z-index:80;background:#0B1220;">
-  <iframe id="manual-frame" style="width:100%;height:100%;border:none;display:block;" title="操作説明書"></iframe>
+  <!--  allow="fullscreen"：商談スライドの「全画面」を、この枠の中からも使えるようにする。
+        付けないと、枠の中で requestFullscreen() が黙って断られる  -->
+  <iframe id="manual-frame" allow="fullscreen" allowfullscreen style="width:100%;height:100%;border:none;display:block;" title="操作説明書"></iframe>
 </div>
 
 <!-- 継ナビくん：右下フローティング窓口（ログイン後に knvInit() で表示） -->
@@ -1381,7 +1383,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260913-02';
+  var APP_BUILD='20260914-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -14147,10 +14149,13 @@
         +'<div style="font-size:13px;font-weight:600;color:var(--ink);">'+(read?'':'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#C39B3F;margin-right:6px;vertical-align:2px;"></span>')+esc(x.title||'')+(read?' <span style="font-size:10px;color:var(--muted);font-weight:400;">既読</span>':'')+'</div>'
         +'<div style="font-size:12.5px;color:var(--ink);line-height:1.75;margin:6px 0;">'+agentInsightBody(x.body)+'</div>'
         +(x.reason?'<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">検出根拠: '+esc(x.reason)+'</div>':'')
-        +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-          +(read?'':'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:7px;padding:4px 10px;" onclick="agentInsightRead(\''+x.id+'\')">✓ 既読にする</button>')
-          +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:7px;padding:4px 10px;" onclick="agentInsightMark(\''+x.id+'\',\'useful\')">👍 役に立った</button>'
-          +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:7px;padding:4px 10px;" onclick="agentInsightMark(\''+x.id+'\',\'not_needed\')">不要（表示しない）</button>'
+        //  ボタンは「読んだ」の一つだけ。以前は「👍 役に立った」「不要（表示しない）」も
+        //  並べていたが、押しても画面の動きは同じで、残る値（feedback）はどこからも
+        //  読んでいなかった。押し分ける意味の無いものを二つ置くと、どちらを押せば
+        //  よいか考えさせるだけになる。提案への評価は四半期のアンケートで聞く
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'
+          +(read?'':'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:7px;padding:4px 10px;" onclick="agentInsightRead(\''+x.id+'\')">✓ 読んだ</button>')
+          +(read?'<span style="font-size:11px;color:var(--muted);">今日のうちは、ここで読み返せます</span>':'')
         +'</div>'
       +'</div>';
     });
@@ -14167,14 +14172,8 @@
     // 右下の継ナビくんボタンのバッジを更新（お知らせ件数＋今日の一手）
     if(typeof knvBadgesRender==='function') knvBadgesRender();
   }
-  async function agentInsightMark(id,fb){
-    // 「役に立った/不要」はブリーフ生成の学習材料として保存する（設計書のフィードバックループ）
-    try{ await sb.from('agent_insights').update({feedback:fb,status:fb==='useful'?'done':'dismissed'}).eq('id',id); }catch(e){}
-    AGENT_INSIGHTS=AGENT_INSIGHTS.filter(function(x){ return x.id!==id; });
-    renderAgentInsights();
-    try{ renderNotifCenter(); }catch(e){}
-  }
-  // 既読管理：既読にしても7日間は薄い表示で読み返せる（削除ではない）
+  // 読んだら薄くなって残る（削除ではない）。行そのものは翌朝の入れ替えと、
+  // 14日の掃除で自然に消えるので、こちらから消す操作は要らない
   async function agentInsightRead(id){
     try{ await sb.from('agent_insights').update({status:'read'}).eq('id',id).eq('status','unread'); }catch(e){}
     AGENT_INSIGHTS.forEach(function(x){ if(x.id===id && x.status==='unread') x.status='read'; });
@@ -14323,7 +14322,7 @@
     if(aisecPortal()==='consultant'){
       return common
         +'【パートナーポータルの画面ガイド】'
-        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全5章。必修10レッスン＋発展のM&A講座8レッスン、第5章の理解度チェックで修了)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁/労働分配率=時給を上げたとき人件費÷粗利をどこに保ち利益を出し続けるか。業種別の目安と、時短・配置転換・値上げで要る大きさ。カルテの月次レポートの上からその会社の数字で開ける)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内。カルテの「やること」の下に「今月の面談台本」(その会社の数字から見せる数字3つ・問い3つ・買い手の基盤へのつながり)と「継ナビくんのナビ」(土台→現金→余力→条件の順番と、済／次／あと)。ナビは12の道具(試算表→資金繰り→保険・固定費→支払予定→導入診断報告書→企業価値→出口の設計→買った後に備える→準備度→買いたい条件。AI診断・銀行提出は任意。売り手プランでは準備度・買いたい条件・買った後に備えるも任意)。各道具の見出しの下に「なぜ今・やると分かること・次の一手」の案内と「結果を継ナビくんと読む」ボタン。出口の設計(5つの出口・目標の年・見る数字のいま/目標/差・持株会社の合図。上部にいまの顧問プランとM&Aの優遇、「◯◯プラン への切替を運営に依頼」)と買った後に備える(6分類24項目・自社では・学ぶ・未着手/学んだ/準備した)はカルテの企業価値・承継準備の中。伴走の1年は契約の翌月1日を起点に暦の月で3か月ずつ、土台が整わなければ次の四半期も並行、四半期の終わりに検証)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（投資・融資・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し、パネルは7タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と担当顧客の面談・期日・支払予定が1枚に並ぶカレンダー。月/週/一覧。「＋ 予定」か、話しかけて登録)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ)。'
+        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全5章。必修10レッスン＋発展のM&A講座8レッスン、第5章の理解度チェックで修了)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁/労働分配率=時給を上げたとき人件費÷粗利をどこに保ち利益を出し続けるか。業種別の目安と、時短・配置転換・値上げで要る大きさ。カルテの月次レポートの上からその会社の数字で開ける)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)。説明資料(経営者向け・パートナー候補向けなど)は継ナビくんの「サポート」タブから開き、右上の⛶で全画面。送りは ←→ か、紙を押す、スマホ・タブレットは指で左右にスワイプ。Escかもう一度⛶で解除、✕でプラットフォームに戻る／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内。カルテの「やること」の下に「今月の面談台本」(その会社の数字から見せる数字3つ・問い3つ・買い手の基盤へのつながり)と「継ナビくんのナビ」(土台→現金→余力→条件の順番と、済／次／あと)。ナビは12の道具(試算表→資金繰り→保険・固定費→支払予定→導入診断報告書→企業価値→出口の設計→買った後に備える→準備度→買いたい条件。AI診断・銀行提出は任意。売り手プランでは準備度・買いたい条件・買った後に備えるも任意)。各道具の見出しの下に「なぜ今・やると分かること・次の一手」の案内と「結果を継ナビくんと読む」ボタン。出口の設計(5つの出口・目標の年・見る数字のいま/目標/差・持株会社の合図。上部にいまの顧問プランとM&Aの優遇、「◯◯プラン への切替を運営に依頼」)と買った後に備える(6分類24項目・自社では・学ぶ・未着手/学んだ/準備した)はカルテの企業価値・承継準備の中。伴走の1年は契約の翌月1日を起点に暦の月で3か月ずつ、土台が整わなければ次の四半期も並行、四半期の終わりに検証)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（投資・融資・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し、パネルは7タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と担当顧客の面談・期日・支払予定が1枚に並ぶカレンダー。月/週/一覧。「＋ 予定」か、話しかけて登録)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ)。'
         +'操作説明書は右下パネルの「サポート」タブから開けます。毎朝の「今日の一手」とお知らせは右下ボタンのバッジに届きます。';
     }
     //  運営がここに落ちていました。運営コンソールを開いている方に
