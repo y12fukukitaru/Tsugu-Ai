@@ -99,6 +99,7 @@ const IDX = R('index.html');
   const POS = '明確な出口（ゴール）を経営者と一緒に決め、管理しながら伴走するプラットフォーム';
   [['pitch-customer', PITC], ['pitch-partner', PITP], ['pitch-general', PITG], ['pitch-bank', PITB], ['recruit-partner', REC]].forEach(function (x) {
     ok(x[0] + ' に位置づけの一文', x[1].indexOf(POS) >= 0);
+    ok(x[0] + ' に「交渉前から交渉後まで」の一文', x[1].indexOf('交渉前の準備から交渉中、交渉後もずっと一緒にいます。') >= 0);
   });
 }
 console.log(bad.length ? bad.join('\n') : 'ALL OK', n, 'checks,', bad.length, 'failed');
