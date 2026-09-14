@@ -36,7 +36,9 @@
 }
 .scr-top .dt{margin-left:auto;font-size:9px;font-weight:400;color:#5A6981;background:#F5F7FA;border:1px solid #E2E7EF;border-radius:99px;padding:1px 7px;}
 .scr-body{display:flex;min-height:200px;}
-.scr-sb{width:96px;flex:0 0 96px;background:#0E1B33;color:rgba(255,255,255,.72);padding:8px 6px;font-size:9px;}
+/*  メニューの幅。「ダッシュボード」「エンタープライズ」で切れない幅にしてある。
+    狭めると、いちばん長い項目から順に読めなくなる */
+.scr-sb{width:116px;flex:0 0 116px;background:#0E1B33;color:rgba(255,255,255,.72);padding:8px 6px;font-size:9px;}
 .scr-sb .lg{font-family:'DM Sans','Noto Sans JP',sans-serif;font-size:11px;color:#fff;letter-spacing:.03em;padding:2px 6px 6px;}
 .scr-sb .lg i{font-style:normal;color:#C39B3F;font-size:8px;margin-left:3px;}
 .scr-sb .co{font-size:8.5px;color:#fff;padding:0 6px 6px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -140,7 +142,9 @@
 .dstep .mk{width:22px;height:22px;font-size:12px;margin-top:1px;}
 .dstep > div{flex:1;min-width:0;}
 .dstep .act{display:block;font-size:13.5px;font-weight:700;color:#1E3A66;line-height:1.5;}
-.dstep .see,.dstep .then{display:block;font-size:11.5px;color:#18202E;line-height:1.7;margin-top:3px;padding-left:44px;position:relative;}
+/*  左の札（分かる／そのあと）のぶんだけ本文を下げる。札の幅より狭いと、
+    本文の1文字目に札が重なって読めなくなる（「そのあと」で 50px 弱） */
+.dstep .see,.dstep .then{display:block;font-size:11.5px;color:#18202E;line-height:1.7;margin-top:3px;padding-left:56px;position:relative;}
 .dstep .see::before,.dstep .then::before{position:absolute;left:0;top:3px;font-size:9px;font-weight:700;letter-spacing:.06em;padding:1px 6px;border-radius:99px;}
 .dstep .see::before{content:'分かる';background:#E8EFFA;color:#2C5DA8;}
 .dstep .then::before{content:'そのあと';background:#FBF3DF;color:#8A6A12;}
@@ -163,7 +167,7 @@
 
 /* ===== 説明書（縦に読む）で使うとき：少し大きく ===== */
 .demo.tall .scr{font-size:11.5px;}
-.demo.tall .scr-sb{width:112px;flex-basis:112px;font-size:10px;}
+.demo.tall .scr-sb{width:128px;flex-basis:128px;font-size:10px;}
 .demo.tall .dstep .act{font-size:14.5px;}
 .demo.tall .dstep .see,.demo.tall .dstep .then{font-size:12.5px;}
 
