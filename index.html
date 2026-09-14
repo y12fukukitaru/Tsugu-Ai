@@ -1383,7 +1383,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260914-03';
+  var APP_BUILD='20260914-04';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -16260,14 +16260,19 @@
 
   // ---- EP-II（所属営業型）----
   function epSum2(d){
-    var n=epActive(d).length, seats=d.members.filter(function(m){ return m.status==='active'; }).length;
-    var cost=epPartnerCost(n, seats, true);
+    //  EP-II の顧問先は「顧問先」欄（ep_clients）ではなく、担当表（ep_book）が正。
+    //  顧客は継に帰属し、担当は profiles.consultant_id で決まるので、本部が
+    //  ep_clients に登録することはない。そちらを数えると、担当が付いていても
+    //  ずっと 0 社と出てしまう
+    var seats=d.members.filter(function(m){ return m.status==='active'; }).length;
+    var cus={}; (d.book||[]).forEach(function(r){ if(r.customer_id) cus[r.customer_id]=1; });
+    var n=Object.keys(cus).length;
     var hq=epSplit(EP_STD_FEE,'EP2',0.5).hq;   // 本部は料率によらず一律10%
     var h='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">'
-      +epCard('所属している方', seats+' 名', '担当者登録使用料 '+epYen(EP_SEAT_FEE)+' 円／人・月')
-      +epCard('担当している会社', n+' 社', '稼働中の顧問先')
+      +epCard('所属している方', seats+' 名', '担当者登録使用料はご本人のご負担')
+      +epCard('担当している会社', n+' 社', '担当表に出ている顧客の数')
       +epCard('本部の受取（月）', epYen(n*hq)+' 円', n+' 社 × '+epYen(hq)+' 円（一律10%）')
-      +epCard('継へのお支払い（月）', epYen(cost.total)+' 円', 'AI '+epYen(cost.ai)+' ＋ 席 '+epYen(cost.seat))
+      +epCard('本部のご負担（月）', '0 円', '利用料は所属の方それぞれのご負担', '#27684A')
     +'</div>';
     var rows='';
     PG_LEVELS.forEach(function(L){
@@ -16293,7 +16298,18 @@
       +'<div style="overflow-x:auto;">'+epSplitTable('EP2', rows2)+'</div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-top:7px;line-height:1.7;">月次と同じ料率で分けます。本部は一律10%（'+epYen(Math.round(EP_SETUP_FEE*EP_HQ_PCT))+' 円）です。</div>'
     +'</div>';
-    h+=epCostBox(n, seats, true);
+    //  EP-II の本部には利用料が掛からない。ここに「継へのご利用料」の表を出すと、
+    //  実際にはご請求しない額をご覧になって身構えさせてしまう。
+    //  代わりに、所属の方それぞれに掛かるぶんを目安として出す
+    h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">継へのご利用料（本部のご負担はありません）</div>'
+      +'<div style="font-size:11.5px;color:#5A6981;line-height:1.9;">'
+      +'EP-II では、プラットフォームのご利用料は<b style="color:#1E3A66;">所属の認定パートナーご本人</b>にお願いしています。'
+      +'本部へのご請求はありません。<br>'
+      +'お一人あたりの目安は、担当者登録使用料 <b style="color:#1E3A66;">'+epYen(EP_SEAT_FEE)+' 円</b>'
+      +'＋ AI利用料 <b style="color:#1E3A66;">'+epYen(EP_AI_FEE)+' 円 × ご担当の社数</b>（いずれも税別）で、'
+      +'毎月の配分から差し引いて精算します。金額は、ご本人の「お支払い」欄でご確認いただけます。</div>'
+    +'</div>';
     h+=epNoteA();
     return h;
   }
@@ -16496,6 +16512,25 @@
   }
   async function epRevokeMember(id){
     if(!confirm('この方の席を外します。割り当てている顧問先も見られなくなります。よろしいですか。')) return;
+    //  「顧客管理」に出る担当（profiles.consultant_id）を先に外す。あとに回すと
+    //  席が無くなってから外すことになり、窓口が「この法人の方ではない」と断る。
+    //  ここを抜かすと、席を外したのに顧客管理からは見えたままになる
+    if(EP_DATA && epIsB(EP_DATA.org.kind)){
+      var mine=EP_DATA.grants.filter(function(g){
+        return g.member_id===id && (g.grant_role||'main')==='main'; });
+      for(var i=0;i<mine.length;i++){
+        try{
+          var sy=await sb.rpc('ep_sync_client_consultant',{
+            p_ep:EP_DATA.org.id, p_customer:mine[i].customer_id, p_user:null });
+          if(sy.error) throw new Error(sy.error.message);
+          var sd=sy.data||null;
+          if(sd && sd.ok===false) throw new Error(sd.error||'担当を外せませんでした');
+        }catch(e){
+          alert('担当を外せませんでした：'+String((e&&e.message)||e)+'\n席はそのままにしています。');
+          return;
+        }
+      }
+    }
     var r=await sb.from('ep_members').update({ status:'revoked', revoked_at:new Date().toISOString(), revoked_by:ME }).eq('id',id);
     if(r.error){ alert('変更できませんでした：'+r.error.message); return; }
     //  席を外したら、その人の割当も切る（記録は残る）
@@ -16550,7 +16585,9 @@
 
     var h='<div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.8;">'
       +'顧問先ごとに<b style="color:var(--navy);">主担当</b>を1名、必要なら<b style="color:var(--navy);">副担当</b>を1名決めます。'
-      +'選んだ瞬間からその方に見えるようになり、外した瞬間から見えなくなります。付け外しは「記録」に残ります。</div>';
+      +'選んだ瞬間からその方に見えるようになり、外した瞬間から見えなくなります。付け外しは「記録」に残ります。<br>'
+      +'<b style="color:var(--navy);">主担当</b>に決めた方には、その顧問先が「顧客管理」の一覧とカルテにも出ます'
+      +'（運営へのご連絡は要りません）。副担当はこの画面の中だけの役です。</div>';
     //  担当者ごとの持ち社数
     h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">'
       +mem.map(function(m){
@@ -16629,7 +16666,21 @@
           customer_id:customerId, grant_role:role, granted_by:ME });
         if(ins.error) throw new Error(ins.error.message);
       }
-      if(msg){ msg.style.color='#27684A'; msg.textContent='変更しました'; }
+      //  主担当は「顧客管理」に出る担当（profiles.consultant_id）と同じ人にする。
+      //  ここを合わせないと、割り当てたのにご担当の画面に顧問先が出てきません。
+      //  法人は profiles を直接は書けないので、専用の窓口を通します
+      if(role==='main'){
+        var mm=memberId ? EP_DATA.members.filter(function(m){ return m.id===memberId; })[0] : null;
+        var sy=await sb.rpc('ep_sync_client_consultant',{
+          p_ep:EP_DATA.org.id, p_customer:customerId, p_user:(mm?mm.user_id:null) });
+        if(sy.error) throw new Error(sy.error.message);
+        var sd=sy.data||null;
+        if(sd && sd.ok===false) throw new Error(sd.error||'担当を反映できませんでした');
+      }
+      if(msg){ msg.style.color='#27684A';
+        msg.textContent=(role==='main' && memberId)
+          ? '変更しました。ご担当の「顧客管理」にも出るようになります。'
+          : '変更しました'; }
       loadEp();
     }catch(e){
       el.disabled=false;
@@ -18845,17 +18896,30 @@
                                rate:null, entity:null, ep2:false, rows:[] };
       return acc[pid];
     }
+    //  EP-II の本部取り分（一律10%）。所属の方の報酬とは別に、法人へお支払いする。
+    //  ここで積まないと、画面に「本部の受取」と出ているのに実際には誰も払わない
+    var hqG={}, hqOrder=[];
     rows.forEach(function(r){
       var c=custs[r.customer_id]; if(!c || !c.consultant_id){ noPartner+=Number(r.amount)||0; return; }
       var p=partners[c.consultant_id]||{};
-      var rate=rankFeeRate(p.fde_rank, payClients[c.consultant_id]||0, !!ep2[c.consultant_id]);
+      var af=EP_AFFIL[c.consultant_id]||null;
+      //  EP-I は「法人がまるごと80%」。担当者個人のランクでは決まらない。
+      //  配分の決めごとは epSplit（画面）と同じ EP_I_PCT を使う
+      var rate=(af && af.ep_kind==='EP1') ? EP_I_PCT
+             : rankFeeRate(p.fde_rank, payClients[c.consultant_id]||0, !!ep2[c.consultant_id]);
       var amt=Number(r.amount)||0;
       //  外注費率は税抜の土台に掛ける。入金額にはお預かりの消費税が
       //  乗っているので、そこまで配分しないようにする。
       var net=taxEx(amt);
+      if(af && af.ep_kind==='EP2'){
+        if(!hqG[af.ep_id]){ hqG[af.ep_id]={ id:af.ep_id, name:af.ep_name||'本部', fee:0, who:{} }; hqOrder.push(af.ep_id); }
+        hqG[af.ep_id].fee += net*EP_HQ_PCT;
+        hqG[af.ep_id].who[c.consultant_id]=(p.full_name||p.email||'');
+      }
       var b=bucket(c.consultant_id, p.full_name||p.email||'パートナー');
       b.rate=rate; b.gross+=amt; b.net+=net; b.entity=p.entity_type||null;
       b.ep2=!!ep2[c.consultant_id];
+      b.ep1rate=!!(af && af.ep_kind==='EP1');
       if(rate==null){ if(noRate.indexOf(b.label)<0) noRate.push(b.label); }
       var fee=(rate==null?0:net*rate);
       b.fee+=fee;
@@ -18878,9 +18942,25 @@
     //  つもりで止まったままになる方が出る。誰に振り込めないのかを先に出す。
     //  引けなかったときは「未登録」だと決めつけない（まだSQLを流していない
     //  だけかもしれず、全員に赤い印が付くと本当の未登録が埋もれる）
+    //  EP-II の本部へのお支払い先は、本部の管理者が登録した口座を見る。
+    //  EP-I のように法人の欄（payout_accounts.ep_id）は使わない。EP-II は
+    //  契約が二本立てで、本部とご本人がそれぞれ受け取るためです。
+    //  管理者が引けなければ「振り込み先が分からない」とはっきり出す
+    var hqUser={}, hqIds=[];
+    if(hqOrder.length){
+      try{
+        var hm=await sb.from('ep_members').select('ep_id,user_id')
+          .eq('seat_role','manager').eq('status','active').in('ep_id',hqOrder);
+        (hm.error?[]:(hm.data||[])).forEach(function(m){
+          if(!hqUser[m.ep_id]){ hqUser[m.ep_id]=m.user_id;
+            if(hqIds.indexOf(m.user_id)<0) hqIds.push(m.user_id); } });
+      }catch(e){}
+      hqOrder.forEach(function(id){ var g=hqG[id];
+        g.fee=Math.round(g.fee); g.user=hqUser[id]||null; });
+    }
     var payAcct=null;
     try{
-      var pa=await sb.rpc('payout_account_status',{ p_users:keys });
+      var pa=await sb.rpc('payout_account_status',{ p_users:keys.concat(hqIds) });
       if(!pa.error){ payAcct={}; (pa.data||[]).forEach(function(x){ payAcct[x.user_id]=x; }); }
     }catch(e){}
     //  EP-I は法人へまとめてお支払いする。見るべき口座は担当者のものではなく
@@ -18955,6 +19035,9 @@
         g.payNet=st.pay; g.due=st.due;
       });
     }
+    //  EP-II の本部取り分の合計。パートナーへのお振込とは別口なので、
+    //  合計の欄でも分けて出す（混ぜると、どちらに振り込んだのか分からなくなる）
+    var tHq=0; hqOrder.forEach(function(id){ tHq+=hqG[id].fee; });
     var h='<div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:10px;">'
       +bizChip('対象の入金（税込）', yen(tG), keys.length+' 名ぶん', 'var(--navy)')
       +bizChip('税抜の土台', yen(tN), '消費税 '+yen(tG-tN)+' を外した額', 'var(--navy)')
@@ -18962,6 +19045,7 @@
       +bizChip('源泉徴収 合計', yen(tW), '個人の方のみ', '#A9403D')
       +bizChip('利用料の相殺 合計', yen(tU), '基本＋顧問先加算＋AI（税込）', '#A9403D')
       +bizChip('お振込額 合計', yen(tPay), '報酬 − 源泉徴収 − 利用料', '#27684A')
+      +(hqOrder.length?bizChip('EP-II 本部へ 合計', yen(tHq), hqOrder.length+' 法人・税抜の10%', '#27684A'):'')
       //  何名から集金することになるかは、口座振替を組むかどうかの判断材料。
       //  金額だけだと「1人が大きい」のか「大勢が少しずつ」なのか分からない
       +(tDue>0?bizChip('ご請求 合計', yen(tDue), payDueCount(acc, keys, epG, epOrder)+' 件・相殺しきれなかったぶん', '#C39B3F'):'')
@@ -19008,12 +19092,48 @@
           +'</div>'; }).join('')
       +'</div>';
     }
+    //  EP-II の本部へ。所属の方への報酬とは別に、本部が一律10%を受け取る決めごと
+    //  （契約 第3条）。ここを出していないと、画面に無い支払いを手で起こすことになり、
+    //  抜けても誰も気づけない
+    if(hqOrder.length){
+      h+='<div style="border:1.5px solid #C9D6EA;background:var(--soft);border-radius:11px;padding:11px 13px;margin-bottom:10px;">'
+        +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">EP-II：本部へのお支払い（一律10%）</div>'
+        +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin:3px 0 6px;">'
+        +'所属の方への報酬とは<b style="color:var(--navy);">別口のお支払い</b>です。'
+        +'税抜の入金額の10%で、本部の利用料はいただきません（差し引きもありません）。'
+        +'お振込先は、本部の管理者が「設定 → お振込先」で登録した口座です。</div>'
+        +hqOrder.map(function(id){ var g=hqG[id];
+          var who=Object.keys(g.who).map(function(u){ return g.who[u]; });
+          return '<div style="padding:8px 0;border-top:1px solid var(--softline);">'
+            +'<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">'
+              +'<b style="font-size:13px;color:var(--ink);">'+esc(g.name)+'</b>'
+              +(g.user
+                ? payAcctTag(payAcct, g.user)
+                : '<span class="tag red" style="font-size:10px;">管理者が未設定</span>')
+              +'<span style="flex:1;"></span>'
+              +'<b style="font-size:13.5px;color:#27684A;">'+yen(g.fee)+'</b>'
+            +'</div>'
+            +(g.user
+              ? ''
+              //  管理者がいない法人は、振込先が決まらない。黙って0円にせず、
+              //  誰に席を渡せばよいのかまで出す
+              : '<div style="font-size:11.5px;color:#A9403D;line-height:1.75;margin-top:3px;">'
+                +'⚠ この法人に<b>有効な管理者の席がありません。</b>お振込先が決まらないため、'
+                +'総合振込ファイルには入りません。「エンタープライズ」→「担当者」で管理者を置いてください。</div>')
+            +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:2px;">'
+              +'内訳：'+esc(who.join('・'))+' の担当ぶん（税抜 × 10%）</div>'
+          +'</div>'; }).join('')
+      +'</div>';
+    }
     keys.forEach(function(k){
       var b=acc[k];
       h+='<div style="border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:7px;">'
         +'<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">'
           +'<b style="font-size:13px;color:var(--ink);">'+esc(b.label)+'</b>'
-          +'<span class="tag gray" style="font-size:10px;">外注費率 '+(b.rate==null?'未設定':Math.round(b.rate*100)+'%')+'</span>'
+          //  EP-I の料率は法人との契約で決まっていて、ご本人のランクとは関係ない。
+          //  ランクを見て直そうとする方が出ないよう、どこから来た率かを書く
+          +'<span class="tag gray" style="font-size:10px;">外注費率 '+(b.rate==null?'未設定':Math.round(b.rate*100)+'%')
+            +(b.ep1rate?'（EP-I 法人の率）':'')+'</span>'
           +'<span class="tag '+(b.entity?'gray':'gold')+'" style="font-size:10px;">'+esc(entityLabel(b.entity))+'</span>'
           //  EP-II は本人がLv料率で、スケール（80%）は効かない。
           //  取り違えて払うと取り戻せないので、行そのものに印を出す
@@ -19096,11 +19216,13 @@
     //  そのまま払われる。払い過ぎは取り戻すのが難しい
     if(EP2_LOOKUP_FAILED){
       h='<div style="border:1.5px solid #E8C4C2;background:#FDF6F5;border-radius:11px;padding:12px 14px;margin-bottom:10px;">'
-        +'<div style="font-size:12.5px;font-weight:700;color:#A9403D;">⚠ EP-II かどうかを確かめられませんでした</div>'
+        +'<div style="font-size:12.5px;font-weight:700;color:#A9403D;">⚠ エンタープライズの所属を確かめられませんでした</div>'
         +'<div style="font-size:11.5px;color:var(--ink);line-height:1.85;margin-top:3px;">'
         +'下の金額は、<b>全員を個人パートナーとして計算しています。</b>'
         +'EP-II に所属している方が含まれていると、'
-        +'<b style="color:#A9403D;">スケール（顧問契約数による上位料率）が誤って効いた額</b>になります。'
+        +'<b style="color:#A9403D;">スケール（顧問契約数による上位料率）が誤って効いた額</b>になり、'
+        +'<b style="color:#A9403D;">本部への一律10%も出ません。</b>'
+        +'EP-I の方が含まれていると、法人の80%ではなくご本人のランク料率で計算されています。'
         +'<br><b>この画面のまま支払わないでください。</b>'
         +'画面を開き直しても直らない場合は、開発にご連絡ください。</div></div>'+h;
     }
@@ -19120,7 +19242,11 @@
       +'<b style="color:var(--navy);">EP-I</b>＝上の「法人へまとめてお振込み」で、法人の担当者数と顧客数から'
       +'（担当者ぶんは1人ごとの額とまとめ登録の定額のうち<b>安いほう</b>）。'
       +'<b style="color:var(--navy);">EP-II</b>＝登録料＋AI利用料×社数を、所属営業ご本人から'
-      +'（本部からは差し引きません）。'
+      +'（本部からは差し引きません）。<br>'
+      +'※ 外注費率は、<b style="color:var(--navy);">EP-I</b> は法人との契約で決めた率（'+Math.round(EP_I_PCT*100)+'%）を使います。'
+      +'ご本人のランクやスケールでは変わりません。'
+      +'<b style="color:var(--navy);">EP-II</b> はご本人のランク料率（スケール無し・上限70%）で、'
+      +'これとは別に<b>本部へ税抜の'+Math.round(EP_HQ_PCT*100)+'%</b>を上の欄のとおりお支払いします。'
       +'相殺の税務上の取扱いは、顧問税理士にご確認ください。</div>';
     // ===== 総合振込ファイル =====
     //  ここまでの計算を「誰にいくら」に落として持っておく。EP-I は法人へ1本、
@@ -19134,6 +19260,11 @@
     keys.forEach(function(k){ var b=acc[k];
       if(b.acctOrg) return;
       if(b.pay>0) fileItems.push({ kind:'user', id:k, amount:Math.round(b.pay), label:b.label }); });
+    //  EP-II の本部ぶんは、本部の管理者の口座へ。法人の欄（ep_id）は
+    //  EP-I のためのものなので、ここでは使わない
+    hqOrder.forEach(function(id){ var g=hqG[id];
+      if(!g.user){ fileSkip.push(g.name+'（EP-II 本部・管理者が未設定）'); return; }
+      if(g.fee>0) fileItems.push({ kind:'user', id:g.user, amount:Math.round(g.fee), label:g.name+'（EP-II 本部）' }); });
     PAY_FILE={ ym:ym, items:fileItems };
     h+=payFileBoxHtml(fileItems, fileSkip, EP2_LOOKUP_FAILED);
     box.innerHTML=h;
@@ -19151,7 +19282,7 @@
         +(skip.length?'<br><b style="color:#A9403D;">入れないもの：</b>'+esc(skip.join('・')):'')
       +'</div>';
     if(blocked){
-      h+='<div style="font-size:11.5px;color:#A9403D;line-height:1.7;">EP-II かどうかを確かめられていないため、ファイルは作れません。画面を開き直してください。</div>';
+      h+='<div style="font-size:11.5px;color:#A9403D;line-height:1.7;">エンタープライズの所属を確かめられていないため、ファイルは作れません。画面を開き直してください。</div>';
     }else if(!items.length){
       h+='<div style="font-size:11.5px;color:var(--muted);line-height:1.7;">この月にお振込みになる方はいません。</div>';
     }else{
@@ -20987,7 +21118,7 @@
 
   //  送る本体。パートナー契約は運営だけ、顧問契約はパートナーだけが送れる
   //  （権限側でも同じ縛りをかけている）
-  async function ctSend(kind, pfx){
+  async function ctSend(kind, pfx, epId){
     var em=(($(pfx+'-email')||{}).value||'').trim();
     var feeEl=$(pfx+'-plan');
     var msg=$(pfx+'-msg');
@@ -21009,6 +21140,9 @@
     var row={ kind:kind, token:tok, email:em, template_id:tpl.id, template_version:tpl.version,
       title:tpl.title, body:tpl.body, offered_by:ME };
     if(kind==='customer'){ row.monthly_fee=fee; row.consultant_id=ME; row.plan=plan; }
+    //  どの本部の所属かを書面に残す。ここを入れないと、契約書の {{本部名}} が
+    //  空欄のまま届き、あとから「どの本部の所属だったか」も辿れなくなる
+    if(epId) row.ep_id=epId;
     var r=await sb.from('contract_offers').insert(row);
     if(r.error){
       var m=String(r.error.message||'');
@@ -21036,12 +21170,30 @@
 
   //  運営：種類を選んでから送る。空のまま送れると、EP-I の相手に EP-II の
   //  書面が飛ぶ。あとから差し替えても、一度読まれた書面は取り消せない
+  var CT_EP2_ORGS=[];
+  //  種類を選び直したら、本部の欄を出し入れする
+  function ctKindPick(){
+    var k=(($('cta-kind')||{}).value||'');
+    var w=$('cta-epwrap'); if(!w) return;
+    var on=(k==='partner_ep2_member');
+    w.classList.toggle('hidden', !on);
+    if(!on && $('cta-ep')) $('cta-ep').value='';
+  }
   async function ctSendAdmin(){
     var k=(($('cta-kind')||{}).value||'');
     var msg=$('cta-msg');
     if(!k){ if(msg){ msg.style.color='#A9403D'; msg.textContent='契約の種類を選んでください。'; } return; }
-    await ctSend(k, 'cta');
+    //  EP-II の所属パートナー契約は、本部名が本文に入る。空のまま送ると
+    //  「所属先の書いていない所属契約」が相手に届く
+    var ep=(($('cta-ep')||{}).value||'');
+    if(k==='partner_ep2_member' && !ep){
+      if(msg){ msg.style.color='#A9403D'; msg.textContent='所属する本部を選んでください。契約書の本文に本部名が入ります。'; }
+      return;
+    }
+    await ctSend(k, 'cta', ep||null);
     if($('cta-kind')) $('cta-kind').value='';
+    if($('cta-ep')) $('cta-ep').value='';
+    ctKindPick();
   }
 
   //  パートナー：自分が送った顧問契約
@@ -21224,6 +21376,14 @@
       .order('created_at',{ascending:false}).limit(200); }
     catch(e){ r={error:1}; }
     if(!r || r.error){ box.innerHTML=''; return; }
+    //  EP-II の所属パートナー契約には、書面に差し込む本部名が要る（{{本部名}}）。
+    //  どの本部かを選ばずに送ると、契約書の本部名が空欄のまま相手に届く
+    var ep2Orgs=[];
+    try{
+      var eo=await sb.from('ep_orgs').select('id,name,kind').eq('kind','EP2').order('name');
+      if(!eo.error) ep2Orgs=eo.data||[];
+    }catch(e){}
+    CT_EP2_ORGS=ep2Orgs;
     var rows=r.data||[];
     rows.forEach(function(o){ CT_CACHE[o.id]=o; });
     var agreed=rows.filter(function(o){ return o.status==='agreed'; }).length;
@@ -21236,15 +21396,25 @@
       +'<div style="flex:1 1 190px;"><label class="fl">パートナー契約を送る先</label>'
       +'<input id="cta-email" class="inp2" style="width:100%;" placeholder="partner@example.com"></div>'
       +'<div><label class="fl">契約の種類（必須）</label>'
-      +'<select id="cta-kind" class="inp2"><option value="">選択してください</option>'
+      +'<select id="cta-kind" class="inp2" onchange="ctKindPick()"><option value="">選択してください</option>'
       +CT_KINDS.filter(function(k){ return k[0]!=='customer'; })
         .map(function(k){ return '<option value="'+k[0]+'">'+k[1]+'</option>'; }).join('')
+      +'</select></div>'
+      //  EP-II の所属パートナー契約のときだけ出す。ふだんは畳んでおく
+      +'<div id="cta-epwrap" class="hidden"><label class="fl">所属する本部（必須）</label>'
+      +'<select id="cta-ep" class="inp2"><option value="">選択してください</option>'
+      +ep2Orgs.map(function(o){ return '<option value="'+escA(o.id)+'">'+esc(o.name)+'</option>'; }).join('')
       +'</select></div>'
       +'<button class="btn2" style="font-size:12px;padding:7px 14px;" onclick="ctSendAdmin()">契約書を送る</button>'
       +'</div><div id="cta-msg" style="font-size:11.5px;margin-top:6px;line-height:1.8;"></div>'
       +'<div style="font-size:11px;color:var(--muted);line-height:1.8;margin-top:4px;">'
       +'EP-I（顧客基盤型）と EP-II（所属営業型）は、報酬の形も責任の範囲も違うため、'
-      +'書面が分かれています。<b>種類を選ばないと送れません。</b></div>';
+      +'書面が分かれています。<b>種類を選ばないと送れません。</b>'
+      +'EP-II の所属パートナー契約は、<b>どの本部の所属かを選んでから</b>お送りください'
+      +'（選んだ本部の名前が、契約書の本文に入ります）。'
+      +(ep2Orgs.length?'':'<br><b style="color:#A9403D;">EP-II の法人がまだ登録されていません。</b>'
+        +'「エンタープライズ」で法人を作ってから、所属パートナー契約をお送りください。')
+      +'</div>';
     if(rows.length){
       h+='<div style="max-height:340px;overflow-y:auto;margin-top:10px;">'
         +rows.map(function(o){ return ctRowHtml(o,true); }).join('')+'</div>';
