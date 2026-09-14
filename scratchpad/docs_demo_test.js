@@ -223,5 +223,38 @@ const IDX = R('index.html');
   ok('パートナー説明書から、詳しい説明書へ', /「エンタープライズ 操作説明書」<\/b>にまとめてあります/.test(MANP));
   ok('運営説明書から、資料と説明書へ', /EP-I（顧客基盤型）向け プロダクト説明/.test(MANA) && /エンタープライズ向け説明書/.test(MANA));
 }
+// ⑫ プロダクトの呼び名は TsuguAi（「継」だけで呼ばない）
+//    「継」は TsuguAi -継- の一部・継ナビくん・承継など、ほかの言葉の中にだけ残す。
+//    単独で製品や当社を指すと、資料を初めて読む方には別物に見える。
+{
+  //  残してよい「継」。長いものから消していく
+  const KEEP = ['TsuguAi<i>-継-', 'TsuguAi -継-', '-継-', '継ナビくん', '承継', '継続', '引き継', '受け継',
+    '継ぎ', '継い', '継ぐ', '継げ', '継がせ', '継がれ', '中継', '継承', '後継',
+    //  例に出てくる会社名・お名前
+    '株式会社継', '継税理士法人', '継ライフ保険サービス', '継事務所', '継 太郎'];
+  function bare(src) {
+    let t = src;
+    KEEP.forEach(function (k, i) { t = t.split(k).join('\u0000' + i + '\u0000'); });
+    return (t.match(/継/g) || []).length;
+  }
+  [['pitch-ep1', R('pitch-ep1.html')], ['pitch-ep2', R('pitch-ep2.html')], ['pitch-customer', PITC], ['pitch-partner', PITP],
+  ['pitch-general', PITG], ['pitch-bank', PITB], ['pitch-finance', PITF], ['recruit-partner', REC],
+  ['manual-ep', R('manual-ep.html')], ['manual-customer', MANC], ['manual-partner', MANP], ['manual-admin', MANA]].forEach(function (x) {
+    var c = bare(x[1]);
+    ok(x[0] + '：単独の「継」で製品を呼んでいない（残り ' + c + ' か所）', c === 0);
+  });
+  //  画面に出る言葉（index.html）も同じ呼び名にそろえる。ここがずれると、
+  //  資料の写しと本物の画面で名前が違うことになる
+  ['TsuguAiへのご利用料（月・税別）', 'TsuguAiへのご利用料（本部のご負担はありません）',
+    'TsuguAiへのお支払い（月）', 'お振込先（TsuguAiが受け取る口座）',
+    '顧客はTsuguAiに帰属', 'TsuguAi（福來）が受け取った手数料'].forEach(function (lab) {
+      ok('本体の「' + lab + '」', IDX.indexOf(lab) >= 0);
+    });
+  //  見るのは画面に出る文字だけ。コード中の覚え書き（// で始まる行）は
+  //  社内の言葉なので、そのままにしてある
+  const IDX_VIEW = IDX.split('\n').filter(function (l) { return l.trim().indexOf('//') !== 0; }).join('\n');
+  no('本体：単独の「継」で呼ぶ表示は残っていない',
+    /継へのご利用料|継へのお支払い|継が受け取る口座|顧客は継に帰属|継（福來）|継の役割は|継の取り分|継は担当者個人/.test(IDX_VIEW));
+}
 console.log(bad.length ? bad.join('\n') : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
