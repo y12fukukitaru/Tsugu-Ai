@@ -68,7 +68,7 @@ const M = new Function(base + 'return {due:payDueCount, sum:invMethodSummary, cs
   ok('初回は試す注意', /初回は<b>1件だけの月で試す<\/b>/.test(h));
   const h2 = M.box(items, [], true);
   no('EP-II 不明ならボタンなし', /payFileMake/.test(h2));
-  ok('EP-II 不明の理由', /EP-II かどうかを確かめられていない/.test(h2));
+  ok('EP-II 不明の理由', /エンタープライズの所属を確かめられていない/.test(h2));
   const h3 = M.box([], [], false);
   ok('対象なしの文', /お振込みになる方はいません/.test(h3));
 }
@@ -98,7 +98,7 @@ const M = new Function(base + 'return {due:payDueCount, sum:invMethodSummary, cs
 // ⑤ 版・SQL・説明書
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260914-03', '20260914-03']);
+  is('版が揃う', [build, VER.build], ['20260914-04', '20260914-04']);
   ok('SQL は列を足すだけで期待値1', /add column if not exists notified_at timestamptz/.test(SQL) && /期待値：1/.test(SQL));
   ok('SQL にデプロイの手順', /supabase functions deploy contract-send --no-verify-jwt/.test(SQL));
   ok('運営説明書：総合振込ファイル', /総合振込ファイル/.test(MANA) && /委託者情報/.test(MANA) && /全銀フォーマット/.test(MANA));
