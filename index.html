@@ -1383,7 +1383,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260914-04';
+  var APP_BUILD='20260914-05';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2624,7 +2624,7 @@
         //  振込でお願いする請求は、振込先が画面に出ないと担当パートナーに
         //  電話が行く。ここに入れておけば、請求のたびに書かずに済む
         +'<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
-          +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;">お振込先（継が受け取る口座）</div>'
+          +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;">お振込先（TsuguAiが受け取る口座）</div>'
           +'<div style="font-size:11px;color:#94A2B6;margin-bottom:7px;line-height:1.7;">'
             +'銀行振込でご請求するとき、顧客の画面にそのまま表示されます。'
             +'<b style="color:var(--navy);">口座振替でお引き落としする請求には出ません。</b>'
@@ -2635,7 +2635,7 @@
         //  銀行から交付される委託者コードと、振込元にする継の口座。
         //  ここも当社の口座であって、お客様・パートナーの口座ではない
         +'<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
-          +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;">総合振込の委託者情報（パートナーへ振り込む継の口座）</div>'
+          +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;">総合振込の委託者情報（パートナーへ振り込むTsuguAiの口座）</div>'
           +'<div style="font-size:11px;color:#94A2B6;margin-bottom:7px;line-height:1.7;">'
             +'「支払い」の画面で作る<b style="color:var(--navy);">総合振込ファイル（全銀フォーマット）</b>の先頭に入ります。'
             +'委託者コードは、ネットバンキングの総合振込の画面で確認できる10桁の番号です（無い銀行は 0 のまま）。'
@@ -2652,7 +2652,7 @@
         +'<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
           +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">パートナーからお預かりする利用料（円・税別）</div>'
           +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">'
-            +'配分とは別に、パートナーから継へお支払いいただくぶんです。'
+            +'配分とは別に、パートナーからTsuguAiへお支払いいただくぶんです。'
             +'<b style="color:var(--navy);">カードでは受け取りません。配分から差し引いてご精算します。</b><br>'
             +'担当者登録使用料は<b>EP-I は法人がまとめて</b>、'
             +'<b style="color:var(--navy);">1人ごとの額と、まとめ登録の定額のうち、安いほう</b>で計算します'
@@ -16229,7 +16229,7 @@
       +'<th style="text-align:right;">料率</th>'
       +'<th style="text-align:right;">'+(kind==='EP1'?'—':'担当者')+'</th>'
       +'<th style="text-align:right;">'+(kind==='solo'?'—':(kind==='EP1'?'御社':'本部'))+'</th>'
-      +'<th style="text-align:right;">継</th></tr></thead><tbody>'+rows+'</tbody></table>';
+      +'<th style="text-align:right;">TsuguAi</th></tr></thead><tbody>'+rows+'</tbody></table>';
   }
 
   // ---- EP-I（顧客基盤型）----
@@ -16240,7 +16240,7 @@
     var h='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">'
       +epCard('導入社数', n+' 社', '稼働中の顧問先')
       +epCard('御社の受取（月）', epYen(n*m.hq)+' 円', n+' 社 × '+epYen(m.hq)+' 円・税別')
-      +epCard('継へのお支払い（月）', epYen(n*m.tsugu+cost.total)+' 円',
+      +epCard('TsuguAiへのお支払い（月）', epYen(n*m.tsugu+cost.total)+' 円',
               '配分 '+epYen(n*m.tsugu)+' ＋ 利用料 '+epYen(cost.total))
       +epCard('差引（月）', epYen(n*m.hq-cost.total)+' 円', '受取 − 利用料', '#27684A')
     +'</div>';
@@ -16251,7 +16251,7 @@
          +epSplitRow('初期導入費（初回）', EP_SETUP_FEE, 'EP1', null, '80%'))
       +'</div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-top:7px;line-height:1.7;">'
-      +'御社がまるごと80%をお受け取りになり、担当者の方への配分は<b style="color:#1E3A66;">御社の社内でご実施</b>ください。継は担当者個人へ直接お支払いしません。</div>'
+      +'御社がまるごと80%をお受け取りになり、担当者の方への配分は<b style="color:#1E3A66;">御社の社内でご実施</b>ください。TsuguAiは担当者個人へ直接お支払いしません。</div>'
     +'</div>';
     h+=epCostBox(n, seats, true);
     h+=epNoteB();
@@ -16285,7 +16285,7 @@
       +'<div style="overflow-x:auto;">'+epSplitTable('EP2', rows)+'</div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-top:7px;line-height:1.7;">'
       +'担当者の方の取り分は、単独で活動されている認定パートナーと<b style="color:#1E3A66;">同じ料率</b>です。'
-      +'本部の10%は継の取り分から出しており、担当者の方の手取りは減りません。'
+      +'本部の10%はTsuguAiの取り分から出しており、担当者の方の手取りは減りません。'
       +'なお EP-II では<b style="color:#1E3A66;">スケール到達（80%）はありません</b>。Lv.4（70%）が上限です。</div>'
     +'</div>';
     var rows2='';
@@ -16302,7 +16302,7 @@
     //  実際にはご請求しない額をご覧になって身構えさせてしまう。
     //  代わりに、所属の方それぞれに掛かるぶんを目安として出す
     h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
-      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">継へのご利用料（本部のご負担はありません）</div>'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">TsuguAiへのご利用料（本部のご負担はありません）</div>'
       +'<div style="font-size:11.5px;color:#5A6981;line-height:1.9;">'
       +'EP-II では、プラットフォームのご利用料は<b style="color:#1E3A66;">所属の認定パートナーご本人</b>にお願いしています。'
       +'本部へのご請求はありません。<br>'
@@ -16318,7 +16318,7 @@
   function epCostBox(clients, seats, isEp){
     var c=epPartnerCost(clients, seats, isEp);
     return '<div style="border:1px solid var(--softline);border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
-      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">継へのご利用料（月・税別）</div>'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">TsuguAiへのご利用料（月・税別）</div>'
       +'<table class="ft" style="max-width:430px;"><tbody>'
       +'<tr><td>AI利用料</td><td style="text-align:right;">'+clients+' 社 × '+epYen(EP_AI_FEE)+' 円</td>'
         +'<td style="text-align:right;"><b>'+epYen(c.ai)+' 円</b></td></tr>'
@@ -16328,7 +16328,7 @@
         +'<div style="font-size:10.5px;color:#94A2B6;font-weight:400;">税込 '+epYen(epTaxIn(c.total))+' 円</div></td></tr>'
       +'</tbody></table>'
       +'<div style="font-size:11px;color:#94A2B6;margin-top:7px;line-height:1.7;">'
-      +'配分とは別に、御社から継へお支払いいただくぶんです。'
+      +'配分とは別に、御社からTsuguAiへお支払いいただくぶんです。'
       +(isEp?'担当者登録使用料は席を置いている人数ぶんで、席を外された月から掛かりません。':'')
       +'</div></div>';
   }
@@ -16337,11 +16337,11 @@
     return '<div style="border:1.5px solid #EBDDB4;background:#FDFAF1;border-radius:11px;padding:12px 14px;">'
       +'<div style="font-size:12.5px;font-weight:700;color:#8A6A12;margin-bottom:6px;">この形（EP-I 顧客基盤型）の決めごと</div>'
       +'<div style="font-size:11.5px;color:#5A6981;line-height:1.9;">'
-      +'・基本顧問料 <b style="color:#1E3A66;">'+epYen(EP_STD_FEE)+' 円（税別）／社・月</b>のうち、<b style="color:#1E3A66;">80%が御社</b>、20%が継です。<br>'
+      +'・基本顧問料 <b style="color:#1E3A66;">'+epYen(EP_STD_FEE)+' 円（税別）／社・月</b>のうち、<b style="color:#1E3A66;">80%が御社</b>、20%がTsuguAiです。<br>'
       +'・初期導入費は <b style="color:#1E3A66;">'+epYen(EP_SETUP_FEE)+' 円／社</b>（全社一律）。こちらも80%が御社です。<br>'
       +'・担当者の方への配分は<b style="color:#1E3A66;">御社の社内でご実施</b>ください。<br>'
       +'・ボリュームディスカウント・EP登録料・月額下限・法人管理料は<b style="color:#1E3A66;">ありません</b>。<br>'
-      +'・M&A案件が出たときは、継（福來）が受け取った手数料から税金分（消費税と、御社が個人事業の場合の源泉徴収）を差し引いた額の<b style="color:#1E3A66;">5割</b>を御社へお支払いします。継の役割は<b style="color:#1E3A66;">買い手候補の特定まで</b>です。'
+      +'・M&A案件が出たときは、TsuguAi（福來）が受け取った手数料から税金分（消費税と、御社が個人事業の場合の源泉徴収）を差し引いた額の<b style="color:#1E3A66;">5割</b>を御社へお支払いします。TsuguAiの役割は<b style="color:#1E3A66;">買い手候補の特定まで</b>です。'
       +'</div></div>';
   }
   function epNoteA(){
@@ -16349,11 +16349,11 @@
       +'<div style="font-size:12.5px;font-weight:700;color:#2C5DA8;margin-bottom:6px;">この形（EP-II 所属営業型）の決めごと</div>'
       +'<div style="font-size:11.5px;color:#5A6981;line-height:1.9;">'
       +'・担当者の方の取り分は<b style="color:#1E3A66;">Lvの料率そのまま</b>（Lv.2 50%／Lv.3 60%／Lv.4 70%）。単独の認定パートナーと同じです。<br>'
-      +'・本部は<b style="color:#1E3A66;">一律10%</b>。これは継の取り分から出ており、担当者の方の手取りは減りません。<br>'
+      +'・本部は<b style="color:#1E3A66;">一律10%</b>。これはTsuguAiの取り分から出ており、担当者の方の手取りは減りません。<br>'
       +'・<b style="color:#1E3A66;">スケール到達（80%）はありません。</b>Lv.4（70%）が上限です。<br>'
       +'・初期導入費 '+epYen(EP_SETUP_FEE)+' 円／社も、月次と同じ料率で分けます（本部は一律10%）。<br>'
-      +'・顧客は<b style="color:#1E3A66;">継に帰属</b>します。ご担当が退職されたときは、本部が後任を指名してください。<br>'
-      +'・M&A案件が出たときは、継（福來）が受け取った手数料から税金分を差し引いた額の<b style="color:#1E3A66;">5割</b>をお支払いします。'
+      +'・顧客は<b style="color:#1E3A66;">TsuguAiに帰属</b>します。ご担当が退職されたときは、本部が後任を指名してください。<br>'
+      +'・M&A案件が出たときは、TsuguAi（福來）が受け取った手数料から税金分を差し引いた額の<b style="color:#1E3A66;">5割</b>をお支払いします。'
       +'</div></div>';
   }
   // ---- 顧問先 ----
@@ -16695,7 +16695,7 @@
     if(!book.length){
       return '<div style="font-size:12px;color:#94A2B6;line-height:1.9;">'
         +'まだ担当が付いていません。<br>'
-        +'EP-II では顧客は継に帰属し、担当は<b>個々の認定パートナー</b>に付きます。'
+        +'EP-II では顧客はTsuguAiに帰属し、担当は<b>個々の認定パートナー</b>に付きます。'
         +'運営が顧客に担当パートナーを設定すると、ここに自動で並びます（本部での登録作業はありません）。</div>';
     }
     //  担当者ごとにまとめる
@@ -16707,7 +16707,7 @@
     var total=book.filter(function(r){ return r.customer_id; }).length;
     var h='<div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.8;">'
       +'所属されている認定パートナーと、その方が担当している顧客です。'
-      +'<b style="color:var(--navy);">顧客は継に帰属</b>し、担当は継が設定しますので、本部での登録作業はありません。'
+      +'<b style="color:var(--navy);">顧客はTsuguAiに帰属</b>し、担当はTsuguAiが設定しますので、本部での登録作業はありません。'
       +'ご担当が退職されたときは、後任のご指名を運営までお知らせください。</div>';
     h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:11px;">'
       +'<span class="ep-tag" style="background:var(--soft);color:var(--muted);font-weight:400;">所属 <b style="color:var(--ink);">'+order.length+'</b> 名</span>'
