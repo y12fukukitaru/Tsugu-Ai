@@ -150,5 +150,47 @@ const IDX = R('index.html');
   no('経営者説明書にも「同業の」は残っていない', /同業/.test(MANC));
   ok('本体の承継シミュレーションは相手を広く取る', /気になる会社（同業・取引先・近隣など）/.test(IDX));
 }
+// ⑪ エンタープライズ（EP-I／EP-II）の資料と説明書
+{
+  const EP1 = R('pitch-ep1.html'), EP2 = R('pitch-ep2.html'), MANE = R('manual-ep.html');
+  // 設え：ほかの資料と同じ読み込み・同じ操作
+  [['pitch-ep1', EP1], ['pitch-ep2', EP2]].forEach(function (x) {
+    ok(x[0] + ' が設えを読む', /<link rel="stylesheet" href="pitch-wa.css">/.test(x[1]) && /<link rel="stylesheet" href="pitch-demo.css">/.test(x[1]));
+    ok(x[0] + ' が pitch-fit.js を読む', /<\/script>\n<script src="pitch-fit.js"><\/script>\n<\/body>/.test(x[1]));
+    ok(x[0] + ' に位置づけの一文', x[1].indexOf('明確な出口（ゴール）を経営者と一緒に決め、管理しながら伴走するプラットフォーム') >= 0
+      && x[1].indexOf('交渉前の準備から交渉中、交渉後もずっと一緒にいます。') >= 0);
+    ok(x[0] + ' に画面の写しが2枚', (x[1].match(/<section class="slide dm" data-t="画面/g) || []).length === 2);
+    ok(x[0] + '：どちらの形かを並べて示す', /data-t="EP-IとEP-IIの違い"/.test(x[1]));
+  });
+  ok('manual-ep が設えを読む', /<link rel="stylesheet" href="manual-wa.css">/.test(MANE) && /<link rel="stylesheet" href="pitch-demo.css">/.test(MANE));
+  ok('manual-ep に画面の写しが3枚', (MANE.match(/<div class="demo one tall"/g) || []).length === 3);
+  // 目次の組は続けて並ぶ
+  (function () {
+    var gs = []; (MANE.match(/data-g="[^"]*"/g) || []).forEach(function (g) { if (gs[gs.length - 1] !== g) gs.push(g); });
+    ok('manual-ep：目次の組は続けて並ぶ', new Set(gs).size === gs.length);
+  })();
+  // 中身：本体の決めごとと数字が合っている
+  ok('EP-I：顧客は法人のもの・80%・担当の割当', /顧客との関係はパートナーが保持します/.test(EP1) && /<b>36,000円<\/b>/.test(EP1) && /<b>80,000円<\/b>/.test(EP1) && /data-t="画面②担当の割当"/.test(EP1));
+  ok('EP-II：契約2本立て・本部一律10%・スケールなし', /2本立て/.test(EP2) && /4,500/.test(EP2) && /スケール到達（80%）はありません/.test(EP2) && /Lv\.4（70%）が上限/.test(EP2));
+  ok('EP-II：本部のご負担はありません', /本部のご負担はありません/.test(EP2) && /所属の方がご負担/.test(EP2));
+  ok('どちらの資料にも、廃止済みの制度は無いと書く', /ボリュームディスカウント・EP登録料・月額下限・法人管理料は<b>ありません<\/b>/.test(EP1) && /ボリュームディスカウント・EP登録料・月額下限・法人管理料はありません/.test(EP2));
+  ok('説明書：タブの構成が本体と同じ', /概要／<b>顧問先<\/b>／担当者／<b>担当の割当<\/b>／記録/.test(MANE) && /概要／担当者／<b>担当表<\/b>／記録/.test(MANE));
+  ok('説明書：管理者と担当者の線引き', /data-t="管理者と担当者"/.test(MANE) && /お客様へ顧問契約を送る（EP-I）/.test(MANE) && /お振込先の登録（EP-I）/.test(MANE));
+  ok('説明書：席を戻しても割当は戻らない', /外したときの割当は戻りません/.test(MANE));
+  ok('説明書：顧客管理に出すには運営の設定が要る', /顧客管理」<\/b>の一覧とカルテに出すには、運営が担当パートナーの設定を行います/.test(MANE));
+  ok('説明書：金額は明細で確かめる', /金額の確認は、明細で。/.test(MANE));
+  ok('説明書：契約のひな形は仮', /契約書のひな形は<b>（仮）<\/b>です/.test(MANE));
+  // 画面の写しの言葉は、本体にある言葉と同じ
+  ['担当の割当', '担当表', '席を外す', '顧問先を追加する', '担当者を追加する', '受領を記録', '管理者として表示', 'まだ記録がありません。'].forEach(function (lab) {
+    ok('説明書の「' + lab + '」が本体にもある', MANE.indexOf(lab) >= 0 && IDX.indexOf(lab) >= 0);
+  });
+  // サポートタブへの配線
+  ok('サポート：所属している方にだけ説明書を出す', /if\(EP_ME\) h\+=knvRow\('🏢','エンタープライズ 操作説明書'/.test(IDX));
+  ok('サポート：運営には説明書と資料2本', /エンタープライズ向け説明書[^]*manual-ep\.html/.test(IDX)
+    && /EP-I（顧客基盤型）向け プロダクト説明[^]*pitch-ep1\.html/.test(IDX)
+    && /EP-II（所属営業型）向け プロダクト説明[^]*pitch-ep2\.html/.test(IDX));
+  ok('パートナー説明書から、詳しい説明書へ', /「エンタープライズ 操作説明書」<\/b>にまとめてあります/.test(MANP));
+  ok('運営説明書から、資料と説明書へ', /EP-I（顧客基盤型）向け プロダクト説明/.test(MANA) && /エンタープライズ向け説明書/.test(MANA));
+}
 console.log(bad.length ? bad.join('\n') : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
