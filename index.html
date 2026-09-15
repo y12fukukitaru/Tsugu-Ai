@@ -1383,7 +1383,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260915-02';
+  var APP_BUILD='20260915-03';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -1835,6 +1835,12 @@
     save:'<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M7 21v-8h10v8"/><path d="M7 3v5h7"/>',
     plus:'<path d="M12 5v14M5 12h14"/>',
     compass:'<circle cx="12" cy="12" r="9"/><path d="m15.8 8.2-2 5.6-5.6 2 2-5.6z"/>',
+    //  出口の設計 … 部屋から外へ出ていく形。「どこへ向かうか」を決める画面なので、
+    //  行き先を指す矢印を外に出す
+    door:'<path d="M9.5 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4.5"/><path d="m15.5 7.5 4.5 4.5-4.5 4.5"/><path d="M20 12H9"/>',
+    //  買った後に備える … 譲り受けた会社の鍵を受け取る形。
+    //  斜めに引くと輪と軸だけの記号（♂）に見えるので、横に寝かせて刻みを付ける
+    key:'<circle cx="7" cy="12" r="5"/><path d="M12 12h9"/><path d="M17 12v4M20.5 12v3"/>',
     hospital:'<path d="M3 21h18"/><path d="M5 21V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v15"/><path d="M12 8v6M9 11h6"/>',
     briefcase:'<rect x="2.5" y="7" width="19" height="13" rx="2"/><path d="M8.5 7V5.5A2 2 0 0 1 10.5 3.5h3a2 2 0 0 1 2 2V7"/><path d="M2.5 12.5h19"/>',
     tag:'<path d="M20.6 12.6 12.4 20.8a2 2 0 0 1-2.8 0l-6.4-6.4a2 2 0 0 1-.6-1.5l.3-6a2 2 0 0 1 1.9-1.9l6-.3a2 2 0 0 1 1.5.6l6.4 6.4a2 2 0 0 1 0 2.9z"/><circle cx="8" cy="8" r="1.3"/>',
@@ -1851,7 +1857,7 @@
   }
   var NAV_ICON={
     'sec-flow':'home','sec-chat':'chat','sec-reports':'doc','sec-mypdca':'target','sec-company':'building',
-    'sec-cash':'wallet','sec-value':'trend','sec-ai':'cpu','sec-ins':'shieldCheck','sec-ma':'link','sec-market':'market','sec-sec':'sparkle',
+    'sec-cash':'wallet','sec-value':'trend','sec-ai':'cpu','sec-ins':'shieldCheck','sec-exit':'door','sec-ma':'link','sec-after':'key','sec-market':'market','sec-sec':'sparkle',
     'sec-clients':'building','sec-sales':'clipboard','sec-pdca':'cycle','sec-madeals':'folder','sec-knowledge':'book','sec-sozoku':'calc',
     'sec-kpi':'chart','sec-risk':'alert','sec-fde':'users','sec-cust':'building','sec-exec':'flag',
     'sec-billing':'card','sec-billpay':'card','sec-audit':'shield','sec-broadcast':'megaphone','sec-support':'life','sec-growth':'up',
