@@ -1,0 +1,146 @@
+// =============================================================
+// Googleカレンダー連携（双方向）の試験
+//   ・鍵が画面に降りてこないこと（いちばん大事）
+//   ・同じ予定が二つにならない作りになっていること
+//   ・面談は Google 側の操作で消えないこと
+//   ・つないでいないときは、これまでの ICS が残ること
+// =============================================================
+const fs = require('fs');
+const R = (f) => fs.readFileSync(__dirname + '/../' + f, 'utf8');
+const SRC = R('index.html');
+const SQL = R('supabase/migrations/20260916020000_google_calendar.sql');
+const OAUTH = R('supabase/functions/google-oauth/index.ts');
+const SYNC = R('supabase/functions/google-sync/index.ts');
+const GUIDE = R('docs/google-calendar-setup.md');
+const MANC = R('manual-customer.html'), MANP = R('manual-partner.html');
+const VER = JSON.parse(R('version.json'));
+let n = 0, bad = [];
+function is(name, got, want) { n++; const g = JSON.stringify(got), w = JSON.stringify(want); if (g !== w) bad.push({ name, got: g, want: w }); }
+function ok(name, cond) { is(name, !!cond, true); }
+function no(name, cond) { is(name, !!cond, false); }
+function takeFn(name) {
+  const re = new RegExp('\\n  (?:async )?function ' + name + '\\s*\\(', 'g');
+  let m, last = null, cnt = 0;
+  while ((m = re.exec(SRC)) !== null) { last = m; cnt++; }
+  if (!last) throw new Error('見つかりません: ' + name);
+  is('定義は一つだけ: ' + name, cnt, 1);
+  const end = SRC.indexOf('\n  }\n', last.index);
+  return SRC.slice(last.index, end + 4);
+}
+
+// ① 鍵の守り（ここが破れると、他人のカレンダーが読まれます）
+{
+  ok('つながりの表は画面から触れない', /revoke all on public\.google_cal_links from authenticated, anon, public;/.test(SQL));
+  ok('更新用の鍵は暗号化してしまう', /pgp_sym_encrypt\(p_refresh, public\.google_key\(\)\)/.test(SQL));
+  ok('鍵は Vault から、無ければ自前の表から', /vault\.create_secret/.test(SQL) && /google_keys/.test(SQL));
+  ok('鍵を出す関数は画面から呼べない', /revoke all on function public\.google_refresh_get\(uuid\) from public, anon, authenticated;/.test(SQL));
+  ok('しまう関数も画面から呼べない', /revoke all on function public\.google_link_save\(uuid, text, text\) from public, anon, authenticated;/.test(SQL));
+  //  画面に返すのは「つながっているか」だけ
+  const st = SQL.slice(SQL.indexOf('function public.google_cal_status'), SQL.indexOf('google_cal_set_private'));
+  no('状態に鍵は含めない', /refresh_enc'|access_token|sync_token/.test(st.replace('g.refresh_enc is not null', '')));
+  ok('返すのは4つだけ', /'linked'/.test(st) && /'email'/.test(st) && /'pull_private'/.test(st) && /'last_sync_at'/.test(st));
+  ok('状態は本人のぶんだけ', /g\.user_id = auth\.uid\(\)/.test(st));
+}
+// ② 同じ予定が二つにならない
+{
+  ok('Googleの番号で一意', /create unique index if not exists agenda_events_google_uniq/.test(SQL));
+  ok('出どころを持つ', /source\s+text not null default 'tsugu'/.test(SQL));
+  ok('出どころは2つだけ', /check \(source in \('tsugu','google'\)\)/.test(SQL));
+  //  送ったものを取り込み直さない
+  ok('送るときに印を付ける', /extendedProperties: \{ private: \{ tsuguai: e\.id \} \}/.test(SYNC));
+  ok('印の付いたものは取り込まない', /if \(mark\.tsuguai \|\| mark\.tsuguai_meeting\) continue;/.test(SYNC));
+  ok('Googleから来たものは送り返さない', /if \(e\.source === "google"\) continue;/.test(SYNC));
+  ok('直していなければ送らない', /if \(e\.google_id && e\.synced_at && new Date\(e\.synced_at\) >= new Date\(e\.updated_at\)\) continue;/.test(SYNC));
+  ok('取り込みは番号で上書き', /onConflict: "owner_id,google_id"/.test(SYNC));
+}
+// ③ 消えかたの約束
+{
+  //  面談は顧客との約束。カレンダーの操作で消えては困る
+  ok('Googleで消えても、消すのは取り込んだぶんだけ', /\.eq\("owner_id", uid\)\.eq\("google_id", it\.id\)\.eq\("source", "google"\)/.test(SYNC));
+  ok('面談が消えない理由が書いてある', /顧客との約束なので/.test(SYNC));
+  //  解除したときの後始末
+  //  「確かめ」は冒頭の説明にも出るので、末尾から数えて切り出す
+  const un = SQL.slice(SQL.indexOf('function public.google_cal_unlink'), SQL.lastIndexOf('-- 確かめ'));
+  ok('解除で取り込んだ予定を消す', /delete from public\.agenda_events[\s\S]{0,80}source = 'google'/.test(un));
+  ok('解除でこちらの予定は残す', /set google_id = null/.test(un));
+  ok('解除でつながりを消す', /delete from public\.google_cal_links where user_id = auth\.uid\(\)/.test(un));
+}
+// ④ 差分の取り方
+{
+  ok('前回からの差分をもらう札を使う', /syncToken/.test(SYNC) && /nextSyncToken/.test(SYNC));
+  ok('札が古くなったら取り直す', /r\.status === 410/.test(SYNC));
+  ok('取り直しでも無限に回らない', /guard/.test(SYNC));
+  ok('取り込まない設定を見る', /link\.pull_private !== false/.test(SYNC));
+}
+// ⑤ 同意のときの札（他人のカレンダーを結び付けられないように）
+{
+  ok('札に署名する', /HMAC/.test(OAUTH) && /function hmac/.test(OAUTH));
+  ok('札は10分で切れる', /600000/.test(OAUTH));
+  ok('署名は時間差の出ない比べ方', /diff \|= want\.charCodeAt\(i\) \^ p\[2\]\.charCodeAt\(i\)/.test(OAUTH));
+  ok('更新用の鍵をもらう指定', /access_type: "offline"/.test(OAUTH) && /prompt: "consent"/.test(OAUTH));
+  ok('求める権限は予定とアカウントだけ', /calendar\.events/.test(OAUTH) && !/auth\/gmail|auth\/drive|contacts/.test(OAUTH));
+  //  Verify JWT を切るので、自分で確かめる
+  ok('ログインを自分で確かめる（oauth）', /sb\.auth\.getUser\(token\)/.test(OAUTH));
+  ok('ログインを自分で確かめる（sync）', /sb\.auth\.getUser\(token\)/.test(SYNC));
+  ok('つなぎ直しで鍵が来なくても消さない', /coalesce\(excluded\.refresh_enc, public\.google_cal_links\.refresh_enc\)/.test(SQL));
+  ok('デプロイ手順が書いてある', /google-oauth --no-verify-jwt/.test(OAUTH) && /google-sync --no-verify-jwt/.test(SYNC));
+}
+// ⑥ 画面
+{
+  const gb = takeFn('googleCalBox');
+  ok('つないでいなければ「つなぐ」', /Googleでつなぐ/.test(gb));
+  ok('つないでいれば、相手と最後の同期', /つながっています/.test(gb) && /最後の同期/.test(gb));
+  ok('私用を取り込むかの切り替え', /googleCalPriv/.test(gb));
+  ok('解除の道がある', /googleCalUnlink/.test(gb));
+  //  切れているのに緑のままだと、直す必要に気づけない
+  ok('切れているときは色を変える', /var dead=\/つなぎ直し\/\.test\(String\(GCAL\.last_error\|\|''\)\);/.test(gb));
+  ok('切れているときは「つなぎ直す」を出す', /dead[\s\S]{0,140}googleCalStart\(\)">つなぎ直す/.test(gb));
+  //  「いま同期する」は dead の false 側にだけ置く（切れているのに押させない）
+  ok('切れているときに同期を押させない',
+    /\+\(dead\s*\n?\s*\? '<button[^']*googleCalStart\(\)">つなぎ直す<\/button>'\s*\n?\s*: '<button[^']*googleCalSync\(true\)">いま同期する<\/button>'\)/.test(gb));
+  //  SQL 未実行のときは、これまでの ICS が残る
+  ok('SQL 未実行なら ICS に戻す', /if\(!r \|\| r\.error\)\{ box\.innerHTML=''; GCAL=null; calendarFeedSetup\(\); return; \}/.test(gb));
+  ok('つないだら ICS は出さない', /var cf=\$\('calfeed-box'\); if\(cf\) cf\.innerHTML='';/.test(gb));
+  const au = takeFn('gcalAuto');
+  ok('開いたら黙って同期する', /googleCalSync\(false\)/.test(au));
+  ok('同期は5分に一度まで', /300000/.test(au));
+  const ul = takeFn('googleCalUnlink');
+  ok('解除は確認してから', /confirm\(/.test(ul) && /この画面で作った予定は残ります/.test(ul));
+  //  予定がどちらから来たか分かる
+  const cf = takeFn('calFetch');
+  ok('Google由来かを持つ', /g:\(e\.source==='google'\)/.test(cf));
+}
+// ⑦ 継ナビくんが予定を入れられること（前からある仕組み。壊していないこと）
+{
+  const an = takeFn('calAskNote');
+  ok('頼まれたときだけ出す', /頼まれていないときは絶対に出さないこと/.test(an));
+  ok('登録しましたとは書かせない', /「登録しました」とは書かないこと/.test(an));
+  const dc = takeFn('calDraftClean');
+  ok('昨日より前・2年より先は受けない', /diff< -1 \|\| diff>730/.test(dc));
+  const ds = takeFn('calDraftSave');
+  ok('押して初めて入る', /from\('agenda_events'\)\.insert/.test(ds));
+  ok('確認のカードが出る', /この予定を登録しますか/.test(takeFn('calDraftCard')));
+}
+// ⑧ 説明書と手順書
+{
+  ok('経営者：双方向だと書く', /どちらに入れても両方に出ます/.test(MANC));
+  ok('経営者：他の人に見えないと書く', /ご本人だけが見られます/.test(MANC));
+  ok('経営者：AIには渡ることも書く', /継ナビくんに「今日の予定は？」と聞くと/.test(MANC));
+  ok('パートナー：面談は Google で消えないと書く', /Google側で面談を消しても、TsuguAiの面談は消えません/.test(MANP));
+  ok('継ナビくんの案内に双方向', /Googleでつなぐ」でGoogleカレンダーと双方向/.test(SRC));
+  ok('継ナビくんの案内に、話しかけて登録する手順', /確認のカードが出て、「登録する」を押すと入る/.test(SRC));
+  //  運営がやることの手順書
+  ok('手順書に Google Cloud の段取り', /Google Calendar API/.test(GUIDE) && /OAuth 同意画面/.test(GUIDE));
+  ok('手順書にリダイレクトURI', /functions\/v1\/google-oauth/.test(GUIDE));
+  ok('手順書に Secrets 5つ', ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REDIRECT_URI', 'GOOGLE_STATE_SECRET', 'APP_URL'].every((k) => GUIDE.indexOf(k) > 0));
+  ok('手順書に Verify JWT を切る注意', /Verify JWT は必ず OFF/.test(GUIDE));
+  ok('手順書に審査のこと', /審査/.test(GUIDE) && /100名/.test(GUIDE));
+  ok('手順書に私用の予定の注意', /私用の予定について/.test(GUIDE));
+}
+// ⑨ 版
+{
+  const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
+  is('版が揃う', [build, VER.build], ['20260916-02', '20260916-02']);
+}
+console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
+process.exit(bad.length ? 1 : 0);
