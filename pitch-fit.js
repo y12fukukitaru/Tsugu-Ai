@@ -9,7 +9,9 @@
         測るのは表示中の一枚ではなく**全部**で、いちばん収まらない一枚に
         合わせる。一枚ずつ測ると、縦に伸びるデモの頁だけ小さくなり、
         送るたびに紙の大きさが変わり、見ているほうが落ち着かない。
-        倍率は一度決めたら、画面の大きさが変わるまで動かさない
+        紙の高さ（--slideh）も、いちばん高い一枚にそろえる。幅だけでは
+        上下の位置が頁ごとに動く。倍率も高さも、一度決めたら画面の
+        大きさが変わるまで動かさない
      ② 全画面        … ウェビナー・プレゼン用。ブラウザの全画面が使える
         端末では本物の全画面、使えない端末（iPhone の Safari など）では
         下のバーを退かせて紙を最大にする「見立ての全画面」に落とす
@@ -42,10 +44,12 @@
   //  隠れている一枚の高さを測る。display:none のままでは測れないので、
   //  画面の外へ出して、いま出ている一枚と同じ幅で組み直して測る。
   //  幅を揃えないと、折り返しが変わって高さも変わる
-  function natH(s, w){
+  function natH(s, w, disp){
     var st=s.style;
     var keep=[st.display, st.position, st.left, st.top, st.visibility, st.width];
-    st.setProperty('display','block','important');
+    //  いま出ている一枚と同じ組み方で測る。block で測ると、flex では
+    //  起きない余白の相殺が効いてしまい、実際より低い高さが返る
+    st.setProperty('display', disp||'flex', 'important');
     st.setProperty('position','absolute','important');
     st.setProperty('left','-99999px','important');
     st.setProperty('top','0','important');
@@ -58,19 +62,25 @@
   }
   //  いちばん収まらない一枚に合わせた倍率をひとつ決める。
   //  ここで一枚ずつ決めると、送るたびに紙の大きさが変わる
+  var TALL=0;
   function measure(){
     var deck=document.querySelector('.deck'); if(!deck) return FIT;
     var cur=document.querySelector('.slide.on');
     var all=[].slice.call(document.querySelectorAll('.slide'));
     if(!all.length) return FIT;
     deck.style.setProperty('--fit','1');            // いちど等倍に戻して自然な高さを測る
+    //  前に決めた高さが残っていると、全部がその高さで返ってきてしまう
+    deck.style.removeProperty('--slideh');
     var w=(cur&&cur.offsetWidth)||BASE_W;
+    var disp=cur ? (getComputedStyle(cur).display||'flex') : 'flex';
+    if(disp==='none') disp='flex';
     var tall=0;
     all.forEach(function(s){
-      var h=(s===cur) ? (s.offsetHeight||0) : natH(s, w);
+      var h=(s===cur) ? (s.offsetHeight||0) : natH(s, w, disp);
       if(h>tall) tall=h;
     });
     if(tall<=0) tall=1;
+    TALL=tall;
     var vw=document.documentElement.clientWidth, vh=window.innerHeight;
     var z=Math.min((vw-28)/BASE_W, (vh-barH()-PAD)/tall);
     if(!isFinite(z)||z<=0) z=1;
@@ -79,6 +89,10 @@
   function apply(){
     var deck=document.querySelector('.deck'); if(!deck) return;
     deck.style.setProperty('--fit', String(Math.round(FIT*1000)/1000));
+    //  紙の高さも、いちばん高い一枚にそろえる。幅だけそろえても、
+    //  中央寄せなので低い頁は上下が内側に寄り、送るたびに枠が伸び縮みする。
+    //  低い頁は下に余白が付くだけで、中身の並びは変わらない
+    if(TALL>0) deck.style.setProperty('--slideh', Math.ceil(TALL)+'px');
   }
   function fit(){ FIT=measure(); apply(); }
 
