@@ -1383,7 +1383,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260915-04';
+  var APP_BUILD='20260916-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2624,7 +2624,9 @@
           +'<div><label class="fl">顧問料・買い手プラン（円/月・税別）</label><input id="bl-adv" type="number" class="inp2" style="width:120px;" value="45000" oninput="renderAdmBilling();blRatesSave()"></div>'
           //  売り手プラン（譲渡準備）。請求の自動生成と契約書の月額はここから
           +'<div><label class="fl">顧問料・売り手プラン（円/月・税別）</label><input id="bl-seller" type="number" class="inp2" style="width:120px;" value="30000" oninput="renderAdmBilling();blRatesSave()"></div>'
-          +'<div><label class="fl">運営直接担当（円/月・一律）</label><input id="bl-direct" type="number" class="inp2" style="width:120px;" value="30000" oninput="renderAdmBilling();blRatesSave()"></div>'
+          //  「運営直接担当 30,000円・一律」はやめました。運営が担当していても
+          //  買い手 45,000／売り手 30,000 の2つだけです。相手によって値段が
+          //  違うと、この値段で続けてもらえるのかという本当の反応が読めません
           +'<div><label class="fl">初期導入費・買い手プラン（円・初回）</label><input id="bl-init" type="number" class="inp2" style="width:130px;" value="100000" oninput="renderAdmBilling();blRatesSave()"></div>'
           //  売り手プランは動く実務の量が違うので半額。プランごとに分けて持つ
           +'<div><label class="fl">初期導入費・売り手プラン（円・初回）</label><input id="bl-initseller" type="number" class="inp2" style="width:130px;" value="50000" oninput="renderAdmBilling();blRatesSave()"></div>'
@@ -2785,7 +2787,7 @@
         +'<div class="ph" style="font-size:13px;margin-top:2px;display:flex;align-items:center;justify-content:space-between;">請求を立てる'
           +'<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadInvoices()">↺ 更新</span></div>'
         +'<div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.75;">'
-          +'その月の顧問料を、顧客ごとに請求として立てます。金額は「概要」タブの設定（顧問料・運営直接担当）をそのまま使います。'
+          +'その月の顧問料を、顧客ごとに請求として立てます。金額は<b>その月の1日に効いているプラン</b>で決まり、「概要」タブの設定（顧問料・買い手／売り手）をそのまま使います。運営が直接担当している顧客も同じ額です。'
           +'<b style="color:var(--navy);">同じ月に二度立てても増えません。</b>'
           +'その月の末日までにご登録のあった顧客だけが対象で、解約済みの方は含みません。</div>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">'
@@ -3392,7 +3394,7 @@
   //  すでに保存されている値が残っていても、読み込む先が無いので影響しない。
   //  bl-s*（委託者情報）は総合振込ファイルの先頭に入る「継の口座」。
   //  Edge Function（payout-file）が app_settings.billing_rates から読む
-  var BL_RATE_IDS=['bl-pbase','bl-pclient','bl-adv','bl-direct','bl-init','bl-ai','bl-seat','bl-seatpack','bl-seatpackn','bl-bank',
+  var BL_RATE_IDS=['bl-pbase','bl-pclient','bl-adv','bl-init','bl-ai','bl-seat','bl-seatpack','bl-seatpackn','bl-bank',
                    'bl-sc','bl-sname','bl-sbank','bl-sbranch','bl-stype','bl-sacct','bl-seller','bl-initseller'];
   var BL_RATES_OK=false, BL_SAVE_T=null;
   function blRatesNote(t){ var el=$('bl-rates-note'); if(el) el.textContent=t?('　'+t):''; }
@@ -3434,21 +3436,20 @@
     // パートナー料
     var partnerMRR=0; fdes.forEach(function(f){ partnerMRR += pbase + pcl*(cc[f.id]||0); });
     var assignedClients=Object.keys(cc).reduce(function(s,k){ return s+(cc[k]||0); },0);
-    // 顧問料（割引適用）※運営直接担当はパートナー外注費が無いため一律料金（割引・階層付与の対象外）
-    var direct=blRate('bl-direct',30000);
+    // 顧問料。金額を決めるのはプランだけです。
+    //  運営が直接担当していても額は変わりません（一律 30,000円 は廃止）。
+    //  値段が相手によって違うと、この値段で続けてもらえるのかという
+    //  本当の反応が読めなくなるためです。担当が誰かは印だけ出します。
     var cap=100;   // 割引を廃止したので上限は効かない（custDiscount が常に0%）
     var adminIds={}; (ADM_CACHE.admins||[]).forEach(function(a){ adminIds[a.id]=1; });
     var advGross=0, advNet=0, discTotal=0;
     var custRows=custs.map(function(c){
-      if(c.consultant_id && adminIds[c.consultant_id]){
-        advGross+=direct; advNet+=direct;
-        return {c:c, raw:0, pct:0, isCap:false, parts:[], fee:direct, direct:true};
-      }
       var d=custDiscount(c, cfg, partnerInfo);
       var capped=Math.min(d.pct, cap);
       var base=(planOf(c)==='seller')?sellerFee:adv;   // プランで月額が違う
       var fee=base*(1-capped/100); advGross+=base; advNet+=fee; discTotal+=(base-fee);
-      return {c:c, raw:d.pct, pct:capped, isCap:(d.pct>cap), parts:d.parts, fee:fee, direct:false};
+      return {c:c, raw:d.pct, pct:capped, isCap:(d.pct>cap), parts:d.parts, fee:fee,
+              direct:!!(c.consultant_id && adminIds[c.consultant_id])};
     });
     var mrr=partnerMRR+advNet;
     var ym=jstMonth();
@@ -3500,7 +3501,10 @@
           var tags=r.parts.map(function(p){ return '<span class="tag gray" style="font-size:10px;">'+esc(p.t)+' '+p.p+'%</span>'; }).join('');
           ch+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #EDF1F6;flex-wrap:wrap;">'
             +'<span style="flex:1;min-width:140px;font-size:13px;color:#18202E;">'+esc(r.c.company_name||r.c.email)+'</span>'
-            +(r.direct?'<span class="tag blue">運営直接担当・一律</span>':(r.pct>0?'<span class="tag green">割引 '+r.pct+'%'+(r.isCap?'（上限）':'')+'</span>'+tags:'<span class="tag gray">割引なし</span>'))
+            //  担当が運営かどうかは印だけ。金額はプランで決まる
+            +planTag(r.c)
+            +(r.direct?'<span class="tag blue">運営が直接担当</span>':'')
+            +(r.pct>0?'<span class="tag green">割引 '+r.pct+'%'+(r.isCap?'（上限）':'')+'</span>'+tags:'')
             +'<span style="font-size:13px;font-weight:700;color:#1E3A66;width:110px;text-align:right;">'+yen(r.fee)+'<span style="font-size:10px;color:#94A2B6;font-weight:400;">/月</span></span>'
           +'</div>';
         });
@@ -7050,7 +7054,10 @@
     return '<span class="tag '+c+'" style="font-size:10px;">'+invMethodLabel(m)+'</span>';
   }
   function invKindLabel(k){
-    return { advisory:'顧問料', direct:'顧問料（運営直接）', fa:'FA手数料',
+    //  direct は、運営直接担当を一律 30,000円 で請求していたころの種別です。
+    //  いまは全員プランどおりなので新しくは作りませんが、過去の請求が
+    //  読めなくなるので名前は残します
+    return { advisory:'顧問料', direct:'顧問料（運営直接・旧）', fa:'FA手数料',
              setup:'初期導入費', other:'その他' }[k]||'';
   }
   function invInitMonths(){
