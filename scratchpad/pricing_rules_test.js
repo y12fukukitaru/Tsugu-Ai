@@ -120,5 +120,36 @@ function fn(name) {
   ok('EP-II の資料も入金ベース', /2,000 円 × 入金のあった顧問先の数/.test(PITE2));
 }
 
+// ⑧ エンタープライズの卸値も2プラン
+{
+  const SQL2 = R('supabase/migrations/20260915010000_ep_plan.sql');
+  const PITE1 = R('pitch-ep1.html');
+  //  顧問先ごとのプランが画面に届いているか（届かないと一律で計算してしまう）
+  ok('SQL：ep_people がプランを返す', /returns table \(id uuid, email text, name text, role text, plan text\)/.test(SQL2)
+    && /when p\.role = 'customer' then p\.plan else null end/.test(SQL2));
+  ok('SQL：ep_book が顧問先のプランを返す', /customer_plan text/.test(SQL2) && /c\.email, c\.stage, c\.plan/.test(SQL2));
+  ok('SQL：戻り値が変わるので作り直す', /drop function if exists public\.ep_people\(uuid\);/.test(SQL2)
+    && /drop function if exists public\.ep_book\(uuid\);/.test(SQL2));
+  no('SQL：anon には渡さない', /grant execute on function public\.ep_(people|book)\(uuid\) to anon/.test(SQL2));
+  //  画面側
+  ok('本体：プランで額を出し分ける道具', /function epPlan\(d,id\)/.test(SRC)
+    && /function epFeeOf\(plan\)/.test(SRC) && /function epSetupOf\(plan\)/.test(SRC));
+  ok('本体：名前とプランを一緒に持つ', /plan:p\.plan\|\|null/.test(SRC) && /plan:r\.customer_plan\|\|null/.test(SRC));
+  const cl = fn('epClientsHtml');
+  ok('顧問先の一覧は行ごとにプランで計算', /var pk=epPlan\(d, c\.customer_id\);/.test(cl)
+    && /epYen\(epFeeOf\(pk\)\)/.test(cl) && /epYen\(splitOf\(pk\)\.hq\)/.test(cl));
+  ok('受領を記録もプランの額', /epSetSetup\(\\''\+escJ\(c\.id\)\+'\\','\+epSetupOf\(pk\)\+'\)/.test(cl));
+  no('顧問先の一覧に「全社一律」は残っていない', /全社一律/.test(cl));
+  const s1 = fn('epSum1');
+  ok('EP-I の受取は1社ずつ足す', /live\.forEach\(function\(c\)\{/.test(s1) && /hq\+=s1\.hq; tg\+=s1\.tsugu;/.test(s1));
+  ok('EP-I の配分表は4行（顧問料と初期導入費 × 2プラン）',
+    (s1.match(/epSplitRow\(/g) || []).length === 4);
+  //  資料と説明書
+  ok('EP-I の資料に売り手の額', /売り手 30,000円/.test(PITE1) && /<b>24,000円<\/b>/.test(PITE1) && /<b>40,000円<\/b>/.test(PITE1));
+  ok('EP-II の資料に売り手の額', /売り手 30,000円　Lv\.2/.test(PITE2) && /買い手 4,500円／売り手 3,000円/.test(PITE2));
+  ok('EP 説明書に4行の配分表', /売り手 30,000円／社・月/.test(MANE) && /売り手 50,000円／社/.test(MANE)
+    && /本部 3,000円（一律10%）/.test(MANE));
+  ok('EP 説明書：どちらのプランかは画面の札で分かる', /どちらのプランか/.test(MANE) && /の札で出ます/.test(MANE));
+}
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
