@@ -4,9 +4,12 @@
    ここが引き受けるのは、話す人の手元の操作だけ。中身（何枚あるか、
    どの順で見せるか）は各資料の側にある。
 
-     ① 画面に合わせる … 表示中の一枚を測り、幅と高さの両方に収まる
-        倍率を zoom で当てる（transform と違って配置も一緒に伸びるので、
-        中央寄せがそのまま効く）。倍率は CSS 変数 --fit に置く
+     ① 画面に合わせる … 倍率を zoom で当てる（transform と違って配置も
+        一緒に伸びるので、中央寄せがそのまま効く）。倍率は CSS 変数 --fit。
+        測るのは表示中の一枚ではなく**全部**で、いちばん収まらない一枚に
+        合わせる。一枚ずつ測ると、縦に伸びるデモの頁だけ小さくなり、
+        送るたびに紙の大きさが変わり、見ているほうが落ち着かない。
+        倍率は一度決めたら、画面の大きさが変わるまで動かさない
      ② 全画面        … ウェビナー・プレゼン用。ブラウザの全画面が使える
         端末では本物の全画面、使えない端末（iPhone の Safari など）では
         下のバーを退かせて紙を最大にする「見立ての全画面」に落とす
@@ -27,24 +30,57 @@
   var uiTimer=null;
 
   // ===== ① 画面に合わせる =====
+  var FIT=1;
   function barH(){
     var b=document.querySelector('.bar');
     if(!b) return 0;
-    //  全画面でバーを退かせているあいだは、その分も紙に使う
-    if(body.classList.contains('pf-on') && !body.classList.contains('pf-ui')) return 8;
+    //  全画面ではバーは紙の上に重なる。出ているかどうかで高さを変えると、
+    //  バーが出入りするたびに紙の大きさが変わってしまう。常に同じだけ空ける
+    if(body.classList.contains('pf-on')) return 8;
     return b.offsetHeight||58;
   }
-  function fit(){
-    var deck=document.querySelector('.deck'); if(!deck) return;
-    var cur=document.querySelector('.slide.on'); if(!cur) return;
-    deck.style.setProperty('--fit','1');            // いちど等倍に戻して自然な高さを測る
-    var vw=document.documentElement.clientWidth, vh=window.innerHeight;
-    var natH=cur.offsetHeight||1;
-    var z=Math.min((vw-28)/BASE_W, (vh-barH()-PAD)/natH);
-    if(!isFinite(z)||z<=0) z=1;
-    z=Math.max(0.6, Math.min(z, 2.6));
-    deck.style.setProperty('--fit', String(Math.round(z*1000)/1000));
+  //  隠れている一枚の高さを測る。display:none のままでは測れないので、
+  //  画面の外へ出して、いま出ている一枚と同じ幅で組み直して測る。
+  //  幅を揃えないと、折り返しが変わって高さも変わる
+  function natH(s, w){
+    var st=s.style;
+    var keep=[st.display, st.position, st.left, st.top, st.visibility, st.width];
+    st.setProperty('display','block','important');
+    st.setProperty('position','absolute','important');
+    st.setProperty('left','-99999px','important');
+    st.setProperty('top','0','important');
+    st.setProperty('visibility','hidden','important');
+    if(w>0) st.setProperty('width', w+'px','important');
+    var h=s.offsetHeight||0;
+    st.display=keep[0]; st.position=keep[1]; st.left=keep[2];
+    st.top=keep[3]; st.visibility=keep[4]; st.width=keep[5];
+    return h;
   }
+  //  いちばん収まらない一枚に合わせた倍率をひとつ決める。
+  //  ここで一枚ずつ決めると、送るたびに紙の大きさが変わる
+  function measure(){
+    var deck=document.querySelector('.deck'); if(!deck) return FIT;
+    var cur=document.querySelector('.slide.on');
+    var all=[].slice.call(document.querySelectorAll('.slide'));
+    if(!all.length) return FIT;
+    deck.style.setProperty('--fit','1');            // いちど等倍に戻して自然な高さを測る
+    var w=(cur&&cur.offsetWidth)||BASE_W;
+    var tall=0;
+    all.forEach(function(s){
+      var h=(s===cur) ? (s.offsetHeight||0) : natH(s, w);
+      if(h>tall) tall=h;
+    });
+    if(tall<=0) tall=1;
+    var vw=document.documentElement.clientWidth, vh=window.innerHeight;
+    var z=Math.min((vw-28)/BASE_W, (vh-barH()-PAD)/tall);
+    if(!isFinite(z)||z<=0) z=1;
+    return Math.max(0.6, Math.min(z, 2.6));
+  }
+  function apply(){
+    var deck=document.querySelector('.deck'); if(!deck) return;
+    deck.style.setProperty('--fit', String(Math.round(FIT*1000)/1000));
+  }
+  function fit(){ FIT=measure(); apply(); }
 
   // ===== ② 全画面 =====
   function fsOn(){ return !!(document.fullscreenElement||document.webkitFullscreenElement); }
@@ -57,25 +93,40 @@
       if(e.requestFullscreen) e.requestFullscreen().catch(function(){});
       else if(e.webkitRequestFullscreen) e.webkitRequestFullscreen();
     }catch(err){}
-    body.classList.add('pf-on'); showUi(); paint(); fit();
+    //  入った直後に操作を出さない。押した本人はどこにあるか分かっているし、
+    //  出してしまうと「紙だけ」にした意味が無くなる
+    body.classList.add('pf-on'); paint(); fit();
   }
   function leave(){
     try{
       if(document.exitFullscreen && document.fullscreenElement) document.exitFullscreen().catch(function(){});
       else if(document.webkitExitFullscreen && document.webkitFullscreenElement) document.webkitExitFullscreen();
     }catch(err){}
-    body.classList.remove('pf-on','pf-ui');
+    body.classList.remove('pf-on','pf-ui','pf-topui','pf-cursor');
     paint(); fit();
   }
   function toggle(){ body.classList.contains('pf-on') ? leave() : enter(); }
 
-  // 全画面のあいだ、操作したときだけ下のバーを出す（話している最中は紙だけにする）
-  function showUi(){
+  // 全画面のあいだ、下のバーと右上を出す・退かせる。
+  //   頁を送っただけで出てはいけない（送るたびに操作が現れて、話の邪魔になる）。
+  //   出すのは「そこへ近づいたとき」だけにする。紙の大きさは変えない
+  function showUi(on){
     if(!body.classList.contains('pf-on')) return;
-    body.classList.add('pf-ui');
+    body.classList.toggle('pf-ui', !!on);
+  }
+  function showTop(on){
+    if(!body.classList.contains('pf-on')){ body.classList.remove('pf-topui'); return; }
+    body.classList.toggle('pf-topui', !!on);
+  }
+  //  全画面では、動かしていないあいだカーソルも消す。白い矢印が紙の上に
+  //  残っていると、そこだけ目が行ってしまう
+  function wakeCursor(){
+    if(!body.classList.contains('pf-on')) return;
+    body.classList.add('pf-cursor');
     if(uiTimer) clearTimeout(uiTimer);
-    uiTimer=setTimeout(function(){ body.classList.remove('pf-ui'); fit(); }, 2600);
-    fit();
+    uiTimer=setTimeout(function(){
+      body.classList.remove('pf-cursor','pf-ui','pf-topui');
+    }, 2200);
   }
 
   // ===== ④ 右上の操作 =====
@@ -117,7 +168,9 @@
     document.addEventListener('touchstart', function(e){
       if(e.touches.length!==1) return;
       tx=e.touches[0].clientX; ty=e.touches[0].clientY; swiped=false;
-      showUi();
+      //  指の端末には hover が無いので、下のほうを触ったときだけバーを出す。
+      //  どこを触っても出ると、送るたびに操作が現れることになる
+      if(ty>window.innerHeight-110) showUi(true);
     }, {passive:true});
     document.addEventListener('touchend', function(e){
       var t=e.changedTouches&&e.changedTouches[0]; if(!t) return;
@@ -138,23 +191,39 @@
   // ===== 配線 =====
   if(typeof window.show==='function'){
     var _show=window.show;
-    window.show=function(i){ _show(i); fit(); };
+    //  頁を送っても倍率は測り直さない（全部の頁で同じ大きさを保つ）。
+    //  操作も出さない。出すのは、そこへ近づいたときだけ
+    window.show=function(i){ _show(i); apply(); };
   }
   document.addEventListener('keydown', function(e){
     if(e.key==='Escape' && body.classList.contains('pf-on') && !fsOn()){ leave(); }
     if(e.key==='f'||e.key==='F'){ toggle(); }
-    showUi();
   });
-  document.addEventListener('mousemove', showUi);
+  //  近づいたら出す。下の帯（バー）と右上（操作）を、それぞれの近さで判定する
+  var HOT_BOTTOM=96, HOT_TOP=132, HOT_RIGHT=168;
+  document.addEventListener('mousemove', function(e){
+    if(!body.classList.contains('pf-on')) return;
+    wakeCursor();
+    showUi(e.clientY > window.innerHeight - HOT_BOTTOM);
+    showTop(e.clientY < HOT_TOP && e.clientX > window.innerWidth - HOT_RIGHT);
+  });
   ['fullscreenchange','webkitfullscreenchange'].forEach(function(ev){
     document.addEventListener(ev, function(){
       //  ブラウザ側（Esc やメニュー）で解除されたときも、こちらの見た目を合わせる
-      if(!fsOn() && fsCan()) body.classList.remove('pf-on','pf-ui');
+      if(!fsOn() && fsCan()) body.classList.remove('pf-on','pf-ui','pf-topui','pf-cursor');
       paint(); fit();
     });
   });
-  window.addEventListener('resize', fit);
+  //  測り直すのは画面の大きさが変わったときだけ。全部の頁を測るので、
+  //  resize の連打でそのまま走らせない
+  var rzT=null;
+  window.addEventListener('resize', function(){
+    if(rzT) clearTimeout(rzT);
+    rzT=setTimeout(fit, 120);
+  });
   window.addEventListener('load', fit);
+  //  字が入れ替わると高さが変わる。読み込み終わりにもう一度だけ測る
+  try{ if(document.fonts && document.fonts.ready) document.fonts.ready.then(fit); }catch(e){}
   build(); bindSwipe();
   //  開いた直後だけ右上を濃くして、そこに操作があることを知らせる。
   //  ずっと濃いと、見せている紙より先に目に入ってしまう

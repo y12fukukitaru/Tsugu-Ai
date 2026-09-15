@@ -1383,7 +1383,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260914-05';
+  var APP_BUILD='20260915-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2619,7 +2619,9 @@
           //  売り手プラン（譲渡準備）。請求の自動生成と契約書の月額はここから
           +'<div><label class="fl">顧問料・売り手プラン（円/月・税別）</label><input id="bl-seller" type="number" class="inp2" style="width:120px;" value="30000" oninput="renderAdmBilling();blRatesSave()"></div>'
           +'<div><label class="fl">運営直接担当（円/月・一律）</label><input id="bl-direct" type="number" class="inp2" style="width:120px;" value="30000" oninput="renderAdmBilling();blRatesSave()"></div>'
-          +'<div><label class="fl">初期登録料（円・初回）</label><input id="bl-init" type="number" class="inp2" style="width:130px;" value="100000" oninput="renderAdmBilling();blRatesSave()"></div>'
+          +'<div><label class="fl">初期導入費・買い手プラン（円・初回）</label><input id="bl-init" type="number" class="inp2" style="width:130px;" value="100000" oninput="renderAdmBilling();blRatesSave()"></div>'
+          //  売り手プランは動く実務の量が違うので半額。プランごとに分けて持つ
+          +'<div><label class="fl">初期導入費・売り手プラン（円・初回）</label><input id="bl-initseller" type="number" class="inp2" style="width:130px;" value="50000" oninput="renderAdmBilling();blRatesSave()"></div>'
         +'</div>'
         //  振込でお願いする請求は、振込先が画面に出ないと担当パートナーに
         //  電話が行く。ここに入れておけば、請求のたびに書かずに済む
@@ -2667,11 +2669,22 @@
           +'</div>'
           +'<div style="font-size:11px;color:#8A6A12;background:rgba(195,155,63,.10);border:1px solid rgba(195,155,63,.35);border-radius:8px;padding:8px 10px;margin-top:9px;line-height:1.7;">'
             +'ボリュームディスカウント（契約社数による割引）・HD化ボーナス・担当パートナーの階層付与は<b>すべて廃止</b>しました。'
-            +'顧問料は<b>全社一律 '+EP_STD_FEE.toLocaleString('ja-JP')+' 円（税別）</b>、初期導入費は<b>全社一律 '+EP_SETUP_FEE.toLocaleString('ja-JP')+' 円（税別）</b>です。'
+            //  金額はプランで変わる。ここを「一律」と書いたままにすると、
+            //  売り手プランのお客様に買い手プランの額をご請求してしまう
+            +'金額が変わるのは<b>プランだけ</b>で、会社の規模や契約社数では変わりません。'
+            +'<b>買い手プラン</b>＝顧問料 '+EP_STD_FEE.toLocaleString('ja-JP')+' 円／月・初期導入費 '+EP_SETUP_FEE.toLocaleString('ja-JP')+' 円、'
+            +'<b>売り手プラン</b>＝顧問料 '+EP_SELLER_FEE.toLocaleString('ja-JP')+' 円／月・初期導入費 '+EP_SETUP_SELLER.toLocaleString('ja-JP')+' 円（いずれも税別）。'
             +'EP登録料・月額下限・法人管理料もありません。</div>'
         +'</div>'
         +'<div class="ph" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 14.5 14.5 9.5"/><path d="M11 6.5 12.4 5a4.2 4.2 0 0 1 6 6L17 12.4"/><path d="M13 17.5 11.6 19a4.2 4.2 0 0 1-6-6L7 11.6"/></svg>M&A仲介フィーシミュレーター（レーマン方式）</span></div>'
-        +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">取引金額を入れると、標準レーマン方式（5億以下5%／5〜10億4%／10〜50億3%／50〜100億2%／100億超1%）で仲介フィーを段階計算します。実際の料率・最低報酬額は契約内容に従ってください。</div>'
+        //  料金表（LP・特定商取引法の表示）と同じ条件をここにも書く。
+        //  「最低報酬額は契約内容に従って」と濁すと、無いはずの最低報酬を
+        //  お客様に案内してしまう
+        +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">取引金額を入れると、標準レーマン方式（5億以下5%／5〜10億4%／10〜50億3%／50〜100億2%／100億超1%）で仲介フィーを段階計算します。'
+          +'基準額は<b style="color:var(--navy);">譲渡価額（株価）</b>で、負債は含みません。'
+          +'<b style="color:var(--navy);">着手金・中間金・月額報酬は0円、最低手数料はありません。</b>'
+          +'同一の案件で双方からはいただきません（売却のご相談なら譲渡側のみ）。'
+          +'顧問契約1年超は1年ごとに10%・最大50%引き（プランを変更しても期間は通算）。</div>'
         +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
           +'<div><label class="fl">取引金額（万円）</label><input id="lh-amt" type="number" class="inp2" style="width:160px;" placeholder="例 30000（＝3億円）" oninput="lehmanCalc()"></div>'
         +'</div>'
@@ -3374,7 +3387,7 @@
   //  bl-s*（委託者情報）は総合振込ファイルの先頭に入る「継の口座」。
   //  Edge Function（payout-file）が app_settings.billing_rates から読む
   var BL_RATE_IDS=['bl-pbase','bl-pclient','bl-adv','bl-direct','bl-init','bl-ai','bl-seat','bl-seatpack','bl-seatpackn','bl-bank',
-                   'bl-sc','bl-sname','bl-sbank','bl-sbranch','bl-stype','bl-sacct','bl-seller'];
+                   'bl-sc','bl-sname','bl-sbank','bl-sbranch','bl-stype','bl-sacct','bl-seller','bl-initseller'];
   var BL_RATES_OK=false, BL_SAVE_T=null;
   function blRatesNote(t){ var el=$('bl-rates-note'); if(el) el.textContent=t?('　'+t):''; }
   async function blRatesLoad(){
@@ -3402,6 +3415,7 @@
     var fdes=ADM_CACHE.fdes||[], custs=ADM_CACHE.custs||[], cc=ADM_CACHE.clientCount||{};
     var pbase=blRate('bl-pbase',3000), pcl=blRate('bl-pclient',2000);
     var adv=blRate('bl-adv',EP_STD_FEE), init=blRate('bl-init',EP_SETUP_FEE);
+    var initSeller=blRate('bl-initseller',EP_SETUP_SELLER);
     var sellerFee=blRate('bl-seller',EP_SELLER_FEE);
     var aiFee=blRate('bl-ai',EP_AI_FEE), seatFee=blRate('bl-seat',EP_SEAT_FEE);
     var cfg={};   // 割引は廃止（custDiscount は常に0%を返す）
@@ -3432,15 +3446,19 @@
     });
     var mrr=partnerMRR+advNet;
     var ym=jstMonth();
-    var newC=custs.filter(function(c){ return jstDay(c.created_at).slice(0,7)===ym; }).length;
-    var initThisMonth=newC*init;
+    //  初期導入費はプランで額が違う（買い手 100,000／売り手 50,000）。
+    //  一律で掛けると、売り手プランの多い月ほど試算が上振れする
+    var newAll=custs.filter(function(c){ return jstDay(c.created_at).slice(0,7)===ym; });
+    var newS=newAll.filter(function(c){ return planOf(c)==='seller'; }).length;
+    var newB=newAll.length-newS, newC=newAll.length;
+    var initThisMonth=newB*init+newS*initSeller;
     function card(l,v,sub,c){ return '<div style="flex:1 1 150px;min-width:150px;background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:11px 13px;"><div style="font-size:10.5px;color:#94A2B6;">'+l+'</div><div style="font-size:19px;font-weight:700;color:'+(c||'#1E3A66')+';">'+v+'</div>'+(sub?'<div style="font-size:10.5px;color:#94A2B6;margin-top:2px;">'+sub+'</div>':'')+'</div>'; }
     box.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;">'
       +card('月次売上 MRR合計', yen(mrr), '年換算 '+yen(mrr*12), '#27684A')
       +card('顧問料', yen(advNet), '買い手 '+yen(adv)+'／売り手 '+yen(sellerFee)+'（税別）・売り手 '+custs.filter(function(c){ return planOf(c)==='seller'; }).length+'社')
       +card('パートナー料', yen(partnerMRR), fdes.length+'名・基本＋'+assignedClients+'社加算')
       +card('AI利用料（月）', yen(assignedClients*aiFee), assignedClients+'社 × '+yen(aiFee)+'（パートナー負担）', '#8F7230')
-      +card('今月の初期導入費（一時）', yen(initThisMonth), '新規 '+newC+'社 × '+yen(init), '#C39B3F')
+      +card('今月の初期導入費（一時）', yen(initThisMonth), '新規 '+newC+'社（買い手 '+newB+' × '+yen(init)+'／売り手 '+newS+' × '+yen(initSeller)+'）', '#C39B3F')
       +'</div>';
     var db=$('bl-detail'); if(db){
       if(!fdes.length){ db.innerHTML='<div style="font-size:12px;color:#94A2B6;">パートナーがまだいません。</div>'; }
@@ -6619,11 +6637,15 @@
       //  外注費率は税抜の土台に掛ける（運営の配分画面と同じ計算）
       var net=taxEx(amt);
       var fee=(rate==null)?null:net*rate*share/100;
-      rows.push({ on:r.occurred_on, cust:names[r.customer_id]||'', cat:r.category||'', desc:r.description||'',
+      rows.push({ on:r.occurred_on, custId:r.customer_id, cust:names[r.customer_id]||'', cat:r.category||'', desc:r.description||'',
                   amt:amt, net:net, rate:rate, role:role, share:share, fee:fee });
     });
+    //  利用料の土台は「この期間に入金のあった顧問先の数」。担当している総社数
+    //  （myClients）は外注費率のスケール判定にだけ使う。運営の配分画面と
+    //  同じ数え方でないと、明細より少ない額が振り込まれることになる
+    var paidC={}; rows.forEach(function(x){ if(x.custId) paidC[x.custId]=1; });
     return { rows:rows, entity:myEntity, ep:(EP_AFFIL[ME]||null),
-             clients:(myClients==null?0:myClients), rates:myRates };
+             clients:Object.keys(paidC).length, allClients:(myClients==null?0:myClients), rates:myRates };
   }
   //  ご本人が負担する利用料。運営の配分画面とまったく同じ関数を使う。
   //  別の式で書くと、いつか片方だけ直されて金額がずれる
@@ -16015,7 +16037,8 @@
   var EP_STD_FEE=45000;        // 基本顧問料（円／社・月）
   var EP_AI_FEE=2000;          // AI利用料（円／社・月）パートナーが継へお支払い
   var EP_SEAT_FEE=3000;        // 担当者登録使用料（円／人・月）EP型のみ・EP負担
-  var EP_SETUP_FEE=100000;     // 初期導入費（円／社）全社一律
+  var EP_SETUP_FEE=100000;     // 初期導入費（円／社）買い手プラン。EP の卸値もこの額
+  var EP_SETUP_SELLER=50000;   // 初期導入費（円／社）売り手プラン。動く実務の量が違う
   var EP_SELLER_FEE=30000;     // 売り手プラン（譲渡準備）の顧問料（円／社・月・税別）
   // ===== 顧問プラン（買い手／売り手）=====
   //  買い手＝成長して次の1社を引き受ける会社。売り手＝数年先の出口へ準備する会社。
@@ -18777,6 +18800,11 @@
     var r=rates||{};                                     // 料率が無くても落とさない
     var n=Math.max(0, Math.floor(Number(clients)||0));
     var per=Number(r.per)||0;                            // AI利用料（1社あたり）
+    //  顧問先が0社の月は、基本料（登録料）もいただかない。
+    //  「顧問先がなくなった月は、基本料金の3,000円も請求しません」と
+    //  LP・特定商取引法の表示でお約束している。ここで固定額を足すと、
+    //  入金の無い月にご請求だけが立つ
+    if(n<=0) return { ex:0, inc:0, kind:(kind==='EP2'?'EP2':'solo'), fixed:0, per:per, n:0 };
     var fixed, k;
     if(kind==='EP2'){ k='EP2';  fixed=Number(r.seat)||0; }   // 登録料（1人ぶん）
     else            { k='solo'; fixed=Number(r.base)||0; }
@@ -18788,9 +18816,13 @@
   //  言い方は運営画面の設定欄と同じにする。呼び名が増えるほど、
   //  読む側は「これは別の請求か」と迷う
   function payUsageNote(u){
-    if(!u || u.ex<=0) return '';
+    if(!u) return '';
+    if(u.kind==='EP1') return '';
+    //  0社の月は「引かなかった」ことを書く。何も出ないと、引き忘れたのか
+    //  そういう決まりなのかが分からない
+    if(u.ex<=0) return '利用料：この月は入金のあった顧問先が無いため、基本料もいただいていません。';
     return '利用料の内訳：'+(u.kind==='EP2'?'登録料 ':'基本 ')+yen(u.fixed)
-      +' ＋ AI利用料 '+yen(u.per)+' × '+u.n+'社'
+      +' ＋ AI利用料 '+yen(u.per)+' × '+u.n+'社（入金のあった顧問先）'
       +' ＝ '+yen(u.ex)+'（税抜）→ '+yen(u.inc)+'（税込）';
   }
   // ===== EP（法人）の担当者ぶんの利用料 =====
@@ -18893,7 +18925,7 @@
     var acc={}, noPartner=0, noRate=[];
     function bucket(pid, label){
       if(!acc[pid]) acc[pid]={ label:label, gross:0, net:0, fee:0, main:0, sub:0, subLabel:null,
-                               rate:null, entity:null, ep2:false, rows:[] };
+                               rate:null, entity:null, ep2:false, rows:[], paid:{} };
       return acc[pid];
     }
     //  EP-II の本部取り分（一律10%）。所属の方の報酬とは別に、法人へお支払いする。
@@ -18917,6 +18949,10 @@
         hqG[af.ep_id].who[c.consultant_id]=(p.full_name||p.email||'');
       }
       var b=bucket(c.consultant_id, p.full_name||p.email||'パートナー');
+      //  AI利用料は「その月に入金のあった顧問先」の数で計算する。担当している
+      //  総社数ではない。入金の無い顧問先のぶんまでいただくと、LP・特定商取引法
+      //  の表示（入金のあった顧問先の分だけ加算）より多く請求することになる
+      b.paid[r.customer_id]=1;
       b.rate=rate; b.gross+=amt; b.net+=net; b.entity=p.entity_type||null;
       b.ep2=!!ep2[c.consultant_id];
       b.ep1rate=!!(af && af.ep_kind==='EP1');
@@ -18992,7 +19028,10 @@
     keys.forEach(function(k){ var b=acc[k];
       b.wh=withholdYen(b.fee, isIndiv(b.entity));       // 源泉徴収はその月の報酬合計に対して1回
       b.ep=EP_AFFIL[k]||null;
-      b.clients=payClients[k]||0;
+      //  利用料の土台は「その月に入金のあった顧問先の数」。担当している総社数
+      //  （payClients）はランクのスケール判定にだけ使う
+      b.clients=Object.keys(b.paid).length;
+      b.allClients=payClients[k]||0;
       //  EP に所属している方の利用料は法人のご負担。ご本人から引くと
       //  二重に取ることになる。法人ぶんの内訳は下にまとめて出す
       var u=payUsageFee(b.clients, b.ep, uRates);
@@ -19008,27 +19047,25 @@
     var epG={}, epOrder=[];
     keys.forEach(function(k){ var b=acc[k];
       if(!b.acctOrg) return;
-      if(!epG[b.acctId]){ epG[b.acctId]={ name:b.acctOrg, pay:0, who:[] }; epOrder.push(b.acctId); }
-      epG[b.acctId].pay+=b.pay; epG[b.acctId].who.push(b.label); });
-    //  EP-I の利用料は法人がまとめてお支払いになる。担当者の人数と
-    //  顧客数から計算して、法人の振込額から差し引く。
-    //  数えるのはサーバ側の一か所（ep_billing_counts）に寄せてある。
-    //  画面ごとに数え方がずれると、ずれた数字がそのままご請求額になる
+      if(!epG[b.acctId]){ epG[b.acctId]={ name:b.acctOrg, pay:0, who:[], paid:{}, seats:0 }; epOrder.push(b.acctId); }
+      var g=epG[b.acctId];
+      g.pay+=b.pay; g.who.push(b.label);
+      //  EP-I の利用料も「顧問料の入金があった月に、入金のあった顧問先のぶんだけ」。
+      //  席の数も、その月に入金のあった顧問先を持っている担当者だけを数える。
+      //  在籍している人数と登録済みの顧問先の数で数えると、まだ1社も決まって
+      //  いない担当者のぶんまでご請求することになる（LP・特定商取引法の表示と
+      //  食い違う）。この月の入金から数えれば、数えられない月も無くなる
+      Object.keys(b.paid).forEach(function(cid){ g.paid[cid]=1; });
+      if(Object.keys(b.paid).length>0) g.seats++;
+    });
     if(epOrder.length){
       var uSeat=blRate('bl-seat',EP_SEAT_FEE);
       var uPack=blRate('bl-seatpack',15000), uPackN=blRate('bl-seatpackn',10);
-      var epCnt=null;
-      try{
-        var ec=await sb.rpc('ep_billing_counts',{ p_eps:epOrder });
-        if(!ec.error){ epCnt={}; (ec.data||[]).forEach(function(x){ epCnt[x.ep_id]=x; }); }
-      }catch(e){}
       epOrder.forEach(function(id){
-        var g=epG[id], c=epCnt&&epCnt[id];
-        //  数えられなかったら引かない。分からない数字でご請求は立てられない
-        if(!c){ g.unknown=true; g.payNet=g.pay; g.due=0; return; }
-        g.members=c.members; g.clients=c.clients;
-        g.seat=epSeatFee(c.members, uSeat, uPack, uPackN);
-        g.clientFee=(c.clients||0)*uRates.per;   // AI利用料 × 顧問先の数
+        var g=epG[id];
+        g.members=g.seats; g.clients=Object.keys(g.paid).length;
+        g.seat=epSeatFee(g.members, uSeat, uPack, uPackN);
+        g.clientFee=g.clients*uRates.per;   // AI利用料 × 入金のあった顧問先の数
         g.useEx=g.seat.yen+g.clientFee;
         g.use=taxIn(g.useEx);
         var st=paySettle(g.pay, 0, g.use);
@@ -19069,24 +19106,20 @@
                 ? '<b style="font-size:13.5px;color:#C39B3F;">ご請求 '+yen(g.due)+'</b>'
                 : '<b style="font-size:13.5px;color:#27684A;">'+yen(g.payNet)+'</b>')
             +'</div>'
-            +(g.unknown
-              //  数えられなかったことは必ず出す。黙って引かずに払うと、
-              //  その月の利用料を取りそこねる
-              ? '<div style="font-size:11.5px;color:#A9403D;line-height:1.75;margin-top:3px;">'
-                +'⚠ 担当者数・顧客数を数えられなかったため、<b>利用料を差し引いていません。</b>'
-                +'この金額のまま支払うと、この月の利用料をいただけません。'
-                +'Supabaseで「EPの利用料」のSQLを実行してください。</div>'
-              : '<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-top:3px;">'
-                +'配分 <b style="color:var(--ink);">'+yen(g.pay)+'</b>'
-                +'　− 利用料 <b style="color:#A9403D;">'+yen(g.use)+'</b>'
-                +(g.due>0
-                  ? '　＝ <b style="color:#C39B3F;">ご請求 '+yen(g.due)+'</b>'
-                  : '　＝ お振込 <b style="color:#27684A;">'+yen(g.payNet)+'</b>')
-                +'<br>担当者 '+g.members+'名 '
-                +(g.seat.packs>0 ? 'まとめ'+g.seat.packs+'口'+(g.seat.heads>0?'＋'+g.seat.heads+'名':'') : g.seat.heads+'名ぶん')
-                +' '+yen(g.seat.yen)
-                +' ＋ AI利用料 '+yen(uRates.per)+' × '+g.clients+'社 '+yen(g.clientFee)
-                +' ＝ '+yen(g.useEx)+'（税抜）→ '+yen(g.use)+'（税込）</div>')
+            +'<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-top:3px;">'
+              +'配分 <b style="color:var(--ink);">'+yen(g.pay)+'</b>'
+              +'　− 利用料 <b style="color:#A9403D;">'+yen(g.use)+'</b>'
+              +(g.due>0
+                ? '　＝ <b style="color:#C39B3F;">ご請求 '+yen(g.due)+'</b>'
+                : '　＝ お振込 <b style="color:#27684A;">'+yen(g.payNet)+'</b>')
+              //  何を根拠に何名・何社としたのかを書く。「在籍している人数」では
+              //  なく「この月に入金のあった顧問先を持つ担当者」であることが
+              //  分からないと、法人から見て数が合わないように見える
+              +'<br>担当者 '+g.members+'名（入金のあった顧問先を持つ方）'
+              +(g.seat.packs>0 ? '　まとめ'+g.seat.packs+'口'+(g.seat.heads>0?'＋'+g.seat.heads+'名':'') : '　'+g.seat.heads+'名ぶん')
+              +' '+yen(g.seat.yen)
+              +' ＋ AI利用料 '+yen(uRates.per)+' × '+g.clients+'社（入金のあった顧問先） '+yen(g.clientFee)
+              +' ＝ '+yen(g.useEx)+'（税抜）→ '+yen(g.use)+'（税込）</div>'
             +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:2px;">'
               +'内訳：'+esc(g.who.join('・'))+'</div>'
           +'</div>'; }).join('')
@@ -19239,10 +19272,15 @@
       +'報酬より利用料が大きい方は「ご請求」として出ます（マイナスのお振込みは起こしません）。'
       +'利用料は<b>どなたのご負担かで差し引く先が変わります。</b>'
       +'<b style="color:var(--navy);">個人</b>＝基本＋AI利用料×社数を、ご本人から。'
-      +'<b style="color:var(--navy);">EP-I</b>＝上の「法人へまとめてお振込み」で、法人の担当者数と顧客数から'
+      +'<b style="color:var(--navy);">EP-I</b>＝上の「法人へまとめてお振込み」で、法人にまとめて'
       +'（担当者ぶんは1人ごとの額とまとめ登録の定額のうち<b>安いほう</b>）。'
       +'<b style="color:var(--navy);">EP-II</b>＝登録料＋AI利用料×社数を、所属営業ご本人から'
       +'（本部からは差し引きません）。<br>'
+      //  数え方を書いておく。ここが曖昧だと、請求された側が確かめようがない
+      +'※ 数えるのは<b>その月に入金のあった顧問先</b>だけです。'
+      +'入金の無かった顧問先のぶんはいただきません。'
+      +'<b>入金のあった顧問先が0社の月は、基本料（登録料）もいただきません。</b>'
+      +'EP-I の担当者ぶんも、その月に入金のあった顧問先を持っている方だけを数えます。<br>'
       +'※ 外注費率は、<b style="color:var(--navy);">EP-I</b> は法人との契約で決めた率（'+Math.round(EP_I_PCT*100)+'%）を使います。'
       +'ご本人のランクやスケールでは変わりません。'
       +'<b style="color:var(--navy);">EP-II</b> はご本人のランク料率（スケール無し・上限70%）で、'
@@ -19255,7 +19293,6 @@
     //  ファイルにするのはサーバー側（payout-file）で、取り出した記録が残る
     var fileItems=[], fileSkip=[];
     epOrder.forEach(function(id){ var g=epG[id];
-      if(g.unknown){ fileSkip.push(g.name+'（利用料を引けていない）'); return; }
       if(g.payNet>0) fileItems.push({ kind:'ep', id:id, amount:Math.round(g.payNet), label:g.name }); });
     keys.forEach(function(k){ var b=acc[k];
       if(b.acctOrg) return;

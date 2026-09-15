@@ -77,7 +77,9 @@ const M = new Function(base + 'return {due:payDueCount, sum:invMethodSummary, cs
   const lp = takeFn('loadPayout');
   ok('配分の計算の末尾で「誰にいくら」を持つ', /PAY_FILE=\{ ym:ym, items:fileItems \}/.test(lp) && /PAY_FILE=null;/.test(lp));
   ok('EP-I は法人へ1本・ご本人の行は入れない', /kind:'ep', id:id, amount:Math\.round\(g\.payNet\)/.test(lp) && /if\(b\.acctOrg\) return;/.test(lp));
-  ok('利用料を引けなかった法人は入れない', /if\(g\.unknown\)\{ fileSkip\.push/.test(lp));
+  //  EP-I の利用料は、その月の入金からその場で数える（数えられない月が無い）
+  ok('EP-I の利用料はその月の入金から数える', /g\.members=g\.seats; g\.clients=Object\.keys\(g\.paid\)\.length;/.test(lp));
+  no('数えられなかったときの分岐はもう無い', /g\.unknown/.test(lp));
   ok('ご請求の件数を出す', /payDueCount\(acc, keys, epG, epOrder\)\+' 件/.test(lp));
   const pm = takeFn('payFileMake');
   ok('Edge Function を呼ぶ', /functions\.invoke\('payout-file'/.test(pm));
@@ -98,7 +100,7 @@ const M = new Function(base + 'return {due:payDueCount, sum:invMethodSummary, cs
 // ⑤ 版・SQL・説明書
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260914-05', '20260914-05']);
+  is('版が揃う', [build, VER.build], ['20260915-01', '20260915-01']);
   ok('SQL は列を足すだけで期待値1', /add column if not exists notified_at timestamptz/.test(SQL) && /期待値：1/.test(SQL));
   ok('SQL にデプロイの手順', /supabase functions deploy contract-send --no-verify-jwt/.test(SQL));
   ok('運営説明書：総合振込ファイル', /総合振込ファイル/.test(MANA) && /委託者情報/.test(MANA) && /全銀フォーマット/.test(MANA));

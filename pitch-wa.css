@@ -53,7 +53,7 @@ body{
   position:fixed;top:10px;right:12px;z-index:80;display:flex;gap:6px;
   opacity:.22;transition:opacity .22s;
 }
-.pf-top:hover,body.pf-ui .pf-top{opacity:1;}
+.pf-top:hover,body.pf-topui .pf-top{opacity:1;}
 /* 開いた直後だけ、そこに操作があることを知らせる（数秒で地に沈む） */
 body.pf-hint .pf-top{opacity:.85;}
 .pf-btn{
@@ -142,7 +142,15 @@ body.pf-hint .pf-top{opacity:.85;}
 body.pf-on .deck{padding:10px 10px 12px;}
 body.pf-on .bar{transform:translateY(115%);transition:transform .25s ease;}
 body.pf-on.pf-ui .bar{transform:none;}
-body.pf-on .pf-top{top:8px;right:10px;}
+/*  全画面のあいだは、右上も完全に消す。頁を送っただけでは出さず、
+    カーソルを近づけたときだけ出す（pitch-fit.js が pf-topui を付ける）。
+    薄く残しておくと、送るたびにそこへ目が行く */
+body.pf-on .pf-top{top:8px;right:10px;opacity:0;}
+body.pf-on.pf-topui .pf-top,body.pf-on .pf-top:hover{opacity:1;}
+/*  動かしていないあいだはカーソルも消す。紙の上に矢印が残っていると、
+    そこだけ目立ってしまう。動かせばすぐ戻る */
+body.pf-on{cursor:none;}
+body.pf-on.pf-cursor{cursor:default;}
 @media(prefers-reduced-motion:reduce){ body.pf-on .bar{transition:none;} }
 /* 指で送るので、紙の上では文字の選択を拾わない（選択の青が残ると見苦しい） */
 body.pf-on .slide{-webkit-user-select:none;user-select:none;}
