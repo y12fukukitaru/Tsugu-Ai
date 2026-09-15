@@ -1383,7 +1383,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260915-03';
+  var APP_BUILD='20260915-04';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -3702,6 +3702,8 @@
           //  未入金があることは、まずご本人が知るべき。督促の前に、
           //  ご自身の画面で気づいていただけるようにする
           +'<div id="my-unpaid"></div>'
+          //  プランの変更と解約は、探させない。開いてすぐの場所に置く
+          +'<div id="my-contract"></div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">顧問料等のお支払いはこちらから。決済は国際的な決済基盤Stripeの安全なページで行われ、カード情報が当社のサーバーに保存されることはありません。</div>'
           +'<div id="billpay-links">読み込み中...</div>'
           +'<div class="ph" style="font-size:13px;margin-top:16px;">お支払い履歴（カード決済）</div>'
@@ -3716,7 +3718,6 @@
             +'<button class="ghost" style="font-size:12px;border:1px solid #E2E7EF;border-radius:8px;padding:7px 12px;" onclick="cstCsv()">⬇ CSV保存</button>'
           +'</div>'
           +'<div id="cst-out" style="margin-top:4px;"></div>'
-          +'<div id="my-cancel"></div>'
         +'</div>'
         +'<div class="panel" id="sec-cash"><div class="ph">財務・資金繰り（担当パートナーが入力します）</div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:12px;">月次の数値や支払予定は担当パートナーが入力・更新します。数値や資料は「メッセージ」でお送りいただくだけでOKです。修正のご希望もメッセージでどうぞ。<br>ご自身で入れるのは、ダッシュボード上部の<b style="color:#1E3A66;">「いまの手元資金」</b>だけです（数字ひとつ・任意）。</div>'
@@ -4205,7 +4206,7 @@
     window.__eff=eff;
     $('app-body').innerHTML=view;
     if(eff==='customer' && ACCESS==='finance'){ loadAcct(); }
-    else if(eff==='customer'){ loadDashHero(); loadMyCash(); loadMyCancel(); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyGoal(); loadMyReports(); loadMyObr(); loadMyMa(); loadBuyCriteria(ME,'bc'); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); loadUnpaid('customer'); loadAgentInsights(); loadSurvey('customer'); loadExitPlan(ME,'customer'); loadAfterPrep(ME,'customer'); knvInit(); }
+    else if(eff==='customer'){ loadDashHero(); loadMyCash(); loadPlanRates().then(loadMyContract); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyGoal(); loadMyReports(); loadMyObr(); loadMyMa(); loadBuyCriteria(ME,'bc'); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadBillingPay('customer'); loadUnpaid('customer'); loadAgentInsights(); loadSurvey('customer'); loadExitPlan(ME,'customer'); loadAfterPrep(ME,'customer'); knvInit(); }
     else if(eff==='consultant'){ if(EP_ME) loadEp(); loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadBillingPay('consultant'); loadUnpaid('partner'); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); loadPlanRates(); loadAgentInsights(); loadSurvey('consultant'); knvInit(); }
     else {
       // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
@@ -9345,6 +9346,65 @@
   // パートナー⇔顧客のチャットUIは右下の継ナビくん「メッセージ」タブに一本化した（knvMsgLoad/knvMsgSend）
 
   // 担当パートナーの表示（ダッシュボード）
+  // ===== ご契約について（プランの変更・解約）=====
+  //  やめたい・変えたいは、いちばん言い出しにくい話です。それが画面の
+  //  いちばん下にしか無いと、探すこと自体が引け目になります。だから
+  //  「お支払い」を開いてすぐのところに、見出しを付けて置きます。
+  //
+  //  中身は三つ。いまのプラン／変えたいとき／やめたいとき。三つとも
+  //  金額と時期を先に書きます。聞かないと分からない状態にしておくと、
+  //  それだけで申し出にくくなります。
+  async function loadMyContract(){
+    var box=$('my-contract'); if(!box) return;
+    var prof=window.__prof||{}, plan=planOf(prof), to=(plan==='seller'?'buyer':'seller');
+    //  担当パートナーがすでに依頼を出していることがある。それを出さないと、
+    //  同じことを二度お申し出いただくことになる
+    var pend=null;
+    try{
+      var pr=await sb.from('plan_requests').select('to_plan,created_at')
+        .eq('customer_id',ME).eq('status','pending')
+        .order('created_at',{ascending:false}).limit(1);
+      if(!pr.error) pend=(pr.data||[])[0]||null;
+    }catch(e){}
+    box.innerHTML='<div style="border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px;">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--navy);">ご契約について</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:3px;">'
+        +'プランの変更も、ご利用の終了も、ここからお申し出いただけます。</div>'
+      +'<div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:11px;">'
+        +'<div style="flex:1 1 210px;border:1px solid var(--line);border-radius:10px;padding:10px 13px;">'
+          +'<div style="font-size:11px;color:var(--muted);">いまの顧問プラン</div>'
+          +'<div style="font-size:13.5px;font-weight:700;color:var(--navy);margin-top:2px;">'+esc(planName(plan))+'</div>'
+          +'<div style="font-size:11.5px;color:var(--muted);margin-top:2px;">'+yen(planFee(plan))+'／月（税別）</div>'
+        +'</div>'
+        +'<div style="flex:1 1 210px;border:1px solid var(--line);border-radius:10px;padding:10px 13px;">'
+          +'<div style="font-size:11px;color:var(--muted);">プランを変えたいとき</div>'
+          +(pend
+            ? '<div style="font-size:12.5px;font-weight:700;color:#8A6A12;margin-top:2px;">'+esc(planName(pend.to_plan))+' へ切替を依頼中</div>'
+              +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:3px;">'
+              +esc(jstDay(pend.created_at))+'に担当パートナーから運営へ依頼が出ています。運営が切り替えると、'
+              +'<b style="color:var(--navy);">翌月のご請求から</b>変わります。</div>'
+            : '<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:3px;">'
+              +'<b style="color:var(--navy);">担当パートナーにお申し出ください。</b>運営が切り替え、'
+              +'<b style="color:var(--navy);">翌月のご請求から</b>変わります。'
+              +'いま押しても、この場で変わることはありません。</div>'
+              +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:6px 12px;margin-top:8px;" '
+              +'onclick="knvToggle(true);knvShowTab(\'msg\')">✉️ 担当パートナーに伝える</button>')
+        +'</div>'
+      +'</div>'
+      //  変えたときのお金。ここを書いておかないと、申し出たあとで
+      //  「そんな話は聞いていない」になる
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.9;margin-top:10px;">'
+        +'<b style="color:var(--navy);">'+esc(planName(to))+'</b> に変えるときは'
+        +(to==='buyer'
+          ? '、変更後の初月に初期導入費の差額 <b style="color:var(--navy);">'+yen(EP_SETUP_FEE-EP_SETUP_SELLER)+'</b>（税別）を申し受けます。'
+          : '、差額の返金はありません。ただし<b style="color:var(--navy);">ご契約月の翌月から数えて3か月目の月末まで</b>に変更される場合に限り、差額 '+yen(EP_SETUP_FEE-EP_SETUP_SELLER)+'（税別）を返金します。')
+        +'　M&amp;A の優遇に使う<b style="color:var(--navy);">顧問契約の期間は、プランを変更しても通算</b>します。'
+      +'</div>'
+      +'<div id="my-cancel"></div>'
+    +'</div>';
+    loadMyCancel();
+  }
+
   // ===== 解約のご依頼（経営者 → 運営）=====
   //  言い出しにくい話ほど、押せる場所が要る。ただし押した瞬間に消えてよい
   //  ものではないので、ここで預かるのは「ご依頼」まで。実際の解約と
@@ -9357,8 +9417,17 @@
       r=await sb.from('cancel_requests').select('*').eq('customer_id',ME)
         .order('created_at',{ascending:false}).limit(1);
     }catch(e){ r={error:1}; }
-    //  表がまだ無い環境では何も出さない
-    if(!r || r.error){ box.innerHTML=''; return; }
+    //  表がまだ無い環境でも、申し出る先だけは必ず出す。
+    //  ここを空にすると「やめたいのに、どこにも書いていない」状態になる
+    if(!r || r.error){
+      box.innerHTML='<div style="border-top:1px solid #EDF1F6;margin-top:14px;padding-top:12px;">'
+        +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">ご利用の終了について</div>'
+        +'<div style="font-size:11.5px;color:var(--muted);line-height:1.85;margin-top:4px;">'
+        +'解約をご希望の場合は、<b style="color:var(--navy);">担当パートナーへメッセージでお知らせください</b>。'
+        +'運営が承り、最終月のご請求と資料のお渡しについてご連絡いたします。</div>'
+      +'</div>';
+      return;
+    }
     var last=(r.data||[])[0]||null;
     MYCANCEL=(last && last.status==='open') ? last : null;
     if(MYCANCEL){
@@ -9371,11 +9440,14 @@
       +'</div>';
       return;
     }
-    box.innerHTML='<div style="border-top:1px solid #EDF1F6;margin-top:18px;padding-top:14px;">'
+    box.innerHTML='<div style="border-top:1px solid #EDF1F6;margin-top:14px;padding-top:12px;">'
       +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">ご利用の終了について</div>'
       +'<div style="font-size:11.5px;color:var(--muted);line-height:1.85;margin-top:4px;">'
       +'解約をご希望の場合は、こちらからお申し出ください。運営が承り、最終月のご請求と資料のお渡しについてご連絡いたします。'
-      +'<b style="color:var(--navy);">押してすぐに使えなくなることはありません。</b></div>'
+      +'<b style="color:var(--navy);">押してすぐに使えなくなることはありません。</b><br>'
+      //  条件は押す前に。あとから知らせると、それだけで不信になる
+      +'お申し出いただいた<b style="color:var(--navy);">月の末日をもって終了</b>し、日割りの精算はいたしません。'
+      +'初期導入費と、ご利用済みの月の顧問料は返金いたしません。</div>'
       +'<button class="ghost" style="font-size:12px;border:1px solid #E2E7EF;border-radius:8px;padding:7px 13px;margin-top:9px;" onclick="cancelOpen()">解約を依頼する</button>'
     +'</div>';
   }
@@ -9430,6 +9502,37 @@
     var r=await sb.from('cancel_requests').update({ status:'withdrawn' }).eq('id',MYCANCEL.id);
     if(r.error){ alert('取り下げできませんでした：'+r.error.message); return; }
     loadMyCancel();
+  }
+
+  // ===== 解約のご依頼（担当パートナーの画面）=====
+  //  読む権限は最初から付けてありました（cancel_requests の「担当パートナー
+  //  読み取り」）。けれど、それを出す画面をどこにも作っていませんでした。
+  //  つまり、担当している会社がやめようとしていることを、担当者だけが
+  //  知らないままになります。手続きは運営が行いますが、いちばん先に
+  //  話を聞きに行けるのは担当パートナーです。
+  async function loadClientCancel(custId){
+    var box=$('cl-cancel'); if(!box) return;
+    box.innerHTML='';
+    var r;
+    try{
+      r=await sb.from('cancel_requests').select('*').eq('customer_id',custId)
+        .eq('status','open').order('created_at',{ascending:false}).limit(1);
+    }catch(e){ return; }
+    if(!r || r.error) return;
+    var c=(r.data||[])[0]; if(!c) return;
+    box.innerHTML='<div style="border:1.5px solid #E7B9B6;background:#FDF4F3;border-radius:11px;padding:12px 15px;margin-bottom:12px;">'
+      +'<div style="font-size:13px;font-weight:700;color:#A9403D;">⚠ 解約のご依頼が出ています</div>'
+      +'<div style="font-size:11.5px;color:#5A6981;line-height:1.85;margin-top:4px;">'
+        +esc(jstDay(c.created_at))+'にお申し出がありました。'
+        +(c.reason?'理由：<b style="color:var(--navy);">'+esc(c.reason)+'</b>　':'')
+        +(c.note?'<br>お伝えいただいたこと：'+esc(c.note):'')
+      +'</div>'
+      +'<div style="font-size:11.5px;color:#5A6981;line-height:1.85;margin-top:6px;">'
+        +'手続きと最終月のご請求は<b style="color:var(--navy);">運営が行います</b>。'
+        +'この画面から解約することはできません。'
+        +'まずは<b style="color:var(--navy);">お話をうかがってください</b>。'
+        +'行き違いであれば、経営者ご自身が「お支払い」の画面から取り下げられます。</div>'
+    +'</div>';
   }
 
   // ===== 解約のご依頼（運営）=====
@@ -12245,7 +12348,8 @@
     // ---- 常時表示ヘッダー：ステージ＋レポート ----
     //  法人に所属している方には、この会社に同じ法人の誰が関わっているかを先に出す。
     //  主担当が別の方でも、副担当として入っていることがあるため。
-    var head='<div id="cl-head">'+clKarteEpNote(custId)
+    //  解約のご依頼が出ているかは、ほかの何より先に目に入るべきこと
+    var head='<div id="cl-head"><div id="cl-cancel"></div>'+clKarteEpNote(custId)
       +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">'
       +'<span style="font-size:12px;color:#5A6981;">進捗ステージ</span><span id="cl-stage-auto" style="font-size:12.5px;">判定中…</span>'
       +'<span style="flex:1;"></span>'
@@ -12663,6 +12767,7 @@
     loadClientDiag(custId);
     loadClientNotes(custId);
     autoStageFor(custId);
+    loadClientCancel(custId);
     loadClientTodo(custId);
     loadClientScript(custId);
     loadOnboard(custId);
@@ -13770,8 +13875,17 @@
           +(ctx.pending?'<br><b style="color:#8A6A12;">切替を依頼中（→ '+esc(planName(ctx.pending.to_plan))+'・運営の対応待ち）</b>':'')
         +'</div>'
         +(who==='partner'
-          ? (ctx.pending?'':'<button class="ghost" style="font-size:11px;border:1px solid var(--line);border-radius:7px;padding:4px 10px;margin-top:6px;" onclick="planRequest(\''+esc(EXIT.scope)+'\',\''+(plan==='seller'?'buyer':'seller')+'\')">'+esc(planName(plan==='seller'?'buyer':'seller'))+' への切替を運営に依頼</button>')
-          : '<div style="font-size:10.5px;color:var(--muted);margin-top:4px;">プランの切替は担当パートナーにお申し出ください。翌月の請求から変わります。</div>')
+          ? (ctx.pending?'':'<button class="ghost" style="font-size:11px;border:1px solid var(--line);border-radius:7px;padding:4px 10px;margin-top:6px;" onclick="planRequest(\''+esc(EXIT.scope)+'\',\''+(plan==='seller'?'buyer':'seller')+'\')">'+esc(planName(plan==='seller'?'buyer':'seller'))+' への切替を運営に依頼</button>'
+              //  押す前に、経営者に伝えるべき額と時期を出しておく
+              +'<div style="font-size:10.5px;color:var(--muted);line-height:1.7;margin-top:5px;">切り替えるのは運営です。'
+              +(plan==='seller'
+                ? '買い手プランへは、変更後の初月に初期導入費の差額 '+yen(EP_SETUP_FEE-EP_SETUP_SELLER)+'（税別）。'
+                : '売り手プランへは差額の返金なし（契約月の翌月から3か月目の月末までなら '+yen(EP_SETUP_FEE-EP_SETUP_SELLER)+' を返金）。')
+              +'いずれも翌月の請求から。優遇の年数は通算です。</div>')
+          //  変えかた・やめかたは「お支払い」の一か所にまとめてある。
+          //  ここでも同じことを書くと、どちらが正しいか分からなくなる
+          : '<div style="font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.7;">プランの切替は担当パートナーにお申し出ください。翌月の請求から変わります。<br>'
+            +'<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="goSec(\'sec-billpay\')">「お支払い」の「ご契約について」で、変更と解約のご案内 →</span></div>')
       +'</div>'
       +'<div style="flex:1 1 220px;border:1px solid '+(perk.eligible?'#BFE2CD':'var(--line)')+';background:'+(perk.eligible?'#EFF6F0':'#fff')+';border-radius:11px;padding:10px 13px;">'
         +'<div style="font-size:11px;color:var(--muted);">M&amp;A の優遇（顧問先だけ）</div>'
@@ -14350,7 +14464,7 @@
     if(aisecPortal()==='consultant'){
       return common
         +'【パートナーポータルの画面ガイド】'
-        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全5章。必修10レッスン＋発展のM&A講座8レッスン、第5章の理解度チェックで修了)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁/労働分配率=時給を上げたとき人件費÷粗利をどこに保ち利益を出し続けるか。業種別の目安と、時短・配置転換・値上げで要る大きさ。カルテの月次レポートの上からその会社の数字で開ける)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)。説明資料(経営者向け・パートナー候補向けなど)は継ナビくんの「サポート」タブから開き、右上の⛶で全画面。送りは ←→ か、紙を押す、スマホ・タブレットは指で左右にスワイプ。Escかもう一度⛶で解除、✕でプラットフォームに戻る／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内。カルテの「やること」の下に「今月の面談台本」(その会社の数字から見せる数字3つ・問い3つ・買い手の基盤へのつながり)と「継ナビくんのナビ」(土台→現金→余力→条件の順番と、済／次／あと)。ナビは12の道具(試算表→資金繰り→保険・固定費→支払予定→導入診断報告書→企業価値→出口の設計→買った後に備える→準備度→買いたい条件。AI診断・銀行提出は任意。売り手プランでは準備度・買いたい条件・買った後に備えるも任意)。各道具の見出しの下に「なぜ今・やると分かること・次の一手」の案内と「結果を継ナビくんと読む」ボタン。出口の設計(5つの出口・目標の年・見る数字のいま/目標/差・持株会社の合図。上部にいまの顧問プランとM&Aの優遇、「◯◯プラン への切替を運営に依頼」)と買った後に備える(6分類24項目・自社では・学ぶ・未着手/学んだ/準備した)はカルテの企業価値・承継準備の中。伴走の1年は契約の翌月1日を起点に暦の月で3か月ずつ、土台が整わなければ次の四半期も並行、四半期の終わりに検証)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（投資・融資・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し、パネルは7タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と担当顧客の面談・期日・支払予定が1枚に並ぶカレンダー。月/週/一覧。「＋ 予定」か、話しかけて登録)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ。法人に所属している方には「エンタープライズ 操作説明書」も並ぶ)。'
+        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全5章。必修10レッスン＋発展のM&A講座8レッスン、第5章の理解度チェックで修了)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁/労働分配率=時給を上げたとき人件費÷粗利をどこに保ち利益を出し続けるか。業種別の目安と、時短・配置転換・値上げで要る大きさ。カルテの月次レポートの上からその会社の数字で開ける)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)。説明資料(経営者向け・パートナー候補向けなど)は継ナビくんの「サポート」タブから開き、右上の⛶で全画面。送りは ←→ か、紙を押す、スマホ・タブレットは指で左右にスワイプ。Escかもう一度⛶で解除、✕でプラットフォームに戻る／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内。その顧問先から解約のお申し出が出ているときは、カルテのいちばん上に赤い帯「⚠ 解約のご依頼が出ています」が出る(申し出の日・理由・伝えられたこと。手続きと最終月の請求は運営が行い、パートナーの画面から解約はできない。まず話を聞く。取り下げは経営者ご自身が「お支払い」→「ご契約について」から)。プランの切替はカルテ→企業価値・承継準備→出口の設計の上段のボタンから運営に依頼(理由を書く小窓。空欄でも送れるので必ず書く。切替は運営が行い翌月の請求から。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。パートナーご自身が離れるときは運営サポートの「運営への問い合わせ」から(画面で契約を終える操作は無い)。カルテの「やること」の下に「今月の面談台本」(その会社の数字から見せる数字3つ・問い3つ・買い手の基盤へのつながり)と「継ナビくんのナビ」(土台→現金→余力→条件の順番と、済／次／あと)。ナビは12の道具(試算表→資金繰り→保険・固定費→支払予定→導入診断報告書→企業価値→出口の設計→買った後に備える→準備度→買いたい条件。AI診断・銀行提出は任意。売り手プランでは準備度・買いたい条件・買った後に備えるも任意)。各道具の見出しの下に「なぜ今・やると分かること・次の一手」の案内と「結果を継ナビくんと読む」ボタン。出口の設計(5つの出口・目標の年・見る数字のいま/目標/差・持株会社の合図。上部にいまの顧問プランとM&Aの優遇、「◯◯プラン への切替を運営に依頼」)と買った後に備える(6分類24項目・自社では・学ぶ・未着手/学んだ/準備した)はカルテの企業価値・承継準備の中。伴走の1年は契約の翌月1日を起点に暦の月で3か月ずつ、土台が整わなければ次の四半期も並行、四半期の終わりに検証)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（投資・融資・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し、パネルは7タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と担当顧客の面談・期日・支払予定が1枚に並ぶカレンダー。月/週/一覧。「＋ 予定」か、話しかけて登録)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ。法人に所属している方には「エンタープライズ 操作説明書」も並ぶ)。'
         +'操作説明書は右下パネルの「サポート」タブから開けます。毎朝の「今日の一手」とお知らせは右下ボタンのバッジに届きます。';
     }
     //  運営がここに落ちていました。運営コンソールを開いている方に
@@ -14380,7 +14494,7 @@
     return common
       +'【経営者ダッシュボードの画面ガイド】'
       +'【数字の扱い・必ず守る】経営者に試算表など月次の数字の入力を求めない。経営者の画面に入力欄は無く、担当パートナーが入力する。試算表が手元にあるなら「メッセージで担当パートナーへ送る」と案内する。ご本人が入れるのは「いまの手元資金」だけ。画面の名前は次の一覧の名前だけを使い、それ以外の画面名を作らない。'
-      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)。その下に「はじめの90日（土台づくり）」＝契約の翌月から3か月は成果を急がず土台を整える期間で、1か月目「数字が見える」・2か月目「お金の流れが分かる」・3か月目「1年の道筋が決まる」の3つの節目(資料をお預かりしてからの目安。3か月で整わなければ次の四半期も並行して続ける。契約から翌月までは準備期間)と、「伴走の1年」＝第1 土台づくり／第2 現金を増やす／第3 買い手の余力を測る／第4 次の1社の条件を決める、の四半期の帯(暦の月で3か月ずつ。いまどこにいるか・四半期の終わりに何を振り返るかが出る)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=気になる業務を選んで担当パートナーに送ると、AIで診断した提案が「担当パートナーからの提案」に返る(その場で金額は出ない)／出口の設計=5つの出口(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/畳む(清算)/続けて、買い手になる)から選び、目標の年と、その出口で見る数字のいま・目標・差。いまは企業価値診断と試算表から自動。この出口で整えること(承継チェックの残り)も出る。親族・従業員へ継ぐ出口では持株会社の検討の合図(税額は計算しない)。画面の上部にいまの顧問プラン(買い手プラン(成長)45,000円/売り手プラン(譲渡準備)30,000円・税別・月額)とM&Aの優遇(顧問契約1年以上でFA報酬に最低報酬なし・継続年数×10%、最大50%の割引)。プランの切替は担当パートナーに申し出て運営が切り替え、翌月の請求から／買った後に備える(買い手プランのみ)=会社を買ったあとに待ち受けること24項目(事務・法務/お金・銀行/人・責任者/取引先・対外/業界特有/統合の進め方)。待ち受けること・いつ・いま準備できること。買いたい条件・承継チェック・試算表・企業価値診断から「自社では」が付く。想定する形(株式譲渡/事業譲渡)・責任者の想定・対象の業種を選ぶ。項目ごとに「学ぶ(継ナビくんに聞く)」と未着手/学んだ/準備した。「買った後の1年を、継ナビくんと想像する」。成約後はPMIタスクへ／買い手になる=上に「柱」の絵(買い手プランのみ。本業の1本＋譲り受けた会社。ダッシュボードの帯にも同じ本数)。「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ。同じ画面の下半分が Tsugime -結-（投資・融資・M&A）=マッチング掲載(左メニューには無い。「案件を見る」の文字を押すか、下にたどる)。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と、面談・課題の期日・支払予定が自動で並ぶカレンダー。月/週/一覧。「＋ 予定」か、話しかけて登録。Googleカレンダー用のURLは予定タブの下)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ(先頭に毎朝の「今日の一手」。開いても既読にならず「すべて既読」で消す)／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
+      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)。その下に「はじめの90日（土台づくり）」＝契約の翌月から3か月は成果を急がず土台を整える期間で、1か月目「数字が見える」・2か月目「お金の流れが分かる」・3か月目「1年の道筋が決まる」の3つの節目(資料をお預かりしてからの目安。3か月で整わなければ次の四半期も並行して続ける。契約から翌月までは準備期間)と、「伴走の1年」＝第1 土台づくり／第2 現金を増やす／第3 買い手の余力を測る／第4 次の1社の条件を決める、の四半期の帯(暦の月で3か月ずつ。いまどこにいるか・四半期の終わりに何を振り返るかが出る)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=画面のいちばん上に「ご契約について」(いまの顧問プラン／プランを変えたいとき=「✉️ 担当パートナーに伝える」で継ナビくんのメッセージが開く。切替は運営が行い翌月の請求から。依頼中は「◯◯プラン へ切替を依頼中」と出る／ご利用の終了について=「解約を依頼する」。理由と伝えたいことは任意、押してすぐ使えなくなることはなく「取り下げる」で戻せる。申し出た月の末日で終了・日割りなし・初期導入費と利用済みの月の顧問料は返金なし。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。その下に顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=気になる業務を選んで担当パートナーに送ると、AIで診断した提案が「担当パートナーからの提案」に返る(その場で金額は出ない)／出口の設計=5つの出口(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/畳む(清算)/続けて、買い手になる)から選び、目標の年と、その出口で見る数字のいま・目標・差。いまは企業価値診断と試算表から自動。この出口で整えること(承継チェックの残り)も出る。親族・従業員へ継ぐ出口では持株会社の検討の合図(税額は計算しない)。画面の上部にいまの顧問プラン(買い手プラン(成長)45,000円/売り手プラン(譲渡準備)30,000円・税別・月額)とM&Aの優遇(顧問契約1年以上でFA報酬に最低報酬なし・継続年数×10%、最大50%の割引)。プランの切替は担当パートナーに申し出て運営が切り替え、翌月の請求から／買った後に備える(買い手プランのみ)=会社を買ったあとに待ち受けること24項目(事務・法務/お金・銀行/人・責任者/取引先・対外/業界特有/統合の進め方)。待ち受けること・いつ・いま準備できること。買いたい条件・承継チェック・試算表・企業価値診断から「自社では」が付く。想定する形(株式譲渡/事業譲渡)・責任者の想定・対象の業種を選ぶ。項目ごとに「学ぶ(継ナビくんに聞く)」と未着手/学んだ/準備した。「買った後の1年を、継ナビくんと想像する」。成約後はPMIタスクへ／買い手になる=上に「柱」の絵(買い手プランのみ。本業の1本＋譲り受けた会社。ダッシュボードの帯にも同じ本数)。「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ。同じ画面の下半分が Tsugime -結-（投資・融資・M&A）=マッチング掲載(左メニューには無い。「案件を見る」の文字を押すか、下にたどる)。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と、面談・課題の期日・支払予定が自動で並ぶカレンダー。月/週/一覧。「＋ 予定」か、話しかけて登録。Googleカレンダー用のURLは予定タブの下)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ(先頭に毎朝の「今日の一手」。開いても既読にならず「すべて既読」で消す)／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
