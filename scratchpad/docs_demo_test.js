@@ -92,7 +92,14 @@ const IDX = R('index.html');
 // ⑥ 画面に合わせる（真ん中に・大きく）と、位置づけの一文
 {
   const FIT = R('pitch-fit.js'), WA = R('pitch-wa.css');
-  ok('pitch-fit.js：表示中の一枚を測って --fit を置く', /setProperty\('--fit'/.test(FIT) && /window\.show=function\(i\)\{ _show\(i\); fit\(\); \}/.test(FIT));
+  //  倍率は全部の頁を測ってひとつに決める。頁を送っても測り直さない
+  //  （一枚ずつ決めると、送るたびに紙の大きさが変わる）
+  ok('pitch-fit.js：全部を測って倍率をひとつに決める', /setProperty\('--fit'/.test(FIT)
+    && /function measure\(\)/.test(FIT) && /if\(h>tall\) tall=h;/.test(FIT));
+  ok('pitch-fit.js：頁を送っても倍率は測り直さない', /window\.show=function\(i\)\{ _show\(i\); apply\(\); \}/.test(FIT));
+  ok('pitch-fit.js：隠れている頁は同じ幅で測る', /function natH\(s, w\)/.test(FIT) && /st\.setProperty\('width', w\+'px','important'\)/.test(FIT));
+  ok('pitch-fit.js：全画面ではバーの出入りで大きさを変えない',
+    /if\(body\.classList\.contains\('pf-on'\)\) return 8;/.test(FIT));
   ok('pitch-wa.css：deck は中央寄せ、slide は zoom var(--fit)', /\.deck\{[^}]*justify-content:center/.test(WA) && /\.slide\{zoom:var\(--fit,1\);\}/.test(WA) && /@media print\{ \.deck\{[^}]*\} \.slide\{zoom:1;\} \}/.test(WA));
   ok('印刷では隠さない（screen だけで隠す）', /@media screen\{ \.slide:not\(\.on\)\{display:none!important;\} \}/.test(WA));
   [['pitch-customer', PITC], ['pitch-partner', PITP], ['pitch-general', PITG], ['pitch-bank', PITB], ['pitch-finance', PITF]].forEach(function (x) {
@@ -115,8 +122,17 @@ const IDX = R('index.html');
   ok('右上：全画面と戻るの2つ、全画面中は戻るを出さない', /aria-label', on\?'全画面を解除':'全画面で表示'/.test(FIT) && /btnBack\.style\.display = \(on\|\|window\.parent===window\) \? 'none' : ''/.test(FIT));
   ok('右上の印は線で描く（端末で形が変わらないように）', /SVG_OPEN=/.test(FIT) && /SVG_CLOSE=/.test(FIT) && /SVG_X=/.test(FIT));
   ok('戻るは枠の親に合図を送る', /parent\.postMessage\(\{tsugu:'closeManual'\}/.test(FIT));
-  ok('全画面のあいだ、操作が途切れたらバーを退かせる', /body\.classList\.add\('pf-ui'\)/.test(FIT) && /body\.pf-on \.bar\{transform:translateY\(115%\)/.test(WA) && /body\.pf-on\.pf-ui \.bar\{transform:none;\}/.test(WA));
-  ok('右上は普段うすく、近づくと濃い', /\.pf-top\{[^}]*opacity:\.22/.test(WA) && /\.pf-top:hover,body\.pf-ui \.pf-top\{opacity:1;\}/.test(WA) && /body\.pf-hint \.pf-top\{opacity:\.85;\}/.test(WA));
+  ok('全画面のあいだ、バーは普段退いている', /body\.pf-on \.bar\{transform:translateY\(115%\)/.test(WA) && /body\.pf-on\.pf-ui \.bar\{transform:none;\}/.test(WA));
+  //  頁を送っただけでは操作を出さない。出すのは、そこへ近づいたときだけ
+  ok('近づいたときだけ出す', /showUi\(e\.clientY > window\.innerHeight - HOT_BOTTOM\);/.test(FIT)
+    && /showTop\(e\.clientY < HOT_TOP && e\.clientX > window\.innerWidth - HOT_RIGHT\);/.test(FIT));
+  no('全画面に入った直後には出さない', /add\('pf-on'\); showUi\(\);/.test(FIT));
+  no('キー操作だけでは出さない', /if\(e\.key==='f'\|\|e\.key==='F'\)\{ toggle\(\); \}\n    showUi\(\);/.test(FIT));
+  ok('動かしていないあいだはカーソルも消す', /body\.pf-on\{cursor:none;\}/.test(WA)
+    && /body\.pf-on\.pf-cursor\{cursor:default;\}/.test(WA) && /function wakeCursor\(\)/.test(FIT));
+  ok('右上は普段うすく、近づくと濃い', /\.pf-top\{[^}]*opacity:\.22/.test(WA) && /\.pf-top:hover,body\.pf-topui \.pf-top\{opacity:1;\}/.test(WA) && /body\.pf-hint \.pf-top\{opacity:\.85;\}/.test(WA));
+  ok('全画面では右上を完全に消す', /body\.pf-on \.pf-top\{top:8px;right:10px;opacity:0;\}/.test(WA)
+    && /body\.pf-on\.pf-topui \.pf-top,body\.pf-on \.pf-top:hover\{opacity:1;\}/.test(WA));
   ok('触る端末では hover が無いので、常に見える濃さ', /@media\(hover:none\)\{ \.pf-top\{opacity:\.5;\} \}/.test(WA));
   ok('印刷では右上を隠す', /\.bar,\.pf-top\{display:none!important;\}/.test(WA));
   [['pitch-customer', PITC], ['pitch-partner', PITP], ['pitch-general', PITG], ['pitch-bank', PITB], ['pitch-finance', PITF]].forEach(function (x) {
