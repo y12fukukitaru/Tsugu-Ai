@@ -1383,7 +1383,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260915-01';
+  var APP_BUILD='20260915-02';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -16164,11 +16164,11 @@
     var err=[mem,cl,gr,pe,lg].filter(function(r){ return r && r.error; })[0];
     if(err){ box.innerHTML=epErr(err.error.message); return; }
     var name={};
-    (pe.data||[]).forEach(function(p){ name[p.id]={ nm:p.name||p.email, email:p.email }; });
+    (pe.data||[]).forEach(function(p){ name[p.id]={ nm:p.name||p.email, email:p.email, plan:p.plan||null }; });
     //  担当表に出てくる方の名前も引けるようにしておく（顧客は ep_people に居ない）
     (book||[]).forEach(function(r){
-      if(r.user_id && !name[r.user_id])          name[r.user_id]={ nm:r.user_name, email:r.user_email };
-      if(r.customer_id && !name[r.customer_id])  name[r.customer_id]={ nm:r.customer_name, email:r.customer_email };
+      if(r.user_id && !name[r.user_id])          name[r.user_id]={ nm:r.user_name, email:r.user_email, plan:null };
+      if(r.customer_id && !name[r.customer_id])  name[r.customer_id]={ nm:r.customer_name, email:r.customer_email, plan:r.customer_plan||null };
     });
     EP_DATA={ org:org, isAdm:isAdm, isMgr:isMgr,
               members:(mem.data||[]), clients:(cl.data||[]), grants:(gr.data||[]),
@@ -16257,24 +16257,36 @@
 
   // ---- EP-I（顧客基盤型）----
   function epSum1(d){
-    var n=epActive(d).length, seats=d.members.filter(function(m){ return m.status==='active'; }).length;
-    var m=epSplit(EP_STD_FEE,'EP1'), su=epSplit(EP_SETUP_FEE,'EP1');
+    var live=epActive(d);
+    var n=live.length, seats=d.members.filter(function(m){ return m.status==='active'; }).length;
+    //  受取もお支払いも、顧問先ごとにプランで額が違う。社数×一律では合わない
+    var hq=0, tg=0, nS=0;
+    live.forEach(function(c){
+      var pk=epPlan(d, c.customer_id);
+      if(pk==='seller') nS++;
+      var s1=epSplit(epFeeOf(pk),'EP1');
+      hq+=s1.hq; tg+=s1.tsugu;
+    });
+    var nB=n-nS;
     var cost=epPartnerCost(n, seats, true);
     var h='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">'
-      +epCard('導入社数', n+' 社', '稼働中の顧問先')
-      +epCard('御社の受取（月）', epYen(n*m.hq)+' 円', n+' 社 × '+epYen(m.hq)+' 円・税別')
-      +epCard('TsuguAiへのお支払い（月）', epYen(n*m.tsugu+cost.total)+' 円',
-              '配分 '+epYen(n*m.tsugu)+' ＋ 利用料 '+epYen(cost.total))
-      +epCard('差引（月）', epYen(n*m.hq-cost.total)+' 円', '受取 − 利用料', '#27684A')
+      +epCard('導入社数', n+' 社', '稼働中の顧問先（買い手 '+nB+'／売り手 '+nS+'）')
+      +epCard('御社の受取（月）', epYen(hq)+' 円', 'プランごとの80%を合計・税別')
+      +epCard('TsuguAiへのお支払い（月）', epYen(tg+cost.total)+' 円',
+              '配分 '+epYen(tg)+' ＋ 利用料 '+epYen(cost.total))
+      +epCard('差引（月）', epYen(hq-cost.total)+' 円', '受取 − 利用料', '#27684A')
     +'</div>';
     h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
       +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">1社あたりの配分（税別）</div>'
       +'<div style="overflow-x:auto;">'+epSplitTable('EP1',
-          epSplitRow('基本顧問料（月）', EP_STD_FEE, 'EP1', null, '80%')
-         +epSplitRow('初期導入費（初回）', EP_SETUP_FEE, 'EP1', null, '80%'))
+          epSplitRow('基本顧問料（月）・買い手', EP_STD_FEE, 'EP1', null, '80%')
+         +epSplitRow('基本顧問料（月）・売り手', EP_SELLER_FEE, 'EP1', null, '80%')
+         +epSplitRow('初期導入費（初回）・買い手', EP_SETUP_FEE, 'EP1', null, '80%')
+         +epSplitRow('初期導入費（初回）・売り手', EP_SETUP_SELLER, 'EP1', null, '80%'))
       +'</div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-top:7px;line-height:1.7;">'
-      +'御社がまるごと80%をお受け取りになり、担当者の方への配分は<b style="color:#1E3A66;">御社の社内でご実施</b>ください。TsuguAiは担当者個人へ直接お支払いしません。</div>'
+      +'御社がまるごと80%をお受け取りになり、担当者の方への配分は<b style="color:#1E3A66;">御社の社内でご実施</b>ください。TsuguAiは担当者個人へ直接お支払いしません。'
+      +'どちらのプランに当たるかは、顧問先ごとに「顧問先」タブでご確認いただけます。</div>'
     +'</div>';
     h+=epCostBox(n, seats, true);
     h+=epNoteB();
@@ -16288,38 +16300,47 @@
     //  ep_clients に登録することはない。そちらを数えると、担当が付いていても
     //  ずっと 0 社と出てしまう
     var seats=d.members.filter(function(m){ return m.status==='active'; }).length;
-    var cus={}; (d.book||[]).forEach(function(r){ if(r.customer_id) cus[r.customer_id]=1; });
-    var n=Object.keys(cus).length;
-    var hq=epSplit(EP_STD_FEE,'EP2',0.5).hq;   // 本部は料率によらず一律10%
+    var cus={}; (d.book||[]).forEach(function(r){
+      if(r.customer_id) cus[r.customer_id]=(r.customer_plan==='seller')?'seller':'buyer'; });
+    var ids=Object.keys(cus), n=ids.length;
+    //  本部の受取は顧問料の一律10%。顧問料がプランで違うので、受取も違う
+    var hqB=epSplit(EP_STD_FEE,'EP2',0.5).hq, hqS=epSplit(EP_SELLER_FEE,'EP2',0.5).hq;
+    var nS=0; ids.forEach(function(k){ if(cus[k]==='seller') nS++; });
+    var nB=n-nS, hqSum=nB*hqB+nS*hqS;
     var h='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">'
       +epCard('所属している方', seats+' 名', '担当者登録使用料はご本人のご負担')
-      +epCard('担当している会社', n+' 社', '担当表に出ている顧客の数')
-      +epCard('本部の受取（月）', epYen(n*hq)+' 円', n+' 社 × '+epYen(hq)+' 円（一律10%）')
+      +epCard('担当している会社', n+' 社', '担当表に出ている顧客（買い手 '+nB+'／売り手 '+nS+'）')
+      +epCard('本部の受取（月）', epYen(hqSum)+' 円',
+              '買い手 '+nB+' × '+epYen(hqB)+' ＋ 売り手 '+nS+' × '+epYen(hqS)+'（一律10%）')
       +epCard('本部のご負担（月）', '0 円', '利用料は所属の方それぞれのご負担', '#27684A')
     +'</div>';
-    var rows='';
-    PG_LEVELS.forEach(function(L){
-      var r=pgPct(L.fee);
-      if(r==null) return;                       // Lv.1 は顧問先を持たない
-      rows+=epSplitRow('Lv.'+L.lv+' '+L.name, EP_STD_FEE, 'EP2', r, Math.round(r*100)+'%');
-    });
+    //  プランで顧問料が違うので、配分の表も2つ出す。片方だけだと
+    //  売り手プランの顧問先を持つ方の手取りが分からない
+    var lvRows=function(base){
+      var out='';
+      PG_LEVELS.forEach(function(L){
+        var r=pgPct(L.fee);
+        if(r==null) return;                     // Lv.1 は顧問先を持たない
+        out+=epSplitRow('Lv.'+L.lv+' '+L.name, base, 'EP2', r, Math.round(r*100)+'%');
+      });
+      return out;
+    };
     h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
-      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">基本顧問料 '+epYen(EP_STD_FEE)+' 円の配分（月・税別）</div>'
-      +'<div style="overflow-x:auto;">'+epSplitTable('EP2', rows)+'</div>'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">買い手プラン 基本顧問料 '+epYen(EP_STD_FEE)+' 円の配分（月・税別）</div>'
+      +'<div style="overflow-x:auto;">'+epSplitTable('EP2', lvRows(EP_STD_FEE))+'</div>'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin:10px 0 7px;">売り手プラン 基本顧問料 '+epYen(EP_SELLER_FEE)+' 円の配分（月・税別）</div>'
+      +'<div style="overflow-x:auto;">'+epSplitTable('EP2', lvRows(EP_SELLER_FEE))+'</div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-top:7px;line-height:1.7;">'
       +'担当者の方の取り分は、単独で活動されている認定パートナーと<b style="color:#1E3A66;">同じ料率</b>です。'
       +'本部の10%はTsuguAiの取り分から出しており、担当者の方の手取りは減りません。'
       +'なお EP-II では<b style="color:#1E3A66;">スケール到達（80%）はありません</b>。Lv.4（70%）が上限です。</div>'
     +'</div>';
-    var rows2='';
-    PG_LEVELS.forEach(function(L){
-      var r=pgPct(L.fee); if(r==null) return;
-      rows2+=epSplitRow('Lv.'+L.lv+' '+L.name, EP_SETUP_FEE, 'EP2', r, Math.round(r*100)+'%');
-    });
     h+='<div style="border:1px solid var(--softline);border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
-      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">初期導入費 '+epYen(EP_SETUP_FEE)+' 円の配分（初回・税別）</div>'
-      +'<div style="overflow-x:auto;">'+epSplitTable('EP2', rows2)+'</div>'
-      +'<div style="font-size:11px;color:#94A2B6;margin-top:7px;line-height:1.7;">月次と同じ料率で分けます。本部は一律10%（'+epYen(Math.round(EP_SETUP_FEE*EP_HQ_PCT))+' 円）です。</div>'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:7px;">初期導入費の配分（初回・税別）</div>'
+      +'<div style="overflow-x:auto;">'+epSplitTable('EP2', lvRows(EP_SETUP_FEE))+'</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin:4px 0 7px;line-height:1.7;">買い手プラン '+epYen(EP_SETUP_FEE)+' 円（本部は一律10%＝'+epYen(Math.round(EP_SETUP_FEE*EP_HQ_PCT))+' 円）</div>'
+      +'<div style="overflow-x:auto;">'+epSplitTable('EP2', lvRows(EP_SETUP_SELLER))+'</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-top:4px;line-height:1.7;">売り手プラン '+epYen(EP_SETUP_SELLER)+' 円（本部は一律10%＝'+epYen(Math.round(EP_SETUP_SELLER*EP_HQ_PCT))+' 円）。どちらも月次と同じ料率で分けます。</div>'
     +'</div>';
     //  EP-II の本部には利用料が掛からない。ここに「継へのご利用料」の表を出すと、
     //  実際にはご請求しない額をご覧になって身構えさせてしまう。
@@ -16360,8 +16381,9 @@
     return '<div style="border:1.5px solid #EBDDB4;background:#FDFAF1;border-radius:11px;padding:12px 14px;">'
       +'<div style="font-size:12.5px;font-weight:700;color:#8A6A12;margin-bottom:6px;">この形（EP-I 顧客基盤型）の決めごと</div>'
       +'<div style="font-size:11.5px;color:#5A6981;line-height:1.9;">'
-      +'・基本顧問料 <b style="color:#1E3A66;">'+epYen(EP_STD_FEE)+' 円（税別）／社・月</b>のうち、<b style="color:#1E3A66;">80%が御社</b>、20%がTsuguAiです。<br>'
-      +'・初期導入費は <b style="color:#1E3A66;">'+epYen(EP_SETUP_FEE)+' 円／社</b>（全社一律）。こちらも80%が御社です。<br>'
+      +'・基本顧問料のうち<b style="color:#1E3A66;">80%が御社</b>、20%がTsuguAiです。'
+      +'顧問料は<b style="color:#1E3A66;">買い手プラン '+epYen(EP_STD_FEE)+' 円</b>／<b style="color:#1E3A66;">売り手プラン '+epYen(EP_SELLER_FEE)+' 円</b>（税別・社・月）。<br>'
+      +'・初期導入費は<b style="color:#1E3A66;">買い手 '+epYen(EP_SETUP_FEE)+' 円</b>／<b style="color:#1E3A66;">売り手 '+epYen(EP_SETUP_SELLER)+' 円</b>（税別・社）。こちらも80%が御社です。<br>'
       +'・担当者の方への配分は<b style="color:#1E3A66;">御社の社内でご実施</b>ください。<br>'
       +'・ボリュームディスカウント・EP登録料・月額下限・法人管理料は<b style="color:#1E3A66;">ありません</b>。<br>'
       +'・M&A案件が出たときは、TsuguAi（福來）が受け取った手数料から税金分（消費税と、御社が個人事業の場合の源泉徴収）を差し引いた額の<b style="color:#1E3A66;">5割</b>を御社へお支払いします。TsuguAiの役割は<b style="color:#1E3A66;">買い手候補の特定まで</b>です。'
@@ -16374,7 +16396,7 @@
       +'・担当者の方の取り分は<b style="color:#1E3A66;">Lvの料率そのまま</b>（Lv.2 50%／Lv.3 60%／Lv.4 70%）。単独の認定パートナーと同じです。<br>'
       +'・本部は<b style="color:#1E3A66;">一律10%</b>。これはTsuguAiの取り分から出ており、担当者の方の手取りは減りません。<br>'
       +'・<b style="color:#1E3A66;">スケール到達（80%）はありません。</b>Lv.4（70%）が上限です。<br>'
-      +'・初期導入費 '+epYen(EP_SETUP_FEE)+' 円／社も、月次と同じ料率で分けます（本部は一律10%）。<br>'
+      +'・顧問料は<b style="color:#1E3A66;">買い手 '+epYen(EP_STD_FEE)+' 円</b>／<b style="color:#1E3A66;">売り手 '+epYen(EP_SELLER_FEE)+' 円</b>、初期導入費は<b style="color:#1E3A66;">買い手 '+epYen(EP_SETUP_FEE)+' 円</b>／<b style="color:#1E3A66;">売り手 '+epYen(EP_SETUP_SELLER)+' 円</b>（いずれも税別）。本部の一律10%は、その額に対して掛かります。<br>'
       +'・顧客は<b style="color:#1E3A66;">TsuguAiに帰属</b>します。ご担当が退職されたときは、本部が後任を指名してください。<br>'
       +'・M&A案件が出たときは、TsuguAi（福來）が受け取った手数料から税金分を差し引いた額の<b style="color:#1E3A66;">5割</b>をお支払いします。'
       +'</div></div>';
@@ -16382,6 +16404,18 @@
   // ---- 顧問先 ----
   function epNm(d,id){ var x=d.name[id]; return x?x.nm:'（名前を取得できません）'; }
   function epEm(d,id){ var x=d.name[id]; return x?x.email:''; }
+  //  顧問料も初期導入費も、買い手プランと売り手プランで額が違う。
+  //  EP の卸値もその額に乗るので、顧問先ごとにプランを見て計算する。
+  //  一律で計算すると、売り手プランの顧問先が混ざったときに
+  //  御社の受取もお支払いも、実際より大きく見える
+  function epPlan(d,id){ var x=d.name[id]; return (x && x.plan==='seller') ? 'seller' : 'buyer'; }
+  function epFeeOf(plan){ return (plan==='seller') ? EP_SELLER_FEE : EP_STD_FEE; }
+  function epSetupOf(plan){ return (plan==='seller') ? EP_SETUP_SELLER : EP_SETUP_FEE; }
+  function epPlanTag(plan){
+    return (plan==='seller')
+      ? '<span class="ep-tag" style="background:rgba(195,155,63,.13);color:#8A6A12;">売り手</span>'
+      : '<span class="ep-tag" style="background:rgba(44,93,168,.10);color:#2C5DA8;">買い手</span>';
+  }
   function epClientsHtml(d){
     //  稼働中を先に、それぞれ開始の早い順
     var byDate=function(a,b){ return String(a.started_on).localeCompare(String(b.started_on)); };
@@ -16389,9 +16423,11 @@
     var offList=d.clients.filter(function(c){ return c.status!=='active'; }).sort(byDate);
     var list=onList.concat(offList);
     var ep1=epIsB(d.org.kind);
-    //  顧問料も初期導入費も全社一律。区分ごとの取り分だけが変わる
-    var m=epSplit(EP_STD_FEE, ep1?'EP1':'EP2', 0.5);
-    var su=epSplit(EP_SETUP_FEE, ep1?'EP1':'EP2', 0.5);
+    //  区分ごとの取り分に加えて、顧問先のプランでも額が変わる。
+    //  行ごとに、その顧問先のプランで計算する
+    var kind=ep1?'EP1':'EP2';
+    var splitOf=function(plan){ return epSplit(epFeeOf(plan), kind, 0.5); };
+    var setupOf=function(plan){ return epSplit(epSetupOf(plan), kind, 0.5); };
     var h='';
     if(d.isMgr){
       h+='<div style="background:#F8F9FC;border:1px solid #EDF1F6;border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
@@ -16412,19 +16448,20 @@
       +(d.isMgr?'<th></th>':'')+'</tr></thead><tbody>';
     list.forEach(function(c){
       var live=(c.status==='active');
+      var pk=epPlan(d, c.customer_id);
       h+='<tr'+(live?'':' style="opacity:.5;"')+'>'
         +'<td><b>'+esc(epNm(d,c.customer_id))+'</b><div style="font-size:10.5px;color:#94A2B6;">'+esc(epEm(d,c.customer_id))+'</div></td>'
         +'<td>'+esc(c.started_on||'—')+'</td>'
-        //  顧問料も初期導入費も全社一律なので、金額は編集させない。
-        //  ここを触れるようにすると、表と画面が食い違ってしまう。
-        +'<td style="text-align:right;">'+epYen(EP_STD_FEE)+' 円</td>'
-        +'<td style="text-align:right;">'+(live?('<b>'+epYen(ep1?m.hq:m.hq)+'</b> 円'):'—')+'</td>'
+        //  金額はプランで決まるので、ここでは編集させない。
+        //  触れるようにすると、表と請求が食い違ってしまう
+        +'<td style="text-align:right;">'+epYen(epFeeOf(pk))+' 円<div style="font-size:10px;font-weight:400;">'+epPlanTag(pk)+'</div></td>'
+        +'<td style="text-align:right;">'+(live?('<b>'+epYen(splitOf(pk).hq)+'</b> 円'):'—')+'</td>'
         +'<td style="text-align:right;white-space:nowrap;">'
           +(c.setup_yen!=null
             ? '<span class="ep-tag" style="background:rgba(39,104,74,.09);color:#27684A;">受領済み</span>'
               +(d.isMgr&&live?' <span class="ghost" style="font-size:10.5px;" onclick="epSetSetup(\''+escJ(c.id)+'\',null)">取消</span>':'')
             : (d.isMgr&&live
-                ? '<span class="ghost" style="font-size:11px;" onclick="epSetSetup(\''+escJ(c.id)+'\','+EP_SETUP_FEE+')">受領を記録</span>'
+                ? '<span class="ghost" style="font-size:11px;" onclick="epSetSetup(\''+escJ(c.id)+'\','+epSetupOf(pk)+')">受領を記録</span>'
                 : '<span style="color:#94A2B6;">未受領</span>'))
         +'</td>'
         +'<td>'+(live?'<span class="ep-tag" style="background:rgba(39,104,74,.09);color:#27684A;">稼働中</span>'
@@ -16436,11 +16473,13 @@
     });
     h+='</tbody></table></div>';
     h+='<div style="font-size:11px;color:#94A2B6;margin-top:8px;line-height:1.7;">'
-      +'顧問料は<b>全社一律 '+epYen(EP_STD_FEE)+' 円（税別）</b>、初期導入費は<b>全社一律 '+epYen(EP_SETUP_FEE)+' 円（税別）</b>です。'
+      +'金額が変わるのは<b>プランだけ</b>で、契約社数や会社の規模では変わりません。'
+      +'<b>買い手プラン</b>＝顧問料 '+epYen(EP_STD_FEE)+' 円／月・初期導入費 '+epYen(EP_SETUP_FEE)+' 円、'
+      +'<b>売り手プラン</b>＝顧問料 '+epYen(EP_SELLER_FEE)+' 円／月・初期導入費 '+epYen(EP_SETUP_SELLER)+' 円（いずれも税別）。'
       +'ボリュームディスカウント・月額下限はありません。'
       +(ep1
-        ? '「御社の受取」は '+epYen(m.hq)+' 円（80%）で、初期導入費は '+epYen(su.hq)+' 円（80%）です。担当者の方への配分は御社の社内でご実施ください。'
-        : '「本部の受取」は '+epYen(m.hq)+' 円（一律10%）で、初期導入費は '+epYen(su.hq)+' 円（一律10%）です。担当者の方の取り分はLvの料率で別に計算されます。')
+        ? '「御社の受取」はその<b>80%</b>（買い手 '+epYen(splitOf('buyer').hq)+' 円／売り手 '+epYen(splitOf('seller').hq)+' 円、初期導入費は '+epYen(setupOf('buyer').hq)+' 円／'+epYen(setupOf('seller').hq)+' 円）です。担当者の方への配分は御社の社内でご実施ください。'
+        : '「本部の受取」はその<b>一律10%</b>（買い手 '+epYen(splitOf('buyer').hq)+' 円／売り手 '+epYen(splitOf('seller').hq)+' 円、初期導入費は '+epYen(setupOf('buyer').hq)+' 円／'+epYen(setupOf('seller').hq)+' 円）です。担当者の方の取り分はLvの料率で別に計算されます。')
       +'</div>';
     return h;
   }
@@ -16749,7 +16788,8 @@
         +'</div>'
         +(p.cs.length
           ? '<div style="font-size:12px;color:var(--ink);line-height:1.9;margin-top:6px;">'
-            +p.cs.map(function(c){ return esc(c.customer_name); }).join('　/　')+'</div>'
+            //  どちらのプランかで本部の受取が変わる。名前だけだと確かめようがない
+            +p.cs.map(function(c){ return esc(c.customer_name)+' '+epPlanTag(c.customer_plan==='seller'?'seller':'buyer'); }).join('　/　')+'</div>'
           : '<div style="font-size:11.5px;color:#94A2B6;margin-top:6px;">まだ担当している顧客がありません。</div>')
       +'</div>';
     });

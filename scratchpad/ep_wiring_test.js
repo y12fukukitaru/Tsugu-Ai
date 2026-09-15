@@ -64,7 +64,11 @@ const ADMCT = fn('loadAdmContracts');
   ok('本部のご負担は0円と出す', /本部のご負担（月）/.test(SUM2) && /'0 円'/.test(SUM2));
   ok('負担するのは所属の方だと書く', /所属の認定パートナーご本人/.test(SUM2));
   ok('社数は担当表（ep_book）から数える',
-    /\(d\.book\|\|\[\]\)\.forEach/.test(SUM2) && /Object\.keys\(cus\)\.length/.test(SUM2));
+    /\(d\.book\|\|\[\]\)\.forEach/.test(SUM2) && /var ids=Object\.keys\(cus\), n=ids\.length;/.test(SUM2));
+  //  本部の受取は顧問料の10%。顧問料がプランで違うので、受取も分けて数える
+  ok('本部の受取はプランごとに数える',
+    /var hqB=epSplit\(EP_STD_FEE,'EP2',0\.5\)\.hq, hqS=epSplit\(EP_SELLER_FEE,'EP2',0\.5\)\.hq;/.test(SUM2)
+    && /hqSum=nB\*hqB\+nS\*hqS/.test(SUM2));
   no('社数に ep_clients を使わない', /epActive\(d\)/.test(SUM2));
 }
 // ④ 主担当 → 顧客管理

@@ -146,14 +146,17 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
   <div class="grid g2" style="margin-top:14px;">
     <div class="card"><h3>1社あたりの配分（税別）</h3>
       <table class="kv tight" style="margin-top:6px;"><tr><th></th><th style="text-align:right;">御社</th><th style="text-align:right;">TsuguAi</th></tr>
-      <tr><th>基本顧問料（月）45,000円</th><td style="text-align:right;"><b>36,000円</b></td><td style="text-align:right;">9,000円</td></tr>
-      <tr><th>初期導入費（初回）100,000円</th><td style="text-align:right;"><b>80,000円</b></td><td style="text-align:right;">20,000円</td></tr></table>
-      <p style="margin-top:8px;">売り手プラン（譲渡準備）をお選びの顧問先は月額30,000円で、同じく80%が御社です。</p></div>
+      <tr><th>基本顧問料（月）買い手 45,000円</th><td style="text-align:right;"><b>36,000円</b></td><td style="text-align:right;">9,000円</td></tr>
+      <tr><th>基本顧問料（月）売り手 30,000円</th><td style="text-align:right;"><b>24,000円</b></td><td style="text-align:right;">6,000円</td></tr>
+      <tr><th>初期導入費（初回）買い手 100,000円</th><td style="text-align:right;"><b>80,000円</b></td><td style="text-align:right;">20,000円</td></tr>
+      <tr><th>初期導入費（初回）売り手 50,000円</th><td style="text-align:right;"><b>40,000円</b></td><td style="text-align:right;">10,000円</td></tr></table>
+      <p style="margin-top:8px;"><b>どちらのプランでも80%が御社</b>です。顧問先ごとにどちらかを選び、画面の「顧問先」タブに札で出ます。</p></div>
     <div class="card g"><h3>10社ご導入の場合（月・税別）</h3>
-      <table class="kv tight" style="margin-top:6px;"><tr><th>御社の受取</th><td style="text-align:right;"><b>360,000円</b></td></tr>
+      <table class="kv tight" style="margin-top:6px;"><tr><th>御社の受取（買い手10社）</th><td style="text-align:right;"><b>360,000円</b></td></tr>
+      <tr><th>御社の受取（売り手10社なら）</th><td style="text-align:right;"><b>240,000円</b></td></tr>
       <tr><th>TsuguAiへのご利用料</th><td style="text-align:right;">−32,000円</td></tr>
-      <tr><th>差引</th><td style="text-align:right;color:#27684A;"><b>328,000円</b></td></tr></table>
-      <p style="margin-top:8px;">ご利用料は AI利用料 2,000円×10社 ＋ 担当者登録使用料（4名なら12,000円）。初年度はこれに初期導入費 80,000円×10社が加わります。</p></div>
+      <tr><th>差引（買い手10社）</th><td style="text-align:right;color:#27684A;"><b>328,000円</b></td></tr></table>
+      <p style="margin-top:8px;">ご利用料は AI利用料 2,000円×10社 ＋ 担当者登録使用料（4名なら12,000円）。<b>その月に入金のあった顧問先のぶんだけ</b>掛かります。初年度はこれに初期導入費（買い手 80,000円／売り手 40,000円）×社数が加わります。</p></div>
   </div>
   <div class="note" style="margin-top:14px;"><b>M&amp;Aが成約したとき。</b>TsuguAi（福來）が受け取った手数料から税金分（消費税と、御社が個人事業の場合の源泉徴収）を差し引いた額の<b>5割</b>を御社へお支払いします。TsuguAiの役割は<b>買い手候補の特定まで</b>です。</div>
 </section>
@@ -192,9 +195,9 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
           <div class="scr-panel"><div class="scr-row" style="margin-top:0;"><span class="scr-ph" style="margin:0;">エンタープライズ</span><span style="flex:1;"></span><span class="scr-link" style="font-size:9px;">↺ 更新</span></div>
             <div class="scr-row"><b style="font-size:11px;color:#1E3A66;">継税理士法人</b><span class="scr-tag gold">EP-I</span><span style="flex:1;"></span><span style="font-size:9px;color:#94A2B6;">管理者として表示</span></div>
             <div class="scr-row hot" style="padding:3px;"><i class="mk ab">1</i><span class="scr-sbtn on">概要</span><span class="scr-sbtn">顧問先</span><span class="scr-sbtn">担当者</span><span class="scr-sbtn">担当の割当</span><span class="scr-sbtn">記録</span></div>
-            <div class="scr-chips" style="margin-top:7px;"><div class="scr-chip"><div class="l">導入社数</div><div class="v">10 社</div><div class="s">稼働中の顧問先</div></div><div class="scr-chip hot"><i class="mk ab">2</i><div class="l">御社の受取（月）</div><div class="v">360,000 円</div><div class="s">10 社 × 36,000 円・税別</div></div><div class="scr-chip"><div class="l">TsuguAiへのお支払い（月）</div><div class="v">122,000 円</div><div class="s">配分 90,000 ＋ 利用料 32,000</div></div><div class="scr-chip"><div class="l">差引（月）</div><div class="v g">328,000 円</div><div class="s">受取 − 利用料</div></div></div>
+            <div class="scr-chips" style="margin-top:7px;"><div class="scr-chip"><div class="l">導入社数</div><div class="v">10 社</div><div class="s">稼働中の顧問先（買い手 8／売り手 2）</div></div><div class="scr-chip hot"><i class="mk ab">2</i><div class="l">御社の受取（月）</div><div class="v">336,000 円</div><div class="s">プランごとの80%を合計・税別</div></div><div class="scr-chip"><div class="l">TsuguAiへのお支払い（月）</div><div class="v">116,000 円</div><div class="s">配分 84,000 ＋ 利用料 32,000</div></div><div class="scr-chip"><div class="l">差引（月）</div><div class="v g">304,000 円</div><div class="s">受取 − 利用料</div></div></div>
             <div class="scr-card" style="margin-top:7px;"><div class="t">1社あたりの配分（税別）</div>
-              <table class="scr-tbl" style="margin-top:3px;"><tr><th></th><th>料率</th><th>御社</th><th>TsuguAi</th></tr><tr><td>基本顧問料（月）</td><td>80%</td><td><b>36,000</b></td><td>9,000</td></tr><tr><td>初期導入費（初回）</td><td>80%</td><td><b>80,000</b></td><td>20,000</td></tr></table>
+              <table class="scr-tbl" style="margin-top:3px;"><tr><th></th><th>料率</th><th>御社</th><th>TsuguAi</th></tr><tr><td>基本顧問料・買い手</td><td>80%</td><td><b>36,000</b></td><td>9,000</td></tr><tr><td>基本顧問料・売り手</td><td>80%</td><td><b>24,000</b></td><td>6,000</td></tr><tr><td>初期導入費・買い手</td><td>80%</td><td><b>80,000</b></td><td>20,000</td></tr><tr><td>初期導入費・売り手</td><td>80%</td><td><b>40,000</b></td><td>10,000</td></tr></table>
               <div class="d" style="margin-top:3px;">御社がまるごと80%をお受け取りになり、担当者の方への配分は<b>御社の社内でご実施</b>ください。</div></div>
             <div class="scr-card hot"><i class="mk ab">3</i><div class="t">TsuguAiへのご利用料（月・税別）</div>
               <table class="scr-tbl" style="margin-top:3px;"><tr><td>AI利用料</td><td>10 社 × 2,000 円</td><td><b>20,000 円</b></td></tr><tr><td>担当者登録使用料</td><td>4 人 × 3,000 円</td><td><b>12,000 円</b></td></tr><tr><td><b>合計</b></td><td></td><td><b>32,000 円</b></td></tr></table></div>
@@ -225,10 +228,10 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
             <div class="scr-note g" style="margin-top:5px;">✓ 株式会社継 を追加しました</div>
             <div class="hot" style="position:relative;margin-top:6px;"><i class="mk ab">2</i>
               <table class="scr-tbl"><tr><th>顧問先</th><th style="text-align:left;">開始</th><th>顧問料（月）</th><th>御社の受取</th><th style="text-align:left;">初期導入費</th><th style="text-align:left;">状態</th></tr>
-              <tr><td>株式会社継</td><td style="text-align:left;">2026-09-14</td><td>45,000 円</td><td><b>36,000</b> 円</td><td style="text-align:left;"><span class="scr-link">受領を記録</span></td><td style="text-align:left;"><span class="scr-tag green">稼働中</span></td></tr>
-              <tr><td>有限会社みどり運輸</td><td style="text-align:left;">2026-07-01</td><td>45,000 円</td><td><b>36,000</b> 円</td><td style="text-align:left;"><span class="scr-tag green">受領済み</span></td><td style="text-align:left;"><span class="scr-tag green">稼働中</span></td></tr>
-              <tr><td>丸山製作所</td><td style="text-align:left;">2026-05-20</td><td>45,000 円</td><td><b>36,000</b> 円</td><td style="text-align:left;"><span class="scr-tag green">受領済み</span></td><td style="text-align:left;"><span class="scr-tag green">稼働中</span></td></tr></table></div>
-            <div class="d" style="font-size:9px;color:#5A6981;line-height:1.5;margin-top:4px;">顧問料は<b>全社一律 45,000 円（税別）</b>、初期導入費は<b>全社一律 100,000 円（税別）</b>です。ボリュームディスカウント・月額下限はありません。「御社の受取」は 36,000 円（80%）で、初期導入費は 80,000 円（80%）です。</div>
+              <tr><td>株式会社継</td><td style="text-align:left;">2026-09-14</td><td>45,000 円<div style="font-size:8.5px;"><span class="scr-tag blue">買い手</span></div></td><td><b>36,000</b> 円</td><td style="text-align:left;"><span class="scr-link">受領を記録</span></td><td style="text-align:left;"><span class="scr-tag green">稼働中</span></td></tr>
+              <tr><td>有限会社みどり運輸</td><td style="text-align:left;">2026-07-01</td><td>30,000 円<div style="font-size:8.5px;"><span class="scr-tag gold">売り手</span></div></td><td><b>24,000</b> 円</td><td style="text-align:left;"><span class="scr-tag green">受領済み</span></td><td style="text-align:left;"><span class="scr-tag green">稼働中</span></td></tr>
+              <tr><td>丸山製作所</td><td style="text-align:left;">2026-05-20</td><td>45,000 円<div style="font-size:8.5px;"><span class="scr-tag blue">買い手</span></div></td><td><b>36,000</b> 円</td><td style="text-align:left;"><span class="scr-tag green">受領済み</span></td><td style="text-align:left;"><span class="scr-tag green">稼働中</span></td></tr></table></div>
+            <div class="d" style="font-size:9px;color:#5A6981;line-height:1.5;margin-top:4px;">金額が変わるのは<b>プランだけ</b>です。買い手プラン＝顧問料 45,000 円／初期導入費 100,000 円、売り手プラン＝顧問料 30,000 円／初期導入費 50,000 円（いずれも税別）。「御社の受取」はその<b>80%</b>で、契約社数や会社の規模では変わりません。</div>
           </div>
         </div>
       </div>
@@ -384,7 +387,7 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
   <div class="eyebrow">はっきりさせておくこと</div>
   <h2>この形（EP-I 顧客基盤型）の決めごと</h2>
   <div class="grid g2" style="margin-top:14px;">
-    <div class="card w"><h3>お金について</h3><p>✔ 基本顧問料 <b>45,000円（税別）／社・月</b>のうち<b>80%が御社</b>、20%がTsuguAi<br>✔ 初期導入費 <b>100,000円／社</b>（全社一律）。こちらも80%が御社<br>✔ 担当者の方への配分は<b>御社の社内で</b><br>✔ ボリュームディスカウント・EP登録料・月額下限・法人管理料は<b>ありません</b></p></div>
+    <div class="card w"><h3>お金について</h3><p>✔ 基本顧問料のうち<b>80%が御社</b>、20%がTsuguAi（買い手 <b>45,000円</b>／売り手 <b>30,000円</b>・税別・社・月）<br>✔ 初期導入費（買い手 <b>100,000円</b>／売り手 <b>50,000円</b>／社）。こちらも80%が御社<br>✔ 担当者の方への配分は<b>御社の社内で</b><br>✔ ボリュームディスカウント・EP登録料・月額下限・法人管理料は<b>ありません</b></p></div>
     <div class="card"><h3>役割について</h3><p>✔ 顧客との契約は<b>法人が</b>結びます（担当者の方からは送れません）<br>✔ 顧問料の金額は画面で編集できません（全社一律のため）<br>✔ 担当者は<b>認定パートナーとして登録済み</b>の方のみ<br>✔ 管理者を増やすときは運営へご依頼ください<br>✔ 認定研修の修了日は運営が記録します</p></div>
   </div>
   <div class="note" style="margin-top:14px;"><b>M&amp;Aの報酬。</b>TsuguAi（福來）が受け取った手数料から税金分を差し引いた額の<b>5割</b>を御社へ。TsuguAiの役割は<b>買い手候補の特定まで</b>です。実行段階は専門家と運営が引き継ぎます。</div>
