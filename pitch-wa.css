@@ -124,7 +124,20 @@ body.pf-hint .pf-top{opacity:.85;}
   padding:16px 14px 74px;
 }
 .slide{zoom:var(--fit,1);}
-@media screen{ .slide:not(.on){display:none!important;} }
+/*  紙の高さも、いちばん高い一枚にそろえる（--slideh は pitch-fit.js が置く）。
+    幅だけそろえても、.deck が中央寄せなので低い頁は上下が内側に寄り、
+    送るたびに枠が伸び縮みして見える。低い頁は下に余白が付くだけで、
+    中身の並びは変わらない。.dm（縦に伸びるデモの頁）にも同じ高さを当てる
+    ため、.slide.dm より強い書き方にしてある */
+@media screen{
+  .deck .slide,.deck .slide.dm{
+    min-height:var(--slideh,0);
+    /*  低い頁は余りを上下に分ける。下だけに寄せると、
+        紙の下半分が空いたまま見えてしまう */
+    display:flex;flex-direction:column;justify-content:center;
+  }
+  .slide:not(.on){display:none!important;}
+}
 /* 文字は基準でも少し大きく（投影・画面共有で読めるように） */
 .sub{font-size:17px;}
 .card p{font-size:14.5px;}

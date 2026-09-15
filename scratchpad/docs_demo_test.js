@@ -97,11 +97,20 @@ const IDX = R('index.html');
   ok('pitch-fit.js：全部を測って倍率をひとつに決める', /setProperty\('--fit'/.test(FIT)
     && /function measure\(\)/.test(FIT) && /if\(h>tall\) tall=h;/.test(FIT));
   ok('pitch-fit.js：頁を送っても倍率は測り直さない', /window\.show=function\(i\)\{ _show\(i\); apply\(\); \}/.test(FIT));
-  ok('pitch-fit.js：隠れている頁は同じ幅で測る', /function natH\(s, w\)/.test(FIT) && /st\.setProperty\('width', w\+'px','important'\)/.test(FIT));
+  ok('pitch-fit.js：隠れている頁は同じ幅・同じ組み方で測る', /function natH\(s, w, disp\)/.test(FIT)
+    && /st\.setProperty\('width', w\+'px','important'\)/.test(FIT)
+    && /st\.setProperty\('display', disp\|\|'flex', 'important'\)/.test(FIT));
+  //  紙の高さもそろえる。幅だけだと、中央寄せのぶん上下の位置が頁ごとに動く
+  ok('pitch-fit.js：高さもいちばん高い一枚にそろえる',
+    /deck\.style\.setProperty\('--slideh', Math\.ceil\(TALL\)\+'px'\)/.test(FIT)
+    && /deck\.style\.removeProperty\('--slideh'\)/.test(FIT));
+  ok('pitch-wa.css：高さをそろえ、余りは上下に分ける',
+    /\.deck \.slide,\.deck \.slide\.dm\{[\s\S]{0,200}min-height:var\(--slideh,0\);/.test(WA)
+    && /justify-content:center;/.test(WA));
   ok('pitch-fit.js：全画面ではバーの出入りで大きさを変えない',
     /if\(body\.classList\.contains\('pf-on'\)\) return 8;/.test(FIT));
   ok('pitch-wa.css：deck は中央寄せ、slide は zoom var(--fit)', /\.deck\{[^}]*justify-content:center/.test(WA) && /\.slide\{zoom:var\(--fit,1\);\}/.test(WA) && /@media print\{ \.deck\{[^}]*\} \.slide\{zoom:1;\} \}/.test(WA));
-  ok('印刷では隠さない（screen だけで隠す）', /@media screen\{ \.slide:not\(\.on\)\{display:none!important;\} \}/.test(WA));
+  ok('印刷では隠さない（screen だけで隠す）', /@media screen\{[\s\S]{0,400}\.slide:not\(\.on\)\{display:none!important;\}[\s\S]{0,20}\}/.test(WA));
   [['pitch-customer', PITC], ['pitch-partner', PITP], ['pitch-general', PITG], ['pitch-bank', PITB], ['pitch-finance', PITF]].forEach(function (x) {
     ok(x[0] + ' が pitch-fit.js を読む（インラインの script のあと）', /<\/script>\n<script src="pitch-fit.js"><\/script>\n<\/body>/.test(x[1]));
   });
