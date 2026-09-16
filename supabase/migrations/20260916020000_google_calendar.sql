@@ -16,8 +16,8 @@
 --                       この表は service_role だけが触れます。画面からは
 --                       読むこともできません。
 --
---    agenda_events に3列 … google_id（あちらの予定の番号）、
---                       source（tsugu か google か）、google_etag（版）。
+--    agenda_events に4列 … google_id（あちらの予定の番号）、google_etag（版）、
+--                       source（tsugu か google か）、synced_at（いつ送ったか）。
 --                       予定そのものは、これまでどおり本人だけが見られます。
 --
 --  ■ 同じ予定が二つにならないように
@@ -37,7 +37,7 @@
 --    「非公開」ではなく、取り込まない設定（画面の「私用も取り込む」を
 --    切る）でお願いします。
 --
---  確かめかた：表=1、agenda_events の新しい列=3、画面から鍵が読めない=false
+--  確かめかた：つながりの表=1、予定の新しい列=4、関数=6、画面から鍵が読めるか=false
 --
 -- 実行方法: Supabase Dashboard → SQL Editor に貼り付けて Run
 --           何度実行しても同じ結果になります。
