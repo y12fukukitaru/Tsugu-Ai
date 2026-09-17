@@ -1383,7 +1383,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260917-01';
+  var APP_BUILD='20260917-02';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -17374,28 +17374,39 @@
       return;
     }
     var cf=$('calfeed-box'); if(cf) cf.innerHTML='';   // つないだら ICS は出さない
-    //  つながりが切れているときに緑のままだと、直す必要に気づけません。
-    //  切れているアカウントは色を変え、「つなぎ直す」を出します
-    var anyDead=false, many=GCAL_LINKS.length>1;
+    //  うまくつながっていないアカウントが緑のままだと、直す必要に気づけません。
+    //  理由は二つあり、直しかたが違うので分けて出します。
+    //
+    //    つなぎ直し         … 許可を取り消された・期限が切れた。つなぎ直せば直る
+    //    カレンダーが使えません … そのGoogleアカウントに、カレンダーの機能が
+    //                          付いていない。つなぎ直しても直りません
+    //
+    //  どちらも、この画面で入れた予定を**出せません**。だから「送り先にする」は
+    //  出しません。押せてしまうと、出せないまま溜まっていることに、
+    //  ずっとあとまで気づけません。
+    var anyBad=false, many=GCAL_LINKS.length>1, tgtBad=false;
     var rows=GCAL_LINKS.map(function(l, i){
-      var dead=/つなぎ直し/.test(String(l.last_error||''));
-      if(dead) anyDead=true;
-      return '<div style="border:1px solid '+(dead?'#E7B9B6':'#D6E6DB')+';background:#fff;border-radius:9px;padding:9px 11px;margin-top:8px;">'
+      var er=String(l.last_error||'');
+      var dead=/つなぎ直し/.test(er), nocal=/カレンダーが使えません/.test(er);
+      var bad=dead||nocal;
+      if(bad){ anyBad=true; if(l.push_target) tgtBad=true; }
+      return '<div style="border:1px solid '+(bad?'#E7B9B6':'#D6E6DB')+';background:#fff;border-radius:9px;padding:9px 11px;margin-top:8px;">'
         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
-          +'<div style="flex:1;min-width:0;font-size:12px;font-weight:700;color:'+(dead?'#A9403D':'var(--navy)')+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'
-            +(dead?'⚠ ':'')+esc(l.email||'（アカウント名なし）')+'</div>'
+          +'<div style="flex:1;min-width:0;font-size:12px;font-weight:700;color:'+(bad?'#A9403D':'var(--navy)')+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'
+            +(bad?'⚠ ':'')+esc(l.email||'（アカウント名なし）')+'</div>'
           +(l.push_target?'<span style="font-size:10.5px;font-weight:700;color:#27684A;background:#E4F1E8;border-radius:999px;padding:2px 8px;white-space:nowrap;">この画面の予定の送り先</span>':'')
         +'</div>'
         +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:2px;">最後の同期：'+(l.last_sync_at?esc(calDT(l.last_sync_at)):'まだ')+'</div>'
         +(l.last_error
           ? '<div style="font-size:11.5px;color:#A9403D;line-height:1.8;margin-top:4px;">'+esc(l.last_error)
-            +(dead?'<br>Google側でアクセスを取り消されたか、期限が切れています。もう一度おつなぎください。':'')+'</div>'
+            +(dead?'<br>Google側でアクセスを取り消されたか、期限が切れています。もう一度おつなぎください。':'')
+            +(nocal?'<br>Google 管理コンソール（アプリ → Google Workspace → カレンダー）で有効にしていただくか、このアカウントは解除してください。つなぎ直しても直りません。':'')+'</div>'
           : '')
-        +(dead?''
+        +(bad?''
           : '<label style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);margin-top:7px;cursor:pointer;">'
             +'<input type="checkbox"'+(l.pull_private===false?'':' checked')+' onchange="googleCalPriv('+i+',this.checked)">'
             +'このアカウントの予定をこの画面に取り込む</label>')
-        +(dead||l.push_target||!many?''
+        +(bad||l.push_target||!many?''
           : '<label style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);margin-top:5px;cursor:pointer;">'
             +'<input type="radio" name="gcal-target" onchange="googleCalTarget('+i+')">'
             +'この画面で入れた予定の送り先にする</label>')
@@ -17405,11 +17416,17 @@
         +'</div>'
       +'</div>';
     }).join('');
-    box.innerHTML='<div style="border:1px solid '+(anyDead?'#E7B9B6':'#BFE2CD')+';background:'+(anyDead?'#FDF4F3':'#EFF6F0')+';border-radius:11px;padding:12px 14px;margin-bottom:10px;">'
-      +'<div style="font-size:12.5px;font-weight:700;color:'+(anyDead?'#A9403D':'#27684A')+';">'
-        +(anyDead?'⚠ つながりが切れているアカウントがあります':'📅 Googleカレンダーとつながっています')
+    box.innerHTML='<div style="border:1px solid '+(anyBad?'#E7B9B6':'#BFE2CD')+';background:'+(anyBad?'#FDF4F3':'#EFF6F0')+';border-radius:11px;padding:12px 14px;margin-bottom:10px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:'+(anyBad?'#A9403D':'#27684A')+';">'
+        +(anyBad?'⚠ うまくつながっていないアカウントがあります':'📅 Googleカレンダーとつながっています')
         +(many?'（'+GCAL_LINKS.length+'つ）':'')+'</div>'
       +rows
+      //  送り先そのものが使えないときは、黙っていると「入れたのに
+      //  Google に出ない」が続きます。いちばん先に気づいていただく
+      +(tgtBad
+        ? '<div style="font-size:11.5px;color:#A9403D;line-height:1.8;margin-top:8px;">いま送り先になっているアカウントは使えません。'
+          +(many?'ほかのアカウントの「この画面で入れた予定の送り先にする」を選んでください。':'この画面で入れた予定は、直るまでGoogleに出ません。')+'</div>'
+        : '')
       +(many
         ? '<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:8px;">どのアカウントに入れた予定も、この画面には全部入ります。この画面で入れた予定は「送り先」のアカウントにだけ出ます（両方に出すと同じ予定が二つになるため）。送り先を変えても、すでに送った予定はそのままです。</div>'
         : '')

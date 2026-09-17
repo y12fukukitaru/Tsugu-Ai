@@ -94,9 +94,9 @@ function takeFn(name) {
   ok('私用を取り込むかの切り替え', /googleCalPriv/.test(gb));
   ok('解除の道がある', /googleCalUnlink/.test(gb));
   //  切れているのに緑のままだと、直す必要に気づけない（アカウントごとに見る）
-  ok('切れているアカウントは色を変える', /var dead=\/つなぎ直し\/\.test\(String\(l\.last_error\|\|''\)\);/.test(gb));
+  ok('うまくいっていないアカウントは色を変える', /var dead=\/つなぎ直し\/\.test\(er\), nocal=\/カレンダーが使えません\/\.test\(er\);/.test(gb));
   ok('切れているアカウントに「つなぎ直す」を出す', /dead\?'<button[^']*googleCalStart\('\+i\+'\)">つなぎ直す/.test(gb));
-  ok('全体の見出しも切れていれば赤', /anyDead\?'⚠ つながりが切れているアカウントがあります'/.test(gb));
+  ok('全体の見出しも、だめなら赤', /anyBad\?'⚠ うまくつながっていないアカウントがあります'/.test(gb));
   //  SQL 未実行のときは、これまでの ICS が残る
   ok('SQL 未実行なら ICS に戻す', /if\(!r \|\| r\.error\)\{ box\.innerHTML=''; GCAL=null; GCAL_LINKS=\[\]; calendarFeedSetup\(\); return; \}/.test(gb));
   ok('つないだら ICS は出さない', /var cf=\$\('calfeed-box'\); if\(cf\) cf\.innerHTML='';/.test(gb));
@@ -239,16 +239,42 @@ function takeFn(name) {
   //  --- 説明書 ---
   ok('経営者：自動で戻ると書く', /自動でこの画面に戻り、そのまま同期が始まります/.test(MANC));
   ok('経営者：複数アカウントの決まり', /「送り先」に選んだ1つのアカウントにだけ/.test(MANC));
-  ok('パートナー：Workspace にカレンダーが無い場合', /The user must be signed up for Google Calendar/.test(MANP));
+  ok('パートナー：Workspace にカレンダーが無い場合', /そのアカウントにカレンダーの機能が付いていません/.test(MANP));
   ok('継ナビくんの案内も直す', /もう1つのアカウントをつなぐ/.test(SRC) && !/「Googleの予定をこの画面に取り込む」/.test(SRC));
   ok('手順書：SQL は4つ順に', /20260917030000_google_multi_account\.sql/.test(GUIDE) && /pgcrypto_search_path/.test(GUIDE));
   ok('手順書：つまずきの表', /ICS 購読/.test(GUIDE) && /signed up for Google Calendar/.test(GUIDE));
   ok('手順書：Edge Function は画面を出さない', /Edge Function は画面を出しません/.test(GUIDE));
 }
+// ⑬ 出せない先を、送り先に選ばせない
+//    （カレンダーの機能が付いていないアカウントで実際に起きた）
+{
+  const gb = gbAll();
+  //  理由は二つ。直しかたが違うので分けて見る
+  ok('二つの理由を分けて見る', /var bad=dead\|\|nocal;/.test(gb));
+  //  ここが肝。出せない先には「送り先にする」を出さない
+  ok('だめなアカウントに送り先の選択を出さない', /\+\(bad\|\|l\.push_target\|\|!many\?''/.test(gb));
+  no('切れているかどうかだけで判断しない', /\+\(dead\|\|l\.push_target\|\|!many\?''/.test(gb));
+  ok('だめなアカウントに取り込みの切り替えも出さない', /\+\(bad\?''\s*\n\s*: '<label[\s\S]{0,200}<input type="checkbox"/.test(gb));
+  //  つなぎ直しても直らないので、そのボタンは出さない
+  ok('カレンダーが無いときは「つなぎ直す」を出さない', /\+\(dead\?'<button[\s\S]{0,160}つなぎ直す<\/button>':''\)/.test(gb));
+  ok('何をすればよいかを書く', /Google 管理コンソール（アプリ → Google Workspace → カレンダー）で有効に/.test(gb));
+  ok('つなぎ直しても直らないと言い切る', /つなぎ直しても直りません/.test(gb));
+  //  すでに送り先になっている先がだめになった場合（切り替えの取りこぼし）
+  ok('送り先がだめなら、いちばん先に知らせる', /if\(bad\)\{ anyBad=true; if\(l\.push_target\) tgtBad=true; \}/.test(gb));
+  ok('送り先がだめなときの言葉', /いま送り先になっているアカウントは使えません。/.test(gb));
+  ok('ほかがあれば乗り換えを促す', /ほかのアカウントの「この画面で入れた予定の送り先にする」を選んでください。/.test(gb));
+  //  英語のままでは何をすればよいか分からない。日本語に置き換える
+  ok('英語の返事を日本語にする', /signed up for Google Calendar\/i\.test\(n\)/.test(SYNC));
+  ok('画面への合図になる言葉を先頭に置く', /"カレンダーが使えません：このGoogleアカウントには、カレンダーの機能が付いていません。"/.test(SYNC));
+  ok('なぜその言葉なのかを書き残す', /画面はこの言葉を見て、そのアカウントに「送り先にする」を/.test(SYNC));
+  //  説明書
+  ok('パートナー：日本語で出ると書く', /カレンダーが使えません/.test(MANP));
+  ok('手順書：日本語で出ると書く', /カレンダーが使えません/.test(GUIDE));
+}
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-01', '20260917-01']);
+  is('版が揃う', [build, VER.build], ['20260917-02', '20260917-02']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
