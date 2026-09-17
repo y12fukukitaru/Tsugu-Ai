@@ -57,7 +57,11 @@ function takeArr(name) { const i = SRC.indexOf('\n  var ' + name + '=['); const 
 // ② 説明書
 {
   ok('パートナー説明書：デットナビ・返済不要→デット', /資金調達ロードマップ／デットナビ／補助金ナビ/.test(MANP) && /返済不要 → デット（融資） の順で提案できます/.test(MANP));
+  ok('パートナー説明書：デットナビの説明と言い方', /<b>デットナビ<\/b>（旧 融資ナビ）は/.test(MANP) && /デット＝借入・融資、エクイティ＝出資/.test(MANP));
+  ok('パートナー説明書：経営者の画面に3つの設計（同じもの）', /「出口の設計」（8つの出口）・「株の持ち方・組織の検討」・「スケールの設計」で目標の年と数字を見ます/.test(MANP));
+  ok('経営者説明書：言葉の使い方（デット・エクイティ）', /<th>言葉の使い方<\/th>/.test(MANC) && /<b>デット<\/b>（借入・融資。返す資金）と<b>エクイティ<\/b>（出資/.test(MANC) && /デット（融資）／エクイティ（出資）／M&amp;A<\/b>の3つ/.test(MANC));
   ok('運営説明書：調達の区分', /data-t="経営計画・調達（デット・エクイティ）"/.test(MANA) && /区分は「デット」「エクイティ」で登録します/.test(MANA));
+  ok('運営説明書：経営者・パートナーの3つの設計と言い方', /「出口の設計」<\/b>（8つの出口/.test(MANA) && /「株の持ち方・組織の検討」<\/b>/.test(MANA) && /「スケールの設計」<\/b>（7つの道/.test(MANA) && /デット＝借入・融資、エクイティ＝出資/.test(MANA));
 }
 // ③ 商談用のプロダクト説明に今日の追加分
 {
@@ -71,7 +75,7 @@ function takeArr(name) { const i = SRC.indexOf('\n  var ' + name + '=['); const 
 // ④ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-20', '20260917-20']);
+  is('版が揃う', [build, VER.build], ['20260917-21', '20260917-21']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
