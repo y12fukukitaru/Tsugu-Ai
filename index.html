@@ -468,6 +468,13 @@
      （.wk-corner=6）より上に */
   .cal-stick{position:sticky;top:-12px;z-index:8;background:var(--bg);margin:-12px -12px 6px;padding:12px 12px 2px;
     box-shadow:0 1px 0 var(--line);}
+  /* 週表示では曜日の見出し（.wk-head）も操作列と一緒に貼り付ける。
+     見出しは本体（.wk-wrap）と別の箱なので、上の角だけ丸め、本体は上の
+     罫線と角を落として、つなげて一つの枠に見せる。横スクロールは
+     knvRenderCal が本体に合わせる（overflow は hidden。自分では動かさない） */
+  .cal-stick.week{margin-bottom:0;padding-bottom:0;box-shadow:none;}
+  .wk-head{overflow-x:hidden;border:1px solid var(--softline);border-bottom:0;border-radius:10px 10px 0 0;background:var(--card);}
+  .wk-wrap.under{border-top:0;border-radius:0 0 10px 10px;}
   /* 継ナビくんの月カレンダー。パネルの幅でも読めるよう、日付は点で示す */
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
   .cal-hd{text-align:center;font-size:10.5px;color:var(--muted);padding:3px 0;letter-spacing:.04em;}
@@ -1389,7 +1396,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260917-04';
+  var APP_BUILD='20260917-05';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -17052,15 +17059,19 @@
     lo=Math.max(0,lo); hi=Math.min(24,Math.max(hi,lo+4));
     var H=(hi-lo)*WK_PX, tKey=calDkey(new Date());
 
-    var h='<div class="wk-wrap"><div class="wk">';
-    // 曜日の見出し
-    h+='<div class="wk-row wk-sep"><div class="wk-corner"></div>';
+    // 曜日の見出しは、本体と別の箱にして返す（head）。上の操作列と一緒に
+    // 貼り付けるため。横スクロールは knvRenderCal が本体と合わせる。
+    // 本体（body）と同じ幅の .wk を中に持ち、列の幅が揃うようにする
+    var head='<div class="wk-head"><div class="wk">';
+    head+='<div class="wk-row wk-sep"><div class="wk-corner"></div>';
     days.forEach(function(d){
       var k=calDkey(d), cls='wk-hcell'+(d.getDay()===0?' sun':(d.getDay()===6?' sat':''))+(k===tKey?' today':'');
-      h+='<div class="'+cls+'" onclick="calPick(\''+k+'\')">'+'日月火水木金土'.charAt(d.getDay())
+      head+='<div class="'+cls+'" onclick="calPick(\''+k+'\')">'+'日月火水木金土'.charAt(d.getDay())
         +'<span class="n">'+d.getDate()+'</span></div>';
     });
-    h+='</div>';
+    head+='</div></div></div>';
+
+    var h='<div class="wk-wrap under"><div class="wk">';
     // 終日の帯
     var hasAd=days.some(function(d){ return (byDay[calDkey(d)]||[]).some(function(x){ return x.allDay; }); });
     if(hasAd){
@@ -17124,7 +17135,7 @@
     }
     if(nowY!==null) h+='<div class="wk-now" style="top:'+nowY+'px;"></div>';
     h+='</div></div></div>';
-    return h;
+    return { head:head, body:h };
   }
   // 予定の長さ（時間）。終わりが無いものは1時間
   function calDurH(x){
@@ -17156,10 +17167,20 @@
     //  こちらが上書きされ、押した予定と違うものが開く。
     ((CAL_ROWS&&CAL_ROWS.rows)||[]).forEach(function(x,i){ x._ri=i; });
     var h='';
+    var byDay=calByDay(), tKey=calDkey(today);
+    //  週表示は、曜日の見出しも操作列と一緒に貼り付ける。見出しは本体と
+    //  別の箱で返ってくるので、先に作っておく
+    var wk=null, ws=null;
+    if(view==='week'){
+      ws=new Date(cur); ws.setDate(ws.getDate()-ws.getDay());
+      wk=calWeekVertical(byDay, ws);
+    }
 
     // 上段：表示の切り替えと操作。下へ送っても上に残す（.cal-stick）。
     // 週表示は縦に長く、切り替えるたびに上まで戻るのは手間なため
-    h+='<div class="cal-stick">';
+    //  印は week。「wk」だと週表示の枠の CSS（.wk{min-width}）に当たって
+    //  操作列まで広がってしまう（実際になった）
+    h+='<div class="cal-stick'+(wk?' week':'')+'">';
     h+='<div class="vaseg" style="margin-bottom:9px;">'
       +[['month','月'],['week','週'],['list','一覧']].map(function(o){
           return '<button class="'+(view===o[0]?'on':'')+'" onclick="calViewSet(\''+o[0]+'\')">'+o[1]+'</button>';
@@ -17184,6 +17205,7 @@
     h+='<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:4px 9px;" onclick="knvRenderCal(true)">↺</button>'
       +'<button class="btn2" style="font-size:12px;padding:6px 13px;" onclick="calOpenForm()">＋ 予定</button>'
     +'</div>';
+    if(wk) h+=wk.head;   // 曜日の見出し（週表示だけ）
     h+='</div>';   // .cal-stick
     //  入力の窓は貼り付けない（開くと背が高く、予定が見えなくなる）
     h+='<div id="cal-form"></div>';
@@ -17192,8 +17214,6 @@
       h+='<div style="font-size:11.5px;color:#A9403D;line-height:1.7;margin-bottom:8px;">予定を読み込めませんでした：'+esc(CAL_ROWS.err)
         +'<br><span style="color:#94A2B6;">（Supabase で agenda_events のSQLが未実行の可能性があります）</span></div>';
     }
-
-    var byDay=calByDay(), tKey=calDkey(today);
 
     if(view==='month'){
       var first=new Date(cur.getFullYear(), cur.getMonth(), 1);
@@ -17228,8 +17248,7 @@
         : '<div style="font-size:12px;color:#94A2B6;padding:4px 2px 2px;">この日の予定はありません。</div>';
     }
     else if(view==='week'){
-      var ws=new Date(cur); ws.setDate(ws.getDate()-ws.getDay());
-      h+=calWeekVertical(byDay, ws);
+      h+=wk.body;
       // 押した日（既定は今日、週の外なら週の初日）の予定を下に開く
       var wkPick=CAL_PICK;
       if(!wkPick){
@@ -17263,11 +17282,17 @@
     h+='<div id="calfeed-host" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--softline);"></div>';
 
     box.innerHTML=h;
-    // 狭い画面では週表示が横スクロールになる。開いた時点で今日が見えるように寄せる
+    // 狭い画面では週表示が横スクロールになる。開いた時点で今日が見えるように寄せる。
+    // 曜日の見出しは別の箱（.wk-head）なので、本体の横スクロールに合わせて動かす
     try{
       var wrap=box.querySelector('.wk-wrap'), td=box.querySelector('.wk-col.today');
+      var whead=box.querySelector('.wk-head');
+      if(wrap && whead){
+        wrap.addEventListener('scroll', function(){ whead.scrollLeft=wrap.scrollLeft; });
+      }
       if(wrap && td && wrap.scrollWidth>wrap.clientWidth){
         wrap.scrollLeft=Math.max(0, td.offsetLeft-wrap.clientWidth/2+td.offsetWidth/2);
+        if(whead) whead.scrollLeft=wrap.scrollLeft;
       }
     }catch(e){}
     calFeedRow();   // この中で、つないでいれば黙って同期する（gcalAuto）
