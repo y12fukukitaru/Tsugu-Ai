@@ -55,8 +55,8 @@ const shown = NAV.effectiveNav('customer').map(x => x[0]);
 no('経営者の navDefs に Tsugime の枠が無い', cust.indexOf('sec-market') >= 0);
 no('経営者の左メニューにも無い', shown.indexOf('sec-market') >= 0);
 ok('「買い手になる」は残っている', cust.indexOf('sec-ma') >= 0);
-is('経営者のメニューは11項目（出口の設計・買った後に備える・継ナビくん含む。買い手プラン）', cust.length, 11);
-is('経営者のメニューの並び（出口の設計は買い手になるの前）', cust, ['sec-flow', 'sec-reports', 'sec-mypdca', 'sec-billpay', 'sec-cash', 'sec-value', 'sec-ai', 'sec-exit', 'sec-ma', 'sec-after', 'sec-sec']);
+is('経営者のメニューは11項目（出口の設計・買った後に備える・継ナビくん含む。買い手プラン）', cust.length, 12);
+is('経営者のメニューの並び（出口の設計は買い手になるの前）', cust, ['sec-flow', 'sec-reports', 'sec-mypdca', 'sec-billpay', 'sec-cash', 'sec-value', 'sec-ai', 'sec-exit', 'sec-scale', 'sec-ma', 'sec-after', 'sec-sec']);
 ok('パートナーの Tsugime は残っている（申請する側）', NAV.navDefs('consultant').map(x => x[0]).indexOf('sec-market') >= 0);
 ok('顧問税理士の入力画面は変えていない', JSON.stringify(new Function(
   'var ACCESS="finance";var EP_ME=null;' + takeFn('navDefs') + 'return navDefs("customer");'
@@ -97,7 +97,7 @@ ok('顧問税理士の入力画面は変えていない', JSON.stringify(new Fun
   const ma = SRC.slice(i, j);
   ok('「買い手になる」の冒頭に案件への入口がある', /goSec\(\\'sec-market\\'\)[^>]*>案件を見る（Tsugime -結-）↓<\/a>/.test(ma));
   ok('入口は柱の絵より前', ma.indexOf("goSec(\\'sec-market\\')") < ma.indexOf('id="my-pillar"'));
-  ok('継ナビくんの案内が「同じ画面の下半分」と言える', /同じ画面の下半分が Tsugime -結-（投資・融資・M&A）=マッチング掲載\(左メニューには無い/.test(SRC));
+  ok('継ナビくんの案内が「同じ画面の下半分」と言える', /同じ画面の下半分が Tsugime -結-（エクイティ・デット・M&A）=マッチング掲載\(左メニューには無い/.test(SRC));
   no('継ナビくんの案内に古い「／Tsugime -結-（投資・融資・M&A）=」の区切りが残っていない', /提案もここ／Tsugime -結-/.test(SRC));
   ok('説明書が「左メニューは一枠」と言う', /<b>左メニューは「買い手になる」の一枠<\/b>で、Tsugime -結- の案件はこの画面の<b>下半分<\/b>/.test(MANC));
   //  「価値の流れ」の経営者の飛び先は sec-ma のまま（束ね先そのもの）
