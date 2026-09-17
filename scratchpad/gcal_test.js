@@ -471,10 +471,38 @@ function takeFn(name) {
   ok('＋予定は金のボタン', /class="btn2 btn-gold"[^>]*onclick="calOpenForm\(\)">＋ 予定<\/button>/.test(SRC));
   ok('金のボタンの CSS（字は濃紺）', /\.btn2\.btn-gold\{background:var\(--gold\);color:#0E1B33;font-weight:700;/.test(SRC));
 }
+// ㉑ 色の見分け（凡例）。自分の予定・面談・課題・支払・調達・補助金・週次と
+//    Google のカレンダーごとの色。読み込んだ予定にある種類だけ並ぶ
+{
+  const lg = takeFn('calLegend');
+  ok('凡例の関数がある', !!lg);
+  ok('自分の予定は青で固定', /<span><i style="background:#2C5DA8;"><\/i>自分の予定<\/span>/.test(lg));
+  ok('種類は実際にある分だけ', /if\(x\.kind && CAL_KINDS\[x\.kind\]\) seen\[x\.kind\]=1;/.test(lg) && /if\(seen\[k\]\) out\.push/.test(lg));
+  ok('種類の色は CAL_KINDS の fg', /CAL_KINDS\[k\]\.fg\+'/.test(lg) && /esc\(CAL_KINDS\[k\]\.label\)/.test(lg));
+  ok('Google のカレンダーは色と名前（重複なし）', /if\(!gcal\[x\.calId\]\)\{ gcal\[x\.calId\]=\{ color:x\.color, name:x\.calName\|\|'Google' \}; gorder\.push\(x\.calId\); \}/.test(lg));
+  ok('Google の色は文字を無害化して出す', /background:'\+esc\(gcal\[id\]\.color\)\+'/.test(lg));
+  ok('暦の下に並ぶ', /h\+=calLegend\(CAL_ROWS\.rows\);\s*\n\s*h\+='<div style="font-size:11px;color:#94A2B6;line-height:1\.7;margin-top:6px;">'/.test(takeFn('knvRenderCal')));
+  ok('凡例の CSS', /\.cal-lg\{display:flex;flex-wrap:wrap;gap:4px 11px;/.test(SRC) && /\.cal-lg i\{width:9px;height:9px;border-radius:50%;/.test(SRC));
+  //  実際に動かして確かめる
+  const F = new Function('esc', 'CAL_KINDS', lg + '\nreturn calLegend;');
+  const CK = { meet:{label:'面談',fg:'#8A6A12'}, task:{label:'課題',fg:'#C86821'}, pay:{label:'支払',fg:'#A9403D'} };
+  const e = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const legend = F(e, CK);
+  const h0 = legend([]);
+  ok('予定が無くても自分の予定だけ出る', h0 === '<div class="cal-lg"><span><i style="background:#2C5DA8;"></i>自分の予定</span></div>');
+  const h1 = legend([
+    { kind:'own' }, { kind:'task' }, { kind:'task' }, { kind:'pay' },
+    { kind:'own', calId:'fam', color:'#8e24aa', calName:'家族' }, { kind:'own', calId:'fam', color:'#8e24aa', calName:'家族' },
+    { kind:'own', calId:'x"y', color:'#33b679', calName:'<共有>' }
+  ]);
+  ok('ある種類だけ、CAL_KINDS の順で', h1.indexOf('課題') > 0 && h1.indexOf('支払') > h1.indexOf('課題') && h1.indexOf('面談') < 0);
+  ok('Google のカレンダーは一度だけ', (h1.match(/家族/g)||[]).length === 1 && /background:#8e24aa;"><\/i>家族/.test(h1));
+  ok('名前と色は無害化', /&lt;共有&gt;/.test(h1) && !/<共有>/.test(h1) && !/x"y/.test(h1));
+}
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-13', '20260917-13']);
+  is('版が揃う', [build, VER.build], ['20260917-14', '20260917-14']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
