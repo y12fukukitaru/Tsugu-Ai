@@ -151,6 +151,22 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
   ok('パートナー説明書', /株の持ち方・組織の検討（出口とは別に）/.test(MANP) && /税理士・司法書士・弁護士へおつなぎ/.test(MANP));
   ok('継ナビくんの画面ガイド', /出口とは別の「株の持ち方・組織の検討」=持株会社\(ホールディングス\)\/資産管理会社\/分社化/.test(SRC));
 }
+// ③d 経営者とパートナーは同じものを見ている（出口の設計・株の持ち方）
+{
+  const ctx = { eq: 5000, ans: {}, prof: {} };
+  const hc = M.html({ exit_type: null, targets: {} }, ctx, 'customer'), hp = M.html({ exit_type: null, targets: {} }, ctx, 'partner');
+  ok('経営者には「パートナーと同じもの」', /担当パートナーと<b>同じもの<\/b>を見ています/.test(hc) && !/経営者の画面「出口の設計」と/.test(hc));
+  ok('パートナーには「経営者と同じもの」', /経営者の画面「出口の設計」と<b>同じもの<\/b>です/.test(hp) && !/担当パートナーと<b>同じもの/.test(hp));
+  const S2 = new Function(base + 'function $(id){ return null; }' + takeArr('STRUCT_KINDS') + takeArr('STRUCT_STATUS') + takeFn('structStatusName') + takeFn('structSignals') + 'var STRUCT={ scope:"c1", who:"customer", row:null, items:{}, sqlOk:true };' + takeFn('structHtml') + 'return structHtml;')();
+  ok('株の持ち方も、両方に同じ案内', /担当パートナーと<b>同じもの<\/b>を見ています/.test(S2({}, ctx, 'customer', true)) && /経営者の画面と<b>同じもの<\/b>です/.test(S2({}, ctx, 'partner', true)));
+  //  説明書・資料に「5つの出口」が残っていない
+  no('経営者説明書に 5つの出口 は残っていない', /5つの出口/.test(MANC));
+  no('パートナー説明書に 5つの出口 は残っていない', /5つの出口/.test(MANP));
+  no('経営者向け資料に 5つの出口 は残っていない', /5つの出口/.test(PITC));
+  ok('経営者説明書：パートナーと同じもの', /担当パートナーのカルテにも同じものが出ます/.test(MANC));
+  ok('パートナー説明書：経営者と同じもの', /経営者とあなたは同じものを見ています/.test(MANP));
+  ok('パートナーの画面ガイド：場所と同じ表', /出口の設計はカルテ→企業価値・承継準備→出口の設計\(企業価値診断の次\)。経営者の左メニュー「出口の設計」と同じ表を見ている/.test(SRC) && /出口は8つ\(第三者へ譲る/.test(SRC));
+}
 // ③b 運営の成長ロードマップ：上場は二段（TOKYO PRO Market → グロース）
 {
   const rm = takeFn('loadAdmRoadmap');
@@ -213,7 +229,7 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
   ok('運営説明書：2プラン・切替は運営だけ・契約書の条文', /顧問料（2プラン）/.test(MANA) && /切替は運営だけ/.test(MANA) && /第2条の3/.test(MANA));
   ok('税額は出さないと明記', /税額は計算しません/.test(MANC) && /税額を計算しません/.test(SRC));
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-17', '20260917-17']);
+  is('版が揃う', [build, VER.build], ['20260917-18', '20260917-18']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
