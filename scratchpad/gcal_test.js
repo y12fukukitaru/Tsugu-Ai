@@ -425,10 +425,27 @@ function takeFn(name) {
   ok('空き枠を押したときの時刻も wkPx で', /\/wkPx\(\)\)\)\);/.test(takeFn('calWkSlot')));
   ok('なぜ Google と同じ読み方にするかを書き残す', /淡い色に細い罫線では、狭い枠が格子に溶けて見えない/.test(mob));
 }
+// ⑲ 横に払って前後の月・週へ
+{
+  const sw = takeFn('calSwipeBind');
+  ok('暦の箱に一度だけ結ぶ', /if\(!box \|\| box\.__swipe\) return;/.test(sw) && /box\.__swipe=1;/.test(sw));
+  ok('指の始まりと終わりを見る（passive）', /addEventListener\('touchstart'/.test(sw) && /addEventListener\('touchend'/.test(sw) && (sw.match(/\{ passive:true \}/g)||[]).length===2);
+  ok('縦のスクロールと見分ける（横 50px 以上・縦の2倍以上・0.8秒以内）', /Math\.abs\(dx\)<50 \|\| Math\.abs\(dx\)<Math\.abs\(dy\)\*2 \|\| Date\.now\(\)-s\.at>800/.test(sw));
+  ok('一覧の表示では何もしない', /if\(calViewGet\(\)==='list'\) return;/.test(sw));
+  ok('週の枠が横にはみ出すときは、そちらを優先', /wrap\.scrollWidth>wrap\.clientWidth\+2\) return;/.test(sw));
+  ok('左へ払うと次へ、右へ払うと前へ', /calMove\(dx<0\?1:-1\);/.test(sw));
+  ok('描き直しのたびに結び直しを試みる（重複はしない）', /calSwipeBind\(\);      \/\/ 横に払って前後へ/.test(takeFn('knvRenderCal')));
+  //  動いたことが分かる滑り込み
+  ok('‹ › と払いで向きを覚える', /CAL_CUR=d; CAL_PICK=null; CAL_SLIDE=n; knvRenderCal\(\);/.test(takeFn('calMove')));
+  const si = takeFn('calSlideIn');
+  ok('次へは右から、前へは左から', /el\.classList\.add\(n>0\?'cal-in-r':'cal-in-l'\);/.test(si));
+  ok('週の枠か、月の升目に掛ける', /box\.querySelector\('\.wk-wrap'\) \|\| box\.querySelector\('\.cal-grid \+ \.cal-grid'\)/.test(si));
+  ok('滑り込みの CSS', /@keyframes calInR\{from\{transform:translateX\(28px\)/.test(SRC) && /\.cal-in-l\{animation:calInL \.22s ease-out;\}/.test(SRC));
+}
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-11', '20260917-11']);
+  is('版が揃う', [build, VER.build], ['20260917-12', '20260917-12']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
