@@ -30,7 +30,8 @@ function takeFn(name) {
   const panel = SRC.slice(SRC.indexOf('<div class="panel" id="sec-billpay">'), SRC.indexOf('<div class="panel" id="sec-cash">'));
   ok('「お支払い」に「ご契約について」の箱がある', panel.indexOf('id="my-contract"') > 0);
   //  探させないための変更なので、位置そのものが仕様
-  ok('決済リンクより上にある', panel.indexOf('id="my-contract"') < panel.indexOf('id="billpay-links"'));
+  //  決済リンク（カード決済）はやめたので、比べる先はお支払い方法の案内
+  ok('お支払い方法の案内より上にある', panel.indexOf('id="my-contract"') < panel.indexOf('銀行振込または口座振替'));
   ok('明細やCSVより上にある', panel.indexOf('id="my-contract"') < panel.indexOf('id="cst-out"'));
   no('解約の欄を画面の末尾に置いたままにしない', /id="cst-out"[\s\S]{0,120}id="my-cancel"/.test(panel));
   ok('読み込みは顧客の起動に入っている', /loadPlanRates\(\)\.then\(loadMyContract\);/.test(SRC));
@@ -111,7 +112,7 @@ function takeFn(name) {
 // ⑦ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-21', '20260917-21']);
+  is('版が揃う', [build, VER.build], ['20260917-22', '20260917-22']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
