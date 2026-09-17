@@ -69,7 +69,7 @@ function takeFn(name) {
 {
   ok('前回からの差分をもらう札を使う', /syncToken/.test(SYNC) && /nextSyncToken/.test(SYNC));
   ok('札が古くなったら取り直す', /r\.status === 410/.test(SYNC));
-  ok('取り直しでも無限に回らない', /guard/.test(SYNC));
+  ok('取り直しでも無限に回らない', /if \(\+\+pages > 20\) break;/.test(SYNC) && /\+\+resets > 2/.test(SYNC));
   ok('取り込まない設定を見る', /link\.pull_private !== false/.test(SYNC));
 }
 // ⑤ 同意のときの札（他人のカレンダーを結び付けられないように）
@@ -153,6 +153,23 @@ function takeFn(name) {
   //  戻りの画面が文字として出てしまった件
   ok('ページは content-type を明示する', /h\.set\("content-type", "text\/html; charset=utf-8"\);/.test(OAUTH));
   ok('差し込む文字は山括弧を落とす', /function esc\(s: string\)/.test(OAUTH) && /\$\{esc\(msg\)\}/.test(OAUTH));
+}
+// ⑪ 取り込みのループ（do…while の continue で取り直せていなかった）
+{
+  const RE = R('supabase/migrations/20260917020000_google_relink_reset.sql');
+  //  do…while の continue は条件式に飛ぶ。ここは自前で終わらせる
+  no('取り込みに do…while は使わない', /do \{[\s\S]{0,400}\} while \(pageToken/.test(SYNC));
+  ok('終わり方を自分で書く', /while \(true\) \{/.test(SYNC) && /if \(!pageToken\) break;/.test(SYNC));
+  ok('ページと取り直しは別々に数える', /let pages = 0;/.test(SYNC) && /let resets = 0;/.test(SYNC));
+  ok('取り直しが続いたら止めて知らせる', /if \(\+\+resets > 2\) \{ notes\.push\("取り直しが続いたので止めました"\); break; \}/.test(SYNC));
+  ok('なぜ do…while が駄目かを書き残す', /条件式に飛ぶので/.test(SYNC));
+  //  そもそも古い札を残さない（入口で正しくする）
+  ok('相手が変わったら札を捨てる', /sync_token   = case/.test(RE) && /then null/.test(RE));
+  ok('相手が変わったら短い鍵も捨てる', /access_token = case/.test(RE));
+  ok('相手が変わったら前の取り込みも消す', /delete from public\.agenda_events[\s\S]{0,60}source = 'google'/.test(RE));
+  ok('いま残っている札を一度捨てる', /update public\.google_cal_links[\s\S]{0,80}set sync_token = null/.test(RE));
+  ok('pgcrypto の棚を見る', /set search_path = public, extensions/.test(RE));
+  ok('確かめに札の残りが出る', /as 札が残っている行/.test(RE));
 }
 // ⑨ 版
 {

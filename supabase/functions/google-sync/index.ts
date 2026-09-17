@@ -219,9 +219,17 @@ Deno.serve(async (req) => {
     let pageToken: string | null = null;
     let syncToken: string | null = link.sync_token ?? null;
     let nextSync: string | null = null;
-    let guard = 0;
 
-    do {
+    //  ここは do…while で書いてはいけません。do…while の continue は
+    //  条件式に飛ぶので、札を捨てたあと pageToken が null のまま条件を
+    //  見て、**取り直さずに終わってしまいます**。実際そうなりました
+    //  （「同期できたのに一件も入らない」という、いちばん分かりにくい形で）。
+    //  終わり方を自分で書きます。
+    let pages = 0;     // 何ページ取ったか
+    let resets = 0;    // 札を捨てて取り直した回数
+    while (true) {
+      if (++pages > 20) break;   // 際限なく回らないように
+
       const q = new URL(API);
       q.searchParams.set("singleEvents", "true");
       q.searchParams.set("maxResults", "250");
@@ -236,10 +244,11 @@ Deno.serve(async (req) => {
 
       const r = await fetch(q, { headers: H });
       if (r.status === 410) {
-        //  札が古い。捨てて最初から取り直す
+        //  札が古い（別のアカウントに付け替えたときにも起きます）。
+        //  捨てて、日付を区切った取り方で最初から取り直す
         syncToken = null; pageToken = null;
         await sb.from("google_cal_links").update({ sync_token: null }).eq("user_id", uid);
-        if (++guard > 2) break;
+        if (++resets > 2) { notes.push("取り直しが続いたので止めました"); break; }
         continue;
       }
       const g = await r.json();
@@ -286,7 +295,8 @@ Deno.serve(async (req) => {
 
       pageToken = g.nextPageToken ?? null;
       if (g.nextSyncToken) nextSync = g.nextSyncToken;
-    } while (pageToken && ++guard < 20);
+      if (!pageToken) break;   // 最後のページまで来た
+    }
 
     if (nextSync) {
       await sb.from("google_cal_links").update({ sync_token: nextSync }).eq("user_id", uid);
