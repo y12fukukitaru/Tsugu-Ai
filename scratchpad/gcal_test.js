@@ -336,18 +336,31 @@ function takeFn(name) {
 // ⑮ 予定タブの操作列は、下へ送っても上に残す
 {
   const rc = takeFn('knvRenderCal');
-  ok('操作列を包む', /h\+='<div class="cal-stick">';/.test(rc) && /h\+='<\/div>';   \/\/ \.cal-stick/.test(rc));
+  ok('操作列を包む', /h\+='<div class="cal-stick'\+\(wk\?' week':''\)\+'">';/.test(rc) && /h\+='<\/div>';   \/\/ \.cal-stick/.test(rc));
+  //  印を「wk」にすると .wk{min-width} に当たって操作列が広がる（実際になった）
+  no('印は .wk と同じ名前にしない', /class="cal-stick'\+\(wk\?' wk':''\)/.test(rc) || /\.cal-stick\.wk\{/.test(SRC));
   //  包みの中に、切り替え・前後・今日・＋予定がぜんぶ入っていること
-  const inside = rc.slice(rc.indexOf('<div class="cal-stick">'), rc.indexOf('// .cal-stick'));
+  const inside = rc.slice(rc.indexOf('<div class="cal-stick'), rc.indexOf('// .cal-stick'));
   ok('切り替えと前後・今日・＋予定が中に入る', /class="vaseg"/.test(inside) && /calMove\(-1\)/.test(inside) && /calToday\(\)/.test(inside) && /calOpenForm\(\)">＋ 予定/.test(inside));
   ok('入力の窓は外に置く', /\/\/ \.cal-stick\s*\n[\s\S]{0,120}h\+='<div id="cal-form"><\/div>';/.test(rc));
   ok('貼り付けの CSS', /\.cal-stick\{position:sticky;top:-12px;z-index:8;background:var\(--bg\);margin:-12px -12px 6px;/.test(SRC));
   ok('週の目盛りより上に', /z-index は週表示の左の目盛り/.test(SRC));
+  //  週表示は曜日の見出しも一緒に貼り付ける
+  const wv = takeFn('calWeekVertical');
+  ok('曜日の見出しは別の箱で返す', /var head='<div class="wk-head"><div class="wk">';/.test(wv) && /return \{ head:head, body:h \};/.test(wv));
+  ok('本体は上の罫線を落とす印を持つ', /var h='<div class="wk-wrap under"><div class="wk">';/.test(wv));
+  ok('見出しは操作列の中に入れる', /if\(wk\) h\+=wk\.head;/.test(inside) || /if\(wk\) h\+=wk\.head;/.test(rc));
+  ok('週表示のときだけ包みに印を付ける', /'<div class="cal-stick'\+\(wk\?' week':''\)\+'">'/.test(rc));
+  ok('見出しは先に作る', /wk=calWeekVertical\(byDay, ws\);/.test(rc) && rc.indexOf('wk=calWeekVertical(byDay, ws);') < rc.indexOf('<div class="cal-stick'));
+  ok('横スクロールを本体に合わせる', /wrap\.addEventListener\('scroll', function\(\)\{ whead\.scrollLeft=wrap\.scrollLeft; \}\);/.test(rc));
+  ok('見出しの CSS', /\.wk-head\{overflow-x:hidden;border:1px solid var\(--softline\);border-bottom:0;border-radius:10px 10px 0 0;/.test(SRC));
+  ok('本体は上の角を落とす', /\.wk-wrap\.under\{border-top:0;border-radius:0 0 10px 10px;\}/.test(SRC));
+  ok('週表示では包みの下の余白を消す', /\.cal-stick\.week\{margin-bottom:0;padding-bottom:0;box-shadow:none;\}/.test(SRC));
 }
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-04', '20260917-04']);
+  is('版が揃う', [build, VER.build], ['20260917-05', '20260917-05']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
