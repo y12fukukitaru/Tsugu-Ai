@@ -30,7 +30,7 @@ const base =
   'var EP_STD_FEE=45000; var EP_SELLER_FEE=30000; var EP_SETUP_FEE=100000; var EP_SETUP_SELLER=50000; var ME="me"; var SHINDAN_CHECKS=[["deputy","右腕"],["manual","手順"],["sales_dep","偏り"],["successor","方向性"],["shares","株主"],["will","遺言"],["contracts","契約書"],["offbalance","簿外"],["guarantee","保証"]];' +
   'var EXIT={ scope:"c1", who:"customer", row:null, ctx:null, edit:{} };' +
   takeObj('PLANS') + takeVar('PLAN_RATES') + takeFn('planOf') + takeFn('planName') + takeFn('planFee') + takeFn('planTag') + takeFn('faPerk') +
-  takeArr('EXIT_TYPES') + takeObj('EXIT_TARGETS') + takeObj('EXIT_CHECKS') + takeFn('exitCheckLabel') + takeFn('exitTypeOf') +
+  takeArr('EXIT_TYPES') + takeObj('EXIT_TARGETS') + takeObj('EXIT_CHECKS') + takeObj('EXIT_NOTES') + takeFn('exitPathNote') + takeFn('exitCheckLabel') + takeFn('exitTypeOf') +
   takeFn('holdingSignals') + takeFn('exitFmt') + takeFn('exitHtml') +
   takeArr('JOURNEY_Q') + takeArr('JOURNEY_Q_SELLER') + takeFn('journeyPhase') + takeFn('karteOpt');
 const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:planName, planFee:planFee, planTag:planTag, faPerk:faPerk, types:EXIT_TYPES, targets:EXIT_TARGETS, checks:EXIT_CHECKS, signals:holdingSignals, html:exitHtml, phase:journeyPhase, QS:JOURNEY_Q_SELLER, Q:JOURNEY_Q, karteOpt:karteOpt};')();
@@ -51,7 +51,7 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
 }
 // ③ 出口の設計
 {
-  is('出口は5つ', M.types.map((t) => t.k), ['sell', 'family', 'employee', 'close', 'buyer']);
+  is('出口は8つ（資本提携・上場2つを足した）', M.types.map((t) => t.k), ['sell', 'family', 'employee', 'alliance', 'tpm', 'ipo', 'close', 'buyer']);
   ok('全出口に目標と整えることがある', M.types.every((t) => (M.targets[t.k] || []).length >= 2 && (M.checks[t.k] || []).length >= 3));
   const ctx = { eq: 12000, eqGrowth: 25, net: 8000, debt: 3000, cash: 5000, opY: 1500, cashM: 2.1, ready: 60, ans: { deputy: true }, prof: { plan: 'seller', created_at: '2024-01-01' } };
   is('持株会社の合図：親族承継で4つ', M.signals(ctx, { exit_type: 'family' }).length, 4);
@@ -61,7 +61,7 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
   const h0 = M.html({ exit_type: null, targets: {} }, ctx, 'customer');
   ok('プランと優遇の箱', /いまの顧問プラン/.test(h0) && /売り手プラン（譲渡準備）/.test(h0) && /FA報酬 20% 割引・最低報酬なし/.test(h0));
   ok('経営者には「担当パートナーへ」', /プランの切替は担当パートナーにお申し出ください/.test(h0) && !/planRequest/.test(h0));
-  is('出口のボタンは5つ', (h0.match(/onclick="exitPick\('/g) || []).length, 5);
+  is('出口のボタンは8つ', (h0.match(/onclick="exitPick\('/g) || []).length, 8);
   ok('出口を選ぶ前は案内だけ', /いちばん近いものを選んでください/.test(h0) && !/id="ex-year"/.test(h0));
   const h1 = M.html({ exit_type: 'sell', target_year: 2029, targets: { price: 15000, debt: 1000 }, holding_flag: false }, ctx, 'partner');
   ok('目標の年と数字の表', /id="ex-year"/.test(h1) && /目標譲渡価格/.test(h1) && /12,000万円/.test(h1) && /\+3,000万円/.test(h1));
@@ -75,6 +75,45 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
   ok('依頼中は依頼ボタンを出さない', /切替を依頼中/.test(h3) && !/planRequest/.test(h3));
   const h4 = M.html({ exit_type: null, targets: {} }, { sqlOk: false, prof: {} }, 'customer');
   ok('SQL 未実行の案内', /SQL を実行してください/.test(h4));
+  //  状況に合わせて選べる道：資本提携・上場（TOKYO PRO Market／グロース）
+  const h5 = M.html({ exit_type: 'tpm', target_year: 2029, targets: {} }, ctx, 'customer');
+  ok('TPM を選ぶと「知っておくこと」', /TOKYO PRO Market で知っておくこと/.test(h5) && /J-Adviser/.test(h5) && /買えるのはプロ投資家だけ/.test(h5));
+  ok('TPM は可否・費用を断定しない', /TsuguAi は J-Adviser ではなく、上場の可否は J-Adviser・取引所が決めます/.test(h5));
+  ok('TPM で見る数字', /年間営業利益/.test(h5) && /時価純資産/.test(h5) && /借入残高/.test(h5));
+  ok('TPM で整えること（株主・保証・売上の偏りを含む）', /この出口で整えること（残り 6）/.test(h5) && /株主/.test(h5) && /保証/.test(h5) && /偏り/.test(h5));
+  is('TPM では持株会社の合図は出ない', M.signals(ctx, { exit_type: 'tpm' }).length, 0);
+  const h6 = M.html({ exit_type: 'ipo', targets: {} }, ctx, 'partner');
+  ok('グロースは TPM を経る道も書く', /一般の市場（グロースなど）で知っておくこと/.test(h6) && /先に TOKYO PRO Market に上場し/.test(h6) && /TsuguAi は断定しません/.test(h6));
+  const h7 = M.html({ exit_type: 'alliance', targets: {} }, ctx, 'customer');
+  ok('資本提携は一部を渡して続ける', /資本提携で知っておくこと/.test(h7) && /経営は続けます/.test(h7) && /推定企業価値/.test(h7));
+  ok('譲る・継ぐには「知っておくこと」の箱は出ない', !/知っておくこと/.test(h1) && !/知っておくこと/.test(h2));
+  no('出口の説明に税額の計算は無い', /税額を計算|相続税評価/.test(M.html({ exit_type: 'tpm', targets: {} }, ctx, 'customer').replace('税額を計算しません', '')));
+  //  SQL：制約を作り直す
+  const EX = R('supabase/migrations/20260917050000_exit_types.sql');
+  ok('制約は名前を探して外す', /pg_get_constraintdef\(oid\) like '%exit_type%'/.test(EX) && /drop constraint %I/.test(EX));
+  ok('新しい制約に8つ', /check \(exit_type in \('sell','family','employee','close','buyer','alliance','tpm','ipo'\)\)/.test(EX));
+  ok('確かめが付いている', /期待値：新しい制約=1、exit_type の制約=1、はみ出た行=0/.test(EX));
+  //  継ナビくんへの頼み方・案内
+  const ea = takeFn('exitAsk');
+  ok('継ナビくんに TPM／グロースの断定をさせない', /上場の可否・費用・時期は断定せず、J-Adviser や主幹事証券への確認を勧めてください/.test(ea));
+  ok('出口を選ぶ前の問いに資本提携・上場', /譲る・親族へ継ぐ・従業員へ継ぐ・資本提携・上場（TOKYO PRO Market／グロース）・畳む・買い手になる/.test(ea));
+  ok('画面の案内に一部を譲る・上場', /譲る・継ぐ・一部を譲って続ける・上場して続ける・畳む・買い手になる/.test(SRC));
+  ok('継ナビくんの画面ガイドは8つ', /出口の設計=8つの出口\(/.test(SRC));
+  //  説明書
+  ok('経営者説明書：8つと TOKYO PRO Market', /🤲 資本提携（一部を譲る）／📈 上場する（TOKYO PRO Market）／🏛️ 上場する（グロース市場など）/.test(MANC) && /TOKYO PRO Market とは/.test(MANC) && /上場の可否・費用・時期は J-Adviser との相談で決まります/.test(MANC));
+  //  写しの「どの出口へ」の行（見出しの次の行）にボタンが8つ
+  const mrow = (MANC.split('\n').find((l, i, a) => i > 0 && /どの出口へ/.test(a[i - 1]) && /scr-sbtn/.test(l)) || '');
+  is('経営者説明書：写しのボタンも8つ', (mrow.match(/class="scr-sbtn/g) || []).length, 8);
+  ok('パートナー説明書：断定しない', /の8つから、その会社の状況にいちばん近いものを選び/.test(MANP) && /経営者に断定しないでください/.test(MANP));
+}
+// ③b 運営の成長ロードマップ：上場は二段（TOKYO PRO Market → グロース）
+{
+  const rm = takeFn('loadAdmRoadmap');
+  ok('5 は TOKYO PRO Market', /card\('5','TOKYO PRO Market 上場','J-Adviser 伴走・3〜5年','sec-exec','#C39B3F', false, cur===5, ''\)/.test(rm));
+  ok('6 はグロース', /card\('6','グロース市場','一般の市場へ（5〜10年）','sec-exec','#27684A', false, false, ''\)/.test(rm));
+  no('古い IPO準備 は残っていない', /IPO準備/.test(rm));
+  ok('5・6 に自動判定が無いと書く', /5・6 は自動の判定がありません/.test(rm) && /J-Adviser（取引所が認めた担当会社）/.test(rm));
+  ok('運営説明書に 5・6', /ステージ5「TOKYO PRO Market 上場」/.test(MANA) && /ステージ6「グロース市場」/.test(MANA));
 }
 // ④ 伴走の1年（売り手）・カルテのナビ・面談台本
 {
@@ -129,7 +168,7 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
   ok('運営説明書：2プラン・切替は運営だけ・契約書の条文', /顧問料（2プラン）/.test(MANA) && /切替は運営だけ/.test(MANA) && /第2条の3/.test(MANA));
   ok('税額は出さないと明記', /税額は計算しません/.test(MANC) && /税額を計算しません/.test(SRC));
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-15', '20260917-15']);
+  is('版が揃う', [build, VER.build], ['20260917-16', '20260917-16']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
