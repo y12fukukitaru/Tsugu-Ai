@@ -136,7 +136,7 @@ Dashboard → Edge Functions → 新規作成で、それぞれ中身を貼り�
 | 出た言葉 | 意味 | 直しかた |
 |---|---|---|
 | `pgp_sym_encrypt does not exist` | 暗号の部品が別の棚にある | ⑤の SQL 2 を流す |
-| `The user must be signed up for Google Calendar.` | その Google Workspace アカウントに**カレンダーの機能が付いていない** | Google 管理コンソール → アプリ → Google Workspace → カレンダー を ON にする。難しければ個人アカウントでつなぐ |
+| `カレンダーが使えません` | その Google Workspace アカウントに**カレンダーの機能が付いていない**（Google からは `The user must be signed up for Google Calendar.` と返ります） | Google 管理コンソール → アプリ → Google Workspace → カレンダー を ON にする。難しければ個人アカウントでつなぐ。**つなぎ直しても直りません**。このアカウントには「送り先にする」が出ません（出せない先に送ると、予定が出ないまま溜まるため） |
 | 同期は成功なのに予定が出ない | 古い札（syncToken）が残っている、または一意の索引が条件つき | ⑤の SQL 3・4 を流す（両方とも手当てが入っています） |
 | Google に同じ予定が二つ出る | 以前の **ICS 購読（見るだけの連携）が残っている** | Google カレンダー左の「他のカレンダー」から TsuguAi の購読を削除する |
 

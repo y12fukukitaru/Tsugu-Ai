@@ -348,11 +348,24 @@ Deno.serve(async (req) => {
       }
     }
 
+    //  Google が「このアカウントはカレンダーを使えない」と返したとき。
+    //  Workspace でカレンダーの機能が付いていないアカウントで起きます
+    //  （実際に起きました）。英語のまま出しても、何をすればよいか
+    //  分かりません。日本語に置き換えます。
+    //
+    //  先頭の「カレンダーが使えません」は画面への合図でもあります。
+    //  画面はこの言葉を見て、そのアカウントに「送り先にする」を
+    //  出さないようにします（出せない先に送ると、予定が溜まります）。
+    const noCal = lnotes.some((n) => /signed up for Google Calendar/i.test(n));
+    const lastError = noCal
+      ? "カレンダーが使えません：このGoogleアカウントには、カレンダーの機能が付いていません。"
+      : (lnotes.length ? lnotes.slice(0, 3).join(" / ") : null);
+
     await sb.from("google_cal_links").update({
       last_sync_at: new Date().toISOString(),
-      last_error: lnotes.length ? lnotes.slice(0, 3).join(" / ") : null,
+      last_error: lastError,
     }).eq("id", link.id);
-    for (const n of lnotes) notes.push(who + n);
+    if (lastError) notes.push(who + lastError);
   }
 
   return json({ ok: true, pushed, pulled, removed, relink, accounts: live.length, notes: notes.slice(0, 3) });
