@@ -390,11 +390,16 @@ function takeFn(name) {
   //  iPhone の拡大（16px 未満の欄に触れると起きる）を止める
   ok('スマホでは入力欄をぜんぶ 16px に', /@media\(max-width:760px\)\{\s*\n\s*\.cfm-bg\{[^}]*\}\s*\n\s*\.cfm\{[^}]*\}[\s\S]{0,200}input,select,textarea\{font-size:16px!important;\}/.test(SRC));
   ok('なぜ 16px かを書き残す', /iPhone が画面を拡大し、そのまま横に/.test(SRC));
+  //  入力の窓は body 直下に出す。継ナビくんの「外側を押したら閉じる」に
+  //  外側と見なされないよう、閉じなくてよい側の一覧に入っていること
+  //  （入れ忘れて、「やめる」や ✕ で継ナビくんごと閉じていた）
+  ok('入力の窓を押しても継ナビくんは閉じない', /var KNV_KEEP_CLASS=\['cpk-bg','cfm-bg','upd-bar'\];/.test(SRC));
+  ok('小窓も同じ扱いのまま', /KNV_KEEP_CLASS=\[[^\]]*'cpk-bg'/.test(SRC));
 }
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-07', '20260917-07']);
+  is('版が揃う', [build, VER.build], ['20260917-08', '20260917-08']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
