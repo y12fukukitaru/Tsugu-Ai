@@ -396,10 +396,21 @@ function takeFn(name) {
   ok('入力の窓を押しても継ナビくんは閉じない', /var KNV_KEEP_CLASS=\['cpk-bg','cfm-bg','upd-bar'\];/.test(SRC));
   ok('小窓も同じ扱いのまま', /KNV_KEEP_CLASS=\[[^\]]*'cpk-bg'/.test(SRC));
 }
+// ⑰ スマホの週表示は7日を幅に収める（横スクロールをなくし、見出しの遅れも消す）
+{
+  const mob = SRC.slice(SRC.indexOf('@media(max-width:600px){'), SRC.indexOf('/* 継ナビくんの顔チップ'));
+  ok('横幅の下限を外す', /\.wk\{min-width:0;\}/.test(mob));
+  ok('目盛りの幅を詰める', /\.wk-row\{grid-template-columns:40px repeat\(7,minmax\(0,1fr\)\);\}/.test(mob));
+  ok('罫線と今の線も詰めた幅に合わせる', /\.wk-line,\.wk-now\{left:40px;\}/.test(mob));
+  ok('文字を少し小さく', /\.wk-chip\{font-size:9px;/.test(mob) && /\.wk-ev\{font-size:9px;/.test(mob));
+  ok('なぜ横スクロールをなくすかを書き残す', /指の動きに一拍遅れて見えた/.test(mob));
+  //  パソコンの幅では今までどおり（514px の下限）
+  ok('広い画面の下限はそのまま', /\n  \.wk\{min-width:514px;\}/.test(SRC));
+}
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-08', '20260917-08']);
+  is('版が揃う', [build, VER.build], ['20260917-09', '20260917-09']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
