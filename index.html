@@ -1455,7 +1455,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260917-18';
+  var APP_BUILD='20260917-19';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2574,7 +2574,7 @@
           +'<div><label class="fl">フェーズ</label><select id="exf-phase" class="inp2"><option>Phase 1</option><option>Phase 2</option><option>Phase 3</option></select></div>'
           +'<div style="min-width:110px;"><label class="fl">時期</label><input id="exf-period" class="inp2" style="width:110px;" placeholder="例：Y1 事業化"></div>'
           +'<div style="flex:1;min-width:180px;"><label class="fl">調達手段</label><input id="exf-method" class="inp2" style="width:100%;" placeholder="例：信用保証協会付き融資"></div>'
-          +'<div><label class="fl">区分</label><select id="exf-cat" class="inp2"><option>自己資金</option><option>融資</option><option>資本性ローン</option><option>補助金</option><option>エクイティ</option><option>デット</option><option>その他</option></select></div>'
+          +'<div><label class="fl">区分</label><select id="exf-cat" class="inp2"><option>自己資金</option><option>デット</option><option>資本性ローン</option><option>エクイティ</option><option>補助金</option><option>その他</option></select></div>'
           +'<div><label class="fl">金額（百万円）</label><input id="exf-amt" type="number" class="inp2" style="width:110px;" placeholder="例 20"></div>'
           +'<div style="flex:1;min-width:160px;"><label class="fl">主な使途</label><input id="exf-usage" class="inp2" style="width:100%;"></div>'
           +'<button class="btn2" onclick="addExecFundItem()">追加</button>'
@@ -2651,7 +2651,7 @@
         +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.8;">ここに登録した制度が、パートナーの顧客カルテ「補助金ナビ」で<b style="color:var(--navy);">顧客の業種・年商・資金使途に照らして自動で候補表示</b>されます。'
         +'補助金は要件を外すと不採択になるため、<b style="color:var(--navy);">AIに判定させず運営が登録した制度だけ</b>を候補にします。締切と要件は必ず公募要領で最新をご確認ください。</div>'
         +'<div id="sub-body">読み込み中...</div></div>'
-      +'<div class="panel" id="sec-market"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8h14l-3.5-3.5"/><path d="M21 16H7l3.5 3.5"/></svg>Tsugime -結- 投資・融資・M&A（全社）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketApps();loadMarketBroker()">↺ 更新</span></div>'
+      +'<div class="panel" id="sec-market"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8h14l-3.5-3.5"/><path d="M21 16H7l3.5 3.5"/></svg>Tsugime -結- エクイティ・デット・M&A（全社）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketApps();loadMarketBroker()">↺ 更新</span></div>'
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">案件の掲載・ステータス変更は<b>運営のみ</b>が行います。パートナーからの掲載申請を審査し、承認すると即時掲載されます。</div>'
         +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:6px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.5 12.5H16l-1.8 2.8H9.8L8 12.5H2.5"/><path d="M5.6 5.1 2.5 12.5V18a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-5.5l-3.1-7.4A2 2 0 0 0 16.6 4H7.4a2 2 0 0 0-1.8 1.1z"/></svg>掲載申請の審査</span><span id="mkapp-count" class="nbadge hidden">0</span></div>'
         +'<div id="mkt-apps" style="margin:4px 0 14px;">読み込み中...</div>'
@@ -2659,7 +2659,7 @@
           +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px;">'
             +'<div style="min-width:180px;"><label class="fl">掲載主（顧客）</label><select id="amk-cust" class="inp2" style="max-width:220px;"><option value="">顧客を選択…</option></select></div>'
             +'<div><label class="fl">立場</label><select id="amk-side" class="inp2"><option value="raise">集めたい／譲渡（売り手）</option><option value="provide">出したい／譲受（買い手）</option></select></div>'
-            +'<div><label class="fl">種別</label><select id="amk-kind" class="inp2"><option value="loan">融資</option><option value="equity">出資</option><option value="mna">M&A</option></select></div>'
+            +'<div><label class="fl">種別</label><select id="amk-kind" class="inp2"><option value="loan">デット（融資）</option><option value="equity">エクイティ（出資）</option><option value="mna">M&A</option></select></div>'
             +'<div><label class="fl">金額（万円）</label><input id="amk-amount" type="number" class="inp2" style="width:110px;"></div>'
             +'<div style="flex:1;min-width:140px;"><label class="fl">業種（任意）</label><input id="amk-industry" class="inp2" style="width:100%;"></div>'
           +'</div>'
@@ -3882,9 +3882,9 @@
           +'<div id="my-ma">読み込み中...</div>'
         +'</div>'
         ) : '')
-        +'<div class="panel" id="sec-market"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8h14l-3.5-3.5"/><path d="M21 16H7l3.5 3.5"/></svg>Tsugime -結- 投資・融資・M&A（プラットフォーム内マッチング）</span></div>'
-          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">資金を「集めたい」企業と「出したい（融資・出資）」企業を、TsuguAi内でマッチングします。案件の掲載は、担当パートナーからの申請にもとづき<b>運営が審査のうえ</b>行います。掲載のご希望や気になる案件があれば「メッセージ」で担当パートナーにお知らせください。</div>'
-          +'<div style="font-size:11px;color:#8F7230;background:#F8F1DF;border:1px solid #EBDDB4;border-radius:9px;padding:9px 12px;margin-bottom:12px;line-height:1.7;">⚠ 本機能は当事者の引き合わせ（マッチング）を支援するもので、実際の融資・出資の実行ではありません。実行には貸金業法・金融商品取引法など関連法令の順守と、弁護士・税理士・有資格者等の関与が必要です。</div>'
+        +'<div class="panel" id="sec-market"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8h14l-3.5-3.5"/><path d="M21 16H7l3.5 3.5"/></svg>Tsugime -結- エクイティ・デット・M&A（プラットフォーム内マッチング）</span></div>'
+          +'<div style="font-size:12px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">資金を「集めたい」企業と「出したい（デット・エクイティ）」企業を、TsuguAi内でマッチングします。案件の掲載は、担当パートナーからの申請にもとづき<b>運営が審査のうえ</b>行います。掲載のご希望や気になる案件があれば「メッセージ」で担当パートナーにお知らせください。</div>'
+          +'<div style="font-size:11px;color:#8F7230;background:#F8F1DF;border:1px solid #EBDDB4;border-radius:9px;padding:9px 12px;margin-bottom:12px;line-height:1.7;">⚠ 本機能は当事者の引き合わせ（マッチング）を支援するもので、実際のデット（融資）・エクイティ（出資）の実行ではありません。実行には貸金業法・金融商品取引法など関連法令の順守と、弁護士・税理士・有資格者等の関与が必要です。</div>'
           +'<div class="ph" style="font-size:13px;">あなたの掲載案件（担当パートナーの申請にもとづき運営が掲載・ここで進捗を確認できます）</div>'
           +'<div id="market-mine" style="margin:4px 0 10px;">読み込み中...</div>'
           +'<div class="ph" style="font-size:13px;display:flex;align-items:center;justify-content:space-between;">公開中の案件<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarket()">↺ 更新</span></div>'
@@ -4095,9 +4095,9 @@
           +'<div id="ma-list" style="margin-top:6px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-market">'
-          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8h14l-3.5-3.5"/><path d="M21 16H7l3.5 3.5"/></svg>Tsugime -結- 投資・融資・M&A（閲覧・進捗確認）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketBroker()">↺ 更新</span></div>'
+          +'<div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8h14l-3.5-3.5"/><path d="M21 16H7l3.5 3.5"/></svg>Tsugime -結- エクイティ・デット・M&A（閲覧・進捗確認）</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadMarketBroker()">↺ 更新</span></div>'
           +'<div style="font-size:11.5px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">掲載中の「集めたい／出したい」案件と、寄せられた関心の一覧です。掲載企業名・関心を出した企業名を確認し、当事者への橋渡しの準備ができます。<b>案件の掲載・成立・終了などの登録/更新は、パートナーからの申請にもとづき運営が審査のうえ行います。</b>掲載のご希望は各顧客カルテの「掲載申請」からどうぞ。</div>'
-          +'<div style="font-size:11px;color:#8F7230;background:#F8F1DF;border:1px solid #EBDDB4;border-radius:9px;padding:9px 12px;margin-bottom:10px;line-height:1.7;">⚠ 実際の融資・出資の実行には関連法令（貸金業法・金融商品取引法等）の順守と有資格者の関与が必要です。TsuguAiはマッチングの場のみを提供します。</div>'
+          +'<div style="font-size:11px;color:#8F7230;background:#F8F1DF;border:1px solid #EBDDB4;border-radius:9px;padding:9px 12px;margin-bottom:10px;line-height:1.7;">⚠ 実際のデット（融資）・エクイティ（出資）の実行には関連法令（貸金業法・金融商品取引法等）の順守と有資格者の関与が必要です。TsuguAiはマッチングの場のみを提供します。</div>'
           +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;" id="mkb-filterbar">'
             +'<button class="sbtn on" data-f="open" onclick="setMkbFilter(\'open\',this)">公開中</button>'
             +'<button class="sbtn" data-f="all" onclick="setMkbFilter(\'all\',this)">すべて</button>'
@@ -4141,7 +4141,7 @@
               +knRuleGrp('① 保険・金融に関する禁止行為',[
                 ['無資格での保険募集','募集人資格がない方は、特定の保険商品の勧誘・乗換の推奨・契約の媒介を行ってはいけません。本プラットフォームのシミュレーターは財務分析ツールであり、保険契約の解約・締結等の「実行」は必ず募集人資格を有する担当者（運営）に取り次いでください（保険業法275条）。'],
                 ['断定的判断の提供','「必ず得します」「絶対に損しません」「確実に月○万円になります」等、不確実な事項について断定的な判断を伝えて勧誘してはいけません。'],
-                ['記録なき提案','保険・M&A・投融資に関わる提案を、顧客カルテに意向把握・提案根拠・説明内容の記録を残さずに行ってはいけません。記録はあなた自身を守る証跡です。']]) 
+                ['記録なき提案','保険・M&A・エクイティ・デットに関わる提案を、顧客カルテに意向把握・提案根拠・説明内容の記録を残さずに行ってはいけません。記録はあなた自身を守る証跡です。']]) 
               +knRuleGrp('② 勧誘・営業活動に関する禁止行為',[
                 ['不実告知・事実の不告知・威迫','勧誘に際して事実と異なることを告げること、不利な事実を故意に告げないこと、威迫して困惑させることは法律で禁止されています（特定商取引法）。'],
                 ['無承認の広告・SNS発信','当社の事前承認なく、TsuguAiの名称・ロゴ・収入例・実績数値を用いた広告、チラシ、SNS投稿、セミナー等での紹介を行ってはいけません（パートナー募集の広告表現は法規制の対象となるため、必ず運営が管理します）。'],
@@ -7771,7 +7771,7 @@
     box.innerHTML=h;
   }
   function closeBizplan(){ var m=$('bp-modal'); if(m){ m.classList.add('hidden'); document.body.style.overflow=''; } }
-  // ===== 融資ナビ（Phase 36）：確定ルールによる優先順位づけ =====
+  // ===== デットナビ（旧 融資ナビ・Phase 36）：確定ルールによる優先順位づけ =====
   var LOAN_TYPES=[
     { id:'jfc_startup', name:'日本政策金融公庫 新規開業資金', tags:['startup','rd'],
       speed:'fast', rate:'低い（年1〜2%台が目安）', collateral:'原則不要・保証人柔軟',
@@ -8068,15 +8068,15 @@
         +'<div style="font-size:12px;color:#1E3A66;margin-top:8px;line-height:1.7;"><b style="color:#27684A;">メリット：</b>'+esc(x.t.pros)+'</div>'
         +'<div style="font-size:12px;color:#1E3A66;margin-top:3px;line-height:1.7;"><b style="color:#A9403D;">注意点：</b>'+esc(x.t.cons)+'</div>'
         +(x.why.length?'<div style="font-size:10.5px;color:#94A2B6;margin-top:6px;">判定理由：'+x.why.map(esc).join('・')+'</div>':'')
-        +'<button class="ghost" style="font-size:12px;margin-top:8px;" onclick="loanToFunding(\''+custId+'\',\''+escJ(x.t.name)+'\','+amount+')">この融資を調達ロードマップに登録</button>'
+        +'<button class="ghost" style="font-size:12px;margin-top:8px;" onclick="loanToFunding(\''+custId+'\',\''+escJ(x.t.name)+'\','+amount+')">この制度を調達ロードマップに登録</button>'
       +'</div>';
     });
     h+='<div style="font-size:10.5px;color:#94A2B6;margin-top:4px;line-height:1.7;">※金利・要件は時期や金融機関により異なります。複数を併用する設計（例：公庫＋保証協会、補助金＋つなぎ）も有効です。具体的な申込条件は各金融機関・認定支援機関にご確認ください。</div>';
     box.innerHTML=h;
   }
   async function loanToFunding(custId, name, amount){
-    var row={ customer_id:custId, source_type:'融資', title:name,
-      amount:(amount>0?amount:0), status:'検討中', note:'融資ナビから登録', created_by:ME };
+    var row={ customer_id:custId, source_type:'デット', title:name,
+      amount:(amount>0?amount:0), status:'検討中', note:'デットナビから登録', created_by:ME };
     var res=await sb.from('funding_roadmap_items').insert(row);
     var box=$('ln-result');
     if(res.error){ alert('登録エラー：'+res.error.message); return; }
@@ -8297,7 +8297,7 @@
     if(btn){ btn.disabled=true; btn.textContent='作成中...（30秒ほどかかります）'; }
     if(msg){ msg.style.color='#94A2B6'; msg.textContent='財務データを読み込み、AIが計画書を作成しています...'; }
     try{
-      var goal=$('bp-goal')?$('bp-goal').value:'銀行融資の申込';
+      var goal=$('bp-goal')?$('bp-goal').value:'デット（銀行融資）の申込';
       var amount=$('bp-amount')?$('bp-amount').value:'';
       var use=$('bp-use')?$('bp-use').value.trim():'';
       var r=await Promise.all([
@@ -8340,15 +8340,22 @@
 
   // ---- 資金調達ロードマップ ----
   var FUND_STATUS=['検討中','準備中','申請中','審査中','承認','実行済','見送り'];
+  //  区分の言い方は「デット（借入・融資）」「エクイティ（出資）」で揃える。
+  //  制度の名前（制度融資・保証協会付融資など）は正式名なのでそのまま
   var FUND_GROUPS=[
-    ['公的融資',['日本政策金融公庫','制度融資（自治体・信用保証付）','商工中金']],
-    ['民間融資',['銀行融資（プロパー）','保証協会付融資','ビジネスローン','私募債']],
+    ['公的デット',['日本政策金融公庫','制度融資（自治体・信用保証付）','商工中金']],
+    ['民間デット',['銀行融資（プロパー）','保証協会付融資','ビジネスローン','私募債']],
     ['補助金・助成金',['補助金（ものづくり・IT導入・省力化等）','助成金（雇用・人材関係）']],
     ['クラウドファンディング',['購入型クラファン','寄付型クラファン','融資型クラファン（ソーシャルレンディング）','株式型クラファン']],
-    ['出資・投資',['VC・CVC出資','エンジェル投資','親族・役員借入']],
+    ['エクイティ',['VC・CVC出資','エンジェル投資','親族・役員借入']],
     ['資産活用',['ファクタリング','ABL（売掛・在庫担保融資）','セール＆リースバック','不動産担保ローン']],
     ['その他',['リスケジュール','M&A・事業譲渡による資金化','その他']]
   ];
+  //  前に登録した行は「融資」「出資」のまま残っている。表示だけ今の言い方に寄せる
+  function fundCatLabel(s){
+    var m={ '融資':'デット', '出資':'エクイティ', '投資':'エクイティ', '出資・投資':'エクイティ', '公的融資':'公的デット', '民間融資':'民間デット' };
+    s=String(s||''); return m[s]||s;
+  }
   function fundTypeOptions(){
     var h=''; FUND_GROUPS.forEach(function(g){ h+='<optgroup label="'+g[0]+'">'; g[1].forEach(function(t){ h+='<option>'+t+'</option>'; }); h+='</optgroup>'; });
     return h;
@@ -8364,7 +8371,7 @@
     if(!rows||!rows.length) return '<div style="font-size:12px;color:#94A2B6;">調達案件はまだ登録されていません。</div>';
     var h='<table class="ft"><tr><th>手段</th><th>案件名</th><th style="text-align:right;">金額(万円)</th><th>目標日</th><th>状態</th>'+(editable?'<th></th>':'')+'</tr>';
     rows.forEach(function(r){
-      h+='<tr><td style="color:#5A6981;">'+esc(r.source_type||'')+'</td>'
+      h+='<tr><td style="color:#5A6981;">'+esc(fundCatLabel(r.source_type))+'</td>'
         +'<td>'+esc(r.title)+(r.note?'<div style="font-size:10px;color:#94A2B6;">'+esc(r.note)+'</div>':'')+'</td>'
         +'<td style="text-align:right;font-weight:600;">'+Number(r.amount||0).toLocaleString('ja-JP')+'</td>'
         +'<td style="color:#5A6981;">'+esc(r.target_date||'-')+'</td>'
@@ -8385,7 +8392,7 @@
     act.forEach(function(f){
       h+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid #EDF1F6;font-size:12.5px;">'
         +fundBadge(f.status)
-        +'<span style="flex:1;color:#18202E;">'+esc(f.title)+'<span style="color:#94A2B6;font-size:11px;">（'+esc(f.source_type||'')+'）</span></span>'
+        +'<span style="flex:1;color:#18202E;">'+esc(f.title)+'<span style="color:#94A2B6;font-size:11px;">（'+esc(fundCatLabel(f.source_type))+'）</span></span>'
         +'<span style="font-weight:600;color:#1E3A66;white-space:nowrap;">'+Number(f.amount||0).toLocaleString('ja-JP')+'万円</span>'
         +(f.target_date?'<span style="font-size:11px;color:#94A2B6;white-space:nowrap;">'+esc(f.target_date)+'</span>':'')
       +'</div>';
@@ -8437,7 +8444,7 @@
     var items=res.data||[];
     // サマリー：総額＋区分別
     var byCat={}; var total=0;
-    items.forEach(function(it){ if(it.status==='見送り')return; var a=Number(it.amount_m)||0; total+=a; byCat[it.category||'その他']=(byCat[it.category||'その他']||0)+a; });
+    items.forEach(function(it){ if(it.status==='見送り')return; var a=Number(it.amount_m)||0; total+=a; var ck=fundCatLabel(it.category)||'その他'; byCat[ck]=(byCat[ck]||0)+a; });
     var sum=$('ex-fund-sum');
     if(sum){
       var cards='<div style="flex:1 1 160px;min-width:150px;background:#fff;border:1px solid #EDF1F6;border-radius:10px;padding:10px 13px;"><div style="font-size:10.5px;color:#94A2B6;">調達予定総額（見送り除く）</div><div style="font-size:19px;font-weight:700;color:#1E3A66;">'+total.toLocaleString()+'<span style="font-size:12px;font-weight:400;"> 百万円</span></div></div>';
@@ -8450,12 +8457,12 @@
     if(!items.length){ box.innerHTML='<div style="font-size:12px;color:#94A2B6;">まだ登録がありません。下のフォームから追加してください。</div>'; return; }
     var curPhase='';
     box.innerHTML=items.map(function(it){
-      var st=EX_CATSTYLE[it.category]||EX_CATSTYLE['その他'];
+      var st=EX_CATSTYLE[fundCatLabel(it.category)]||EX_CATSTYLE['その他'];
       var head='';
       if(it.phase!==curPhase){ curPhase=it.phase; head='<div style="font-size:12px;font-weight:700;color:var(--navy);border-left:3px solid #C39B3F;padding-left:8px;margin:14px 0 4px;">'+esc(it.phase)+'<span style="font-weight:400;color:#94A2B6;margin-left:8px;font-size:11px;">'+esc(it.period||'')+'</span></div>'; }
       var opts=EX_FUND_STATUSES.map(function(o){ return '<option'+(it.status===o?' selected':'')+'>'+o+'</option>'; }).join('');
       return head+'<div style="display:flex;gap:8px;align-items:center;padding:8px 2px;border-bottom:1px dashed var(--softline);font-size:12.5px;flex-wrap:wrap;">'
-        +'<span style="background:'+st[0]+';color:'+st[1]+';border-radius:99px;padding:2px 9px;font-size:10.5px;font-weight:700;">'+esc(it.category||'')+'</span>'
+        +'<span style="background:'+st[0]+';color:'+st[1]+';border-radius:99px;padding:2px 9px;font-size:10.5px;font-weight:700;">'+esc(fundCatLabel(it.category))+'</span>'
         +'<b style="color:var(--navy);min-width:120px;flex:2;">'+esc(it.method)+'</b>'
         +'<span style="flex:2;min-width:140px;color:#5A6981;font-size:11.5px;">'+esc(it.usage||'')+'</span>'
         +'<b style="color:#1E3A66;white-space:nowrap;">'+(it.amount_m!=null?(Number(it.amount_m).toLocaleString()+'百万円'):'—')+'</b>'
@@ -11817,7 +11824,7 @@
 
   // ===== 進捗ステージ：登録データから自動判定（手入力による誤りを防止） =====
   // 判定ルール（上から優先）：
-  //  5. 次の投資      … M&A案件、または投資・融資・M&Aの掲載/申請あり
+  //  5. 次の投資      … M&A案件、またはエクイティ・デット・M&Aの掲載/申請あり
   //  4. 生まれた余力  … 保険最適化で年間改善額を算出済み、または資金調達に「実行済」案件あり
   //  3. コスト削減    … AI診断の施策を顧客へ提案済み
   //  2. AI活用・自動化… AI自動化診断の実施、または顧客が自動化に関心登録
@@ -12142,7 +12149,7 @@
     ['cs-pay','calendar','支払予定','資金・銀行'],
     ['cs-cash','wallet','資金繰りシミュレーター','資金・銀行'],
     ['cs-fund','bank','資金調達ロードマップ','資金・銀行'],
-    ['cs-loan','yen','融資ナビ','資金・銀行'],
+    ['cs-loan','yen','デットナビ','資金・銀行'],
     ['cs-subsidy','gift','補助金ナビ','資金・銀行'],
     ['cs-bank','bank','銀行対応','資金・銀行'],
 
@@ -12598,12 +12605,12 @@
       +'<div id="cl-fund" style="margin-top:4px;">読み込み中...</div>'
       +'</div>'
       +'</div>'
-      +'<div class="ph" id="cs-market" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8h14l-3.5-3.5"/><path d="M21 16H7l3.5 3.5"/></svg>Tsugime -結- 投資・融資・M&A 掲載申請（運営審査制）</span></div>'
+      +'<div class="ph" id="cs-market" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8h14l-3.5-3.5"/><path d="M21 16H7l3.5 3.5"/></svg>Tsugime -結- エクイティ・デット・M&A 掲載申請（運営審査制）</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;line-height:1.7;">案件の掲載・ステータス変更は<b>運営が審査のうえ</b>行います。経営者の意向が固まった段階で、このフォームから運営に申請してください。承認されるとプラットフォームに掲載され、下の「掲載中の案件」で進捗を確認できます。</div>'
-      +'<div style="font-size:11px;color:#5A6981;background:var(--soft);border-radius:8px;padding:7px 10px;margin-bottom:8px;">立場の目安：<b>集めたい</b>＝資金調達／会社・事業の<b>譲渡（売り手）</b>、<b>出したい</b>＝出資・融資／会社・事業の<b>譲受（買い手）</b>。種別で「M&A」を選ぶと譲渡・譲受の案件になります。</div>'
+      +'<div style="font-size:11px;color:#5A6981;background:var(--soft);border-radius:8px;padding:7px 10px;margin-bottom:8px;">立場の目安：<b>集めたい</b>＝資金調達／会社・事業の<b>譲渡（売り手）</b>、<b>出したい</b>＝エクイティ（出資）・デット（融資）／会社・事業の<b>譲受（買い手）</b>。種別で「M&A」を選ぶと譲渡・譲受の案件になります。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
         +'<div><label class="fl">立場</label><select id="cmk-side" class="inp2"><option value="raise">集めたい／譲渡（売り手）</option><option value="provide">出したい／譲受（買い手）</option></select></div>'
-        +'<div><label class="fl">種別</label><select id="cmk-kind" class="inp2"><option value="loan">融資</option><option value="equity">出資</option><option value="mna">M&A</option></select></div>'
+        +'<div><label class="fl">種別</label><select id="cmk-kind" class="inp2"><option value="loan">デット（融資）</option><option value="equity">エクイティ（出資）</option><option value="mna">M&A</option></select></div>'
         +'<div><label class="fl">金額（万円）</label><input id="cmk-amount" type="number" class="inp2" placeholder="例 1000"></div>'
         +'<div style="flex:1;min-width:150px;"><label class="fl">業種（任意）</label><input id="cmk-industry" class="inp2" style="width:100%;" placeholder="例：金属加工業"></div>'
       +'</div>'
@@ -12652,8 +12659,8 @@
       +'<div class="ph" style="font-size:12.5px;margin-top:16px;display:flex;align-items:center;justify-content:space-between;">この顧客への診断・提案の履歴<span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadDiagHistory(\''+custId+'\')">↺ 更新</span></div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">提案・保存した診断結果の一覧です。対応が済んだものは削除して整理できます。</div>'
       +'<div id="diag-history" style="margin-top:4px;">読み込み中...</div>'
-      +'<div class="ph" id="cs-loan" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8.5 8 3.5 4.5L15.5 8"/><path d="M8.5 13.5h7M8.5 16.5h7M12 12.5V18"/></svg>融資ナビ（最適な融資の優先順位）</span></div>'
-      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">資金の性質を選ぶと、適した融資制度を優先順位つきで提示します。判定は制度の特徴に基づく確定ルール（AIではありません）。最終判断は金融機関・専門家にご確認ください。</div>'
+      +'<div class="ph" id="cs-loan" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8.5 8 3.5 4.5L15.5 8"/><path d="M8.5 13.5h7M8.5 16.5h7M12 12.5V18"/></svg>デットナビ（最適な借入の優先順位）</span></div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">資金の性質を選ぶと、適したデット（融資・借入）の制度を優先順位つきで提示します。判定は制度の特徴に基づく確定ルール（AIではありません）。最終判断は金融機関・専門家にご確認ください。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
         +'<div><label class="fl">資金使途</label><select id="ln-use" class="inp2"><option value="startup">創業・開業資金</option><option value="working">運転資金（仕入・人件費等）</option><option value="equip">設備投資</option><option value="bridge">補助金・入金までのつなぎ</option><option value="emergency">業績悪化・資金繰り改善</option><option value="ma">M&A・事業承継資金</option><option value="rd">研究開発・新規事業</option></select></div>'
         +'<div><label class="fl">希望額（万円）</label><input id="ln-amount" type="number" class="inp2" placeholder="例 1000"></div>'
@@ -12797,7 +12804,7 @@
       +'<div class="ph" id="cs-bp" style="font-size:13px;margin-top:18px;">事業計画書の作成（AI）</div>'
       +'<div style="font-size:11px;color:#94A2B6;margin-bottom:6px;">登録済みの財務データと資金繰りシミュレーターを自動で読み込み、金融機関提出用ドラフトを作成します（印刷／PDF可）。</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'
-        +'<div><label class="fl">目的</label><select id="bp-goal" class="inp2"><option>銀行融資の申込</option><option>公庫融資の申込</option><option>補助金申請の事業計画</option><option>経営改善計画</option><option>社内計画・中期経営計画</option></select></div>'
+        +'<div><label class="fl">目的</label><select id="bp-goal" class="inp2"><option>デット（銀行融資）の申込</option><option>公庫融資の申込</option><option>補助金申請の事業計画</option><option>経営改善計画</option><option>社内計画・中期経営計画</option></select></div>'
         +'<div><label class="fl">調達希望額（万円・任意）</label><input id="bp-amount" type="number" class="inp2" placeholder="例 1000"></div>'
         +'<div style="flex:1;min-width:200px;"><label class="fl">資金使途・補足（任意）</label><input id="bp-use" class="inp2" style="width:100%;" placeholder="例：設備更新500万・運転資金500万。新店舗出店を計画。"></div>'
         +'<button class="btn2" id="bp-run" onclick="runBizplan(\''+custId+'\')">計画書を作成</button>'
@@ -14719,7 +14726,7 @@
     if(aisecPortal()==='consultant'){
       return common
         +'【パートナーポータルの画面ガイド】'
-        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全5章。必修10レッスン＋発展のM&A講座8レッスン、第5章の理解度チェックで修了)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁/労働分配率=時給を上げたとき人件費÷粗利をどこに保ち利益を出し続けるか。業種別の目安と、時短・配置転換・値上げで要る大きさ。カルテの月次レポートの上からその会社の数字で開ける)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)。説明資料(経営者向け・パートナー候補向けなど)は継ナビくんの「サポート」タブから開き、右上の⛶で全画面。送りは ←→ か、紙を押す、スマホ・タブレットは指で左右にスワイプ。Escかもう一度⛶で解除、✕でプラットフォームに戻る／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内。その顧問先から解約のお申し出が出ているときは、カルテのいちばん上に赤い帯「⚠ 解約のご依頼が出ています」が出る(申し出の日・理由・伝えられたこと。手続きと最終月の請求は運営が行い、パートナーの画面から解約はできない。まず話を聞く。取り下げは経営者ご自身が「お支払い」→「ご契約について」から)。出口の設計はカルテ→企業価値・承継準備→出口の設計(企業価値診断の次)。経営者の左メニュー「出口の設計」と同じ表を見ているので、どちらで保存しても両方に出る。出口は8つ(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/資本提携(一部を譲る)/上場する(TOKYO PRO Market。プロ投資家向けで数値基準が無く、J-Adviserの伴走で2〜3年)/上場する(グロース市場など)/畳む(清算)/続けて、買い手になる)。資本提携・上場を選ぶと「知っておくこと」の箱が出る。上場の可否・費用はJ-Adviser・証券会社が決めるので経営者に断定しない。その下に、出口とは別の「株の持ち方・組織の検討」=持株会社(ホールディングス)/資産管理会社/分社化/種類株・属人的株式/従業員持株会/事業承継の信託の6つ。出口が決まっていなくても、検討中/専門家に相談中/実行済/見送りで記録でき、企業価値1億円超・株主の整理がまだ・万一の定めがまだ、などの合図が出る。相談先(税理士・司法書士・弁護士)も書いてある。税額は計算しない。これも経営者の画面と同じもの。プランの切替はカルテ→企業価値・承継準備→出口の設計の上段のボタンから運営に依頼(理由を書く小窓。空欄でも送れるので必ず書く。切替は運営が行い翌月の請求から。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。パートナーご自身が離れるときは運営サポートの「運営への問い合わせ」から(画面で契約を終える操作は無い)。カルテの「やること」の下に「今月の面談台本」(その会社の数字から見せる数字3つ・問い3つ・買い手の基盤へのつながり)と「継ナビくんのナビ」(土台→現金→余力→条件の順番と、済／次／あと)。ナビは12の道具(試算表→資金繰り→保険・固定費→支払予定→導入診断報告書→企業価値→出口の設計→買った後に備える→準備度→買いたい条件。AI診断・銀行提出は任意。売り手プランでは準備度・買いたい条件・買った後に備えるも任意)。各道具の見出しの下に「なぜ今・やると分かること・次の一手」の案内と「結果を継ナビくんと読む」ボタン。出口の設計(5つの出口・目標の年・見る数字のいま/目標/差・持株会社の合図。上部にいまの顧問プランとM&Aの優遇、「◯◯プラン への切替を運営に依頼」)と買った後に備える(6分類24項目・自社では・学ぶ・未着手/学んだ/準備した)はカルテの企業価値・承継準備の中。伴走の1年は契約の翌月1日を起点に暦の月で3か月ずつ、土台が整わなければ次の四半期も並行、四半期の終わりに検証)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（投資・融資・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し、パネルは7タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と担当顧客の面談・期日・支払予定が1枚に並ぶカレンダー。月/週/一覧。月・週は横に払う(スワイプ)と前後の月・週へ。操作列(月/週/一覧・‹ ›・今日・＋予定)と週の曜日・終日の帯は、下へ送っても上に残る。スマホの週表示は7日が幅に収まり、予定は色で塗って題名を折り返す。色は青=自分の予定・金=面談・橙=課題の期日・赤=支払・緑=資金調達・紫=補助金の締切、Googleから取り込んだ予定はGoogle側のカレンダーの色。暦の下に「色の見分け」が並ぶ。予定を押すと小窓が開いて全部読める。入力は金色の「＋ 予定」で別の窓が開く(スマホでもキーボードに隠れない)。✕や「やめる」は入力の窓だけ閉じ、継ナビくんは閉じない。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。担当顧客との面談もGoogleに出るが、Google側で面談を消してもTsuguAiの面談は消えない(顧客との約束のため。消すのは顧客管理から)。Googleの予定は本人だけが見え、顧客にも運営にも見えない。私用を取り込みたくないときはアカウントの欄の「このアカウントの予定をこの画面に取り込む」のチェックを外す。Googleの「家族」「誕生日」「共有」「日本の祝日」なども、アカウントの下の「取り込むカレンダー」でチェックを入れれば入る(最初はメインだけ)。個人と会社などアカウントは2つ以上つなげ(「もう1つのアカウントをつなぐ」)、取り込みは全部から、この画面で入れた予定と面談は「送り先」に選んだ1つにだけ出る。「Googleでつなぐ」を押すとGoogleの画面に移り、許可が済むと自動でこの画面に戻って同期が始まる。会社のGoogle Workspaceアカウントで「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていない(Google管理コンソール→アプリ→Google Workspace→カレンダーを有効にする)。つなぎ直しても直らず、「送り先にする」も出ない。個人アカウントでつなぐ)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ。法人に所属している方には「エンタープライズ 操作説明書」も並ぶ)。'
+        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全5章。必修10レッスン＋発展のM&A講座8レッスン、第5章の理解度チェックで修了)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁/労働分配率=時給を上げたとき人件費÷粗利をどこに保ち利益を出し続けるか。業種別の目安と、時短・配置転換・値上げで要る大きさ。カルテの月次レポートの上からその会社の数字で開ける)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)。説明資料(経営者向け・パートナー候補向けなど)は継ナビくんの「サポート」タブから開き、右上の⛶で全画面。送りは ←→ か、紙を押す、スマホ・タブレットは指で左右にスワイプ。Escかもう一度⛶で解除、✕でプラットフォームに戻る／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内。その顧問先から解約のお申し出が出ているときは、カルテのいちばん上に赤い帯「⚠ 解約のご依頼が出ています」が出る(申し出の日・理由・伝えられたこと。手続きと最終月の請求は運営が行い、パートナーの画面から解約はできない。まず話を聞く。取り下げは経営者ご自身が「お支払い」→「ご契約について」から)。出口の設計はカルテ→企業価値・承継準備→出口の設計(企業価値診断の次)。経営者の左メニュー「出口の設計」と同じ表を見ているので、どちらで保存しても両方に出る。出口は8つ(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/資本提携(一部を譲る)/上場する(TOKYO PRO Market。プロ投資家向けで数値基準が無く、J-Adviserの伴走で2〜3年)/上場する(グロース市場など)/畳む(清算)/続けて、買い手になる)。資本提携・上場を選ぶと「知っておくこと」の箱が出る。上場の可否・費用はJ-Adviser・証券会社が決めるので経営者に断定しない。その下に、出口とは別の「株の持ち方・組織の検討」=持株会社(ホールディングス)/資産管理会社/分社化/種類株・属人的株式/従業員持株会/事業承継の信託の6つ。出口が決まっていなくても、検討中/専門家に相談中/実行済/見送りで記録でき、企業価値1億円超・株主の整理がまだ・万一の定めがまだ、などの合図が出る。相談先(税理士・司法書士・弁護士)も書いてある。税額は計算しない。これも経営者の画面と同じもの。プランの切替はカルテ→企業価値・承継準備→出口の設計の上段のボタンから運営に依頼(理由を書く小窓。空欄でも送れるので必ず書く。切替は運営が行い翌月の請求から。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。パートナーご自身が離れるときは運営サポートの「運営への問い合わせ」から(画面で契約を終える操作は無い)。カルテの「やること」の下に「今月の面談台本」(その会社の数字から見せる数字3つ・問い3つ・買い手の基盤へのつながり)と「継ナビくんのナビ」(土台→現金→余力→条件の順番と、済／次／あと)。ナビは12の道具(試算表→資金繰り→保険・固定費→支払予定→導入診断報告書→企業価値→出口の設計→買った後に備える→準備度→買いたい条件。AI診断・銀行提出は任意。売り手プランでは準備度・買いたい条件・買った後に備えるも任意)。各道具の見出しの下に「なぜ今・やると分かること・次の一手」の案内と「結果を継ナビくんと読む」ボタン。出口の設計(5つの出口・目標の年・見る数字のいま/目標/差・持株会社の合図。上部にいまの顧問プランとM&Aの優遇、「◯◯プラン への切替を運営に依頼」)と買った後に備える(6分類24項目・自社では・学ぶ・未着手/学んだ/準備した)はカルテの企業価値・承継準備の中。伴走の1年は契約の翌月1日を起点に暦の月で3か月ずつ、土台が整わなければ次の四半期も並行、四半期の終わりに検証)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（エクイティ・デット・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し、パネルは7タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と担当顧客の面談・期日・支払予定が1枚に並ぶカレンダー。月/週/一覧。月・週は横に払う(スワイプ)と前後の月・週へ。操作列(月/週/一覧・‹ ›・今日・＋予定)と週の曜日・終日の帯は、下へ送っても上に残る。スマホの週表示は7日が幅に収まり、予定は色で塗って題名を折り返す。色は青=自分の予定・金=面談・橙=課題の期日・赤=支払・緑=資金調達・紫=補助金の締切、Googleから取り込んだ予定はGoogle側のカレンダーの色。暦の下に「色の見分け」が並ぶ。予定を押すと小窓が開いて全部読める。入力は金色の「＋ 予定」で別の窓が開く(スマホでもキーボードに隠れない)。✕や「やめる」は入力の窓だけ閉じ、継ナビくんは閉じない。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。担当顧客との面談もGoogleに出るが、Google側で面談を消してもTsuguAiの面談は消えない(顧客との約束のため。消すのは顧客管理から)。Googleの予定は本人だけが見え、顧客にも運営にも見えない。私用を取り込みたくないときはアカウントの欄の「このアカウントの予定をこの画面に取り込む」のチェックを外す。Googleの「家族」「誕生日」「共有」「日本の祝日」なども、アカウントの下の「取り込むカレンダー」でチェックを入れれば入る(最初はメインだけ)。個人と会社などアカウントは2つ以上つなげ(「もう1つのアカウントをつなぐ」)、取り込みは全部から、この画面で入れた予定と面談は「送り先」に選んだ1つにだけ出る。「Googleでつなぐ」を押すとGoogleの画面に移り、許可が済むと自動でこの画面に戻って同期が始まる。会社のGoogle Workspaceアカウントで「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていない(Google管理コンソール→アプリ→Google Workspace→カレンダーを有効にする)。つなぎ直しても直らず、「送り先にする」も出ない。個人アカウントでつなぐ)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ。法人に所属している方には「エンタープライズ 操作説明書」も並ぶ)。'
         +'操作説明書は右下パネルの「サポート」タブから開けます。毎朝の「今日の一手」とお知らせは右下ボタンのバッジに届きます。';
     }
     //  運営がここに落ちていました。運営コンソールを開いている方に
@@ -14749,7 +14756,7 @@
     return common
       +'【経営者ダッシュボードの画面ガイド】'
       +'【数字の扱い・必ず守る】経営者に試算表など月次の数字の入力を求めない。経営者の画面に入力欄は無く、担当パートナーが入力する。試算表が手元にあるなら「メッセージで担当パートナーへ送る」と案内する。ご本人が入れるのは「いまの手元資金」だけ。画面の名前は次の一覧の名前だけを使い、それ以外の画面名を作らない。'
-      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)。その下に「はじめの90日（土台づくり）」＝契約の翌月から3か月は成果を急がず土台を整える期間で、1か月目「数字が見える」・2か月目「お金の流れが分かる」・3か月目「1年の道筋が決まる」の3つの節目(資料をお預かりしてからの目安。3か月で整わなければ次の四半期も並行して続ける。契約から翌月までは準備期間)と、「伴走の1年」＝第1 土台づくり／第2 現金を増やす／第3 買い手の余力を測る／第4 次の1社の条件を決める、の四半期の帯(暦の月で3か月ずつ。いまどこにいるか・四半期の終わりに何を振り返るかが出る)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=画面のいちばん上に「ご契約について」(いまの顧問プラン／プランを変えたいとき=「✉️ 担当パートナーに伝える」で継ナビくんのメッセージが開く。切替は運営が行い翌月の請求から。依頼中は「◯◯プラン へ切替を依頼中」と出る／ご利用の終了について=「解約を依頼する」。理由と伝えたいことは任意、押してすぐ使えなくなることはなく「取り下げる」で戻せる。申し出た月の末日で終了・日割りなし・初期導入費と利用済みの月の顧問料は返金なし。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。その下に顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=気になる業務を選んで担当パートナーに送ると、AIで診断した提案が「担当パートナーからの提案」に返る(その場で金額は出ない)／出口の設計=8つの出口(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/資本提携(一部を譲る)/上場する(TOKYO PRO Market。プロ投資家向けで数値基準が無く、J-Adviserの伴走で2〜3年)/上場する(グロース市場など一般の市場)/畳む(清算)/続けて、買い手になる)から選び。資本提携・上場を選ぶと「知っておくこと」の箱が出る。上場の可否・費用はJ-Adviser・証券会社が決めるので断定しない、目標の年と、その出口で見る数字のいま・目標・差。いまは企業価値診断と試算表から自動。この出口で整えること(承継チェックの残り)も出る。親族・従業員へ継ぐ出口では持株会社の検討の合図(税額は計算しない)。出口の設計の下に、出口とは別の「株の持ち方・組織の検討」=持株会社(ホールディングス)/資産管理会社/分社化(会社分割・子会社化)/種類株・属人的株式/従業員持株会/事業承継の信託の6つ。出口が決まっていなくても、それぞれを検討中/専門家に相談中/実行済/見送りで記録でき、企業価値1億円超・株主の整理がまだ・万一の定めがまだ、などの合図が出る。相談先(税理士・司法書士・弁護士)も書いてある。税額は計算しない。画面の上部にいまの顧問プラン(買い手プラン(成長)45,000円/売り手プラン(譲渡準備)30,000円・税別・月額)とM&Aの優遇(顧問契約1年以上でFA報酬に最低報酬なし・継続年数×10%、最大50%の割引)。プランの切替は担当パートナーに申し出て運営が切り替え、翌月の請求から／買った後に備える(買い手プランのみ)=会社を買ったあとに待ち受けること24項目(事務・法務/お金・銀行/人・責任者/取引先・対外/業界特有/統合の進め方)。待ち受けること・いつ・いま準備できること。買いたい条件・承継チェック・試算表・企業価値診断から「自社では」が付く。想定する形(株式譲渡/事業譲渡)・責任者の想定・対象の業種を選ぶ。項目ごとに「学ぶ(継ナビくんに聞く)」と未着手/学んだ/準備した。「買った後の1年を、継ナビくんと想像する」。成約後はPMIタスクへ／買い手になる=上に「柱」の絵(買い手プランのみ。本業の1本＋譲り受けた会社。ダッシュボードの帯にも同じ本数)。「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ。同じ画面の下半分が Tsugime -結-（投資・融資・M&A）=マッチング掲載(左メニューには無い。「案件を見る」の文字を押すか、下にたどる)。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と、面談・課題の期日・支払予定が自動で並ぶカレンダー。月/週/一覧。月・週は横に払う(スワイプ)と前後の月・週へ。操作列(月/週/一覧・‹ ›・今日・＋予定)と週の曜日・終日の帯は、下へ送っても上に残る。スマホの週表示は7日が幅に収まり、予定は色で塗って題名を折り返す。色は青=自分の予定・金=面談・橙=課題の期日・赤=支払・緑=資金調達・紫=補助金の締切、Googleから取り込んだ予定はGoogle側のカレンダーの色。暦の下に「色の見分け」が並ぶ。予定を押すと小窓が開いて全部読める。入力は金色の「＋ 予定」で別の窓が開く(スマホでもキーボードに隠れない)。✕や「やめる」は入力の窓だけ閉じ、継ナビくんは閉じない。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。Googleの予定は本人だけが見え、担当パートナーにも運営にも見えない。私用を入れたくないときはアカウントの欄の「このアカウントの予定をこの画面に取り込む」のチェックを外すと送るだけになる。Googleの「家族」「誕生日」「共有」「日本の祝日」なども、アカウントの下の「取り込むカレンダー」でチェックを入れれば入る(最初はメインだけ)。個人と会社などアカウントは2つ以上つなげ(「もう1つのアカウントをつなぐ」)、取り込みは全部から、この画面で入れた予定は「送り先」に選んだ1つにだけ出る。「Googleでつなぐ」を押すとGoogleの画面に移り、許可が済むと自動でこの画面に戻って同期が始まる。会社のGoogle Workspaceアカウントで「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていない(Google管理コンソール→アプリ→Google Workspace→カレンダーを有効にする)。つなぎ直しても直らず、「送り先にする」も出ない。個人アカウントでつなぐ。解除はいつでもできる)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ(先頭に毎朝の「今日の一手」。開いても既読にならず「すべて既読」で消す)／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
+      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)。その下に「はじめの90日（土台づくり）」＝契約の翌月から3か月は成果を急がず土台を整える期間で、1か月目「数字が見える」・2か月目「お金の流れが分かる」・3か月目「1年の道筋が決まる」の3つの節目(資料をお預かりしてからの目安。3か月で整わなければ次の四半期も並行して続ける。契約から翌月までは準備期間)と、「伴走の1年」＝第1 土台づくり／第2 現金を増やす／第3 買い手の余力を測る／第4 次の1社の条件を決める、の四半期の帯(暦の月で3か月ずつ。いまどこにいるか・四半期の終わりに何を振り返るかが出る)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=画面のいちばん上に「ご契約について」(いまの顧問プラン／プランを変えたいとき=「✉️ 担当パートナーに伝える」で継ナビくんのメッセージが開く。切替は運営が行い翌月の請求から。依頼中は「◯◯プラン へ切替を依頼中」と出る／ご利用の終了について=「解約を依頼する」。理由と伝えたいことは任意、押してすぐ使えなくなることはなく「取り下げる」で戻せる。申し出た月の末日で終了・日割りなし・初期導入費と利用済みの月の顧問料は返金なし。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。その下に顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=気になる業務を選んで担当パートナーに送ると、AIで診断した提案が「担当パートナーからの提案」に返る(その場で金額は出ない)／出口の設計=8つの出口(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/資本提携(一部を譲る)/上場する(TOKYO PRO Market。プロ投資家向けで数値基準が無く、J-Adviserの伴走で2〜3年)/上場する(グロース市場など一般の市場)/畳む(清算)/続けて、買い手になる)から選び。資本提携・上場を選ぶと「知っておくこと」の箱が出る。上場の可否・費用はJ-Adviser・証券会社が決めるので断定しない、目標の年と、その出口で見る数字のいま・目標・差。いまは企業価値診断と試算表から自動。この出口で整えること(承継チェックの残り)も出る。親族・従業員へ継ぐ出口では持株会社の検討の合図(税額は計算しない)。出口の設計の下に、出口とは別の「株の持ち方・組織の検討」=持株会社(ホールディングス)/資産管理会社/分社化(会社分割・子会社化)/種類株・属人的株式/従業員持株会/事業承継の信託の6つ。出口が決まっていなくても、それぞれを検討中/専門家に相談中/実行済/見送りで記録でき、企業価値1億円超・株主の整理がまだ・万一の定めがまだ、などの合図が出る。相談先(税理士・司法書士・弁護士)も書いてある。税額は計算しない。画面の上部にいまの顧問プラン(買い手プラン(成長)45,000円/売り手プラン(譲渡準備)30,000円・税別・月額)とM&Aの優遇(顧問契約1年以上でFA報酬に最低報酬なし・継続年数×10%、最大50%の割引)。プランの切替は担当パートナーに申し出て運営が切り替え、翌月の請求から／買った後に備える(買い手プランのみ)=会社を買ったあとに待ち受けること24項目(事務・法務/お金・銀行/人・責任者/取引先・対外/業界特有/統合の進め方)。待ち受けること・いつ・いま準備できること。買いたい条件・承継チェック・試算表・企業価値診断から「自社では」が付く。想定する形(株式譲渡/事業譲渡)・責任者の想定・対象の業種を選ぶ。項目ごとに「学ぶ(継ナビくんに聞く)」と未着手/学んだ/準備した。「買った後の1年を、継ナビくんと想像する」。成約後はPMIタスクへ／買い手になる=上に「柱」の絵(買い手プランのみ。本業の1本＋譲り受けた会社。ダッシュボードの帯にも同じ本数)。「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ。同じ画面の下半分が Tsugime -結-（エクイティ・デット・M&A）=マッチング掲載(左メニューには無い。「案件を見る」の文字を押すか、下にたどる)。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と、面談・課題の期日・支払予定が自動で並ぶカレンダー。月/週/一覧。月・週は横に払う(スワイプ)と前後の月・週へ。操作列(月/週/一覧・‹ ›・今日・＋予定)と週の曜日・終日の帯は、下へ送っても上に残る。スマホの週表示は7日が幅に収まり、予定は色で塗って題名を折り返す。色は青=自分の予定・金=面談・橙=課題の期日・赤=支払・緑=資金調達・紫=補助金の締切、Googleから取り込んだ予定はGoogle側のカレンダーの色。暦の下に「色の見分け」が並ぶ。予定を押すと小窓が開いて全部読める。入力は金色の「＋ 予定」で別の窓が開く(スマホでもキーボードに隠れない)。✕や「やめる」は入力の窓だけ閉じ、継ナビくんは閉じない。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。Googleの予定は本人だけが見え、担当パートナーにも運営にも見えない。私用を入れたくないときはアカウントの欄の「このアカウントの予定をこの画面に取り込む」のチェックを外すと送るだけになる。Googleの「家族」「誕生日」「共有」「日本の祝日」なども、アカウントの下の「取り込むカレンダー」でチェックを入れれば入る(最初はメインだけ)。個人と会社などアカウントは2つ以上つなげ(「もう1つのアカウントをつなぐ」)、取り込みは全部から、この画面で入れた予定は「送り先」に選んだ1つにだけ出る。「Googleでつなぐ」を押すとGoogleの画面に移り、許可が済むと自動でこの画面に戻って同期が始まる。会社のGoogle Workspaceアカウントで「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていない(Google管理コンソール→アプリ→Google Workspace→カレンダーを有効にする)。つなぎ直しても直らず、「送り先にする」も出ない。個人アカウントでつなぐ。解除はいつでもできる)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ(先頭に毎朝の「今日の一手」。開いても既読にならず「すべて既読」で消す)／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
@@ -14887,7 +14894,7 @@
     customer:[
       {t:'💰 資金繰り・お金', subs:[
         ['手元資金が足りるか不安','資金繰りが不安です。現在の手元資金は約◯◯万円、毎月の固定費は約◯◯万円です。今後◯か月の見通しの立て方と、今すぐ打てる手を整理してください。'],
-        ['借入・融資を検討したい','◯◯（設備投資／運転資金）のために◯◯万円の借入を検討しています。準備すべき資料と、金融機関への伝え方を整理してください。'],
+        ['デット（借入・融資）を検討したい','◯◯（設備投資／運転資金）のために◯◯万円の借入を検討しています。準備すべき資料と、金融機関への伝え方を整理してください。'],
         ['コストを下げたい','経費を見直したいです。特に大きいのは◯◯費（月あたり約◯◯万円）です。効果が出やすい削減の観点を、優先順位つきで教えてください。']]},
       {t:'📈 売上・値上げ', subs:[
         ['値上げの進め方','値上げを検討しています。商品・サービスは◯◯、現在の価格は◯◯円、主なお客様は◯◯です。値上げ幅の考え方と、お客様への伝え方を整理してください。'],
@@ -16154,7 +16161,7 @@
   // Sonnet に落とすのは、判断を含まない短い事務作業（文面づくり・要約・言い換え等）だけ。
   // 会話が深まっている（往復が続いている）ときは、短い一言でも文脈を踏まえた判断が要るため Opus を維持する。
   var SEC_CLERICAL=/(メール|文面|挨拶|お礼|案内文|議事録|要約|まとめて|言い換え|書き直|添削|誤字|翻訳|英訳|和訳|タイトル|件名|箇条書き)/;
-  var SEC_JUDGEMENT=/(べき|どう|なぜ|理由|判断|方針|戦略|計画|比較|検討|リスク|課題|改善|選択肢|進め方|優先|いくら|試算|見通し|相続|承継|M&A|融資|資金繰り|節税|解雇|値上げ)/;
+  var SEC_JUDGEMENT=/(べき|どう|なぜ|理由|判断|方針|戦略|計画|比較|検討|リスク|課題|改善|選択肢|進め方|優先|いくら|試算|見通し|相続|承継|M&A|融資|デット|エクイティ|資金繰り|節税|解雇|値上げ)/;
   function pickModel(text, turns){
     var t=text||'';
     var deep=(turns||0)>=4;                                   // 往復が続いている＝文脈込みの相談
@@ -18297,10 +18304,10 @@
     if(res.error){ if(msg){ msg.style.color='#A9403D'; msg.textContent='共有エラー：'+res.error.message; } return; }
     if(msg){ msg.style.color='#27684A'; msg.textContent=rows.length+'件をパートナーに共有しました。'; }
   }
-  // ===== Tsugime -結-（投資・融資・M&A）（顧客間マッチング・Phase41） =====
+  // ===== Tsugime -結-（エクイティ・デット・M&A）（顧客間マッチング・Phase41） =====
   var MK_FILTER='all', MKB_FILTER='open', MK_CACHE=[], MKB_CACHE=[];
   function mkSideLabel(s, kind){ if(kind==='mna') return s==='raise'?'譲渡（売り手）':'譲受（買い手）'; return s==='raise'?'資金を集めたい':'資金を出したい'; }
-  function mkKindLabel(k){ return k==='mna'?'M&A':(k==='equity'?'出資':'融資'); }
+  function mkKindLabel(k){ return k==='mna'?'M&A':(k==='equity'?'エクイティ':'デット'); }
   function mkStatusLabel(s){ return s==='matched'?'マッチング成立':(s==='closed'?'終了':'公開中'); }
   function mkAmount(a){ return (a===null||a===undefined||a==='')?'金額応相談':(Number(a).toLocaleString('ja-JP')+'万円'); }
   function setMkFilter(f,el){ MK_FILTER=f; var b=$('mk-filterbar'); if(b){Array.prototype.forEach.call(b.querySelectorAll('.sbtn'),function(x){x.classList.remove('on');});} if(el)el.classList.add('on'); renderMarket(); }
@@ -18849,7 +18856,7 @@
       + card('2','初期トラクション','パートナー10名・顧問10社','sec-fde','#2C5DA8', s2done, cur===2,
           bar('顧問先', custs, 10, '社') + bar('パートナー', fdes, 10, '名') + bar('MRR（概算）', Math.round(mrr), 50, '万円'))
       + ar
-      + card('3','シード調達','FUNDINNO・VC 5,000万〜','sec-exec','#C39B3F', s3done, cur===3,
+      + card('3','シード調達','エクイティ（FUNDINNO・VC）5,000万〜','sec-exec','#C39B3F', s3done, cur===3,
           bar('実行済', Math.round(fundDoneM), 50, '百万円') + (fundPlanM?'<div style="font-size:10px;color:#94A2B6;margin-top:4px;text-align:left;">計画総額 '+Math.round(fundPlanM).toLocaleString()+'百万円</div>':''))
       + ar
       + card('4','組織化・スケール','COO/CTO採用・顧客100社','sec-kpi','#2C5DA8', s4done, cur===4,
@@ -22618,9 +22625,9 @@
       q:'銀行融資“以外”の資金調達や成長の選択肢を、いくつ挙げられますか？',
       sub:'出資・私募・M&Aによる成長…。選択肢を知らないことは、それ自体が機会損失かもしれません。',
       hint:'知識マウントにならないように。「選択肢を知ったうえで銀行融資を選ぶのと、それしか知らないのは違いますよね」と価値づけ。',
-      sol:'Tsugime -結-（投資・融資・M&A）',
+      sol:'Tsugime -結-（エクイティ・デット・M&A）',
       solDesc:'「資金を集めたい」「事業を譲りたい・譲り受けたい」を掲載し、関心のある相手とつながる場を提供。実行の場面では関連法令にもとづき有資格者が関与します。',
-      feat:'Tsugime -結-（投資・融資・M&A）' }
+      feat:'Tsugime -結-（エクイティ・デット・M&A）' }
   ];
   var SALES_I=0, SALES_ANS=[];
   function salesIntroHtml(){
@@ -22809,7 +22816,7 @@
       +'<div style="font-family:\'Hiragino Mincho ProN\',\'Yu Mincho\',\'Noto Serif CJK JP\',serif;font-size:14.5px;font-weight:700;line-height:1.65;color:#fff;margin-top:4px;">もし——<b style="color:#cfa860;">☑</b> のついた問題を、<span style="color:#cfa860;">一つのプラットフォーム</span>で、<br>専属の経営パートナーと解決していけるとしたら、いかがですか？</div>'
       +'<div style="font-size:9.5px;color:#d6e2f4;line-height:1.6;margin-top:4px;"><b style="color:#fff;">TsuguAi -継-</b> は、AIと認定パートナーが月額5万円で経営に伴走する、中小企業のための経営プラットフォーム。8つの問題すべてに、対応する仕組みをご用意しています。</div>'
       +'<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:6px;">'
-        +['財務・資金繰りの見える化','企業価値のかんたん診断','AI業務自動化','保険・固定費の最適化','コメント付き月次レポート','M&A・承継、投資・融資マッチング'].map(function(c){
+        +['財務・資金繰りの見える化','企業価値のかんたん診断','AI業務自動化','保険・固定費の最適化','コメント付き月次レポート','M&A・承継、エクイティ・デットのマッチング'].map(function(c){
             return '<span style="border:1px solid rgba(169,199,238,.55);color:#e8f0fa;border-radius:99px;font-size:8.5px;font-weight:700;padding:3px 10px;"><span style="color:#cfa860;">✓</span> '+c+'</span>';
           }).join('')
       +'</div>'
