@@ -509,6 +509,25 @@
   .cpk-r .k{flex:0 0 76px;color:var(--muted);white-space:nowrap;}
   .cpk-r .v{flex:1;min-width:0;color:var(--ink);word-break:break-word;white-space:pre-wrap;}
   body.dark .cpk{background:var(--card);}
+  /* 予定の入力の窓。暦の中に埋め込むと、上に貼り付いた操作列と、下から
+     上がってくるスマホの文字入力の板に挟まれて、入力欄がほとんど見えない。
+     別の窓にして、いちばん上に寄せる（真ん中だと文字入力の板に隠れる）。
+     窓の外側（.cfm-bg）が縦にスクロールするので、板が出ていても
+     「保存」まで送って届く */
+  .cfm-bg{position:fixed;inset:0;background:rgba(8,14,26,.5);z-index:82;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    display:flex;align-items:flex-start;justify-content:center;padding:4vh 14px 40px;}
+  .cfm{width:min(460px,100%);background:var(--card);border-radius:15px;box-shadow:0 24px 70px rgba(6,12,24,.45);
+    padding:16px 17px 18px;animation:mpop .18s ease;}
+  .cfm .inp2{font-size:14px;padding:10px 12px;}
+  .cfm-lbl{font-size:11.5px;color:var(--muted);margin:9px 0 4px;}
+  body.dark .cfm{background:var(--card);}
+  @media(max-width:760px){
+    .cfm-bg{padding:8px 8px 60px;}
+    .cfm{padding:14px 14px 16px;}
+    /* 16px 未満の入力欄に触れると iPhone が画面を拡大し、そのまま横に
+       揺れる。触れる欄はぜんぶ 16px にして、拡大そのものを起こさせない */
+    input,select,textarea{font-size:16px!important;}
+  }
   /* 本人のしるし。写真・継ナビくん・頭文字のいずれかが入る */
   .me-row{display:flex;align-items:center;gap:9px;margin-bottom:9px;min-width:0;}
   .me-row .sb-email{margin-bottom:0;flex:1;min-width:0;}
@@ -1398,7 +1417,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260917-06';
+  var APP_BUILD='20260917-07';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -17218,8 +17237,7 @@
     +'</div>';
     if(wk) h+=wk.head;   // 曜日の見出し（週表示だけ）
     h+='</div>';   // .cal-stick
-    //  入力の窓は貼り付けない（開くと背が高く、予定が見えなくなる）
-    h+='<div id="cal-form"></div>';
+    //  入力の窓はここには置かない。別の窓（calOpenForm → .cfm-bg）で開く
 
     if(CAL_ROWS.err){
       h+='<div style="font-size:11.5px;color:#A9403D;line-height:1.7;margin-bottom:8px;">予定を読み込めませんでした：'+esc(CAL_ROWS.err)
@@ -17307,7 +17325,8 @@
       }
     }catch(e){}
     calFeedRow();   // この中で、つないでいれば黙って同期する（gcalAuto）
-    if(CAL_EDIT!==null) calOpenForm(CAL_EDIT, CAL_EDIT_WHEN);
+    //  入力の窓は暦の外（別の窓）にあるので、描き直しても消えない。
+    //  ここで開き直すと、打ちかけの文字が消えてしまう
   }
   function calPick(key){ CAL_PICK=key; knvRenderCal(); }
   //  週表示で空いているところを押したら、その日のその時刻で新規作成を開く。
@@ -17320,8 +17339,8 @@
       hh=Math.max(0, Math.min(23, Math.floor(lo + (ev.clientY-box.top)/WK_PX)));
     }catch(e){}
     CAL_PICK=key;
-    CAL_EDIT=''; CAL_EDIT_WHEN=key+'T'+('0'+hh).slice(-2)+':00';
     knvRenderCal();
+    calOpenForm('', key+'T'+('0'+hh).slice(-2)+':00');
   }
 
   // ===== 予定の中身を開く小窓 =====
@@ -17660,9 +17679,12 @@
   }
   //  whenLocal（'YYYY-MM-DDTHH:MM'）を渡すと、その日時が入った状態で開く。
   //  日付を打ち直さずに済むよう、日付の見出しや週の空きから呼ぶ。
+  //  予定の入力は別の窓（.cfm-bg）で開く。暦の中に埋め込んでいたときは、
+  //  上に貼り付いた操作列と、スマホの文字入力の板に挟まれて見えなかった
   function calOpenForm(id, whenLocal){
     CAL_EDIT=id||''; CAL_EDIT_WHEN=whenLocal||null;
-    var host=$('cal-form'); if(!host) return;
+    calCloseForm(true);   // 開きかけの窓があれば片付ける（印は残す）
+    calPeekClose();
     var row=null;
     if(id) (CAL_ROWS&&CAL_ROWS.rows||[]).forEach(function(x){ if(x.kind==='own'&&x.id===id) row=x; });
     function iso2local(v){
@@ -17672,34 +17694,60 @@
       return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());
     }
     var def=row?iso2local(row.when):(whenLocal||iso2local(new Date(Date.now()+3600000).toISOString()));
-    host.innerHTML='<div style="border:1px solid var(--gold);background:rgba(195,155,63,.06);border-radius:11px;padding:12px 13px;margin-bottom:12px;">'
-      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">'+(row?'予定を編集':'予定を追加')+'</div>'
-      +'<input id="cal-t" class="inp2" placeholder="予定の名前（例：銀行と面談）" value="'+escA(row?row.title:'')+'" style="width:100%;margin-bottom:7px;">'
-      +'<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:7px;">'
+    var el=document.createElement('div');
+    el.className='cfm-bg'; el.id='cal-fm';
+    //  外側を押したら閉じる。ただし打ちかけがあれば確かめる
+    el.onclick=function(ev){ if(ev.target===el) calFormDismiss(); };
+    el.innerHTML='<div class="cfm" role="dialog" aria-label="'+(row?'予定を編集':'予定を追加')+'">'
+      +'<div class="cpk-h" style="margin-bottom:4px;">'
+        +'<div class="cpk-t">'+(row?'予定を編集':'予定を追加')+'</div>'
+        +'<button class="cpk-x" onclick="calFormDismiss()" aria-label="閉じる">✕</button>'
+      +'</div>'
+      +'<div class="cfm-lbl">予定の名前</div>'
+      +'<input id="cal-t" class="inp2" placeholder="例：銀行と面談" value="'+escA(row?row.title:'')+'" style="width:100%;">'
+      +'<div class="cfm-lbl">日時</div>'
+      +'<div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center;">'
         +'<input id="cal-s" class="inp2" type="datetime-local" value="'+escA(def)+'" style="flex:1;min-width:190px;">'
-        +'<label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);">'
+        +'<label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);white-space:nowrap;">'
           +'<input id="cal-a" type="checkbox"'+(row&&row.allDay?' checked':'')+' onchange="calAllDayToggle()">終日</label>'
       +'</div>'
       //  終わりの時刻。空でよい。日付は始まりと同じ日として扱い、
       //  始まりより前になったら翌日にまたぐものとみなす（22:00〜01:00 など）。
-      +'<div id="cal-end-row" style="display:'+(row&&row.allDay?'none':'flex')+';gap:7px;align-items:center;margin-bottom:7px;">'
-        +'<span style="font-size:12px;color:var(--muted);white-space:nowrap;">終わり</span>'
-        +'<input id="cal-e" class="inp2" type="time" value="'+escA(row?hm2(row.ends):'')+'" style="flex:0 0 auto;">'
-        +'<span style="font-size:11px;color:var(--muted);">空欄でも構いません</span>'
+      +'<div id="cal-end-row" style="display:'+(row&&row.allDay?'none':'flex')+';gap:9px;align-items:center;margin-top:8px;">'
+        +'<span style="font-size:12.5px;color:var(--muted);white-space:nowrap;">終わり</span>'
+        +'<input id="cal-e" class="inp2" type="time" value="'+escA(row?hm2(row.ends):'')+'" style="flex:0 0 auto;width:auto!important;">'
+        +'<span style="font-size:11.5px;color:var(--muted);">空欄でも構いません</span>'
       +'</div>'
-      +'<input id="cal-p" class="inp2" placeholder="場所・方法（任意）" value="'+escA(row?row.place:'')+'" style="width:100%;margin-bottom:7px;">'
-      +'<input id="cal-n" class="inp2" placeholder="メモ（任意）" value="'+escA(row?row.note:'')+'" style="width:100%;margin-bottom:9px;">'
-      +'<div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">'
-        +'<button class="btn2" style="font-size:12px;padding:7px 15px;" onclick="calSave(\''+escJ(id||'')+'\')">保存</button>'
-        +'<button class="ghost" style="font-size:12px;" onclick="calCloseForm()">やめる</button>'
-        +'<span id="cal-msg" style="font-size:11.5px;"></span>'
-      +'</div></div>';
-    //  入力欄は暦の上端にある。下のほうの日を押して開いたとき、そのままでは
-    //  画面の外に出ていて「押しても何も起きない」ように見える。必ず見せる。
-    try{ host.scrollIntoView({block:'center', behavior:'smooth'}); }catch(e){ try{ host.scrollIntoView(); }catch(e2){} }
-    var t=$('cal-t'); if(t) t.focus({preventScroll:true});
+      +'<div class="cfm-lbl">場所・方法（任意）</div>'
+      +'<input id="cal-p" class="inp2" placeholder="例：本社 会議室／Zoom" value="'+escA(row?row.place:'')+'" style="width:100%;">'
+      +'<div class="cfm-lbl">メモ（任意）</div>'
+      +'<input id="cal-n" class="inp2" placeholder="持ち物や議題など" value="'+escA(row?row.note:'')+'" style="width:100%;">'
+      +'<div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:14px;">'
+        +'<button class="btn2" style="font-size:13.5px;padding:10px 22px;" onclick="calSave(\''+escJ(id||'')+'\')">保存</button>'
+        +'<button class="ghost" style="font-size:13px;border:1px solid var(--line);border-radius:9px;padding:9px 14px;" onclick="calFormDismiss()">やめる</button>'
+        +'<span id="cal-msg" style="font-size:12px;flex:1;min-width:0;"></span>'
+      +'</div>'
+    +'</div>';
+    document.body.appendChild(el);
+    document.addEventListener('keydown', calFormKey);
+    //  スマホでは、ここで焦点を当てると文字入力の板が上がって窓が隠れる。
+    //  名前の欄に触れてもらうほうが自然なので、パソコンのときだけ焦点を当てる
+    var t=$('cal-t');
+    if(t && !/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) t.focus({preventScroll:true});
   }
-  function calCloseForm(){ CAL_EDIT=null; CAL_EDIT_WHEN=null; var host=$('cal-form'); if(host) host.innerHTML=''; }
+  function calFormKey(ev){ if(ev.key==='Escape') calFormDismiss(); }
+  //  「やめる」「✕」「外側」。打ちかけの文字があるときだけ確かめる
+  function calFormDismiss(){
+    var t=$('cal-t'), typed=t && t.value.trim() && !CAL_EDIT;
+    if(typed && !confirm('入力した内容を捨てて閉じます。よろしいですか？')) return;
+    calCloseForm();
+  }
+  //  keep=true は、開き直すときに印（CAL_EDIT）を残したまま窓だけ片付ける
+  function calCloseForm(keep){
+    if(!keep){ CAL_EDIT=null; CAL_EDIT_WHEN=null; }
+    var e=$('cal-fm'); if(e && e.parentNode) e.parentNode.removeChild(e);
+    document.removeEventListener('keydown', calFormKey);
+  }
 
   async function calSave(id){
     var msg=$('cal-msg');
@@ -17732,7 +17780,7 @@
     if(id) res=await sb.from('agenda_events').update(row).eq('id',id);
     else { row.owner_id=ME; res=await sb.from('agenda_events').insert(row); }
     if(res.error){ say('保存エラー：'+res.error.message+'（agenda_events のSQLが未実行の可能性があります）'); return; }
-    CAL_EDIT=null; CAL_EDIT_WHEN=null; knvAgendaReset();
+    calCloseForm(); knvAgendaReset();
     await knvRenderCal(true);
   }
   async function calDelete(id){

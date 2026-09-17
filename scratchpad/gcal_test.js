@@ -342,7 +342,7 @@ function takeFn(name) {
   //  包みの中に、切り替え・前後・今日・＋予定がぜんぶ入っていること
   const inside = rc.slice(rc.indexOf('<div class="cal-stick'), rc.indexOf('// .cal-stick'));
   ok('切り替えと前後・今日・＋予定が中に入る', /class="vaseg"/.test(inside) && /calMove\(-1\)/.test(inside) && /calToday\(\)/.test(inside) && /calOpenForm\(\)">＋ 予定/.test(inside));
-  ok('入力の窓は外に置く', /\/\/ \.cal-stick\s*\n[\s\S]{0,120}h\+='<div id="cal-form"><\/div>';/.test(rc));
+  ok('入力の窓は暦の中に置かない', !/id="cal-form"/.test(rc) && /別の窓（calOpenForm → \.cfm-bg）で開く/.test(rc));
   ok('貼り付けの CSS', /\.cal-stick\{position:sticky;top:-12px;z-index:8;background:var\(--bg\);margin:-12px -12px 6px;/.test(SRC));
   ok('週の目盛りより上に', /z-index は週表示の左の目盛り/.test(SRC));
   //  週表示は曜日の見出しも一緒に貼り付ける
@@ -366,10 +366,35 @@ function takeFn(name) {
   ok('なぜ 3件までかを書き残す', /貼り付けたまま時間の枠が見えなくなる/.test(hd));
   ok('+n の札の CSS', /\.wk-more\{background:var\(--soft\);color:var\(--muted\);border:1px dashed var\(--line\);/.test(SRC));
 }
+// ⑯ スマホ：予定の入力は別の窓で。触れると拡大して横に揺れる問題も止める
+{
+  const of = takeFn('calOpenForm'), rc = takeFn('knvRenderCal');
+  ok('入力は別の窓（.cfm-bg）', /el\.className='cfm-bg'; el\.id='cal-fm';/.test(of) && /document\.body\.appendChild\(el\);/.test(of));
+  ok('開くとき、開きかけの窓と小窓を片付ける', /calCloseForm\(true\);/.test(of) && /calPeekClose\(\);/.test(of));
+  ok('外側を押したら閉じる（打ちかけは確かめる）', /if\(ev\.target===el\) calFormDismiss\(\);/.test(of));
+  ok('Esc で閉じる', /document\.addEventListener\('keydown', calFormKey\);/.test(of) && /if\(ev\.key==='Escape'\) calFormDismiss\(\);/.test(takeFn('calFormKey')));
+  ok('スマホでは勝手に焦点を当てない（板が上がって窓が隠れる）', /!\/Mobi\|Android\|iPhone\|iPad\/i\.test\(navigator\.userAgent\)\) t\.focus/.test(of));
+  ok('欄に見出しを付ける', /class="cfm-lbl">予定の名前</.test(of) && /class="cfm-lbl">日時</.test(of));
+  const ds = takeFn('calFormDismiss');
+  ok('打ちかけがあれば確かめてから閉じる', /confirm\('入力した内容を捨てて閉じます。よろしいですか？'\)/.test(ds));
+  const cf = takeFn('calCloseForm');
+  ok('閉じるときは窓を消して Esc の見張りも外す', /var e=\$\('cal-fm'\); if\(e && e\.parentNode\) e\.parentNode\.removeChild\(e\);/.test(cf) && /document\.removeEventListener\('keydown', calFormKey\);/.test(cf));
+  ok('保存したら窓を閉じる', /calCloseForm\(\); knvAgendaReset\(\);/.test(takeFn('calSave')));
+  //  描き直しで開き直さない（打ちかけの文字が消える）
+  no('描き直しで開き直さない', /if\(CAL_EDIT!==null\) calOpenForm\(CAL_EDIT, CAL_EDIT_WHEN\);/.test(rc));
+  ok('週の空き枠を押したら、その日時で窓を開く', /calOpenForm\('', key\+'T'\+\('0'\+hh\)\.slice\(-2\)\+':00'\);/.test(takeFn('calWkSlot')));
+  //  窓は上に寄せ、外側がスクロールする（文字入力の板が出ていても保存まで届く）
+  ok('窓は上寄せで外側がスクロール', /\.cfm-bg\{position:fixed;inset:0;[^}]*overflow-y:auto;[^}]*align-items:flex-start;/.test(SRC));
+  ok('窓は小窓より上に重なる', /\.cfm-bg\{[^}]*z-index:82;/.test(SRC) && /\.cpk-bg\{[^}]*z-index:80;/.test(SRC));
+  ok('なぜ別の窓かを書き残す', /上に貼り付いた操作列と、下から\s*\n\s*上がってくるスマホの文字入力の板に挟まれて/.test(SRC));
+  //  iPhone の拡大（16px 未満の欄に触れると起きる）を止める
+  ok('スマホでは入力欄をぜんぶ 16px に', /@media\(max-width:760px\)\{\s*\n\s*\.cfm-bg\{[^}]*\}\s*\n\s*\.cfm\{[^}]*\}[\s\S]{0,200}input,select,textarea\{font-size:16px!important;\}/.test(SRC));
+  ok('なぜ 16px かを書き残す', /iPhone が画面を拡大し、そのまま横に/.test(SRC));
+}
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-06', '20260917-06']);
+  is('版が揃う', [build, VER.build], ['20260917-07', '20260917-07']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
