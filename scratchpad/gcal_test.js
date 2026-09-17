@@ -333,10 +333,21 @@ function takeFn(name) {
   ok('手順書：他のカレンダーの節', /### 他のカレンダー（家族・誕生日・共有・祝日など）/.test(GUIDE) && /メインだけ最初からオン/.test(GUIDE));
   ok('手順書：旧来の購読は出さないと書く', /旧来の ICS 購読（「TsuguAi 継ナビくん」）は一覧に出しません/.test(GUIDE));
 }
+// ⑮ 予定タブの操作列は、下へ送っても上に残す
+{
+  const rc = takeFn('knvRenderCal');
+  ok('操作列を包む', /h\+='<div class="cal-stick">';/.test(rc) && /h\+='<\/div>';   \/\/ \.cal-stick/.test(rc));
+  //  包みの中に、切り替え・前後・今日・＋予定がぜんぶ入っていること
+  const inside = rc.slice(rc.indexOf('<div class="cal-stick">'), rc.indexOf('// .cal-stick'));
+  ok('切り替えと前後・今日・＋予定が中に入る', /class="vaseg"/.test(inside) && /calMove\(-1\)/.test(inside) && /calToday\(\)/.test(inside) && /calOpenForm\(\)">＋ 予定/.test(inside));
+  ok('入力の窓は外に置く', /\/\/ \.cal-stick\s*\n[\s\S]{0,120}h\+='<div id="cal-form"><\/div>';/.test(rc));
+  ok('貼り付けの CSS', /\.cal-stick\{position:sticky;top:-12px;z-index:8;background:var\(--bg\);margin:-12px -12px 6px;/.test(SRC));
+  ok('週の目盛りより上に', /z-index は週表示の左の目盛り/.test(SRC));
+}
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-03', '20260917-03']);
+  is('版が揃う', [build, VER.build], ['20260917-04', '20260917-04']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
