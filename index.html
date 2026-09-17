@@ -475,6 +475,12 @@
   .cal-stick.week{margin-bottom:0;padding-bottom:0;box-shadow:none;}
   .wk-head{overflow-x:hidden;border:1px solid var(--softline);border-bottom:0;border-radius:10px 10px 0 0;background:var(--card);}
   .wk-wrap.under{border-top:0;border-radius:0 0 10px 10px;}
+  /* 月・週を前後へ動かしたときの滑り込み（次へ＝右から、前へ＝左から）。
+     横に払っても画面が何も動かないと、効いたのか分からない */
+  @keyframes calInR{from{transform:translateX(28px);opacity:.35;}to{transform:none;opacity:1;}}
+  @keyframes calInL{from{transform:translateX(-28px);opacity:.35;}to{transform:none;opacity:1;}}
+  .cal-in-r{animation:calInR .22s ease-out;}
+  .cal-in-l{animation:calInL .22s ease-out;}
   /* 終日の帯で 3件を超えたぶんの札。押すとその日の一覧が下に開く */
   .wk-more{background:var(--soft);color:var(--muted);border:1px dashed var(--line);text-align:center;font-weight:700;}
   /* 継ナビくんの月カレンダー。パネルの幅でも読めるよう、日付は点で示す */
@@ -1443,7 +1449,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260917-11';
+  var APP_BUILD='20260917-12';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -16147,12 +16153,46 @@
   function calDkey(d){ var p=function(n){return ('0'+n).slice(-2);};
     return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
   function calCur(){ if(!CAL_CUR) CAL_CUR=new Date(); return CAL_CUR; }
+  //  n=+1 で次へ、-1 で前へ。どちらへ動いたかは描き直しのあとの
+  //  滑り込み（calSlideIn）に使う
+  var CAL_SLIDE=0;
   function calMove(n){
     var d=new Date(calCur());
     if(calViewGet()==='month') d.setMonth(d.getMonth()+n); else d.setDate(d.getDate()+7*n);
-    CAL_CUR=d; CAL_PICK=null; knvRenderCal();
+    CAL_CUR=d; CAL_PICK=null; CAL_SLIDE=n; knvRenderCal();
   }
   function calToday(){ CAL_CUR=new Date(); CAL_PICK=null; knvRenderCal(); }
+  //  月・週の表示で、横に払うと前後へ（スマホでは ‹ › を押すより自然）。
+  //  縦のスクロールと見分けるため、横に 50px 以上、かつ縦の2倍以上、
+  //  0.8秒以内に動いたときだけ。一覧の表示では何もしない
+  var CAL_SW=null;
+  function calSwipeBind(){
+    var box=$('knv-cal'); if(!box || box.__swipe) return;
+    box.__swipe=1;
+    box.addEventListener('touchstart', function(e){
+      if(!e.touches || e.touches.length!==1){ CAL_SW=null; return; }
+      var t=e.touches[0]; CAL_SW={ x:t.clientX, y:t.clientY, at:Date.now() };
+    }, { passive:true });
+    box.addEventListener('touchend', function(e){
+      var s=CAL_SW; CAL_SW=null; if(!s) return;
+      var t=e.changedTouches && e.changedTouches[0]; if(!t) return;
+      var dx=t.clientX-s.x, dy=t.clientY-s.y;
+      if(Math.abs(dx)<50 || Math.abs(dx)<Math.abs(dy)*2 || Date.now()-s.at>800) return;
+      if(calViewGet()==='list') return;
+      //  週の枠が横にはみ出してスクロールできるときは、そちらを優先する
+      var wrap=box.querySelector('.wk-wrap');
+      if(wrap && wrap.scrollWidth>wrap.clientWidth+2) return;
+      calMove(dx<0?1:-1);
+    }, { passive:true });
+  }
+  //  切り替わったことが分かるよう、暦を横から滑り込ませる。
+  //  次へ進んだら右から、前へ戻ったら左から
+  function calSlideIn(box){
+    var n=CAL_SLIDE; CAL_SLIDE=0; if(!n) return;
+    var el=box.querySelector('.wk-wrap') || box.querySelector('.cal-grid + .cal-grid') || box.querySelector('.cal-grid');
+    if(!el) return;
+    el.classList.add(n>0?'cal-in-r':'cal-in-l');
+  }
   // 日付ごとにまとめる
   function calByDay(){
     var map={};
@@ -17351,6 +17391,8 @@
     h+='<div id="calfeed-host" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--softline);"></div>';
 
     box.innerHTML=h;
+    calSwipeBind();      // 横に払って前後へ（一度だけ結ぶ）
+    calSlideIn(box);     // ‹ › や払いで動いたときの滑り込み
     // 狭い画面では週表示が横スクロールになる。開いた時点で今日が見えるように寄せる。
     // 曜日の見出しは別の箱（.wk-head）なので、本体の横スクロールに合わせて動かす
     try{
