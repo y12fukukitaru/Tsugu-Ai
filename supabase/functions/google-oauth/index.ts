@@ -57,17 +57,34 @@ function json(body: unknown, status = 200) {
 }
 
 //  人が読む画面。終わったことだけ伝えて、アプリへ戻す
+//
+//  ・ページとして表示させるには content-type が要ります。付け忘れると
+//    ブラウザが HTML の中身をそのまま文字として出します（実際に出ました）。
+//    Headers で明示的に組み、charset も必ず付けます。付けないと
+//    日本語が文字化けします（Windows では Shift-JIS と誤読されます）。
+//  ・返す本文は、こちらで組んだ文字列です。ただし Google から来た
+//    エラー文などが混ざるので、山括弧だけは落としておきます。
+function esc(s: string) {
+  return String(s ?? "").replace(/[<>&"]/g, (c) =>
+    ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c] as string));
+}
 function page(title: string, msg: string, ok: boolean) {
   const back = APP_URL
-    ? `<p style="margin-top:22px"><a href="${APP_URL}" style="color:#2C5DA8">TsuguAi に戻る</a></p>`
+    ? `<p style="margin-top:22px"><a href="${esc(APP_URL)}" style="color:#2C5DA8">TsuguAi に戻る</a></p>`
     : "";
+  const h = new Headers();
+  h.set("content-type", "text/html; charset=utf-8");
+  h.set("cache-control", "no-store");
   return new Response(
-    `<!doctype html><meta charset="utf-8"><title>${title}</title>
+    `<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(title)}</title></head>
 <body style="margin:0;background:#FBF9F4;font:15px/1.9 system-ui,'Noto Sans JP',sans-serif;color:#243247">
 <div style="max-width:560px;margin:14vh auto;padding:28px 30px;background:#fff;border:1px solid #E2E7EF;border-radius:14px">
-<div style="font-size:19px;font-weight:700;color:${ok ? "#27684A" : "#A9403D"}">${title}</div>
-<div style="margin-top:10px;color:#5A6981">${msg}</div>${back}</div></body>`,
-    { status: ok ? 200 : 400, headers: { "content-type": "text/html; charset=utf-8" } },
+<div style="font-size:19px;font-weight:700;color:${ok ? "#27684A" : "#A9403D"}">${esc(title)}</div>
+<div style="margin-top:10px;color:#5A6981">${esc(msg)}</div>${back}</div></body></html>`,
+    { status: ok ? 200 : 400, headers: h },
   );
 }
 

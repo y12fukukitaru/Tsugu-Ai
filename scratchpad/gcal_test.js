@@ -137,6 +137,23 @@ function takeFn(name) {
   ok('手順書に審査のこと', /審査/.test(GUIDE) && /100名/.test(GUIDE));
   ok('手順書に私用の予定の注意', /私用の予定について/.test(GUIDE));
 }
+// ⑩ 暗号の棚（pgcrypto）— ここが合わないと、つなぐ手前で必ず止まる
+{
+  const FIX = R('supabase/migrations/20260917010000_pgcrypto_search_path.sql');
+  ok('pgcrypto が無ければ入れる', /create extension pgcrypto/.test(FIX));
+  //  名指しにすると、今後足した関数が漏れる
+  ok('pgp_sym を使う関数を探して直す', /p\.prosrc like '%pgp_sym%'/.test(FIX));
+  ok('中身は触らず search_path だけ足す', /alter function %s set search_path = public, %I/.test(FIX));
+  //  数えるだけでは動くか分からない。実際に暗号化してみる
+  ok('本当に暗号化できるかを試す関数', /function public\.crypto_ok\(\)/.test(FIX) && /perform pgp_sym_encrypt\('test', public\.google_key\(\)\)/.test(FIX));
+  ok('確かめに「暗号化できるか」が出る', /as 暗号化できるか/.test(FIX) && /まだ直っていない関数/.test(FIX));
+  ok('crypto_ok は画面から呼べない', /revoke all on function public\.crypto_ok\(\) from public, anon, authenticated;/.test(FIX));
+  //  口座のほうも同じ不具合だった（総合振込の手前で止まる）
+  ok('口座の関数も同じ書き方だと書いてある', /payout_account_submit/.test(FIX) && /総合振込ファイルを作る手前/.test(FIX));
+  //  戻りの画面が文字として出てしまった件
+  ok('ページは content-type を明示する', /h\.set\("content-type", "text\/html; charset=utf-8"\);/.test(OAUTH));
+  ok('差し込む文字は山括弧を落とす', /function esc\(s: string\)/.test(OAUTH) && /\$\{esc\(msg\)\}/.test(OAUTH));
+}
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
