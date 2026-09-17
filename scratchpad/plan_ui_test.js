@@ -192,9 +192,9 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
 }
 // ⑤ 配線
 {
-  ok('経営者のメニュー：出口の設計は全員、買い手になるは買い手だけ', /\['sec-exit','出口の設計'\]\]\.concat\(planOf\(window\.__prof\)==='buyer'\?\[\['sec-ma','買い手になる'\],\['sec-after','買った後に備える'\]\]:\[\]\)/.test(SRC));
+  ok('経営者のメニュー：出口の設計は全員、買い手になるは買い手だけ', /\['sec-exit','出口の設計'\],\['sec-scale','スケールの設計'\]\]\.concat\(planOf\(window\.__prof\)==='buyer'\?\[\['sec-ma','買い手になる'\],\['sec-after','買った後に備える'\]\]:\[\]\)/.test(SRC));
   ok('経営者の画面：出口の設計の枠と、買い手だけの「買い手になる」', /id="sec-exit"/.test(SRC) && /id="my-exit"/.test(SRC) && /\+\(planOf\(prof\)==='buyer' \? \(''/.test(SRC));
-  ok('起動時に出口を読む', /loadSurvey\('customer'\); loadExitPlan\(ME,'customer'\); loadAfterPrep\(ME,'customer'\); knvInit\(\);/.test(SRC));
+  ok('起動時に出口を読む', /loadSurvey\('customer'\); loadExitPlan\(ME,'customer'\); loadScalePlan\(ME,'customer'\); loadAfterPrep\(ME,'customer'\); knvInit\(\);/.test(SRC));
   ok('カルテ：出口の設計の見出し・案内・枠と読み込み', /id="cs-exit"/.test(SRC) && /id="knav-exit"/.test(SRC) && /id="cl-exit"/.test(SRC) && /loadShindan\(custId\);\n    loadExitPlan\(custId,'partner'\);/.test(SRC));
   ok('顧客一覧にプランの印', /tags\+=planTag\(c\);/.test(SRC) && /select\('id,email,company_name,role,stage,created_at,plan'\)/.test(SRC));
   const cs = takeFn('ctSend');
@@ -229,7 +229,7 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
   ok('運営説明書：2プラン・切替は運営だけ・契約書の条文', /顧問料（2プラン）/.test(MANA) && /切替は運営だけ/.test(MANA) && /第2条の3/.test(MANA));
   ok('税額は出さないと明記', /税額は計算しません/.test(MANC) && /税額を計算しません/.test(SRC));
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-19', '20260917-19']);
+  is('版が揃う', [build, VER.build], ['20260917-20', '20260917-20']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

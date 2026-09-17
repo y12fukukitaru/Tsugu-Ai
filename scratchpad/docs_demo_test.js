@@ -36,7 +36,7 @@ const IDX = R('index.html');
     ok('顧客デモの押す場所「' + lab + '」が本体にもある', PITC.indexOf(lab) >= 0 && IDX.indexOf(lab) >= 0);
   });
   ok('各デモに 押す→分かる→そのあと', (PITC.match(/<span class="act">/g) || []).length >= 24 && (PITC.match(/<span class="see">/g) || []).length >= 20 && (PITC.match(/<span class="then">/g) || []).length >= 12);
-  ok('左メニューは本体と同じ並び', /ダッシュボード<\/div><div class="ni"><b>▤<\/b>月次レポート<\/div><div class="ni"><b>✓<\/b>経営課題<\/div><div class="ni"><b>¥<\/b>お支払い<\/div><div class="ni"><b>≈<\/b>財務・資金繰り<\/div><div class="ni"><b>◆<\/b>企業価値・試算結果<\/div><div class="ni"><b>⚙<\/b>AI自動化診断<\/div><div class="ni"><b>⇢<\/b>出口の設計<\/div><div class="ni"><b>▣<\/b>買い手になる<\/div><div class="ni"><b>☰<\/b>買った後に備える/.test(PITC));
+  ok('左メニューは本体と同じ並び', /ダッシュボード<\/div><div class="ni"><b>▤<\/b>月次レポート<\/div><div class="ni"><b>✓<\/b>経営課題<\/div><div class="ni"><b>¥<\/b>お支払い<\/div><div class="ni"><b>≈<\/b>財務・資金繰り<\/div><div class="ni"><b>◆<\/b>企業価値・試算結果<\/div><div class="ni"><b>⚙<\/b>AI自動化診断<\/div><div class="ni"><b>⇢<\/b>出口の設計<\/div><div class="ni"><b>↗<\/b>スケールの設計<\/div><div class="ni"><b>▣<\/b>買い手になる<\/div><div class="ni"><b>☰<\/b>買った後に備える/.test(PITC));
 }
 // ③ パートナー向け：デモ6枚
 {
