@@ -162,7 +162,7 @@ function takeFn(name) {
   no('取り込みに do…while は使わない', /do \{[\s\S]{0,400}\} while \(pageToken/.test(SYNC));
   ok('終わり方を自分で書く', /while \(true\) \{/.test(SYNC) && /if \(!pageToken\) break;/.test(SYNC));
   ok('ページと取り直しは別々に数える', /let pages = 0;/.test(SYNC) && /let resets = 0;/.test(SYNC));
-  ok('取り直しが続いたら止めて知らせる', /if \(\+\+resets > 2\) \{ lnotes\.push\("取り直しが続いたので止めました"\); break; \}/.test(SYNC));
+  ok('取り直しが続いたら止めて知らせる', /if \(\+\+resets > 2\) \{ lnotes\.push\(`\$\{cal\.name\}：取り直しが続いたので止めました`\); break; \}/.test(SYNC));
   ok('なぜ do…while が駄目かを書き残す', /条件式に飛ぶので/.test(SYNC));
   //  そもそも古い札を残さない（入口で正しくする）
   ok('相手が変わったら札を捨てる', /sync_token   = case/.test(RE) && /then null/.test(RE));
@@ -221,7 +221,7 @@ function takeFn(name) {
   ok('つないだ全部を回す', /for \(const link of live\) \{/.test(SYNC));
   ok('送り先は一つ（預かっている予定はそのまま）', /const here = e\.link_id \? e\.link_id === link\.id : !!link\.push_target;/.test(SYNC));
   ok('面談は送り先にだけ', /if \(link\.push_target && nameOf\.size\) \{/.test(SYNC));
-  ok('取り込んだ予定にアカウントを書く', /link_id: link\.id,\s*\n\s*source: "google"/.test(SYNC));
+  ok('取り込んだ予定にアカウントを書く', /link_id: link\.id,\s*\n\s*cal_id: cal\.cal_id,\s*\n\s*source: "google"/.test(SYNC));
   ok('入れ損ねたら札を進めない', /if \(nextSync && !pullBad\) \{/.test(SYNC));
   ok('入れ損ねを黙って落とさない', /入れられませんでした：\$\{row\.title\}/.test(SYNC));
   ok('切れたアカウントは飛ばして知らせる', /if \(!access\) \{ relink = true; continue; \}/.test(SYNC));
@@ -271,10 +271,72 @@ function takeFn(name) {
   ok('パートナー：日本語で出ると書く', /カレンダーが使えません/.test(MANP));
   ok('手順書：日本語で出ると書く', /カレンダーが使えません/.test(GUIDE));
 }
+// ⑭ 他のカレンダー（家族・誕生日・共有・祝日）をカレンダーごとに選んで取り込む
+{
+  const GC = R('supabase/migrations/20260917040000_google_calendars.sql');
+  //  --- SQL ---
+  ok('カレンダーの一覧の表', /create table if not exists public\.google_calendars/.test(GC) && /primary key \(link_id, cal_id\)/.test(GC));
+  ok('一覧の表は画面から触れない', /revoke all on public\.google_calendars from authenticated, anon, public;/.test(GC));
+  ok('札はカレンダーごと', /sync_token text,\s*-- 差分の札。カレンダーごと/.test(GC));
+  ok('予定にカレンダーを持たせる', /alter table public\.agenda_events add column if not exists cal_id text;/.test(GC));
+  ok('アカウントの札は捨てる', /update public\.google_cal_links set sync_token = null where sync_token is not null;/.test(GC));
+  //  合わせるときの約束：オン／オフと札は触らない。メインだけ最初からオン
+  ok('はじめて見つけたときはメインだけオン', /coalesce\(x\.is_primary, false\),   -- はじめて見つけたとき：メインだけオン/.test(GC));
+  const mg = GC.slice(GC.indexOf('function public.google_cal_list_merge'), GC.indexOf('-- ④'));
+  no('合わせるときにオン／オフを上書きしない', /set[\s\S]{0,200}enabled\s*=\s*excluded/.test(mg));
+  no('合わせるときに札を上書きしない', /sync_token\s*=\s*excluded/.test(mg));
+  ok('無くなったカレンダーは予定ごと消す', /delete from public\.agenda_events e[\s\S]{0,200}not exists[\s\S]{0,120}x\.id = e\.cal_id/.test(mg));
+  ok('合わせる関数は画面から呼べない', /revoke all on function public\.google_cal_list_merge\(uuid, jsonb\) from public, anon, authenticated;/.test(GC));
+  ok('状態にカレンダーの一覧が付く', /'calendars',    coalesce\(\(/.test(GC) && /order by c\.is_primary desc, c\.name/.test(GC));
+  //  切り替え
+  ok('切り替えは本人だけ', /function public\.google_cal_set_cal\(p_link uuid, p_cal text, p_on boolean\)/.test(GC) && /grant execute on function public\.google_cal_set_cal\(uuid, text, boolean\) to authenticated;/.test(GC));
+  ok('外したらそのカレンダーの予定だけ消す', /and cal_id = p_cal;/.test(GC));
+  ok('外したら同じアカウントのほかの札も捨てる（招待で両方に出る予定を戻すため）', /update public\.google_calendars set sync_token = null\s*\n\s*where link_id = p_link and enabled;/.test(GC));
+  ok('確かめに一覧の表が読めるかが出る', /as 画面から一覧の表が読めるか/.test(GC));
+
+  //  --- 同期 ---
+  ok('一覧を Google から取る', /users\/me\/calendarList\?minAccessRole=reader&showHidden=false/.test(SYNC));
+  ok('一覧は SQL で合わせる', /sb\.rpc\("google_cal_list_merge", \{ p_link: link\.id, p_items: items \}\)/.test(SYNC));
+  ok('オンのカレンダーだけ取る', /\.eq\("link_id", link\.id\)\.eq\("enabled", true\)/.test(SYNC));
+  ok('カレンダーの番号は URL 用に包む', /calendars\/\$\{encodeURIComponent\(cal\.cal_id\)\}\/events/.test(SYNC));
+  ok('札はカレンダーごとに進める', /sb\.from\("google_calendars"\)\.update\(\{ sync_token: nextSync \}\)/.test(SYNC));
+  ok('札を捨てるのもカレンダーごと', /sb\.from\("google_calendars"\)\.update\(\{ sync_token: null \}\)/.test(SYNC));
+  no('アカウントの札はもう使わない', /google_cal_links"\)\.update\(\{ sync_token/.test(SYNC));
+  ok('取り込んだ予定にカレンダーを書く', /cal_id: cal\.cal_id,/.test(SYNC));
+  ok('どのカレンダーで止まったか分かる', /`\$\{cal\.name\}：取ってこられませんでした/.test(SYNC));
+  ok('送り先はメインのまま', /const CAL = "primary";/.test(SYNC));
+  //  TsuguAi 自身の予定が戻ってこないように（二重の守り）
+  ok('旧来の購読は一覧から外す', /function isSelfFeed/.test(SYNC) && /\.filter\(\(c: any\) => !isSelfFeed\(c\)\)/.test(SYNC));
+  ok('旧来の購読の名前で見分ける', /\^TsuguAi 継ナビくん\$/.test(SYNC));
+  ok('ICS 経由の予定も取り込まない', /if \(\/@tsugu-ai\$\/\.test\(String\(it\.iCalUID \?\? ""\)\)\) continue;/.test(SYNC));
+  ok('色は形を確かめてから使う', /\^#\[0-9a-f\]\{6\}\$\/i\.test\(String\(c\.backgroundColor/.test(SYNC));
+
+  //  --- 画面 ---
+  const gb = gbAll();
+  ok('取り込むアカウントには一覧を出す', /\+\(l\.pull_private===false\?'':gcalCalsHtml\(l, i\)\)/.test(gb));
+  const ch = takeFn('gcalCalsHtml');
+  ok('つないだ直後（一覧が空）の言葉', /カレンダーの一覧は、次の同期のあとに並びます。/.test(ch));
+  ok('カレンダーごとのチェック', /onchange="googleCalCal\('\+i\+',this\.value,this\.checked\)"/.test(ch));
+  ok('カレンダーの番号は属性用に包む', /value="'\+escA\(c\.id\)\+'"/.test(ch));
+  ok('色は形を確かめてから使う（画面）', /\^#\[0-9a-f\]\{6\}\$\/i\.test\(String\(c\.color/.test(ch));
+  ok('メインに印', /メイン<\/span>/.test(ch));
+  const cc = takeFn('googleCalCal');
+  ok('切り替えは SQL の関数で', /sb\.rpc\('google_cal_set_cal',\{ p_link:l\.id, p_cal:calId, p_on:!!on \}\)/.test(cc));
+  ok('入れたらすぐ同期して見せる', /if\(on\)\{[\s\S]{0,120}googleCalSync\(true\)/.test(cc));
+  ok('外したら描き直すだけ', /gcalSayLater\('このカレンダーの予定を外しました。'\)/.test(cc));
+
+  //  --- 説明書 ---
+  ok('経営者：他のカレンダーも取り込めると書く', /「家族」「誕生日」「共有されたカレンダー」「日本の祝日」なども取り込めます/.test(MANC));
+  ok('パートナー：他のカレンダーも取り込めると書く', /「取り込むカレンダー」/.test(MANP));
+  ok('継ナビくんの案内にも', /「取り込むカレンダー」でチェックを入れれば入る/.test(SRC));
+  ok('手順書：SQL は5つ', /20260917040000_google_calendars\.sql/.test(GUIDE));
+  ok('手順書：他のカレンダーの節', /### 他のカレンダー（家族・誕生日・共有・祝日など）/.test(GUIDE) && /メインだけ最初からオン/.test(GUIDE));
+  ok('手順書：旧来の購読は出さないと書く', /旧来の ICS 購読（「TsuguAi 継ナビくん」）は一覧に出しません/.test(GUIDE));
+}
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-02', '20260917-02']);
+  is('版が揃う', [build, VER.build], ['20260917-03', '20260917-03']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
