@@ -411,13 +411,13 @@ function takeFn(name) {
 {
   const mob = SRC.slice(SRC.indexOf('@media(max-width:600px){'), SRC.indexOf('/* 継ナビくんの顔チップ'));
   const wv = takeFn('calWeekVertical');
-  ok('枠を種類の色で塗り、白い字に', /\.wk-ev\{background:var\(--fg\)!important;color:#fff!important;/.test(mob));
+  ok('枠を種類の色で塗り、白い字に（明るい色は濃い字）', /\.wk-ev\{background:var\(--fg\)!important;color:var\(--fgtxt,#fff\)!important;/.test(mob));
   ok('題名は折り返す（行数は JS が決める）', /\.wk-ev b\{white-space:normal;word-break:break-all;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;/.test(mob));
   ok('枠の中の時刻は出さない（目盛りで分かる）', /\.wk-ev span\{display:none;\}/.test(mob));
   ok('横に3文字入る大きさ（10px・余白 2px）', /\.wk-ev\{[^}]*font-size:10px;line-height:1\.25;padding:2px 2px;/.test(mob) && /横に3文字は入る大きさに/.test(mob));
   ok('終日の札も3文字入る余白', /\.wk-chip\{[^}]*font-size:9\.5px;padding:1px 2px;/.test(mob));
-  ok('終日の札も塗る', /\.wk-chip\{background:var\(--fg\)!important;color:#fff!important;/.test(mob));
-  ok('塗る色を枠に持たせる（自分の予定は青）', /'--fg:'\+\(kk\?kk\.fg:'#2C5DA8'\)\+';'/.test(wv) && /style="--fg:'\+\(k\?k\.fg:'#2C5DA8'\)/.test(wv));
+  ok('終日の札も塗る', /\.wk-chip\{background:var\(--fg\)!important;color:var\(--fgtxt,#fff\)!important;/.test(mob));
+  ok('塗る色を枠に持たせる（自分の予定は青）', /'--fg:'\+\(kk\?kk\.fg:'#2C5DA8'\)\+';--fgtxt:/.test(wv) && /style="--fg:'\+\(k\?k\.fg:'#2C5DA8'\)\+';--fgtxt:/.test(wv));
   ok('何行まで折り返すかは枠の高さから', /var lines=Math\.max\(1, Math\.floor\(\(hgt-4\)\/12\.5\)\);/.test(wv) && /-webkit-line-clamp:'\+lines\+';/.test(wv));
   //  1時間の高さはスマホで 54px、パソコンは 42px のまま
   ok('1時間の高さは画面の幅で変える', /function wkPx\(\)/.test(SRC) && /matchMedia\('\(max-width:600px\)'\)\.matches\) \? 54 : WK_PX/.test(SRC));
@@ -442,10 +442,39 @@ function takeFn(name) {
   ok('週の枠か、月の升目に掛ける', /box\.querySelector\('\.wk-wrap'\) \|\| box\.querySelector\('\.cal-grid \+ \.cal-grid'\)/.test(si));
   ok('滑り込みの CSS', /@keyframes calInR\{from\{transform:translateX\(28px\)/.test(SRC) && /\.cal-in-l\{animation:calInL \.22s ease-out;\}/.test(SRC));
 }
+// ⑳ 色：Google のカレンダーごとの色・課題（ToDo）は橙・＋予定は金
+{
+  //  Google のカレンダーの色を、種類の色と同じ形に
+  const ct = takeFn('calTint');
+  ok('Google の色を fg/bg/bd に組み直す', /bg:'rgba\('\+r\+','\+g\+','\+b\+',\.10\)'/.test(ct) && /bd:'rgba\('\+r\+','\+g\+','\+b\+',\.38\)'/.test(ct));
+  ok('明るい色には濃い字（白では読めない）', /txt:\(lum>0\.62\?'#0E1B33':'#fff'\)/.test(ct));
+  ok('色の元は Google → 種類の順', /return \(x && x\.color && calTint\(x\.color, x\.calName\)\) \|\| \(x && CAL_KINDS\[x\.kind\]\) \|\| null;/.test(takeFn('calKindOf')));
+  //  予定に、どのカレンダーかと色を持たせる
+  const cf = takeFn('calFetch');
+  ok('予定にカレンダーの番号を持たせる', /calId:e\.cal_id\|\|''/.test(cf));
+  ok('一覧（google_cal_status）から色と名前を引く', /cmap\[c\.id\]=\{ color:c\.color\|\|'', name:c\.name\|\|'' \};/.test(cf) && /e\.color=c\.color; e\.calName=c\.name;/.test(cf));
+  ok('一覧が無いときだけ引く（連携欄と共用）', /if\(!GCAL\)\{ var gs=await sb\.rpc\('google_cal_status'\)/.test(cf));
+  //  描く側はぜんぶ calKindOf を通す
+  const wv = takeFn('calWeekVertical');
+  ok('週の枠', /var kk=calKindOf\(x\);/.test(wv) && /--fgtxt:'\+\(\(kk&&kk\.txt\)\|\|'#fff'\)/.test(wv));
+  ok('終日の札', /var k=calKindOf\(x\);\s*\n\s*head\+='<span class="wk-chip"/.test(wv) && /--fgtxt:'\+\(\(k&&k\.txt\)\|\|'#fff'\)/.test(wv));
+  ok('月の点', /var k=calKindOf\(x\);\s*\n\s*return '<span class="cal-dot"/.test(takeFn('knvRenderCal')));
+  ok('一覧の札', /var own=\(x\.kind==='own'\), k=calKindOf\(x\);/.test(takeFn('calCard')));
+  const pk = takeFn('calPeek');
+  ok('小窓の札', /var k=calKindOf\(x\), own=\(x\.kind==='own'\);/.test(pk));
+  ok('小窓にカレンダー名', /if\(own && x\.calName\) rows\+=row\('カレンダー', x\.calName\+'（Google）'\);/.test(pk));
+  ok('スマホの塗りつぶしの字の色は変えられる', /\.wk-ev\{background:var\(--fg\)!important;color:var\(--fgtxt,#fff\)!important;/.test(SRC) && /\.wk-chip\{background:var\(--fg\)!important;color:var\(--fgtxt,#fff\)!important;/.test(SRC));
+  //  課題（ToDo）の色は自分の予定の青と分ける
+  ok('課題は橙', /task:  \{ label:'課題',   bd:'#EFD3BE', bg:'rgba\(200,104,33,\.08\)',   fg:'#C86821' \},/.test(SRC));
+  no('課題と自分の予定が同じ青ではない', /task:  \{[^}]*fg:'#2C5DA8'/.test(SRC));
+  //  ＋予定は金
+  ok('＋予定は金のボタン', /class="btn2 btn-gold"[^>]*onclick="calOpenForm\(\)">＋ 予定<\/button>/.test(SRC));
+  ok('金のボタンの CSS（字は濃紺）', /\.btn2\.btn-gold\{background:var\(--gold\);color:#0E1B33;font-weight:700;/.test(SRC));
+}
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-12', '20260917-12']);
+  is('版が揃う', [build, VER.build], ['20260917-13', '20260917-13']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
