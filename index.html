@@ -872,6 +872,21 @@
     .knv-fab svg{width:42px;height:42px;}
     .knv-panel{right:8px;bottom:8px;width:calc(100vw - 16px);height:calc(100vh - 60px);
       transform-origin:calc(100% - 46px) calc(100% - 46px);}
+    /* 週表示は7日を幅に収め、横スクロールをなくす。
+       見出し（.wk-head）と本体（.wk-wrap）は別の箱で、本体の横スクロールに
+       合わせて見出しを動かしていたが、指の動きに一拍遅れて見えた
+       （scroll のたびに scrollLeft を書き戻す作りは、iPhone では滑らかにならない）。
+       そもそも横に動かなければ、遅れも起きない。
+       目盛りの幅を 54→40px に詰め、390px の画面で 1日 44px ほど。
+       題名は短く切れるが、押せば小窓で全部読める */
+    .wk{min-width:0;}
+    .wk-row{grid-template-columns:40px repeat(7,minmax(0,1fr));}
+    .wk-line,.wk-now{left:40px;}
+    .wk-hh{font-size:9.5px;right:3px;}
+    .wk-nowt{font-size:9px;right:2px;}
+    .wk-hcell{font-size:9.5px;} .wk-hcell .n{font-size:12px;}
+    .wk-chip{font-size:9px;padding:1px 2px;}
+    .wk-ev{font-size:9px;padding:2px 3px;}
   }
   /* 継ナビくんの顔チップと名前ラベル（チャットの発言者表示） */
   .tsg-face{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:11px;background:#0e2038;flex:0 0 auto;margin-top:2px;}
@@ -1417,7 +1432,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260917-08';
+  var APP_BUILD='20260917-09';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
