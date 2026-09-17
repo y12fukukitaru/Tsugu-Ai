@@ -402,15 +402,32 @@ function takeFn(name) {
   ok('横幅の下限を外す', /\.wk\{min-width:0;\}/.test(mob));
   ok('目盛りの幅を詰める', /\.wk-row\{grid-template-columns:40px repeat\(7,minmax\(0,1fr\)\);\}/.test(mob));
   ok('罫線と今の線も詰めた幅に合わせる', /\.wk-line,\.wk-now\{left:40px;\}/.test(mob));
-  ok('文字を少し小さく', /\.wk-chip\{font-size:9px;/.test(mob) && /\.wk-ev\{font-size:9px;/.test(mob));
+  ok('曜日の文字を少し小さく', /\.wk-hcell\{font-size:9\.5px;\}/.test(mob));
   ok('なぜ横スクロールをなくすかを書き残す', /指の動きに一拍遅れて見えた/.test(mob));
   //  パソコンの幅では今までどおり（514px の下限）
   ok('広い画面の下限はそのまま', /\n  \.wk\{min-width:514px;\}/.test(SRC));
 }
+// ⑱ スマホの予定の枠を Google カレンダーと同じ読み方に（色を塗り、題名を折り返す）
+{
+  const mob = SRC.slice(SRC.indexOf('@media(max-width:600px){'), SRC.indexOf('/* 継ナビくんの顔チップ'));
+  const wv = takeFn('calWeekVertical');
+  ok('枠を種類の色で塗り、白い字に', /\.wk-ev\{background:var\(--fg\)!important;color:#fff!important;/.test(mob));
+  ok('題名は折り返す（行数は JS が決める）', /\.wk-ev b\{white-space:normal;word-break:break-all;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;/.test(mob));
+  ok('枠の中の時刻は出さない（目盛りで分かる）', /\.wk-ev span\{display:none;\}/.test(mob));
+  ok('題名を大きく', /\.wk-ev\{[^}]*font-size:10\.5px;/.test(mob));
+  ok('終日の札も塗る', /\.wk-chip\{background:var\(--fg\)!important;color:#fff!important;/.test(mob));
+  ok('塗る色を枠に持たせる（自分の予定は青）', /'--fg:'\+\(kk\?kk\.fg:'#2C5DA8'\)\+';'/.test(wv) && /style="--fg:'\+\(k\?k\.fg:'#2C5DA8'\)/.test(wv));
+  ok('何行まで折り返すかは枠の高さから', /var lines=Math\.max\(1, Math\.floor\(\(hgt-6\)\/13\)\);/.test(wv) && /-webkit-line-clamp:'\+lines\+';/.test(wv));
+  //  1時間の高さはスマホで 54px、パソコンは 42px のまま
+  ok('1時間の高さは画面の幅で変える', /function wkPx\(\)/.test(SRC) && /matchMedia\('\(max-width:600px\)'\)\.matches\) \? 54 : WK_PX/.test(SRC));
+  ok('週表示は wkPx を使う', /var PX=wkPx\(\);/.test(wv) && !/WK_PX/.test(wv));
+  ok('空き枠を押したときの時刻も wkPx で', /\/wkPx\(\)\)\)\);/.test(takeFn('calWkSlot')));
+  ok('なぜ Google と同じ読み方にするかを書き残す', /淡い色に細い罫線では、狭い枠が格子に溶けて見えない/.test(mob));
+}
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-09', '20260917-09']);
+  is('版が揃う', [build, VER.build], ['20260917-10', '20260917-10']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

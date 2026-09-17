@@ -885,8 +885,16 @@
     .wk-hh{font-size:9.5px;right:3px;}
     .wk-nowt{font-size:9px;right:2px;}
     .wk-hcell{font-size:9.5px;} .wk-hcell .n{font-size:12px;}
-    .wk-chip{font-size:9px;padding:1px 2px;}
-    .wk-ev{font-size:9px;padding:2px 3px;}
+    /* 予定の枠は Google カレンダーと同じ読み方にする：色を塗り、題名を折り返す。
+       淡い色に細い罫線では、狭い枠が格子に溶けて見えない。時刻は左の目盛りで
+       分かるので枠の中には出さず、そのぶん題名を大きく（10.5px）して
+       2〜3行に折り返す（何行までかは枠の高さから JS が決める）。
+       1時間の高さも 42→54px（wkPx）。Google のスマホもこのくらい */
+    .wk-ev{background:var(--fg)!important;color:#fff!important;border-color:rgba(255,255,255,.45)!important;
+      font-size:10.5px;line-height:1.25;padding:3px 4px;border-radius:6px;}
+    .wk-ev b{white-space:normal;word-break:break-all;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;font-weight:600;}
+    .wk-ev span{display:none;}
+    .wk-chip{background:var(--fg)!important;color:#fff!important;border-color:transparent!important;font-size:9.5px;padding:2px 3px;}
   }
   /* 継ナビくんの顔チップと名前ラベル（チャットの発言者表示） */
   .tsg-face{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:11px;background:#0e2038;flex:0 0 auto;margin-top:2px;}
@@ -1432,7 +1440,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260917-09';
+  var APP_BUILD='20260917-10';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -17080,8 +17088,15 @@
   }
 
   // 週表示（バーチカル）。横に7日、縦に時間。Googleカレンダーの週と同じ読み方。
-  var WK_PX=42;   // 1時間の高さ
+  var WK_PX=42;   // 1時間の高さ（パソコン）
+  //  スマホは 54px。1日 44px ほどの狭い枠に題名を折り返して入れるには、
+  //  縦に余裕が要る。Google のスマホの週表示もこのくらいの高さ
+  function wkPx(){
+    try{ return (window.matchMedia && window.matchMedia('(max-width:600px)').matches) ? 54 : WK_PX; }
+    catch(e){ return WK_PX; }
+  }
   function calWeekVertical(byDay, ws){
+    var PX=wkPx();
     // 表示する時間帯。既定は 6:00〜21:00 で、はみ出す予定があれば広げる
     //  朝の面談・朝礼が6時台に入ることがあるため、開始は6時から置けるようにする。
     var lo=6, hi=21, days=[];
@@ -17096,7 +17111,7 @@
       });
     });
     lo=Math.max(0,lo); hi=Math.min(24,Math.max(hi,lo+4));
-    var H=(hi-lo)*WK_PX, tKey=calDkey(new Date());
+    var H=(hi-lo)*PX, tKey=calDkey(new Date());
 
     // 曜日の見出しは、本体と別の箱にして返す（head）。上の操作列と一緒に
     // 貼り付けるため。横スクロールは knvRenderCal が本体と合わせる。
@@ -17121,7 +17136,7 @@
         head+='<div class="wk-ad">';
         ads.slice(0, AD_MAX).forEach(function(x){
           var k=CAL_KINDS[x.kind];
-          head+='<span class="wk-chip" style="background:'+(k?k.bg:'var(--soft)')+';color:'+(k?k.fg:'var(--ink)')
+          head+='<span class="wk-chip" style="--fg:'+(k?k.fg:'#2C5DA8')+';background:'+(k?k.bg:'var(--soft)')+';color:'+(k?k.fg:'var(--ink)')
             +';border:1px solid '+(k?k.bd:'var(--line)')+';" title="'+escA(x.title)+'"'
             +' onclick="event.stopPropagation();calPeek('+(x._ri|0)+')">'+esc(x.title)+'</span>';
         });
@@ -17140,7 +17155,7 @@
     var now=new Date(), nowY=null;
     if(now>=days[0] && now<=new Date(days[6].getFullYear(),days[6].getMonth(),days[6].getDate(),23,59)){
       var nh=now.getHours()+now.getMinutes()/60;
-      if(nh>=lo && nh<=hi) nowY=(nh-lo)*WK_PX;
+      if(nh>=lo && nh<=hi) nowY=(nh-lo)*PX;
     }
     // 時間の目盛りと予定
     h+='<div class="wk-body" style="height:'+H+'px;"><div class="wk-row" style="height:'+H+'px;">'
@@ -17148,7 +17163,7 @@
     //  「6」ではなく「6:00」。数字だけだと日付と紛れて時刻に見えない。
     //  3時間ごと（clock 基準）は濃くして、目で追える手がかりにする。
     for(var t2=lo;t2<=hi;t2++){
-      h+='<span class="wk-hh'+(t2%3===0?' anc':'')+(t2===hi?' end':'')+'" style="top:'+((t2-lo)*WK_PX)+'px;">'
+      h+='<span class="wk-hh'+(t2%3===0?' anc':'')+(t2===hi?' end':'')+'" style="top:'+((t2-lo)*PX)+'px;">'
         +t2+':00</span>';
     }
     if(nowY!==null){
@@ -17163,14 +17178,18 @@
         .sort(function(a,b){ return new Date(a.when)-new Date(b.when); });
       calLayoutDay(timed).forEach(function(x){
         var t3=new Date(x.when), st=t3.getHours()+t3.getMinutes()/60;
-        var top=(st-lo)*WK_PX, hgt=Math.max(18, calDurH(x)*WK_PX-2);
+        var top=(st-lo)*PX, hgt=Math.max(18, calDurH(x)*PX-2);
         var kk=CAL_KINDS[x.kind];
         var w=100/x._n, left=x._i*w;
+        //  --fg はスマホで枠を塗る色（種類の色。自分の予定は青）。
+        //  何行まで折り返すかは枠の高さから決める（1行 13px、上下の余白 6px）
+        var lines=Math.max(1, Math.floor((hgt-6)/13));
         h+='<div class="wk-ev" style="top:'+top+'px;height:'+hgt+'px;left:calc('+left+'% + 1px);width:calc('+w+'% - 3px);'
+          +'--fg:'+(kk?kk.fg:'#2C5DA8')+';'
           +'background:'+(kk?kk.bg:'rgba(44,93,168,.10)')+';border-color:'+(kk?kk.bd:'#CBD9EE')+';color:'+(kk?kk.fg:'#1E3A66')+';"'
           +' onclick="event.stopPropagation();calPeek('+(x._ri|0)+')"'
           +' title="'+escA(('0'+t3.getHours()).slice(-2)+':'+('0'+t3.getMinutes()).slice(-2)+' '+x.title)+'">'
-          +'<b>'+esc(x.title)+'</b>'
+          +'<b style="-webkit-line-clamp:'+lines+';">'+esc(x.title)+'</b>'
           +(hgt>=32?'<span>'+('0'+t3.getHours()).slice(-2)+':'+('0'+t3.getMinutes()).slice(-2)+'</span>':'')
         +'</div>';
       });
@@ -17179,7 +17198,7 @@
     h+='</div>';
     // 罫線と、今の時刻の線
     for(var t4=lo+1;t4<hi;t4++){
-      h+='<div class="wk-line'+(t4%3===0?' anc':'')+'" style="top:'+((t4-lo)*WK_PX)+'px;"></div>';
+      h+='<div class="wk-line'+(t4%3===0?' anc':'')+'" style="top:'+((t4-lo)*PX)+'px;"></div>';
     }
     if(nowY!==null) h+='<div class="wk-now" style="top:'+nowY+'px;"></div>';
     h+='</div></div></div>';
@@ -17354,7 +17373,7 @@
     var hh=9;
     try{
       var box=ev.currentTarget.getBoundingClientRect();
-      hh=Math.max(0, Math.min(23, Math.floor(lo + (ev.clientY-box.top)/WK_PX)));
+      hh=Math.max(0, Math.min(23, Math.floor(lo + (ev.clientY-box.top)/wkPx())));
     }catch(e){}
     CAL_PICK=key;
     knvRenderCal();
