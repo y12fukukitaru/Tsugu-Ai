@@ -499,10 +499,30 @@ function takeFn(name) {
   ok('Google のカレンダーは一度だけ', (h1.match(/家族/g)||[]).length === 1 && /background:#8e24aa;"><\/i>家族/.test(h1));
   ok('名前と色は無害化', /&lt;共有&gt;/.test(h1) && !/<共有>/.test(h1) && !/x"y/.test(h1));
 }
+// ㉒ 説明書に今日の更新分（スワイプ・上に残る操作列・別の窓の入力・スマホの週表示・色・Workspace の注意）
+{
+  const MANA = R('manual-admin.html');
+  [['経営者', MANC], ['パートナー', MANP]].forEach(([w, M]) => {
+    ok(w + '：横スワイプで前後へ', /横にスワイプ<\/b>すると前の月・次の月/.test(M));
+    ok(w + '：操作列・曜日・終日が上に残る', /曜日の見出し・終日の帯<\/b>は、下へ送っても<b>上に貼り付いたまま<\/b>/.test(M));
+    ok(w + '：入力は別の窓、✕で継ナビくんは閉じない', /入力の窓だけを閉じ、継ナビくんはそのまま開いています/.test(M));
+    ok(w + '：スマホの週表示は7日が幅に収まる', /スマホでも7日が画面の幅に収まり、予定は色で塗られて題名が折り返されます/.test(M));
+    ok(w + '：＋予定は金色', /金色の<b>「＋ 予定」<\/b>/.test(M));
+    ok(w + '：色の見分け', /暦の下に<b>色の見分け<\/b>/.test(M));
+    ok(w + '：Workspace のカレンダー無しの注意', /「カレンダーが使えません」<\/b>と出るときは/.test(M) && /つなぎ直しても直りません/.test(M));
+  });
+  no('パートナー：古い「入力欄は暦の上」が残っていない', /入力欄は暦の上にあるので/.test(MANP));
+  ok('運営：Google 連携と Workspace の注意', /「Googleでつなぐ」で Google カレンダーと双方向/.test(MANA) && /カレンダーが使えません/.test(MANA));
+  //  継ナビくんの案内（サポートの受け答え）にも入っている。両ロール分
+  const guide = SRC.match(/横に払う\(スワイプ\)と前後の月・週へ。操作列/g) || [];
+  is('継ナビくんの案内にスワイプと上に残る操作列（2ロール）', guide.length, 2);
+  is('継ナビくんの案内に色と入力の窓（2ロール）', (SRC.match(/色は青=自分の予定・金=面談・橙=課題の期日/g) || []).length, 2);
+  is('継ナビくんの案内に Workspace の注意（2ロール）', (SRC.match(/「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていない/g) || []).length, 2);
+}
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-14', '20260917-14']);
+  is('版が揃う', [build, VER.build], ['20260917-15', '20260917-15']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
