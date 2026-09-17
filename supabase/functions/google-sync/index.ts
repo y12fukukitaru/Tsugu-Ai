@@ -1,11 +1,20 @@
 // =============================================================
-// google-sync: 予定を Google と行き来させる（双方向）
+// google-sync: 予定を Google と行き来させる（双方向・複数アカウント）
 // ---------------------------------------------------------------
-//  やることは三つです。
+//  つないである Google アカウント**全部**について、順にやります。
 //
 //    ① 短い鍵を取り直す（1時間で切れるため）
 //    ② こちらの予定を Google へ送る（まだ送っていないもの・直したもの）
 //    ③ Google の変更を取ってくる（前回からの差分だけ）
+//
+//  ■ 複数アカウントのときの決まり
+//
+//    ・Google → TsuguAi は、つないだ**全部**から取り込む
+//      （アカウントごとに「取り込む／取り込まない」を選べる）
+//    ・TsuguAi → Google は、**送り先（push_target）一つ**にだけ送る。
+//      両方に送ると、同じ予定が二つのカレンダーに出て散らかります
+//    ・一度どこかへ送った予定は、そのアカウントで直し続ける（link_id）。
+//      送り先を変えても動かしません。新しい予定から新しい送り先へ
 //
 //  ■ 同じ予定が二つにならないように
 //
@@ -19,6 +28,8 @@
 //    Google は syncToken という札をくれます。次からはその札を渡すと
 //    「前回からの変更だけ」が返ります。札が古くなると 410 が返るので、
 //    そのときは札を捨てて全部取り直します。
+//    取り込みが一件でも失敗した回は、札を進めません。進めると、
+//    失敗した予定が次から「もう渡した」扱いになり、永久に入りません。
 //
 //  ■ 面談について
 //
@@ -67,6 +78,39 @@ function fromG(v: any): { iso: string | null; allDay: boolean } {
   return { iso: null, allDay: false };
 }
 
+//  短い鍵を用意する。切れていれば更新用の鍵で取り直す。
+//  取り直せなければ null（つなぎ直しが要る）
+async function accessFor(sb: any, link: any): Promise<string | null> {
+  const stillGood = link.access_expires && new Date(link.access_expires).getTime() > Date.now();
+  if (link.access_token && stillGood) return link.access_token;
+
+  const { data: refresh } = await sb.rpc("google_refresh_get", { p_link: link.id });
+  if (!refresh) {
+    await sb.from("google_cal_links").update({ last_error: "つなぎ直しが要ります：更新用の鍵がありません" }).eq("id", link.id);
+    return null;
+  }
+  const r = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: CLIENT_ID, client_secret: CLIENT_SECRET,
+      refresh_token: String(refresh), grant_type: "refresh_token",
+    }),
+  });
+  const t = await r.json();
+  if (!r.ok || !t.access_token) {
+    //  取り消された・期限切れ。つなぎ直していただくほかない
+    const msg = t?.error_description || t?.error || `HTTP ${r.status}`;
+    await sb.from("google_cal_links").update({ last_error: `つなぎ直しが要ります：${msg}` }).eq("id", link.id);
+    return null;
+  }
+  await sb.from("google_cal_links").update({
+    access_token: t.access_token,
+    access_expires: new Date(Date.now() + (Number(t.expires_in || 3600) - 60) * 1000).toISOString(),
+  }).eq("id", link.id);
+  return t.access_token;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (!CLIENT_ID || !CLIENT_SECRET) {
@@ -82,101 +126,93 @@ Deno.serve(async (req) => {
   if (ue || !u?.user) return json({ ok: false, error: "ログインを確かめられませんでした" }, 401);
   const uid = u.user.id;
 
-  const { data: link } = await sb.from("google_cal_links")
-    .select("*").eq("user_id", uid).maybeSingle();
-  if (!link || !link.refresh_enc) return json({ ok: false, error: "まだ連携していません" }, 400);
+  const { data: links } = await sb.from("google_cal_links")
+    .select("*").eq("user_id", uid).order("created_at", { ascending: true });
+  const live = (links ?? []).filter((l: any) => l.refresh_enc);
+  if (!live.length) return json({ ok: false, error: "まだ連携していません" }, 400);
 
-  // ---------------------------------------------------------------
-  // ① 短い鍵を用意する
-  // ---------------------------------------------------------------
-  let access = link.access_token as string | null;
-  const stillGood = link.access_expires && new Date(link.access_expires).getTime() > Date.now();
-  if (!access || !stillGood) {
-    const { data: refresh } = await sb.rpc("google_refresh_get", { p_user: uid });
-    if (!refresh) return json({ ok: false, error: "更新用の鍵がありません。つなぎ直してください" }, 400);
-    const r = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        client_id: CLIENT_ID, client_secret: CLIENT_SECRET,
-        refresh_token: String(refresh), grant_type: "refresh_token",
-      }),
-    });
-    const t = await r.json();
-    if (!r.ok || !t.access_token) {
-      //  取り消された・期限切れ。つなぎ直していただくほかない
-      const msg = t?.error_description || t?.error || `HTTP ${r.status}`;
-      await sb.from("google_cal_links").update({ last_error: `つなぎ直しが要ります：${msg}` }).eq("user_id", uid);
-      return json({ ok: false, error: `Google とのつながりが切れています（${msg}）。つなぎ直してください`, relink: true }, 400);
-    }
-    access = t.access_token;
-    await sb.from("google_cal_links").update({
-      access_token: access,
-      access_expires: new Date(Date.now() + (Number(t.expires_in || 3600) - 60) * 1000).toISOString(),
-    }).eq("user_id", uid);
-  }
-  const H = { authorization: `Bearer ${access}`, "content-type": "application/json" };
-
-  let pushed = 0, pulled = 0, removed = 0;
-  const notes: string[] = [];
-
-  // ---------------------------------------------------------------
-  // ② こちらの予定を Google へ
-  // ---------------------------------------------------------------
   //  送るのは、これから先と、少し前まで。古いものまで送っても
   //  相手のカレンダーが散らかるだけです
   const since = new Date(Date.now() - 30 * DAY).toISOString();
   const until = new Date(Date.now() + 180 * DAY).toISOString();
 
+  //  こちらの予定は一度だけ読んで、アカウントごとに振り分ける
   const { data: mine } = await sb.from("agenda_events")
-    .select("id, title, starts_at, ends_at, all_day, place, note, google_id, source, synced_at, updated_at")
+    .select("id, title, starts_at, ends_at, all_day, place, note, google_id, link_id, source, synced_at, updated_at")
     .eq("owner_id", uid).gte("starts_at", since).lte("starts_at", until).limit(400);
 
-  for (const e of mine ?? []) {
-    //  Google から来たものを送り返さない
-    if (e.source === "google") continue;
-    //  前に送ったあと、こちらで直していなければ何もしない
-    if (e.google_id && e.synced_at && new Date(e.synced_at) >= new Date(e.updated_at)) continue;
-
-    const end = e.ends_at
-      ? e.ends_at
-      : new Date(new Date(e.starts_at).getTime() + (e.all_day ? DAY : 3600000)).toISOString();
-    const body = {
-      summary: e.title,
-      location: e.place || undefined,
-      description: e.note || undefined,
-      start: gWhen(e.starts_at, e.all_day),
-      end: gWhen(end, e.all_day),
-      //  こちらのものだという印。この表が失われても見分けがつく
-      extendedProperties: { private: { tsuguai: e.id } },
-    };
-    try {
-      const r = e.google_id
-        ? await fetch(`${API}/${encodeURIComponent(e.google_id)}`, { method: "PATCH", headers: H, body: JSON.stringify(body) })
-        : await fetch(API, { method: "POST", headers: H, body: JSON.stringify(body) });
-      const g = await r.json();
-      if (r.ok && g.id) {
-        await sb.from("agenda_events").update({
-          google_id: g.id, google_etag: g.etag ?? null, synced_at: new Date().toISOString(),
-        }).eq("id", e.id);
-        pushed++;
-      } else if (r.status === 404 && e.google_id) {
-        //  向こうで消されていた。番号を外して、次の回に作り直す
-        await sb.from("agenda_events").update({ google_id: null, synced_at: null }).eq("id", e.id);
-      } else {
-        notes.push(`送れませんでした：${e.title}（${g?.error?.message ?? r.status}）`);
-      }
-    } catch (err) {
-      notes.push(`送れませんでした：${e.title}（${String((err as Error).message)}）`);
-    }
-  }
-
-  //  面談も Google に出す（こちらからの一方通行）
+  //  面談はパートナーだけ。担当顧客の名前も一度だけ引く
   const { data: prof } = await sb.from("profiles").select("role").eq("id", uid).maybeSingle();
+  let nameOf = new Map<string, string>();
   if (prof?.role === "consultant") {
     const { data: ids } = await sb.from("profiles").select("id, company_name").eq("consultant_id", uid);
-    const nameOf = new Map((ids ?? []).map((p: any) => [p.id, p.company_name || "顧客"]));
-    if (nameOf.size) {
+    nameOf = new Map((ids ?? []).map((p: any) => [p.id, p.company_name || "顧客"]));
+  }
+
+  let pushed = 0, pulled = 0, removed = 0;
+  const notes: string[] = [];
+  let relink = false;   // つなぎ直しが要るアカウントがあるか
+
+  for (const link of live) {
+    const lnotes: string[] = [];
+    const who = link.google_email ? `${link.google_email}：` : "";
+
+    // -------------------------------------------------------------
+    // ① 短い鍵を用意する
+    // -------------------------------------------------------------
+    const access = await accessFor(sb, link);
+    if (!access) { relink = true; continue; }   // 理由は accessFor が書いてある
+    const H = { authorization: `Bearer ${access}`, "content-type": "application/json" };
+
+    // -------------------------------------------------------------
+    // ② こちらの予定を Google へ
+    // -------------------------------------------------------------
+    for (const e of mine ?? []) {
+      //  Google から来たものを送り返さない
+      if (e.source === "google") continue;
+      //  どのアカウントへ送るか。すでにどこかへ送ったものはそのアカウントへ、
+      //  まだのものは送り先へ。送り先でもなく預かってもいなければ何もしない
+      const here = e.link_id ? e.link_id === link.id : !!link.push_target;
+      if (!here) continue;
+      //  前に送ったあと、こちらで直していなければ何もしない
+      if (e.google_id && e.synced_at && new Date(e.synced_at) >= new Date(e.updated_at)) continue;
+
+      const end = e.ends_at
+        ? e.ends_at
+        : new Date(new Date(e.starts_at).getTime() + (e.all_day ? DAY : 3600000)).toISOString();
+      const body = {
+        summary: e.title,
+        location: e.place || undefined,
+        description: e.note || undefined,
+        start: gWhen(e.starts_at, e.all_day),
+        end: gWhen(end, e.all_day),
+        //  こちらのものだという印。この表が失われても見分けがつく
+        extendedProperties: { private: { tsuguai: e.id } },
+      };
+      try {
+        const r = e.google_id
+          ? await fetch(`${API}/${encodeURIComponent(e.google_id)}`, { method: "PATCH", headers: H, body: JSON.stringify(body) })
+          : await fetch(API, { method: "POST", headers: H, body: JSON.stringify(body) });
+        const g = await r.json();
+        if (r.ok && g.id) {
+          await sb.from("agenda_events").update({
+            google_id: g.id, google_etag: g.etag ?? null, link_id: link.id,
+            synced_at: new Date().toISOString(),
+          }).eq("id", e.id);
+          pushed++;
+        } else if (r.status === 404 && e.google_id) {
+          //  向こうで消されていた。番号を外して、次の回に送り先へ作り直す
+          await sb.from("agenda_events").update({ google_id: null, link_id: null, synced_at: null }).eq("id", e.id);
+        } else {
+          lnotes.push(`送れませんでした：${e.title}（${g?.error?.message ?? r.status}）`);
+        }
+      } catch (err) {
+        lnotes.push(`送れませんでした：${e.title}（${String((err as Error).message)}）`);
+      }
+    }
+
+    //  面談も Google に出す（こちらからの一方通行。送り先にだけ）
+    if (link.push_target && nameOf.size) {
       const { data: ms } = await sb.from("meetings_scheduled")
         .select("id, customer_id, meet_at, place, status")
         .eq("status", "scheduled").in("customer_id", [...nameOf.keys()])
@@ -210,93 +246,114 @@ Deno.serve(async (req) => {
         } catch { /* 次の回に持ち越す */ }
       }
     }
-  }
 
-  // ---------------------------------------------------------------
-  // ③ Google の変更を取ってくる
-  // ---------------------------------------------------------------
-  if (link.pull_private !== false) {
-    let pageToken: string | null = null;
-    let syncToken: string | null = link.sync_token ?? null;
-    let nextSync: string | null = null;
-    let guard = 0;
+    // -------------------------------------------------------------
+    // ③ Google の変更を取ってくる
+    // -------------------------------------------------------------
+    if (link.pull_private !== false) {
+      let pageToken: string | null = null;
+      let syncToken: string | null = link.sync_token ?? null;
+      let nextSync: string | null = null;
+      let pullBad = false;   // 一件でも入れ損ねたら、札を進めない
 
-    do {
-      const q = new URL(API);
-      q.searchParams.set("singleEvents", "true");
-      q.searchParams.set("maxResults", "250");
-      if (syncToken) {
-        q.searchParams.set("syncToken", syncToken);
-      } else {
-        //  はじめて、または札が古くなったとき。取りすぎないよう幅を切る
-        q.searchParams.set("timeMin", since);
-        q.searchParams.set("timeMax", until);
-      }
-      if (pageToken) q.searchParams.set("pageToken", pageToken);
+      //  ここは do…while で書いてはいけません。do…while の continue は
+      //  条件式に飛ぶので、札を捨てたあと pageToken が null のまま条件を
+      //  見て、**取り直さずに終わってしまいます**。実際そうなりました
+      //  （「同期できたのに一件も入らない」という、いちばん分かりにくい形で）。
+      //  終わり方を自分で書きます。
+      let pages = 0;     // 何ページ取ったか
+      let resets = 0;    // 札を捨てて取り直した回数
+      while (true) {
+        if (++pages > 20) break;   // 際限なく回らないように
 
-      const r = await fetch(q, { headers: H });
-      if (r.status === 410) {
-        //  札が古い。捨てて最初から取り直す
-        syncToken = null; pageToken = null;
-        await sb.from("google_cal_links").update({ sync_token: null }).eq("user_id", uid);
-        if (++guard > 2) break;
-        continue;
-      }
-      const g = await r.json();
-      if (!r.ok) {
-        notes.push(`取ってこられませんでした（${g?.error?.message ?? r.status}）`);
-        break;
-      }
+        const q = new URL(API);
+        q.searchParams.set("singleEvents", "true");
+        q.searchParams.set("maxResults", "250");
+        if (syncToken) {
+          q.searchParams.set("syncToken", syncToken);
+        } else {
+          //  はじめて、または札が古くなったとき。取りすぎないよう幅を切る
+          q.searchParams.set("timeMin", since);
+          q.searchParams.set("timeMax", until);
+        }
+        if (pageToken) q.searchParams.set("pageToken", pageToken);
 
-      for (const it of g.items ?? []) {
-        //  こちらが送ったものは取り込まない（同じ予定が二つになる）
-        const mark = it.extendedProperties?.private ?? {};
-        if (mark.tsuguai || mark.tsuguai_meeting) continue;
-
-        if (it.status === "cancelled") {
-          //  向こうで消えたものは、取り込んだぶんだけ消す。
-          //  こちらで作った予定は消しません（Google の操作で消えては困る）
-          const { count } = await sb.from("agenda_events")
-            .delete({ count: "exact" })
-            .eq("owner_id", uid).eq("google_id", it.id).eq("source", "google");
-          removed += count ?? 0;
+        const r = await fetch(q, { headers: H });
+        if (r.status === 410) {
+          //  札が古い。捨てて、日付を区切った取り方で最初から取り直す
+          syncToken = null; pageToken = null;
+          await sb.from("google_cal_links").update({ sync_token: null }).eq("id", link.id);
+          if (++resets > 2) { lnotes.push("取り直しが続いたので止めました"); break; }
           continue;
         }
+        const g = await r.json();
+        if (!r.ok) {
+          lnotes.push(`取ってこられませんでした（${g?.error?.message ?? r.status}）`);
+          pullBad = true;
+          break;
+        }
 
-        const st = fromG(it.start), en = fromG(it.end);
-        if (!st.iso) continue;
-        const row = {
-          owner_id: uid,
-          title: String(it.summary || "（無題）").slice(0, 120),
-          starts_at: st.iso,
-          ends_at: en.iso,
-          all_day: st.allDay,
-          place: it.location ? String(it.location).slice(0, 120) : null,
-          note: it.description ? String(it.description).slice(0, 300) : null,
-          google_id: it.id,
-          google_etag: it.etag ?? null,
-          source: "google",
-          synced_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        const { error } = await sb.from("agenda_events")
-          .upsert(row, { onConflict: "owner_id,google_id" });
-        if (!error) pulled++;
+        for (const it of g.items ?? []) {
+          //  こちらが送ったものは取り込まない（同じ予定が二つになる）
+          const mark = it.extendedProperties?.private ?? {};
+          if (mark.tsuguai || mark.tsuguai_meeting) continue;
+
+          if (it.status === "cancelled") {
+            //  向こうで消えたものは、取り込んだぶんだけ消す。
+            //  こちらで作った予定は消しません（Google の操作で消えては困る）
+            const { count } = await sb.from("agenda_events")
+              .delete({ count: "exact" })
+              .eq("owner_id", uid).eq("google_id", it.id).eq("source", "google");
+            removed += count ?? 0;
+            continue;
+          }
+
+          const st = fromG(it.start), en = fromG(it.end);
+          if (!st.iso) continue;
+          const row = {
+            owner_id: uid,
+            title: String(it.summary || "（無題）").slice(0, 120),
+            starts_at: st.iso,
+            ends_at: en.iso,
+            all_day: st.allDay,
+            place: it.location ? String(it.location).slice(0, 120) : null,
+            note: it.description ? String(it.description).slice(0, 300) : null,
+            google_id: it.id,
+            google_etag: it.etag ?? null,
+            link_id: link.id,
+            source: "google",
+            synced_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+          //  同じ予定は番号で上書き（索引は owner_id, google_id。条件なし）
+          const { error } = await sb.from("agenda_events")
+            .upsert(row, { onConflict: "owner_id,google_id" });
+          if (error) {
+            //  黙って落とすと「同期は成功なのに出ない」になる。必ず知らせる
+            pullBad = true;
+            if (lnotes.length < 3) lnotes.push(`入れられませんでした：${row.title}（${error.message}）`);
+          } else {
+            pulled++;
+          }
+        }
+
+        pageToken = g.nextPageToken ?? null;
+        if (g.nextSyncToken) nextSync = g.nextSyncToken;
+        if (!pageToken) break;   // 最後のページまで来た
       }
 
-      pageToken = g.nextPageToken ?? null;
-      if (g.nextSyncToken) nextSync = g.nextSyncToken;
-    } while (pageToken && ++guard < 20);
-
-    if (nextSync) {
-      await sb.from("google_cal_links").update({ sync_token: nextSync }).eq("user_id", uid);
+      //  全部入ったときだけ札を進める。入れ損ねがあれば、次も同じ幅で取り直す
+      if (nextSync && !pullBad) {
+        await sb.from("google_cal_links").update({ sync_token: nextSync }).eq("id", link.id);
+      }
     }
+
+    await sb.from("google_cal_links").update({
+      last_sync_at: new Date().toISOString(),
+      last_error: lnotes.length ? lnotes.slice(0, 3).join(" / ") : null,
+    }).eq("id", link.id);
+    for (const n of lnotes) notes.push(who + n);
   }
 
-  await sb.from("google_cal_links").update({
-    last_sync_at: new Date().toISOString(),
-    last_error: notes.length ? notes.slice(0, 3).join(" / ") : null,
-  }).eq("user_id", uid);
-
-  return json({ ok: true, pushed, pulled, removed, notes: notes.slice(0, 3) });
+  return json({ ok: true, pushed, pulled, removed, relink, accounts: live.length, notes: notes.slice(0, 3) });
 });
