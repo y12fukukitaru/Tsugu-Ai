@@ -475,6 +475,8 @@
   .cal-stick.week{margin-bottom:0;padding-bottom:0;box-shadow:none;}
   .wk-head{overflow-x:hidden;border:1px solid var(--softline);border-bottom:0;border-radius:10px 10px 0 0;background:var(--card);}
   .wk-wrap.under{border-top:0;border-radius:0 0 10px 10px;}
+  /* 終日の帯で 3件を超えたぶんの札。押すとその日の一覧が下に開く */
+  .wk-more{background:var(--soft);color:var(--muted);border:1px dashed var(--line);text-align:center;font-weight:700;}
   /* 継ナビくんの月カレンダー。パネルの幅でも読めるよう、日付は点で示す */
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
   .cal-hd{text-align:center;font-size:10.5px;color:var(--muted);padding:3px 0;letter-spacing:.04em;}
@@ -1396,7 +1398,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260917-05';
+  var APP_BUILD='20260917-06';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -17069,25 +17071,34 @@
       head+='<div class="'+cls+'" onclick="calPick(\''+k+'\')">'+'日月火水木金土'.charAt(d.getDay())
         +'<span class="n">'+d.getDate()+'</span></div>';
     });
-    head+='</div></div></div>';
-
-    var h='<div class="wk-wrap under"><div class="wk">';
-    // 終日の帯
+    head+='</div>';
+    // 終日の帯も見出しと一緒に貼り付ける。ただし祝日や連休で増えると背が
+    // 高くなり、貼り付けたまま時間の枠が見えなくなる。1日 3件までにして、
+    // それ以上は「+n」の札にする（押すとその日の一覧が下に開く）
+    var AD_MAX=3;
     var hasAd=days.some(function(d){ return (byDay[calDkey(d)]||[]).some(function(x){ return x.allDay; }); });
     if(hasAd){
-      h+='<div class="wk-row wk-sep"><div class="wk-corner" style="font-size:10px;color:var(--muted);text-align:right;padding:3px 6px 0 0;">終日</div>';
+      head+='<div class="wk-row wk-sep"><div class="wk-corner" style="font-size:10px;color:var(--muted);text-align:right;padding:3px 6px 0 0;">終日</div>';
       days.forEach(function(d){
-        h+='<div class="wk-ad">';
-        (byDay[calDkey(d)]||[]).filter(function(x){ return x.allDay; }).forEach(function(x){
+        var k0=calDkey(d), ads=(byDay[k0]||[]).filter(function(x){ return x.allDay; });
+        head+='<div class="wk-ad">';
+        ads.slice(0, AD_MAX).forEach(function(x){
           var k=CAL_KINDS[x.kind];
-          h+='<span class="wk-chip" style="background:'+(k?k.bg:'var(--soft)')+';color:'+(k?k.fg:'var(--ink)')
+          head+='<span class="wk-chip" style="background:'+(k?k.bg:'var(--soft)')+';color:'+(k?k.fg:'var(--ink)')
             +';border:1px solid '+(k?k.bd:'var(--line)')+';" title="'+escA(x.title)+'"'
             +' onclick="event.stopPropagation();calPeek('+(x._ri|0)+')">'+esc(x.title)+'</span>';
         });
-        h+='</div>';
+        if(ads.length>AD_MAX){
+          head+='<span class="wk-chip wk-more" title="ほか '+(ads.length-AD_MAX)+' 件。押すとこの日の一覧が開きます"'
+            +' onclick="event.stopPropagation();calPick(\''+k0+'\')">+'+(ads.length-AD_MAX)+'</span>';
+        }
+        head+='</div>';
       });
-      h+='</div>';
+      head+='</div>';
     }
+    head+='</div></div>';
+
+    var h='<div class="wk-wrap under"><div class="wk">';
     // 今この瞬間の位置。目盛りにも赤い時刻の札を出すので、先に出しておく
     var now=new Date(), nowY=null;
     if(now>=days[0] && now<=new Date(days[6].getFullYear(),days[6].getMonth(),days[6].getDate(),23,59)){
