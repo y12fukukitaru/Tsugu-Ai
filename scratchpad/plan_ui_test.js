@@ -70,7 +70,9 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
   ok('パートナーには切替の依頼ボタン', /planRequest\('c1','buyer'\)/.test(h1) && /買い手プラン（成長） への切替を運営に依頼/.test(h1));
   ok('保存と継ナビくん', /onclick="exitSave\(\)"/.test(h1) && /onclick="exitAsk\(\)"/.test(h1));
   const h2 = M.html({ exit_type: 'family', target_year: 2030, targets: {}, holding_flag: true, holding_note: '税理士と相談中' }, ctx, 'partner');
-  ok('持株会社の合図と検討中', /合図あり/.test(h2) && /1億円を超えています/.test(h2) && /checked/.test(h2) && /税理士と相談中/.test(h2) && /税額を計算しません/.test(h2));
+  //  検討の記録は「株の持ち方・組織の検討」に一本化。出口の欄は合図だけ
+  ok('持株会社の合図（出口の欄は合図と案内だけ）', /合図あり/.test(h2) && /1億円を超えています/.test(h2) && /株の持ち方・組織の検討/.test(h2) && /税額を計算しません/.test(h2));
+  no('出口の欄に持株会社のチェック箱は残っていない', /EXIT\.edit\.holding_flag=this\.checked/.test(h2) || /EXIT\.edit\.holding_note=this\.value/.test(h2));
   const h3 = M.html({ exit_type: 'sell', targets: {} }, Object.assign({}, ctx, { pending: { to_plan: 'buyer' } }), 'partner');
   ok('依頼中は依頼ボタンを出さない', /切替を依頼中/.test(h3) && !/planRequest/.test(h3));
   const h4 = M.html({ exit_type: null, targets: {} }, { sqlOk: false, prof: {} }, 'customer');
@@ -105,6 +107,49 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
   const mrow = (MANC.split('\n').find((l, i, a) => i > 0 && /どの出口へ/.test(a[i - 1]) && /scr-sbtn/.test(l)) || '');
   is('経営者説明書：写しのボタンも8つ', (mrow.match(/class="scr-sbtn/g) || []).length, 8);
   ok('パートナー説明書：断定しない', /の8つから、その会社の状況にいちばん近いものを選び/.test(MANP) && /経営者に断定しないでください/.test(MANP));
+}
+// ③c 株の持ち方・組織の検討（出口とは別に）
+{
+  const S = new Function(base + 'function $(id){ return null; }' + takeArr('STRUCT_KINDS') + takeArr('STRUCT_STATUS') + takeFn('structStatusName') + takeFn('structSignals') + 'var STRUCT={ scope:"c1", who:"customer", row:null, items:{}, sqlOk:true };' + takeFn('structHtml') + takeFn('structPick') + takeFn('structNote') +
+    'return {kinds:STRUCT_KINDS, st:STRUCT_STATUS, signals:structSignals, html:structHtml, pick:structPick, note:structNote, S:function(){return STRUCT;}};')();
+  is('6つの形', S.kinds.map((x) => x.k), ['holding', 'asset', 'split', 'shares', 'esop', 'trust']);
+  ok('どれにも、何か・向く状況・相談先がある', S.kinds.every((x) => x.what && x.fit && x.who));
+  is('状況は4つ', S.st.map((x) => x[0]), ['consider', 'consult', 'done', 'skip']);
+  const ctx = { eq: 12000, eqGrowth: 25, net: 8000, debt: 3000, opY: 1500, ans: { deputy: true }, prof: { company_name: '◯◯商事' } };
+  const sg = S.signals(ctx);
+  ok('合図は出口の種類に関係なく出る（持株会社・資産管理会社・種類株・信託・持株会）', ['holding', 'asset', 'shares', 'trust', 'esop'].every((k) => (sg[k] || []).length > 0));
+  ok('分社化には数字の合図が無い', !sg.split);
+  ok('合図に税額は出ない', !/相続税|税額/.test(JSON.stringify(sg)));
+  is('整っていれば合図は減る', Object.keys(S.signals({ eq: 5000, eqGrowth: 5, ans: { shares: true, will: true, successor: true } })).length, 0);
+  const h0 = S.html({}, ctx, 'customer', true);
+  ok('見出しに「出口とは別に」', /株の持ち方・組織の検討/.test(h0) && /出口とは別に。出口が決まっていなくても検討できます/.test(h0));
+  ok('税額を計算しないと明記', /TsuguAi は税額を計算しません/.test(h0) && /税理士・司法書士・弁護士/.test(h0));
+  is('形ごとに4つの札', (h0.match(/onclick="structPick\('/g) || []).length, 24);
+  ok('合図のある形に「合図あり」', /合図あり/.test(h0) && /1億円を超えています/.test(h0));
+  ok('選ぶ前はメモ欄が出ない', !/structNote\(/.test(h0));
+  const h1 = S.html({ holding: { status: 'consult', note: '税理士と相談中' }, split: { status: 'skip' } }, ctx, 'partner', true);
+  ok('選んだ形に状況の札とメモ', /専門家に相談中/.test(h1) && /税理士と相談中/.test(h1) && /structNote\('holding'/.test(h1));
+  ok('見送りにした形は合図を消す', !/✂️ 分社化[\s\S]{0,400}合図あり/.test(h1));
+  ok('保存と継ナビくん', /onclick="structSave\(\)"/.test(h1) && /onclick="structAsk\(\)"/.test(h1));
+  ok('SQL 未実行の案内', /「株の持ち方・組織の検討」の SQL を実行してください/.test(S.html({}, ctx, 'customer', false)));
+  //  同じ札をもう一度押すと外れる（画面が無くても状態は動く）
+  S.pick('holding', 'consider'); is('押すと検討中', S.S().items.holding.status, 'consider');
+  S.pick('holding', 'consider'); ok('もう一度押すと外れる', !S.S().items.holding);
+  S.note('trust', 'x'.repeat(400)); is('メモは300字まで', S.S().items.trust.note.length, 300);
+  //  出口の設計から呼ぶ・置き場所
+  ok('出口の設計のあとに描く', /try\{ await loadStructPlan\(scope, who, ctx\); \}catch\(e\)\{\}/.test(takeFn('loadExitPlan')));
+  ok('経営者・カルテの両方に置き場', /<div id="my-struct"><\/div>/.test(SRC) && /<div id="cl-struct"><\/div>/.test(SRC));
+  const sa = takeFn('structAsk');
+  ok('継ナビくんには2つまでに絞らせ、税額は出さない', /2つまでに絞り/.test(sa) && /税額の計算はしないでください/.test(sa));
+  //  SQL
+  const SQ = R('supabase/migrations/20260917060000_structure_plans.sql');
+  ok('表と RLS', /create table if not exists public\.structure_plans/.test(SQ) && /using \(public\.customer_may\(customer_id\)\)/.test(SQ) && /with check \(public\.customer_may\(customer_id\)\)/.test(SQ));
+  ok('出口の「持株会社を検討中」を引き継ぐ', /from public\.exit_plans\s+where holding_flag/.test(SQ) && /on conflict \(customer_id\) do nothing/.test(SQ));
+  no('税額の列は無い', /tax|税額/.test(SQ.replace(/税額は持たない/g, '')));
+  //  説明書・案内
+  ok('経営者説明書', /持株会社などは、出口とは別に検討できます/.test(MANC) && /検討中／専門家に相談中／実行済／見送り/.test(MANC));
+  ok('パートナー説明書', /株の持ち方・組織の検討（出口とは別に）/.test(MANP) && /税理士・司法書士・弁護士へおつなぎ/.test(MANP));
+  ok('継ナビくんの画面ガイド', /出口とは別の「株の持ち方・組織の検討」=持株会社\(ホールディングス\)\/資産管理会社\/分社化/.test(SRC));
 }
 // ③b 運営の成長ロードマップ：上場は二段（TOKYO PRO Market → グロース）
 {
@@ -163,12 +208,12 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
   ok('SQL：出口の設計は相続税評価額を持たない', /相続税評価額は持たない/.test(SQL) && !/inheritance|相続税評価額 integer/.test(SQL));
   ok('SQL の期待値', /期待値：列=4、表=2、関数=6、契約書にプラン=1/.test(SQL));
   ok('pitch：2つのプランと優遇', /買い手プラン（成長）45,000円/.test(PITC) && /売り手プラン（譲渡準備）30,000円/.test(PITC) && /最大50%/.test(PITC));
-  ok('経営者説明書：プラン・優遇・出口の設計', /2つのプラン/.test(MANC) && /<h3>出口の設計<\/h3>/.test(MANC) && /持株会社の検討/.test(MANC));
+  ok('経営者説明書：プラン・優遇・出口の設計', /2つのプラン/.test(MANC) && /<h3>出口の設計<\/h3>/.test(MANC) && /持株会社などは、出口とは別に検討できます/.test(MANC));
   ok('パートナー説明書：プランを選ぶ・切替依頼・出口の設計', /金額ではなく<b>プラン<\/b>を選びます/.test(MANP) && /運営に依頼し、運営が切り替えます/.test(MANP) && /<h3>出口の設計<\/h3>/.test(MANP));
   ok('運営説明書：2プラン・切替は運営だけ・契約書の条文', /顧問料（2プラン）/.test(MANA) && /切替は運営だけ/.test(MANA) && /第2条の3/.test(MANA));
   ok('税額は出さないと明記', /税額は計算しません/.test(MANC) && /税額を計算しません/.test(SRC));
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-16', '20260917-16']);
+  is('版が揃う', [build, VER.build], ['20260917-17', '20260917-17']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

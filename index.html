@@ -1455,7 +1455,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260917-16';
+  var APP_BUILD='20260917-17';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -3867,6 +3867,8 @@
         +'<div class="panel" id="sec-exit"><div class="ph">出口の設計</div>'
           +'<div style="font-size:12px;color:#94A2B6;margin-bottom:10px;line-height:1.7;">どの会社にも出口があります。譲る・継ぐ・一部を譲って続ける・上場して続ける・畳む・買い手になる。どれへ、いつまでに、どの数字を。担当パートナーと一緒に決め、四半期ごとに差を見ます。早く決めておくほど、そのときの<b style="color:#1E3A66;">交渉力</b>が変わります。期限に追われてからでは、条件は相手が決めます。</div>'
           +'<div id="my-exit">読み込み中...</div>'
+          //  出口とは別に検討する、株の持ち方・組織（持株会社など）
+          +'<div id="my-struct"></div>'
         +'</div>'
         +(planOf(prof)==='buyer' ? (''
         +'<div class="panel" id="sec-ma"><div class="ph">買い手になる</div>'
@@ -12765,6 +12767,7 @@
       +'<div class="ph" id="cs-exit" style="font-size:13px;margin-top:18px;"><span class="ph-t">'+icoSvg('trend')+'出口の設計（どこへ・いつまでに・どの数字を）</span></div>'
       +'<div id="knav-exit"></div>'
       +'<div id="cl-exit">読み込み中...</div>'
+      +'<div id="cl-struct"></div>'
       +'<div class="ph" id="cs-after" style="font-size:13px;margin-top:18px;"><span class="ph-t">'+icoSvg('trend')+'買った後に備える（この会社の状況で）</span></div>'
       +'<div id="knav-after"></div>'
       +'<div id="cl-after">読み込み中...</div>'
@@ -13982,6 +13985,8 @@
                 targets:(EXIT.row&&EXIT.row.targets)||{}, holding_flag:!!(EXIT.row&&EXIT.row.holding_flag),
                 holding_note:(EXIT.row&&EXIT.row.holding_note)||'', notes:(EXIT.row&&EXIT.row.notes)||'' };
     box.innerHTML=exitHtml(EXIT.edit, ctx, who);
+    //  株の持ち方・組織の検討は、出口が決まっていなくても使う。同じ材料（ctx）で描く
+    try{ await loadStructPlan(scope, who, ctx); }catch(e){}
   }
   function exitFmt(v, u){ return (v==null||!isFinite(v))?'—':(Number(v).toLocaleString('ja-JP')+u); }
   function exitHtml(e, ctx, who){
@@ -14062,15 +14067,15 @@
         : '<div style="font-size:11.5px;color:#27684A;">承継チェックの項目は整っています。目標との差を詰める段階です。</div>');
     //  持株会社
     var sig=holdingSignals(ctx, e);
-    var hot=(sig.length>0||!!e.holding_flag);
+    var hot=(sig.length>0);
     h+='<div style="border:1.5px solid '+(hot?'#EBDDB4':'var(--line)')+';background:'+(hot?'#FDFAF1':'#fff')+';border-radius:11px;padding:10px 13px;margin-top:12px;">'
       +'<div style="font-size:12px;font-weight:700;color:var(--navy);">🏢 持株会社の検討'+(sig.length?'<span class="tag gold" style="margin-left:6px;">合図あり</span>':'')+'</div>'
       +(sig.length
         ? '<ul style="margin:6px 0 0;padding-left:18px;font-size:11.5px;line-height:1.75;color:var(--ink);">'+sig.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>'
           +'<div style="font-size:11.5px;color:var(--ink);line-height:1.7;margin-top:6px;">持株会社の設立など、<b>株の持ち方を変える選択肢</b>を、税理士など専門家と検討する時期です。TsuguAi は税額を計算しません。</div>'
         : '<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:4px;">株価が上がりすぎたり、後継者が株を引き取る負担が大きくなりすぎたときに、ここに合図が出ます（親族・従業員へ継ぐ出口のとき）。</div>')
-      +'<label style="display:flex;gap:6px;align-items:center;font-size:12px;margin-top:8px;cursor:pointer;"><input type="checkbox" '+(e.holding_flag?'checked':'')+' onchange="EXIT.edit.holding_flag=this.checked"> 持株会社の設立を検討中（専門家と相談を始めた）</label>'
-      +'<input class="inp2" style="width:100%;margin-top:6px;" placeholder="相談先・時期など（任意）" value="'+esc(e.holding_note||'')+'" oninput="EXIT.edit.holding_note=this.value">'
+      //  検討の記録は、出口とは別の欄（株の持ち方・組織の検討）に一本化した
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:6px;">検討の記録は、下の<b>「株の持ち方・組織の検討」</b>に。持株会社のほか、資産管理会社・分社化・種類株なども並びます。</div>'
     +'</div>';
     h+='<div style="margin-top:10px;"><label class="fl">出口について決めたこと・残したいもの（任意）</label>'
       +'<textarea class="inp2" rows="2" style="width:100%;" placeholder="例：社名と従業員は残したい。譲渡は3年以内、相手は同業。" oninput="EXIT.edit.notes=this.value">'+esc(e.notes||'')+'</textarea></div>'
@@ -14112,6 +14117,118 @@
       +(sig.length?'持株会社の合図：'+sig.join(' '):'')
       +' この出口に向けて、今四半期の一手を3つ、経営者への切り出し方と一緒に考えてください。税額の計算はしないでください。'
       +((e.exit_type==='tpm'||e.exit_type==='ipo')?' 上場の可否・費用・時期は断定せず、J-Adviser や主幹事証券への確認を勧めてください。':''));
+  }
+  // ===== 株の持ち方・組織の検討（出口とは別に）=====
+  //  持株会社・資産管理会社・分社化・種類株・従業員持株会・信託。出口が決まって
+  //  いなくても検討できる。検討中／相談中／実行済／見送りを記録するだけで、
+  //  税額は出さない（税理士法）。設計は税理士・司法書士・弁護士と
+  var STRUCT_KINDS=[
+    { k:'holding', ic:'🏢', name:'持株会社（ホールディングス）', what:'株を持株会社に集め、事業会社をその下に置く形',
+      fit:'事業が2つ以上ある／後継者が株を引き取る負担が重い／グループで採用・資金を回したい', who:'税理士・司法書士' },
+    { k:'asset',   ic:'🗝️', name:'資産管理会社', what:'経営者一族の株や不動産を、個人ではなく会社で持つ形',
+      fit:'株や不動産が個人名義に集まっている／家族で分けて持ちたい', who:'税理士' },
+    { k:'split',   ic:'✂️', name:'分社化（会社分割・子会社化）', what:'事業ごとに会社を分ける形',
+      fit:'残す事業と譲る事業を分けたい／赤字の事業を切り出したい／許認可が事業ごとに違う', who:'税理士・弁護士・司法書士' },
+    { k:'shares',  ic:'🎫', name:'種類株・属人的株式', what:'議決権と配当など、株の中身を分ける形',
+      fit:'後継者に経営権、ほかの相続人には財産、と分けたい／少数株主の議決権を整えたい', who:'弁護士・司法書士' },
+    { k:'esop',    ic:'👥', name:'従業員持株会', what:'従業員が株を持つ仕組み',
+      fit:'株の分散を防ぎながら社員の参加意識を高めたい／従業員へ継ぐ受け皿を作りたい', who:'税理士・証券会社' },
+    { k:'trust',   ic:'📜', name:'事業承継の信託（民事信託）', what:'株の議決権と、財産としての価値を分けて託す形',
+      fit:'経営者の万一に備えたい／病気などで議決権が止まるのを防ぎたい', who:'弁護士・司法書士・信託銀行' }
+  ];
+  var STRUCT_STATUS=[['consider','検討中'],['consult','専門家に相談中'],['done','実行済'],['skip','見送り']];
+  function structStatusName(s){ for(var i=0;i<STRUCT_STATUS.length;i++) if(STRUCT_STATUS[i][0]===s) return STRUCT_STATUS[i][1]; return ''; }
+  //  出口の種類に関係なく出す合図。数字と承継チェックから
+  function structSignals(ctx){
+    var s={}, ans=(ctx&&ctx.ans)||{};
+    function add(k,m){ (s[k]=s[k]||[]).push(m); }
+    if(ctx && ctx.eq!=null && ctx.eq>=10000){
+      add('holding','推定企業価値が '+Math.round(ctx.eq).toLocaleString('ja-JP')+'万円と、1億円を超えています。株を引き取る側の負担が大きくなっている可能性があります');
+      add('asset','株の重さが増えています。個人で持ち続けるか、会社で持つかを分けて考える時期です');
+    }
+    if(ctx && ctx.eqGrowth!=null && ctx.eqGrowth>=20) add('holding','企業価値が1年で '+Math.round(ctx.eqGrowth)+'% 上がりました。上がるほど、株を動かす負担は増えます');
+    if(ctx && ctx.ans && !ans.shares){ add('shares','株主の整理（分散・名義株・所在不明株主）がまだです。株の中身を変える前に整えるものです'); add('holding','株主の整理がまだです。持株会社に集める前に整えるものです'); }
+    if(ctx && ctx.ans && !ans.will){ add('trust','経営者の万一に備えた定め（遺言・株の行き先）がまだです。信託はその一つの形です'); add('shares','万一の定めがまだです。種類株は、その設計の道具にもなります'); }
+    if(ctx && ctx.ans && !ans.successor) add('esop','承継の方向性がまだ話せていません。従業員へ継ぐ道を残すなら、受け皿を先に作っておく手があります');
+    return s;
+  }
+  var STRUCT={ scope:null, who:'customer', row:null, items:{}, sqlOk:true };
+  async function loadStructPlan(scope, who, ctx){
+    var box=$(who==='partner'?'cl-struct':'my-struct'); if(!box) return;
+    STRUCT={ scope:scope, who:who, row:null, items:{}, sqlOk:true, ctx:ctx||{} };
+    try{
+      var r=await sb.from('structure_plans').select('*').eq('customer_id',scope).maybeSingle();
+      if(r.error) STRUCT.sqlOk=false; else STRUCT.row=r.data||null;
+    }catch(e){ STRUCT.sqlOk=false; }
+    STRUCT.items=(STRUCT.row&&STRUCT.row.items)||{};
+    box.innerHTML=structHtml(STRUCT.items, ctx||{}, who, STRUCT.sqlOk);
+  }
+  function structHtml(items, ctx, who, sqlOk){
+    var sig=structSignals(ctx||{}), nSig=Object.keys(sig).length;
+    var h='<div style="border:1.5px solid var(--line);border-radius:12px;padding:12px 13px;margin-top:14px;">'
+      +'<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">'
+        +'<div style="font-size:13px;font-weight:700;color:var(--navy);">🏢 株の持ち方・組織の検討</div>'
+        +'<div style="font-size:11px;color:var(--muted);">出口とは別に。出口が決まっていなくても検討できます</div>'
+      +'</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-top:4px;">持株会社の設立、事業の分け方、株の種類など。'
+        +(nSig?'<b style="color:#8A6A12;">合図の出ているものから</b>見てください。':'')
+        +'検討中・相談中・実行済・見送りを記録しておくと、四半期の振り返りと継ナビくんが拾います。<b>TsuguAi は税額を計算しません。</b>設計は税理士・司法書士・弁護士と。</div>';
+    if(sqlOk===false){
+      h+='<div style="font-size:11.5px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:8px 11px;margin-top:8px;">まだ保存できません。Supabase で「株の持ち方・組織の検討」の SQL を実行してください。</div>';
+    }
+    STRUCT_KINDS.forEach(function(x){
+      var it=(items&&items[x.k])||{}, st=it.status||'', ss=sig[x.k]||[];
+      var hot=(ss.length>0 && st!=='done' && st!=='skip');
+      h+='<div style="border-top:1px solid var(--softline);padding:9px 0 8px;'+(hot?'background:linear-gradient(90deg,rgba(195,155,63,.07),transparent);':'')+'">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+          +'<div style="font-size:12.5px;font-weight:700;color:var(--ink);">'+x.ic+' '+esc(x.name)+'</div>'
+          +(st?'<span class="tag '+(st==='done'?'green':(st==='skip'?'':'gold'))+'" style="font-size:10px;">'+esc(structStatusName(st))+'</span>':'')
+          +(hot?'<span class="tag gold" style="font-size:10px;">合図あり</span>':'')
+        +'</div>'
+        +'<div style="font-size:11px;color:var(--muted);line-height:1.65;margin-top:2px;">'+esc(x.what)+'。<br>向く状況：'+esc(x.fit)+'　／　相談先：'+esc(x.who)+'</div>'
+        +(ss.length?'<ul style="margin:4px 0 0;padding-left:18px;font-size:11.5px;line-height:1.7;color:#8A6A12;">'+ss.map(function(m){ return '<li>'+esc(m)+'</li>'; }).join('')+'</ul>':'')
+        +'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;">'
+          +STRUCT_STATUS.map(function(o){ var on=(o[0]===st);
+              return '<button type="button" class="ghost" onclick="structPick(\''+x.k+'\',\''+o[0]+'\')" style="font-size:11px;border:1px solid '+(on?'var(--navy)':'var(--line)')+';background:'+(on?'var(--navy)':'#fff')+';color:'+(on?'#fff':'var(--ink)')+';border-radius:99px;padding:3px 10px;">'+o[1]+'</button>'; }).join('')
+        +'</div>'
+        +(st?'<input class="inp2" style="width:100%;margin-top:6px;font-size:12px;" placeholder="相談先・時期・決めたこと（任意）" value="'+esc(it.note||'')+'" oninput="structNote(\''+x.k+'\',this.value)">':'')
+      +'</div>';
+    });
+    h+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;">'
+        +'<button class="btn2" onclick="structSave()">保存する</button>'
+        +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:7px 11px;" onclick="structAsk()">🌱 継ナビくんと整理する</button>'
+        +'<span id="st-msg" style="font-size:11.5px;"></span>'
+      +'</div>'
+      +(STRUCT.row&&STRUCT.row.updated_at?'<div style="font-size:10.5px;color:var(--muted);margin-top:4px;">最終更新 '+esc(jstDay(STRUCT.row.updated_at))+'</div>':'')
+    +'</div>';
+    return h;
+  }
+  //  同じ札をもう一度押すと外れる
+  function structPick(k, s){
+    var it=STRUCT.items[k]||{};
+    it.status=(it.status===s)?'':s;
+    if(!it.status && !it.note) delete STRUCT.items[k]; else STRUCT.items[k]=it;
+    var box=$(STRUCT.who==='partner'?'cl-struct':'my-struct'); if(box) box.innerHTML=structHtml(STRUCT.items, STRUCT.ctx||{}, STRUCT.who, STRUCT.sqlOk);
+  }
+  function structNote(k, v){ var it=STRUCT.items[k]||{}; it.note=String(v||'').slice(0,300); STRUCT.items[k]=it; }
+  async function structSave(){
+    var msg=$('st-msg'); var say=function(t,c){ if(msg){ msg.style.color=c||'#A9403D'; msg.textContent=t; } };
+    var clean={};
+    Object.keys(STRUCT.items).forEach(function(k){ var it=STRUCT.items[k]||{}; if(it.status||it.note) clean[k]={ status:it.status||'', note:(it.note||'').slice(0,300) }; });
+    var row={ customer_id:STRUCT.scope, items:clean, updated_at:new Date().toISOString(), updated_by:ME };
+    var r=await sb.from('structure_plans').upsert(row);
+    if(r.error) return say('保存できませんでした：'+r.error.message);
+    say('✓ 保存しました。','#27684A');
+    STRUCT.row=row;
+  }
+  function structAsk(){
+    var ctx=STRUCT.ctx||{}, sig=structSignals(ctx);
+    var who=(ctx.prof&&ctx.prof.company_name&&STRUCT.who==='partner')?'担当顧客（'+ctx.prof.company_name+'）について。':'';
+    var picked=STRUCT_KINDS.filter(function(x){ var it=STRUCT.items[x.k]; return it&&it.status; })
+      .map(function(x){ var it=STRUCT.items[x.k]; return x.name+'（'+structStatusName(it.status)+(it.note?'：'+it.note:'')+'）'; });
+    var sigs=Object.keys(sig).map(function(k){ var x=STRUCT_KINDS.filter(function(y){ return y.k===k; })[0]; return (x?x.name:k)+'：'+sig[k].join(' '); });
+    knvAsk(who+'株の持ち方・組織の検討（出口とは別）。記録：'+(picked.length?picked.join('、'):'まだ何も選んでいない')+'。合図：'+(sigs.length?sigs.join('／'):'なし')+'。'
+      +' 持株会社・資産管理会社・分社化・種類株・従業員持株会・信託のうち、この会社でまず検討する価値があるものを2つまでに絞り、それぞれ何から始めるか、誰に相談するか、出口の設計との関係を、経営者への切り出し方と一緒に整理してください。税額の計算はしないでください。');
   }
   //  パートナー → 運営へ、プラン切替の依頼
   async function planRequest(custId, to){
@@ -14623,7 +14740,7 @@
     return common
       +'【経営者ダッシュボードの画面ガイド】'
       +'【数字の扱い・必ず守る】経営者に試算表など月次の数字の入力を求めない。経営者の画面に入力欄は無く、担当パートナーが入力する。試算表が手元にあるなら「メッセージで担当パートナーへ送る」と案内する。ご本人が入れるのは「いまの手元資金」だけ。画面の名前は次の一覧の名前だけを使い、それ以外の画面名を作らない。'
-      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)。その下に「はじめの90日（土台づくり）」＝契約の翌月から3か月は成果を急がず土台を整える期間で、1か月目「数字が見える」・2か月目「お金の流れが分かる」・3か月目「1年の道筋が決まる」の3つの節目(資料をお預かりしてからの目安。3か月で整わなければ次の四半期も並行して続ける。契約から翌月までは準備期間)と、「伴走の1年」＝第1 土台づくり／第2 現金を増やす／第3 買い手の余力を測る／第4 次の1社の条件を決める、の四半期の帯(暦の月で3か月ずつ。いまどこにいるか・四半期の終わりに何を振り返るかが出る)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=画面のいちばん上に「ご契約について」(いまの顧問プラン／プランを変えたいとき=「✉️ 担当パートナーに伝える」で継ナビくんのメッセージが開く。切替は運営が行い翌月の請求から。依頼中は「◯◯プラン へ切替を依頼中」と出る／ご利用の終了について=「解約を依頼する」。理由と伝えたいことは任意、押してすぐ使えなくなることはなく「取り下げる」で戻せる。申し出た月の末日で終了・日割りなし・初期導入費と利用済みの月の顧問料は返金なし。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。その下に顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=気になる業務を選んで担当パートナーに送ると、AIで診断した提案が「担当パートナーからの提案」に返る(その場で金額は出ない)／出口の設計=8つの出口(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/資本提携(一部を譲る)/上場する(TOKYO PRO Market。プロ投資家向けで数値基準が無く、J-Adviserの伴走で2〜3年)/上場する(グロース市場など一般の市場)/畳む(清算)/続けて、買い手になる)から選び。資本提携・上場を選ぶと「知っておくこと」の箱が出る。上場の可否・費用はJ-Adviser・証券会社が決めるので断定しない、目標の年と、その出口で見る数字のいま・目標・差。いまは企業価値診断と試算表から自動。この出口で整えること(承継チェックの残り)も出る。親族・従業員へ継ぐ出口では持株会社の検討の合図(税額は計算しない)。画面の上部にいまの顧問プラン(買い手プラン(成長)45,000円/売り手プラン(譲渡準備)30,000円・税別・月額)とM&Aの優遇(顧問契約1年以上でFA報酬に最低報酬なし・継続年数×10%、最大50%の割引)。プランの切替は担当パートナーに申し出て運営が切り替え、翌月の請求から／買った後に備える(買い手プランのみ)=会社を買ったあとに待ち受けること24項目(事務・法務/お金・銀行/人・責任者/取引先・対外/業界特有/統合の進め方)。待ち受けること・いつ・いま準備できること。買いたい条件・承継チェック・試算表・企業価値診断から「自社では」が付く。想定する形(株式譲渡/事業譲渡)・責任者の想定・対象の業種を選ぶ。項目ごとに「学ぶ(継ナビくんに聞く)」と未着手/学んだ/準備した。「買った後の1年を、継ナビくんと想像する」。成約後はPMIタスクへ／買い手になる=上に「柱」の絵(買い手プランのみ。本業の1本＋譲り受けた会社。ダッシュボードの帯にも同じ本数)。「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ。同じ画面の下半分が Tsugime -結-（投資・融資・M&A）=マッチング掲載(左メニューには無い。「案件を見る」の文字を押すか、下にたどる)。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と、面談・課題の期日・支払予定が自動で並ぶカレンダー。月/週/一覧。月・週は横に払う(スワイプ)と前後の月・週へ。操作列(月/週/一覧・‹ ›・今日・＋予定)と週の曜日・終日の帯は、下へ送っても上に残る。スマホの週表示は7日が幅に収まり、予定は色で塗って題名を折り返す。色は青=自分の予定・金=面談・橙=課題の期日・赤=支払・緑=資金調達・紫=補助金の締切、Googleから取り込んだ予定はGoogle側のカレンダーの色。暦の下に「色の見分け」が並ぶ。予定を押すと小窓が開いて全部読める。入力は金色の「＋ 予定」で別の窓が開く(スマホでもキーボードに隠れない)。✕や「やめる」は入力の窓だけ閉じ、継ナビくんは閉じない。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。Googleの予定は本人だけが見え、担当パートナーにも運営にも見えない。私用を入れたくないときはアカウントの欄の「このアカウントの予定をこの画面に取り込む」のチェックを外すと送るだけになる。Googleの「家族」「誕生日」「共有」「日本の祝日」なども、アカウントの下の「取り込むカレンダー」でチェックを入れれば入る(最初はメインだけ)。個人と会社などアカウントは2つ以上つなげ(「もう1つのアカウントをつなぐ」)、取り込みは全部から、この画面で入れた予定は「送り先」に選んだ1つにだけ出る。「Googleでつなぐ」を押すとGoogleの画面に移り、許可が済むと自動でこの画面に戻って同期が始まる。会社のGoogle Workspaceアカウントで「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていない(Google管理コンソール→アプリ→Google Workspace→カレンダーを有効にする)。つなぎ直しても直らず、「送り先にする」も出ない。個人アカウントでつなぐ。解除はいつでもできる)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ(先頭に毎朝の「今日の一手」。開いても既読にならず「すべて既読」で消す)／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
+      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)。その下に「はじめの90日（土台づくり）」＝契約の翌月から3か月は成果を急がず土台を整える期間で、1か月目「数字が見える」・2か月目「お金の流れが分かる」・3か月目「1年の道筋が決まる」の3つの節目(資料をお預かりしてからの目安。3か月で整わなければ次の四半期も並行して続ける。契約から翌月までは準備期間)と、「伴走の1年」＝第1 土台づくり／第2 現金を増やす／第3 買い手の余力を測る／第4 次の1社の条件を決める、の四半期の帯(暦の月で3か月ずつ。いまどこにいるか・四半期の終わりに何を振り返るかが出る)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=画面のいちばん上に「ご契約について」(いまの顧問プラン／プランを変えたいとき=「✉️ 担当パートナーに伝える」で継ナビくんのメッセージが開く。切替は運営が行い翌月の請求から。依頼中は「◯◯プラン へ切替を依頼中」と出る／ご利用の終了について=「解約を依頼する」。理由と伝えたいことは任意、押してすぐ使えなくなることはなく「取り下げる」で戻せる。申し出た月の末日で終了・日割りなし・初期導入費と利用済みの月の顧問料は返金なし。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。その下に顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=気になる業務を選んで担当パートナーに送ると、AIで診断した提案が「担当パートナーからの提案」に返る(その場で金額は出ない)／出口の設計=8つの出口(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/資本提携(一部を譲る)/上場する(TOKYO PRO Market。プロ投資家向けで数値基準が無く、J-Adviserの伴走で2〜3年)/上場する(グロース市場など一般の市場)/畳む(清算)/続けて、買い手になる)から選び。資本提携・上場を選ぶと「知っておくこと」の箱が出る。上場の可否・費用はJ-Adviser・証券会社が決めるので断定しない、目標の年と、その出口で見る数字のいま・目標・差。いまは企業価値診断と試算表から自動。この出口で整えること(承継チェックの残り)も出る。親族・従業員へ継ぐ出口では持株会社の検討の合図(税額は計算しない)。出口の設計の下に、出口とは別の「株の持ち方・組織の検討」=持株会社(ホールディングス)/資産管理会社/分社化(会社分割・子会社化)/種類株・属人的株式/従業員持株会/事業承継の信託の6つ。出口が決まっていなくても、それぞれを検討中/専門家に相談中/実行済/見送りで記録でき、企業価値1億円超・株主の整理がまだ・万一の定めがまだ、などの合図が出る。相談先(税理士・司法書士・弁護士)も書いてある。税額は計算しない。画面の上部にいまの顧問プラン(買い手プラン(成長)45,000円/売り手プラン(譲渡準備)30,000円・税別・月額)とM&Aの優遇(顧問契約1年以上でFA報酬に最低報酬なし・継続年数×10%、最大50%の割引)。プランの切替は担当パートナーに申し出て運営が切り替え、翌月の請求から／買った後に備える(買い手プランのみ)=会社を買ったあとに待ち受けること24項目(事務・法務/お金・銀行/人・責任者/取引先・対外/業界特有/統合の進め方)。待ち受けること・いつ・いま準備できること。買いたい条件・承継チェック・試算表・企業価値診断から「自社では」が付く。想定する形(株式譲渡/事業譲渡)・責任者の想定・対象の業種を選ぶ。項目ごとに「学ぶ(継ナビくんに聞く)」と未着手/学んだ/準備した。「買った後の1年を、継ナビくんと想像する」。成約後はPMIタスクへ／買い手になる=上に「柱」の絵(買い手プランのみ。本業の1本＋譲り受けた会社。ダッシュボードの帯にも同じ本数)。「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ。同じ画面の下半分が Tsugime -結-（投資・融資・M&A）=マッチング掲載(左メニューには無い。「案件を見る」の文字を押すか、下にたどる)。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と、面談・課題の期日・支払予定が自動で並ぶカレンダー。月/週/一覧。月・週は横に払う(スワイプ)と前後の月・週へ。操作列(月/週/一覧・‹ ›・今日・＋予定)と週の曜日・終日の帯は、下へ送っても上に残る。スマホの週表示は7日が幅に収まり、予定は色で塗って題名を折り返す。色は青=自分の予定・金=面談・橙=課題の期日・赤=支払・緑=資金調達・紫=補助金の締切、Googleから取り込んだ予定はGoogle側のカレンダーの色。暦の下に「色の見分け」が並ぶ。予定を押すと小窓が開いて全部読める。入力は金色の「＋ 予定」で別の窓が開く(スマホでもキーボードに隠れない)。✕や「やめる」は入力の窓だけ閉じ、継ナビくんは閉じない。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。Googleの予定は本人だけが見え、担当パートナーにも運営にも見えない。私用を入れたくないときはアカウントの欄の「このアカウントの予定をこの画面に取り込む」のチェックを外すと送るだけになる。Googleの「家族」「誕生日」「共有」「日本の祝日」なども、アカウントの下の「取り込むカレンダー」でチェックを入れれば入る(最初はメインだけ)。個人と会社などアカウントは2つ以上つなげ(「もう1つのアカウントをつなぐ」)、取り込みは全部から、この画面で入れた予定は「送り先」に選んだ1つにだけ出る。「Googleでつなぐ」を押すとGoogleの画面に移り、許可が済むと自動でこの画面に戻って同期が始まる。会社のGoogle Workspaceアカウントで「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていない(Google管理コンソール→アプリ→Google Workspace→カレンダーを有効にする)。つなぎ直しても直らず、「送り先にする」も出ない。個人アカウントでつなぐ。解除はいつでもできる)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ(先頭に毎朝の「今日の一手」。開いても既読にならず「すべて既読」で消す)／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
