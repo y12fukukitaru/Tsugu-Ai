@@ -414,10 +414,11 @@ function takeFn(name) {
   ok('枠を種類の色で塗り、白い字に', /\.wk-ev\{background:var\(--fg\)!important;color:#fff!important;/.test(mob));
   ok('題名は折り返す（行数は JS が決める）', /\.wk-ev b\{white-space:normal;word-break:break-all;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;/.test(mob));
   ok('枠の中の時刻は出さない（目盛りで分かる）', /\.wk-ev span\{display:none;\}/.test(mob));
-  ok('題名を大きく', /\.wk-ev\{[^}]*font-size:10\.5px;/.test(mob));
+  ok('横に3文字入る大きさ（10px・余白 2px）', /\.wk-ev\{[^}]*font-size:10px;line-height:1\.25;padding:2px 2px;/.test(mob) && /横に3文字は入る大きさに/.test(mob));
+  ok('終日の札も3文字入る余白', /\.wk-chip\{[^}]*font-size:9\.5px;padding:1px 2px;/.test(mob));
   ok('終日の札も塗る', /\.wk-chip\{background:var\(--fg\)!important;color:#fff!important;/.test(mob));
   ok('塗る色を枠に持たせる（自分の予定は青）', /'--fg:'\+\(kk\?kk\.fg:'#2C5DA8'\)\+';'/.test(wv) && /style="--fg:'\+\(k\?k\.fg:'#2C5DA8'\)/.test(wv));
-  ok('何行まで折り返すかは枠の高さから', /var lines=Math\.max\(1, Math\.floor\(\(hgt-6\)\/13\)\);/.test(wv) && /-webkit-line-clamp:'\+lines\+';/.test(wv));
+  ok('何行まで折り返すかは枠の高さから', /var lines=Math\.max\(1, Math\.floor\(\(hgt-4\)\/12\.5\)\);/.test(wv) && /-webkit-line-clamp:'\+lines\+';/.test(wv));
   //  1時間の高さはスマホで 54px、パソコンは 42px のまま
   ok('1時間の高さは画面の幅で変える', /function wkPx\(\)/.test(SRC) && /matchMedia\('\(max-width:600px\)'\)\.matches\) \? 54 : WK_PX/.test(SRC));
   ok('週表示は wkPx を使う', /var PX=wkPx\(\);/.test(wv) && !/WK_PX/.test(wv));
@@ -427,7 +428,7 @@ function takeFn(name) {
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260917-10', '20260917-10']);
+  is('版が揃う', [build, VER.build], ['20260917-11', '20260917-11']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
