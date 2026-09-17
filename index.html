@@ -501,6 +501,10 @@
   .cal-dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;}
   .cal-dot{width:6px;height:6px;border-radius:50%;display:block;}
   .cal-more{font-size:9px;color:var(--muted);line-height:1;}
+  /* 色の見分け（凡例）。自分の予定・面談・課題…と Google のカレンダーごとの色 */
+  .cal-lg{display:flex;flex-wrap:wrap;gap:4px 11px;margin-top:10px;font-size:11px;color:var(--muted);align-items:center;line-height:1.5;}
+  .cal-lg span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
+  .cal-lg i{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none;}
   @media(max-width:600px){ .cal-cell{min-height:40px;} .cal-cell .d{font-size:11px;} }
   /* 予定の中身をひと目で読むための小窓。月・週の枠は小さく、題名も切れるため、
      押したらここに開いて全部見せる。継ナビくんのパネル（71）より前に出す。 */
@@ -1451,7 +1455,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260917-13';
+  var APP_BUILD='20260917-14';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -16095,6 +16099,24 @@
   function calKindOf(x){
     return (x && x.color && calTint(x.color, x.calName)) || (x && CAL_KINDS[x.kind]) || null;
   }
+  //  色の見分け（凡例）。読み込んだ予定に実際にある種類だけ並べる。
+  //  自分の予定は青で固定。面談・課題・支払…は各画面から自動で並ぶもの。
+  //  Google のカレンダー（家族・共有・祝日など）は、その色と名前
+  function calLegend(rows){
+    var seen={}, gcal={}, gorder=[];
+    (rows||[]).forEach(function(x){
+      if(x.color && x.calId){ if(!gcal[x.calId]){ gcal[x.calId]={ color:x.color, name:x.calName||'Google' }; gorder.push(x.calId); } return; }
+      if(x.kind && CAL_KINDS[x.kind]) seen[x.kind]=1;
+    });
+    var out=['<span><i style="background:#2C5DA8;"></i>自分の予定</span>'];
+    Object.keys(CAL_KINDS).forEach(function(k){
+      if(seen[k]) out.push('<span><i style="background:'+CAL_KINDS[k].fg+';"></i>'+esc(CAL_KINDS[k].label)+'</span>');
+    });
+    gorder.forEach(function(id){
+      out.push('<span><i style="background:'+esc(gcal[id].color)+';"></i>'+esc(gcal[id].name)+'</span>');
+    });
+    return '<div class="cal-lg">'+out.join('')+'</div>';
+  }
   function calDayIso(d){ return String(d||'').slice(0,10)+'T09:00:00'; }
   async function calExtraFetch(since, until){
     var eff=(window.__eff||currentRole()), out=[];
@@ -17416,7 +17438,9 @@
       }
     }
 
-    h+='<div style="font-size:11px;color:#94A2B6;line-height:1.7;margin-top:12px;">'
+    //  色の見分け。読み込んだ予定にある種類だけ並ぶ
+    h+=calLegend(CAL_ROWS.rows);
+    h+='<div style="font-size:11px;color:#94A2B6;line-height:1.7;margin-top:6px;">'
       +'色の付いた予定（面談・課題・支払・調達・補助金・週次）は、それぞれの画面から自動で並びます。ここでは変更できません。'
       +'<br>自分で入れた予定と合わせて、継ナビくんが把握しています。</div>';
     h+='<div id="calfeed-host" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--softline);"></div>';
