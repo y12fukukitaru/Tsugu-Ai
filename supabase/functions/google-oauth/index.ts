@@ -5,7 +5,12 @@
 //  （リダイレクトURI）は一つでないといけないためです。
 //
 //    GET  ?start=1   … Google の同意画面の URL を返す（要ログイン）
-//    GET  ?code=...  … Google が戻してくる。鍵を受け取ってしまう
+//                      &hint=メール で、つなぎ直すアカウントを先に伝える
+//    GET  ?code=...  … Google が戻してくる。鍵を受け取ってしまい、
+//                      TsuguAi の画面へ戻す（?gcal=ok ／ ?gcal=err&m=理由）
+//
+//  一人が複数の Google アカウントをつなげます（個人と会社など）。
+//  つなぐたびに google_cal_links に行が増えます。
 //
 //  認証: 戻り先には JWT が付きません。だから「Verify JWT」は OFF にし、
 //        start のときだけ Authorization ヘッダの中身を自分で確かめます。
@@ -22,7 +27,7 @@
 //    GOOGLE_CLIENT_SECRET  … 同シークレット
 //    GOOGLE_REDIRECT_URI   … この関数の URL（Google 側にも同じものを登録）
 //    GOOGLE_STATE_SECRET   … 札の署名に使う任意の長い文字列
-//    APP_URL               … 終わったあとに戻すページ（例 https://…/index.html）
+//    APP_URL               … 終わったあとに戻すページ（例 https://y12fukukitaru.github.io/Tsugu-Ai/）
 // =============================================================
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -56,36 +61,32 @@ function json(body: unknown, status = 200) {
   });
 }
 
-//  人が読む画面。終わったことだけ伝えて、アプリへ戻す
+//  終わったら TsuguAi の画面へ戻す（302 リダイレクト）
 //
-//  ・ページとして表示させるには content-type が要ります。付け忘れると
-//    ブラウザが HTML の中身をそのまま文字として出します（実際に出ました）。
-//    Headers で明示的に組み、charset も必ず付けます。付けないと
-//    日本語が文字化けします（Windows では Shift-JIS と誤読されます）。
-//  ・返す本文は、こちらで組んだ文字列です。ただし Google から来た
-//    エラー文などが混ざるので、山括弧だけは落としておきます。
-function esc(s: string) {
-  return String(s ?? "").replace(/[<>&"]/g, (c) =>
-    ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c] as string));
-}
-function page(title: string, msg: string, ok: boolean) {
-  const back = APP_URL
-    ? `<p style="margin-top:22px"><a href="${esc(APP_URL)}" style="color:#2C5DA8">TsuguAi に戻る</a></p>`
-    : "";
-  const h = new Headers();
-  h.set("content-type", "text/html; charset=utf-8");
-  h.set("cache-control", "no-store");
-  return new Response(
-    `<!doctype html>
-<html lang="ja"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(title)}</title></head>
-<body style="margin:0;background:#FBF9F4;font:15px/1.9 system-ui,'Noto Sans JP',sans-serif;color:#243247">
-<div style="max-width:560px;margin:14vh auto;padding:28px 30px;background:#fff;border:1px solid #E2E7EF;border-radius:14px">
-<div style="font-size:19px;font-weight:700;color:${ok ? "#27684A" : "#A9403D"}">${esc(title)}</div>
-<div style="margin-top:10px;color:#5A6981">${esc(msg)}</div>${back}</div></body></html>`,
-    { status: ok ? 200 : 400, headers: h },
-  );
+//  以前はここで HTML の画面を出していましたが、Supabase の Edge Function は
+//  HTML を返しても**文字のまま**表示されます（content-type を明示しても
+//  同じでした。実際にそうなりました）。読ませる画面は作らず、結果だけを
+//  URL に添えて TsuguAi に戻し、向こうの画面で伝えます。
+//
+//    うまくいった  → APP_URL?gcal=ok
+//    だめだった    → APP_URL?gcal=err&m=（理由）
+//
+//  戻った先の画面は、予定タブを開いて、結果を出し、すぐ同期します。
+//  APP_URL が無いときだけ、文字で結果を返します。
+function back(ok: boolean, msg: string) {
+  if (!APP_URL) {
+    return new Response(`${ok ? "つながりました" : "つなげませんでした"}\n\n${msg}`, {
+      status: ok ? 200 : 400,
+      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
+    });
+  }
+  const u = new URL(APP_URL);
+  u.searchParams.set("gcal", ok ? "ok" : "err");
+  if (!ok) u.searchParams.set("m", msg);
+  return new Response(null, {
+    status: 302,
+    headers: { location: u.toString(), "cache-control": "no-store" },
+  });
 }
 
 //  ---- 札の署名（HMAC-SHA256）----
@@ -125,7 +126,7 @@ Deno.serve(async (req) => {
   if (!CLIENT_ID || !CLIENT_SECRET || !REDIRECT_URI || !STATE_SECRET) {
     const miss = "Google連携の設定が済んでいません（Secrets：GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REDIRECT_URI / GOOGLE_STATE_SECRET）";
     return url.searchParams.get("code")
-      ? page("つなげませんでした", miss, false)
+      ? back(false, miss)
       : json({ ok: false, error: miss }, 500);
   }
 
@@ -145,12 +146,18 @@ Deno.serve(async (req) => {
       response_type: "code",
       scope: SCOPE,
       //  更新用の鍵をもらうために要る二つ。offline でないと
-      //  1時間ごとにログインし直しになります
+      //  1時間ごとにログインし直しになります。
+      //  select_account は、二つ目のアカウントをつなぐときに
+      //  「どのアカウントか」を必ず選ばせるため（無いと、いま
+      //  ブラウザに入っているほうで勝手に進みます）
       access_type: "offline",
-      prompt: "consent",
+      prompt: "consent select_account",
       include_granted_scopes: "true",
       state: await makeState(u.user.id),
     });
+    //  つなぎ直しのときは、どのアカウントかを先に伝えて選びやすくする
+    const hint = url.searchParams.get("hint") ?? "";
+    if (hint) p.set("login_hint", hint);
     return json({ ok: true, url: `https://accounts.google.com/o/oauth2/v2/auth?${p}` });
   }
 
@@ -160,18 +167,17 @@ Deno.serve(async (req) => {
   const code = url.searchParams.get("code");
   const err = url.searchParams.get("error");
   if (err) {
-    return page("つなげませんでした",
+    return back(false,
       err === "access_denied"
         ? "Google の画面で「許可」が押されなかったため、つながっていません。もう一度お試しいただけます。"
-        : `Google から次の返事がありました：${err}`,
-      false);
+        : `Google から次の返事がありました：${err}`);
   }
   if (!code) return json({ ok: false, error: "使い方が違います" }, 400);
 
   const userId = await readState(url.searchParams.get("state") ?? "");
   if (!userId) {
-    return page("つなげませんでした",
-      "確認の札が合わないか、時間が経ちすぎています（10分で切れます）。TsuguAi の画面からもう一度お試しください。", false);
+    return back(false,
+      "確認の札が合わないか、時間が経ちすぎています（10分で切れます）。もう一度「Googleでつなぐ」からお試しください。");
   }
 
   //  code を鍵に交換する
@@ -188,7 +194,7 @@ Deno.serve(async (req) => {
     tok = await r.json();
     if (!r.ok) throw new Error(tok?.error_description || tok?.error || `HTTP ${r.status}`);
   } catch (e) {
-    return page("つなげませんでした", `Google とのやり取りで止まりました：${String((e as Error).message)}`, false);
+    return back(false, `Google とのやり取りで止まりました：${String((e as Error).message)}`);
   }
 
   //  どのアカウントか（id_token の中身を見るだけ。署名は Google 直送なので信じてよい）
@@ -201,11 +207,13 @@ Deno.serve(async (req) => {
     }
   } catch { /* 名前が取れなくても、つながりは作れる */ }
 
-  //  更新用の鍵は暗号化してしまう（SQL 側の関数がやる）
-  const { error: e1 } = await sb.rpc("google_link_save", {
+  //  更新用の鍵は暗号化してしまう（SQL 側の関数がやる）。
+  //  同じアカウントなら上書き、新しいアカウントなら行が増えます。
+  //  返ってくるのは、そのつながりの番号です
+  const { data: linkId, error: e1 } = await sb.rpc("google_link_save", {
     p_user: userId, p_email: email, p_refresh: tok.refresh_token ?? "",
   });
-  if (e1) return page("つなげませんでした", `保存で止まりました：${e1.message}`, false);
+  if (e1 || !linkId) return back(false, `保存で止まりました：${e1?.message ?? "つながりの番号が返りませんでした"}`);
 
   //  短いほうの鍵は、そのまま入れておく（すぐ同期できるように）
   if (tok.access_token) {
@@ -213,18 +221,17 @@ Deno.serve(async (req) => {
       access_token: tok.access_token,
       access_expires: new Date(Date.now() + (Number(tok.expires_in || 3600) - 60) * 1000).toISOString(),
       updated_at: new Date().toISOString(),
-    }).eq("user_id", userId);
+    }).eq("id", linkId);
   }
 
   //  更新用の鍵が来なかったとき（二度目以降の同意で起きます）。
   //  前のものが残っていれば、それで動きます
   const { data: link } = await sb.from("google_cal_links")
-    .select("refresh_enc").eq("user_id", userId).maybeSingle();
+    .select("refresh_enc").eq("id", linkId).maybeSingle();
   if (!link?.refresh_enc) {
-    return page("もう一度だけお願いします",
-      "Google から更新用の鍵が返りませんでした。Google アカウントの「セキュリティ → サードパーティのアクセス」から TsuguAi のアクセスを一度削除してから、もう一度おつなぎください。", false);
+    return back(false,
+      "Google から更新用の鍵が返りませんでした。Google アカウントの「セキュリティ → サードパーティのアクセス」から TsuguAi のアクセスを一度削除してから、もう一度おつなぎください。");
   }
 
-  return page("つながりました",
-    `${email ? email + " の" : ""}Googleカレンダーとつながりました。TsuguAi に戻ると、すぐに予定の行き来が始まります。`, true);
+  return back(true, email);
 });

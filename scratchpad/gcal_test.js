@@ -18,6 +18,7 @@ let n = 0, bad = [];
 function is(name, got, want) { n++; const g = JSON.stringify(got), w = JSON.stringify(want); if (g !== w) bad.push({ name, got: g, want: w }); }
 function ok(name, cond) { is(name, !!cond, true); }
 function no(name, cond) { is(name, !!cond, false); }
+function gbAll() { return takeFn('googleCalBox'); }
 function takeFn(name) {
   const re = new RegExp('\\n  (?:async )?function ' + name + '\\s*\\(', 'g');
   let m, last = null, cnt = 0;
@@ -77,7 +78,7 @@ function takeFn(name) {
   ok('札に署名する', /HMAC/.test(OAUTH) && /function hmac/.test(OAUTH));
   ok('札は10分で切れる', /600000/.test(OAUTH));
   ok('署名は時間差の出ない比べ方', /diff \|= want\.charCodeAt\(i\) \^ p\[2\]\.charCodeAt\(i\)/.test(OAUTH));
-  ok('更新用の鍵をもらう指定', /access_type: "offline"/.test(OAUTH) && /prompt: "consent"/.test(OAUTH));
+  ok('更新用の鍵をもらう指定', /access_type: "offline"/.test(OAUTH) && /prompt: "consent select_account"/.test(OAUTH));
   ok('求める権限は予定とアカウントだけ', /calendar\.events/.test(OAUTH) && !/auth\/gmail|auth\/drive|contacts/.test(OAUTH));
   //  Verify JWT を切るので、自分で確かめる
   ok('ログインを自分で確かめる（oauth）', /sb\.auth\.getUser\(token\)/.test(OAUTH));
@@ -92,14 +93,12 @@ function takeFn(name) {
   ok('つないでいれば、相手と最後の同期', /つながっています/.test(gb) && /最後の同期/.test(gb));
   ok('私用を取り込むかの切り替え', /googleCalPriv/.test(gb));
   ok('解除の道がある', /googleCalUnlink/.test(gb));
-  //  切れているのに緑のままだと、直す必要に気づけない
-  ok('切れているときは色を変える', /var dead=\/つなぎ直し\/\.test\(String\(GCAL\.last_error\|\|''\)\);/.test(gb));
-  ok('切れているときは「つなぎ直す」を出す', /dead[\s\S]{0,140}googleCalStart\(\)">つなぎ直す/.test(gb));
-  //  「いま同期する」は dead の false 側にだけ置く（切れているのに押させない）
-  ok('切れているときに同期を押させない',
-    /\+\(dead\s*\n?\s*\? '<button[^']*googleCalStart\(\)">つなぎ直す<\/button>'\s*\n?\s*: '<button[^']*googleCalSync\(true\)">いま同期する<\/button>'\)/.test(gb));
+  //  切れているのに緑のままだと、直す必要に気づけない（アカウントごとに見る）
+  ok('切れているアカウントは色を変える', /var dead=\/つなぎ直し\/\.test\(String\(l\.last_error\|\|''\)\);/.test(gb));
+  ok('切れているアカウントに「つなぎ直す」を出す', /dead\?'<button[^']*googleCalStart\('\+i\+'\)">つなぎ直す/.test(gb));
+  ok('全体の見出しも切れていれば赤', /anyDead\?'⚠ つながりが切れているアカウントがあります'/.test(gb));
   //  SQL 未実行のときは、これまでの ICS が残る
-  ok('SQL 未実行なら ICS に戻す', /if\(!r \|\| r\.error\)\{ box\.innerHTML=''; GCAL=null; calendarFeedSetup\(\); return; \}/.test(gb));
+  ok('SQL 未実行なら ICS に戻す', /if\(!r \|\| r\.error\)\{ box\.innerHTML=''; GCAL=null; GCAL_LINKS=\[\]; calendarFeedSetup\(\); return; \}/.test(gb));
   ok('つないだら ICS は出さない', /var cf=\$\('calfeed-box'\); if\(cf\) cf\.innerHTML='';/.test(gb));
   const au = takeFn('gcalAuto');
   ok('開いたら黙って同期する', /googleCalSync\(false\)/.test(au));
@@ -150,9 +149,11 @@ function takeFn(name) {
   ok('crypto_ok は画面から呼べない', /revoke all on function public\.crypto_ok\(\) from public, anon, authenticated;/.test(FIX));
   //  口座のほうも同じ不具合だった（総合振込の手前で止まる）
   ok('口座の関数も同じ書き方だと書いてある', /payout_account_submit/.test(FIX) && /総合振込ファイルを作る手前/.test(FIX));
-  //  戻りの画面が文字として出てしまった件
-  ok('ページは content-type を明示する', /h\.set\("content-type", "text\/html; charset=utf-8"\);/.test(OAUTH));
-  ok('差し込む文字は山括弧を落とす', /function esc\(s: string\)/.test(OAUTH) && /\$\{esc\(msg\)\}/.test(OAUTH));
+  //  戻りの画面が文字として出てしまった件 → 画面は出さず、TsuguAi へ戻す
+  no('HTML の画面はもう出さない', /<!doctype html>/.test(OAUTH));
+  ok('結果は URL に添えて戻す', /u\.searchParams\.set\("gcal", ok \? "ok" : "err"\);/.test(OAUTH) && /status: 302/.test(OAUTH));
+  ok('だめだった理由も添える', /if \(!ok\) u\.searchParams\.set\("m", msg\);/.test(OAUTH));
+  ok('なぜ画面を出さないかを書き残す', /文字のまま\*\*表示されます/.test(OAUTH));
 }
 // ⑪ 取り込みのループ（do…while の continue で取り直せていなかった）
 {
@@ -161,7 +162,7 @@ function takeFn(name) {
   no('取り込みに do…while は使わない', /do \{[\s\S]{0,400}\} while \(pageToken/.test(SYNC));
   ok('終わり方を自分で書く', /while \(true\) \{/.test(SYNC) && /if \(!pageToken\) break;/.test(SYNC));
   ok('ページと取り直しは別々に数える', /let pages = 0;/.test(SYNC) && /let resets = 0;/.test(SYNC));
-  ok('取り直しが続いたら止めて知らせる', /if \(\+\+resets > 2\) \{ notes\.push\("取り直しが続いたので止めました"\); break; \}/.test(SYNC));
+  ok('取り直しが続いたら止めて知らせる', /if \(\+\+resets > 2\) \{ lnotes\.push\("取り直しが続いたので止めました"\); break; \}/.test(SYNC));
   ok('なぜ do…while が駄目かを書き残す', /条件式に飛ぶので/.test(SYNC));
   //  そもそも古い札を残さない（入口で正しくする）
   ok('相手が変わったら札を捨てる', /sync_token   = case/.test(RE) && /then null/.test(RE));
@@ -171,10 +172,83 @@ function takeFn(name) {
   ok('pgcrypto の棚を見る', /set search_path = public, extensions/.test(RE));
   ok('確かめに札の残りが出る', /as 札が残っている行/.test(RE));
 }
+// ⑫ 自動で戻る・複数アカウント
+{
+  const MA = R('supabase/migrations/20260917030000_google_multi_account.sql');
+  //  --- 自動で戻る ---
+  const st = takeFn('googleCalStart');
+  ok('同じ窓で Google へ行く（別の窓にしない）', /location\.href=j\.url;/.test(st) && !/window\.open\(/.test(st));
+  ok('つなぎ直しはアカウントを先に伝える', /&hint='\+encodeURIComponent\(hint\)/.test(st) && /p\.set\("login_hint", hint\)/.test(OAUTH));
+  const rt = takeFn('gcalReturn');
+  ok('戻りの URL を読む', /\/\[\?&\]gcal=\(ok\|err\)\//.test(rt));
+  ok('読んだら URL から外す', /history\.replaceState/.test(rt));
+  ok('予定タブへ連れて行く', /knvToggle\(true\); knvShowTab\('cal'\);/.test(rt));
+  ok('ログイン直後に読む', /gcalReturn\(\);   \/\/ Google の画面から戻ってきたなら/.test(takeFn('knvInit')));
+  const rs = takeFn('gcalReturnSay');
+  ok('戻ったら声を出して同期する', /googleCalSync\(true\)/.test(rs));
+  ok('だめだった理由を赤で出す', /gcalMsg\(rr\.msg\|\|'つなげませんでした。もう一度お試しください。', true\)/.test(rs));
+  //  同期のあとの描き直しで言葉が消えないよう、預けてから出す
+  const sy = takeFn('googleCalSync');
+  ok('同期の結果は預けてから出す', /gcalSayLater\(/.test(sy) && !/gcalMsg\(bad\?/.test(sy));
+  ok('描き直しのあとで預けた言葉を出す', /gcalSaid\(\);/.test(gbAll()));
+  ok('入れ損ねと切れたアカウントは成功の顔をさせない', /if\(j\.relink\) bad=/.test(sy) && /j\.notes\.join/.test(sy));
+
+  //  --- 複数アカウント（SQL）---
+  ok('主キーを id に付け替える', /drop constraint google_cal_links_pkey/.test(MA) && /add primary key \(id\)/.test(MA));
+  ok('同じアカウントは二度つながない', /google_cal_links_user_email_uniq[\s\S]{0,80}\(user_id, google_email\)/.test(MA));
+  ok('送り先は1人に一つだけ', /google_cal_links_target_uniq[\s\S]{0,80}\(user_id\) where push_target/.test(MA));
+  ok('予定にアカウントを持たせる', /add column if not exists link_id uuid/.test(MA) && /on delete set null/.test(MA));
+  ok('前回の手直し（条件なしの索引）を残す', /drop index if exists public\.agenda_events_google_uniq;[\s\S]{0,120}on public\.agenda_events \(owner_id, google_id\);/.test(MA));
+  no('索引に条件を付けない', /\(owner_id, google_id\) where/.test(MA));
+  ok('前回の手直し（札を捨てる）を残す', /update public\.google_cal_links set sync_token = null where sync_token is not null;/.test(MA));
+  ok('保存は行の番号を返す', /returns uuid/.test(MA) && /returning id into v_id/.test(MA));
+  ok('はじめてのアカウントが送り先になる', /not v_has_target/.test(MA));
+  ok('取り出しはつながりの番号で', /google_refresh_get\(p_link uuid\)/.test(MA));
+  ok('新しい関数も pgcrypto の棚を見る', (MA.match(/set search_path = public, extensions/g) || []).length >= 2);
+  ok('状態はアカウントの一覧で返す', /'links', coalesce\(\(/.test(MA) && /'push_target',  g\.push_target/.test(MA));
+  const stt = MA.slice(MA.indexOf('function public.google_cal_status'), MA.indexOf('google_cal_set_private'));
+  no('一覧に鍵は含めない', /refresh_enc'|access_token|sync_token/.test(stt.replace(/g\.refresh_enc is not null/g, '')));
+  ok('取り込むかはアカウントごと', /google_cal_set_private\(p_link uuid, p_on boolean\)/.test(MA));
+  ok('古い形の関数は消す', /drop function if exists public\.google_cal_set_private\(boolean\);/.test(MA) && /drop function if exists public\.google_cal_unlink\(\);/.test(MA));
+  ok('送り先の切り替えは先に外してから付ける', /set push_target = false[\s\S]{0,120}set push_target = true/.test(MA));
+  ok('解除はそのアカウントのぶんだけ消す', /source = 'google'\s*\n\s*and \(link_id = p_link or link_id is null\)/.test(MA));
+  ok('解除で送り先が無くなれば引き継ぐ', /order by created_at limit 1/.test(MA));
+  ok('画面から呼べるのは本人用の4つ', ['google_cal_status()', 'google_cal_set_private(uuid, boolean)', 'google_cal_set_target(uuid)', 'google_cal_unlink(uuid)']
+    .every((f) => MA.indexOf('grant execute on function public.' + f + ' to authenticated;') > 0));
+  ok('確かめに送り先の重なりが出る', /as 送り先が二つある人/.test(MA));
+
+  //  --- 複数アカウント（同期）---
+  ok('つないだ全部を回す', /for \(const link of live\) \{/.test(SYNC));
+  ok('送り先は一つ（預かっている予定はそのまま）', /const here = e\.link_id \? e\.link_id === link\.id : !!link\.push_target;/.test(SYNC));
+  ok('面談は送り先にだけ', /if \(link\.push_target && nameOf\.size\) \{/.test(SYNC));
+  ok('取り込んだ予定にアカウントを書く', /link_id: link\.id,\s*\n\s*source: "google"/.test(SYNC));
+  ok('入れ損ねたら札を進めない', /if \(nextSync && !pullBad\) \{/.test(SYNC));
+  ok('入れ損ねを黙って落とさない', /入れられませんでした：\$\{row\.title\}/.test(SYNC));
+  ok('切れたアカウントは飛ばして知らせる', /if \(!access\) \{ relink = true; continue; \}/.test(SYNC));
+  ok('鍵の取り直しはつながりの番号で', /google_refresh_get", \{ p_link: link\.id \}/.test(SYNC));
+  ok('oauth も番号で短い鍵を入れる', /\.eq\("id", linkId\)/.test(OAUTH));
+
+  //  --- 複数アカウント（画面）---
+  const gb = gbAll();
+  ok('もう1つつなぐ道がある', /もう1つのアカウントをつなぐ/.test(gb));
+  ok('送り先は選べる（2つ以上のとき）', /googleCalTarget\('\+i\+'\)/.test(gb) && /この画面の予定の送り先/.test(gb));
+  ok('取り込みはアカウントごと', /googleCalPriv\('\+i\+',this\.checked\)/.test(gb));
+  ok('解除はアカウントごと', /googleCalUnlink\('\+i\+'\)/.test(gb) && /p_link:l\.id/.test(takeFn('googleCalUnlink')));
+  ok('二つ以上のときは決まりを添える', /「送り先」のアカウントにだけ出ます/.test(gb));
+
+  //  --- 説明書 ---
+  ok('経営者：自動で戻ると書く', /自動でこの画面に戻り、そのまま同期が始まります/.test(MANC));
+  ok('経営者：複数アカウントの決まり', /「送り先」に選んだ1つのアカウントにだけ/.test(MANC));
+  ok('パートナー：Workspace にカレンダーが無い場合', /The user must be signed up for Google Calendar/.test(MANP));
+  ok('継ナビくんの案内も直す', /もう1つのアカウントをつなぐ/.test(SRC) && !/「Googleの予定をこの画面に取り込む」/.test(SRC));
+  ok('手順書：SQL は4つ順に', /20260917030000_google_multi_account\.sql/.test(GUIDE) && /pgcrypto_search_path/.test(GUIDE));
+  ok('手順書：つまずきの表', /ICS 購読/.test(GUIDE) && /signed up for Google Calendar/.test(GUIDE));
+  ok('手順書：Edge Function は画面を出さない', /Edge Function は画面を出しません/.test(GUIDE));
+}
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260916-02', '20260916-02']);
+  is('版が揃う', [build, VER.build], ['20260917-01', '20260917-01']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

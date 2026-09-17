@@ -1383,7 +1383,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260916-02';
+  var APP_BUILD='20260917-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -14471,7 +14471,7 @@
     if(aisecPortal()==='consultant'){
       return common
         +'【パートナーポータルの画面ガイド】'
-        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全5章。必修10レッスン＋発展のM&A講座8レッスン、第5章の理解度チェックで修了)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁/労働分配率=時給を上げたとき人件費÷粗利をどこに保ち利益を出し続けるか。業種別の目安と、時短・配置転換・値上げで要る大きさ。カルテの月次レポートの上からその会社の数字で開ける)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)。説明資料(経営者向け・パートナー候補向けなど)は継ナビくんの「サポート」タブから開き、右上の⛶で全画面。送りは ←→ か、紙を押す、スマホ・タブレットは指で左右にスワイプ。Escかもう一度⛶で解除、✕でプラットフォームに戻る／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内。その顧問先から解約のお申し出が出ているときは、カルテのいちばん上に赤い帯「⚠ 解約のご依頼が出ています」が出る(申し出の日・理由・伝えられたこと。手続きと最終月の請求は運営が行い、パートナーの画面から解約はできない。まず話を聞く。取り下げは経営者ご自身が「お支払い」→「ご契約について」から)。プランの切替はカルテ→企業価値・承継準備→出口の設計の上段のボタンから運営に依頼(理由を書く小窓。空欄でも送れるので必ず書く。切替は運営が行い翌月の請求から。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。パートナーご自身が離れるときは運営サポートの「運営への問い合わせ」から(画面で契約を終える操作は無い)。カルテの「やること」の下に「今月の面談台本」(その会社の数字から見せる数字3つ・問い3つ・買い手の基盤へのつながり)と「継ナビくんのナビ」(土台→現金→余力→条件の順番と、済／次／あと)。ナビは12の道具(試算表→資金繰り→保険・固定費→支払予定→導入診断報告書→企業価値→出口の設計→買った後に備える→準備度→買いたい条件。AI診断・銀行提出は任意。売り手プランでは準備度・買いたい条件・買った後に備えるも任意)。各道具の見出しの下に「なぜ今・やると分かること・次の一手」の案内と「結果を継ナビくんと読む」ボタン。出口の設計(5つの出口・目標の年・見る数字のいま/目標/差・持株会社の合図。上部にいまの顧問プランとM&Aの優遇、「◯◯プラン への切替を運営に依頼」)と買った後に備える(6分類24項目・自社では・学ぶ・未着手/学んだ/準備した)はカルテの企業価値・承継準備の中。伴走の1年は契約の翌月1日を起点に暦の月で3か月ずつ、土台が整わなければ次の四半期も並行、四半期の終わりに検証)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（投資・融資・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し、パネルは7タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と担当顧客の面談・期日・支払予定が1枚に並ぶカレンダー。月/週/一覧。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。担当顧客との面談もGoogleに出るが、Google側で面談を消してもTsuguAiの面談は消えない(顧客との約束のため。消すのは顧客管理から)。Googleの予定は本人だけが見え、顧客にも運営にも見えない。私用を取り込みたくないときは「Googleの予定をこの画面に取り込む」のチェックを外す)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ。法人に所属している方には「エンタープライズ 操作説明書」も並ぶ)。'
+        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全5章。必修10レッスン＋発展のM&A講座8レッスン、第5章の理解度チェックで修了)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁/労働分配率=時給を上げたとき人件費÷粗利をどこに保ち利益を出し続けるか。業種別の目安と、時短・配置転換・値上げで要る大きさ。カルテの月次レポートの上からその会社の数字で開ける)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)。説明資料(経営者向け・パートナー候補向けなど)は継ナビくんの「サポート」タブから開き、右上の⛶で全画面。送りは ←→ か、紙を押す、スマホ・タブレットは指で左右にスワイプ。Escかもう一度⛶で解除、✕でプラットフォームに戻る／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内。その顧問先から解約のお申し出が出ているときは、カルテのいちばん上に赤い帯「⚠ 解約のご依頼が出ています」が出る(申し出の日・理由・伝えられたこと。手続きと最終月の請求は運営が行い、パートナーの画面から解約はできない。まず話を聞く。取り下げは経営者ご自身が「お支払い」→「ご契約について」から)。プランの切替はカルテ→企業価値・承継準備→出口の設計の上段のボタンから運営に依頼(理由を書く小窓。空欄でも送れるので必ず書く。切替は運営が行い翌月の請求から。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。パートナーご自身が離れるときは運営サポートの「運営への問い合わせ」から(画面で契約を終える操作は無い)。カルテの「やること」の下に「今月の面談台本」(その会社の数字から見せる数字3つ・問い3つ・買い手の基盤へのつながり)と「継ナビくんのナビ」(土台→現金→余力→条件の順番と、済／次／あと)。ナビは12の道具(試算表→資金繰り→保険・固定費→支払予定→導入診断報告書→企業価値→出口の設計→買った後に備える→準備度→買いたい条件。AI診断・銀行提出は任意。売り手プランでは準備度・買いたい条件・買った後に備えるも任意)。各道具の見出しの下に「なぜ今・やると分かること・次の一手」の案内と「結果を継ナビくんと読む」ボタン。出口の設計(5つの出口・目標の年・見る数字のいま/目標/差・持株会社の合図。上部にいまの顧問プランとM&Aの優遇、「◯◯プラン への切替を運営に依頼」)と買った後に備える(6分類24項目・自社では・学ぶ・未着手/学んだ/準備した)はカルテの企業価値・承継準備の中。伴走の1年は契約の翌月1日を起点に暦の月で3か月ずつ、土台が整わなければ次の四半期も並行、四半期の終わりに検証)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（投資・融資・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し、パネルは7タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と担当顧客の面談・期日・支払予定が1枚に並ぶカレンダー。月/週/一覧。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。担当顧客との面談もGoogleに出るが、Google側で面談を消してもTsuguAiの面談は消えない(顧客との約束のため。消すのは顧客管理から)。Googleの予定は本人だけが見え、顧客にも運営にも見えない。私用を取り込みたくないときはアカウントの欄の「このアカウントの予定をこの画面に取り込む」のチェックを外す。個人と会社などアカウントは2つ以上つなげ(「もう1つのアカウントをつなぐ」)、取り込みは全部から、この画面で入れた予定と面談は「送り先」に選んだ1つにだけ出る。「Googleでつなぐ」を押すとGoogleの画面に移り、許可が済むと自動でこの画面に戻って同期が始まる)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ。法人に所属している方には「エンタープライズ 操作説明書」も並ぶ)。'
         +'操作説明書は右下パネルの「サポート」タブから開けます。毎朝の「今日の一手」とお知らせは右下ボタンのバッジに届きます。';
     }
     //  運営がここに落ちていました。運営コンソールを開いている方に
@@ -14501,7 +14501,7 @@
     return common
       +'【経営者ダッシュボードの画面ガイド】'
       +'【数字の扱い・必ず守る】経営者に試算表など月次の数字の入力を求めない。経営者の画面に入力欄は無く、担当パートナーが入力する。試算表が手元にあるなら「メッセージで担当パートナーへ送る」と案内する。ご本人が入れるのは「いまの手元資金」だけ。画面の名前は次の一覧の名前だけを使い、それ以外の画面名を作らない。'
-      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)。その下に「はじめの90日（土台づくり）」＝契約の翌月から3か月は成果を急がず土台を整える期間で、1か月目「数字が見える」・2か月目「お金の流れが分かる」・3か月目「1年の道筋が決まる」の3つの節目(資料をお預かりしてからの目安。3か月で整わなければ次の四半期も並行して続ける。契約から翌月までは準備期間)と、「伴走の1年」＝第1 土台づくり／第2 現金を増やす／第3 買い手の余力を測る／第4 次の1社の条件を決める、の四半期の帯(暦の月で3か月ずつ。いまどこにいるか・四半期の終わりに何を振り返るかが出る)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=画面のいちばん上に「ご契約について」(いまの顧問プラン／プランを変えたいとき=「✉️ 担当パートナーに伝える」で継ナビくんのメッセージが開く。切替は運営が行い翌月の請求から。依頼中は「◯◯プラン へ切替を依頼中」と出る／ご利用の終了について=「解約を依頼する」。理由と伝えたいことは任意、押してすぐ使えなくなることはなく「取り下げる」で戻せる。申し出た月の末日で終了・日割りなし・初期導入費と利用済みの月の顧問料は返金なし。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。その下に顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=気になる業務を選んで担当パートナーに送ると、AIで診断した提案が「担当パートナーからの提案」に返る(その場で金額は出ない)／出口の設計=5つの出口(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/畳む(清算)/続けて、買い手になる)から選び、目標の年と、その出口で見る数字のいま・目標・差。いまは企業価値診断と試算表から自動。この出口で整えること(承継チェックの残り)も出る。親族・従業員へ継ぐ出口では持株会社の検討の合図(税額は計算しない)。画面の上部にいまの顧問プラン(買い手プラン(成長)45,000円/売り手プラン(譲渡準備)30,000円・税別・月額)とM&Aの優遇(顧問契約1年以上でFA報酬に最低報酬なし・継続年数×10%、最大50%の割引)。プランの切替は担当パートナーに申し出て運営が切り替え、翌月の請求から／買った後に備える(買い手プランのみ)=会社を買ったあとに待ち受けること24項目(事務・法務/お金・銀行/人・責任者/取引先・対外/業界特有/統合の進め方)。待ち受けること・いつ・いま準備できること。買いたい条件・承継チェック・試算表・企業価値診断から「自社では」が付く。想定する形(株式譲渡/事業譲渡)・責任者の想定・対象の業種を選ぶ。項目ごとに「学ぶ(継ナビくんに聞く)」と未着手/学んだ/準備した。「買った後の1年を、継ナビくんと想像する」。成約後はPMIタスクへ／買い手になる=上に「柱」の絵(買い手プランのみ。本業の1本＋譲り受けた会社。ダッシュボードの帯にも同じ本数)。「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ。同じ画面の下半分が Tsugime -結-（投資・融資・M&A）=マッチング掲載(左メニューには無い。「案件を見る」の文字を押すか、下にたどる)。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と、面談・課題の期日・支払予定が自動で並ぶカレンダー。月/週/一覧。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。Googleの予定は本人だけが見え、担当パートナーにも運営にも見えない。私用を入れたくないときは「Googleの予定をこの画面に取り込む」のチェックを外すと送るだけになる。解除はいつでもできる)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ(先頭に毎朝の「今日の一手」。開いても既読にならず「すべて既読」で消す)／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
+      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)。その下に「はじめの90日（土台づくり）」＝契約の翌月から3か月は成果を急がず土台を整える期間で、1か月目「数字が見える」・2か月目「お金の流れが分かる」・3か月目「1年の道筋が決まる」の3つの節目(資料をお預かりしてからの目安。3か月で整わなければ次の四半期も並行して続ける。契約から翌月までは準備期間)と、「伴走の1年」＝第1 土台づくり／第2 現金を増やす／第3 買い手の余力を測る／第4 次の1社の条件を決める、の四半期の帯(暦の月で3か月ずつ。いまどこにいるか・四半期の終わりに何を振り返るかが出る)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=画面のいちばん上に「ご契約について」(いまの顧問プラン／プランを変えたいとき=「✉️ 担当パートナーに伝える」で継ナビくんのメッセージが開く。切替は運営が行い翌月の請求から。依頼中は「◯◯プラン へ切替を依頼中」と出る／ご利用の終了について=「解約を依頼する」。理由と伝えたいことは任意、押してすぐ使えなくなることはなく「取り下げる」で戻せる。申し出た月の末日で終了・日割りなし・初期導入費と利用済みの月の顧問料は返金なし。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。その下に顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=気になる業務を選んで担当パートナーに送ると、AIで診断した提案が「担当パートナーからの提案」に返る(その場で金額は出ない)／出口の設計=5つの出口(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/畳む(清算)/続けて、買い手になる)から選び、目標の年と、その出口で見る数字のいま・目標・差。いまは企業価値診断と試算表から自動。この出口で整えること(承継チェックの残り)も出る。親族・従業員へ継ぐ出口では持株会社の検討の合図(税額は計算しない)。画面の上部にいまの顧問プラン(買い手プラン(成長)45,000円/売り手プラン(譲渡準備)30,000円・税別・月額)とM&Aの優遇(顧問契約1年以上でFA報酬に最低報酬なし・継続年数×10%、最大50%の割引)。プランの切替は担当パートナーに申し出て運営が切り替え、翌月の請求から／買った後に備える(買い手プランのみ)=会社を買ったあとに待ち受けること24項目(事務・法務/お金・銀行/人・責任者/取引先・対外/業界特有/統合の進め方)。待ち受けること・いつ・いま準備できること。買いたい条件・承継チェック・試算表・企業価値診断から「自社では」が付く。想定する形(株式譲渡/事業譲渡)・責任者の想定・対象の業種を選ぶ。項目ごとに「学ぶ(継ナビくんに聞く)」と未着手/学んだ/準備した。「買った後の1年を、継ナビくんと想像する」。成約後はPMIタスクへ／買い手になる=上に「柱」の絵(買い手プランのみ。本業の1本＋譲り受けた会社。ダッシュボードの帯にも同じ本数)。「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ。同じ画面の下半分が Tsugime -結-（投資・融資・M&A）=マッチング掲載(左メニューには無い。「案件を見る」の文字を押すか、下にたどる)。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と、面談・課題の期日・支払予定が自動で並ぶカレンダー。月/週/一覧。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。Googleの予定は本人だけが見え、担当パートナーにも運営にも見えない。私用を入れたくないときはアカウントの欄の「このアカウントの予定をこの画面に取り込む」のチェックを外すと送るだけになる。個人と会社などアカウントは2つ以上つなげ(「もう1つのアカウントをつなぐ」)、取り込みは全部から、この画面で入れた予定は「送り先」に選んだ1つにだけ出る。「Googleでつなぐ」を押すとGoogleの画面に移り、許可が済むと自動でこの画面に戻って同期が始まる。解除はいつでもできる)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ(先頭に毎朝の「今日の一手」。開いても既読にならず「すべて既読」で消す)／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
@@ -14936,6 +14936,7 @@
     knvAskPvClear(); knvAskBindPaste();
     renderSecLog();
     if((window.__eff||'')==='admin') knvAdminBadge();
+    gcalReturn();   // Google の画面から戻ってきたなら、予定タブへ
   }
   // 運営：未対応の問い合わせ件数をバッジに反映
   async function knvAdminBadge(){
@@ -17343,16 +17344,21 @@
   // ===== Googleカレンダー連携（双方向）=====
   //  どちらに入れても、両方に出るようにする。鍵は画面に降りてきません
   //  （SQL 側で暗号化して持ち、返すのは「つながっているか」だけ）。
-  var GCAL=null;
+  //  一人が複数の Google アカウント（個人・会社など）をつなげます。
+  //    ・取り込みは、つないだ全部から（アカウントごとに切れる）
+  //    ・この画面で入れた予定の送り先は、一つだけ（push_target）
+  var GCAL=null, GCAL_LINKS=[];
   async function googleCalBox(){
     var box=$('gcal-box'); if(!box) return;
     box.innerHTML='<div style="font-size:12px;color:var(--muted);padding:6px 0;">確認中…</div>';
     var r;
     try{ r=await sb.rpc('google_cal_status'); }catch(e){ r={error:1}; }
     //  SQL がまだのときは、この欄ごと出さない（旧来の ICS は下に出ます）
-    if(!r || r.error){ box.innerHTML=''; GCAL=null; calendarFeedSetup(); return; }
+    if(!r || r.error){ box.innerHTML=''; GCAL=null; GCAL_LINKS=[]; calendarFeedSetup(); return; }
     GCAL=r.data||{linked:false};
-    if(!GCAL.linked){
+    //  鍵の無い行（つなぎかけ）は数に入れない
+    GCAL_LINKS=(GCAL.links||[]).filter(function(l){ return l.linked!==false; });
+    if(!GCAL.linked || !GCAL_LINKS.length){
       box.innerHTML='<div style="border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-bottom:10px;">'
         +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">📅 Googleカレンダーとつなぐ</div>'
         +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin:3px 0 8px;">'
@@ -17364,38 +17370,88 @@
       +'</div>';
       //  つないでいない方には、これまでどおり見るだけの道も残す
       calendarFeedSetup();
+      if(!gcalReturnSay()) gcalSaid();
       return;
     }
     var cf=$('calfeed-box'); if(cf) cf.innerHTML='';   // つないだら ICS は出さない
     //  つながりが切れているときに緑のままだと、直す必要に気づけません。
-    //  切れているときは色を変え、押すべきボタンも「つなぎ直す」にします
-    var dead=/つなぎ直し/.test(String(GCAL.last_error||''));
-    box.innerHTML='<div style="border:1px solid '+(dead?'#E7B9B6':'#BFE2CD')+';background:'+(dead?'#FDF4F3':'#EFF6F0')+';border-radius:11px;padding:12px 14px;margin-bottom:10px;">'
-      +'<div style="font-size:12.5px;font-weight:700;color:'+(dead?'#A9403D':'#27684A')+';">'
-        +(dead?'⚠ Googleとのつながりが切れています':'📅 Googleカレンダーとつながっています')+'</div>'
-      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:3px;">'
-        +(GCAL.email?esc(GCAL.email)+'<br>':'')
-        +'最後の同期：'+(GCAL.last_sync_at?esc(calDT(GCAL.last_sync_at)):'まだ')
-      +'</div>'
-      +(GCAL.last_error
-        ? '<div style="font-size:11.5px;color:#A9403D;line-height:1.8;margin-top:5px;">'+esc(GCAL.last_error)
-          +(dead?'<br>Google側でアクセスを取り消されたか、期限が切れています。もう一度おつなぎください。':'')+'</div>'
+    //  切れているアカウントは色を変え、「つなぎ直す」を出します
+    var anyDead=false, many=GCAL_LINKS.length>1;
+    var rows=GCAL_LINKS.map(function(l, i){
+      var dead=/つなぎ直し/.test(String(l.last_error||''));
+      if(dead) anyDead=true;
+      return '<div style="border:1px solid '+(dead?'#E7B9B6':'#D6E6DB')+';background:#fff;border-radius:9px;padding:9px 11px;margin-top:8px;">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+          +'<div style="flex:1;min-width:0;font-size:12px;font-weight:700;color:'+(dead?'#A9403D':'var(--navy)')+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'
+            +(dead?'⚠ ':'')+esc(l.email||'（アカウント名なし）')+'</div>'
+          +(l.push_target?'<span style="font-size:10.5px;font-weight:700;color:#27684A;background:#E4F1E8;border-radius:999px;padding:2px 8px;white-space:nowrap;">この画面の予定の送り先</span>':'')
+        +'</div>'
+        +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:2px;">最後の同期：'+(l.last_sync_at?esc(calDT(l.last_sync_at)):'まだ')+'</div>'
+        +(l.last_error
+          ? '<div style="font-size:11.5px;color:#A9403D;line-height:1.8;margin-top:4px;">'+esc(l.last_error)
+            +(dead?'<br>Google側でアクセスを取り消されたか、期限が切れています。もう一度おつなぎください。':'')+'</div>'
+          : '')
+        +(dead?''
+          : '<label style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);margin-top:7px;cursor:pointer;">'
+            +'<input type="checkbox"'+(l.pull_private===false?'':' checked')+' onchange="googleCalPriv('+i+',this.checked)">'
+            +'このアカウントの予定をこの画面に取り込む</label>')
+        +(dead||l.push_target||!many?''
+          : '<label style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);margin-top:5px;cursor:pointer;">'
+            +'<input type="radio" name="gcal-target" onchange="googleCalTarget('+i+')">'
+            +'この画面で入れた予定の送り先にする</label>')
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">'
+          +(dead?'<button class="btn2" style="font-size:12px;padding:6px 13px;" onclick="googleCalStart('+i+')">つなぎ直す</button>':'')
+          +'<button class="ghost" style="font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:6px 12px;" onclick="googleCalUnlink('+i+')">'+(many?'このアカウントを解除':'連携を解除する')+'</button>'
+        +'</div>'
+      +'</div>';
+    }).join('');
+    box.innerHTML='<div style="border:1px solid '+(anyDead?'#E7B9B6':'#BFE2CD')+';background:'+(anyDead?'#FDF4F3':'#EFF6F0')+';border-radius:11px;padding:12px 14px;margin-bottom:10px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:'+(anyDead?'#A9403D':'#27684A')+';">'
+        +(anyDead?'⚠ つながりが切れているアカウントがあります':'📅 Googleカレンダーとつながっています')
+        +(many?'（'+GCAL_LINKS.length+'つ）':'')+'</div>'
+      +rows
+      +(many
+        ? '<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:8px;">どのアカウントに入れた予定も、この画面には全部入ります。この画面で入れた予定は「送り先」のアカウントにだけ出ます（両方に出すと同じ予定が二つになるため）。送り先を変えても、すでに送った予定はそのままです。</div>'
         : '')
-      +(dead?''
-        : '<label style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);margin-top:8px;cursor:pointer;">'
-          +'<input type="checkbox" id="gcal-priv"'+(GCAL.pull_private===false?'':' checked')+' onchange="googleCalPriv(this.checked)">'
-          +'Googleの予定をこの画面に取り込む（外すと、こちらから送るだけになります）</label>')
       +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px;">'
-        +(dead
-          ? '<button class="btn2" style="font-size:12px;padding:7px 14px;" onclick="googleCalStart()">つなぎ直す</button>'
-          : '<button class="btn2" style="font-size:12px;padding:7px 14px;" onclick="googleCalSync(true)">いま同期する</button>')
-        +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:7px 13px;" onclick="googleCalUnlink()">連携を解除する</button>'
+        +'<button class="btn2" style="font-size:12px;padding:7px 14px;" onclick="googleCalSync(true)">いま同期する</button>'
+        +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:7px 13px;" onclick="googleCalStart()">もう1つのアカウントをつなぐ</button>'
       +'</div>'
       +'<div id="gcal-msg" style="font-size:11.5px;margin-top:7px;"></div>'
     +'</div>';
+    //  Google の画面から戻ってきた直後なら、結果を伝えて、声を出して同期する
+    if(gcalReturnSay()) return;
+    //  同期や切り替えの結果を預かっていれば、ここで出す
+    gcalSaid();
     //  開いたときに、黙って一度だけ合わせる。押させると「押し忘れたら
     //  古いまま」になり、それはもう双方向とは言えない
     gcalAuto();
+  }
+  //  Google の画面から戻ってきたとき（?gcal=ok ／ ?gcal=err&m=理由）。
+  //  google-oauth は画面を出さず、結果を URL に添えてここへ戻します
+  //  （Edge Function の HTML は文字のまま表示されてしまうため）。
+  //  ログイン直後（knvInit）に読み、予定タブを開いて伝えます。
+  var GCAL_RET=null;
+  function gcalReturn(){
+    var m=/[?&]gcal=(ok|err)/.exec(location.search||'');
+    if(!m) return;
+    var em=/[?&]m=([^&#]*)/.exec(location.search||''), msg='';
+    try{ msg=em?decodeURIComponent(em[1].replace(/\+/g,' ')):''; }catch(e){ msg=''; }
+    GCAL_RET={ ok:m[1]==='ok', msg:msg };
+    //  戻るたびに同じ知らせが出ないよう、URL から外しておく
+    try{ history.replaceState(null, '', location.pathname+(location.hash||'')); }catch(e){}
+    //  画面が組み上がってから、予定タブへ連れて行く
+    setTimeout(function(){ knvToggle(true); knvShowTab('cal'); }, 500);
+  }
+  //  戻ってきた結果を出す。出したら true（同期まで済ませる）
+  function gcalReturnSay(){
+    var rr=GCAL_RET; if(!rr) return false;
+    GCAL_RET=null;
+    if(!rr.ok){ gcalMsg(rr.msg||'つなげませんでした。もう一度お試しください。', true); return true; }
+    gcalMsg((rr.msg?rr.msg+' の':'')+'Googleカレンダーとつながりました。同期しています…');
+    GCAL_AT=Date.now();
+    googleCalSync(true);
+    return true;
   }
   //  自動の同期。つないでいる方だけ、5分に一度まで。
   //  開くたびに走らせると、Google への問い合わせが無駄に増えます
@@ -17410,20 +17466,30 @@
     var m=$('gcal-msg'); if(!m) return;
     m.style.color=bad?'#A9403D':'#27684A'; m.textContent=t||'';
   }
-  async function googleCalStart(){
+  //  同期のあとは欄ごと描き直すので、その前に出した言葉は消えてしまう。
+  //  描き直しが終わってから出すよう、一度預かる
+  var GCAL_SAY=null;
+  function gcalSayLater(t, bad){ GCAL_SAY={ t:t, bad:!!bad }; }
+  function gcalSaid(){ var s=GCAL_SAY; GCAL_SAY=null; if(s) gcalMsg(s.t, s.bad); return !!s; }
+  //  i を渡すと、そのアカウントのつなぎ直し（Google にどのアカウントかを先に伝える）
+  async function googleCalStart(i){
     gcalMsg('Googleの画面を用意しています…');
+    var hint=(i!=null && GCAL_LINKS[i] && GCAL_LINKS[i].email)||'';
     //  functions.invoke は本文を付けてしまうので、素直に fetch で取りにいく
     try{
       var s=await sb.auth.getSession();
       var tok=(s&&s.data&&s.data.session&&s.data.session.access_token)||'';
-      var res=await fetch(SUPABASE_URL+'/functions/v1/google-oauth?start=1', {
+      var res=await fetch(SUPABASE_URL+'/functions/v1/google-oauth?start=1'+(hint?'&hint='+encodeURIComponent(hint):''), {
         headers:{ authorization:'Bearer '+tok }
       });
       var j=await res.json();
       if(!j.ok){ gcalMsg(j.error||'用意できませんでした', true); return; }
-      //  同意はGoogleの画面で行う。別の窓で開き、戻ってきたら同期する
-      window.open(j.url, '_blank', 'noopener');
-      gcalMsg('別の窓でGoogleの画面が開きます。許可が済んだらこの画面に戻り、「いま同期する」を押してください。');
+      //  同意はGoogleの画面で行う。**同じ窓**で行き、許可が済むと
+      //  Google → google-oauth → この画面（?gcal=ok）と自動で戻ってきます。
+      //  別の窓で開くと、戻り先がその窓になって元の窓は古いまま。
+      //  スマホではポップアップが塞がれることもあります
+      gcalMsg('Googleの画面へ移ります。許可が済むと、この画面に自動で戻ります。');
+      location.href=j.url;
     }catch(e){ gcalMsg('用意できませんでした：'+String((e&&e.message)||e), true); }
   }
   async function googleCalSync(loud){
@@ -17441,20 +17507,38 @@
         if(j.pushed) t.push('送り '+j.pushed+'件');
         if(j.pulled) t.push('受け '+j.pulled+'件');
         if(j.removed) t.push('削除 '+j.removed+'件');
-        gcalMsg(t.length?('同期しました（'+t.join('・')+'）'):'変わりはありませんでした');
+        var say=t.length?('同期しました（'+t.join('・')+'）'):'変わりはありませんでした';
+        //  入れ損ねや切れたアカウントは、成功の顔をさせずに理由を添える
+        var bad=(j.notes&&j.notes.length)?j.notes.join(' / '):'';
+        if(j.relink) bad=(bad?bad+' / ':'')+'つなぎ直しが要るアカウントがあります';
+        gcalSayLater(bad?(say+'。'+bad):say, !!bad);
       }
+      //  結果（最後の同期・不具合）も描き直す。預けた言葉はその中で出る。
+      //  gcalAuto は5分の見送りで止まる
       knvAgendaReset(); await knvRenderCal(true);
     }catch(e){ if(loud) gcalMsg('同期できませんでした：'+String((e&&e.message)||e), true); }
   }
-  async function googleCalPriv(on){
-    var r=await sb.rpc('google_cal_set_private',{ p_on:!!on });
+  async function googleCalPriv(i, on){
+    var l=GCAL_LINKS[i]; if(!l) return;
+    var r=await sb.rpc('google_cal_set_private',{ p_link:l.id, p_on:!!on });
     var res=(r&&!r.error)?String(r.data||''):('error: '+((r.error&&r.error.message)||''));
     if(res!=='ok'){ gcalMsg(res.replace(/^error:\s*/,''), true); return; }
-    gcalMsg(on?'Googleの予定を取り込みます。':'こちらから送るだけにしました。');
+    gcalMsg((l.email||'このアカウント')+(on?' の予定を取り込みます。':' からは取り込みません。'));
   }
-  async function googleCalUnlink(){
-    if(!confirm('Googleカレンダーとの連携を解除します。よろしいですか？\n\n・Googleから取り込んだ予定は、この画面から消えます\n・この画面で作った予定は残ります（Google側に出したものもGoogleに残ります）')) return;
-    var r=await sb.rpc('google_cal_unlink');
+  //  この画面で入れた予定の送り先を変える（一つだけ）
+  async function googleCalTarget(i){
+    var l=GCAL_LINKS[i]; if(!l) return;
+    var r=await sb.rpc('google_cal_set_target',{ p_link:l.id });
+    var res=(r&&!r.error)?String(r.data||''):('error: '+((r.error&&r.error.message)||''));
+    if(res!=='ok'){ gcalMsg(res.replace(/^error:\s*/,''), true); return; }
+    GCAL_AT=Date.now();   // 描き直しで黙って同期が走らないように
+    gcalSayLater('これからこの画面で入れる予定は '+(l.email||'このアカウント')+' に出ます。');
+    await googleCalBox();
+  }
+  async function googleCalUnlink(i){
+    var l=GCAL_LINKS[i]; if(!l) return;
+    if(!confirm((l.email?l.email+' との':'Googleカレンダーとの')+'連携を解除します。よろしいですか？\n\n・このアカウントから取り込んだ予定は、この画面から消えます\n・この画面で作った予定は残ります（Google側に出したものもGoogleに残ります）')) return;
+    var r=await sb.rpc('google_cal_unlink',{ p_link:l.id });
     var res=(r&&!r.error)?String(r.data||''):('error: '+((r.error&&r.error.message)||''));
     if(res!=='ok'){ gcalMsg(res.replace(/^error:\s*/,''), true); return; }
     knvAgendaReset(); await knvRenderCal(true);
