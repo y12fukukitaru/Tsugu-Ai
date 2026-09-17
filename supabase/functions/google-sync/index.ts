@@ -5,12 +5,16 @@
 //
 //    ① 短い鍵を取り直す（1時間で切れるため）
 //    ② こちらの予定を Google へ送る（まだ送っていないもの・直したもの）
-//    ③ Google の変更を取ってくる（前回からの差分だけ）
+//    ③ Google の変更を取ってくる（カレンダーごと・前回からの差分だけ）
 //
 //  ■ 複数アカウントのときの決まり
 //
 //    ・Google → TsuguAi は、つないだ**全部**から取り込む
 //      （アカウントごとに「取り込む／取り込まない」を選べる）
+//    ・アカウントの中の**どのカレンダーを取り込むか**も選べる
+//      （家族・誕生日・共有されたもの・祝日など。メインだけ最初からオン）。
+//      一覧は同期のたびに Google と合わせ、札（syncToken）は
+//      カレンダーごとに持つ
 //    ・TsuguAi → Google は、**送り先（push_target）一つ**にだけ送る。
 //      両方に送ると、同じ予定が二つのカレンダーに出て散らかります
 //    ・一度どこかへ送った予定は、そのアカウントで直し続ける（link_id）。
@@ -52,6 +56,7 @@ const CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID") ?? "";
 const CLIENT_SECRET = Deno.env.get("GOOGLE_CLIENT_SECRET") ?? "";
 
 const DAY = 86400000;
+//  送り先はメインカレンダー。購読しているだけのカレンダーには書けません
 const CAL = "primary";
 const API = `https://www.googleapis.com/calendar/v3/calendars/${CAL}/events`;
 
@@ -76,6 +81,14 @@ function fromG(v: any): { iso: string | null; allDay: boolean } {
   if (v.date) return { iso: `${v.date}T00:00:00+09:00`, allDay: true };
   if (v.dateTime) return { iso: v.dateTime, allDay: false };
   return { iso: null, allDay: false };
+}
+
+//  旧来の「見るだけ」の購読（calendar-feed の ICS）を Google 側に残して
+//  いると、一覧にカレンダーとして出てきます。それを取り込むと TsuguAi の
+//  予定が TsuguAi に戻ってきて、際限なく増えます。一覧から外します
+function isSelfFeed(c: any) {
+  const id = String(c?.id ?? ""), name = String(c?.summaryOverride ?? c?.summary ?? "");
+  return /calendar-feed/.test(id) || /^TsuguAi 継ナビくん$/.test(name);
 }
 
 //  短い鍵を用意する。切れていれば更新用の鍵で取り直す。
@@ -248,103 +261,138 @@ Deno.serve(async (req) => {
     }
 
     // -------------------------------------------------------------
-    // ③ Google の変更を取ってくる
+    // ③ Google の変更を取ってくる（カレンダーごと）
     // -------------------------------------------------------------
     if (link.pull_private !== false) {
-      let pageToken: string | null = null;
-      let syncToken: string | null = link.sync_token ?? null;
-      let nextSync: string | null = null;
-      let pullBad = false;   // 一件でも入れ損ねたら、札を進めない
-
-      //  ここは do…while で書いてはいけません。do…while の continue は
-      //  条件式に飛ぶので、札を捨てたあと pageToken が null のまま条件を
-      //  見て、**取り直さずに終わってしまいます**。実際そうなりました
-      //  （「同期できたのに一件も入らない」という、いちばん分かりにくい形で）。
-      //  終わり方を自分で書きます。
-      let pages = 0;     // 何ページ取ったか
-      let resets = 0;    // 札を捨てて取り直した回数
-      while (true) {
-        if (++pages > 20) break;   // 際限なく回らないように
-
-        const q = new URL(API);
-        q.searchParams.set("singleEvents", "true");
-        q.searchParams.set("maxResults", "250");
-        if (syncToken) {
-          q.searchParams.set("syncToken", syncToken);
-        } else {
-          //  はじめて、または札が古くなったとき。取りすぎないよう幅を切る
-          q.searchParams.set("timeMin", since);
-          q.searchParams.set("timeMax", until);
-        }
-        if (pageToken) q.searchParams.set("pageToken", pageToken);
-
-        const r = await fetch(q, { headers: H });
-        if (r.status === 410) {
-          //  札が古い。捨てて、日付を区切った取り方で最初から取り直す
-          syncToken = null; pageToken = null;
-          await sb.from("google_cal_links").update({ sync_token: null }).eq("id", link.id);
-          if (++resets > 2) { lnotes.push("取り直しが続いたので止めました"); break; }
-          continue;
-        }
-        const g = await r.json();
-        if (!r.ok) {
-          lnotes.push(`取ってこられませんでした（${g?.error?.message ?? r.status}）`);
-          pullBad = true;
-          break;
-        }
-
-        for (const it of g.items ?? []) {
-          //  こちらが送ったものは取り込まない（同じ予定が二つになる）
-          const mark = it.extendedProperties?.private ?? {};
-          if (mark.tsuguai || mark.tsuguai_meeting) continue;
-
-          if (it.status === "cancelled") {
-            //  向こうで消えたものは、取り込んだぶんだけ消す。
-            //  こちらで作った予定は消しません（Google の操作で消えては困る）
-            const { count } = await sb.from("agenda_events")
-              .delete({ count: "exact" })
-              .eq("owner_id", uid).eq("google_id", it.id).eq("source", "google");
-            removed += count ?? 0;
-            continue;
-          }
-
-          const st = fromG(it.start), en = fromG(it.end);
-          if (!st.iso) continue;
-          const row = {
-            owner_id: uid,
-            title: String(it.summary || "（無題）").slice(0, 120),
-            starts_at: st.iso,
-            ends_at: en.iso,
-            all_day: st.allDay,
-            place: it.location ? String(it.location).slice(0, 120) : null,
-            note: it.description ? String(it.description).slice(0, 300) : null,
-            google_id: it.id,
-            google_etag: it.etag ?? null,
-            link_id: link.id,
-            source: "google",
-            synced_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          };
-          //  同じ予定は番号で上書き（索引は owner_id, google_id。条件なし）
-          const { error } = await sb.from("agenda_events")
-            .upsert(row, { onConflict: "owner_id,google_id" });
-          if (error) {
-            //  黙って落とすと「同期は成功なのに出ない」になる。必ず知らせる
-            pullBad = true;
-            if (lnotes.length < 3) lnotes.push(`入れられませんでした：${row.title}（${error.message}）`);
-          } else {
-            pulled++;
-          }
-        }
-
-        pageToken = g.nextPageToken ?? null;
-        if (g.nextSyncToken) nextSync = g.nextSyncToken;
-        if (!pageToken) break;   // 最後のページまで来た
+      //  まず、このアカウントが持つカレンダーの一覧を Google と合わせる。
+      //  新しく見つかったものはオフで足され（メインだけオン）、名前と色は
+      //  毎回直す。オン／オフと札は SQL 側が守るので、ここでは触らない
+      const lr = await fetch(
+        "https://www.googleapis.com/calendar/v3/users/me/calendarList?minAccessRole=reader&showHidden=false",
+        { headers: H },
+      );
+      const lj = await lr.json();
+      if (!lr.ok) {
+        lnotes.push(`カレンダーの一覧を取れませんでした（${lj?.error?.message ?? lr.status}）`);
+      } else {
+        const items = (lj.items ?? [])
+          .filter((c: any) => !isSelfFeed(c))
+          .map((c: any) => ({
+            id: c.id,
+            name: c.summaryOverride || c.summary || c.id,
+            is_primary: !!c.primary,
+            color: /^#[0-9a-f]{6}$/i.test(String(c.backgroundColor ?? "")) ? c.backgroundColor : null,
+          }));
+        await sb.rpc("google_cal_list_merge", { p_link: link.id, p_items: items });
       }
 
-      //  全部入ったときだけ札を進める。入れ損ねがあれば、次も同じ幅で取り直す
-      if (nextSync && !pullBad) {
-        await sb.from("google_cal_links").update({ sync_token: nextSync }).eq("id", link.id);
+      //  オンになっているカレンダーだけ取ってくる
+      const { data: cals } = await sb.from("google_calendars")
+        .select("cal_id, name, sync_token").eq("link_id", link.id).eq("enabled", true);
+
+      for (const cal of cals ?? []) {
+        const calApi = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.cal_id)}/events`;
+        let pageToken: string | null = null;
+        let syncToken: string | null = cal.sync_token ?? null;
+        let nextSync: string | null = null;
+        let pullBad = false;   // 一件でも入れ損ねたら、札を進めない
+
+        //  ここは do…while で書いてはいけません。do…while の continue は
+        //  条件式に飛ぶので、札を捨てたあと pageToken が null のまま条件を
+        //  見て、**取り直さずに終わってしまいます**。実際そうなりました
+        //  （「同期できたのに一件も入らない」という、いちばん分かりにくい形で）。
+        //  終わり方を自分で書きます。
+        let pages = 0;     // 何ページ取ったか
+        let resets = 0;    // 札を捨てて取り直した回数
+        while (true) {
+          if (++pages > 20) break;   // 際限なく回らないように
+
+          const q = new URL(calApi);
+          q.searchParams.set("singleEvents", "true");
+          q.searchParams.set("maxResults", "250");
+          if (syncToken) {
+            q.searchParams.set("syncToken", syncToken);
+          } else {
+            //  はじめて、または札が古くなったとき。取りすぎないよう幅を切る
+            q.searchParams.set("timeMin", since);
+            q.searchParams.set("timeMax", until);
+          }
+          if (pageToken) q.searchParams.set("pageToken", pageToken);
+
+          const r = await fetch(q, { headers: H });
+          if (r.status === 410) {
+            //  札が古い。捨てて、日付を区切った取り方で最初から取り直す
+            syncToken = null; pageToken = null;
+            await sb.from("google_calendars").update({ sync_token: null })
+              .eq("link_id", link.id).eq("cal_id", cal.cal_id);
+            if (++resets > 2) { lnotes.push(`${cal.name}：取り直しが続いたので止めました`); break; }
+            continue;
+          }
+          const g = await r.json();
+          if (!r.ok) {
+            lnotes.push(`${cal.name}：取ってこられませんでした（${g?.error?.message ?? r.status}）`);
+            pullBad = true;
+            break;
+          }
+
+          for (const it of g.items ?? []) {
+            //  こちらが送ったものは取り込まない（同じ予定が二つになる）
+            const mark = it.extendedProperties?.private ?? {};
+            if (mark.tsuguai || mark.tsuguai_meeting) continue;
+            //  旧来の購読（ICS）経由で Google に入った TsuguAi の予定も、
+            //  取り込まない。戻ってくると際限なく増える
+            if (/@tsugu-ai$/.test(String(it.iCalUID ?? ""))) continue;
+
+            if (it.status === "cancelled") {
+              //  向こうで消えたものは、取り込んだぶんだけ消す。
+              //  こちらで作った予定は消しません（Google の操作で消えては困る）
+              const { count } = await sb.from("agenda_events")
+                .delete({ count: "exact" })
+                .eq("owner_id", uid).eq("google_id", it.id).eq("source", "google");
+              removed += count ?? 0;
+              continue;
+            }
+
+            const st = fromG(it.start), en = fromG(it.end);
+            if (!st.iso) continue;
+            const row = {
+              owner_id: uid,
+              title: String(it.summary || "（無題）").slice(0, 120),
+              starts_at: st.iso,
+              ends_at: en.iso,
+              all_day: st.allDay,
+              place: it.location ? String(it.location).slice(0, 120) : null,
+              note: it.description ? String(it.description).slice(0, 300) : null,
+              google_id: it.id,
+              google_etag: it.etag ?? null,
+              link_id: link.id,
+              cal_id: cal.cal_id,
+              source: "google",
+              synced_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+            //  同じ予定は番号で上書き（索引は owner_id, google_id。条件なし）
+            const { error } = await sb.from("agenda_events")
+              .upsert(row, { onConflict: "owner_id,google_id" });
+            if (error) {
+              //  黙って落とすと「同期は成功なのに出ない」になる。必ず知らせる
+              pullBad = true;
+              if (lnotes.length < 3) lnotes.push(`入れられませんでした：${row.title}（${error.message}）`);
+            } else {
+              pulled++;
+            }
+          }
+
+          pageToken = g.nextPageToken ?? null;
+          if (g.nextSyncToken) nextSync = g.nextSyncToken;
+          if (!pageToken) break;   // 最後のページまで来た
+        }
+
+        //  全部入ったときだけ札を進める。入れ損ねがあれば、次も同じ幅で取り直す
+        if (nextSync && !pullBad) {
+          await sb.from("google_calendars").update({ sync_token: nextSync })
+            .eq("link_id", link.id).eq("cal_id", cal.cal_id);
+        }
       }
     }
 
