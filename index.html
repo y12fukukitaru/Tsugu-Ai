@@ -1467,7 +1467,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260917-22';
+  var APP_BUILD='20260918-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -5320,10 +5320,21 @@
       s=s.replace(/`([^`]+)`/g,'<code style="background:#EEF2F8;border-radius:4px;padding:1px 5px;font-size:.92em;">$1</code>');
       return s;
     }
-    function flushPara(){ if(para.length){ out.push('<div style="margin:0 0 8px;line-height:1.75;">'+para.join('<br>')+'</div>'); para=[]; } }
+    //  一段下げた行は箱そのものが行を作るので、直後の <br> は落とす（空きすぎる）
+    function flushPara(){ if(para.length){ out.push('<div style="margin:0 0 8px;line-height:1.75;">'+para.join('<br>').replace(/<\/div><br>/g,'</div>')+'</div>'); para=[]; } }
     function list(ordered){
       var buf=[], rx=ordered?/^\s*\d+[.)]\s+/:/^\s*[-*・]\s+/;
-      while(i<lines.length && rx.test(lines[i])){ buf.push('<li style="margin:2px 0;">'+inline(lines[i].replace(rx,''))+'</li>'); i++; }
+      while(i<lines.length && rx.test(lines[i])){
+        var li=inline(lines[i].replace(rx,'')); i++;
+        //  一段下げた行は、直前の項目のなかに小さく添える。
+        //  「・17:00 面談」の次の行に場所を書く、という形のため。
+        //  HTMLは行頭の空白を潰すので、ここで箱にしないと段が消える。
+        while(i<lines.length && /^[ \t\u3000]+\S/.test(lines[i]) && !rx.test(lines[i])){
+          li+='<div style="margin:1px 0 0;font-size:.92em;color:#5A6981;">'+inline(lines[i].replace(/^[ \t\u3000]+/,'').replace(/\s+$/,''))+'</div>';
+          i++;
+        }
+        buf.push('<li style="margin:2px 0;">'+li+'</li>');
+      }
       var tag=ordered?'ol':'ul';
       out.push('<'+tag+' style="margin:4px 0 8px;padding-left:20px;line-height:1.7;">'+buf.join('')+'</'+tag+'>');
     }
@@ -5362,6 +5373,13 @@
       if(/^\s*[-*・]\s+/.test(ln)){ flushPara(); list(false); continue; }
       if(/^\s*\d+[.)]\s+/.test(ln)){ flushPara(); list(true); continue; }
       if(/^\s*$/.test(ln)){ flushPara(); i++; continue; }
+      //  一段下げた行は、直前の行に添える。「・17:00 面談」の次の行に場所を書く形。
+      //  HTMLは行頭の空白を潰すので、箱にしないと段が消えて1行に見えてしまう。
+      //  直前の行にくっつけるのは、<br> がもう1つ入って空きすぎるのを避けるため。
+      if(/^[ \t\u3000]+\S/.test(ln) && para.length){
+        para[para.length-1]+='<div style="margin:1px 0 0 1.4em;font-size:.92em;color:#5A6981;">'+inline(ln.replace(/^[ \t\u3000]+/,''))+'</div>';
+        i++; continue;
+      }
       para.push(inline(ln)); i++;
     }
     flushPara();
