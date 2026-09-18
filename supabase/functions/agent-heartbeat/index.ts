@@ -113,7 +113,7 @@ async function runHeartbeat(sb: any) {
       kind: "daily_brief",
       title: brief.title,
       body: brief.body,
-      reason: [...signals.map((s) => s.fact), ...agenda.map((a) => "予定: " + a)].join(" / "),
+      reason: [...signals.map((s) => s.fact), ...agenda.map((a) => "予定: " + agendaFlat(a))].join(" / "),
       priority: signals.length ? Math.min(...signals.map((s) => s.priority)) : 3,
     });
     if (!insErr) {
@@ -343,7 +343,7 @@ async function customerBriefs(sb: any): Promise<number> {
       '出力は次のJSONのみ: {"title":"見出し(20字以内)","body":"本文(Markdown可・250字以内)"}';
     const tj = jstToday();
     const usr = `会社: ${c.company_name || ""}\n今日は${tj.label}、今週のはじまりです。\n`
-      + (agenda.length ? `今週の予定:\n${agenda.map((a) => "- " + a).join("\n")}\n` : "")
+      + (agenda.length ? `今週の予定:\n${agenda.map((a) => "- " + agendaFlat(a)).join("\n")}\n` : "")
       + (signals.length ? `\n今週の状況:\n${signals.map((x) => "- " + x).join("\n")}` : "");
     const brief = await callClaudeJson(sys, usr, 700);
     if (!brief) continue;
@@ -352,7 +352,7 @@ async function customerBriefs(sb: any): Promise<number> {
     const { error: insErr } = await sb.from("agent_insights").insert({
       user_id: c.id, kind: "weekly_brief",
       title: brief.title, body: brief.body,
-      reason: [...signals, ...agenda.map((a) => "予定: " + a)].join(" / "), priority: signals.length ? 2 : 3,
+      reason: [...signals, ...agenda.map((a) => "予定: " + agendaFlat(a))].join(" / "), priority: signals.length ? 2 : 3,
     });
     if (!insErr) { made++; await deliver(sb, c.id, brief, "weekly_brief"); }
   }
@@ -1053,15 +1053,24 @@ function emailHtml(brief: { title: string; body: string }, kind = "daily_brief")
   const body = (brief.body || "")
     .split("\n")
     .map((line) => {
+      //  行頭の下げ幅は trim で消える前に控えておく。予定の場所のように、
+      //  一段下げて添える行があるため（「・17:00 面談」の次の行に場所）
+      const indented = /^[ \t\u3000]/.test(line);
       let l = line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").trim();
       if (/^(-{3,}|\*{3,}|─{3,})$/.test(l)) return '<div style="border-top:1px solid #E2E7EF;margin:10px 0;"></div>';
       l = l.replace(/^&gt;\s*/, "");                    // 引用記号は外す
       const heading = /^#{1,4}\s*(.+)$/.exec(l);
       if (heading) l = `<b style="color:#1E3A66;">${heading[1]}</b>`;
       l = l.replace(/^-\s+/, "・").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+      //  下げた行は折り返しても左端に戻らないよう、余白を持つ箱にして出す。
+      //  住所のように長い文字列が入るため、ここは &nbsp; では足りない。
+      if (l && indented) l = `<div style="margin:0 0 0 1.4em;color:#5A6981;">${l}</div>`;
       return l;
     })
     .join("<br>")
+    //  下げた行は箱そのものが行を作るので、前後の <br> は落とす（空きすぎる）
+    .replace(/<br>(<div style="margin:0 0 0 1\.4em;)/g, "$1")
+    .replace(/(<\/div>)<br>/g, "$1")
     .replace(/(<br>){3,}/g, "<br><br>")
     //  区切り線の前後の改行を吸わせる。残すと線のまわりが空きすぎて、
     //  かえって「何も無い場所」に見える。線自体も薄すぎたので少し濃くする。
@@ -1287,7 +1296,7 @@ async function collectSignals(sb: any, customerIds: string[]): Promise<Signal[]>
 }
 
 // ---- Claudeでブリーフに編集（優先順位付けと「最初の一言」まで） ----
-async function composeBrief(signals: Signal[], agenda: string[] = []): Promise<{ title: string; body: string } | null> {
+async function composeBrief(signals: Signal[], agenda: AgendaItem[] = []): Promise<{ title: string; body: string } | null> {
   const sys =
     "あなたは中小企業支援プラットフォーム「TsuguAi」の、認定パートナーを支えるAIエージェント「継ナビくん」です。" +
     "親しみやすく、頼れる相棒として振る舞います（ただし馴れ馴れしくしない）。" +
@@ -1309,7 +1318,7 @@ async function composeBrief(signals: Signal[], agenda: string[] = []): Promise<{
     '出力は次のJSONのみ: {"title":"見出し(20字以内)","body":"本文(Markdown可・600字以内)"}';
   const t = jstToday();
   const usr = `今日は${t.label}です。\n`
-    + (agenda.length ? `今日の予定:\n${agenda.map((a) => "- " + a).join("\n")}\n\n` : "")
+    + (agenda.length ? `今日の予定:\n${agenda.map((a) => "- " + agendaFlat(a)).join("\n")}\n\n` : "")
     + (signals.length ? "今朝のシグナル:\n" + signals.map((s) => `- [優先${s.priority}] ${s.fact}`).join("\n") : "特筆すべきシグナルはありません。");
   return await callClaudeJson(sys, usr, 1200);
 }
@@ -1324,17 +1333,32 @@ async function composeBrief(signals: Signal[], agenda: string[] = []): Promise<{
 //  週の便りの頭に置く「今週の予定」。毎週おなじ場所に同じ形で出す。
 //  予定が無い週も出す。空だったという報告になるので、届いていない・
 //  壊れている、と区別がつく。
-function weekBlock(agenda: string[]): string {
+function weekBlock(agenda: AgendaItem[]): string {
   const head = "**【今週の予定】**\n";
   if (!agenda.length) return head + "　今週は予定が入っていません\n\n────────────\n\n";
-  return head + agenda.map((a) => "・" + a).join("\n") + "\n\n────────────\n\n";
+  return head + agendaLines(agenda) + "\n\n────────────\n\n";
 }
-function agendaBlock(agenda: string[]): string {
+function agendaBlock(agenda: AgendaItem[]): string {
   //  LINEでは ** が落ちるため、【】そのもので見出しと分かるようにする。
   //  区切り線は、予定と本題のあいだに視線の切れ目を作るためのもの。
   const head = "**【本日の予定】**\n";
   if (!agenda.length) return "**【本日の予定】**　なし\n\n────────────\n\n";
-  return head + agenda.map((a) => "・" + a).join("\n") + "\n\n────────────\n\n";
+  return head + agendaLines(agenda) + "\n\n────────────\n\n";
+}
+
+//  予定の一件。時間と要件（text）と、場所（place）は分けて持つ。
+//  ひとつの文字列にまとめると
+//  「終日 文化祭り（安田幼稚園, 日本、〒730-0002 広島県広島市中区白島中町2-25）」
+//  のように一行が伸びて、スマホでもLINEでも読めなくなる。
+type AgendaItem = { text: string; place?: string | null };
+//  AIへの指示や reason 欄など、1行に収めたいところで使う形
+function agendaFlat(a: AgendaItem): string { return a.place ? `${a.text}（${a.place}）` : a.text; }
+//  読む人に見せる形。1行目に時間と要件、場所は次の行に一段下げる。
+//   ・17:00 高重さん
+//   　　安田幼稚園（広島市中区白島中町2-25）
+//  下げ幅は全角空白2つ。半角空白だとLINEで潰れて見えるため。
+function agendaLines(items: AgendaItem[]): string {
+  return items.map((a) => (a.place ? `・${a.text}\n　　${a.place}` : `・${a.text}`)).join("\n");
 }
 
 // ---- 今日の予定（継ナビくんのカレンダー＋面談）----
@@ -1414,9 +1438,9 @@ async function openTodosForCustomers(sb: any, customerIds: string[], today: stri
   } catch { return []; }
 }
 //  今週の予定。経営者ご本人のカレンダーと、担当パートナーとの面談を混ぜる。
-async function weekAgenda(sb: any, customerId: string): Promise<string[]> {
+async function weekAgenda(sb: any, customerId: string): Promise<AgendaItem[]> {
   const { from, to } = jstWeek();
-  const rows: { t: number; s: string }[] = [];
+  const rows: { t: number; s: AgendaItem }[] = [];
   try {
     const { data: ev } = await sb.from("agenda_events")
       .select("title, starts_at, all_day, place")
@@ -1426,7 +1450,7 @@ async function weekAgenda(sb: any, customerId: string): Promise<string[]> {
     for (const e of ev ?? []) {
       rows.push({
         t: new Date(e.starts_at).getTime(),
-        s: `${fmtDayTimeJst(e.starts_at, e.all_day)} ${e.title ?? "予定"}${e.place ? `（${e.place}）` : ""}`,
+        s: { text: `${fmtDayTimeJst(e.starts_at, e.all_day)} ${e.title ?? "予定"}`, place: e.place },
       });
     }
   } catch { /* 表が無い環境でも止めない */ }
@@ -1439,7 +1463,7 @@ async function weekAgenda(sb: any, customerId: string): Promise<string[]> {
     for (const m of mt ?? []) {
       rows.push({
         t: new Date(m.meet_at).getTime(),
-        s: `${fmtDayTimeJst(m.meet_at)} 担当パートナーとの面談${m.place ? `（${m.place}）` : ""}`,
+        s: { text: `${fmtDayTimeJst(m.meet_at)} 担当パートナーとの面談`, place: m.place },
       });
     }
   } catch { /* 同上 */ }
@@ -1447,9 +1471,9 @@ async function weekAgenda(sb: any, customerId: string): Promise<string[]> {
   return rows.map((r) => r.s);
 }
 
-async function todayAgenda(sb: any, ownerId: string, customerIds?: string[]): Promise<string[]> {
+async function todayAgenda(sb: any, ownerId: string, customerIds?: string[]): Promise<AgendaItem[]> {
   const { from, to } = jstToday();
-  const rows: { t: number; s: string }[] = [];
+  const rows: { t: number; s: AgendaItem }[] = [];
   try {
     const { data: ev } = await sb
       .from("agenda_events")
@@ -1460,7 +1484,7 @@ async function todayAgenda(sb: any, ownerId: string, customerIds?: string[]): Pr
     for (const e of ev ?? []) {
       rows.push({
         t: new Date(e.starts_at).getTime(),
-        s: `${e.all_day ? "終日" : fmtTimeJst(e.starts_at)} ${e.title ?? "予定"}${e.place ? `（${e.place}）` : ""}`,
+        s: { text: `${e.all_day ? "終日" : fmtTimeJst(e.starts_at)} ${e.title ?? "予定"}`, place: e.place },
       });
     }
   } catch { /* 表が無い環境でも止めない */ }
@@ -1478,7 +1502,7 @@ async function todayAgenda(sb: any, ownerId: string, customerIds?: string[]): Pr
       for (const m of mt ?? []) {
         rows.push({
           t: new Date(m.meet_at).getTime(),
-          s: `${fmtTimeJst(m.meet_at)} ${names.get(m.customer_id) ?? "顧客"}との面談${m.place ? `（${m.place}）` : ""}`,
+          s: { text: `${fmtTimeJst(m.meet_at)} ${names.get(m.customer_id) ?? "顧客"}との面談`, place: m.place },
         });
       }
     } catch { /* 同上 */ }
