@@ -85,6 +85,9 @@ async function runHeartbeat(sb: any) {
     add(a.sub_id, a.customer_id);
   }
 
+  //  Googleカレンダーをつないでいる方。便りを作る前に取り込む
+  const linked = await googleLinked(sb);
+
   let generated = 0;
   for (const [partnerId, customerSet] of byPartner) {
     const customerIds = [...customerSet];
@@ -98,6 +101,9 @@ async function runHeartbeat(sb: any) {
       .gte("created_at", daysAgo(0.8))
       .limit(1);
     if (dup?.length) continue;
+
+    //  予定を読む前に取り込む。Googleにだけ入れた予定も拾えるようにする
+    if (linked.has(partnerId)) await syncGoogle(partnerId);
 
     const signals = await collectSignals(sb, customerIds);
     const agenda = await todayAgenda(sb, partnerId, customerIds);
@@ -262,6 +268,8 @@ async function customerBriefs(sb: any): Promise<number> {
   const prevMonth = prev.toISOString().slice(0, 7);
   //  日本時間の今日。UTCで取ると、朝6時の実行では前日になる。
   const today = jstToday().date;
+  //  Googleカレンダーをつないでいる方。便りを作る前に取り込む
+  const linked = await googleLinked(sb);
 
   let made = 0;
   for (const c of custs) {
@@ -316,6 +324,7 @@ async function customerBriefs(sb: any): Promise<number> {
         ? `ご自分で書いた「${t.title}」が${t.due_on}の予定のまま`
         : `今日やると書いていた「${t.title}」`);
     }
+    if (linked.has(c.id)) await syncGoogle(c.id);   // 今週の予定を読む前に取り込む
     const agenda = await weekAgenda(sb, c.id);
     // 予定が入っている週は、ほかに何も無くてもひとことを届ける
     if (!signals.length && !agenda.length) continue;
@@ -1321,6 +1330,39 @@ async function composeBrief(signals: Signal[], agenda: AgendaItem[] = []): Promi
     + (agenda.length ? `今日の予定:\n${agenda.map((a) => "- " + agendaFlat(a)).join("\n")}\n\n` : "")
     + (signals.length ? "今朝のシグナル:\n" + signals.map((s) => `- [優先${s.priority}] ${s.fact}`).join("\n") : "特筆すべきシグナルはありません。");
   return await callClaudeJson(sys, usr, 1200);
+}
+
+// ---- 便りを作る前に、Googleカレンダーを取り込む ----
+//  google-sync を呼んでいるのは画面だけで、予定タブを開いたときにしか
+//  取りにいきません。つまり「Googleにだけ入れて、その後TsuguAiを開いて
+//  いない予定」は、朝の便りに出ませんでした。本文を作る前にこちらから
+//  呼んで、その取りこぼしを無くします。
+//
+//  ・つないでいる方のぶんだけ呼ぶ（下の googleLinked で先に絞る）
+//  ・20秒で見切る。Google が重い日に、便りそのものを止めない
+//  ・失敗しても黙って進む。予定が古いだけで、シグナルは生きている
+async function syncGoogle(userId: string) {
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(), 20000);
+  try {
+    await fetch(`${SUPABASE_URL}/functions/v1/google-sync`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${SERVICE_KEY}`, "content-type": "application/json" },
+      body: JSON.stringify({ user_id: userId }),
+      signal: ac.signal,
+    });
+  } catch (e) {
+    console.error("google sync skipped:", userId, String((e as Error).message));
+  } finally {
+    clearTimeout(t);
+  }
+}
+//  つないでいる方の一覧。つないでいない方のぶんまで呼ぶと、ただ待つだけになる
+async function googleLinked(sb: any): Promise<Set<string>> {
+  try {
+    const { data } = await sb.from("google_cal_links").select("user_id").not("refresh_enc", "is", null);
+    return new Set<string>((data ?? []).map((r: any) => r.user_id));
+  } catch { return new Set<string>(); }   // 表がまだ無い環境でも止めない
 }
 
 // ---- 本文の頭に置く「本日の予定」の枠 ----

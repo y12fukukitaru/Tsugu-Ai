@@ -31,7 +31,8 @@ function ok(name, cond) { is(name, !!cond, true); }
     ok(w + '：取りにいくのは画面を開いたとき', /<b>この画面（予定タブ）を開いたときに取りにいきます<\/b>（開くたび、最短5分おき）。TsuguAiを開いていないあいだは取りにいきません。/.test(s));
     ok(w + '：すぐ合わせる方法', /すぐ合わせたいときは<b>「いま同期する」<\/b>を押してください。/.test(s));
   });
-  ok('パートナー説明書：朝の便りとの関係も書く', /<b>毎朝の「今日の一手」は、そのとき取り込み済みの予定から作ります。<\/b>Googleにだけ入れて一度もTsuguAiを開いていない予定は、朝の便りに出ません。/.test(MANP));
+  //  朝の便りとの関係は、後日 agent-heartbeat 側で取り込むようにした（gcalmorning_test.js）
+  ok('パートナー説明書：朝の便りとの関係も書く', /<b>毎朝の「今日の一手」だけは、届く前に取り込みます。<\/b>/.test(MANP));
   is('継ナビくんの知識にも入れる', (SRC.match(/Google→TsuguAiの向きだけ間がある\(こちらからGoogleへは入れた時点ですぐ。逆は予定タブを開いたときに取りにいく。開くたび・最短5分おき。TsuguAiを開いていない間は取りにいかない\)/g) || []).length, 2);
 }
 
@@ -46,7 +47,7 @@ function ok(name, cond) { is(name, !!cond, true); }
 // ④ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260919-03', '20260919-03']);
+  is('版が揃う', [build, VER.build], ['20260919-04', '20260919-04']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
