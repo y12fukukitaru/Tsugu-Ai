@@ -5,6 +5,7 @@
 //
 //    ① 短い鍵を取り直す（1時間で切れるため）
 //    ② こちらの予定を Google へ送る（まだ送っていないもの・直したもの）
+//   ②-2 こちらで消した予定を Google からも消す（墓標をたどる）
 //    ③ Google の変更を取ってくる（カレンダーごと・前回からの差分だけ）
 //
 //  ■ 複数アカウントのときの決まり
@@ -26,6 +27,15 @@
 //    ときは google_id で突き合わせるので、送ったものが戻ってきて
 //    増えることはありません。Google 側にも印を付けています
 //    （extendedProperties.private.tsuguai = こちらの番号）。
+//
+//  ■ 消したときのこと
+//
+//    TsuguAi で予定を消すと、行そのものが無くなるので「あちらの番号」も
+//    一緒に消えてしまいます。そこで SQL 側の引き金が agenda_deletions に
+//    番号だけを残します（墓標）。ここではそれをたどって Google 側を消し、
+//    消せたら墓標を下ろします。すでに無ければ（404・410）も下ろします。
+//    見るだけのカレンダー（日本の祝日など）は Google が 403 を返すので、
+//    書き残して下ろします。毎回やり直しても同じ失敗を繰り返すためです。
 //
 //  ■ 差分の取り方
 //
@@ -59,6 +69,9 @@ const DAY = 86400000;
 //  送り先はメインカレンダー。購読しているだけのカレンダーには書けません
 const CAL = "primary";
 const API = `https://www.googleapis.com/calendar/v3/calendars/${CAL}/events`;
+//  消すときだけは、取り込んだカレンダー（家族・共有など）も相手になります
+const evUrl = (cal: string) =>
+  `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal)}/events`;
 
 const CORS = {
   "access-control-allow-origin": "*",
@@ -154,6 +167,11 @@ Deno.serve(async (req) => {
     .select("id, title, starts_at, ends_at, all_day, place, note, google_id, link_id, source, synced_at, updated_at")
     .eq("owner_id", uid).gte("starts_at", since).lte("starts_at", until).limit(400);
 
+  //  消した予定の墓標（agenda_deletions）。行が消えるときに SQL の引き金が
+  //  立てています。ここで Google 側も消して、消せたら墓標を下ろします
+  const { data: graves } = await sb.from("agenda_deletions")
+    .select("id, google_id, link_id, cal_id").eq("user_id", uid).limit(200);
+
   //  面談はパートナーだけ。担当顧客の名前も一度だけ引く
   const { data: prof } = await sb.from("profiles").select("role").eq("id", uid).maybeSingle();
   let nameOf = new Map<string, string>();
@@ -162,7 +180,9 @@ Deno.serve(async (req) => {
     nameOf = new Map((ids ?? []).map((p: any) => [p.id, p.company_name || "顧客"]));
   }
 
-  let pushed = 0, pulled = 0, removed = 0;
+  let pushed = 0, pulled = 0, removed = 0, deleted = 0;
+  //  墓標は一度下ろせばそれきり。アカウントを順に見るので、二度触らない
+  const doneGraves = new Set<string>();
   const notes: string[] = [];
   let relink = false;   // つなぎ直しが要るアカウントがあるか
 
@@ -221,6 +241,37 @@ Deno.serve(async (req) => {
         }
       } catch (err) {
         lnotes.push(`送れませんでした：${e.title}（${String((err as Error).message)}）`);
+      }
+    }
+
+    // -------------------------------------------------------------
+    // ②-2 消した予定を、Google からも消す（墓標を下ろす）
+    // -------------------------------------------------------------
+    for (const gv of graves ?? []) {
+      if (doneGraves.has(gv.id)) continue;
+      //  どのアカウントの予定だったか。預かっていないものは送り先が引き受ける
+      const here = gv.link_id ? gv.link_id === link.id : !!link.push_target;
+      if (!here) continue;
+      const url = `${evUrl(gv.cal_id || CAL)}/${encodeURIComponent(gv.google_id)}`;
+      try {
+        const r = await fetch(url, { method: "DELETE", headers: H });
+        if (r.ok || r.status === 404 || r.status === 410) {
+          //  消えた、またはすでに無い。どちらも墓標は下ろす
+          doneGraves.add(gv.id);
+          await sb.from("agenda_deletions").delete().eq("id", gv.id);
+          if (r.ok) deleted++;
+        } else if (r.status === 403) {
+          //  見るだけのカレンダー（日本の祝日など）。毎回やり直しても
+          //  同じ失敗を繰り返すだけなので、書き残して墓標を下ろす
+          lnotes.push("Googleからは消せませんでした（見るだけのカレンダーです）");
+          doneGraves.add(gv.id);
+          await sb.from("agenda_deletions").delete().eq("id", gv.id);
+        } else {
+          //  一時の不調かもしれない。墓標は残して次の同期でもう一度
+          lnotes.push(`Googleから消せませんでした（${r.status}）`);
+        }
+      } catch (err) {
+        lnotes.push(`Googleから消せませんでした（${String((err as Error).message)}）`);
       }
     }
 
@@ -416,5 +467,12 @@ Deno.serve(async (req) => {
     if (lastError) notes.push(who + lastError);
   }
 
-  return json({ ok: true, pushed, pulled, removed, relink, accounts: live.length, notes: notes.slice(0, 3) });
+  //  行き先の無くなった墓標（アカウントを解除した、送り先がまだ無い）を
+  //  いつまでも残さない。30日も経てば、消す相手はもういません
+  try {
+    await sb.from("agenda_deletions").delete()
+      .eq("user_id", uid).lt("created_at", new Date(Date.now() - 30 * DAY).toISOString());
+  } catch { /* 掃除に失敗しても同期は成功 */ }
+
+  return json({ ok: true, pushed, pulled, removed, deleted, relink, accounts: live.length, notes: notes.slice(0, 3) });
 });
