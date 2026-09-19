@@ -46,23 +46,21 @@ function takeFn(name) {
   is('呼んでいるのは3か所だけ', (SRC.match(/^\s*gcalPushNow\(\);/gm) || []).length, 3);
 }
 
-// ③ 消したときは呼ばない
+// ③ 消したとき（くわしくは gcaldel_test.js）
 {
   const f = takeFn('calDelete');
-  no('削除からは呼ばない', /gcalPushNow/.test(f));
-  ok('呼ばない理由を書いてある', /ここでは Google を呼びません/.test(f));
+  ok('こちらの予定を消したときだけ走らせる', /if\(onG\) gcalPushNow\(\);/.test(f));
+  no('取り込んだ予定では走らせない', /^\s*gcalPushNow\(\);\s*$/m.test(f));
 }
 
 // ④ 画面と説明書の言い方
 {
-  ok('連携欄に「押す必要はありません」と書く', /この画面で予定を入れる・直すと、そのままGoogleに出ます（押す必要はありません）。/.test(SRC));
+  ok('連携欄に「押す必要はありません」と書く', /そのままGoogleに出ます（押す必要はありません）。/.test(SRC));
   ok('「いま同期する」の役割も書く', /「いま同期する」は、Google側で入れた予定を待たずに取り込みたいときにお使いください。/.test(SRC));
   ok('ボタンは残す', /onclick="googleCalSync\(true\)">いま同期する<\/button>/.test(SRC));
   is('継ナビくんの知識にも入れる', (SRC.match(/その場でGoogleに出る\(同期のボタンを押す必要はない/g) || []).length, 2);
-  ok('知識：消したぶんは残ることも書く', (SRC.match(/この画面で消した予定はGoogle側に残るので、Google側でも消す。/g) || []).length === 2);
   [['経営者説明書', MANC], ['パートナー説明書', MANP]].forEach(([w, s]) => {
-    ok(w + '：その場で出る', /<b>この画面で予定を入れる・直すと、その場でGoogleに出ます<\/b>（同期のボタンを押す必要はありません）/.test(s));
-    ok(w + '：消したぶんは残る', /<b>この画面で消した予定はGoogle側に残ります<\/b>。Google側でも消してください。/.test(s));
+    ok(w + '：その場で出る', /その場でGoogleに出ます<\/b>（同期のボタンを押す必要はありません）/.test(s));
   });
   ok('パートナー説明書：次回面談も同じ', /カルテで決めた次回面談も同じで、保存した時点でGoogleに出ます。/.test(MANP));
 }
@@ -70,7 +68,7 @@ function takeFn(name) {
 // ⑤ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260919-01', '20260919-01']);
+  is('版が揃う', [build, VER.build], ['20260919-02', '20260919-02']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
