@@ -52,6 +52,15 @@
 //    面談は顧客との約束なので、カレンダーの操作で消えてよいものでは
 //    ありません。消したいときは TsuguAi の画面から行います。
 //
+//  ■ 誰が呼ぶか
+//
+//    ・画面（継ナビくんの予定タブ）… ログイン中の本人の鍵で呼びます。
+//      予定を入れた・直した・消した直後と、タブを開いたとき（最短5分おき）
+//    ・毎朝の便り（agent-heartbeat）… service_role の鍵で、本文の
+//      `{"user_id":"…"}` に誰のぶんかを書いて呼びます。画面を開いて
+//      いない方のぶんも取り込まないと、Google にだけ入れた予定が
+//      「今日の一手」に出ないためです。
+//
 //  デプロイ:
 //    supabase functions deploy google-sync --no-verify-jwt
 //    （Verify JWT は OFF。中でログインを確かめます）
@@ -104,6 +113,16 @@ function isSelfFeed(c: any) {
   return /calendar-feed/.test(id) || /^TsuguAi 継ナビくん$/.test(name);
 }
 
+//  合鍵かどうかを、長さで当たりを付けられない形で比べる。
+//  === だと、先頭から何文字合っていたかが時間に出ます。ここで比べるのは
+//  service_role の鍵そのものなので、念のため最後まで見てから返します
+function sameSecret(a: string, b: string): boolean {
+  if (!a || !b || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
 //  短い鍵を用意する。切れていれば更新用の鍵で取り直す。
 //  取り直せなければ null（つなぎ直しが要る）
 async function accessFor(sb: any, link: any): Promise<string | null> {
@@ -148,9 +167,20 @@ Deno.serve(async (req) => {
   //  誰の同期かを確かめる（Verify JWT は OFF なので自分で見る）
   const token = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
   if (!token) return json({ ok: false, error: "ログインが必要です" }, 401);
-  const { data: u, error: ue } = await sb.auth.getUser(token);
-  if (ue || !u?.user) return json({ ok: false, error: "ログインを確かめられませんでした" }, 401);
-  const uid = u.user.id;
+
+  let uid = "";
+  if (sameSecret(token, SERVICE_KEY)) {
+    //  運営の仕組みからの呼び出し。毎朝の便り（agent-heartbeat）が、本文を
+    //  作る前にここを呼びます。画面を開いていない方のぶんも取り込むためです。
+    //  誰のぶんかは本文で受け取ります（service_role の鍵はサーバーにしかない）
+    const body = await req.json().catch(() => ({}));
+    uid = String((body as any)?.user_id ?? "");
+    if (!uid) return json({ ok: false, error: "user_id が要ります" }, 400);
+  } else {
+    const { data: u, error: ue } = await sb.auth.getUser(token);
+    if (ue || !u?.user) return json({ ok: false, error: "ログインを確かめられませんでした" }, 401);
+    uid = u.user.id;
+  }
 
   const { data: links } = await sb.from("google_cal_links")
     .select("*").eq("user_id", uid).order("created_at", { ascending: true });
