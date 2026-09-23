@@ -197,7 +197,8 @@ const IDX = R('index.html');
       && /<section class="slide" data-t="デモの地図">/.test(x[1]) && /class="dmap"/.test(x[1]));
     ok(x[0] + ' に画面の写しが6枚', (x[1].match(/<section class="slide dm" data-t="画面/g) || []).length === 6);
     ok(x[0] + ' の地図は6つ', (x[1].match(/<div class="st"><i class="n mk">/g) || []).length === 6);
-    ok(x[0] + ' の各デモに「押す→分かる→そのあと」', (x[1].match(/<div class="dsteps">/g) || []).length === 6
+    //  6枚の画面に加えて、物語の中に「担当者（所属の方）のカルテ」と「顧問先の画面（1年後）」の2枚
+    ok(x[0] + ' の各デモに「押す→分かる→そのあと」', (x[1].match(/<div class="dsteps">/g) || []).length === 8
       && (x[1].match(/<span class="see">/g) || []).length >= 12);
     //  表の中に番号の丸を直接置くと、HTMLの決まりで表の外へ押し出されて
     //  見当違いの場所に出る。必ず外側の箱に付ける
