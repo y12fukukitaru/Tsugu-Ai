@@ -423,7 +423,7 @@
   .sb-foot{padding:14px 16px;border-top:1px solid rgba(255,255,255,.07);}
   .sb-email{display:block;font-size:11px;color:rgba(255,255,255,.55);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   /* 週表示（バーチカル）：横に7日、縦に時間。パネルが狭いときは横スクロール */
-  .wk-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--softline);border-radius:10px;background:var(--card);}
+  .wk-wrap{overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;border:1px solid var(--softline);border-radius:10px;background:var(--card);}
   .wk{min-width:514px;}
   /* minmax(0,1fr) が要る。既定の 1fr は中身より狭くならないため、長い予定名が
      列を押し広げ、見出し・終日・本体で列の幅がずれてしまう */
@@ -775,7 +775,7 @@
   .ai-h:first-child{margin-top:2px;}
   body.dark .ai-h{color:#EDF0F5;border-left-color:#cfa860;}
   /* AI回答内の表（mdLite がパイプ区切りの行を変換） */
-  .ai-tblwrap{overflow-x:auto;margin:8px 0 10px;}
+  .ai-tblwrap{overflow-x:auto;overscroll-behavior-x:contain;margin:8px 0 10px;}
   table.ai-tbl{border-collapse:collapse;width:100%;font-size:12.5px;min-width:300px;}
   table.ai-tbl th{background:#0e2038;color:#cfa860;font-weight:700;text-align:left;padding:7px 10px;border:1px solid #0e2038;line-height:1.5;}
   table.ai-tbl td{padding:6px 10px;border:1px solid #E2E7EF;color:#18202E;vertical-align:top;line-height:1.6;}
@@ -840,7 +840,12 @@
       パネルの角から56pxの位置に来るように合わせてある。
       transform-origin をそこに置くと、パネルが継ナビくん自身から
       膨らんで出てくるように見える。FABの大きさを変えたらここも直すこと */
-  .knv-panel{position:fixed;right:20px;bottom:20px;z-index:71;width:min(600px,calc(100vw - 24px));height:min(820px,calc(100vh - 60px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(6,12,24,.45);display:flex;flex-direction:column;overflow:hidden;
+  /* overscroll-behavior:contain … パネルの中で送りきったあと、その勢いが
+     背後の画面に伝わらないようにする。これが無いと、継ナビくんの中を
+     読んでいるつもりが、下の画面だけが動いていく（スクロールの連鎖）。
+     パネル自身にも掛けるのは、見出し・タブ・入力欄のような
+     「スクロールしない所」をなぞったときの受け皿がここになるため */
+  .knv-panel{position:fixed;right:20px;bottom:20px;z-index:71;width:min(600px,calc(100vw - 24px));height:min(820px,calc(100vh - 60px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(6,12,24,.45);display:flex;flex-direction:column;overflow:hidden;overscroll-behavior:contain;
     transform-origin:calc(100% - 56px) calc(100% - 56px);animation:knvOpen .24s cubic-bezier(.3,.6,.6,1);}
   .knv-panel.max{width:min(920px,calc(100vw - 28px));height:calc(100vh - 24px);bottom:12px;}
   /* 開く：右下の継ナビくんの位置から膨らんで出てくる。
@@ -879,7 +884,7 @@
   .knv-tabs button:hover{color:#C6D2E6;}
   .knv-tabs button.on:hover{color:#CFAD62;}
   .knv-tbadge{position:absolute;top:1px;left:calc(50% + 6px);min-width:15px;height:15px;border-radius:99px;background:#A9403D;color:#fff;font-size:9.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;border:1.5px solid #0E1B33;}
-  .knv-body{flex:1;overflow-y:auto;padding:12px;background:var(--bg);}
+  .knv-body{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:12px;background:var(--bg);}
   /* 通知の内訳サマリー：何が何件あるかを開いた瞬間に見せる */
   .knv-summary{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--line);flex-shrink:0;}
   .knv-summary button{font-family:inherit;font-size:11px;font-weight:600;border-radius:99px;padding:4px 11px;cursor:pointer;border:1px solid var(--line);background:var(--soft);color:var(--muted);}
@@ -1343,7 +1348,7 @@
         <button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:6px 9px;" onclick="knvSearchToggle()" aria-label="検索を閉じる">✕</button>
       </div>
     </div>
-    <div id="knv-guide" class="hidden" style="background:#FDFAF1;border:1px solid #EAD9AC;border-radius:10px;padding:9px 11px;margin-bottom:8px;max-height:210px;overflow:auto;"></div>
+    <div id="knv-guide" class="hidden" style="background:#FDFAF1;border:1px solid #EAD9AC;border-radius:10px;padding:9px 11px;margin-bottom:8px;max-height:210px;overflow:auto;overscroll-behavior:contain;"></div>
     <div id="knv-sugs" class="ai-sugrow" style="margin-bottom:8px;"></div>
     <div id="knv-ask-pv"></div>
     <div style="display:flex;gap:8px;align-items:flex-end;">
@@ -1467,7 +1472,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260919-06';
+  var APP_BUILD='20260923-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -1502,6 +1507,8 @@
     if(typeof KNV_CLOSE_T!=='undefined' && KNV_CLOSE_T){ clearTimeout(KNV_CLOSE_T); KNV_CLOSE_T=null; }
     var fb=$('knv-fab'); if(fb){ fb.classList.add('hidden'); fb.classList.remove('leaving','back','hop'); }
     var pn=$('knv-panel'); if(pn){ pn.classList.add('hidden'); pn.classList.remove('closing'); }
+    //  knvToggle を通らずに隠す道。留めたままにすると、画面が動かなくなる
+    if(typeof knvLock==='function') knvLock(false);
   }
 
   async function doSignup(){
@@ -15299,6 +15306,69 @@
       var b=$('knv-max-btn'); if(b){ b.textContent='⤡'; b.title='元の大きさに戻す'; }
     }catch(e){}
   }
+  // ===== 開いているあいだ、背後の画面を止める（スマホ）=====
+  //  スマホではパネルが画面いっぱいに出る。その状態で背後が動くと、
+  //  継ナビくんを閉じたときに「さっきまで見ていた場所」を見失う。
+  //  overscroll-behavior は「中で送りきったあとの連鎖」を止めるが、
+  //  iPhone の Safari は指を置いた所がスクロールしない箱だと、
+  //  それでも背後が動く。そこで body ごと留める。
+  //
+  //  overflow:hidden だけでは iPhone は止まらないので、いまの位置を
+  //  覚えて position:fixed にし、閉じるときに同じ位置へ戻す。
+  //  広い画面では留めない。パネルは浮いた小窓で、背後を読みながら
+  //  使うことがあるため（留めると横の帯も消えて画面が跳ねる）。
+  var KNV_LOCK_Y=null;
+  function knvNarrow(){
+    try{ return window.matchMedia('(max-width:600px)').matches; }catch(e){ return false; }
+  }
+  function knvLock(on){
+    var b=document.body; if(!b) return;
+    if(on){
+      if(KNV_LOCK_Y!==null || !knvNarrow()) return;
+      KNV_LOCK_Y=window.pageYOffset||document.documentElement.scrollTop||0;
+      b.style.position='fixed';
+      b.style.top=(-KNV_LOCK_Y)+'px';
+      b.style.left='0'; b.style.right='0'; b.style.width='100%';
+      b.style.overflow='hidden';
+    }else{
+      if(KNV_LOCK_Y===null) return;
+      var y=KNV_LOCK_Y; KNV_LOCK_Y=null;
+      b.style.position=''; b.style.top=''; b.style.left=''; b.style.right=''; b.style.width=''; b.style.overflow='';
+      try{ window.scrollTo(0,y); }catch(e){}
+    }
+  }
+
+  // ===== 受け取れない送りは、背後へ流さない =====
+  //  overscroll-behavior は「中で送りきったあとの連鎖」を止める仕掛けで、
+  //  見出し・タブ・入力欄のような、そもそもスクロールしない所をなぞった
+  //  ときには効かない（受け皿になる箱が無く、ブラウザは素通りさせる）。
+  //  実際、中身は止まっても、見出しの上で送ると背後だけが流れていた。
+  //  そこで、パネルの中のどの箱もその向きに動けないときだけ、こちらで止める。
+  //  「動ける箱があるとき」は何もしないので、ふつうのスクロールは妨げない。
+  function knvCanTake(el, dy){
+    var p=$('knv-panel');
+    while(el && el!==p && el!==document.body){
+      if(el.nodeType===1){
+        var oy='';
+        try{ oy=getComputedStyle(el).overflowY; }catch(e){}
+        if((oy==='auto'||oy==='scroll') && el.scrollHeight>el.clientHeight+1){
+          if(dy<0 && el.scrollTop>0) return true;
+          if(dy>0 && el.scrollTop+el.clientHeight<el.scrollHeight-1) return true;
+        }
+      }
+      el=el.parentNode;
+    }
+    return false;
+  }
+  function knvWheelGuard(){
+    var p=$('knv-panel'); if(!p||p.__knvWheel) return;
+    p.__knvWheel=1;
+    p.addEventListener('wheel', function(e){
+      if(!e.deltaY) return;
+      if(!knvCanTake(e.target, e.deltaY)) e.preventDefault();
+    }, { passive:false });
+  }
+
   // 開閉には「継ナビくんが飛び出す／手元に戻る」動きを添える。
   // 閉じるときは、アニメーションが終わってから hidden にする（途中で消えると味気ないため）
   var KNV_CLOSE_T=null;
@@ -15314,6 +15384,8 @@
       setTimeout(function(){ fab.classList.add('hidden'); fab.classList.remove('leaving'); }, 180);
       p.classList.remove('closing');
       p.classList.remove('hidden');
+      knvLock(true);        // 背後の画面を留める（スマホのみ）
+      knvWheelGuard();      // 受け取れない送りを背後へ流さない（一度だけ掛ける）
       void p.offsetWidth;   // 開くアニメーションを毎回頭から再生する
       renderSecLog(); renderAgentInsights();
       // お知らせに用があって開いた人を迷わせない：未読・期日があるときはお知らせタブから
@@ -15324,6 +15396,7 @@
     }
     // 閉じる：パネルが縮んで消えたあと、継ナビくんがぽんっと戻ってくる
     var wasOpen=!p.classList.contains('hidden');
+    knvLock(false);         // 留めていた背後を、元の位置のまま返す
     if(wasOpen){
       p.classList.add('closing');
       KNV_CLOSE_T=setTimeout(function(){
