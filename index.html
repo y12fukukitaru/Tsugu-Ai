@@ -1472,7 +1472,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260924-02';
+  var APP_BUILD='20260924-03';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -16985,7 +16985,7 @@
       +'・初期導入費は<b style="color:#1E3A66;">買い手 '+epYen(EP_SETUP_FEE)+' 円</b>／<b style="color:#1E3A66;">売り手 '+epYen(EP_SETUP_SELLER)+' 円</b>（税別・社）。こちらも80%が御社です。<br>'
       +'・担当者の方への配分は<b style="color:#1E3A66;">御社の社内でご実施</b>ください。<br>'
       +'・ボリュームディスカウント・EP登録料・月額下限・法人管理料は<b style="color:#1E3A66;">ありません</b>。<br>'
-      +'・M&A案件が出たときは、御社でM&A業務をお持ちなら<b style="color:#1E3A66;">御社で実行していただいて構いません</b>（報酬は御社と顧客の契約どおり）。TsuguAiに任せていただいた案件は、TsuguAi（福來）が受け取った手数料から税金分（消費税と、御社が個人事業の場合の源泉徴収）を差し引いた額の<b style="color:#1E3A66;">5割</b>を御社へお支払いします。TsuguAiの役割は<b style="color:#1E3A66;">買い手候補の特定まで</b>です。'
+      +'・M&A案件が出たときは、御社でM&A業務をお持ちなら<b style="color:#1E3A66;">御社で実行していただいて構いません</b>（報酬は御社と顧客の契約どおり。Tsugimeで見つかった相手との案件も同じです。利益相反のおそれがある場面では双方に事前に説明して同意を得るなど、中小M&Aガイドラインに沿ってください）。TsuguAiに任せていただいた案件は、TsuguAi（福來）が受け取った手数料から税金分（消費税と、御社が個人事業の場合の源泉徴収）を差し引いた額の<b style="color:#1E3A66;">5割</b>を御社へお支払いします。TsuguAiの役割は<b style="color:#1E3A66;">買い手候補の特定まで</b>です。'
       +'</div></div>';
   }
   function epNoteA(){

@@ -114,6 +114,8 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
 .nt td.dn{color:var(--red);font-weight:700;}
 .nt td b{color:var(--navy);}
 .nt.big{font-size:14px;}
+/* 文字の表（比べる表）は左寄せで折り返す */
+.nt.tx th,.nt.tx td{text-align:left;white-space:normal;}
 .nt.big th,.nt.big td{padding:6px 10px;}
 .scn{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center;font-size:12px;color:var(--muted);}
 .scn .k{display:inline-block;border:1px solid #C9D6EA;background:#EFF3FB;color:var(--blue);border-radius:99px;padding:2px 10px;font-weight:700;font-size:11.5px;}
@@ -159,6 +161,7 @@ body.talk-on #talkp{display:block;}
   </div>
   <div class="talk"><p><b>言うこと</b>「売り込みではありません」から入る。今日は、1社が3年でどう変わるかを数字でお見せします、と伝える。</p>
 <p><b>時間</b>全部で30分ほど。15分しかないときは次の順だけ：3つの問い → 4つの壁 → 全体の地図 → 物語の会社 → 第1 → 第2 → 1年後の画面 → ② → ⑤ → 2年目｜お金の話 → 3年間を数字で → 約束すること・しないこと → 料金 → 次の一歩</p>
+<p><b>売り手の社長</b>譲る側の社長なら、15分の道順の「3年間を数字で」のあとに「譲る側の社長へ → 準備した3年」を入れる。</p>
 <p><b>操作</b>→ かスペースで次へ、F で全画面、T でこの欄の開け閉め。お客様と同じ画面のときは、この欄を開かない。</p></div>
 </section>
 
@@ -212,7 +215,8 @@ body.talk-on #talkp{display:block;}
   </div>
   <div class="note" style="margin-top:16px;"><b>交渉は、席に着く前に決まります。</b>数字が整い、出口が決まっていて、期限に追われていない——この3つが揃っているほど、条件は選べます。だから<b>交渉前の準備から</b>ご一緒します。<br><b>逆もあります。</b>買う側に回れば、人材・技術・販路を一度に手に入れるチャンスの時代です。</div>
   <div class="talk"><p><b>言うこと</b>交渉は席に着く前に決まる。数字が整い、出口が決まっていて、期限に追われていない——この3つが揃っているほど、条件はこちらが選べる。</p>
-<p><b>聞かれたら</b>「まだ先の話」→ 承継の準備は数年単位。だから、最初の3か月は土台づくりから始めます。</p></div>
+<p><b>聞かれたら</b>「まだ先の話」→ 承継の準備は数年単位。だから、最初の3か月は土台づくりから始めます。</p>
+<p><b>売り手の社長なら</b>後半の「譲る側の社長へ」「準備した3年」で、今始める理由を数字でお見せする、と予告する。</p></div>
 </section>
 
 <section class="slide" data-t="4つの壁">
@@ -832,6 +836,43 @@ body.talk-on #talkp{display:block;}
   <div class="talk"><p><b>言うこと</b>最後に一枚で。契約した月・1年後・3年後。</p>
 <p><b>見せる所</b>右の「何が効いたか」。1年目は見直しで＋360万、2〜3年目はM&amp;Aで＋1,120万。</p>
 <p><b>必ず言う</b>架空の会社の例で、結果のお約束ではありません。式はTsuguAiの企業価値診断と同じです。</p></div>
+</section>
+
+<section class="slide" data-t="譲る側の社長へ">
+  <div class="eyebrow">譲る側の社長へ — なぜ、今なのか</div>
+  <h2>譲るのが3年先でも、顧問契約は「今」がいちばん得です</h2>
+  <div class="grid g3" style="margin-top:12px;">
+    <div class="card soft" style="text-align:left;"><h3>① 数字は3期分で見られる</h3><p>買い手は決算書を<b>3期</b>並べて見ます。今期から整えれば、3年後に「整った3期」がそろう。1年遅れれば、そろうのも1年遅れます。</p></div>
+    <div class="card soft" style="text-align:left;"><h3>② 利益の1年分が、値段の5年分</h3><p>会社の値段は利益のおよそ5倍で動きます。利益を年100万増やせば、値段は<b>約500万</b>上がる。早く始めるほど積み上がります。</p></div>
+    <div class="card soft" style="text-align:left;"><h3>③ 見つかる前に直せる</h3><p>未払の残業代、社会保険、社長個人の経費、親族の報酬。買い手に見つかれば値引きか補償、<b>先に直せば問題になりません</b>。</p></div>
+    <div class="card soft" style="text-align:left;"><h3>④ 期限に追われない</h3><p>体調・年齢・取引先の事情で急ぐと、条件は相手が決めます。準備ができていれば、<b>「今は売らない」も選べます</b>。</p></div>
+    <div class="card soft" style="text-align:left;"><h3>⑤ M&amp;Aの優遇が育つ</h3><p>顧問契約が1年を過ぎると最低報酬がなくなり、継続年数×10%（最大50%）の割引。<b>3年続けていれば30%引き</b>です。</p></div>
+    <div class="card" style="text-align:left;border-color:#EBDDB4;"><h3>売ると決めていなくても</h3><p>売り手プランは<b>月30,000円</b>（税別）。「いつでも売れる状態」をつくる健康診断です。継ぐ・続けるを選んでも、整えた数字はそのまま活きます。</p></div>
+  </div>
+  <div class="talk"><p><b>言うこと</b>売り手の社長へ。譲るのが3年先でも、顧問契約は今がいちばん得。理由は5つ。</p>
+<p><b>見せる所</b>①3期分の数字 ②利益の1年分が値段の5年分 ③見つかる前に直せる ④期限に追われない ⑤M&amp;Aの優遇が育つ。</p>
+<p><b>聞かれたら</b>「まだ売ると決めていない」→ 売り手プランは売る決断ではなく、いつでも売れる状態をつくる健康診断。継ぐ・続けるを選んでも、整えた数字は無駄にならない。</p>
+<p><b>気をつける</b>株価対策・相続税の額は税理士の仕事。こちらからは計算しない。</p></div>
+</section>
+
+<section class="slide" data-t="準備した3年">
+  <div class="eyebrow">譲る側の社長へ — 物語の運送会社を、売り手の側から見ると（例）</div>
+  <h2>3年前に準備を始めていたら、何が変わっていたか</h2>
+  <table class="nt big tx" style="margin-top:12px;">
+    <thead><tr><th></th><th>準備なく譲った場合（物語の運送会社）</th><th>3年前に売り手プランを始めていたら</th></tr></thead>
+    <tr><td>決算書の営業利益</td><td>320万。520万に直す理由を、買い手に説明する側</td><td><b>520万が3期そろう</b>。説明が要らない</td></tr>
+    <tr><td>未払の残業代</td><td>DDで<b class="dn">432万</b>が見つかり、特別補償を負う</td><td>労務を整え、<b>先に精算ずみ</b></td></tr>
+    <tr><td>車両（18台）</td><td>更新の不安が、値下げの材料になる</td><td><b>更新計画</b>を示せる</td></tr>
+    <tr><td>相手と価格</td><td>見つかった1社と交渉。2,600万（目安の真ん中）</td><td>複数の候補を比べ、<b>目安（2,080〜3,120万）の上のほう</b>を狙える</td></tr>
+    <tr><td>FA報酬（価格の5%の例）</td><td>130万。顧問1年未満なら最低報酬あり・割引なし</td><td><b>91万</b>（顧問3年で30%引き・最低報酬なし）</td></tr>
+    <tr><td>準備にかかった費用</td><td>—</td><td>売り手プラン 月3万×36か月＝108万＋初期導入費5万（税別）</td></tr>
+  </table>
+  <div class="note" style="margin-top:12px;">残業代の補償だけで、3年分の顧問料を上回ります。<b>準備の費用は、交渉の席で取り戻せる</b>——これが「今始める」理由です。</div>
+  <div class="eg">架空の例です。価格・補償・割引の結果をお約束するものではありません。FA報酬の料率は別途のFA契約によります。</div>
+  <div class="talk"><p><b>言うこと</b>物語で株式会社継が譲り受けた運送会社を、売り手の側から見る。3年前に準備を始めていたら、何が変わっていたか。</p>
+<p><b>見せる所</b>未払の残業代432万。準備していれば先に精算でき、補償を負わずに済んだ。これだけで3年分の顧問料（108万＋5万）を上回る。</p>
+<p><b>必ず言う</b>架空の例で、価格・補償・割引の結果はお約束しない。FA報酬の料率は別途のFA契約による。</p>
+<p><b>締め</b>「準備の費用は、交渉の席で取り戻せます。だから、今からです」。</p></div>
 </section>
 
 <section class="slide" data-t="約束すること・しないこと">
