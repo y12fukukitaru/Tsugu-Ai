@@ -226,7 +226,9 @@
   .cl-grp.open>.cl-gh .cl-gc{transform:rotate(90deg);}
   .cl-gi{display:none;padding-left:5px;margin-bottom:5px;}
   .cl-grp.open>.cl-gi{display:block;}
+  .cl-gd{font-size:10px;line-height:1.55;color:rgba(255,255,255,.42);padding:0 9px 5px 23px;}
   .cl-tgh{font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.06em;margin:13px 2px 6px;}
+  .cl-tgh .cl-tgd{font-weight:400;color:var(--muted);margin-left:8px;letter-spacing:0;}
   .cl-sheet-body>.cl-tgh:first-child{margin-top:2px;}
   .cl-main{flex:1;min-width:0;}
   /* ===== PC：カルテを大画面・固定レイアウトに（メニューは固定、本文のみスクロール） ===== */
@@ -413,6 +415,7 @@
   .plan-pill{display:inline-block;margin-top:6px;font-size:10px;font-weight:600;padding:2px 9px;border-radius:99px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);letter-spacing:.04em;}
   .sb-nav{flex:1;padding:14px 10px;}
   .sb-sec{font-size:10px;color:rgba(255,255,255,.38);font-weight:600;letter-spacing:.12em;margin:10px 10px 6px;}
+  .sb-nav .sb-sec,.drawer-nav .sb-sec{margin:18px 8px 6px;padding:0 4px 5px;cursor:default;font-size:11px;font-weight:700;letter-spacing:.08em;color:#d9bd7e;border-bottom:1px solid rgba(207,168,96,.28);}
   .ni{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:11px;font-size:13px;color:rgba(255,255,255,.72);cursor:pointer;margin-bottom:4px;position:relative;transition:background .15s,color .15s;}
   .ni:hover{background:rgba(255,255,255,.06);color:#fff;}
   .ni.active{background:rgba(255,255,255,.1);color:#fff;font-weight:600;}
@@ -1534,7 +1537,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260925-01';
+  var APP_BUILD='20260925-02';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -1919,6 +1922,55 @@
   //  パネルを束ねるのに要るためです。
   var NAV_TUCKED={ consultant:['sec-sozoku'] };
   function navTucked(r){ return NAV_TUCKED[r]||[]; }
+  // ===== メニューの組（カテゴリー）=====
+  //  項目が並ぶだけだと「どこに何があるか」が分からない、というご意見から。
+  //  役割ごとに仕事のまとまりで組にして、左メニュー・スマホのメニュー・設定の
+  //  並び替えに見出しを出す。先頭（ダッシュボード）は見出しなしで一番上。
+  //  並び替えは組の中だけ（組をまたぐと見出しの意味が崩れるため）。
+  //  ここに無い項目（これから足すもの）は、最後の「そのほか」に入る。
+  //  ［組の名前, この組にあるものの説明（見出しに添える）, 項目の id…］
+  var NAV_GROUPS={
+    customer:[
+      ['毎月のこと','月次レポート・経営課題・お支払い',['sec-reports','sec-mypdca','sec-billpay']],
+      ['会社の数字','資金繰り・会社の値段・AI自動化',['sec-cash','sec-value','sec-ai']],
+      ['出口と成長','出口・スケール・買い手になる',['sec-exit','sec-scale','sec-ma','sec-after']]
+    ],
+    consultant:[
+      ['顧客の伴走','担当顧客のカルテ・課題・M&A',['sec-clients','sec-pdca','sec-madeals','sec-market']],
+      ['広げる','新しい顧客・本業とのつながり',['sec-sales','sec-biz']],
+      ['自分のこと','研修・所属・報酬',['sec-growth','sec-ep','sec-billpay']]
+    ],
+    admin:[
+      ['全体を見る','数字の推移と、いま対応が要るもの',['sec-kpi','sec-risk']],
+      ['人と顧客','パートナー・法人・顧客・運営メンバー',['sec-fde','sec-ep','sec-cust','sec-team']],
+      ['案件と情報','Tsugime・専門家・補助金・お知らせ',['sec-market','sec-network','sec-subsidy','sec-broadcast']],
+      ['お金・サポート・記録','課金と契約・届いた相談・操作の記録',['sec-billing','sec-support','sec-audit']]
+    ]
+  };
+  //  いま出ている項目（effectiveNav の順）を組に分ける。
+  //  返すのは [{name, desc, items:[[id,label],…]}]。先頭の組は名前なし（ダッシュボード）
+  function navGrouped(r, items){
+    var defs=NAV_GROUPS[r]||[];
+    if(!items.length) return [];
+    var head={ name:'', desc:'', items:[items[0]] };
+    var rest=items.slice(1);
+    var gid={}; defs.forEach(function(g,i){ g[2].forEach(function(id){ gid[id]=i; }); });
+    var groups=defs.map(function(g){ return { name:g[0], desc:g[1], items:[] }; });
+    var other={ name:'そのほか', desc:'', items:[] };
+    rest.forEach(function(it){ var i=gid[it[0]]; if(i===undefined) other.items.push(it); else groups[i].items.push(it); });
+    //  組が一つしかない（顧問税理士の入力だけの画面など）ときは見出しを出さない
+    var out=[head].concat(groups).concat([other]).filter(function(g){ return g.items.length; });
+    if(!defs.length) return [{ name:'', desc:'', items:items }];
+    return out;
+  }
+  //  その項目が属する組の番号（先頭＝-1、そのほか＝組の数）。並び替えの境目に使う
+  function navGroupOf(r, id){
+    var defs=NAV_GROUPS[r]||[];
+    var first=(navDefs(r)[0]||[])[0];
+    if(id===first) return -1;
+    for(var i=0;i<defs.length;i++){ if(defs[i][2].indexOf(id)>=0) return i; }
+    return defs.length;
+  }
   function effectiveNav(r){
     var ab=knvAbsorbed(r);
     var tk=navTucked(r);
@@ -2027,9 +2079,14 @@
     return '<div class="ni" data-sec="'+id+'" onclick="navTo(\''+id+'\')"><span class="ni-ic">'+ic+'</span><span class="ni-tx">'+esc(label)+'</span>'+badge+'</div>';
   }
   function buildNav(r){
-    // フラットなメニュー（カテゴリー見出しなし・設定の並び順どおり）
+    // 組（カテゴリー）ごとに見出しを付けて並べる。組の中は設定の並び順どおり
     var items=effectiveNav(r);
-    function render(drawer){ return items.map(function(it){ return niHtml(it[0],it[1],drawer); }).join(''); }
+    function render(drawer){
+      return navGrouped(r, items).map(function(g){
+        return (g.name?'<div class="sb-sec" title="'+escA(g.desc)+'">'+esc(g.name)+'</div>':'')
+          +g.items.map(function(it){ return niHtml(it[0],it[1],drawer); }).join('');
+      }).join('');
+    }
     var nav=$('app-nav'); if(nav) nav.innerHTML=render(false);
     var dn=$('drawer-nav'); if(dn) dn.innerHTML=render(true);
     if(typeof CURRENT_SEC!=='undefined' && CURRENT_SEC){ setActiveNav(CURRENT_SEC); }
@@ -2150,14 +2207,27 @@
       +'</div></div>';
     // メニュー並び替え・表示
     h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:16px 0 4px;">メニュー（'+roleName+'）</div>';
-    h+='<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;">▲▼で並び替え、目のボタンで表示／非表示を切り替えます。</div>';
-    order.forEach(function(id,idx){
+    h+='<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;">組（見出し）ごとに並んでいます。▲▼で組の中の並び替え、目のボタンで表示／非表示を切り替えます。</div>';
+    //  パネルに取り込んだ項目・別の画面から開く項目は、メニューに出ないので並べない
+    var skip=knvAbsorbed(r).concat(navTucked(r));
+    var shownOrder=order.filter(function(id){ return skip.indexOf(id)<0; });
+    var lastG=null;
+    shownOrder.forEach(function(id,idx){
       var hidden=(conf.hidden||[]).indexOf(id)>=0;
       var isTop=(id===all[0][0]); // ダッシュボードは非表示不可
+      var gi=navGroupOf(r,id);
+      var prevSame=(idx>0 && navGroupOf(r,shownOrder[idx-1])===gi);
+      var nextSame=(idx<shownOrder.length-1 && navGroupOf(r,shownOrder[idx+1])===gi);
+      if(gi!==lastG && gi>=0){
+        var gd=(NAV_GROUPS[r]||[])[gi];
+        h+='<div style="font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.06em;margin:10px 2px 5px;">'+esc(gd?gd[0]:'そのほか')
+          +(gd?'<span style="font-weight:400;margin-left:8px;">'+esc(gd[1])+'</span>':'')+'</div>';
+      }
+      lastG=gi;
       h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:6px;border:1px solid var(--softline);border-radius:9px;background:var(--soft);">'
         +'<span style="flex:1;font-size:13px;'+(hidden?'color:#A8B6C8;text-decoration:line-through;':'')+'">'+esc(labelOf[id])+'</span>'
-        +'<button class="ghost" style="font-size:14px;padding:3px 7px;'+(idx===0?'opacity:.3;pointer-events:none;':'')+'" onclick="moveNav(\''+id+'\',-1)" aria-label="上へ">▲</button>'
-        +'<button class="ghost" style="font-size:14px;padding:3px 7px;'+(idx===order.length-1?'opacity:.3;pointer-events:none;':'')+'" onclick="moveNav(\''+id+'\',1)" aria-label="下へ">▼</button>'
+        +'<button class="ghost" style="font-size:14px;padding:3px 7px;'+(!prevSame?'opacity:.3;pointer-events:none;':'')+'" onclick="moveNav(\''+id+'\',-1)" aria-label="上へ">▲</button>'
+        +'<button class="ghost" style="font-size:14px;padding:3px 7px;'+(!nextSame?'opacity:.3;pointer-events:none;':'')+'" onclick="moveNav(\''+id+'\',1)" aria-label="下へ">▼</button>'
         +'<button class="ghost" style="font-size:14px;padding:3px 7px;'+(isTop?'opacity:.3;pointer-events:none;':'')+'" onclick="toggleNavHidden(\''+id+'\')" aria-label="表示切替">'+(hidden?'🚫':'👁')+'</button>'
       +'</div>';
     });
@@ -2546,11 +2616,17 @@
     p.nav[r].order=p.nav[r].order.filter(function(id){ return all.indexOf(id)>=0; });
     return p;
   }
+  //  同じ組の、いちばん近い隣と入れ替える（組をまたがない）
   function moveNav(id,dir){
-    var p=ensureNavConf(loadPrefs(),SETTINGS_ROLE);
-    var o=p.nav[SETTINGS_ROLE].order;
+    var r=SETTINGS_ROLE;
+    var p=ensureNavConf(loadPrefs(),r);
+    var o=p.nav[r].order;
     var i=o.indexOf(id); if(i<0)return;
-    var j=i+dir; if(j<0||j>=o.length)return;
+    var skip=knvAbsorbed(r).concat(navTucked(r));
+    var g=navGroupOf(r,id), j=i+dir;
+    while(j>=0 && j<o.length && skip.indexOf(o[j])>=0) j+=dir;
+    if(j<0||j>=o.length) return;
+    if(navGroupOf(r,o[j])!==g) return;
     var tmp=o[i]; o[i]=o[j]; o[j]=tmp;
     savePrefs(p); renderSettings(); rebuildNavNow();
   }
@@ -2605,12 +2681,16 @@
       document.body.style.overflow='hidden';
       return;
     }
-    var h='<div class="cl-tiles">';
-    effectiveNav('customer').forEach(function(it){
-      var badge=(it[0]==='sec-chat')?'<span id="nav-unread-t" class="clnb hidden">0</span>':'';
-      h+='<div class="cl-tile'+(CURRENT_SEC===it[0]?' on':'')+'" onclick="dashTileGo(\''+it[0]+'\')"><span class="ti">'+icoSvg(NAV_ICON[it[0]]||'')+'</span><span class="tl">'+esc(it[1])+'</span>'+badge+'</div>';
+    var h='';
+    navGrouped('customer', effectiveNav('customer')).forEach(function(g){
+      if(g.name) h+='<div class="cl-tgh">'+esc(g.name)+'<span class="cl-tgd">'+esc(g.desc)+'</span></div>';
+      h+='<div class="cl-tiles">';
+      g.items.forEach(function(it){
+        var badge=(it[0]==='sec-chat')?'<span id="nav-unread-t" class="clnb hidden">0</span>':'';
+        h+='<div class="cl-tile'+(CURRENT_SEC===it[0]?' on':'')+'" onclick="dashTileGo(\''+it[0]+'\')"><span class="ti">'+icoSvg(NAV_ICON[it[0]]||'')+'</span><span class="tl">'+esc(it[1])+'</span>'+badge+'</div>';
+      });
+      h+='</div>';
     });
-    h+='</div>';
     body.innerHTML=h;
     var nt=$('nav-unread-t'); if(nt){ var n=(UNREAD&&UNREAD.total)||0; nt.textContent=n>99?'99+':n; nt.classList.toggle('hidden', !n); }
     d.classList.remove('hidden');
@@ -12086,6 +12166,16 @@
   //
   //  ［id, アイコン, 表示名, 組］
   var CL_GROUPS=['基本','導入','月次の運営','資金・銀行','企業価値・承継','その他の診断'];
+  //  組の名前だけでは中身が分かりにくい、というご意見から、組ごとに
+  //  「ここに何があるか・いつ使うか」を一行で添える（開いた組の見出しの下と、スマホのメニュー）
+  var CL_GROUP_DESC=[
+    '毎回ここから。やること・連絡・会社の基本',
+    'はじめの90日。導入のチェックと診断報告書',
+    '毎月の面談で。レポート・議事録・課題',
+    'お金の見通しと調達。資金繰り・支払・借入・補助金',
+    '会社の値段とM&A。承継の準備から成約後まで',
+    '必要なときに。保険の見直し・AI自動化'
+  ];
   var CL_ITEMS=[
     ['cs-todo','pin','やること','基本'],
     ['cs-company','building','会社情報','基本'],
@@ -12256,7 +12346,7 @@
           +'<span>'+esc(grp.name)+'</span>'
           +'<span class="clnb hidden" id="clgb-'+gi+'">0</span>'
         +'</div>'
-        +'<div class="cl-gi">';
+        +'<div class="cl-gi"><div class="cl-gd">'+esc(CL_GROUP_DESC[CL_GROUPS.indexOf(grp.name)]||'')+'</div>';
       grp.items.forEach(function(it){ h+=clNi(it[0],it[1],it[2]); });
       h+='</div></div>';
     });
@@ -12295,7 +12385,7 @@
     var h='';
     clNavByGroup().forEach(function(grp){
       if(!grp.items.length) return;
-      h+='<div class="cl-tgh">'+esc(grp.name)+'</div><div class="cl-tiles">';
+      h+='<div class="cl-tgh">'+esc(grp.name)+'<span class="cl-tgd">'+esc(CL_GROUP_DESC[CL_GROUPS.indexOf(grp.name)]||'')+'</span></div><div class="cl-tiles">';
       grp.items.forEach(function(it){
         h+='<div class="cl-tile'+(it[0]===CL_ACTIVE?' on':'')+'" onclick="clMenuGo(\''+it[0]+'\')"><span class="ti">'+icoSvg(it[1])+'</span><span class="tl">'+it[2]+'</span><span class="clnb hidden" id="clmb-'+it[0]+'">0</span></div>';
       });
