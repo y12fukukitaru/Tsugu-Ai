@@ -67,7 +67,8 @@ function takeFn(name) {
 // ③ スマホは背後を留める
 {
   const f = takeFn('knvLock');
-  ok('狭い画面だけ', /if\(KNV_LOCK_Y!==null \|\| !knvNarrow\(\)\) return;/.test(f));
+  //  中央に大きく、を選んでいるときも留める（2026-09-25）
+  ok('狭い画面と、中央に大きく', /if\(KNV_LOCK_Y!==null \|\| !\(knvNarrow\(\) \|\| knvCentered\(\)\)\) return;/.test(f));
   ok('いまの位置を覚える', /KNV_LOCK_Y=window\.pageYOffset\|\|document\.documentElement\.scrollTop\|\|0;/.test(f));
   ok('body ごと留める（overflow だけでは iPhone は止まらない）', /b\.style\.position='fixed';/.test(f)
       && /b\.style\.top=\(-KNV_LOCK_Y\)\+'px';/.test(f) && /b\.style\.overflow='hidden';/.test(f));
@@ -76,7 +77,7 @@ function takeFn(name) {
   ok('境目は CSS と同じ600px', /matchMedia\('\(max-width:600px\)'\)\.matches/.test(takeFn('knvNarrow')));
   //  掛け外しの場所
   const t = takeFn('knvToggle');
-  ok('開くときに掛ける', /knvLock\(true\);        \/\/ 背後の画面を留める（スマホのみ）/.test(t));
+  ok('開くときに掛ける', /knvLock\(true\);        \/\/ 背後の画面を留める（スマホと、中央に大きく）/.test(t));
   ok('開くときに送りの番人も掛ける', /knvWheelGuard\(\);      \/\/ 受け取れない送りを背後へ流さない/.test(t));
   ok('閉じるときに外す', /knvLock\(false\);         \/\/ 留めていた背後を、元の位置のまま返す/.test(t));
   //  knvToggle を通らない道（ログイン画面へ戻すときなど）でも外す
@@ -86,7 +87,7 @@ function takeFn(name) {
 // ④ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260924-03', '20260924-03']);
+  is('版が揃う', [build, VER.build], ['20260925-01', '20260925-01']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

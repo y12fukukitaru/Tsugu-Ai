@@ -847,7 +847,65 @@
      「スクロールしない所」をなぞったときの受け皿がここになるため */
   .knv-panel{position:fixed;right:20px;bottom:20px;z-index:71;width:min(600px,calc(100vw - 24px));height:min(820px,calc(100vh - 60px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(6,12,24,.45);display:flex;flex-direction:column;overflow:hidden;overscroll-behavior:contain;
     transform-origin:calc(100% - 56px) calc(100% - 56px);animation:knvOpen .24s cubic-bezier(.3,.6,.6,1);}
-  .knv-panel.max{width:min(920px,calc(100vw - 28px));height:calc(100vh - 24px);bottom:12px;}
+  /* ===== 継ナビくんの大きさと、呼び出し口の場所（設定で選ぶ）=====
+     body に knv-sz-〇〇（大きさ）と knv-fab-〇〇（場所）が付く。knvApplyLayout が付ける。
+       大きさ … float＝標準（右下の小窓）／right・left＝画面の半分／center＝中央に大きく
+       場所   … rb＝右下／lb＝左下／rt＝右上／lt＝左上
+     スマホ（600px以下）は大きさを選ばない。どれを選んでも画面いっぱいの今の形。 */
+  @media(min-width:601px){
+    /*  半分：画面の端から端まで。幅は 50vw、ただし週表示の7日（555px）が
+        横送りなしで入るように 600px を下限にする */
+    body.knv-sz-right .knv-panel,body.knv-sz-left .knv-panel{top:0;bottom:0;width:max(600px,50vw);height:100vh;border-radius:0;
+      max-width:100vw;animation-duration:.26s;}
+    body.knv-sz-right .knv-panel{right:0;left:auto;border-width:0 0 0 1px;transform-origin:right center;animation-name:knvSlideR;}
+    body.knv-sz-left .knv-panel{left:0;right:auto;border-width:0 1px 0 0;transform-origin:left center;animation-name:knvSlideL;}
+    body.knv-sz-right .knv-panel.closing{animation-name:knvSlideROut;}
+    body.knv-sz-left .knv-panel.closing{animation-name:knvSlideLOut;}
+    /*  中央に大きく：読むことに集中する形。背後は薄暗くして留める */
+    body.knv-sz-center .knv-panel{top:0;right:0;bottom:0;left:0;margin:auto;width:min(1120px,calc(100vw - 64px));height:min(920px,calc(100vh - 48px));transform-origin:center;}
+    body.knv-open.knv-sz-center #knv-scrim{display:block;}
+    /*  標準の小窓は、呼び出し口のある隅から出す */
+    body.knv-sz-float.knv-fab-lb .knv-panel,body.knv-sz-float.knv-fab-lt .knv-panel{right:auto;left:var(--knv-edge-l,20px);transform-origin:56px calc(100% - 56px);}
+    body.knv-sz-float.knv-fab-rt .knv-panel,body.knv-sz-float.knv-fab-lt .knv-panel{bottom:auto;top:20px;}
+    body.knv-sz-float.knv-fab-rt .knv-panel{transform-origin:calc(100% - 56px) 56px;}
+    body.knv-sz-float.knv-fab-lt .knv-panel{transform-origin:56px 56px;}
+  }
+  /*  半分にして横に並べるのは、並べても本文が読める広さ（1200px以上）のときだけ。
+      それより狭い画面では、半分を選んでいても標準の小窓と同じ幅で端に寄せる */
+  @media(min-width:601px) and (max-width:1199px){
+    body.knv-sz-right .knv-panel,body.knv-sz-left .knv-panel{width:min(600px,calc(100vw - 24px));box-shadow:0 24px 70px rgba(6,12,24,.45);}
+  }
+  @media(min-width:1200px){
+    /*  開いているあいだ、画面の本体を反対側に寄せて並べる（上に重ねない）。
+        本文を読みながら継ナビくんに聞ける。閉じれば元の幅に戻る */
+    #app{transition:padding .26s ease;}
+    body.knv-open.knv-sz-right #app{padding-right:max(600px,50vw);}
+    body.knv-open.knv-sz-left #app{padding-left:max(600px,50vw);}
+    body.knv-sz-right .knv-panel,body.knv-sz-left .knv-panel{box-shadow:0 0 40px rgba(6,12,24,.18);}
+  }
+  @keyframes knvSlideR{0%{opacity:0;transform:translateX(40px);}100%{opacity:1;transform:translateX(0);}}
+  @keyframes knvSlideL{0%{opacity:0;transform:translateX(-40px);}100%{opacity:1;transform:translateX(0);}}
+  @keyframes knvSlideROut{0%{opacity:1;transform:translateX(0);}100%{opacity:0;transform:translateX(40px);}}
+  @keyframes knvSlideLOut{0%{opacity:1;transform:translateX(0);}100%{opacity:0;transform:translateX(-40px);}}
+  /*  中央に大きく、のときだけ出す背後の幕。押すと閉じる（外側を押したら閉じる、と同じ） */
+  #knv-scrim{display:none;position:fixed;inset:0;z-index:69;background:rgba(7,13,25,.45);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);}
+  /*  呼び出し口の場所。左は、左メニュー（238px）の上に重ねない */
+  :root{--knv-edge-l:258px;}
+  body.knv-fab-lb .knv-fab,body.knv-fab-lt .knv-fab{right:auto;left:270px;}
+  body.knv-fab-rt .knv-fab,body.knv-fab-lt .knv-fab{bottom:auto;top:84px;}
+  @media(max-width:760px){
+    :root{--knv-edge-l:20px;}
+    body.knv-fab-lb .knv-fab,body.knv-fab-lt .knv-fab{left:32px;}
+    body.knv-fab-rt .knv-fab,body.knv-fab-lt .knv-fab{top:72px;}
+  }
+  /*  大きさを選ぶ小さな一覧（見出しの ⤢ から） */
+  .knv-szmenu{position:absolute;top:52px;right:46px;z-index:3;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 34px rgba(6,12,24,.28);padding:6px;min-width:190px;}
+  .knv-szmenu button{display:flex;align-items:center;gap:9px;width:100%;font-family:inherit;font-size:12.5px;color:var(--ink);background:transparent;border:none;border-radius:8px;padding:8px 10px;cursor:pointer;text-align:left;}
+  .knv-szmenu button:hover{background:var(--soft);}
+  .knv-szmenu button.on{background:rgba(195,155,63,.12);color:#8A6A12;font-weight:700;}
+  .knv-szmenu .ic{width:26px;height:18px;border:1.5px solid currentColor;border-radius:3px;position:relative;flex-shrink:0;opacity:.8;}
+  .knv-szmenu .ic i{position:absolute;background:currentColor;opacity:.55;}
+  .knv-szmenu .note{font-size:10.5px;color:var(--muted);padding:6px 10px 2px;line-height:1.6;border-top:1px solid var(--softline);margin-top:4px;}
   /* 開く：右下の継ナビくんの位置から膨らんで出てくる。
      閉じる（.24s・吸い込まれる）と同じ速さの鏡写しにしてある。以前は
      .34s の弾む動きだったが、跳ねの分だけ最初の膨らみが速く、閉じるより
@@ -898,6 +956,8 @@
       元の 72px・端から18px に戻し、パネルもほぼ画面いっぱいに広げる */
   @media(max-width:600px){
     .knv-fab{right:18px;bottom:18px;width:72px;height:72px;border-width:2.5px;box-shadow:0 10px 30px rgba(6,12,24,.45);}
+    body.knv-fab-lb .knv-fab,body.knv-fab-lt .knv-fab{left:18px;right:auto;}
+    body.knv-fab-rt .knv-fab,body.knv-fab-lt .knv-fab{top:64px;bottom:auto;}
     .knv-fab svg{width:42px;height:42px;}
     .knv-panel{right:8px;bottom:8px;width:calc(100vw - 16px);height:calc(100vh - 60px);
       transform-origin:calc(100% - 46px) calc(100% - 46px);}
@@ -1311,6 +1371,7 @@
 <!-- 継ナビくん：右下フローティング窓口（ログイン後に knvInit() で表示） -->
 <div id="upd-bar" class="upd-bar hidden"><span class="t"><b>新しい版があります。</b>更新すると最新になります。</span><button onclick="appReload()">更新する</button><button class="x" onclick="appUpdDismiss()" aria-label="閉じる">×</button></div>
 <div id="knv-fab" class="knv-fab hidden" onclick="knvToggle(true)" title="継ナビくんに相談" aria-label="継ナビくんに相談"><span id="knv-badge" class="knv-badge hidden">0</span></div>
+<div id="knv-scrim" aria-hidden="true"></div>
 <div id="knv-panel" class="knv-panel hidden" role="dialog" aria-label="継ナビくん">
   <div class="knv-head">
     <span class="tsg-face" style="background:transparent;border:1.5px solid #cfa860;border-radius:10px;"></span>
@@ -1318,9 +1379,10 @@
       <div style="font-size:14px;font-weight:700;color:#fff;letter-spacing:.02em;">継ナビくん</div>
       <div style="font-size:10.5px;color:#CFAD62;">困ったときは、いつでもどうぞ</div>
     </div>
-    <button class="knv-max" id="knv-max-btn" onclick="knvMaxToggle()" title="拡大表示" aria-label="拡大表示">⤢</button>
+    <button class="knv-max" id="knv-max-btn" onclick="knvSizeMenu()" title="大きさを変える" aria-label="大きさを変える">⤢</button>
     <button class="knv-close" onclick="knvToggle(false)" aria-label="閉じる">×</button>
   </div>
+  <div id="knv-szmenu" class="knv-szmenu hidden"></div>
   <div class="knv-tabs">
     <button id="knv-tab-chat" class="on" onclick="knvShowTab('chat')"><span class="ki">💬</span>相談</button>
     <button id="knv-tab-cal" onclick="knvShowTab('cal')"><span class="ki">📅</span>予定</button>
@@ -1472,7 +1534,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260924-03';
+  var APP_BUILD='20260925-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -1509,6 +1571,7 @@
     var pn=$('knv-panel'); if(pn){ pn.classList.add('hidden'); pn.classList.remove('closing'); }
     //  knvToggle を通らずに隠す道。留めたままにすると、画面が動かなくなる
     if(typeof knvLock==='function') knvLock(false);
+    if(document.body) document.body.classList.remove('knv-open');
   }
 
   async function doSignup(){
@@ -1748,6 +1811,7 @@
     var p=loadPrefs();
     document.body.classList.toggle('dark', p.dark===true);
     document.documentElement.style.setProperty('--fs', String(p.fontScale||1));
+    if(typeof knvApplyLayout==='function') knvApplyLayout();
   }
   // 役割ごとの全メニュー定義（ラベル付き）。設定で並び順・表示を変えられる
   // ===== 運営内の権限（Phase71）=====
@@ -2063,6 +2127,25 @@
       +'<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">'
       +[['小',0.9],['標準',1],['大',1.15],['特大',1.3]].map(function(o){
           return '<button class="sbtn'+(Math.abs(fs-o[1])<0.001?' on':'')+'" onclick="setFontScale('+o[1]+')">'+o[0]+'</button>';
+        }).join('')
+      +'</div></div>';
+    // 継ナビくん：画面の大きさと、ボタンの場所
+    var kl=knvLayout();
+    h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:16px 0 8px;">継ナビくん</div>';
+    h+='<div style="padding:4px 0 12px;border-bottom:1px solid var(--softline);">'
+      +'<div style="font-size:13px;">画面の大きさ（パソコン）</div>'
+      +'<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">'
+      +KNV_SIZES.map(function(o){
+          return '<button class="sbtn'+(kl.size===o[0]?' on':'')+'" onclick="knvSetSize(\''+o[0]+'\')">'+esc(o[1])+'</button>';
+        }).join('')
+      +'</div>'
+      +'<div style="font-size:11px;color:#94A2B6;margin-top:7px;line-height:1.7;">半分は、画面の本体を反対側に寄せて横に並べます（幅1200px以上の画面）。中央に大きく、は背後を薄暗くして読むことに集中します。スマホではどれを選んでも画面いっぱいです。継ナビくんの見出しの ⤢ からも変えられます。</div>'
+    +'</div>';
+    h+='<div style="padding:12px 0;border-bottom:1px solid var(--softline);">'
+      +'<div style="font-size:13px;">ボタンの場所</div>'
+      +'<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">'
+      +KNV_FABPOS.map(function(o){
+          return '<button class="sbtn'+(kl.fab===o[0]?' on':'')+'" onclick="knvSetFab(\''+o[0]+'\')">'+esc(o[1])+'</button>';
         }).join('')
       +'</div></div>';
     // メニュー並び替え・表示
@@ -14790,7 +14873,7 @@
     if(aisecPortal()==='consultant'){
       return common
         +'【パートナーポータルの画面ガイド】'
-        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全5章。必修10レッスン＋発展のM&A講座8レッスン、第5章の理解度チェックで修了)・FA実務講座(研修とは別の深く学ぶ場。序章＋7章：財務三表・正常収益力・企業価値評価・財務DD・税務の論点(助言はせず税理士につなぐ)・契約と会計・医療法人、理解度チェック10問。修了してもレベル・外注費率は変わらない。本文は fa-course.html)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁/労働分配率=時給を上げたとき人件費÷粗利をどこに保ち利益を出し続けるか。業種別の目安と、時短・配置転換・値上げで要る大きさ。カルテの月次レポートの上からその会社の数字で開ける)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)。説明資料(経営者向け・パートナー候補向けなど)は継ナビくんの「サポート」タブから開き、右上の⛶で全画面。送りは ←→ か、紙を押す、スマホ・タブレットは指で左右にスワイプ。Escかもう一度⛶で解除、✕でプラットフォームに戻る／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内。その顧問先から解約のお申し出が出ているときは、カルテのいちばん上に赤い帯「⚠ 解約のご依頼が出ています」が出る(申し出の日・理由・伝えられたこと。手続きと最終月の請求は運営が行い、パートナーの画面から解約はできない。まず話を聞く。取り下げは経営者ご自身が「お支払い」→「ご契約について」から)。出口の設計はカルテ→企業価値・承継準備→出口の設計(企業価値診断の次)。経営者の左メニュー「出口の設計」と同じ表を見ているので、どちらで保存しても両方に出る。出口は8つ(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/資本提携(一部を譲る)/上場する(TOKYO PRO Market。プロ投資家向けで数値基準が無く、J-Adviserの伴走で2〜3年)/上場する(グロース市場など)/畳む(清算)/続けて、買い手になる)。資本提携・上場を選ぶと「知っておくこと」の箱が出る。上場の可否・費用はJ-Adviser・証券会社が決めるので経営者に断定しない。その下に、出口とは別の「株の持ち方・組織の検討」=持株会社(ホールディングス)/資産管理会社/分社化/種類株・属人的株式/従業員持株会/事業承継の信託の6つ。出口が決まっていなくても、検討中/専門家に相談中/実行済/見送りで記録でき、企業価値1億円超・株主の整理がまだ・万一の定めがまだ、などの合図が出る。相談先(税理士・司法書士・弁護士)も書いてある。税額は計算しない。これも経営者の画面と同じもの。その次に「スケールの設計」=大きくする道を7つ(いまの事業を深める/柱を増やす/M&Aで買う/デットで加速/エクイティで加速/グループ化/上場で加速)から主軸を一つ決め、目標の年と見る数字(年商・年間営業利益・現預金の月商倍率・柱の本数)のいま・目標・差。道ごとに検討中/取り組み中/済/見送りの札とメモ。数字から向いている道に合図(営業利益率5%未満・柱が1本・債務償還年数7年未満/10年超・現預金2か月分など)。借入・出資・上場の可否は断定しない。経営者の左メニュー「スケールの設計」と同じ表(ナビの12の道具には含めない)。プランの切替はカルテ→企業価値・承継準備→出口の設計の上段のボタンから運営に依頼(理由を書く小窓。空欄でも送れるので必ず書く。切替は運営が行い翌月の請求から。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。パートナーご自身が離れるときは運営サポートの「運営への問い合わせ」から(画面で契約を終える操作は無い)。カルテの「やること」の下に「今月の面談台本」(その会社の数字から見せる数字3つ・問い3つ・買い手の基盤へのつながり)と「継ナビくんのナビ」(土台→現金→余力→条件の順番と、済／次／あと)。ナビは12の道具(試算表→資金繰り→保険・固定費→支払予定→導入診断報告書→企業価値→出口の設計→買った後に備える→準備度→買いたい条件。AI診断・銀行提出は任意。売り手プランでは準備度・買いたい条件・買った後に備えるも任意)。各道具の見出しの下に「なぜ今・やると分かること・次の一手」の案内と「結果を継ナビくんと読む」ボタン。出口の設計(5つの出口・目標の年・見る数字のいま/目標/差・持株会社の合図。上部にいまの顧問プランとM&Aの優遇、「◯◯プラン への切替を運営に依頼」)と買った後に備える(6分類24項目・自社では・学ぶ・未着手/学んだ/準備した)はカルテの企業価値・承継準備の中。伴走の1年は契約の翌月1日を起点に暦の月で3か月ずつ、土台が整わなければ次の四半期も並行、四半期の終わりに検証)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（エクイティ・デット・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し、パネルは7タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と担当顧客の面談・期日・支払予定が1枚に並ぶカレンダー。月/週/一覧。月・週は横に払う(スワイプ)と前後の月・週へ。操作列(月/週/一覧・‹ ›・今日・＋予定)と週の曜日・終日の帯は、下へ送っても上に残る。スマホの週表示は7日が幅に収まり、予定は色で塗って題名を折り返す。色は青=自分の予定・金=面談・橙=課題の期日・赤=支払・緑=資金調達・紫=補助金の締切、Googleから取り込んだ予定はGoogle側のカレンダーの色。暦の下に「色の見分け」が並ぶ。予定を押すと小窓が開いて全部読める。入力は金色の「＋ 予定」で別の窓が開く(スマホでもキーボードに隠れない)。✕や「やめる」は入力の窓だけ閉じ、継ナビくんは閉じない。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。この画面で入れた予定は、直しても消してもその場でGoogleに出る(同期のボタンを押す必要はない。「いま同期する」はGoogle側の予定を待たずに取り込みたいときだけ)。ただしGoogleから取り込んだ予定をこの画面で消したときは、この画面から消えるだけでGoogle側には残る(削除を押す前にその旨が出る)。取り込みをやめたいだけなら、アカウントの下の「取り込むカレンダー」のチェックを外す。Google→TsuguAiの向きだけ間がある(こちらからGoogleへは入れた時点ですぐ。逆は予定タブを開いたときに取りにいく。開くたび・最短5分おき。TsuguAiを開いていない間は取りにいかない)。すぐ合わせたいときは「いま同期する」。ただし毎朝の今日の一手（パートナー）と毎週月曜の今週のひとこと（経営者）は、本文を作る前にこちらからGoogleを見にいくので、画面を開いていなくてもGoogleの予定が入る。担当顧客との面談もGoogleに出るが、Google側で面談を消してもTsuguAiの面談は消えない(顧客との約束のため。消すのは顧客管理から)。Googleの予定は本人だけが見え、顧客にも運営にも見えない。私用を取り込みたくないときはアカウントの欄の「このアカウントの予定をこの画面に取り込む」のチェックを外す。Googleの「家族」「誕生日」「共有」「日本の祝日」なども、アカウントの下の「取り込むカレンダー」でチェックを入れれば入る(最初はメインだけ)。個人と会社などアカウントは2つ以上つなげ(「もう1つのアカウントをつなぐ」)、取り込みは全部から、この画面で入れた予定と面談は「送り先」に選んだ1つにだけ出る。「Googleでつなぐ」を押すとGoogleの画面に移り、許可が済むと自動でこの画面に戻って同期が始まる。会社のGoogle Workspaceアカウントで「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていない(Google管理コンソール→アプリ→Google Workspace→カレンダーを有効にする)。つなぎ直しても直らず、「送り先にする」も出ない。個人アカウントでつなぐ)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ。法人に所属している方には「エンタープライズ 操作説明書」も並ぶ)。'
+        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全5章。必修10レッスン＋発展のM&A講座8レッスン、第5章の理解度チェックで修了)・FA実務講座(研修とは別の深く学ぶ場。序章＋7章：財務三表・正常収益力・企業価値評価・財務DD・税務の論点(助言はせず税理士につなぐ)・契約と会計・医療法人、理解度チェック10問。修了してもレベル・外注費率は変わらない。本文は fa-course.html)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁/労働分配率=時給を上げたとき人件費÷粗利をどこに保ち利益を出し続けるか。業種別の目安と、時短・配置転換・値上げで要る大きさ。カルテの月次レポートの上からその会社の数字で開ける)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)。説明資料(経営者向け・パートナー候補向けなど)は継ナビくんの「サポート」タブから開き、右上の⛶で全画面。送りは ←→ か、紙を押す、スマホ・タブレットは指で左右にスワイプ。Escかもう一度⛶で解除、✕でプラットフォームに戻る／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内。その顧問先から解約のお申し出が出ているときは、カルテのいちばん上に赤い帯「⚠ 解約のご依頼が出ています」が出る(申し出の日・理由・伝えられたこと。手続きと最終月の請求は運営が行い、パートナーの画面から解約はできない。まず話を聞く。取り下げは経営者ご自身が「お支払い」→「ご契約について」から)。出口の設計はカルテ→企業価値・承継準備→出口の設計(企業価値診断の次)。経営者の左メニュー「出口の設計」と同じ表を見ているので、どちらで保存しても両方に出る。出口は8つ(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/資本提携(一部を譲る)/上場する(TOKYO PRO Market。プロ投資家向けで数値基準が無く、J-Adviserの伴走で2〜3年)/上場する(グロース市場など)/畳む(清算)/続けて、買い手になる)。資本提携・上場を選ぶと「知っておくこと」の箱が出る。上場の可否・費用はJ-Adviser・証券会社が決めるので経営者に断定しない。その下に、出口とは別の「株の持ち方・組織の検討」=持株会社(ホールディングス)/資産管理会社/分社化/種類株・属人的株式/従業員持株会/事業承継の信託の6つ。出口が決まっていなくても、検討中/専門家に相談中/実行済/見送りで記録でき、企業価値1億円超・株主の整理がまだ・万一の定めがまだ、などの合図が出る。相談先(税理士・司法書士・弁護士)も書いてある。税額は計算しない。これも経営者の画面と同じもの。その次に「スケールの設計」=大きくする道を7つ(いまの事業を深める/柱を増やす/M&Aで買う/デットで加速/エクイティで加速/グループ化/上場で加速)から主軸を一つ決め、目標の年と見る数字(年商・年間営業利益・現預金の月商倍率・柱の本数)のいま・目標・差。道ごとに検討中/取り組み中/済/見送りの札とメモ。数字から向いている道に合図(営業利益率5%未満・柱が1本・債務償還年数7年未満/10年超・現預金2か月分など)。借入・出資・上場の可否は断定しない。経営者の左メニュー「スケールの設計」と同じ表(ナビの12の道具には含めない)。プランの切替はカルテ→企業価値・承継準備→出口の設計の上段のボタンから運営に依頼(理由を書く小窓。空欄でも送れるので必ず書く。切替は運営が行い翌月の請求から。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。パートナーご自身が離れるときは運営サポートの「運営への問い合わせ」から(画面で契約を終える操作は無い)。カルテの「やること」の下に「今月の面談台本」(その会社の数字から見せる数字3つ・問い3つ・買い手の基盤へのつながり)と「継ナビくんのナビ」(土台→現金→余力→条件の順番と、済／次／あと)。ナビは12の道具(試算表→資金繰り→保険・固定費→支払予定→導入診断報告書→企業価値→出口の設計→買った後に備える→準備度→買いたい条件。AI診断・銀行提出は任意。売り手プランでは準備度・買いたい条件・買った後に備えるも任意)。各道具の見出しの下に「なぜ今・やると分かること・次の一手」の案内と「結果を継ナビくんと読む」ボタン。出口の設計(5つの出口・目標の年・見る数字のいま/目標/差・持株会社の合図。上部にいまの顧問プランとM&Aの優遇、「◯◯プラン への切替を運営に依頼」)と買った後に備える(6分類24項目・自社では・学ぶ・未着手/学んだ/準備した)はカルテの企業価値・承継準備の中。伴走の1年は契約の翌月1日を起点に暦の月で3か月ずつ、土台が整わなければ次の四半期も並行、四半期の終わりに検証)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（エクイティ・デット・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し(ボタンの場所は設定で右下・左下・右上・左上から、パネルの大きさは設定か見出しの⤢で標準・右半分・左半分・中央に大きく、から選べる。半分は本体を反対側に寄せて横に並べる)、パネルは7タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と担当顧客の面談・期日・支払予定が1枚に並ぶカレンダー。月/週/一覧。月・週は横に払う(スワイプ)と前後の月・週へ。操作列(月/週/一覧・‹ ›・今日・＋予定)と週の曜日・終日の帯は、下へ送っても上に残る。スマホの週表示は7日が幅に収まり、予定は色で塗って題名を折り返す。色は青=自分の予定・金=面談・橙=課題の期日・赤=支払・緑=資金調達・紫=補助金の締切、Googleから取り込んだ予定はGoogle側のカレンダーの色。暦の下に「色の見分け」が並ぶ。予定を押すと小窓が開いて全部読める。入力は金色の「＋ 予定」で別の窓が開く(スマホでもキーボードに隠れない)。✕や「やめる」は入力の窓だけ閉じ、継ナビくんは閉じない。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。この画面で入れた予定は、直しても消してもその場でGoogleに出る(同期のボタンを押す必要はない。「いま同期する」はGoogle側の予定を待たずに取り込みたいときだけ)。ただしGoogleから取り込んだ予定をこの画面で消したときは、この画面から消えるだけでGoogle側には残る(削除を押す前にその旨が出る)。取り込みをやめたいだけなら、アカウントの下の「取り込むカレンダー」のチェックを外す。Google→TsuguAiの向きだけ間がある(こちらからGoogleへは入れた時点ですぐ。逆は予定タブを開いたときに取りにいく。開くたび・最短5分おき。TsuguAiを開いていない間は取りにいかない)。すぐ合わせたいときは「いま同期する」。ただし毎朝の今日の一手（パートナー）と毎週月曜の今週のひとこと（経営者）は、本文を作る前にこちらからGoogleを見にいくので、画面を開いていなくてもGoogleの予定が入る。担当顧客との面談もGoogleに出るが、Google側で面談を消してもTsuguAiの面談は消えない(顧客との約束のため。消すのは顧客管理から)。Googleの予定は本人だけが見え、顧客にも運営にも見えない。私用を取り込みたくないときはアカウントの欄の「このアカウントの予定をこの画面に取り込む」のチェックを外す。Googleの「家族」「誕生日」「共有」「日本の祝日」なども、アカウントの下の「取り込むカレンダー」でチェックを入れれば入る(最初はメインだけ)。個人と会社などアカウントは2つ以上つなげ(「もう1つのアカウントをつなぐ」)、取り込みは全部から、この画面で入れた予定と面談は「送り先」に選んだ1つにだけ出る。「Googleでつなぐ」を押すとGoogleの画面に移り、許可が済むと自動でこの画面に戻って同期が始まる。会社のGoogle Workspaceアカウントで「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていない(Google管理コンソール→アプリ→Google Workspace→カレンダーを有効にする)。つなぎ直しても直らず、「送り先にする」も出ない。個人アカウントでつなぐ)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ。法人に所属している方には「エンタープライズ 操作説明書」も並ぶ)。'
         +'操作説明書は右下パネルの「サポート」タブから開けます。毎朝の「今日の一手」とお知らせは右下ボタンのバッジに届きます。';
     }
     //  運営がここに落ちていました。運営コンソールを開いている方に
@@ -14815,12 +14898,12 @@
         +'月次の請求を立てたい→「課金・契約」→「請求と未収」タブ→年月とお支払い方法を選んで「この月の請求を立てる」。同じ月に二度立てても増えません。'
         +'FA手数料など単発の請求→同じ「請求と未収」タブの「単発の請求」から。顧問料はここでは立てられません（月次生成と二重になるため）。'
         +'パートナーの口座を確認したい→「課金・契約」の下部「お振込先の確認」。開くと記録が残ります。'
-        +'継ナビくんは画面右下のボタンに常駐し、パネルのタブは 相談／予定／お知らせ／連携／サポート（説明書3種・商談用スライド・社外向け資料・問い合わせ受信箱への導線）です。運営にメッセージタブとナレッジタブはありません。';
+        +'継ナビくんは画面右下のボタンに常駐し(ボタンの場所は設定で右下・左下・右上・左上から、パネルの大きさは設定か見出しの⤢で標準・右半分・左半分・中央に大きく、から選べる。半分は本体を反対側に寄せて横に並べる)、パネルのタブは 相談／予定／お知らせ／連携／サポート（説明書3種・商談用スライド・社外向け資料・問い合わせ受信箱への導線）です。運営にメッセージタブとナレッジタブはありません。';
     }
     return common
       +'【経営者ダッシュボードの画面ガイド】'
       +'【数字の扱い・必ず守る】経営者に試算表など月次の数字の入力を求めない。経営者の画面に入力欄は無く、担当パートナーが入力する。試算表が手元にあるなら「メッセージで担当パートナーへ送る」と案内する。ご本人が入れるのは「いまの手元資金」だけ。画面の名前は次の一覧の名前だけを使い、それ以外の画面名を作らない。'
-      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)。その下に「はじめの90日（土台づくり）」＝契約の翌月から3か月は成果を急がず土台を整える期間で、1か月目「数字が見える」・2か月目「お金の流れが分かる」・3か月目「1年の道筋が決まる」の3つの節目(資料をお預かりしてからの目安。3か月で整わなければ次の四半期も並行して続ける。契約から翌月までは準備期間)と、「伴走の1年」＝第1 土台づくり／第2 現金を増やす／第3 買い手の余力を測る／第4 次の1社の条件を決める、の四半期の帯(暦の月で3か月ずつ。いまどこにいるか・四半期の終わりに何を振り返るかが出る)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=画面のいちばん上に「ご契約について」(いまの顧問プラン／プランを変えたいとき=「✉️ 担当パートナーに伝える」で継ナビくんのメッセージが開く。切替は運営が行い翌月の請求から。依頼中は「◯◯プラン へ切替を依頼中」と出る／ご利用の終了について=「解約を依頼する」。理由と伝えたいことは任意、押してすぐ使えなくなることはなく「取り下げる」で戻せる。申し出た月の末日で終了・日割りなし・初期導入費と利用済みの月の顧問料は返金なし。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。その下に顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=気になる業務を選んで担当パートナーに送ると、AIで診断した提案が「担当パートナーからの提案」に返る(その場で金額は出ない)／出口の設計=8つの出口(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/資本提携(一部を譲る)/上場する(TOKYO PRO Market。プロ投資家向けで数値基準が無く、J-Adviserの伴走で2〜3年)/上場する(グロース市場など一般の市場)/畳む(清算)/続けて、買い手になる)から選び。資本提携・上場を選ぶと「知っておくこと」の箱が出る。上場の可否・費用はJ-Adviser・証券会社が決めるので断定しない／スケールの設計(左メニュー。出口の設計の次)=大きくする道を7つ(いまの事業を深める/柱を増やす/M&Aで買う/デットで加速/エクイティで加速/グループ化/上場で加速)から主軸を一つ決め、目標の年と見る数字(年商・年間営業利益・現預金の月商倍率・柱の本数)のいま・目標・差。道ごとに検討中/取り組み中/済/見送りの札とメモ。数字から向いている道に合図(営業利益率5%未満・柱が1本・債務償還年数・現預金など)。借入・出資・上場の可否は断定しない。担当パートナーと同じもの、目標の年と、その出口で見る数字のいま・目標・差。いまは企業価値診断と試算表から自動。この出口で整えること(承継チェックの残り)も出る。親族・従業員へ継ぐ出口では持株会社の検討の合図(税額は計算しない)。出口の設計の下に、出口とは別の「株の持ち方・組織の検討」=持株会社(ホールディングス)/資産管理会社/分社化(会社分割・子会社化)/種類株・属人的株式/従業員持株会/事業承継の信託の6つ。出口が決まっていなくても、それぞれを検討中/専門家に相談中/実行済/見送りで記録でき、企業価値1億円超・株主の整理がまだ・万一の定めがまだ、などの合図が出る。相談先(税理士・司法書士・弁護士)も書いてある。税額は計算しない。画面の上部にいまの顧問プラン(買い手プラン(成長)45,000円/売り手プラン(譲渡準備)30,000円・税別・月額)とM&Aの優遇(顧問契約1年以上でFA報酬に最低報酬なし・継続年数×10%、最大50%の割引)。プランの切替は担当パートナーに申し出て運営が切り替え、翌月の請求から／買った後に備える(買い手プランのみ)=会社を買ったあとに待ち受けること24項目(事務・法務/お金・銀行/人・責任者/取引先・対外/業界特有/統合の進め方)。待ち受けること・いつ・いま準備できること。買いたい条件・承継チェック・試算表・企業価値診断から「自社では」が付く。想定する形(株式譲渡/事業譲渡)・責任者の想定・対象の業種を選ぶ。項目ごとに「学ぶ(継ナビくんに聞く)」と未着手/学んだ/準備した。「買った後の1年を、継ナビくんと想像する」。成約後はPMIタスクへ／買い手になる=上に「柱」の絵(買い手プランのみ。本業の1本＋譲り受けた会社。ダッシュボードの帯にも同じ本数)。「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ。同じ画面の下半分が Tsugime -結-（エクイティ・デット・M&A）=マッチング掲載(左メニューには無い。「案件を見る」の文字を押すか、下にたどる)。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し、パネルは6タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と、面談・課題の期日・支払予定が自動で並ぶカレンダー。月/週/一覧。月・週は横に払う(スワイプ)と前後の月・週へ。操作列(月/週/一覧・‹ ›・今日・＋予定)と週の曜日・終日の帯は、下へ送っても上に残る。スマホの週表示は7日が幅に収まり、予定は色で塗って題名を折り返す。色は青=自分の予定・金=面談・橙=課題の期日・赤=支払・緑=資金調達・紫=補助金の締切、Googleから取り込んだ予定はGoogle側のカレンダーの色。暦の下に「色の見分け」が並ぶ。予定を押すと小窓が開いて全部読める。入力は金色の「＋ 予定」で別の窓が開く(スマホでもキーボードに隠れない)。✕や「やめる」は入力の窓だけ閉じ、継ナビくんは閉じない。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。この画面で入れた予定は、直しても消してもその場でGoogleに出る(同期のボタンを押す必要はない。「いま同期する」はGoogle側の予定を待たずに取り込みたいときだけ)。ただしGoogleから取り込んだ予定をこの画面で消したときは、この画面から消えるだけでGoogle側には残る(削除を押す前にその旨が出る)。取り込みをやめたいだけなら、アカウントの下の「取り込むカレンダー」のチェックを外す。Google→TsuguAiの向きだけ間がある(こちらからGoogleへは入れた時点ですぐ。逆は予定タブを開いたときに取りにいく。開くたび・最短5分おき。TsuguAiを開いていない間は取りにいかない)。すぐ合わせたいときは「いま同期する」。ただし毎朝の今日の一手（パートナー）と毎週月曜の今週のひとこと（経営者）は、本文を作る前にこちらからGoogleを見にいくので、画面を開いていなくてもGoogleの予定が入る。Googleの予定は本人だけが見え、担当パートナーにも運営にも見えない。私用を入れたくないときはアカウントの欄の「このアカウントの予定をこの画面に取り込む」のチェックを外すと送るだけになる。Googleの「家族」「誕生日」「共有」「日本の祝日」なども、アカウントの下の「取り込むカレンダー」でチェックを入れれば入る(最初はメインだけ)。個人と会社などアカウントは2つ以上つなげ(「もう1つのアカウントをつなぐ」)、取り込みは全部から、この画面で入れた予定は「送り先」に選んだ1つにだけ出る。「Googleでつなぐ」を押すとGoogleの画面に移り、許可が済むと自動でこの画面に戻って同期が始まる。会社のGoogle Workspaceアカウントで「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていない(Google管理コンソール→アプリ→Google Workspace→カレンダーを有効にする)。つなぎ直しても直らず、「送り先にする」も出ない。個人アカウントでつなぐ。解除はいつでもできる)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ(先頭に毎週月曜の「今週のひとこと」。開いても既読にならず「すべて既読」で消す。経営者に毎朝の便りは無い。毎朝の「今日の一手」はパートナー宛)／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
+      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)。その下に「はじめの90日（土台づくり）」＝契約の翌月から3か月は成果を急がず土台を整える期間で、1か月目「数字が見える」・2か月目「お金の流れが分かる」・3か月目「1年の道筋が決まる」の3つの節目(資料をお預かりしてからの目安。3か月で整わなければ次の四半期も並行して続ける。契約から翌月までは準備期間)と、「伴走の1年」＝第1 土台づくり／第2 現金を増やす／第3 買い手の余力を測る／第4 次の1社の条件を決める、の四半期の帯(暦の月で3か月ずつ。いまどこにいるか・四半期の終わりに何を振り返るかが出る)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=画面のいちばん上に「ご契約について」(いまの顧問プラン／プランを変えたいとき=「✉️ 担当パートナーに伝える」で継ナビくんのメッセージが開く。切替は運営が行い翌月の請求から。依頼中は「◯◯プラン へ切替を依頼中」と出る／ご利用の終了について=「解約を依頼する」。理由と伝えたいことは任意、押してすぐ使えなくなることはなく「取り下げる」で戻せる。申し出た月の末日で終了・日割りなし・初期導入費と利用済みの月の顧問料は返金なし。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。その下に顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=気になる業務を選んで担当パートナーに送ると、AIで診断した提案が「担当パートナーからの提案」に返る(その場で金額は出ない)／出口の設計=8つの出口(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/資本提携(一部を譲る)/上場する(TOKYO PRO Market。プロ投資家向けで数値基準が無く、J-Adviserの伴走で2〜3年)/上場する(グロース市場など一般の市場)/畳む(清算)/続けて、買い手になる)から選び。資本提携・上場を選ぶと「知っておくこと」の箱が出る。上場の可否・費用はJ-Adviser・証券会社が決めるので断定しない／スケールの設計(左メニュー。出口の設計の次)=大きくする道を7つ(いまの事業を深める/柱を増やす/M&Aで買う/デットで加速/エクイティで加速/グループ化/上場で加速)から主軸を一つ決め、目標の年と見る数字(年商・年間営業利益・現預金の月商倍率・柱の本数)のいま・目標・差。道ごとに検討中/取り組み中/済/見送りの札とメモ。数字から向いている道に合図(営業利益率5%未満・柱が1本・債務償還年数・現預金など)。借入・出資・上場の可否は断定しない。担当パートナーと同じもの、目標の年と、その出口で見る数字のいま・目標・差。いまは企業価値診断と試算表から自動。この出口で整えること(承継チェックの残り)も出る。親族・従業員へ継ぐ出口では持株会社の検討の合図(税額は計算しない)。出口の設計の下に、出口とは別の「株の持ち方・組織の検討」=持株会社(ホールディングス)/資産管理会社/分社化(会社分割・子会社化)/種類株・属人的株式/従業員持株会/事業承継の信託の6つ。出口が決まっていなくても、それぞれを検討中/専門家に相談中/実行済/見送りで記録でき、企業価値1億円超・株主の整理がまだ・万一の定めがまだ、などの合図が出る。相談先(税理士・司法書士・弁護士)も書いてある。税額は計算しない。画面の上部にいまの顧問プラン(買い手プラン(成長)45,000円/売り手プラン(譲渡準備)30,000円・税別・月額)とM&Aの優遇(顧問契約1年以上でFA報酬に最低報酬なし・継続年数×10%、最大50%の割引)。プランの切替は担当パートナーに申し出て運営が切り替え、翌月の請求から／買った後に備える(買い手プランのみ)=会社を買ったあとに待ち受けること24項目(事務・法務/お金・銀行/人・責任者/取引先・対外/業界特有/統合の進め方)。待ち受けること・いつ・いま準備できること。買いたい条件・承継チェック・試算表・企業価値診断から「自社では」が付く。想定する形(株式譲渡/事業譲渡)・責任者の想定・対象の業種を選ぶ。項目ごとに「学ぶ(継ナビくんに聞く)」と未着手/学んだ/準備した。「買った後の1年を、継ナビくんと想像する」。成約後はPMIタスクへ／買い手になる=上に「柱」の絵(買い手プランのみ。本業の1本＋譲り受けた会社。ダッシュボードの帯にも同じ本数)。「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ。同じ画面の下半分が Tsugime -結-（エクイティ・デット・M&A）=マッチング掲載(左メニューには無い。「案件を見る」の文字を押すか、下にたどる)。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し(ボタンの場所は設定で右下・左下・右上・左上から、パネルの大きさは設定か見出しの⤢で標準・右半分・左半分・中央に大きく、から選べる。半分は本体を反対側に寄せて横に並べる)、パネルは6タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と、面談・課題の期日・支払予定が自動で並ぶカレンダー。月/週/一覧。月・週は横に払う(スワイプ)と前後の月・週へ。操作列(月/週/一覧・‹ ›・今日・＋予定)と週の曜日・終日の帯は、下へ送っても上に残る。スマホの週表示は7日が幅に収まり、予定は色で塗って題名を折り返す。色は青=自分の予定・金=面談・橙=課題の期日・赤=支払・緑=資金調達・紫=補助金の締切、Googleから取り込んだ予定はGoogle側のカレンダーの色。暦の下に「色の見分け」が並ぶ。予定を押すと小窓が開いて全部読める。入力は金色の「＋ 予定」で別の窓が開く(スマホでもキーボードに隠れない)。✕や「やめる」は入力の窓だけ閉じ、継ナビくんは閉じない。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。この画面で入れた予定は、直しても消してもその場でGoogleに出る(同期のボタンを押す必要はない。「いま同期する」はGoogle側の予定を待たずに取り込みたいときだけ)。ただしGoogleから取り込んだ予定をこの画面で消したときは、この画面から消えるだけでGoogle側には残る(削除を押す前にその旨が出る)。取り込みをやめたいだけなら、アカウントの下の「取り込むカレンダー」のチェックを外す。Google→TsuguAiの向きだけ間がある(こちらからGoogleへは入れた時点ですぐ。逆は予定タブを開いたときに取りにいく。開くたび・最短5分おき。TsuguAiを開いていない間は取りにいかない)。すぐ合わせたいときは「いま同期する」。ただし毎朝の今日の一手（パートナー）と毎週月曜の今週のひとこと（経営者）は、本文を作る前にこちらからGoogleを見にいくので、画面を開いていなくてもGoogleの予定が入る。Googleの予定は本人だけが見え、担当パートナーにも運営にも見えない。私用を入れたくないときはアカウントの欄の「このアカウントの予定をこの画面に取り込む」のチェックを外すと送るだけになる。Googleの「家族」「誕生日」「共有」「日本の祝日」なども、アカウントの下の「取り込むカレンダー」でチェックを入れれば入る(最初はメインだけ)。個人と会社などアカウントは2つ以上つなげ(「もう1つのアカウントをつなぐ」)、取り込みは全部から、この画面で入れた予定は「送り先」に選んだ1つにだけ出る。「Googleでつなぐ」を押すとGoogleの画面に移り、許可が済むと自動でこの画面に戻って同期が始まる。会社のGoogle Workspaceアカウントで「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていない(Google管理コンソール→アプリ→Google Workspace→カレンダーを有効にする)。つなぎ直しても直らず、「送り先にする」も出ない。個人アカウントでつなぐ。解除はいつでもできる)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ(先頭に毎週月曜の「今週のひとこと」。開いても既読にならず「すべて既読」で消す。経営者に毎朝の便りは無い。毎朝の「今日の一手」はパートナー宛)／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
@@ -15249,7 +15332,7 @@
     var mt=$('knv-tab-msg'); if(mt) mt.classList.toggle('hidden', (window.__eff||'')==='admin');
     var kt=$('knv-tab-kn'); if(kt) kt.classList.toggle('hidden', (window.__eff||'')!=='consultant');
     knvShowTab('chat');
-    knvMaxRestore();
+    knvApplyLayout();
     fab.classList.remove('hidden');
     knvOutsideBind();
     knvAskPvClear(); knvAskBindPaste();
@@ -15298,20 +15381,57 @@
       }
     }catch(e){}
   }
-  // PC版の拡大表示（⤢/⤡）。選んだ大きさは次回以降も記憶する
-  function knvMaxToggle(){
-    var p=$('knv-panel'); if(!p) return;
-    var on=!p.classList.contains('max');
-    p.classList.toggle('max', on);
-    var b=$('knv-max-btn'); if(b){ b.textContent=on?'⤡':'⤢'; b.title=on?'元の大きさに戻す':'拡大表示'; }
-    try{ localStorage.setItem('tsugu_knv_max', on?'1':''); }catch(e){}
+  // ===== 継ナビくんの大きさと、呼び出し口の場所（設定で選ぶ）=====
+  //  大きさ … 標準（右下の小窓）・右半分・左半分・中央に大きく
+  //  場所   … 右下・左下・右上・左上
+  //  どちらもログインしている方ごとの表示設定（loadPrefs）に入れる。
+  //  以前の「⤢ 拡大表示」を覚えている方は、中央に大きく、から始める。
+  var KNV_SIZES=[['float','標準（今の大きさ）'],['right','右半分'],['left','左半分'],['center','中央に大きく']];
+  var KNV_FABPOS=[['rb','右下'],['lb','左下'],['rt','右上'],['lt','左上']];
+  function knvPick(list, v, dflt){ return list.some(function(x){ return x[0]===v; }) ? v : dflt; }
+  function knvLayout(){
+    var p={}; try{ p=loadPrefs()||{}; }catch(e){}
+    var sz=p.knvSize;
+    if(!sz){ try{ if(localStorage.getItem('tsugu_knv_max')) sz='center'; }catch(e){} }
+    return { size:knvPick(KNV_SIZES, sz, 'float'), fab:knvPick(KNV_FABPOS, p.knvFab, 'rb') };
   }
-  function knvMaxRestore(){
-    try{
-      if(!localStorage.getItem('tsugu_knv_max')) return;
-      var p=$('knv-panel'); if(p) p.classList.add('max');
-      var b=$('knv-max-btn'); if(b){ b.textContent='⤡'; b.title='元の大きさに戻す'; }
-    }catch(e){}
+  function knvApplyLayout(){
+    var b=document.body; if(!b) return;
+    var k=knvLayout();
+    KNV_SIZES.forEach(function(x){ b.classList.toggle('knv-sz-'+x[0], x[0]===k.size); });
+    KNV_FABPOS.forEach(function(x){ b.classList.toggle('knv-fab-'+x[0], x[0]===k.fab); });
+  }
+  //  開いているあいだに大きさを変えたときは、背後を留めるかどうかも選び直す
+  //  （中央に大きく＝留める／それ以外＝留めない。スマホはいつも留める）
+  function knvSetSize(v){
+    var p=loadPrefs(); p.knvSize=knvPick(KNV_SIZES, v, 'float'); savePrefs(p);
+    try{ localStorage.removeItem('tsugu_knv_max'); }catch(e){}
+    knvApplyLayout();
+    var pn=$('knv-panel');
+    if(pn && !pn.classList.contains('hidden')){ knvLock(false); knvLock(true); }
+    knvSizeMenu(false);
+    if($('settings-body')) renderSettings();
+  }
+  function knvSetFab(v){
+    var p=loadPrefs(); p.knvFab=knvPick(KNV_FABPOS, v, 'rb'); savePrefs(p);
+    knvApplyLayout();
+    if($('settings-body')) renderSettings();
+  }
+  //  見出しの ⤢ から、その場で大きさを選ぶ。設定を開かなくても変えられる
+  function knvSizeMenu(open){
+    var m=$('knv-szmenu'); if(!m) return;
+    if(open===undefined) open=m.classList.contains('hidden');
+    if(!open){ m.classList.add('hidden'); return; }
+    var cur=knvLayout().size;
+    var ic={ float:'<i style="right:2px;bottom:2px;width:9px;height:9px;"></i>',
+             right:'<i style="right:0;top:0;bottom:0;width:50%;"></i>',
+             left:'<i style="left:0;top:0;bottom:0;width:50%;"></i>',
+             center:'<i style="left:3px;right:3px;top:2px;bottom:2px;"></i>' };
+    m.innerHTML=KNV_SIZES.map(function(x){
+      return '<button class="'+(x[0]===cur?'on':'')+'" onclick="knvSetSize(\''+x[0]+'\')"><span class="ic">'+ic[x[0]]+'</span>'+esc(x[1])+'</button>';
+    }).join('')
+      +'<div class="note">ボタンの場所は、設定（左下の歯車）の「継ナビくん」で変えられます。スマホではいつも画面いっぱいです。</div>';
+    m.classList.remove('hidden');
   }
   // ===== 開いているあいだ、背後の画面を止める（スマホ）=====
   //  スマホではパネルが画面いっぱいに出る。その状態で背後が動くと、
@@ -15324,23 +15444,39 @@
   //  覚えて position:fixed にし、閉じるときに同じ位置へ戻す。
   //  広い画面では留めない。パネルは浮いた小窓で、背後を読みながら
   //  使うことがあるため（留めると横の帯も消えて画面が跳ねる）。
+  //  中央に大きく、を選んでいるときも留める。パネルが画面の真ん中をふさぎ、
+  //  背後は幕の向こうで読めないので、動いても意味がなく、戻る場所を見失うだけ。
+  //  半分・標準の小窓は留めない（背後を読みながら使う形のため）。
   var KNV_LOCK_Y=null;
+  function knvCentered(){
+    var b=document.body; return !!(b && b.classList.contains('knv-sz-center'));
+  }
+  //  半分にして本体を横に寄せているとき（広い画面）。パネルの外は「作業中の本体」
+  function knvDocked(){
+    var b=document.body; if(!b) return false;
+    if(!b.classList.contains('knv-sz-right') && !b.classList.contains('knv-sz-left')) return false;
+    try{ return window.matchMedia('(min-width:1200px)').matches; }catch(e){ return false; }
+  }
   function knvNarrow(){
     try{ return window.matchMedia('(max-width:600px)').matches; }catch(e){ return false; }
   }
   function knvLock(on){
     var b=document.body; if(!b) return;
     if(on){
-      if(KNV_LOCK_Y!==null || !knvNarrow()) return;
+      if(KNV_LOCK_Y!==null || !(knvNarrow() || knvCentered())) return;
       KNV_LOCK_Y=window.pageYOffset||document.documentElement.scrollTop||0;
       b.style.position='fixed';
       b.style.top=(-KNV_LOCK_Y)+'px';
       b.style.left='0'; b.style.right='0'; b.style.width='100%';
+      //  広い画面で留めると縦のスクロールバーが消え、その幅だけ本体が横に跳ねる。
+      //  消えた幅を右の余白で埋めて、見た目の位置を変えない
+      var sbw=0; try{ sbw=window.innerWidth-document.documentElement.clientWidth; }catch(e){}
+      if(sbw>0) b.style.paddingRight=sbw+'px';
       b.style.overflow='hidden';
     }else{
       if(KNV_LOCK_Y===null) return;
       var y=KNV_LOCK_Y; KNV_LOCK_Y=null;
-      b.style.position=''; b.style.top=''; b.style.left=''; b.style.right=''; b.style.width=''; b.style.overflow='';
+      b.style.position=''; b.style.top=''; b.style.left=''; b.style.right=''; b.style.width=''; b.style.overflow=''; b.style.paddingRight='';
       try{ window.scrollTo(0,y); }catch(e){}
     }
   }
@@ -15391,7 +15527,8 @@
       setTimeout(function(){ fab.classList.add('hidden'); fab.classList.remove('leaving'); }, 180);
       p.classList.remove('closing');
       p.classList.remove('hidden');
-      knvLock(true);        // 背後の画面を留める（スマホのみ）
+      document.body.classList.add('knv-open');   // 半分なら本体を横に寄せる／中央なら幕を出す
+      knvLock(true);        // 背後の画面を留める（スマホと、中央に大きく）
       knvWheelGuard();      // 受け取れない送りを背後へ流さない（一度だけ掛ける）
       void p.offsetWidth;   // 開くアニメーションを毎回頭から再生する
       renderSecLog(); renderAgentInsights();
@@ -15404,6 +15541,8 @@
     // 閉じる：パネルが縮んで消えたあと、継ナビくんがぽんっと戻ってくる
     var wasOpen=!p.classList.contains('hidden');
     knvLock(false);         // 留めていた背後を、元の位置のまま返す
+    document.body.classList.remove('knv-open');
+    knvSizeMenu(false);
     if(wasOpen){
       p.classList.add('closing');
       KNV_CLOSE_T=setTimeout(function(){
@@ -15458,6 +15597,9 @@
     //  「押された場所が継ナビくんかどうか」だけでは守り切れない
     if(Date.now()-KNV_OPEN_AT < 400) return;
     if(knvKeepOpen(e.target)) return;
+    //  半分にして横に並べているときは、反対側は作業中の本体。
+    //  本文を押すたびに閉じては並べた意味がないので、閉じるのは × だけにする
+    if(typeof knvDocked==='function' && knvDocked()) return;
     knvToggle(false);
   }
   //  click ではなく mousedown で拾う。click だと、開くきっかけになった
@@ -15466,6 +15608,13 @@
     if(window.__KNV_OUTSIDE) return;
     window.__KNV_OUTSIDE=1;
     document.addEventListener('mousedown', knvOutside, true);
+    //  大きさの一覧（⤢）は、ほかの所を押したら畳む
+    document.addEventListener('mousedown', function(e){
+      var m=$('knv-szmenu'); if(!m || m.classList.contains('hidden')) return;
+      var t=e.target;
+      if(m.contains(t) || (t && t.closest && t.closest('#knv-max-btn'))) return;
+      m.classList.add('hidden');
+    }, true);
   }
   // 質問文を入れた状態で継ナビくんの窓口を開く
   function knvAsk(q){
