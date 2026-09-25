@@ -50,6 +50,8 @@ ul.dots li b{color:var(--navy);}
 .kv th,.kv td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--softline);vertical-align:top;line-height:1.75;}
 .kv th{width:26%;color:var(--navy);font-weight:700;background:var(--soft);}
 .kv td b{color:var(--navy);}
+.kv tr.grp td{background:transparent;border-bottom:2px solid var(--gold);padding:12px 4px 4px;font-size:13px;letter-spacing:.06em;color:var(--navy);}
+.kv tr.grp td span{font-weight:400;color:var(--muted);margin-left:10px;letter-spacing:0;font-size:12px;}
 .kv.num td:last-child{text-align:right;font-family:'DM Sans',sans-serif;white-space:nowrap;}
 .kv.tight th,.kv.tight td{padding:6px 11px;font-size:12.5px;line-height:1.65;}
 .pill{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--softline);color:var(--blue);margin-right:5px;}
@@ -180,20 +182,25 @@ ul.dots li{font-size:14.5px;}
 <section class="slide" data-t="全体像" data-g="はじめに">
   <div class="eyebrow">はじめに</div>
   <h2>運営コンソールの14メニュー</h2>
+  <p class="sub">いちばん上の<b>ダッシュボード</b>の下に、見出しの付いた<b>4つの組</b>で並びます。⚙️ 設定の▲▼は、組の中での並び替えです。</p>
   <table class="kv tight">
     <tr><th>ダッシュボード</th><td>運営向けのお知らせ、<b>今日の動き</b>、四半期アンケートの受付と集計、<b>顧問プランの切替依頼</b>、成長ロードマップ。毎朝ここから始めてください（次ページ）。</td></tr>
+    <tr class="grp"><td colspan="2"><b>全体を見る</b><span>数字の推移と、いま対応が要るもの</span></td></tr>
     <tr><th>KPI・経営計画</th><td>ステージ・ファネル／稼働状況と、経営計画（資金調達リスト・週次計画・KPIトラッキング）。経営計画の部分は<b>権限（sec-exec）を持つメンバーにだけ</b>表示されます。</td></tr>
     <tr><th>要対応</th><td>顧客リスクの自動検知。優先度順に並びます。</td></tr>
+    <tr class="grp"><td colspan="2"><b>人と顧客</b><span>パートナー・法人・顧客・運営メンバー</span></td></tr>
     <tr><th>パートナー</th><td>一覧・稼働モニタ、ランクの設定。</td></tr>
     <tr><th>エンタープライズ</th><td>法人パートナー（EP-I／EP-II）の作成、担当者（seat）、顧問先、担当表、記録。</td></tr>
     <tr><th>顧客</th><td>一覧・管理。担当未割当での絞り込み、<b>担当の割当</b>（運営（直接担当）／認定パートナー）、プランの切替。</td></tr>
     <tr><th>運営メンバー <span class="pill r">代表のみ</span></th><td>アカウントと役割の管理、運営内の権限設定、<b>2名体制の承認</b>、<b>🎫 登録コードの発行・停止</b>。<b>このメニューは代表にしか表示されません。</b></td></tr>
+    <tr class="grp"><td colspan="2"><b>案件と情報</b><span>Tsugime・専門家・補助金・お知らせ</span></td></tr>
     <tr><th>専門家ネットワーク</th><td>領域カバレッジ／顧客の業種分布／提携専門家の名簿／紹介依頼の受信箱。</td></tr>
     <tr><th>補助金マスタ</th><td>公募中の補助金制度を運営が登録します。登録した制度は、要件に合う顧客のカルテに<b>候補として自動で並びます</b>。</td></tr>
     <tr><th>Tsugime -結-（エクイティ・デット・M&amp;A）</th><td>掲載案件の管理、パートナーからの掲載申請の審査、運営による直接掲載。</td></tr>
+    <tr><th>お知らせ配信</th><td>全員／パートナーのみ／顧客のみへの一斉配信。</td></tr>
+    <tr class="grp"><td colspan="2"><b>お金・サポート・記録</b><span>課金と契約・届いた相談・操作の記録</span></td></tr>
     <tr><th>課金・契約</th><td>6つのタブ。MRR試算、料率パラメータ（<b>変更は自動保存され運営全員に共有</b>）、入金履歴、<b>パートナー報酬の配分</b>、売上目標・実績、請求と未収。</td></tr>
     <tr><th>監査ログ</th><td>AIの利用記録（AI診断・マーケット・試算・提案メモ・レポート）。</td></tr>
-    <tr><th>お知らせ配信</th><td>全員／パートナーのみ／顧客のみへの一斉配信。</td></tr>
     <tr><th>サポート管理</th><td>パートナーからの問い合わせの受信箱、AIナレッジ管理、<b>契約（Web締結）</b>、<b>解約のご依頼</b>とアカウント削除。</td></tr>
   </table>
   <div class="note" style="margin-top:12px;">画面右下の<b>継ナビくん</b>はメニューではなくボタンです。相談／📅 予定（運営の週次計画と補助金の締切も並びます。いちばん下の「Googleでつなぐ」で Google カレンダーと双方向につながり、個人と会社などアカウントを2つ以上つなげます。会社の Workspace アカウントで「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていないので、Google 管理コンソール → アプリ → Google Workspace → カレンダー を有効にしてください）／お知らせ／連携（LINE・スマホ通知）／サポート（操作説明書・受信箱）が開きます。画面上部の<b>表示モード</b>（運営／パートナー／顧客）で、各ロールの見え方をプレビューできます。経営者の画面とパートナーのカルテには<b>「出口の設計」</b>（8つの出口。資本提携・上場（TOKYO PRO Market／グロース）を含む）、<b>「株の持ち方・組織の検討」</b>（持株会社・資産管理会社・分社化・種類株・従業員持株会・信託）、<b>「スケールの設計」</b>（7つの道から主軸を一つ、見る数字と合図）が並び、経営者と担当パートナーが同じ表を見ます。資金の区分の言い方は全体で<b>デット＝借入・融資、エクイティ＝出資</b>に揃えています。</div>
