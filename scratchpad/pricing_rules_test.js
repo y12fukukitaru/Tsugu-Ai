@@ -100,6 +100,17 @@ function fn(name) {
     && /着手金・中間金・月額報酬は0円、最低手数料はありません/.test(MANA));
   //  顧問契約の起点はプランではない（プランを変えても通算される）
   ok('優遇の起点は契約開始日', /faPerk\(prof\.onboard_start\|\|prof\.created_at\)/.test(SRC));
+  //  最低報酬は、どなたにもない。顧問先の優遇は割引だけ。
+  //  「1年以上なら最低報酬なし」と書くと、1年未満には最低報酬があるように読める
+  const MINFEE = /最低報酬(なし|を設けず|はかかりません|あり|がなくな|額は別途)/;
+  const PITP = R('pitch-partner.html');
+  [['index.html', SRC], ['pitch-customer.html', PITC], ['pitch-bank.html', PITB], ['pitch-partner.html', PITP],
+   ['manual-customer.html', MANC], ['manual-partner.html', MANP], ['manual-admin.html', MANA]].forEach(([f, s]) => {
+    no(f + '：1年以上だけ最低報酬なし、と読める言い方は無い', MINFEE.test(s));
+  });
+  const FIX = fs.existsSync(__dirname + '/../supabase/migrations/20260925000000_fa_no_minimum.sql')
+    ? R('supabase/migrations/20260925000000_fa_no_minimum.sql') : '';
+  ok('契約書ひな形を直す SQL がある', /FA報酬に最低報酬額は設けません/.test(FIX));
 }
 // ⑥ プラン変更の差額と、解約
 {
