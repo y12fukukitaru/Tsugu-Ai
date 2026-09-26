@@ -179,6 +179,27 @@
   .ph{font-size:14px;font-weight:600;color:var(--navy);margin-bottom:9px;letter-spacing:.02em;}
   .fl{font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;letter-spacing:.04em;}
   .inp2{width:140px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-size:13px;font-family:inherit;background:var(--card);outline:none;transition:border-color .15s;}
+  /* 継ナビくん サポート：資料の一覧と、資料から探す */
+  .knv-dsearch{border:1px solid #D9E3F1;background:#F4F7FC;border-radius:12px;padding:11px 12px;margin-bottom:6px;}
+  .knv-dchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center;}
+  .knv-dchip-l{font-size:10.5px;color:var(--muted);}
+  .knv-dchip{font-size:11px;border:1px solid #D9E3F1;background:var(--card);color:var(--navy);border-radius:999px;padding:3px 10px;cursor:pointer;}
+  .knv-dcount{font-size:10.5px;color:var(--muted);margin:9px 0 5px;}
+  .knv-dnone{font-size:11.5px;color:var(--muted);line-height:1.7;margin-top:9px;}
+  .knv-dhit{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 11px;margin-bottom:6px;cursor:pointer;}
+  .knv-dhit:hover{border-color:#B9C8DE;}
+  .knv-dhit-d{font-size:10px;color:var(--muted);}
+  .knv-dhit-t{font-size:12.5px;font-weight:700;color:var(--ink);margin-top:1px;}
+  .knv-dhit-s{font-size:11px;color:var(--muted);line-height:1.6;margin-top:2px;}
+  .knv-dhit mark{background:rgba(195,155,63,.3);color:inherit;border-radius:3px;padding:0 1px;}
+  .knv-doc{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:8px;background:var(--card);}
+  .knv-doc-i{font-size:18px;flex:0 0 auto;line-height:1.2;}
+  .knv-doc-b{flex:1;min-width:0;}
+  .knv-doc-n{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.4;}
+  .knv-doc-d{font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:2px;}
+  .knv-doc-a{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;}
+  .knv-doc-a button{font-size:11px;border:1px solid var(--line);background:var(--soft);color:var(--navy);border-radius:8px;padding:4px 10px;cursor:pointer;font-family:inherit;}
+  .knv-doc-a button:first-child{background:var(--navy);border-color:var(--navy);color:#fff;}
   /* 経営者の画面：確かめるだけの欄（出口・株の持ち方・スケール・買った後・買いたい条件・目標） */
   .cust-ro{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;border:1px solid #D9E3F1;background:#F4F7FC;border-radius:11px;padding:9px 12px;margin:0 0 12px;}
   .cust-ro-t{flex:1 1 260px;font-size:11.5px;color:var(--ink);line-height:1.7;}
@@ -269,6 +290,27 @@
   .cl-gi{display:none;padding-left:5px;margin-bottom:5px;}
   .cl-grp.open>.cl-gi{display:block;}
   .cl-gd{font-size:10px;line-height:1.55;color:rgba(255,255,255,.42);padding:0 9px 5px 23px;}
+  /* 枝葉（ツリー）：組＝枝、項目＝葉、画面の中の見出し＝小枝 */
+  .cl-tree .cl-gi{margin-left:14px;padding-left:10px;border-left:1px solid rgba(255,255,255,.14);}
+  .cl-tree .cl-gi .cl-gd{padding-left:4px;}
+  .cl-tree .cl-gi>.cl-ni{position:relative;}
+  .cl-tree .cl-gi>.cl-ni::before{content:'';position:absolute;left:-10px;top:50%;width:8px;border-top:1px solid rgba(255,255,255,.14);}
+  .cl-twigs:empty{display:none;}
+  .cl-twigs{margin:0 0 6px 20px;padding-left:10px;border-left:1px dashed rgba(207,168,96,.5);}
+  .cl-tw{position:relative;font-size:11px;line-height:1.4;color:rgba(255,255,255,.6);padding:4px 7px;border-radius:6px;cursor:pointer;}
+  .cl-tw::before{content:'';position:absolute;left:-10px;top:50%;width:7px;border-top:1px dashed rgba(207,168,96,.5);}
+  .cl-tw:hover{color:#fff;background:rgba(255,255,255,.06);}
+  .cl-tw.on{color:#fff;background:rgba(207,168,96,.18);}
+  .cl-crumb{margin:0 0 10px;}
+  .cl-crumb-path{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--muted);}
+  .cl-crumb-path i{font-style:normal;color:#B7C2D3;}
+  .cl-crumb-path b{color:var(--navy);font-size:13px;}
+  .cl-crumb-menu{display:none;margin-left:auto;font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:4px 10px;background:var(--card);color:var(--navy);font-family:inherit;cursor:pointer;}
+  .cl-crumb-twigs{display:none;gap:6px;flex-wrap:wrap;margin-top:7px;}
+  .cl-ctw{font-size:11px;border:1px dashed #D9C79A;background:#FDFBF6;color:#8A6D2F;border-radius:999px;padding:3px 10px;cursor:pointer;}
+  #cl-main .ph{scroll-margin-top:10px;}
+  .ph.cl-flash{animation:clflash 1.2s ease;}
+  @keyframes clflash{0%{background:rgba(195,155,63,.28);}100%{background:transparent;}}
   .cl-tgh{font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.06em;margin:13px 2px 6px;}
   .cl-tgh .cl-tgd{font-weight:400;color:var(--muted);margin-left:8px;letter-spacing:0;}
   .cl-sheet-body>.cl-tgh:first-child{margin-top:2px;}
@@ -346,9 +388,15 @@
     /* スマホのみ：左ナビを隠し、ヘッダーのハンバーガーに集約 */
     #cl-modal .cl-side{display:none;}
     #cl-modal .cl-burger{display:flex;}
+    /* 左の枝が無いので、本文の上に「組 › 項目」と小枝を出す */
+    #cl-modal .cl-crumb-twigs{display:flex;}
+    #cl-modal .cl-crumb-menu{display:inline-block;}
+    #cl-modal .cl-crumb{position:sticky;top:0;z-index:3;background:var(--card);padding:8px 0 8px;border-bottom:1px solid var(--softline);}
+    #cl-main .ph{scroll-margin-top:96px;}
     /* 横ズレ防止：カルテ本体は横はみ出しを遮断し、資金調達の表は枠内で横スクロール */
-    #cl-modal .modal-body{overflow-x:hidden;}
-    #cl-modal .cl-main{max-width:100%;overflow-x:hidden;}
+    /* clip は hidden と違ってスクロールの箱を作らないので、上のパンくずが sticky で残る */
+    #cl-modal .modal-body{overflow-x:hidden;overflow-x:clip;}
+    #cl-modal .cl-main{max-width:100%;overflow-x:hidden;overflow-x:clip;}
   }
   /* 資金調達ロードマップ：表が画面幅を超えても画面全体が横にズレないよう枠内スクロール */
   #cl-fund{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;}
@@ -12238,13 +12286,55 @@
   }
 
   function clNi(id, icon, label){
-    return '<div class="cl-ni" id="ni-'+id+'" onclick="clNav(\''+id+'\',this)"><span class="ci">'+icoSvg(icon)+'</span><span>'+label+'</span><span class="clnb hidden" id="clnb-'+id+'">0</span></div>';
+    return '<div class="cl-ni" id="ni-'+id+'" onclick="clNav(\''+id+'\',this)"><span class="ci">'+icoSvg(icon)+'</span><span>'+label+'</span><span class="clnb hidden" id="clnb-'+id+'">0</span></div>'
+      +'<div class="cl-twigs" id="tw-'+id+'"></div>';
   }
   function clNav(id, el){
     clShowSection(id);
   }
+  //  いま開いている項目の中の見出し（.ph）を拾う。これが小枝になる
+  function clSubHeads(id){
+    var out=[];
+    CL_TAB_WRAPS.forEach(function(wid){
+      var w=$(wid); if(!w) return;
+      var cur=null, k=0;
+      Array.prototype.forEach.call(w.children,function(ch){
+        if(ch.id && CL_SPY_IDS.indexOf(ch.id)>=0){ cur=ch.id; return; }
+        if(cur!==id || !ch.classList || !ch.classList.contains('ph')) return;
+        var t=String(ch.textContent||'').replace(/\s+/g,' ').trim();
+        if(!t) return;
+        if(!ch.id) ch.id='clsub-'+id+'-'+(k++);
+        out.push({ id:ch.id, t:t.replace(/[（(][^）)]*[）)]\s*$/,'').trim() || t });
+      });
+    });
+    return out;
+  }
+  function clItemOf(id){ var it=null; CL_ITEMS.forEach(function(x){ if(x[0]===id) it=x; }); return it; }
+  function clTwigsRender(id){
+    var subs=clSubHeads(id);
+    Array.prototype.forEach.call(document.querySelectorAll('.cl-twigs'),function(t){ t.innerHTML=''; });
+    var tw=$('tw-'+id);
+    var twig=function(x){ return '<div class="cl-tw" data-to="'+escA(x.id)+'" onclick="clTwig(\''+escA(x.id)+'\',event)">'+esc(x.t.length>22?x.t.slice(0,21)+'…':x.t)+'</div>'; };
+    if(tw) tw.innerHTML=subs.map(twig).join('');
+    //  本文の上のパンくず。スマホでは左の枝が無いので、小枝もここに並べる
+    var cr=$('cl-crumb'), it=clItemOf(id);
+    if(cr){
+      cr.innerHTML=(it?'<div class="cl-crumb-path"><span>'+esc(it[3])+'</span><i>›</i><b>'+esc(it[2])+'</b>'
+          +'<button type="button" class="cl-crumb-menu" onclick="clSheetOpen(false)">メニュー</button></div>':'')
+        +(subs.length?'<div class="cl-crumb-twigs">'+subs.map(function(x){ return '<span class="cl-ctw" onclick="clTwig(\''+escA(x.id)+'\',event)">'+esc(x.t.length>16?x.t.slice(0,15)+'…':x.t)+'</span>'; }).join('')+'</div>':'');
+    }
+  }
+  function clTwig(hid, ev){
+    if(ev) ev.stopPropagation();
+    var el=$(hid); if(!el) return;
+    try{ el.scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){ el.scrollIntoView(); }
+    Array.prototype.forEach.call(document.querySelectorAll('.cl-tw'),function(t){ t.classList.toggle('on', t.getAttribute('data-to')===hid); });
+    el.classList.add('cl-flash'); setTimeout(function(){ el.classList.remove('cl-flash'); }, 1200);
+  }
   function clSpySet(id){
-    var side=$('cl-side'); if(!side)return;
+    var side=$('cl-side');
+    clTwigsRender(id);
+    if(!side)return;
     Array.prototype.forEach.call(side.querySelectorAll('.cl-ni'),function(n){ n.classList.toggle('on', n.id==='ni-'+id); });
     // いま見ているタブの組は必ず開く。畳んだままだと現在地が見えない。
     var gi=clGroupIdx(id);
@@ -12347,13 +12437,17 @@
     try{ var a=JSON.parse(localStorage.getItem(CL_OPEN_KEY)||'null'); if(Array.isArray(a)) return a; }catch(e){}
     return null;
   }
+  //  枝葉（ツリー）の形にした（2026-09-26）。組は最初から全部ひらいておき、
+  //  いま見ている項目の下に、その画面の中の見出しを小枝として出す。
+  //  以前は「いま見ている組だけ」を開いていたので、項目を移るたびに組が開いたり
+  //  閉じたりして、どこに何があるかがつかみにくかった。畳んだ組は覚えておく
   function clOpenIs(gi){
     var a=clOpenGet();
-    if(a===null) return gi===clGroupIdx(CL_ACTIVE);
+    if(a===null) return true;
     return a.indexOf(gi)>=0;
   }
   function clOpenSet(gi, on){
-    var a=clOpenGet(); if(a===null){ var cur=clGroupIdx(CL_ACTIVE); a=(cur>=0?[cur]:[]); }
+    var a=clOpenGet(); if(a===null){ a=CL_GROUPS.map(function(g,i){ return i; }); }
     var i=a.indexOf(gi);
     if(on && i<0) a.push(gi);
     if(!on && i>=0) a.splice(i,1);
@@ -12473,7 +12567,7 @@
     return out;
   }
   function clSideHtml(){
-    var h='<div class="cl-side" id="cl-side"><div class="sb-sec">メニュー</div>';
+    var h='<div class="cl-side cl-tree" id="cl-side"><div class="sb-sec">メニュー</div>';
     clNavByGroup().forEach(function(grp, gi){
       if(!grp.items.length) return;
       h+='<div class="cl-grp'+(clOpenIs(gi)?' open':'')+'" id="clg-'+gi+'">'
@@ -13021,7 +13115,7 @@
       +'</div>'
       +'</div>'
     +'</div>';
-    box.innerHTML='<div class="cl-shell">'+side+'<div class="cl-main" id="cl-main">'+tabMsg+tabFin+tabTools+tabShared+'</div></div>';
+    box.innerHTML='<div class="cl-shell">'+side+'<div class="cl-main" id="cl-main"><div class="cl-crumb" id="cl-crumb"></div>'+tabMsg+tabFin+tabTools+tabShared+'</div></div>';
     clSpyInit();
     applyClKarteBadges(custId);
     var f=await sb.from('financial_entries').select('*').eq('customer_id',custId).order('year_month',{ascending:false});
@@ -16355,46 +16449,155 @@
   //  経営者   … 顧客向け説明書＋担当パートナーへの導線
   //  パートナー… パートナー向け説明書＋運営サポート（AI即答・問い合わせ・履歴）をパネル内に取り込み
   //  運営     … 説明書3種＋パートナーからの問い合わせ受信箱をパネル内に取り込み
+  //  ===== 資料の一覧と、資料から探す（継ナビくん サポート） =====
+  //  f: ファイル／who: 出す相手（customer・consultant・admin）／sec: 組
+  //  doc-reader.js を入れた資料は ?view=read で「目次から読む」、#t=題名 でその頁から開く
+  var KNV_DOCS=[
+    { f:'manual-customer.html', i:'📖', n:'経営者向け 操作説明書', d:'各画面でできること・メッセージの使い方など', who:{ customer:'操作説明書', consultant:'経営者に聞かれたとき用', admin:'経営者に案内するときの確認用' }, sec:'manual' },
+    { f:'manual-partner.html', i:'🤝', n:'パートナー向け 操作説明書', d:'画面の使い方・日々の業務の流れを1本のドキュメントで', who:{ consultant:'', admin:'パートナーに案内するときの確認用' }, sec:'manual' },
+    { f:'manual-ep.html', i:'🏢', n:'エンタープライズ 操作説明書', d:'席の配りかた・担当の割当／担当表・配分とご利用料・担当交代のときの手順', who:{ consultant:'ep', admin:'法人パートナー（EP-I／EP-II）に案内するときの確認用' }, sec:'manual' },
+    { f:'manual-admin.html', i:'🗂️', n:'運営向け 操作説明書', d:'コンソールの全機能・月次の運営業務', who:{ admin:'' }, sec:'manual' },
+    { f:'pitch-customer.html', i:'🎤', n:'顧客候補向け プロダクト説明', d:'「社長、会社の値段をご存知ですか」——3つの問いかけで始まる15分の商談スライド。→キーで進み、そのまま画面共有・印刷もOK', who:{ consultant:'', admin:'パートナーが経営者に見せる商談スライド。内容確認・研修用に' }, sec:'pitch' },
+    { f:'pitch-partner.html', i:'🤝', n:'パートナー候補向け プロダクト説明', d:'「顧問先に承継という未来を売れる人へ」——収入の波・一度きりの関係への問いかけから始まる説明スライド', who:{ admin:'' }, sec:'pitch' },
+    { f:'pitch-ep1.html', i:'🏛️', n:'EP-I（顧客基盤型）向け プロダクト説明', d:'税理士法人・社労士法人など、顧客基盤をお持ちの法人へ。事業承継・M&A支援部門の立ち上げ（すみわけ・組織図・90日・成績表・よくあるご質問）から、顧客は御社のもの・配分80%・担当の割当まで', who:{ admin:'' }, sec:'pitch' },
+    { f:'pitch-ep2.html', i:'🏛️', n:'EP-II（所属営業型）向け プロダクト説明', d:'保険代理店など、営業を抱える本部へ。契約2本立て・本部は一律10%でご負担なし・担当表まで', who:{ admin:'' }, sec:'pitch' },
+    { f:'pitch-bank.html', i:'🏦', n:'金融機関向け 提携のご提案', d:'「後継者不在は御行の課題でもあります」——紹介の流れ・線引き・情報の取り扱いまで。手数料のやり取りが無いことも明記', who:{ admin:'' }, sec:'ext' },
+    { f:'pitch-finance.html', i:'📊', n:'事業のご説明（金融機関提出用）', d:'自社の事業・収益の仕組み・資金使途。融資や審査の場で使う資料。<b>実績と計画は［要記入］のまま</b>なので、提出前に埋めてください', who:{ admin:'' }, sec:'ext' },
+    { f:'pitch-general.html', i:'🏛️', n:'会社・サービスのご紹介（汎用）', d:'自治体・商工会議所・士業団体・事業会社など、相手を選ばず使える紹介資料。売り込み色を抜いた構成', who:{ admin:'' }, sec:'ext' }
+  ];
+  var KNV_DOC_SECS={
+    manual:{ customer:'📖 操作説明書', consultant:'📖 操作説明書', admin:'📖 操作説明書' },
+    pitch:{ consultant:'🎤 商談用スライド（お客様に見せる）', admin:'🎤 商談用スライド（説明会・面談で見せる）' },
+    ext:{ admin:'🏦 社外向け説明資料' }
+  };
+  //  役割ごとに出す資料。エンタープライズの説明書は、法人に所属している方にだけ
+  function knvDocsFor(eff){
+    return KNV_DOCS.filter(function(d){
+      if(!(eff in d.who)) return false;
+      if(d.who[eff]==='ep') return !!EP_ME;
+      return true;
+    });
+  }
+  function knvDocOpen(f, mode, t){
+    var q=(mode==='read'?'?view=read':'?view=slide');
+    openManual(f+q+(t?('#t='+encodeURIComponent(t)):''));
+  }
+  function knvDocRow(d, eff){
+    var sub=(d.who[eff] && d.who[eff]!=='ep')?d.who[eff]:d.d;
+    return '<div class="knv-doc">'
+      +'<span class="knv-doc-i">'+d.i+'</span>'
+      +'<div class="knv-doc-b"><div class="knv-doc-n">'+esc(d.n)+'</div><div class="knv-doc-d">'+sub+'</div>'
+        +'<div class="knv-doc-a">'
+          +'<button type="button" onclick="knvDocOpen(\''+d.f+'\',\'read\')">📑 目次から読む</button>'
+          +'<button type="button" onclick="knvDocOpen(\''+d.f+'\',\'slide\')">▶ スライドで見る</button>'
+        +'</div></div></div>';
+  }
+  function knvDocHubHtml(eff){
+    var docs=knvDocsFor(eff);
+    var h='<div class="knv-dsearch">'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:6px;">🔎 資料から探す</div>'
+      +'<input id="knv-dq" class="inp2" style="width:100%;" placeholder="聞かれたこと・説明したいことを言葉で（例：解約、出口、報酬、料金）" oninput="knvDocSearchSoon()">'
+      +'<div id="knv-dq-chips" class="knv-dchips"></div>'
+      +'<div id="knv-dq-res"></div>'
+    +'</div>';
+    ['manual','pitch','ext'].forEach(function(sec){
+      var list=docs.filter(function(d){ return d.sec===sec; });
+      if(!list.length || !KNV_DOC_SECS[sec][eff]) return;
+      h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin:12px 0 8px;">'+KNV_DOC_SECS[sec][eff]+'</div>'
+        +list.map(function(d){ return knvDocRow(d, eff); }).join('');
+    });
+    //  よくある質問のきっかけを、資料の「質問から探す」から少しだけ並べる
+    setTimeout(function(){ knvDocIndex().then(knvDocChips); }, 0);
+    return h+'<div style="height:8px;"></div>';
+  }
+  //  資料を読み込んで、頁（section.slide）ごとに 題名・組・質問・本文 を持つ
+  var KNV_DOCIDX=null;
+  function knvDocIndex(){
+    if(KNV_DOCIDX) return KNV_DOCIDX;
+    var eff=window.__eff||'customer', docs=knvDocsFor(eff);
+    KNV_DOCIDX=Promise.all(docs.map(function(d){
+      return fetch('./'+d.f,{ cache:'no-cache' }).then(function(r){ return r.ok?r.text():''; }).then(function(html){
+        if(!html) return [];
+        var doc=new DOMParser().parseFromString(html,'text/html');
+        var out=[];
+        Array.prototype.forEach.call(doc.querySelectorAll('section.slide'),function(sl, n){
+          var t=sl.getAttribute('data-t')||''; if(!t || t==='表紙') return;
+          //  話す内容（.talk）は、お客様に見せる本文ではないので探す対象から外す
+          Array.prototype.forEach.call(sl.querySelectorAll('.talk,script,style'),function(x){ x.parentNode.removeChild(x); });
+          out.push({ f:d.f, dn:d.n, n:n+1, t:t, g:sl.getAttribute('data-g')||'',
+            q:String(sl.getAttribute('data-q')||'').split('|').map(function(x){ return x.trim(); }).filter(Boolean),
+            x:String(sl.textContent||'').replace(/\s+/g,' ').trim() });
+        });
+        return out;
+      }).catch(function(){ return []; });
+    })).then(function(a){ return [].concat.apply([],a); });
+    return KNV_DOCIDX;
+  }
+  function knvNorm(s){ try{ s=String(s||'').normalize('NFKC'); }catch(e){ s=String(s||''); } return s.toLowerCase(); }
+  //  点数：質問に当たる＞題名＞組＞本文。言葉を空白で区切ったら、全部を含むものだけ
+  function knvDocSearch(idx, q){
+    var words=knvNorm(q).split(/\s+/).filter(Boolean); if(!words.length) return [];
+    var res=[];
+    idx.forEach(function(p){
+      var T=knvNorm(p.t), G=knvNorm(p.g), Q=knvNorm(p.q.join(' ')), X=knvNorm(p.x), sc=0, all=true;
+      words.forEach(function(w){
+        var s1=(Q.indexOf(w)>=0?6:0)+(T.indexOf(w)>=0?5:0)+(G.indexOf(w)>=0?2:0)+(X.indexOf(w)>=0?1:0);
+        if(!s1) all=false; sc+=s1;
+      });
+      if(all) res.push({ p:p, s:sc });
+    });
+    res.sort(function(a,b){ return b.s-a.s; });
+    return res.slice(0,20);
+  }
+  function knvSnip(p, q){
+    var w=knvNorm(q).split(/\s+/).filter(Boolean)[0]||'';
+    var hitQ=p.q.filter(function(x){ return knvNorm(x).indexOf(w)>=0; })[0];
+    if(hitQ) return { k:'q', s:hitQ };
+    var X=p.x, i=knvNorm(X).indexOf(w);
+    if(i<0) return { k:'x', s:X.slice(0,70)+(X.length>70?'…':'') };
+    var a=Math.max(0,i-26), b=Math.min(X.length,i+w.length+44);
+    return { k:'x', s:(a>0?'…':'')+X.slice(a,b)+(b<X.length?'…':'') };
+  }
+  var KNV_DQ_T=null;
+  function knvDocSearchSoon(){ if(KNV_DQ_T) clearTimeout(KNV_DQ_T); KNV_DQ_T=setTimeout(knvDocSearchRun, 220); }
+  function knvDocSearchRun(){
+    var inp=$('knv-dq'), box=$('knv-dq-res'); if(!inp||!box) return;
+    var q=String(inp.value||'').trim();
+    var ch=$('knv-dq-chips'); if(ch) ch.style.display=q?'none':'';
+    if(!q){ box.innerHTML=''; return; }
+    box.innerHTML='<div class="knv-dnone">探しています…</div>';
+    knvDocIndex().then(function(idx){
+      if(String(($('knv-dq')||{}).value||'').trim()!==q) return;
+      if(!idx.length){ box.innerHTML='<div class="knv-dnone">資料を読み込めませんでした。下の一覧から開いてください。</div>'; return; }
+      var r=knvDocSearch(idx, q);
+      if(!r.length){ box.innerHTML='<div class="knv-dnone">「'+esc(q)+'」は見つかりませんでした。言葉を短くするか、言いかえてみてください。見つからないことは「相談」タブで継ナビくんに聞けます。</div>'; return; }
+      var w=knvNorm(q).split(/\s+/).filter(Boolean)[0]||'';
+      box.innerHTML='<div class="knv-dcount">'+r.length+'件（押すと、その頁を「目次から読む」形で開きます）</div>'
+        +r.map(function(x){
+          var p=x.p, sn=knvSnip(p,q), s=esc(sn.s);
+          if(w){ try{ s=s.replace(new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), function(m){ return '<mark>'+m+'</mark>'; }); }catch(e){} }
+          return '<div class="knv-dhit" onclick="knvDocOpen(\''+p.f+'\',\'read\',\''+escA(p.t).replace(/\\/g,'\\\\').replace(/&#39;/g,"\\'")+'\')">'
+            +'<div class="knv-dhit-d">'+esc(p.dn)+(p.g?' ・ '+esc(p.g):'')+'</div>'
+            +'<div class="knv-dhit-t">'+esc(p.t)+'</div>'
+            +'<div class="knv-dhit-s">'+(sn.k==='q'?'❓ ':'')+s+'</div></div>';
+        }).join('');
+    });
+  }
+  //  よくある質問のきっかけ（資料の data-q から、最初の数件ずつ）
+  function knvDocChips(idx){
+    var ch=$('knv-dq-chips'); if(!ch || !idx || !idx.length) return;
+    var seen={}, qs=[];
+    idx.forEach(function(p){ p.q.slice(0,1).forEach(function(q){ if(!seen[q] && qs.length<8){ seen[q]=1; qs.push({ q:q, p:p }); } }); });
+    ch.innerHTML=qs.length?('<span class="knv-dchip-l">よく聞かれること：</span>'+qs.map(function(x){
+      return '<span class="knv-dchip" onclick="knvDocOpen(\''+x.p.f+'\',\'read\',\''+escA(x.p.t).replace(/&#39;/g,"\\'")+'\')">'+esc(x.q)+'</span>';
+    }).join('')):'';
+  }
   function knvRenderSupport(){
     var box=$('knv-support'); if(!box || box.getAttribute('data-ready')) return;
     var eff=window.__eff||'customer';
-    var h='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">📖 操作説明書</div>';
-    if(eff==='consultant'){
-      h+=knvRow('📖','パートナー向け説明書','画面の使い方・日々の業務の流れを1本のドキュメントで','openManual(\'manual-partner.html\')');
-      //  法人に所属している方にだけ、エンタープライズの説明書を出す。
-      //  所属していない方には関係が無く、置いておくと探すものが増えるだけ
-      if(EP_ME) h+=knvRow('🏢','エンタープライズ 操作説明書',
-        '席の配りかた・担当の割当／担当表・配分とご利用料・担当交代のときの手順','openManual(\'manual-ep.html\')');
-    }else if(eff==='customer'){
-      h+=knvRow('📖','操作説明書を開く','各画面でできること・メッセージの使い方など','openManual(\'manual-customer.html\')');
-    }else{
-      h+=knvRow('🗂️','運営向け説明書','コンソールの全機能・月次の運営業務','openManual(\'manual-admin.html\')')
-        +knvRow('🤝','パートナー向け説明書','パートナーに案内するときの確認用','openManual(\'manual-partner.html\')')
-        +knvRow('🏢','顧客向け説明書','経営者に案内するときの確認用','openManual(\'manual-customer.html\')')
-        +knvRow('🏛️','エンタープライズ向け説明書','法人パートナー（EP-I／EP-II）に案内するときの確認用','openManual(\'manual-ep.html\')');
-    }
-    h+='<div style="height:8px;"></div>';
-    // 商談用のプロダクト説明スライド（ニード喚起→解決の順で構成。→キー/クリックで進む・印刷可）
-    if(eff==='consultant'){
-      h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">🎤 商談用スライド（お客様に見せる）</div>'
-        +knvRow('🎤','顧客候補向け プロダクト説明','「社長、会社の値段をご存知ですか」——3つの問いかけで始まる15分の商談スライド。→キーで進み、そのまま画面共有・印刷もOK','openManual(\'pitch-customer.html\')')
-        +'<div style="height:8px;"></div>';
-    }else if(eff==='admin'){
-      h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">🎤 商談用スライド（説明会・面談で見せる）</div>'
-        +knvRow('🤝','パートナー候補向け プロダクト説明','「顧問先に承継という未来を売れる人へ」——収入の波・一度きりの関係への問いかけから始まる説明スライド','openManual(\'pitch-partner.html\')')
-        +knvRow('🏢','顧客候補向け プロダクト説明','パートナーが経営者に見せる商談スライド。内容確認・研修用に','openManual(\'pitch-customer.html\')')
-        //  法人でのご参加は、顧客基盤をお持ちか営業組織をお持ちかで話の順番が変わる。
-        //  同じ資料で両方を説明すると、相手に関係の無い話を聞かせることになる
-        +knvRow('🏛️','EP-I（顧客基盤型）向け プロダクト説明','税理士法人・社労士法人など、顧客基盤をお持ちの法人へ。事業承継・M&A支援部門の立ち上げ（すみわけ・組織図・90日・成績表・よくあるご質問）から、顧客は御社のもの・配分80%・担当の割当まで','openManual(\'pitch-ep1.html\')')
-        +knvRow('🏛️','EP-II（所属営業型）向け プロダクト説明','保険代理店など、営業を抱える本部へ。契約2本立て・本部は一律10%でご負担なし・担当表まで','openManual(\'pitch-ep2.html\')')
-        +'<div style="height:8px;"></div>'
-        // 社外に見せる資料。相手によって話す順番が変わるため、目的ごとに分けてある
-        +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">🏦 社外向け説明資料</div>'
-        +knvRow('🏦','金融機関向け 提携のご提案','「後継者不在は御行の課題でもあります」——紹介の流れ・線引き・情報の取り扱いまで。手数料のやり取りが無いことも明記','openManual(\'pitch-bank.html\')')
-        +knvRow('📊','事業のご説明（金融機関提出用）','自社の事業・収益の仕組み・資金使途。融資や審査の場で使う資料。<b>実績と計画は［要記入］のまま</b>なので、提出前に埋めてください','openManual(\'pitch-finance.html\')')
-        +knvRow('🏛️','会社・サービスのご紹介（汎用）','自治体・商工会議所・士業団体・事業会社など、相手を選ばず使える紹介資料。売り込み色を抜いた構成','openManual(\'pitch-general.html\')')
-        +'<div style="height:8px;"></div>';
-    }
+    //  資料は「探す」を先に置く（2026-09-26）。どの資料のどこに書いてあるかを覚えていなくても、
+    //  聞かれたこと・説明したいことの言葉で引ける。見つかった場所は「目次から読む」形で開く
+    var h=knvDocHubHtml(eff);
     if(eff==='customer'){
       h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">🛟 困ったときは</div>'
         +'<div style="font-size:11.5px;color:var(--muted);line-height:1.7;">操作の質問は「相談」タブで継ナビくんへ。個別のご事情は「メッセージ」タブから担当パートナーへどうぞ。</div>';

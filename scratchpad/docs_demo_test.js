@@ -250,10 +250,10 @@ const IDX = R('index.html');
     ok('説明書の「' + lab + '」が本体にもある', MANE.indexOf(lab) >= 0 && IDX.indexOf(lab) >= 0);
   });
   // サポートタブへの配線
-  ok('サポート：所属している方にだけ説明書を出す', /if\(EP_ME\) h\+=knvRow\('🏢','エンタープライズ 操作説明書'/.test(IDX));
-  ok('サポート：運営には説明書と資料2本', /エンタープライズ向け説明書[^]*manual-ep\.html/.test(IDX)
-    && /EP-I（顧客基盤型）向け プロダクト説明[^]*pitch-ep1\.html/.test(IDX)
-    && /EP-II（所属営業型）向け プロダクト説明[^]*pitch-ep2\.html/.test(IDX));
+  ok('サポート：所属している方にだけ説明書を出す', /f:'manual-ep\.html'[^\n]*n:'エンタープライズ 操作説明書'[^\n]*who:\{ consultant:'ep'/.test(IDX) && /if\(d\.who\[eff\]==='ep'\) return !!EP_ME;/.test(IDX));
+  ok('サポート：運営には説明書と資料2本', /f:'manual-ep\.html'[^\n]*admin:'法人パートナー（EP-I／EP-II）に案内するときの確認用'/.test(IDX)
+    && /f:'pitch-ep1\.html'[^\n]*n:'EP-I（顧客基盤型）向け プロダクト説明'[^\n]*who:\{ admin:''/.test(IDX)
+    && /f:'pitch-ep2\.html'[^\n]*n:'EP-II（所属営業型）向け プロダクト説明'[^\n]*who:\{ admin:''/.test(IDX));
   ok('パートナー説明書から、詳しい説明書へ', /「エンタープライズ 操作説明書」<\/b>にまとめてあります/.test(MANP));
   ok('運営説明書から、資料と説明書へ', /EP-I（顧客基盤型）向け プロダクト説明/.test(MANA) && /エンタープライズ向け説明書/.test(MANA));
 }
