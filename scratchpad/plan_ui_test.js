@@ -59,7 +59,7 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
   is('保証と株主が整っていれば2つ', M.signals(Object.assign({}, ctx, { ans: { guarantee: true, shares: true } }), { exit_type: 'employee' }).length, 2);
   ok('合図に税額は出ない', !/相続税|税額/.test(M.signals(ctx, { exit_type: 'family' }).join('')));
   const h0 = M.html({ exit_type: null, targets: {} }, ctx, 'customer');
-  ok('プランと優遇の箱', /いまの顧問プラン/.test(h0) && /売り手プラン（譲渡準備）/.test(h0) && /FA報酬 20% 割引・最低報酬なし/.test(h0));
+  ok('プランと優遇の箱', /いまの顧問プラン/.test(h0) && /売り手プラン（譲渡準備）/.test(h0) && /FA報酬 20% 割引</.test(h0) && !/最低報酬なし/.test(h0));
   ok('経営者には「担当パートナーへ」', /プランの切替は担当パートナーにお申し出ください/.test(h0) && !/planRequest/.test(h0));
   is('出口のボタンは8つ', (h0.match(/onclick="exitPick\('/g) || []).length, 8);
   ok('出口を選ぶ前は案内だけ', /いちばん近いものを選んでください/.test(h0) && !/id="ex-year"/.test(h0));
@@ -229,7 +229,7 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
   ok('運営説明書：2プラン・切替は運営だけ・契約書の条文', /顧問料（2プラン）/.test(MANA) && /切替は運営だけ/.test(MANA) && /第2条の3/.test(MANA));
   ok('税額は出さないと明記', /税額は計算しません/.test(MANC) && /税額を計算しません/.test(SRC));
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260925-02', '20260925-02']);
+  is('版が揃う', [build, VER.build], ['20260926-01', '20260926-01']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

@@ -1537,7 +1537,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260925-02';
+  var APP_BUILD='20260926-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -3156,7 +3156,7 @@
   //  出せるのは「いつ登録したか」と「いま担当がいるか」まで。
   // ============================================================
   var ADM_MOVES_DAYS=7;
-  function admMovesHtml(rows, nameOf, pending, now, contracts, invites){
+  function admMovesHtml(rows, nameOf, pending, now, contracts, invites, licPend){
     now=now||new Date(); contracts=contracts||[]; invites=invites||[];
     var since=now.getTime()-ADM_MOVES_DAYS*86400000;
     function recent(r){ var t=Date.parse(r.created_at||''); return isFinite(t) && t>=since; }
@@ -3185,6 +3185,8 @@
         +chip('確認待ちの口座', pending.length+'件', pending.length?'#C39B3F':'#27684A', 'sec-billing')
         +chip('締結した契約', newContracts.length+'件', newContracts.length?'#27684A':'#94A2B6', 'sec-support')
         +chip('招待中（登録待ち）', pendInv.length+'件', pendInv.length?'#1E3A66':'#94A2B6', 'sec-cust')
+        //  資格の確認待ち（番号か写しが出ているもの）。表が無い環境では出さない
+        +(licPend!=null?chip('確認待ちの資格', licPend+'件', licPend?'#C39B3F':'#27684A', 'sec-network'):'')
       +'</div>';
     var lines=[];
     newContracts.slice(0,8).forEach(function(c){
@@ -3229,7 +3231,10 @@
       if(!c2.error){ var seen={}; contracts.forEach(function(x){ seen[String(x.email).toLowerCase()]=1; }); (c2.data||[]).forEach(function(x){ if(!seen[String(x.email).toLowerCase()]){ contracts.push(x); seen[String(x.email).toLowerCase()]=1; } }); }
     }catch(e){}
     try{ var iv=await sb.from('customer_invites').select('email,company_name,consultant_id,created_at,status').eq('status','pending').order('created_at',{ascending:false}).limit(50); if(!iv.error) invites=iv.data||[]; }catch(e){}
-    box.innerHTML=admMovesHtml(rows, nameOf, pending, new Date(), contracts, invites);
+    var licPend=null;
+    try{ var lp=await sb.from('partner_licenses').select('reg_no,file_path').eq('status','pending');
+      if(!lp.error) licPend=(lp.data||[]).filter(licHasEvidence).length; }catch(e){}
+    box.innerHTML=admMovesHtml(rows, nameOf, pending, new Date(), contracts, invites, licPend);
   }
   async function loadAdmin(){
     var res=await sb.from('profiles').select('*');
@@ -3753,7 +3758,7 @@
     var h='<div style="border:1px solid #EDF1F6;border-radius:10px;padding:10px 12px;">';
     r.rows.forEach(function(x){ if(x.base<=0)return; h+='<div style="display:flex;justify-content:space-between;font-size:12px;color:#5A6981;padding:3px 0;"><span>'+x.label+'（'+(x.rate*100)+'%）：対象 '+yen(x.base)+'</span><span style="font-weight:600;color:#1E3A66;">'+yen(x.fee)+'</span></div>'; });
     h+='<div style="display:flex;justify-content:space-between;border-top:1px solid #EDF1F6;margin-top:6px;padding-top:6px;font-size:14px;"><span style="font-weight:700;color:var(--navy);">仲介フィー合計</span><span style="font-weight:700;color:#27684A;">'+yen(r.total)+'</span></div>';
-    h+='<div style="font-size:10.5px;color:#94A2B6;margin-top:4px;">実効料率 約'+(r.total/((v||1)*10000)*100).toFixed(2)+'%（税抜・最低報酬額は別途）</div>';
+    h+='<div style="font-size:10.5px;color:#94A2B6;margin-top:4px;">実効料率 約'+(r.total/((v||1)*10000)*100).toFixed(2)+'%（税抜）</div>';
     h+='</div>';
     out.innerHTML=h;
   }
@@ -4137,7 +4142,7 @@
           +'<div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.8;">'
             +'TsuguAiは、あなたの本業（保険・不動産・士業・M&Aなど）と<b style="color:var(--navy);">競合しません</b>。顧問として会社の内側に入り、課題を先に見つける立場をつくることで、<b style="color:var(--navy);">本業の案件があなたのところに戻ってくる</b>ようにするための道具です。'
             +(SELF_EXEC_OK
-                ? '保有資格を登録すると、その領域は「あなたが実行できる案件」として扱われます。'
+                ? '保有資格を登録し、登録番号か資格証の写しを出してください。<b style="color:var(--navy);">運営が確かめた領域</b>は「あなたが実行できる案件」として扱われます。'
                 : '保有資格を登録すると、その領域があなたの<b style="color:var(--navy);">得意領域</b>として記録され、案件の芽を見つけやすくなります。'
                   +'ただし<b style="color:var(--navy);">実行の手順は現行の「認定パートナー 禁止行為ガイドライン」が優先します</b>。'
                   +'ご自身が有資格の場合の取り扱いは、実行の前に運営へご確認ください。')
@@ -4318,7 +4323,7 @@
                 ['法律事務・登記・許認可','法的紛争の代理・和解あっせん（弁護士法72条）、登記書類の作成（司法書士）、官公署提出書類の作成（行政書士）等を報酬を得て行ってはいけません。該当する相談は専門家へ引き継ぎます。'],
                 ['補助金・助成金の申請代行','補助金・助成金の申請書類の作成・提出の代行は、報酬を得て行うと行政書士等の独占業務にあたります。本プラットフォームの補助金ナビは制度のご案内（情報提供）までとし、申請支援が必要な場合は専門家ネットワークの専門家へおつなぎしてください。採択の見込みを保証する表現も禁止です。']])
               +knRuleGrp('④ 金銭・情報・利益相反に関する禁止行為',[
-                ['金銭の直接授受','顧客から顧問料・手数料等の現金を直接受け取ること、正規ルート（当社の請求）外での報酬受領、顧客との個人的な金銭貸借・立替は禁止です。'],
+                ['金銭の直接授受','TsuguAiの顧問料・M&Aの報酬など<b>当社の業務の対価</b>を、顧客から直接受け取ること、正規ルート（当社の請求）外で受け取ること、顧客との個人的な金銭貸借・立替は禁止です。<br>ただし、運営が資格を確かめた領域で<b>ご自身の本業として</b>行った業務の報酬（保険の手数料・税理士の報酬など）を、<b>ご自身の事務所・所属会社（代理店など）として</b>、それぞれの業法に沿って受け取るのは、この禁止の対象外です。その場合も、TsuguAiの顧問料と混ぜて請求しないでください。'],
                 ['顧客情報の目的外利用','カルテ・財務データ・面談内容を、担当業務以外の目的で利用すること、第三者への提供、私的な端末・クラウドへの保存、SNS等への掲載（匿名加工を含め無承認のもの）は禁止です。'],
                 ['アカウントの共有・貸与','自分のログインID・パスワードを、家族・同僚・顧客を含む第三者に共有・貸与してはいけません。'],
                 ['利益相反・反社会的勢力','自己や親族の利益のために顧客の意思決定を誘導すること、反社会的勢力と関係を持つこと・取引を仲介することは禁止です。']])
@@ -4326,6 +4331,7 @@
               +'<div style="font-size:11.5px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:9px 11px;margin-top:8px;line-height:1.8;">'
                 +'<b>【運営からの補足】ご自身が有資格の場合の取り扱いについて（2026年9月改定）</b><br>'
                 +'保険の募集人資格、宅建士、士業の資格などをお持ちの方は、<b>その資格の範囲で、ご自身の本業として実行して構いません</b>（保険なら、ご自身の所属代理店の募集人として締結まで）。'
+                +'対象は、<b>本業と連携で登録番号か資格証の写しを出し、運営が確認した領域</b>に限ります。確認が済むまでは有資格者へお繋ぎください。本業の報酬は、ご自身の事務所・所属会社として受け取ります（④の対象外）。'
                 +'その際は、<b>顧問としての立場と、募集人・専門家としての立場を先に明示</b>し、意向の把握・比較の説明・カルテへの記録など、それぞれの業法の定めに従ってください。資格のない領域は、これまでどおり有資格者へお繋ぎください。'
                 +'保有資格は<span style="color:#2C5DA8;cursor:pointer;font-weight:600;" onclick="goSec(\'sec-biz\')">本業と連携</span>からご登録いただけます。'
               +'</div>'
@@ -14072,8 +14078,8 @@
       +'</div>'
       +'<div style="flex:1 1 220px;border:1px solid '+(perk.eligible?'#BFE2CD':'var(--line)')+';background:'+(perk.eligible?'#EFF6F0':'#fff')+';border-radius:11px;padding:10px 13px;">'
         +'<div style="font-size:11px;color:var(--muted);">M&amp;A の優遇（顧問先だけ）</div>'
-        +'<div style="font-size:13.5px;font-weight:700;color:'+(perk.eligible?'#27684A':'var(--navy)')+';margin-top:2px;">'+(perk.eligible?'FA報酬 '+perk.rate+'% 割引・最低報酬なし':'伴走 '+(perk.years+1)+'年目')+'</div>'
-        +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:3px;">顧問契約が1年以上で、譲渡・譲受のFA報酬に<b>最低報酬を設けず、継続年数×10%（最大50%）</b>を割り引きます。'
+        +'<div style="font-size:13.5px;font-weight:700;color:'+(perk.eligible?'#27684A':'var(--navy)')+';margin-top:2px;">'+(perk.eligible?'FA報酬 '+perk.rate+'% 割引':'伴走 '+(perk.years+1)+'年目')+'</div>'
+        +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:3px;">顧問契約が1年以上で、譲渡・譲受のFA報酬を<b>継続年数×10%（最大50%）</b>割り引きます。最低報酬はどなたにもありません。'
           +(perk.eligible?'':'1年を過ぎた月から効きます。')+'顧問料は、出口の報酬の先払いでもあります。</div>'
       +'</div>'
     +'</div>';
@@ -14963,7 +14969,7 @@
     if(aisecPortal()==='consultant'){
       return common
         +'【パートナーポータルの画面ガイド】'
-        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全5章。必修10レッスン＋発展のM&A講座8レッスン、第5章の理解度チェックで修了)・FA実務講座(研修とは別の深く学ぶ場。序章＋7章：財務三表・正常収益力・企業価値評価・財務DD・税務の論点(助言はせず税理士につなぐ)・契約と会計・医療法人、理解度チェック10問。修了してもレベル・外注費率は変わらない。本文は fa-course.html)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁/労働分配率=時給を上げたとき人件費÷粗利をどこに保ち利益を出し続けるか。業種別の目安と、時短・配置転換・値上げで要る大きさ。カルテの月次レポートの上からその会社の数字で開ける)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)。説明資料(経営者向け・パートナー候補向けなど)は継ナビくんの「サポート」タブから開き、右上の⛶で全画面。送りは ←→ か、紙を押す、スマホ・タブレットは指で左右にスワイプ。Escかもう一度⛶で解除、✕でプラットフォームに戻る／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内。その顧問先から解約のお申し出が出ているときは、カルテのいちばん上に赤い帯「⚠ 解約のご依頼が出ています」が出る(申し出の日・理由・伝えられたこと。手続きと最終月の請求は運営が行い、パートナーの画面から解約はできない。まず話を聞く。取り下げは経営者ご自身が「お支払い」→「ご契約について」から)。出口の設計はカルテ→企業価値・承継準備→出口の設計(企業価値診断の次)。経営者の左メニュー「出口の設計」と同じ表を見ているので、どちらで保存しても両方に出る。出口は8つ(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/資本提携(一部を譲る)/上場する(TOKYO PRO Market。プロ投資家向けで数値基準が無く、J-Adviserの伴走で2〜3年)/上場する(グロース市場など)/畳む(清算)/続けて、買い手になる)。資本提携・上場を選ぶと「知っておくこと」の箱が出る。上場の可否・費用はJ-Adviser・証券会社が決めるので経営者に断定しない。その下に、出口とは別の「株の持ち方・組織の検討」=持株会社(ホールディングス)/資産管理会社/分社化/種類株・属人的株式/従業員持株会/事業承継の信託の6つ。出口が決まっていなくても、検討中/専門家に相談中/実行済/見送りで記録でき、企業価値1億円超・株主の整理がまだ・万一の定めがまだ、などの合図が出る。相談先(税理士・司法書士・弁護士)も書いてある。税額は計算しない。これも経営者の画面と同じもの。その次に「スケールの設計」=大きくする道を7つ(いまの事業を深める/柱を増やす/M&Aで買う/デットで加速/エクイティで加速/グループ化/上場で加速)から主軸を一つ決め、目標の年と見る数字(年商・年間営業利益・現預金の月商倍率・柱の本数)のいま・目標・差。道ごとに検討中/取り組み中/済/見送りの札とメモ。数字から向いている道に合図(営業利益率5%未満・柱が1本・債務償還年数7年未満/10年超・現預金2か月分など)。借入・出資・上場の可否は断定しない。経営者の左メニュー「スケールの設計」と同じ表(ナビの12の道具には含めない)。プランの切替はカルテ→企業価値・承継準備→出口の設計の上段のボタンから運営に依頼(理由を書く小窓。空欄でも送れるので必ず書く。切替は運営が行い翌月の請求から。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。パートナーご自身が離れるときは運営サポートの「運営への問い合わせ」から(画面で契約を終える操作は無い)。カルテの「やること」の下に「今月の面談台本」(その会社の数字から見せる数字3つ・問い3つ・買い手の基盤へのつながり)と「継ナビくんのナビ」(土台→現金→余力→条件の順番と、済／次／あと)。ナビは12の道具(試算表→資金繰り→保険・固定費→支払予定→導入診断報告書→企業価値→出口の設計→買った後に備える→準備度→買いたい条件。AI診断・銀行提出は任意。売り手プランでは準備度・買いたい条件・買った後に備えるも任意)。各道具の見出しの下に「なぜ今・やると分かること・次の一手」の案内と「結果を継ナビくんと読む」ボタン。出口の設計(5つの出口・目標の年・見る数字のいま/目標/差・持株会社の合図。上部にいまの顧問プランとM&Aの優遇、「◯◯プラン への切替を運営に依頼」)と買った後に備える(6分類24項目・自社では・学ぶ・未着手/学んだ/準備した)はカルテの企業価値・承継準備の中。伴走の1年は契約の翌月1日を起点に暦の月で3か月ずつ、土台が整わなければ次の四半期も並行、四半期の終わりに検証)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（エクイティ・デット・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し(ボタンの場所は設定で右下・左下・右上・左上から、パネルの大きさは設定か見出しの⤢で標準・右半分・左半分・中央に大きく、から選べる。半分は本体を反対側に寄せて横に並べる)、パネルは7タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と担当顧客の面談・期日・支払予定が1枚に並ぶカレンダー。月/週/一覧。月・週は横に払う(スワイプ)と前後の月・週へ。操作列(月/週/一覧・‹ ›・今日・＋予定)と週の曜日・終日の帯は、下へ送っても上に残る。スマホの週表示は7日が幅に収まり、予定は色で塗って題名を折り返す。色は青=自分の予定・金=面談・橙=課題の期日・赤=支払・緑=資金調達・紫=補助金の締切、Googleから取り込んだ予定はGoogle側のカレンダーの色。暦の下に「色の見分け」が並ぶ。予定を押すと小窓が開いて全部読める。入力は金色の「＋ 予定」で別の窓が開く(スマホでもキーボードに隠れない)。✕や「やめる」は入力の窓だけ閉じ、継ナビくんは閉じない。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。この画面で入れた予定は、直しても消してもその場でGoogleに出る(同期のボタンを押す必要はない。「いま同期する」はGoogle側の予定を待たずに取り込みたいときだけ)。ただしGoogleから取り込んだ予定をこの画面で消したときは、この画面から消えるだけでGoogle側には残る(削除を押す前にその旨が出る)。取り込みをやめたいだけなら、アカウントの下の「取り込むカレンダー」のチェックを外す。Google→TsuguAiの向きだけ間がある(こちらからGoogleへは入れた時点ですぐ。逆は予定タブを開いたときに取りにいく。開くたび・最短5分おき。TsuguAiを開いていない間は取りにいかない)。すぐ合わせたいときは「いま同期する」。ただし毎朝の今日の一手（パートナー）と毎週月曜の今週のひとこと（経営者）は、本文を作る前にこちらからGoogleを見にいくので、画面を開いていなくてもGoogleの予定が入る。担当顧客との面談もGoogleに出るが、Google側で面談を消してもTsuguAiの面談は消えない(顧客との約束のため。消すのは顧客管理から)。Googleの予定は本人だけが見え、顧客にも運営にも見えない。私用を取り込みたくないときはアカウントの欄の「このアカウントの予定をこの画面に取り込む」のチェックを外す。Googleの「家族」「誕生日」「共有」「日本の祝日」なども、アカウントの下の「取り込むカレンダー」でチェックを入れれば入る(最初はメインだけ)。個人と会社などアカウントは2つ以上つなげ(「もう1つのアカウントをつなぐ」)、取り込みは全部から、この画面で入れた予定と面談は「送り先」に選んだ1つにだけ出る。「Googleでつなぐ」を押すとGoogleの画面に移り、許可が済むと自動でこの画面に戻って同期が始まる。会社のGoogle Workspaceアカウントで「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていない(Google管理コンソール→アプリ→Google Workspace→カレンダーを有効にする)。つなぎ直しても直らず、「送り先にする」も出ない。個人アカウントでつなぐ)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ。法人に所属している方には「エンタープライズ 操作説明書」も並ぶ)。'
+        +'ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全5章。必修10レッスン＋発展のM&A講座8レッスン、第5章の理解度チェックで修了)・FA実務講座(研修とは別の深く学ぶ場。序章＋7章：財務三表・正常収益力・企業価値評価・財務DD・税務の論点(助言はせず税理士につなぐ)・契約と会計・医療法人、理解度チェック10問。修了してもレベル・外注費率は変わらない。本文は fa-course.html)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。選んだ領域ごとに登録番号か資格証の写しを出して「確認を依頼する」。運営が確認済みにした領域だけが、ご自身の本業として実行できる領域になる(確認までは有資格者へつなぐ。IT・自動化は確認不要。本業の報酬はご自身の事務所・所属会社として受け取る)。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁/労働分配率=時給を上げたとき人件費÷粗利をどこに保ち利益を出し続けるか。業種別の目安と、時短・配置転換・値上げで要る大きさ。カルテの月次レポートの上からその会社の数字で開ける)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)。説明資料(経営者向け・パートナー候補向けなど)は継ナビくんの「サポート」タブから開き、右上の⛶で全画面。送りは ←→ か、紙を押す、スマホ・タブレットは指で左右にスワイプ。Escかもう一度⛶で解除、✕でプラットフォームに戻る／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内。その顧問先から解約のお申し出が出ているときは、カルテのいちばん上に赤い帯「⚠ 解約のご依頼が出ています」が出る(申し出の日・理由・伝えられたこと。手続きと最終月の請求は運営が行い、パートナーの画面から解約はできない。まず話を聞く。取り下げは経営者ご自身が「お支払い」→「ご契約について」から)。出口の設計はカルテ→企業価値・承継準備→出口の設計(企業価値診断の次)。経営者の左メニュー「出口の設計」と同じ表を見ているので、どちらで保存しても両方に出る。出口は8つ(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/資本提携(一部を譲る)/上場する(TOKYO PRO Market。プロ投資家向けで数値基準が無く、J-Adviserの伴走で2〜3年)/上場する(グロース市場など)/畳む(清算)/続けて、買い手になる)。資本提携・上場を選ぶと「知っておくこと」の箱が出る。上場の可否・費用はJ-Adviser・証券会社が決めるので経営者に断定しない。その下に、出口とは別の「株の持ち方・組織の検討」=持株会社(ホールディングス)/資産管理会社/分社化/種類株・属人的株式/従業員持株会/事業承継の信託の6つ。出口が決まっていなくても、検討中/専門家に相談中/実行済/見送りで記録でき、企業価値1億円超・株主の整理がまだ・万一の定めがまだ、などの合図が出る。相談先(税理士・司法書士・弁護士)も書いてある。税額は計算しない。これも経営者の画面と同じもの。その次に「スケールの設計」=大きくする道を7つ(いまの事業を深める/柱を増やす/M&Aで買う/デットで加速/エクイティで加速/グループ化/上場で加速)から主軸を一つ決め、目標の年と見る数字(年商・年間営業利益・現預金の月商倍率・柱の本数)のいま・目標・差。道ごとに検討中/取り組み中/済/見送りの札とメモ。数字から向いている道に合図(営業利益率5%未満・柱が1本・債務償還年数7年未満/10年超・現預金2か月分など)。借入・出資・上場の可否は断定しない。経営者の左メニュー「スケールの設計」と同じ表(ナビの12の道具には含めない)。プランの切替はカルテ→企業価値・承継準備→出口の設計の上段のボタンから運営に依頼(理由を書く小窓。空欄でも送れるので必ず書く。切替は運営が行い翌月の請求から。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。パートナーご自身が離れるときは運営サポートの「運営への問い合わせ」から(画面で契約を終える操作は無い)。カルテの「やること」の下に「今月の面談台本」(その会社の数字から見せる数字3つ・問い3つ・買い手の基盤へのつながり)と「継ナビくんのナビ」(土台→現金→余力→条件の順番と、済／次／あと)。ナビは12の道具(試算表→資金繰り→保険・固定費→支払予定→導入診断報告書→企業価値→出口の設計→買った後に備える→準備度→買いたい条件。AI診断・銀行提出は任意。売り手プランでは準備度・買いたい条件・買った後に備えるも任意)。各道具の見出しの下に「なぜ今・やると分かること・次の一手」の案内と「結果を継ナビくんと読む」ボタン。出口の設計(5つの出口・目標の年・見る数字のいま/目標/差・持株会社の合図。上部にいまの顧問プランとM&Aの優遇、「◯◯プラン への切替を運営に依頼」)と買った後に備える(6分類24項目・自社では・学ぶ・未着手/学んだ/準備した)はカルテの企業価値・承継準備の中。伴走の1年は契約の翌月1日を起点に暦の月で3か月ずつ、土台が整わなければ次の四半期も並行、四半期の終わりに検証)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（エクイティ・デット・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し(ボタンの場所は設定で右下・左下・右上・左上から、パネルの大きさは設定か見出しの⤢で標準・右半分・左半分・中央に大きく、から選べる。半分は本体を反対側に寄せて横に並べる)、パネルは7タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と担当顧客の面談・期日・支払予定が1枚に並ぶカレンダー。月/週/一覧。月・週は横に払う(スワイプ)と前後の月・週へ。操作列(月/週/一覧・‹ ›・今日・＋予定)と週の曜日・終日の帯は、下へ送っても上に残る。スマホの週表示は7日が幅に収まり、予定は色で塗って題名を折り返す。色は青=自分の予定・金=面談・橙=課題の期日・赤=支払・緑=資金調達・紫=補助金の締切、Googleから取り込んだ予定はGoogle側のカレンダーの色。暦の下に「色の見分け」が並ぶ。予定を押すと小窓が開いて全部読める。入力は金色の「＋ 予定」で別の窓が開く(スマホでもキーボードに隠れない)。✕や「やめる」は入力の窓だけ閉じ、継ナビくんは閉じない。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。この画面で入れた予定は、直しても消してもその場でGoogleに出る(同期のボタンを押す必要はない。「いま同期する」はGoogle側の予定を待たずに取り込みたいときだけ)。ただしGoogleから取り込んだ予定をこの画面で消したときは、この画面から消えるだけでGoogle側には残る(削除を押す前にその旨が出る)。取り込みをやめたいだけなら、アカウントの下の「取り込むカレンダー」のチェックを外す。Google→TsuguAiの向きだけ間がある(こちらからGoogleへは入れた時点ですぐ。逆は予定タブを開いたときに取りにいく。開くたび・最短5分おき。TsuguAiを開いていない間は取りにいかない)。すぐ合わせたいときは「いま同期する」。ただし毎朝の今日の一手（パートナー）と毎週月曜の今週のひとこと（経営者）は、本文を作る前にこちらからGoogleを見にいくので、画面を開いていなくてもGoogleの予定が入る。担当顧客との面談もGoogleに出るが、Google側で面談を消してもTsuguAiの面談は消えない(顧客との約束のため。消すのは顧客管理から)。Googleの予定は本人だけが見え、顧客にも運営にも見えない。私用を取り込みたくないときはアカウントの欄の「このアカウントの予定をこの画面に取り込む」のチェックを外す。Googleの「家族」「誕生日」「共有」「日本の祝日」なども、アカウントの下の「取り込むカレンダー」でチェックを入れれば入る(最初はメインだけ)。個人と会社などアカウントは2つ以上つなげ(「もう1つのアカウントをつなぐ」)、取り込みは全部から、この画面で入れた予定と面談は「送り先」に選んだ1つにだけ出る。「Googleでつなぐ」を押すとGoogleの画面に移り、許可が済むと自動でこの画面に戻って同期が始まる。会社のGoogle Workspaceアカウントで「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていない(Google管理コンソール→アプリ→Google Workspace→カレンダーを有効にする)。つなぎ直しても直らず、「送り先にする」も出ない。個人アカウントでつなぐ)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ。法人に所属している方には「エンタープライズ 操作説明書」も並ぶ)。'
         +'操作説明書は右下パネルの「サポート」タブから開けます。毎朝の「今日の一手」とお知らせは右下ボタンのバッジに届きます。';
     }
     //  運営がここに落ちていました。運営コンソールを開いている方に
@@ -14993,7 +14999,7 @@
     return common
       +'【経営者ダッシュボードの画面ガイド】'
       +'【数字の扱い・必ず守る】経営者に試算表など月次の数字の入力を求めない。経営者の画面に入力欄は無く、担当パートナーが入力する。試算表が手元にあるなら「メッセージで担当パートナーへ送る」と案内する。ご本人が入れるのは「いまの手元資金」だけ。画面の名前は次の一覧の名前だけを使い、それ以外の画面名を作らない。'
-      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)。その下に「はじめの90日（土台づくり）」＝契約の翌月から3か月は成果を急がず土台を整える期間で、1か月目「数字が見える」・2か月目「お金の流れが分かる」・3か月目「1年の道筋が決まる」の3つの節目(資料をお預かりしてからの目安。3か月で整わなければ次の四半期も並行して続ける。契約から翌月までは準備期間)と、「伴走の1年」＝第1 土台づくり／第2 現金を増やす／第3 買い手の余力を測る／第4 次の1社の条件を決める、の四半期の帯(暦の月で3か月ずつ。いまどこにいるか・四半期の終わりに何を振り返るかが出る)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=画面のいちばん上に「ご契約について」(いまの顧問プラン／プランを変えたいとき=「✉️ 担当パートナーに伝える」で継ナビくんのメッセージが開く。切替は運営が行い翌月の請求から。依頼中は「◯◯プラン へ切替を依頼中」と出る／ご利用の終了について=「解約を依頼する」。理由と伝えたいことは任意、押してすぐ使えなくなることはなく「取り下げる」で戻せる。申し出た月の末日で終了・日割りなし・初期導入費と利用済みの月の顧問料は返金なし。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。その下に顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=気になる業務を選んで担当パートナーに送ると、AIで診断した提案が「担当パートナーからの提案」に返る(その場で金額は出ない)／出口の設計=8つの出口(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/資本提携(一部を譲る)/上場する(TOKYO PRO Market。プロ投資家向けで数値基準が無く、J-Adviserの伴走で2〜3年)/上場する(グロース市場など一般の市場)/畳む(清算)/続けて、買い手になる)から選び。資本提携・上場を選ぶと「知っておくこと」の箱が出る。上場の可否・費用はJ-Adviser・証券会社が決めるので断定しない／スケールの設計(左メニュー。出口の設計の次)=大きくする道を7つ(いまの事業を深める/柱を増やす/M&Aで買う/デットで加速/エクイティで加速/グループ化/上場で加速)から主軸を一つ決め、目標の年と見る数字(年商・年間営業利益・現預金の月商倍率・柱の本数)のいま・目標・差。道ごとに検討中/取り組み中/済/見送りの札とメモ。数字から向いている道に合図(営業利益率5%未満・柱が1本・債務償還年数・現預金など)。借入・出資・上場の可否は断定しない。担当パートナーと同じもの、目標の年と、その出口で見る数字のいま・目標・差。いまは企業価値診断と試算表から自動。この出口で整えること(承継チェックの残り)も出る。親族・従業員へ継ぐ出口では持株会社の検討の合図(税額は計算しない)。出口の設計の下に、出口とは別の「株の持ち方・組織の検討」=持株会社(ホールディングス)/資産管理会社/分社化(会社分割・子会社化)/種類株・属人的株式/従業員持株会/事業承継の信託の6つ。出口が決まっていなくても、それぞれを検討中/専門家に相談中/実行済/見送りで記録でき、企業価値1億円超・株主の整理がまだ・万一の定めがまだ、などの合図が出る。相談先(税理士・司法書士・弁護士)も書いてある。税額は計算しない。画面の上部にいまの顧問プラン(買い手プラン(成長)45,000円/売り手プラン(譲渡準備)30,000円・税別・月額)とM&Aの優遇(顧問契約1年以上でFA報酬に最低報酬なし・継続年数×10%、最大50%の割引)。プランの切替は担当パートナーに申し出て運営が切り替え、翌月の請求から／買った後に備える(買い手プランのみ)=会社を買ったあとに待ち受けること24項目(事務・法務/お金・銀行/人・責任者/取引先・対外/業界特有/統合の進め方)。待ち受けること・いつ・いま準備できること。買いたい条件・承継チェック・試算表・企業価値診断から「自社では」が付く。想定する形(株式譲渡/事業譲渡)・責任者の想定・対象の業種を選ぶ。項目ごとに「学ぶ(継ナビくんに聞く)」と未着手/学んだ/準備した。「買った後の1年を、継ナビくんと想像する」。成約後はPMIタスクへ／買い手になる=上に「柱」の絵(買い手プランのみ。本業の1本＋譲り受けた会社。ダッシュボードの帯にも同じ本数)。「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ。同じ画面の下半分が Tsugime -結-（エクイティ・デット・M&A）=マッチング掲載(左メニューには無い。「案件を見る」の文字を押すか、下にたどる)。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し(ボタンの場所は設定で右下・左下・右上・左上から、パネルの大きさは設定か見出しの⤢で標準・右半分・左半分・中央に大きく、から選べる。半分は本体を反対側に寄せて横に並べる)、パネルは6タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と、面談・課題の期日・支払予定が自動で並ぶカレンダー。月/週/一覧。月・週は横に払う(スワイプ)と前後の月・週へ。操作列(月/週/一覧・‹ ›・今日・＋予定)と週の曜日・終日の帯は、下へ送っても上に残る。スマホの週表示は7日が幅に収まり、予定は色で塗って題名を折り返す。色は青=自分の予定・金=面談・橙=課題の期日・赤=支払・緑=資金調達・紫=補助金の締切、Googleから取り込んだ予定はGoogle側のカレンダーの色。暦の下に「色の見分け」が並ぶ。予定を押すと小窓が開いて全部読める。入力は金色の「＋ 予定」で別の窓が開く(スマホでもキーボードに隠れない)。✕や「やめる」は入力の窓だけ閉じ、継ナビくんは閉じない。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。この画面で入れた予定は、直しても消してもその場でGoogleに出る(同期のボタンを押す必要はない。「いま同期する」はGoogle側の予定を待たずに取り込みたいときだけ)。ただしGoogleから取り込んだ予定をこの画面で消したときは、この画面から消えるだけでGoogle側には残る(削除を押す前にその旨が出る)。取り込みをやめたいだけなら、アカウントの下の「取り込むカレンダー」のチェックを外す。Google→TsuguAiの向きだけ間がある(こちらからGoogleへは入れた時点ですぐ。逆は予定タブを開いたときに取りにいく。開くたび・最短5分おき。TsuguAiを開いていない間は取りにいかない)。すぐ合わせたいときは「いま同期する」。ただし毎朝の今日の一手（パートナー）と毎週月曜の今週のひとこと（経営者）は、本文を作る前にこちらからGoogleを見にいくので、画面を開いていなくてもGoogleの予定が入る。Googleの予定は本人だけが見え、担当パートナーにも運営にも見えない。私用を入れたくないときはアカウントの欄の「このアカウントの予定をこの画面に取り込む」のチェックを外すと送るだけになる。Googleの「家族」「誕生日」「共有」「日本の祝日」なども、アカウントの下の「取り込むカレンダー」でチェックを入れれば入る(最初はメインだけ)。個人と会社などアカウントは2つ以上つなげ(「もう1つのアカウントをつなぐ」)、取り込みは全部から、この画面で入れた予定は「送り先」に選んだ1つにだけ出る。「Googleでつなぐ」を押すとGoogleの画面に移り、許可が済むと自動でこの画面に戻って同期が始まる。会社のGoogle Workspaceアカウントで「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていない(Google管理コンソール→アプリ→Google Workspace→カレンダーを有効にする)。つなぎ直しても直らず、「送り先にする」も出ない。個人アカウントでつなぐ。解除はいつでもできる)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ(先頭に毎週月曜の「今週のひとこと」。開いても既読にならず「すべて既読」で消す。経営者に毎朝の便りは無い。毎朝の「今日の一手」はパートナー宛)／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
+      +'ダッシュボード=全体の入口。上部に「いまの手元資金」の欄(ご本人が預金残高を数字ひとつ入れるだけ。30秒・任意。月次の数字とは別)。その下に「はじめの90日（土台づくり）」＝契約の翌月から3か月は成果を急がず土台を整える期間で、1か月目「数字が見える」・2か月目「お金の流れが分かる」・3か月目「1年の道筋が決まる」の3つの節目(資料をお預かりしてからの目安。3か月で整わなければ次の四半期も並行して続ける。契約から翌月までは準備期間)と、「伴走の1年」＝第1 土台づくり／第2 現金を増やす／第3 買い手の余力を測る／第4 次の1社の条件を決める、の四半期の帯(暦の月で3か月ずつ。いまどこにいるか・四半期の終わりに何を振り返るかが出る)／月次レポート=毎月の報告書(パートナーが承認後に公開)／経営課題=取り組み中の課題の進捗／お支払い=画面のいちばん上に「ご契約について」(いまの顧問プラン／プランを変えたいとき=「✉️ 担当パートナーに伝える」で継ナビくんのメッセージが開く。切替は運営が行い翌月の請求から。依頼中は「◯◯プラン へ切替を依頼中」と出る／ご利用の終了について=「解約を依頼する」。理由と伝えたいことは任意、押してすぐ使えなくなることはなく「取り下げる」で戻せる。申し出た月の末日で終了・日割りなし・初期導入費と利用済みの月の顧問料は返金なし。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。その下に顧問料などの決済と、運営が受領したお支払いの記録(明細・印刷/CSV出力可)／財務・資金繰り=担当パートナーが入れた試算表の数字・支払予定・資金繰りシミュレーターを見る画面(ご本人の入力欄は無い)／企業価値・試算結果=会社の値段の推移・承継シミュレーション(買う/売る体験)・パートナーからの試算共有／AI自動化診断=気になる業務を選んで担当パートナーに送ると、AIで診断した提案が「担当パートナーからの提案」に返る(その場で金額は出ない)／出口の設計=8つの出口(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/資本提携(一部を譲る)/上場する(TOKYO PRO Market。プロ投資家向けで数値基準が無く、J-Adviserの伴走で2〜3年)/上場する(グロース市場など一般の市場)/畳む(清算)/続けて、買い手になる)から選び。資本提携・上場を選ぶと「知っておくこと」の箱が出る。上場の可否・費用はJ-Adviser・証券会社が決めるので断定しない／スケールの設計(左メニュー。出口の設計の次)=大きくする道を7つ(いまの事業を深める/柱を増やす/M&Aで買う/デットで加速/エクイティで加速/グループ化/上場で加速)から主軸を一つ決め、目標の年と見る数字(年商・年間営業利益・現預金の月商倍率・柱の本数)のいま・目標・差。道ごとに検討中/取り組み中/済/見送りの札とメモ。数字から向いている道に合図(営業利益率5%未満・柱が1本・債務償還年数・現預金など)。借入・出資・上場の可否は断定しない。担当パートナーと同じもの、目標の年と、その出口で見る数字のいま・目標・差。いまは企業価値診断と試算表から自動。この出口で整えること(承継チェックの残り)も出る。親族・従業員へ継ぐ出口では持株会社の検討の合図(税額は計算しない)。出口の設計の下に、出口とは別の「株の持ち方・組織の検討」=持株会社(ホールディングス)/資産管理会社/分社化(会社分割・子会社化)/種類株・属人的株式/従業員持株会/事業承継の信託の6つ。出口が決まっていなくても、それぞれを検討中/専門家に相談中/実行済/見送りで記録でき、企業価値1億円超・株主の整理がまだ・万一の定めがまだ、などの合図が出る。相談先(税理士・司法書士・弁護士)も書いてある。税額は計算しない。画面の上部にいまの顧問プラン(買い手プラン(成長)45,000円/売り手プラン(譲渡準備)30,000円・税別・月額)とM&Aの優遇(顧問契約1年以上でFA報酬を継続年数×10%、最大50%割引。最低報酬はどなたにも無い)。プランの切替は担当パートナーに申し出て運営が切り替え、翌月の請求から／買った後に備える(買い手プランのみ)=会社を買ったあとに待ち受けること24項目(事務・法務/お金・銀行/人・責任者/取引先・対外/業界特有/統合の進め方)。待ち受けること・いつ・いま準備できること。買いたい条件・承継チェック・試算表・企業価値診断から「自社では」が付く。想定する形(株式譲渡/事業譲渡)・責任者の想定・対象の業種を選ぶ。項目ごとに「学ぶ(継ナビくんに聞く)」と未着手/学んだ/準備した。「買った後の1年を、継ナビくんと想像する」。成約後はPMIタスクへ／買い手になる=上に「柱」の絵(買い手プランのみ。本業の1本＋譲り受けた会社。ダッシュボードの帯にも同じ本数)。「買いたい条件」(業種・地域・規模・予算・目的)をご本人が書ける。担当パートナーからの譲受の提案もここ。同じ画面の下半分が Tsugime -結-（エクイティ・デット・M&A）=マッチング掲載(左メニューには無い。「案件を見る」の文字を押すか、下にたどる)。気になる案件には「関心を出す」ボタンでご本人が関心を出せる(担当パートナーに届き、橋渡しする)。継ナビくんは画面右下のボタンに常駐し(ボタンの場所は設定で右下・左下・右上・左上から、パネルの大きさは設定か見出しの⤢で標準・右半分・左半分・中央に大きく、から選べる。半分は本体を反対側に寄せて横に並べる)、パネルは6タブ: 相談(24時間。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と、面談・課題の期日・支払予定が自動で並ぶカレンダー。月/週/一覧。月・週は横に払う(スワイプ)と前後の月・週へ。操作列(月/週/一覧・‹ ›・今日・＋予定)と週の曜日・終日の帯は、下へ送っても上に残る。スマホの週表示は7日が幅に収まり、予定は色で塗って題名を折り返す。色は青=自分の予定・金=面談・橙=課題の期日・赤=支払・緑=資金調達・紫=補助金の締切、Googleから取り込んだ予定はGoogle側のカレンダーの色。暦の下に「色の見分け」が並ぶ。予定を押すと小窓が開いて全部読める。入力は金色の「＋ 予定」で別の窓が開く(スマホでもキーボードに隠れない)。✕や「やめる」は入力の窓だけ閉じ、継ナビくんは閉じない。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。この画面で入れた予定は、直しても消してもその場でGoogleに出る(同期のボタンを押す必要はない。「いま同期する」はGoogle側の予定を待たずに取り込みたいときだけ)。ただしGoogleから取り込んだ予定をこの画面で消したときは、この画面から消えるだけでGoogle側には残る(削除を押す前にその旨が出る)。取り込みをやめたいだけなら、アカウントの下の「取り込むカレンダー」のチェックを外す。Google→TsuguAiの向きだけ間がある(こちらからGoogleへは入れた時点ですぐ。逆は予定タブを開いたときに取りにいく。開くたび・最短5分おき。TsuguAiを開いていない間は取りにいかない)。すぐ合わせたいときは「いま同期する」。ただし毎朝の今日の一手（パートナー）と毎週月曜の今週のひとこと（経営者）は、本文を作る前にこちらからGoogleを見にいくので、画面を開いていなくてもGoogleの予定が入る。Googleの予定は本人だけが見え、担当パートナーにも運営にも見えない。私用を入れたくないときはアカウントの欄の「このアカウントの予定をこの画面に取り込む」のチェックを外すと送るだけになる。Googleの「家族」「誕生日」「共有」「日本の祝日」なども、アカウントの下の「取り込むカレンダー」でチェックを入れれば入る(最初はメインだけ)。個人と会社などアカウントは2つ以上つなげ(「もう1つのアカウントをつなぐ」)、取り込みは全部から、この画面で入れた予定は「送り先」に選んだ1つにだけ出る。「Googleでつなぐ」を押すとGoogleの画面に移り、許可が済むと自動でこの画面に戻って同期が始まる。会社のGoogle Workspaceアカウントで「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていない(Google管理コンソール→アプリ→Google Workspace→カレンダーを有効にする)。つなぎ直しても直らず、「送り先にする」も出ない。個人アカウントでつなぐ。解除はいつでもできる)／メッセージ(担当パートナーとの送受信・ファイル添付はここで完結)／お知らせ(先頭に毎週月曜の「今週のひとこと」。開いても既読にならず「すべて既読」で消す。経営者に毎朝の便りは無い。毎朝の「今日の一手」はパートナー宛)／連携(スマホ通知・LINE。毎週月曜の朝に「今週のひとこと」、面談の前日にお知らせが届く)／サポート(操作説明書)。'
       +'操作の詳細は右下パネルの「サポート」タブの操作説明書から。困ったら担当パートナーへのメッセージも使えます。';
   }
   // 文脈ヘルプ：いま開いている画面をシステム指示に添える（「この画面」で通じるように）
@@ -16896,7 +16902,7 @@
       if(!r.error && r.data){ if(Number(r.data.adv)>0) PLAN_RATES.adv=Number(r.data.adv); if(Number(r.data.seller)>0) PLAN_RATES.seller=Number(r.data.seller); }
     }catch(e){}
   }
-  //  M&A の優遇：顧問契約が1年以上なら、FA 報酬の最低報酬なし・継続年数×10%（最大50%）の割引。
+  //  M&A の優遇：顧問契約が1年以上なら、FA 報酬を継続年数×10%（最大50%）割り引く。最低報酬はどなたにも無い。
   //  伴走型だからできる。顧問料を「出口の報酬の先払い」として受け取ってもらう考え方
   function faPerk(since, today){
     var t0=Date.parse(String(since||'').slice(0,10)+'T00:00:00');
@@ -21185,20 +21191,83 @@
   // 手薄な領域は提携専門家で埋める。料金の目安を先に見せることが「安価」の担保、
   // 運営が審査した名簿から選ぶことが「安心」の担保になる。
   // ============================================================
-  var NET={ partners:[], custs:[], experts:[], refs:[] }, NET_ERR={};
+  var NET={ partners:[], custs:[], experts:[], refs:[], lics:[], names:{} }, NET_ERR={};
   async function netFetch(){
     NET_ERR={};
     var jobs=[
       sb.from('partner_business').select('*'),
       sb.from('profiles').select('id,company_name,industry,role,consultant_id').eq('role','customer'),
       sb.from('experts').select('*').order('field',{ascending:true}),
-      sb.from('referrals').select('*').order('created_at',{ascending:false})
+      sb.from('referrals').select('*').order('created_at',{ascending:false}),
+      //  資格の確認（partner_licenses）。表が無い環境では自己申告のまま数える
+      sb.from('partner_licenses').select('*').order('submitted_at',{ascending:true}),
+      sb.from('profiles').select('id,company_name,contact_name,email').eq('role','consultant')
     ];
     var r=await Promise.all(jobs.map(function(p){ return p.then(function(x){return x;},function(e){return {error:e};}); }));
     NET.partners = r[0].error?(NET_ERR.pb=r[0].error.message,[]):(r[0].data||[]);
     NET.custs    = r[1].error?(NET_ERR.cu=r[1].error.message,[]):(r[1].data||[]);
     NET.experts  = r[2].error?(NET_ERR.ex=r[2].error.message,[]):(r[2].data||[]);
     NET.refs     = r[3].error?(NET_ERR.rf=r[3].error.message,[]):(r[3].data||[]);
+    NET.lics     = r[4].error?(NET_ERR.lc=r[4].error.message,[]):(r[4].data||[]);
+    NET.names={}; (r[5].error?[]:(r[5].data||[])).forEach(function(p){ NET.names[p.id]=p.contact_name||p.company_name||p.email||'（名前未登録）'; });
+  }
+  //  運営が確かめた資格だけを「実行できる」に数える（IT・自動化は確認不要）
+  function netExecLicenses(p){
+    var own=String(p.licenses||'').split(',').filter(Boolean);
+    if(NET_ERR.lc) return own;
+    var ok={}; NET.lics.forEach(function(l){ if(l.user_id===p.user_id && l.status==='approved') ok[l.field]=1; });
+    return own.filter(function(id){ return id==='it' || ok[id]; });
+  }
+  function netLicHtml(){
+    if(NET_ERR.lc) return netMissBox('資格の確認の表がまだありません。確認前の自己申告のまま数えています', '20260926000000_partner_licenses');
+    var pend=NET.lics.filter(function(l){ return l.status==='pending'; });
+    var done=NET.lics.filter(function(l){ return l.status!=='pending'; });
+    function nm(id){ return NET.names[id]||'（名前未登録）'; }
+    function row(l, actions){
+      var no=String(l.reg_no||''); if(no===LIC_PLACEHOLDER) no='';
+      var noEv=!no && !l.file_path;
+      return '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12px;padding:7px 0;border-top:1px dashed var(--softline);">'
+        +'<b style="color:var(--navy);min-width:110px;">'+esc(nm(l.user_id))+'</b>'
+        +'<span class="tag blue" style="font-size:10.5px;">'+esc(bizFieldName(l.field))+'</span>'
+        +'<span style="color:var(--muted);">'+(no?'登録番号 '+esc(no):'番号なし')+'</span>'
+        +(l.file_path?'<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="licOpenFile(\''+escA(l.file_path)+'\')">📎 '+esc(l.file_name||'写し')+'</span>':'')
+        +(noEv?'<span style="color:#A9403D;">まだ出ていません（以前の自己申告）</span>':'')
+        +'<span style="color:var(--muted);font-size:11px;">'+esc(String(l.submitted_at||'').slice(0,10))+'</span>'
+        +'<span style="margin-left:auto;display:flex;gap:6px;">'+actions+'</span>'
+      +'</div>';
+    }
+    var h='<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;">⓪ 資格の確認'
+      +'<span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:8px;">確認待ち '+pend.length+'件</span></div>'
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:6px;">パートナーが出した登録番号・資格証の写しを確かめます。<b>確認済みにした領域だけ</b>が、そのパートナーの「実行できる領域」になり、下の実行体制にも数えます。番号は各団体の登録簿（募集人登録・宅建士名簿・税理士情報検索など）で照らしてください。</div>'
+      +'<div style="border:1px solid var(--line);border-radius:11px;padding:4px 12px 8px;margin-bottom:16px;background:#fff;">';
+    if(!pend.length) h+='<div style="font-size:12px;color:#27684A;padding:8px 0 2px;">確認待ちはありません。</div>';
+    pend.forEach(function(l){
+      var ev=licHasEvidence(l);
+      h+=row(l, (ev?'<button class="btn2" style="padding:5px 12px;" onclick="netLicReview(\''+l.user_id+'\',\''+l.field+'\',true)">確認済みにする</button>':'')
+        +'<button class="sbtn" onclick="netLicReview(\''+l.user_id+'\',\''+l.field+'\',false)">差し戻す</button>');
+    });
+    if(done.length){
+      h+='<details style="margin-top:6px;"><summary style="cursor:pointer;font-size:11.5px;color:var(--muted);">確認済み・差し戻し（'+done.length+'件）</summary>';
+      done.forEach(function(l){
+        h+=row(l, '<span style="font-size:11px;font-weight:700;color:'+(l.status==='approved'?'#27684A':'#A9403D')+';">'+(l.status==='approved'?'確認済み':'差し戻し')+'</span>'
+          +(l.status==='approved'?'<button class="sbtn" onclick="netLicReview(\''+l.user_id+'\',\''+l.field+'\',false)">取り消す</button>'
+                                 :'<button class="sbtn" onclick="netLicReview(\''+l.user_id+'\',\''+l.field+'\',true)">確認済みにする</button>'));
+      });
+      h+='</details>';
+    }
+    return h+'</div>';
+  }
+  async function netLicReview(uid, field, ok){
+    var note=null;
+    if(!ok){
+      note=prompt('差し戻す（取り消す）理由を書いてください。パートナーの画面に出ます。','登録番号を確かめられませんでした。資格証の写しを添えてください。');
+      if(note===null) return;
+    }
+    try{
+      var r=await sb.from('partner_licenses').update({ status:ok?'approved':'rejected', note:ok?null:(note||null) }).eq('user_id',uid).eq('field',field);
+      if(r.error) throw new Error(r.error.message);
+    }catch(e){ alert('更新できませんでした：'+String((e&&e.message)||e)); return; }
+    await netFetch(); renderNetwork();
   }
   async function loadNetwork(){ if(!$('net-body')) return; await netFetch(); renderNetwork(); }
   function netUid(){ return uuid4(); }
@@ -21210,16 +21279,17 @@
     var box=$('net-body'); if(!box) return;
     var h='';
     // ---- ① 領域ごとのカバレッジ ----
+    h+=netLicHtml();
     var byField={}; BIZ_FIELDS.forEach(function(f){ byField[f.id]={ n:0, areas:{} }; });
     NET.partners.forEach(function(p){
-      String(p.licenses||'').split(',').filter(Boolean).forEach(function(id){
+      netExecLicenses(p).forEach(function(id){
         if(!byField[id]) byField[id]={n:0,areas:{}};
         byField[id].n++;
         if(p.area) byField[id].areas[p.area]=1;
       });
     });
     var expByField={}; NET.experts.forEach(function(e){ if(e.active===false) return; expByField[e.field]=(expByField[e.field]||0)+1; });
-    h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">① 領域ごとの実行体制</div>';
+    h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">① 領域ごとの実行体制<span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:8px;">パートナーは確認済みの資格だけを数えます</span></div>';
     if(NET_ERR.pb) h+=netMissBox('パートナーの本業データを取得できませんでした', 'Phase66');
     h+='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">';
     BIZ_FIELDS.forEach(function(f){
@@ -21833,6 +21903,112 @@
     { id:'finance',   n:'資金調達・財務',  lic:'中小企業診断士・FP等' },
     { id:'it',        n:'IT・自動化',      lic:'（資格要件なし）' }
   ];
+  //  資格の確認（2026-09-26）
+  //  「本業と連携」で領域を選ぶだけの自己申告で「あなたが実行する領域」にしていた。
+  //  本人が実行してよい前提にする以上、登録番号か資格証の写しを出してもらい、
+  //  運営が確かめた領域だけを実行できる領域にする。IT・自動化は資格要件が無いので確認不要。
+  //  表 partner_licenses が無い環境（SQL 未実行）では、どの領域も確認前の扱い
+  var LIC={ rows:{}, remote:false, err:'' };
+  var LIC_PLACEHOLDER='（未提出）';   // 以前の自己申告を取り込んだ行の仮の番号
+  var LIC_ST={
+    free:['確認不要','#27684A'], approved:['確認済み','#27684A'], pending:['運営が確認中','#8A6A12'],
+    rejected:['差し戻し','#A9403D'], missing:['番号か写しを出してください','#A9403D']
+  };
+  function licNeeds(id){ return id!=='it'; }
+  function licHasEvidence(r){
+    if(!r) return false;
+    var no=String(r.reg_no||'').trim();
+    return !!((no && no!==LIC_PLACEHOLDER) || r.file_path);
+  }
+  function licStatus(id){
+    if(!licNeeds(id)) return 'free';
+    var r=LIC.rows[id];
+    if(r && r.status==='approved') return 'approved';
+    if(r && r.status==='rejected') return 'rejected';
+    return licHasEvidence(r) ? 'pending' : 'missing';
+  }
+  //  選んだ領域のうち、実行してよいもの（確認済み＋確認不要）
+  function licExecFields(lic){
+    return BIZ_FIELDS.filter(function(f){
+      var st=licStatus(f.id); return (lic||[]).indexOf(f.id)>=0 && (st==='approved' || st==='free');
+    });
+  }
+  async function licLoad(){
+    LIC.rows={}; LIC.remote=false; LIC.err='';
+    try{
+      var r=await sb.from('partner_licenses').select('*').eq('user_id',ME);
+      if(r.error){ LIC.err=r.error.message; return; }
+      LIC.remote=true;
+      (r.data||[]).forEach(function(x){ LIC.rows[x.field]=x; });
+    }catch(e){ LIC.err=String((e&&e.message)||e); }
+  }
+  function licRowsHtml(lic){
+    var need=BIZ_FIELDS.filter(function(f){ return (lic||[]).indexOf(f.id)>=0 && licNeeds(f.id); });
+    if(!need.length) return '';
+    var h='<div style="margin-top:12px;border-top:1px dashed var(--line);padding-top:11px;">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:3px;">資格の確認</div>'
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.75;margin-bottom:8px;">登録番号か資格証の写し（どちらか一つで構いません）を出してください。運営が確かめると<b style="color:#27684A;">確認済み</b>になり、その領域をご自身の本業として実行できます。確認が済むまでは、有資格者へおつなぎする扱いです。番号や写しを出し直すと、もう一度確認待ちになります。</div>';
+    if(!LIC.remote){
+      h+='<div style="font-size:11px;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:8px 11px;line-height:1.7;">資格の確認の受付を準備しています（運営の設定が済むと、ここから出せます）。それまでは、どの領域も有資格者へおつなぎする扱いです。</div></div>';
+      return h;
+    }
+    need.forEach(function(f){
+      var r=LIC.rows[f.id]||{}, st=licStatus(f.id), lab=LIC_ST[st];
+      var no=String(r.reg_no||''); if(no===LIC_PLACEHOLDER) no='';
+      h+='<div style="border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 11px;margin-bottom:7px;">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">'
+          +'<b style="font-size:12.5px;color:var(--navy);">'+esc(f.n)+'</b>'
+          +'<span style="font-size:10.5px;color:var(--muted);">'+esc(f.lic)+'</span>'
+          +'<span style="margin-left:auto;font-size:11px;font-weight:700;color:'+lab[1]+';">'+esc(lab[0])+'</span>'
+        +'</div>'
+        +(st==='rejected' && r.note?'<div style="font-size:11px;color:#A9403D;line-height:1.7;margin-bottom:6px;">運営より：'+esc(r.note)+'</div>':'')
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'
+          +'<input id="lic-no-'+f.id+'" class="inp2" style="flex:1 1 180px;min-width:160px;" value="'+escA(no)+'" placeholder="登録番号（例：募集人登録番号・宅建士登録番号）">'
+          +'<label class="sbtn" style="cursor:pointer;">📎 資格証の写し<input id="lic-file-'+f.id+'" type="file" accept="image/*,application/pdf" style="display:none;" onchange="licFileNote(\''+f.id+'\')"></label>'
+          +'<button class="btn2" onclick="licSubmit(\''+f.id+'\')">'+(st==='missing'?'確認を依頼する':'出し直す')+'</button>'
+        +'</div>'
+        +'<div id="lic-msg-'+f.id+'" style="font-size:11px;color:var(--muted);margin-top:5px;">'
+          +(r.file_path?'写し：<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="licOpenFile(\''+escA(r.file_path)+'\')">'+esc(r.file_name||'資格証')+'</span>':'')
+        +'</div>'
+      +'</div>';
+    });
+    return h+'</div>';
+  }
+  function licFileNote(id){
+    var i=$('lic-file-'+id), m=$('lic-msg-'+id);
+    if(i && i.files && i.files[0] && m){ m.style.color='var(--muted)'; m.textContent='選んだ写し：'+i.files[0].name+'（「'+(licStatus(id)==='missing'?'確認を依頼する':'出し直す')+'」で送ります）'; }
+  }
+  async function licSubmit(id){
+    var m=$('lic-msg-'+id);
+    function say(t,c){ if(m){ m.style.color=c||'var(--muted)'; m.textContent=t; } }
+    var no=((($('lic-no-'+id)||{}).value)||'').trim();
+    var inp=$('lic-file-'+id), f=(inp && inp.files && inp.files[0])||null;
+    var cur=LIC.rows[id]||{};
+    if(!no && !f && !cur.file_path){ say('登録番号を入れるか、資格証の写しを選んでください。','#A9403D'); return; }
+    if(f && f.size>10*1024*1024){ say('写しは10MBまでにしてください。','#A9403D'); return; }
+    say('送っています…');
+    try{
+      var row={ user_id:ME, field:id, reg_no:no||null };
+      if(f){
+        var ext=(f.name.indexOf('.')>=0)?f.name.split('.').pop().replace(/[^A-Za-z0-9]/g,'').slice(0,8):'bin';
+        var path=ME+'/'+id+'_'+Date.now()+'.'+(ext||'bin');
+        var up=await sb.storage.from('license-docs').upload(path, f, { upsert:false, contentType:f.type||'application/octet-stream' });
+        if(up.error) throw new Error(up.error.message);
+        row.file_path=path; row.file_name=f.name;
+      } else if(cur.file_path){ row.file_path=cur.file_path; row.file_name=cur.file_name||null; }
+      var r=await sb.from('partner_licenses').upsert(row,{onConflict:'user_id,field'});
+      if(r.error) throw new Error(r.error.message);
+      await licLoad(); renderBiz();
+      var m2=$('lic-msg-'+id); if(m2){ m2.style.color='#27684A'; m2.textContent='受け付けました。運営が確認するまで、少しお待ちください。'; }
+    }catch(e){ say('送れませんでした：'+String((e&&e.message)||e),'#A9403D'); }
+  }
+  async function licOpenFile(path){
+    try{
+      var r=await sb.storage.from('license-docs').createSignedUrl(path, 600);
+      if(r.error) throw new Error(r.error.message);
+      window.open(r.data.signedUrl,'_blank','noopener');
+    }catch(e){ alert('写しを開けませんでした：'+String((e&&e.message)||e)); }
+  }
   var BIZ_STATUS=[['lead','見込み'],['prop','提案中'],['won','成約'],['lost','不成立']];
   function bizFieldName(id){ var f=null; BIZ_FIELDS.forEach(function(x){ if(x.id===id) f=x; }); return f?f.n:id; }
   function bizStatusName(s){ var n=s; BIZ_STATUS.forEach(function(x){ if(x[0]===s) n=x[1]; }); return n; }
@@ -21899,7 +22075,7 @@
   }
   async function loadBiz(){
     if(!$('biz-body')) return;
-    await bizLoad(); await refLoad(); renderBiz();
+    await bizLoad(); await refLoad(); await licLoad(); renderBiz();
     // 成長ロードマップの「本業への還元」は、案件の読み込み後でないと確定しない
     if($('pg-body')) loadPartnerGrowth();
   }
@@ -21912,7 +22088,7 @@
       +'<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;">① あなたの本業</div>'
       +'<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:11px;">主戦場と保有資格を登録してください。'
         +(SELF_EXEC_OK
-          ? 'ここに登録した領域は、顧客の課題が当たったときに<b style="color:var(--navy);">あなたが実行する案件</b>として扱われます（運営には取り次ぎません）。'
+          ? '登録した領域は、<b style="color:var(--navy);">運営が資格を確かめたあと</b>、顧客の課題が当たったときに<b style="color:var(--navy);">あなたが実行する案件</b>として扱われます（運営には取り次ぎません）。確認が済むまでは、有資格者へおつなぎする扱いです。'
           : 'ここに登録した領域は、顧客の課題が当たったときに<b style="color:var(--navy);">あなたの案件として最初にお知らせ</b>します。'
             +'実行の進め方（ご自身で行えるか、有資格者へお繋ぎするか）は、'
             +'<span style="color:var(--blue);cursor:pointer;font-weight:600;" onclick="goSec(\'sec-knowledge\')">禁止行為ガイドライン</span>の定めに従い、'
@@ -21925,7 +22101,7 @@
         +'</select></div>'
         +'<div style="flex:1;min-width:180px;"><label class="fl">対応エリア</label><input id="biz-area" class="inp2" style="width:100%;" value="'+escA(P.area||'')+'" placeholder="例：東京・神奈川・千葉"></div>'
       +'</div>'
-      +'<label class="fl">'+(SELF_EXEC_OK?'実行できる領域（保有資格にチェック）':'保有資格（お持ちのものにチェック）')+'</label>'
+      +'<label class="fl">'+(SELF_EXEC_OK?'保有資格のある領域（チェックして保存し、下で確認を依頼）':'保有資格（お持ちのものにチェック）')+'</label>'
       +'<div style="display:flex;flex-wrap:wrap;gap:7px;margin:5px 0 10px;">'
       +BIZ_FIELDS.map(function(f){
           var on=P.lic.indexOf(f.id)>=0;
@@ -21936,15 +22112,20 @@
         +'<button class="btn2" onclick="bizSaveProfile()">保存する</button>'
         +'<span id="biz-msg" style="font-size:12px;"></span>'
       +'</div>'
+      +(SELF_EXEC_OK?licRowsHtml(P.lic):'')
     +'</div>';
     // ---- 2. あなたが実行できる領域 / 送客する領域 ----
     if(P.lic.length){
-      var mine=BIZ_FIELDS.filter(function(f){ return P.lic.indexOf(f.id)>=0; });
-      var other=BIZ_FIELDS.filter(function(f){ return P.lic.indexOf(f.id)<0; });
+      //  実行できるのは、運営が資格を確かめた領域だけ（IT・自動化は確認不要）
+      var mine=SELF_EXEC_OK ? licExecFields(P.lic) : BIZ_FIELDS.filter(function(f){ return P.lic.indexOf(f.id)>=0; });
+      var mineIds=mine.map(function(f){ return f.id; });
+      var waiting=BIZ_FIELDS.filter(function(f){ return P.lic.indexOf(f.id)>=0 && mineIds.indexOf(f.id)<0; });
+      var other=BIZ_FIELDS.filter(function(f){ return mineIds.indexOf(f.id)<0; });
       h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">'
         +'<div style="flex:1 1 250px;border:1.5px solid #CFE3D6;background:rgba(39,104,74,.07);border-radius:12px;padding:12px 14px;">'
           +'<div style="font-size:12.5px;font-weight:700;color:#27684A;margin-bottom:5px;">'+(SELF_EXEC_OK?'あなたが実行する領域':'あなたの得意領域')+'</div>'
-          +'<div style="font-size:12px;color:var(--ink);line-height:1.8;">'+mine.map(function(f){ return esc(f.n); }).join('・')+'</div>'
+          +'<div style="font-size:12px;color:var(--ink);line-height:1.8;">'+(mine.length?mine.map(function(f){ return esc(f.n); }).join('・'):'<span style="color:var(--muted);">まだありません（資格の確認が済むと、ここに入ります）</span>')+'</div>'
+          +(SELF_EXEC_OK && waiting.length?'<div style="font-size:11px;color:#8A6A12;line-height:1.7;margin-top:4px;">確認待ち：'+waiting.map(function(f){ return esc(f.n); }).join('・')+'（確認が済むまでは有資格者へおつなぎします）</div>':'')
           +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:6px;">'
             +'顧問先でこの領域の課題が出たら、それはあなたの本業につながる案件です。顧問という立場で先に相談を受けられるぶん、外から営業するより早く・確実に話が進みます。'
             +(SELF_EXEC_OK?'':'<br>実行の進め方は禁止行為ガイドラインの定めに従ってください（規程は改定を検討中です）。')

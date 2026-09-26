@@ -66,7 +66,7 @@ select public.t_assert('プランは売り手のまま', (select plan from publi
 select public.t_assert('ひな形の新しい版が公開', (select version::text from public.contract_templates where kind='customer' and active), '2');
 select public.t_assert('第2条がプランの規定に', (select (position('契約時のプラン（{{プラン}}）' in body) > 0 and position('翌月の請求から新しい月額' in body) > 0)::text from public.contract_templates where kind='customer' and active), 'true');
 select public.t_assert('第2条の2 は残る', (select (position('第2条の2（初期導入費）' in body) > 0)::text from public.contract_templates where kind='customer' and active), 'true');
-select public.t_assert('M&A の優遇と利益相反', (select (position('最低報酬額を設けず' in body) > 0 and position('最大50%' in body) > 0 and position('利益相反' in body) > 0)::text from public.contract_templates where kind='customer' and active), 'true');
+select public.t_assert('M&A の優遇と利益相反', (select (position('最低報酬額は設けません' in body) > 0 and position('最大50%' in body) > 0 and position('利益相反' in body) > 0)::text from public.contract_templates where kind='customer' and active), 'true');
 select public.t_assert('契約者欄にプラン', (select (position('プラン：{{プラン}}' in body) > 0)::text from public.contract_templates where kind='customer' and active), 'true');
 insert into public.contract_offers (kind, token, email, monthly_fee, consultant_id, offered_by, plan, body)
   select 'customer', repeat('t',40), 'new@x.jp', 30000, :p1::uuid, :p1::uuid, 'seller', body from public.contract_templates where kind='customer' and active;

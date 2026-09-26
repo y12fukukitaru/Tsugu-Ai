@@ -65,7 +65,7 @@ function takeFn(name) {
   no('お支払いを読む関数は無くなった', /loadBillingPay|loadMyPayEvents/.test(SRC));
   //  年の選択肢を作る処理は、読み込みの並びに移した（明細の年が空にならないこと）
   is('起動時に poInitDefaults を呼ぶ（経営者・パートナー）', (SRC.match(/poInitDefaults\(\); /g) || []).length, 2);
-  ok('禁止行為の正規ルートから決済代行の名前を外す', /正規ルート（当社の請求）外での報酬受領/.test(SRC));
+  ok('禁止行為の正規ルートから決済代行の名前を外す', /正規ルート（当社の請求）外で受け取る/.test(SRC));
 }
 // ③ 説明書
 {
@@ -80,7 +80,7 @@ function takeFn(name) {
 // ④ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260925-02', '20260925-02']);
+  is('版が揃う', [build, VER.build], ['20260926-01', '20260926-01']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
