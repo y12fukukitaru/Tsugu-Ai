@@ -201,9 +201,9 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
   ok('契約書はプランを選ぶ（金額はプランから）', /var feeEl=\$\(pfx\+'-plan'\);/.test(cs) && /plan=v; fee=planFee\(v\);/.test(cs) && /row\.plan=plan;/.test(cs));
   ok('契約の送信画面：プランの選択肢2つ', /id="ctp-plan"/.test(SRC) && /<option value="buyer">/.test(SRC) && /<option value="seller">/.test(SRC) && !/id="ctp-fee"/.test(SRC));
   ok('月額は my_billing_rates から', /await loadPlanRates\(\);/.test(takeFn('loadMyContracts')) && /rpc\('my_billing_rates'\)/.test(takeFn('loadPlanRates')));
-  ok('運営：概要に売り手の月額、保存対象', /id="bl-seller"/.test(SRC) && /'bl-seller'/.test(SRC.match(/var BL_RATE_IDS=\[[^\]]+\]/)[0]));
+  ok('運営：概要に売り手の月額、保存対象', /blIn\('bl-seller',/.test(SRC) && /'bl-seller'/.test(SRC.match(/var BL_RATE_IDS=\[[^\]]+\]/)[0]));
   //  初期導入費もプランで違う（買い手 100,000／売り手 50,000）
-  ok('運営：初期導入費も売り手ぶんを持つ', /id="bl-initseller"/.test(SRC) && /'bl-initseller'/.test(SRC.match(/var BL_RATE_IDS=\[[^\]]+\]/)[0]));
+  ok('運営：初期導入費も売り手ぶんを持つ', /blIn\('bl-initseller',/.test(SRC) && /'bl-initseller'/.test(SRC.match(/var BL_RATE_IDS=\[[^\]]+\]/)[0]));
   const rb = takeFn('renderAdmBilling');
   ok('MRR はプランごとの月額', /var base=\(planOf\(c\)==='seller'\)\?sellerFee:adv;/.test(rb) && /売り手 '\+custs\.filter/.test(rb));
   const rc = takeFn('renderAdmCust');
@@ -229,7 +229,7 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
   ok('運営説明書：2プラン・切替は運営だけ・契約書の条文', /顧問料（2プラン）/.test(MANA) && /切替は運営だけ/.test(MANA) && /第2条の3/.test(MANA));
   ok('税額は出さないと明記', /税額は計算しません/.test(MANC) && /税額を計算しません/.test(SRC));
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260926-02', '20260926-02']);
+  is('版が揃う', [build, VER.build], ['20260926-03', '20260926-03']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

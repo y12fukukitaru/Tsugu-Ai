@@ -179,6 +179,40 @@
   .ph{font-size:14px;font-weight:600;color:var(--navy);margin-bottom:9px;letter-spacing:.02em;}
   .fl{font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;letter-spacing:.04em;}
   .inp2{width:140px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-size:13px;font-family:inherit;background:var(--card);outline:none;transition:border-color .15s;}
+  /* 課金・契約の料金設定（プラン×月額・初期の表と、利用料の欄） */
+  .bl-card{background:var(--soft);border:1px solid var(--softline);border-radius:12px;padding:12px 14px;margin-top:10px;}
+  .bl-card-h{display:flex;align-items:baseline;gap:4px 10px;flex-wrap:wrap;margin-bottom:10px;}
+  .bl-card-h b{font-size:12.5px;color:var(--navy);}
+  .bl-card-h span{font-size:11px;color:var(--muted);}
+  .bl-plan{display:grid;grid-template-columns:minmax(150px,1fr) minmax(170px,1fr) minmax(170px,1fr);gap:8px 16px;align-items:start;}
+  .bl-plan .hd{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.04em;padding-bottom:2px;border-bottom:1px solid var(--line);}
+  .bl-plan .nm{font-size:13px;font-weight:700;color:var(--navy);padding-top:8px;}
+  .bl-plan .nm small{display:block;font-size:10.5px;font-weight:400;color:var(--muted);margin-top:1px;}
+  .bl-in .ml{display:none;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:3px;}
+  .bl-row{display:flex;align-items:center;gap:7px;}
+  .bl-row .inp2{width:118px;text-align:right;font-variant-numeric:tabular-nums;}
+  .bl-row .u{font-size:11.5px;color:var(--muted);white-space:nowrap;}
+  .bl-std{font-size:10.5px;color:#94A2B6;margin-top:3px;min-height:14px;}
+  .bl-std.diff{color:#8A6A12;font-weight:700;}
+  .inp2.bl-diff{border-color:#D9B868;background:rgba(195,155,63,.07);}
+  .bl-fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:12px 18px;}
+  .bl-f > label{display:block;font-size:11.5px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+  .bl-f > label small{display:block;font-size:10.5px;font-weight:400;color:var(--muted);margin-top:1px;}
+  .bl-f .nt,.bl-nt{font-size:10.5px;color:var(--muted);line-height:1.6;margin-top:3px;}
+  .bl-nt{margin-top:10px;}
+  .bl-sec{font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 2px;padding-bottom:5px;border-bottom:2px solid var(--gold,#C39B3F);display:flex;align-items:baseline;gap:4px 10px;flex-wrap:wrap;}
+  .bl-sec span{font-size:11px;font-weight:400;color:var(--muted);}
+  .bl-sub{font-size:11.5px;font-weight:700;color:var(--navy);margin:14px 0 8px;padding-top:10px;border-top:1px dashed var(--line);}
+  .bl-sub span{font-weight:400;color:var(--muted);font-size:10.5px;margin-left:8px;}
+  @media (max-width:600px){
+    .bl-plan{grid-template-columns:1fr 1fr;gap:6px 12px;}
+    .bl-plan .hd{display:none;}
+    .bl-plan .nm{grid-column:1/-1;padding-top:10px;border-top:1px solid var(--line);}
+    .bl-plan .nm.first{border-top:none;padding-top:0;}
+    .bl-in .ml{display:block;}
+    .bl-row .inp2{width:100%;min-width:0;}
+    .bl-row{min-width:0;}
+  }
   .inp2:focus{border-color:var(--navy);}
   .btn2{padding:9px 18px;background:var(--navy);color:#fff;font-weight:600;font-size:13px;letter-spacing:.04em;border:none;border-radius:9px;cursor:pointer;font-family:inherit;transition:opacity .15s;}
   /* 金のボタン（予定タブの「＋予定」）。紺の中で目に留まるように。字は濃紺（.tg-chip.on と同じ組み合わせ） */
@@ -1537,7 +1571,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260926-02';
+  var APP_BUILD='20260926-03';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2872,24 +2906,53 @@
         +'<div id="bl-tab-overview">'
         +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">登録済みのパートナー・顧客から月次の売上（MRR）を自動試算します。料率・割引は下で調整でき、<b style="color:#27684A;">変更は自動保存されて運営メンバー全員のコンソールに反映</b>されます。<span id="bl-rates-note" style="color:#27684A;"></span></div>'
         +'<div id="bl-summary" style="margin-bottom:12px;">読み込み中...</div>'
-        +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;background:var(--soft);border-radius:10px;padding:10px 12px;">'
-          +'<div><label class="fl">パートナー基本（円/月）</label><input id="bl-pbase" type="number" class="inp2" style="width:120px;" value="3000" oninput="renderAdmBilling();blRatesSave()"></div>'
-          +'<div><label class="fl">顧問先1社あたり加算（円/月）</label><input id="bl-pclient" type="number" class="inp2" style="width:140px;" value="2000" oninput="renderAdmBilling();blRatesSave()">'
-            +'<div style="font-size:10px;color:#94A2B6;line-height:1.5;margin-top:2px;max-width:150px;">MRR試算の表示用。<b>相殺は下の「AI利用料」で計算します</b></div></div>'
-          +'<div><label class="fl">顧問料・買い手プラン（円/月・税別）</label><input id="bl-adv" type="number" class="inp2" style="width:120px;" value="45000" oninput="renderAdmBilling();blRatesSave()"></div>'
-          //  売り手プラン（譲渡準備）。請求の自動生成と契約書の月額はここから
-          +'<div><label class="fl">顧問料・売り手プラン（円/月・税別）</label><input id="bl-seller" type="number" class="inp2" style="width:120px;" value="30000" oninput="renderAdmBilling();blRatesSave()"></div>'
+        +'<div class="bl-sec">料金<span>変えると、試算・請求・配分・契約書にそのまま使われます</span></div>'
+        //  料金の設定。以前は8つの欄が横一列に折り返して並び、何の料金かが読みにくかった。
+        //  「顧客からいただく（プラン×月額・初期）」と「パートナーからいただく」に分けて、
+        //  単位を欄の右に、標準の額を欄の下に出す（標準と違うときは金色で知らせる）
+        +'<div class="bl-card">'
+          +'<div class="bl-card-h"><b>顧客からいただく料金</b><span>税別。金額が変わるのはプランだけです（会社の規模・契約社数では変わりません）</span></div>'
+          +'<div class="bl-plan">'
+            +'<div class="hd pl">プラン</div><div class="hd">月額の顧問料</div><div class="hd">初期導入費（初回のみ）</div>'
+            //  売り手プラン（譲渡準備）。請求の自動生成と契約書の月額はここから
+            +'<div class="nm first">買い手プラン<small>成長。毎月の数字で柱を増やす</small></div>'
+            +blIn('bl-adv','円／月',EP_STD_FEE,'月額の顧問料')+blIn('bl-init','円',EP_SETUP_FEE,'初期導入費')
+            //  売り手プランは動く実務の量が違うので初期導入費は半額。プランごとに分けて持つ
+            +'<div class="nm">売り手プラン<small>譲渡準備。数年先の出口へ</small></div>'
+            +blIn('bl-seller','円／月',EP_SELLER_FEE,'月額の顧問料')+blIn('bl-initseller','円',EP_SETUP_SELLER,'初期導入費')
+          +'</div>'
           //  「運営直接担当 30,000円・一律」はやめました。運営が担当していても
           //  買い手 45,000／売り手 30,000 の2つだけです。相手によって値段が
           //  違うと、この値段で続けてもらえるのかという本当の反応が読めません
-          +'<div><label class="fl">初期導入費・買い手プラン（円・初回）</label><input id="bl-init" type="number" class="inp2" style="width:130px;" value="100000" oninput="renderAdmBilling();blRatesSave()"></div>'
-          //  売り手プランは動く実務の量が違うので半額。プランごとに分けて持つ
-          +'<div><label class="fl">初期導入費・売り手プラン（円・初回）</label><input id="bl-initseller" type="number" class="inp2" style="width:130px;" value="50000" oninput="renderAdmBilling();blRatesSave()"></div>'
+          +'<div class="bl-nt">運営が直接担当している顧客も、同じ額です。変えた額は、この先の請求の自動作成と契約書の月額に使われます。ボリュームディスカウント・HD化ボーナス・担当パートナーの階層付与は廃止しました（EP登録料・月額下限・法人管理料もありません）。</div>'
         +'</div>'
+        +'<div class="bl-card">'
+          +'<div class="bl-card-h"><b>パートナーからいただく利用料</b><span>税別。カードでは受け取らず、配分から差し引いて精算します</span></div>'
+          +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">'
+            +'担当者登録使用料は<b>EP-I は法人がまとめて</b>、'
+            +'<b style="color:var(--navy);">1人ごとの額と、まとめ登録の定額のうち、安いほう</b>で計算します'
+            +'（例：10人までは定額15,000円。31人なら 15,000×3＋3,000＝48,000円）。'
+            +'<b>EP-II は所属営業ご本人</b>が、登録料1人ぶん＋AI利用料×顧問先数をお支払いです（本部からは引きません）。</div>'
+          +'<div class="bl-fields">'
+            +'<div class="bl-f"><label>AI利用料<small>顧問先1社あたり</small></label>'+blIn('bl-ai','円／月',EP_AI_FEE)
+              +'<div class="nt">配分から差し引く額は、この額で計算します。</div></div>'
+            +'<div class="bl-f"><label>担当者登録使用料 <span class="tag blue" style="font-size:10px;">EP-I</span><small>担当者1人あたり</small></label>'+blIn('bl-seat','円／月',EP_SEAT_FEE)+'</div>'
+            +'<div class="bl-f"><label>まとめ登録の定額 <span class="tag blue" style="font-size:10px;">EP-I</span><small>下の人数までこの額</small></label>'+blIn('bl-seatpack','円／月',15000)+'</div>'
+            +'<div class="bl-f"><label>まとめ登録の人数 <span class="tag blue" style="font-size:10px;">EP-I</span><small>定額で登録できる人数</small></label>'+blIn('bl-seatpackn','人まで',10)+'</div>'
+          +'</div>'
+          //  MRR試算の表示用の2つ。配分から差し引く額（上の AI利用料）とは別
+          +'<div class="bl-sub">MRR試算の表示用<span>上の「月次売上 MRR」の計算にだけ使います。配分からは差し引きません</span></div>'
+          +'<div class="bl-fields">'
+            +'<div class="bl-f"><label>パートナー基本<small>パートナー1名あたり</small></label>'+blIn('bl-pbase','円／月',3000)+'</div>'
+            +'<div class="bl-f"><label>顧問先1社あたり加算<small>顧問先1社あたり</small></label>'+blIn('bl-pclient','円／月',2000)
+              +'<div class="nt">実際に差し引く額は、上の「AI利用料」で計算します。</div></div>'
+          +'</div>'
+        +'</div>'
+        +'<div class="bl-sec">口座<span>どちらも当社（TsuguAi）の口座です。お客様・パートナーの口座はここには入れません</span></div>'
         //  振込でお願いする請求は、振込先が画面に出ないと担当パートナーに
         //  電話が行く。ここに入れておけば、請求のたびに書かずに済む
-        +'<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
-          +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;">お振込先（TsuguAiが受け取る口座）</div>'
+        +'<div class="bl-card">'
+          +'<div class="bl-card-h"><b>お振込先（TsuguAiが受け取る口座）</b></div>'
           +'<div style="font-size:11px;color:#94A2B6;margin-bottom:7px;line-height:1.7;">'
             +'銀行振込でご請求するとき、顧客の画面にそのまま表示されます。'
             +'<b style="color:var(--navy);">口座振替でお引き落としする請求には出ません。</b>'
@@ -2903,8 +2966,8 @@
         //  総合振込ファイル（全銀フォーマット）の先頭に入る「委託者」。
         //  銀行から交付される委託者コードと、振込元にする継の口座。
         //  ここも当社の口座であって、お客様・パートナーの口座ではない
-        +'<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
-          +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;">総合振込の委託者情報（パートナーへ振り込むTsuguAiの口座）</div>'
+        +'<div class="bl-card">'
+          +'<div class="bl-card-h"><b>総合振込の委託者情報（パートナーへ振り込むTsuguAiの口座）</b></div>'
           +'<div style="font-size:11px;color:#94A2B6;margin-bottom:7px;line-height:1.7;">'
             +'「支払い」の画面で作る<b style="color:var(--navy);">総合振込ファイル（全銀フォーマット）</b>の先頭に入ります。'
             +'委託者コードは、ネットバンキングの総合振込の画面で確認できる10桁の番号です（無い銀行は 0 のまま）。'
@@ -2924,31 +2987,6 @@
             +'<button class="btn2" style="padding:6px 16px;" onclick="blRatesSaveNow()">保存する</button>'
             +'<span class="bl-save-st" style="font-size:11.5px;color:#94A2B6;">入力すると自動で保存されます</span>'
           +'</div>'
-        +'</div>'
-        +'<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
-          +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">パートナーからお預かりする利用料（円・税別）</div>'
-          +'<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.7;">'
-            +'配分とは別に、パートナーからTsuguAiへお支払いいただくぶんです。'
-            +'<b style="color:var(--navy);">カードでは受け取りません。配分から差し引いてご精算します。</b><br>'
-            +'担当者登録使用料は<b>EP-I は法人がまとめて</b>、'
-            +'<b style="color:var(--navy);">1人ごとの額と、まとめ登録の定額のうち、安いほう</b>で計算します'
-            +'（例：10人までは定額15,000円。31人なら 15,000×3＋3,000＝48,000円）。'
-            +'<b>EP-II は所属営業ご本人</b>が、登録料1人ぶん＋AI利用料×顧問先数をお支払いです（本部からは引きません）。</div>'
-          +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
-            +'<div><label class="fl">AI利用料（円/社・月）</label><input id="bl-ai" type="number" class="inp2" style="width:110px;" value="2000" oninput="renderAdmBilling();blRatesSave()">'
-            +'<div style="font-size:10px;color:#94A2B6;line-height:1.5;margin-top:2px;max-width:150px;">顧問先1社につきこの額。<b>相殺はこの額で計算します</b></div></div>'
-            +'<div><label class="fl">担当者登録使用料（円/人・月）</label><input id="bl-seat" type="number" class="inp2" style="width:130px;" value="3000" oninput="renderAdmBilling();blRatesSave()"></div>'
-            +'<div><label class="fl">まとめ登録の定額（円/月）</label><input id="bl-seatpack" type="number" class="inp2" style="width:130px;" value="15000" oninput="renderAdmBilling();blRatesSave()"></div>'
-            +'<div><label class="fl">まとめ登録の人数（人まで）</label><input id="bl-seatpackn" type="number" class="inp2" style="width:130px;" value="10" oninput="renderAdmBilling();blRatesSave()"></div>'
-          +'</div>'
-          +'<div style="font-size:11px;color:#8A6A12;background:rgba(195,155,63,.10);border:1px solid rgba(195,155,63,.35);border-radius:8px;padding:8px 10px;margin-top:9px;line-height:1.7;">'
-            +'ボリュームディスカウント（契約社数による割引）・HD化ボーナス・担当パートナーの階層付与は<b>すべて廃止</b>しました。'
-            //  金額はプランで変わる。ここを「一律」と書いたままにすると、
-            //  売り手プランのお客様に買い手プランの額をご請求してしまう
-            +'金額が変わるのは<b>プランだけ</b>で、会社の規模や契約社数では変わりません。'
-            +'<b>買い手プラン</b>＝顧問料 '+EP_STD_FEE.toLocaleString('ja-JP')+' 円／月・初期導入費 '+EP_SETUP_FEE.toLocaleString('ja-JP')+' 円、'
-            +'<b>売り手プラン</b>＝顧問料 '+EP_SELLER_FEE.toLocaleString('ja-JP')+' 円／月・初期導入費 '+EP_SETUP_SELLER.toLocaleString('ja-JP')+' 円（いずれも税別）。'
-            +'EP登録料・月額下限・法人管理料もありません。</div>'
         +'</div>'
         +'<div class="ph" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 14.5 14.5 9.5"/><path d="M11 6.5 12.4 5a4.2 4.2 0 0 1 6 6L17 12.4"/><path d="M13 17.5 11.6 19a4.2 4.2 0 0 1-6-6L7 11.6"/></svg>M&A仲介フィーシミュレーター（レーマン方式）</span></div>'
         //  料金表（LP・特定商取引法の表示）と同じ条件をここにも書く。
@@ -3623,6 +3661,23 @@
   // ---- G. 課金・契約管理 ----
   function yen(n){ return '¥'+Math.round(n||0).toLocaleString('ja-JP'); }
   function blRate(id,def){ var el=$(id); var v=el?Number(el.value):NaN; return isFinite(v)?v:def; }
+  //  料金の欄ひとつ。単位を右に、標準の額を下に出す。mob はスマホで欄の上に出す見出し
+  function blIn(id, unit, std, mob){
+    return '<div class="bl-in">'+(mob?'<span class="ml">'+esc(mob)+'</span>':'')
+      +'<div class="bl-row"><input id="'+id+'" type="number" class="inp2" value="'+std+'" oninput="renderAdmBilling();blRatesSave()"><span class="u">'+esc(unit)+'</span></div>'
+      +'<div class="bl-std" id="'+id+'-std" data-std="'+std+'"></div></div>';
+  }
+  //  標準の額と違う欄に印をつける。料金を変えたことに気づかないまま請求しないように
+  function blStdMark(){
+    Array.prototype.forEach.call(document.querySelectorAll('.bl-std'), function(el){
+      var id=el.id.replace(/-std$/,''), inp=$(id); if(!inp) return;
+      var std=Number(el.getAttribute('data-std')), v=Number(inp.value);
+      var diff=(inp.value!=='' && isFinite(v) && v!==std);
+      el.textContent=diff?('標準 '+std.toLocaleString('ja-JP')+' から変えています'):('標準 '+std.toLocaleString('ja-JP'));
+      el.className='bl-std'+(diff?' diff':'');
+      inp.classList.toggle('bl-diff', diff);
+    });
+  }
   //  階層付与は廃止した。顧問料は全社一律（割引なし）になったため、常に0を返す。
   //  呼び出し側（運営一覧の表示）を壊さないよう、関数そのものは残している。
   function partnerTierPct(rank, clients, cfg){ return 0; }
@@ -3678,11 +3733,11 @@
       BL_RATE_IDS.forEach(function(id){ var el=$(id); if(el && v[id]!=null && v[id]!=='') el.value=v[id]; });
       blRatesNote(r.data&&r.data.updated_at?('✓ 保存済み（最終保存 '+blHm(r.data.updated_at)+'）'):'入力すると自動で保存されます', r.data?'#27684A':'#94A2B6');
     }catch(e){}
-    blSenderCheck();
+    blSenderCheck(); blStdMark();
   }
   //  入力の0.8秒後に自動で保存する。「保存する」はそれを待たずに今すぐ保存する
   function blRatesSave(){
-    blSenderCheck();
+    blSenderCheck(); blStdMark();
     if(!BL_RATES_OK){ blRatesNote('保存できません（保存機能のSQL設定が未実施です）','#A9403D'); return; }
     if(BL_SAVE_T) clearTimeout(BL_SAVE_T);
     blRatesNote('入力中…（手を止めると自動で保存します）','#94A2B6');

@@ -73,7 +73,7 @@ function fn(name) {
 // ④ 初期導入費はプランで違う
 {
   ok('定数が2つある', /var EP_SETUP_FEE=100000;/.test(SRC) && /var EP_SETUP_SELLER=50000;/.test(SRC));
-  ok('運営の設定欄も2つ', /id="bl-init"/.test(SRC) && /id="bl-initseller"/.test(SRC));
+  ok('運営の設定欄も2つ', /blIn\('bl-init',/.test(SRC) && /blIn\('bl-initseller',/.test(SRC));
   const rb = fn('renderAdmBilling');
   ok('試算はプランごとに掛ける', /var initThisMonth=newB\*init\+newS\*initSeller;/.test(rb));
   no('一律で掛けていない', /var initThisMonth=newC\*init;/.test(rb));
