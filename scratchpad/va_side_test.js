@@ -30,8 +30,8 @@ const L = new Function('env', 'els',
   'var window={}; Object.defineProperty(window,"__role",{get:function(){return env.role;}});'
   + 'function $(id){ return els[id]||null; }'
   + 'var VIEWAS; Object.defineProperty(this,"x",{});'
-  + takeFn('vaActive').replace(/VIEWAS/g, 'env.VIEWAS') + takeFn('vaButtons') + takeFn('vaSideRender') + takeFn('vaSheetHtml')
-  + 'return { vaActive:vaActive, vaSideRender:vaSideRender, vaSheetHtml:vaSheetHtml };'
+  + takeFn('vaActive').replace(/VIEWAS/g, 'env.VIEWAS') + takeFn('vaButtons') + takeFn('vaSideRender')
+  + 'return { vaActive:vaActive, vaSideRender:vaSideRender };'
 )(env, els);
 
 // ① ②
@@ -43,20 +43,17 @@ is('3つのボタン', (els['sb-va'].innerHTML.match(/<button /g) || []).length,
 ok('運営が on', /class="on" aria-pressed="true" onclick="setAdminView\('admin'\)">運営</.test(els['sb-va'].innerHTML));
 env.VIEWAS = 'fde'; L.vaSideRender();
 ok('パートナーの見え方ではパートナーが on', /class="on" aria-pressed="true" onclick="setAdminView\('fde'\)">パートナー</.test(els['sb-va'].innerHTML));
-env.VIEWAS = 'customer';
-ok('顧客の見え方：メニューのシートにも出る', /<div class="ds-va">[\s\S]*setAdminView\('customer'\)">顧客/.test(L.vaSheetHtml()));
 env.role = 'consultant'; L.vaSideRender();
 ok('運営でなければ左のメニューに出ない', els['sb-va'].classList.contains('hidden') && els['sb-va'].innerHTML === '');
 ok('運営でなければドロワーにも出ない', els['dw-va'].classList.contains('hidden'));
-is('運営でなければシートにも出ない', L.vaSheetHtml(), '');
 
 // ③ つなぎ
 ok('左のメニュー：会社名と役割の下、メニューの上', /<span id="app-role" class="plan-pill"><\/span><\/div>\n    <div id="sb-va" class="sb-va hidden"><\/div>\n    <nav id="app-nav"/.test(SRC));
 ok('ドロワー：役割の下、メニューの上', /<span id="dw-role" class="plan-pill"><\/span><\/div>\n  <div id="dw-va" class="sb-va hidden"><\/div>\n  <nav id="drawer-nav"/.test(SRC));
 ok('左のメニューを下へ送っても上に残る', /\.sb-va\{position:sticky;top:0;z-index:2;background:var\(--deep\);/.test(SRC));
 ok('描くたびに表示モードも描き直す', /vaSideRender\(\);\n    avatarRemember\(\); renderAvatar\(\);/.test(SRC));
-ok('顧客の見え方のシートの先頭', /var h=vaSheetHtml\(\);\n    navGrouped\('customer'/.test(SRC));
-ok('切り替えたらシートを閉じて描き直す', /function setAdminView\(m\)\{ VIEWAS=m; dashSheetClose\(\); renderApp\(window\.__prof, window\.__email\); \}/.test(SRC));
+ok('顧客の見え方でも、≡のメニューは同じドロワー（いちばん上に表示モード）', !/vaSheetHtml|dash-sheet/.test(SRC));
+ok('切り替えたら描き直す（ドロワーは renderApp が閉じる）', /function setAdminView\(m\)\{ VIEWAS=m; renderApp\(window\.__prof, window\.__email\); \}/.test(SRC) && /closeDrawer\(\);\n    buildNav\(eff\);/.test(SRC));
 
 // ④ 以前の切替バーは無い
 no('ダッシュボードの中の切替バーは無い', /vaswitch|adminSwitchHtml|viewas-row/.test(SRC));

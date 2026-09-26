@@ -406,9 +406,6 @@
   /* 選択中タイルは背景に var(--navy) を使うが、ダークでは --navy が明色に反転して
      .tl/.ti の #fff と重なり読めなくなるため、選択色を青系に差し替える（.sbtn.on と同じ扱い）*/
   body.dark .cl-tile.on{background:#2A5488;border-color:#3E6DAE;}
-  .dash-sheet-foot{display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--softline);flex-shrink:0;}
-  .dash-sheet-foot .sb-out2{flex:1;padding:10px;border:1px solid var(--line);background:var(--soft);color:var(--navy);border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;}
-  .dash-sheet-foot .sb-out2:hover{background:var(--softline);}
   @media(max-width:760px){
     .cl-shell{flex-direction:column;gap:12px;}
     .cl-side{position:static;flex:1 1 auto;width:100%;max-height:none;display:flex;flex-wrap:wrap;gap:5px;padding:8px;}
@@ -556,9 +553,6 @@
   .sb-vaseg button.on:hover{background:var(--gold);}
   .drawer .sb-va{position:static;padding:12px 16px 14px;}
   .drawer .sb-vaseg button{padding:9px 0;font-size:12.5px;}
-  .ds-va{margin:0 0 12px;}
-  .ds-va .vaseg{display:flex;width:100%;}
-  .ds-va .vaseg button{width:auto;}
   .sb-email{display:block;font-size:11px;color:rgba(255,255,255,.55);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   /* 週表示（バーチカル）：横に7日、縦に時間。パネルが狭いときは横スクロール */
   .wk-wrap{overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;border:1px solid var(--softline);border-radius:10px;background:var(--card);}
@@ -1471,8 +1465,6 @@
   <div class="drawer-foot"><div class="me-row"><span id="dw-ico" class="me-ico"></span><span id="dw-email" class="sb-email"></span></div><button class="sb-out" onclick="openSettings()" style="margin-bottom:6px;">⚙️ 設定</button><button class="sb-out" onclick="signOut()">ログアウト</button></div>
 </aside>
 
-<!-- ===== 顧客ポータル用：ボトムシート型メニュー（タイル表示） ===== -->
-<div id="dash-sheet" class="cl-sheet-back hidden" onclick="if(event.target===this)dashSheetClose()"><div class="cl-sheet" onclick="event.stopPropagation()"><div class="cl-grab"></div><div class="cl-sheet-head"><span class="cl-sheet-title">メニュー</span><button class="modal-close" onclick="event.stopPropagation();dashSheetClose()" aria-label="メニューを閉じる" style="margin-left:0;">×</button></div><div class="cl-sheet-body" id="dash-sheet-body"></div><div class="dash-sheet-foot"><button class="sb-out2" onclick="dashSheetClose();openSettings()">⚙️ 設定</button><button class="sb-out2" onclick="signOut()">ログアウト</button></div></div></div>
 
 <!-- ===== CLIENT DETAIL MODAL ===== -->
 <div id="cl-modal" class="modal-back hidden" onclick="if(event.target===this && !(window.__clGuard && Date.now()-window.__clGuard<450))closeClientModal()">
@@ -1685,7 +1677,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260927-02';
+  var APP_BUILD='20260927-03';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2804,8 +2796,7 @@
     closeDrawer();
   }
   function openDrawer(){
-    // 顧客ポータルはタイル型ボトムシート（カルテメニューと同じ操作感）
-    if(currentRole()==='customer'){ dashSheetOpen(); return; }
+    // ≡も右端からの払いも、同じドロワー（組の見出し付きの一覧）を開く。経営者も同じ
     var d=$('drawer'), b=$('drawer-back');
     if(d){ d.classList.add('open'); d.setAttribute('aria-hidden','false'); }
     if(b) b.classList.remove('hidden');
@@ -2828,12 +2819,7 @@
   var SWIPE_EDGE=24;          // 右端の帯の幅（px）
   var SWIPE_OPEN_RATIO=0.33;  // 幅のこの割合まで引いたら開く／閉じる
   function swipeMobile(){ return window.matchMedia && window.matchMedia('(max-width:760px)').matches; }
-  function openSideDrawer(){
-    var d=$('drawer'), b=$('drawer-back');
-    if(d){ d.classList.add('open'); d.setAttribute('aria-hidden','false'); }
-    if(b) b.classList.remove('hidden');
-    document.body.style.overflow='hidden';
-  }
+
   //  カルテのドロワー：2段のメニュー（#cl-side）を、開いているあいだだけ body 直下の入れ物へ移す。
   //  カルテの窓の中に置いたままだと、窓の動き（transform）のせいで画面に固定できない
   var CL_DRAWER_HOME=null;
@@ -2860,10 +2846,12 @@
     var e=clDrawerMount(); if(!e) return;
     e.box.classList.add('open'); e.back.classList.remove('hidden');
     clPanelShow(clGroupIdx(CL_ACTIVE));
+    var mb=$('cl-menu-btn'); if(mb) mb.classList.add('open');
   }
   function clDrawerClose(){
     var e=clDrawerEls();
     e.box.classList.remove('open'); e.back.classList.add('hidden');
+    var mb=$('cl-menu-btn'); if(mb) mb.classList.remove('open');
     setTimeout(function(){ if(!e.box.classList.contains('open')) clDrawerUnmount(); }, 260);
   }
   //  カルテのドロワーで項目や小枝を押したら閉じる（組のアイコンは、中身を見るだけなので閉じない）
@@ -2879,7 +2867,6 @@
       return 'karte';
     }
     var app=$('app'); if(!app || app.classList.contains('hidden')) return null;
-    var ds=$('dash-sheet'); if(ds && !ds.classList.contains('hidden')) return null;
     var mm=$('manual-modal'); if(mm && !mm.classList.contains('hidden')) return null;
     var kp=$('knv-panel'); if(kp && !kp.classList.contains('hidden')) return null;
     return 'app';
@@ -2887,7 +2874,7 @@
   function swipeParts(ctx){
     if(ctx==='karte'){ var e=clDrawerEls(); return { el:e.box, back:e.back, open:clDrawerOpen, close:clDrawerClose,
       prep:function(){ var sh=$('cl-menu'); if(sh && !sh.classList.contains('hidden')) clMenuClose(); clDrawerMount(); } }; }
-    return { el:$('drawer'), back:$('drawer-back'), open:openSideDrawer, close:closeDrawer, prep:function(){} };
+    return { el:$('drawer'), back:$('drawer-back'), open:openDrawer, close:closeDrawer, prep:function(){} };
   }
   //  はじめてスマホで開いたときに一度だけ、払えることを知らせる（その端末で覚える）
   function swipeHintOnce(){
@@ -2946,35 +2933,6 @@
     s.P.el.classList.remove('swiping'); s.P.el.style.transform='';
     if(s.P.back){ s.P.back.classList.remove('swiping'); s.P.back.style.opacity=''; if(!s.P.el.classList.contains('open')) s.P.back.classList.add('hidden'); }
   }, { passive:true });
-  function dashSheetOpen(){
-    var d=$('dash-sheet'), body=$('dash-sheet-body');
-    if(!d || !body){ // 念のためのフォールバック
-      var dr=$('drawer'), b=$('drawer-back');
-      if(dr){ dr.classList.add('open'); dr.setAttribute('aria-hidden','false'); }
-      if(b) b.classList.remove('hidden');
-      document.body.style.overflow='hidden';
-      return;
-    }
-    var h=vaSheetHtml();
-    navGrouped('customer', effectiveNav('customer')).forEach(function(g){
-      if(g.name) h+='<div class="cl-tgh">'+esc(g.name)+'<span class="cl-tgd">'+esc(g.desc)+'</span></div>';
-      h+='<div class="cl-tiles">';
-      g.items.forEach(function(it){
-        var badge=(it[0]==='sec-chat')?'<span id="nav-unread-t" class="clnb hidden">0</span>':'';
-        h+='<div class="cl-tile'+(CURRENT_SEC===it[0]?' on':'')+'" onclick="dashTileGo(\''+it[0]+'\')"><span class="ti">'+icoSvg(NAV_ICON[it[0]]||'')+'</span><span class="tl">'+esc(it[1])+'</span>'+badge+'</div>';
-      });
-      h+='</div>';
-    });
-    body.innerHTML=h;
-    var nt=$('nav-unread-t'); if(nt){ var n=(UNREAD&&UNREAD.total)||0; nt.textContent=n>99?'99+':n; nt.classList.toggle('hidden', !n); }
-    d.classList.remove('hidden');
-    document.body.style.overflow='hidden';
-  }
-  function dashSheetClose(){
-    var d=$('dash-sheet'); if(d) d.classList.add('hidden');
-    document.body.style.overflow='';
-  }
-  function dashTileGo(id){ dashSheetClose(); showSection(id); }
   function goSec(id,el){
     // 経営者のメッセージは継ナビくんのパネル内に集約した。旧導線が残っていてもそちらへ
     if(id==='sec-chat' && (window.__eff||'customer')==='customer'){ if(typeof knvOpenMsg==='function'){ knvOpenMsg(); return; } }
@@ -2984,9 +2942,9 @@
   }
 
   var VIEWAS_NOTE=1; // 運営の表示モードは VIEWAS で管理
-  function setAdminView(m){ VIEWAS=m; dashSheetClose(); renderApp(window.__prof, window.__email); }
+  function setAdminView(m){ VIEWAS=m; renderApp(window.__prof, window.__email); }
   //  表示モード（運営だけ）。以前はダッシュボードの中にだけあったが、どの画面にいても切り替えられるよう
-  //  左のメニューの最上部（スマホはドロワーの上・経営者の見え方ではメニューのシートの上）に置く
+  //  左のメニューの最上部（スマホはドロワーの上）に置く
   function vaActive(){ return VIEWAS==='fde'?'fde':(VIEWAS==='customer'?'customer':'admin'); }
   function vaButtons(){
     var a=vaActive();
@@ -3002,9 +2960,7 @@
       el.innerHTML=on ? '<div class="sb-va-l">表示モード</div><div class="sb-vaseg" role="group" aria-label="表示モード">'+vaButtons()+'</div>' : '';
     });
   }
-  function vaSheetHtml(){
-    return (window.__role==='admin') ? '<div class="ds-va"><div class="cl-tgh" style="margin-top:2px;">表示モード</div><div class="vaseg" role="group" aria-label="表示モード">'+vaButtons()+'</div></div>' : '';
-  }
+
   function adminViewHtml(email, prof){
     return '<div class="panel"><span class="pill" style="background:#F7EFDC;color:#C39B3F;">運営コンソール</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">運営管理</h2>'
@@ -9563,7 +9519,6 @@
     if(typeof knvBadgesRender==='function') knvBadgesRender();
     var nv=$('nav-unread'); if(nv){ nv.textContent=n>99?'99+':n; nv.classList.toggle('hidden', !n); }
     var nvd=$('nav-unread-d'); if(nvd){ nvd.textContent=n>99?'99+':n; nvd.classList.toggle('hidden', !n); }
-    var nvt=$('nav-unread-t'); if(nvt){ nvt.textContent=n>99?'99+':n; nvt.classList.toggle('hidden', !n); }
     var mb=$('knv-mbadge'); if(mb){ mb.textContent=n>9?'9+':n; mb.classList.toggle('hidden', !n); }
     Object.keys(UNREAD.perClient||{}).forEach(function(id){
       var e=$('clb-'+id); if(!e)return; var c=UNREAD.perClient[id]||0;
@@ -12268,7 +12223,7 @@
   function openClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.remove('hidden'); document.body.style.overflow='hidden'; if(typeof clMenuClose==='function') clMenuClose(); }
   function closeClientModal(){ var m=$('cl-modal'); if(!m)return; m.classList.add('hidden'); document.body.style.overflow=''; if(typeof clMenuClose==='function') clMenuClose(); clDrawerReset(); }
   //  カルテを閉じる・別の会社を開くときは、ドロワーに移していたメニューを元に戻す（id が二つにならないように）
-  function clDrawerReset(){ var b=$('cl-drawer'), k=$('cl-dback'); if(b) b.classList.remove('open'); if(k) k.classList.add('hidden'); clDrawerUnmount(); if(b) b.innerHTML=''; }
+  function clDrawerReset(){ var b=$('cl-drawer'), k=$('cl-dback'), mb=$('cl-menu-btn'); if(b) b.classList.remove('open'); if(k) k.classList.add('hidden'); if(mb) mb.classList.remove('open'); clDrawerUnmount(); if(b) b.innerHTML=''; }
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var m=$('cl-modal'); if(m && !m.classList.contains('hidden')) closeClientModal(); var r=$('rep-modal'); if(r && !r.classList.contains('hidden')) closeReport(); var b=$('bp-modal'); if(b && !b.classList.contains('hidden')) closeBizplan(); } });
   // Enterキーで送信（ログイン系フォーム／継ナビくん）
   document.addEventListener('keydown',function(e){
@@ -12516,7 +12471,7 @@
     var cr=$('cl-crumb'), it=clItemOf(id);
     if(cr){
       cr.innerHTML=(it?'<div class="cl-crumb-path"><span>'+esc(it[3])+'</span><i>›</i><b>'+esc(it[2])+'</b>'
-          +'<button type="button" class="cl-crumb-menu" onclick="clSheetOpen(false)">メニュー</button></div>':'')
+          +'<button type="button" class="cl-crumb-menu" onclick="clMenuToggle(event)">メニュー</button></div>':'')
         +(subs.length?'<div class="cl-crumb-twigs">'+subs.map(function(x){ return '<span class="cl-ctw" onclick="clTwig(\''+escA(x.id)+'\',event)">'+esc(x.t.length>16?x.t.slice(0,15)+'…':x.t)+'</span>'; }).join('')+'</div>':'');
     }
   }
@@ -12733,7 +12688,7 @@
     var c=clKarteTodoCounts(custId);
     Object.keys(c).forEach(function(id){
       var n=c[id]||0;
-      ['clnb-','clmb-'].forEach(function(pfx){
+      ['clnb-'].forEach(function(pfx){
         var e=$(pfx+id); if(!e) return;
         e.textContent=n>99?'99+':n;
         e.classList.toggle('hidden', !n);
@@ -12821,10 +12776,11 @@
 
   // ===== ボトムシート型メニュー（スマホ）＋カスタマイズ =====
   var CL_EDIT=false;
+  //  ≡とパンくずの「メニュー」は、右端から払ったときと同じ2段のドロワーを開く
   function clMenuToggle(e){
     if(e){ e.stopPropagation(); }
-    var d=$('cl-menu'); if(!d)return;
-    if(d.classList.contains('hidden')) clSheetOpen(false); else clMenuClose();
+    var box=$('cl-drawer');
+    if(box && box.classList.contains('open')) clDrawerClose(); else clDrawerOpen();
   }
   function clSheetOpen(edit){
     var d=$('cl-menu'); if(!d)return;
@@ -12834,12 +12790,10 @@
     CL_EDIT=!!edit;
     d.classList.remove('hidden');
     clSheetRender();
-    var b=$('cl-menu-btn'); if(b) b.classList.add('open');
   }
   function clMenuClose(){
     var d=$('cl-menu'); if(d) d.classList.add('hidden');
     CL_EDIT=false;
-    var b=$('cl-menu-btn'); if(b) b.classList.remove('open');
     window.__clGuard=Date.now(); // シートを閉じた直後のタップすり抜けでカルテ本体が閉じるのを防ぐ
   }
   function clMenuBackdrop(ev){ if(ev && ev.target && ev.target.id==='cl-menu') clMenuClose(); }
@@ -12847,21 +12801,9 @@
     var body=$('cl-sheet-body'); if(!body)return;
     var eb=$('cl-sheet-editbtn'); if(eb) eb.textContent=CL_EDIT?'完了':'⚙ 編集';
     var tt=$('cl-sheet-title'); if(tt) tt.textContent=CL_EDIT?'メニューのカスタマイズ':'メニュー';
-    body.innerHTML=CL_EDIT?clEditHtml():clTilesHtml();
-    if(!CL_EDIT && CURRENT_CLIENT) applyClKarteBadges(CURRENT_CLIENT.id);
+    body.innerHTML=clEditHtml();
   }
-  function clTilesHtml(){
-    var h='';
-    clNavByGroup().forEach(function(grp){
-      if(!grp.items.length) return;
-      h+='<div class="cl-tgh">'+esc(grp.name)+'<span class="cl-tgd">'+esc(CL_GROUP_DESC[CL_GROUPS.indexOf(grp.name)]||'')+'</span></div><div class="cl-tiles">';
-      grp.items.forEach(function(it){
-        h+='<div class="cl-tile'+(it[0]===CL_ACTIVE?' on':'')+'" onclick="clMenuGo(\''+it[0]+'\')"><span class="ti">'+icoSvg(it[1])+'</span><span class="tl">'+it[2]+'</span><span class="clnb hidden" id="clmb-'+it[0]+'">0</span></div>';
-      });
-      h+='</div>';
-    });
-    return h+'<div class="cl-sheet-hint">右上の「⚙ 編集」から、タブの並び順を変更できます。</div>';
-  }
+
   function clEditHtml(){
     var h='<div class="cl-sheet-hint" style="margin:0 0 8px;">▲▼でよく使うタブを組の中で並べ替えられます。設定はこの端末に保存され、メニューとPC版の左ナビの両方に反映されます。</div>';
     clNavByGroup().forEach(function(grp){
@@ -12882,7 +12824,8 @@
     +'</div>';
     return h;
   }
-  function clSheetEditToggle(){ CL_EDIT=!CL_EDIT; clSheetRender(); }
+  //  シートは並び順のカスタマイズだけに使う（メニューは2段のドロワー）。「完了」で閉じる
+  function clSheetEditToggle(){ clMenuClose(); }
   //  並べ替えは組の中だけ。組をまたぐと、見た目は動かないのに保存だけ変わって
   //  「押しても何も起きない」ように見えるため。
   function clEditMove(id,dir){
@@ -12909,7 +12852,6 @@
     clSpySet(CL_ACTIVE);
     if(CURRENT_CLIENT) applyClKarteBadges(CURRENT_CLIENT.id);
   }
-  function clMenuGo(id){ clMenuClose(); clNav(id); }
   //  カルテの上に出す「◯◯法人としての関わり」。
   //  EP-I は法人が担当を決めるので主担当・副担当を、EP-II は所属していること
   //  だけを出す（EP-II の担当は継が決め、法人の中では分けない）。
