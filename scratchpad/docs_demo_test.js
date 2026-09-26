@@ -27,7 +27,7 @@ const IDX = R('index.html');
 // ② 経営者向け：デモ8枚 ＋ 地図 ＋ 中扉
 {
   ['①ダッシュボード', '②承継シミュレーション', '③継ナビくん', '④出口の設計', '⑤買い手になる', '⑥買った後に備える', '⑦月次レポート・財務', '⑧契約から90日'].forEach(function (t) {
-    ok('顧客デモ ' + t, PITC.indexOf('<section class="slide dm" data-t="' + t + '">') >= 0);
+    ok('顧客デモ ' + t, /[ >]/.test((PITC.split('<section class="slide dm" data-t="' + t + '"')[1] || '').charAt(0)));
   });
   //  顧客向けは「1社の3年間」の物語の中で画面を見せる。中扉とデモの地図は、
   //  全体の地図（最初）と「1年後の画面」（第4のあと）に置き換えた
@@ -47,7 +47,7 @@ const IDX = R('index.html');
 // ③ パートナー向け：デモ6枚
 {
   ['①今日やること', '②今日の一手', '③顧問契約を送る', '④カルテ', '⑤M&amp;A案件・Tsugime', '⑥ランクと明細'].forEach(function (t) {
-    ok('パートナーデモ ' + t, PITP.indexOf('<section class="slide dm" data-t="' + t + '">') >= 0);
+    ok('パートナーデモ ' + t, /[ >]/.test((PITP.split('<section class="slide dm" data-t="' + t + '"')[1] || '').charAt(0)));
   });
   ok('パートナーデモの中扉と地図', /class="slide divider" data-t="画面で見る"/.test(PITP) && /data-t="デモの地図"/.test(PITP));
   ok('契約を送る：メールとプランだけ（金額の入力は無い）', /プラン（必須）/.test(PITP) && /契約書を送る/.test(PITP) && /金額の入力はありません/.test(PITP));
@@ -118,7 +118,7 @@ const IDX = R('index.html');
   ok('pitch-wa.css：deck は中央寄せ、slide は zoom var(--fit)', /\.deck\{[^}]*justify-content:center/.test(WA) && /\.slide\{zoom:var\(--fit,1\);\}/.test(WA) && /@media print\{ \.deck\{[^}]*\} \.slide\{zoom:1;\} \}/.test(WA));
   ok('印刷では隠さない（screen だけで隠す）', /@media screen\{[\s\S]{0,400}\.slide:not\(\.on\)\{display:none!important;\}[\s\S]{0,20}\}/.test(WA));
   [['pitch-customer', PITC], ['pitch-partner', PITP], ['pitch-general', PITG], ['pitch-bank', PITB], ['pitch-finance', PITF]].forEach(function (x) {
-    ok(x[0] + ' が pitch-fit.js を読む（インラインの script のあと）', /<\/script>\n<script src="pitch-fit.js"><\/script>\n<\/body>/.test(x[1]));
+    ok(x[0] + ' が pitch-fit.js を読む（インラインの script のあと）', /<\/script>\n<script src="pitch-fit.js"><\/script>\n<script src="doc-reader.js"><\/script>\n<\/body>/.test(x[1]));
   });
   const POS = '明確な出口（ゴール）を経営者と一緒に決め、管理しながら伴走するプラットフォーム';
   [['pitch-customer', PITC], ['pitch-partner', PITP], ['pitch-general', PITG], ['pitch-bank', PITB], ['recruit-partner', REC]].forEach(function (x) {
@@ -189,12 +189,12 @@ const IDX = R('index.html');
   // 設え：ほかの資料と同じ読み込み・同じ操作
   [['pitch-ep1', EP1], ['pitch-ep2', EP2]].forEach(function (x) {
     ok(x[0] + ' が設えを読む', /<link rel="stylesheet" href="pitch-wa.css">/.test(x[1]) && /<link rel="stylesheet" href="pitch-demo.css">/.test(x[1]));
-    ok(x[0] + ' が pitch-fit.js を読む', /<\/script>\n<script src="pitch-fit.js"><\/script>\n<\/body>/.test(x[1]));
+    ok(x[0] + ' が pitch-fit.js を読む', /<\/script>\n<script src="pitch-fit.js"><\/script>\n<script src="doc-reader.js"><\/script>\n<\/body>/.test(x[1]));
     ok(x[0] + ' に位置づけの一文', x[1].indexOf('明確な出口（ゴール）を経営者と一緒に決め、管理しながら伴走するプラットフォーム') >= 0
       && x[1].indexOf('交渉前の準備から交渉中、交渉後もずっと一緒にいます。') >= 0);
     //  デモの章は、ほかの資料と同じ組み立て（中扉 → 地図 → 画面が6枚）
-    ok(x[0] + ' にデモの中扉と地図', /<section class="slide divider" data-t="画面で見る">/.test(x[1])
-      && /<section class="slide" data-t="デモの地図">/.test(x[1]) && /class="dmap"/.test(x[1]));
+    ok(x[0] + ' にデモの中扉と地図', /<section class="slide divider" data-t="画面で見る"[ >]/.test(x[1])
+      && /<section class="slide" data-t="デモの地図"[ >]/.test(x[1]) && /class="dmap"/.test(x[1]));
     ok(x[0] + ' に画面の写しが6枚', (x[1].match(/<section class="slide dm" data-t="画面/g) || []).length === 6);
     ok(x[0] + ' の地図は6つ', (x[1].match(/<div class="st"><i class="n mk">/g) || []).length === 6);
     //  6枚の画面に加えて、物語の中に「担当者（所属の方）のカルテ」と「顧問先の画面（1年後）」の2枚
@@ -250,10 +250,10 @@ const IDX = R('index.html');
     ok('説明書の「' + lab + '」が本体にもある', MANE.indexOf(lab) >= 0 && IDX.indexOf(lab) >= 0);
   });
   // サポートタブへの配線
-  ok('サポート：所属している方にだけ説明書を出す', /if\(EP_ME\) h\+=knvRow\('🏢','エンタープライズ 操作説明書'/.test(IDX));
-  ok('サポート：運営には説明書と資料2本', /エンタープライズ向け説明書[^]*manual-ep\.html/.test(IDX)
-    && /EP-I（顧客基盤型）向け プロダクト説明[^]*pitch-ep1\.html/.test(IDX)
-    && /EP-II（所属営業型）向け プロダクト説明[^]*pitch-ep2\.html/.test(IDX));
+  ok('サポート：所属している方にだけ説明書を出す', /f:'manual-ep\.html'[^\n]*n:'エンタープライズ 操作説明書'[^\n]*who:\{ consultant:'ep'/.test(IDX) && /if\(d\.who\[eff\]==='ep'\) return !!EP_ME;/.test(IDX));
+  ok('サポート：運営には説明書と資料2本', /f:'manual-ep\.html'[^\n]*admin:'法人パートナー（EP-I／EP-II）に案内するときの確認用'/.test(IDX)
+    && /f:'pitch-ep1\.html'[^\n]*n:'EP-I（顧客基盤型）向け プロダクト説明'[^\n]*who:\{ admin:''/.test(IDX)
+    && /f:'pitch-ep2\.html'[^\n]*n:'EP-II（所属営業型）向け プロダクト説明'[^\n]*who:\{ admin:''/.test(IDX));
   ok('パートナー説明書から、詳しい説明書へ', /「エンタープライズ 操作説明書」<\/b>にまとめてあります/.test(MANP));
   ok('運営説明書から、資料と説明書へ', /EP-I（顧客基盤型）向け プロダクト説明/.test(MANA) && /エンタープライズ向け説明書/.test(MANA));
 }
