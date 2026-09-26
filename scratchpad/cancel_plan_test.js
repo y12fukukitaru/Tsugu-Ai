@@ -100,7 +100,7 @@ function takeFn(name) {
   ok('経営者：お金の表', /売り手 → 買い手/.test(MANC) && /買い手 → 売り手/.test(MANC) && /3か月目の月末まで/.test(MANC));
   ok('パートナー：依頼の手順', /への切替を運営に依頼/.test(MANP) && /空欄のままでも送れてしまう/.test(MANP));
   ok('パートナー：解約は赤い帯で気づく', /解約のご依頼が出ています/.test(MANP) && /まずお話をうかがってください/.test(MANP));
-  ok('パートナー：自分が離れるとき', /運営への問い合わせ/.test(MANP) && /ご自身の契約を画面から終える操作はありません/.test(MANP));
+  ok('パートナー：自分が離れるとき（2026-09-27 画面から申し出られる）', /「お支払い」のいちばん下<\/b>の「ご契約の終了について」から申し出ます/.test(MANP) && /data-t="ご自身の契約を終えるとき"/.test(MANP));
   //  金額は published の条件どおりか（下げも上げもしない）
   [['manual-customer', MANC], ['manual-partner', MANP]].forEach(function (x) {
     ok(x[0] + '：差額は50,000円', /50,000円/.test(x[1]));
@@ -112,7 +112,7 @@ function takeFn(name) {
 // ⑦ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260927-05', '20260927-05']);
+  is('版が揃う', [build, VER.build], ['20260927-06', '20260927-06']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
