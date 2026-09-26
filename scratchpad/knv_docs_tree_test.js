@@ -58,6 +58,11 @@ ok('2段：左の列（組のアイコンと名前）と右の枠', /class="cl-s
 ok('組にカーソルでのぞく・押して開く・離れたら戻る', /onmouseenter="clRailHover\('\+gi\+'\)"/.test(side) && /onclick="clRailPick\('\+gi\+'\)"/.test(side) && /onmouseleave="clRailLeave\(\)"/.test(side));
 ok('件数の札と項目の id は前と同じ', /id="clgb-'\+gi\+'"/.test(side) && /id="clg-'\+gi\+'"/.test(side) && /clNi\(it\[0\],it\[1\],it\[2\]\)/.test(side));
 ok('組を押したら、前にその組で見ていた項目へ', /CL_LAST_IN_G\[gi\]/.test(takeFn('clRailPick')) && /CL_LAST_IN_G\[gi\]=id; clPanelShow\(gi\);/.test(takeFn('clSpySet')));
+ok('指で触る画面ではカーソルの動き（のぞく・戻る）を使わない（iPhone は mouseenter で中身が変わると押したことを捨てるため、金色が押した組へ移らなかった）',
+  /if\(Date\.now\(\)-CL_TOUCH_AT < 1000\) return false;/.test(takeFn('clHoverOk')) && /\(hover: none\)/.test(takeFn('clHoverOk'))
+  && /if\(clHoverOk\(\)\) clPanelShow\(gi\);/.test(takeFn('clRailHover')) && /if\(clHoverOk\(\)\) clPanelShow\(clGroupIdx\(CL_ACTIVE\)\);/.test(takeFn('clRailLeave'))
+  && /document\.addEventListener\('touchstart', function\(\)\{ CL_TOUCH_AT=Date\.now\(\); \}, \{ passive:true, capture:true \}\);/.test(SRC));
+ok('押した組（金色）は背景と文字でも分かる', /\.cl-rg\.on\{color:#fff;background:rgba\(195,155,63,\.18\);\}/.test(SRC) && /\.cl-rg\.on \.cl-rl\{font-weight:700;\}/.test(SRC));
 ok('右の枠の見た目', /\.cl-pg\.on\{display:block;/.test(SRC) && /\.cl-rg\.on \.ci\{background:var\(--gold\)/.test(SRC) && /\.cl-panel \.cl-tw\.on\{/.test(SRC));
 {
   //  のぞく・戻る（DOM の代わりに作り物）

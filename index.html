@@ -315,7 +315,8 @@
   .cl-rg .ci{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.06);}
   .cl-rg .cl-rl{font-size:9.5px;line-height:1.3;}
   .cl-rg:hover,.cl-rg.hov{background:rgba(255,255,255,.09);color:#fff;}
-  .cl-rg.on{color:#fff;}
+  .cl-rg.on{color:#fff;background:rgba(195,155,63,.18);}
+  .cl-rg.on .cl-rl{font-weight:700;}
   .cl-rg.on .ci{background:var(--gold);border-color:var(--gold);}
   .cl-rg .clnb{position:absolute;top:3px;right:5px;}
   .cl-rg-set{margin-top:auto;opacity:.7;}
@@ -1684,7 +1685,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260927-01';
+  var APP_BUILD='20260927-02';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -12800,8 +12801,17 @@
       r.classList.toggle('hov', r.id==='clr-'+gi && gi!==cur);
     });
   }
-  function clRailHover(gi){ clPanelShow(gi); }
-  function clRailLeave(){ clPanelShow(clGroupIdx(CL_ACTIVE)); }
+  //  指で触る画面（スマホ・タブレット）では「カーソルを置く」を使わない。iPhone の Safari は、
+  //  触れたときに先に mouseenter を出し、それで中身が変わると押したこと（click）を捨てる。
+  //  そのため組を一度押しても中身が見えるだけで、金色（いまの組）が押した組へ移らなかった
+  var CL_TOUCH_AT=0;
+  document.addEventListener('touchstart', function(){ CL_TOUCH_AT=Date.now(); }, { passive:true, capture:true });
+  function clHoverOk(){
+    if(Date.now()-CL_TOUCH_AT < 1000) return false;
+    return !(window.matchMedia && window.matchMedia('(hover: none)').matches);
+  }
+  function clRailHover(gi){ if(clHoverOk()) clPanelShow(gi); }
+  function clRailLeave(){ if(clHoverOk()) clPanelShow(clGroupIdx(CL_ACTIVE)); }
   function clRailPick(gi){
     var grp=clNavByGroup()[gi]; if(!grp || !grp.items.length) return;
     var last=CL_LAST_IN_G[gi], ok=false;
