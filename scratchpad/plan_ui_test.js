@@ -27,7 +27,7 @@ const base =
   'function nOr(v){ return (v==null||v==="")?null:Number(v); }' +
   'function jstDay(s){ return String(s||"").slice(0,10); }' +
   'function yen(v){ return "¥"+Math.round(Number(v)||0).toLocaleString("ja-JP"); }' +
-  'var EP_STD_FEE=45000; var EP_SELLER_FEE=30000; var EP_SETUP_FEE=100000; var EP_SETUP_SELLER=50000; var ME="me"; var SHINDAN_CHECKS=[["deputy","右腕"],["manual","手順"],["sales_dep","偏り"],["successor","方向性"],["shares","株主"],["will","遺言"],["contracts","契約書"],["offbalance","簿外"],["guarantee","保証"]];' +
+  'var EP_STD_FEE=45000; var EP_SELLER_FEE=35000; var EP_SETUP_FEE=100000; var EP_SETUP_SELLER=50000; var ME="me"; var SHINDAN_CHECKS=[["deputy","右腕"],["manual","手順"],["sales_dep","偏り"],["successor","方向性"],["shares","株主"],["will","遺言"],["contracts","契約書"],["offbalance","簿外"],["guarantee","保証"]];' +
   'var EXIT={ scope:"c1", who:"customer", row:null, ctx:null, edit:{} };' +
   takeObj('PLANS') + takeVar('PLAN_RATES') + takeFn('planOf') + takeFn('planName') + takeFn('planFee') + takeFn('planTag') + takeFn('faPerk') +
   takeArr('EXIT_TYPES') + takeObj('EXIT_TARGETS') + takeObj('EXIT_CHECKS') + takeObj('EXIT_NOTES') + takeFn('exitPathNote') + takeFn('exitCheckLabel') + takeFn('exitTypeOf') +
@@ -38,7 +38,7 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
 // ① プラン
 {
   is('既定は買い手', [M.planOf(null), M.planOf({}), M.planOf({ plan: 'seller' })], ['buyer', 'buyer', 'seller']);
-  is('名前と月額', [M.planName('buyer'), M.planName('seller'), M.planFee('buyer'), M.planFee('seller')], ['買い手プラン（成長）', '売り手プラン（譲渡準備）', 45000, 30000]);
+  is('名前と月額', [M.planName('buyer'), M.planName('seller'), M.planFee('buyer'), M.planFee('seller')], ['買い手プラン（成長）', '売り手プラン（譲渡準備）', 45000, 35000]);
   ok('印', /gold[^>]*>売り手プラン/.test(M.planTag({ plan: 'seller' })) && /blue[^>]*>買い手プラン/.test(M.planTag({})));
 }
 // ② M&A の優遇
@@ -62,7 +62,8 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
   ok('プランと優遇の箱', /いまの顧問プラン/.test(h0) && /売り手プラン（譲渡準備）/.test(h0) && /FA報酬 20% 割引</.test(h0) && !/最低報酬なし/.test(h0));
   ok('経営者には「担当パートナーへ」', /プランの切替は担当パートナーにお申し出ください/.test(h0) && !/planRequest/.test(h0));
   is('出口のボタンは8つ', (h0.match(/onclick="exitPick\('/g) || []).length, 8);
-  ok('出口を選ぶ前は案内だけ', /いちばん近いものを選んでください/.test(h0) && !/id="ex-year"/.test(h0));
+  ok('出口を選ぶ前は案内だけ（経営者は「決まると」）', /出口が決まると、目標の年と、その出口で見る数字が出ます。四半期ごとに担当パートナーと見直します。/.test(h0) && !/id="ex-year"/.test(h0));
+  ok('パートナーには「面談でいちばん近いものを」', /面談でいちばん近いものを選んでください/.test(M.html({ exit_type: null, targets: {} }, ctx, 'partner')));
   const h1 = M.html({ exit_type: 'sell', target_year: 2029, targets: { price: 15000, debt: 1000 }, holding_flag: false }, ctx, 'partner');
   ok('目標の年と数字の表', /id="ex-year"/.test(h1) && /目標譲渡価格/.test(h1) && /12,000万円/.test(h1) && /\+3,000万円/.test(h1));
   ok('借入は下げる目標（達していれば緑）', /color:#A9403D;font-weight:600;">-2,000万円/.test(h1));
@@ -100,7 +101,7 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
   ok('継ナビくんに TPM／グロースの断定をさせない', /上場の可否・費用・時期は断定せず、J-Adviser や主幹事証券への確認を勧めてください/.test(ea));
   ok('出口を選ぶ前の問いに資本提携・上場', /譲る・親族へ継ぐ・従業員へ継ぐ・資本提携・上場（TOKYO PRO Market／グロース）・畳む・買い手になる/.test(ea));
   ok('画面の案内に一部を譲る・上場', /譲る・継ぐ・一部を譲って続ける・上場して続ける・畳む・買い手になる/.test(SRC));
-  ok('継ナビくんの画面ガイドは8つ', /出口の設計=8つの出口\(/.test(SRC));
+  ok('継ナビくんの画面ガイドは8つ', /出口の設計\([^)]*\)=8つの出口\(/.test(SRC));
   //  説明書
   ok('経営者説明書：8つと TOKYO PRO Market', /🤲 資本提携（一部を譲る）／📈 上場する（TOKYO PRO Market）／🏛️ 上場する（グロース市場など）/.test(MANC) && /TOKYO PRO Market とは/.test(MANC) && /上場の可否・費用・時期は J-Adviser との相談で決まります/.test(MANC));
   //  写しの「どの出口へ」の行（見出しの次の行）にボタンが8つ
@@ -155,16 +156,16 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
 {
   const ctx = { eq: 5000, ans: {}, prof: {} };
   const hc = M.html({ exit_type: null, targets: {} }, ctx, 'customer'), hp = M.html({ exit_type: null, targets: {} }, ctx, 'partner');
-  ok('経営者には「パートナーと同じもの」', /担当パートナーと<b>同じもの<\/b>を見ています/.test(hc) && !/経営者の画面「出口の設計」と/.test(hc));
+  ok('経営者には保存の案内を書かない（上の案内は custReadOnly）', !/ここで保存した内容は/.test(hc) && !/経営者の画面「出口の設計」と/.test(hc));
   ok('パートナーには「経営者と同じもの」', /経営者の画面「出口の設計」と<b>同じもの<\/b>です/.test(hp) && !/担当パートナーと<b>同じもの/.test(hp));
   const S2 = new Function(base + 'function $(id){ return null; }' + takeArr('STRUCT_KINDS') + takeArr('STRUCT_STATUS') + takeFn('structStatusName') + takeFn('structSignals') + 'var STRUCT={ scope:"c1", who:"customer", row:null, items:{}, sqlOk:true };' + takeFn('structHtml') + 'return structHtml;')();
-  ok('株の持ち方も、両方に同じ案内', /担当パートナーと<b>同じもの<\/b>を見ています/.test(S2({}, ctx, 'customer', true)) && /経営者の画面と<b>同じもの<\/b>です/.test(S2({}, ctx, 'partner', true)));
+  ok('株の持ち方：パートナーには同じ表の案内、経営者には保存の案内なし', !/保存すると/.test(S2({}, ctx, 'customer', true)) && /経営者の画面と<b>同じもの<\/b>です/.test(S2({}, ctx, 'partner', true)));
   //  説明書・資料に「5つの出口」が残っていない
   no('経営者説明書に 5つの出口 は残っていない', /5つの出口/.test(MANC));
   no('パートナー説明書に 5つの出口 は残っていない', /5つの出口/.test(MANP));
   no('経営者向け資料に 5つの出口 は残っていない', /5つの出口/.test(PITC));
-  ok('経営者説明書：パートナーと同じもの', /担当パートナーのカルテにも同じものが出ます/.test(MANC));
-  ok('パートナー説明書：経営者と同じもの', /経営者とあなたは同じものを見ています/.test(MANP));
+  ok('経営者説明書：書き込むのは担当、経営者は確かめる', /書き込むのは担当パートナー<\/b>で、あなたはこの画面で決まったことを<b>確かめます<\/b>/.test(MANC) && !/どちらで保存しても両方に反映/.test(MANC));
+  ok('パートナー説明書：経営者の画面は確かめるだけ', /経営者の画面は確かめるだけ。書き込むのはあなた（カルテ）です。/.test(MANP) && !/どちらで保存しても両方に/.test(MANP));
   ok('パートナーの画面ガイド：場所と同じ表', /出口の設計はカルテ→企業価値・承継準備→出口の設計\(企業価値診断の次\)。経営者の左メニュー「出口の設計」と同じ表を見ている/.test(SRC) && /出口は8つ\(第三者へ譲る/.test(SRC));
 }
 // ③b 運営の成長ロードマップ：上場は二段（TOKYO PRO Market → グロース）
@@ -194,7 +195,7 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
 {
   ok('経営者のメニュー：出口の設計は全員、買い手になるは買い手だけ', /\['sec-exit','出口の設計'\],\['sec-scale','スケールの設計'\]\]\.concat\(planOf\(window\.__prof\)==='buyer'\?\[\['sec-ma','買い手になる'\],\['sec-after','買った後に備える'\]\]:\[\]\)/.test(SRC));
   ok('経営者の画面：出口の設計の枠と、買い手だけの「買い手になる」', /id="sec-exit"/.test(SRC) && /id="my-exit"/.test(SRC) && /\+\(planOf\(prof\)==='buyer' \? \(''/.test(SRC));
-  ok('起動時に出口を読む', /loadSurvey\('customer'\); loadExitPlan\(ME,'customer'\); loadScalePlan\(ME,'customer'\); loadAfterPrep\(ME,'customer'\); knvInit\(\);/.test(SRC));
+  ok('起動時に出口を読む', /loadSurvey\('customer'\); loadExitPlan\(SCOPE,'customer'\); loadScalePlan\(SCOPE,'customer'\); loadAfterPrep\(SCOPE,'customer'\); knvInit\(\);/.test(SRC));
   ok('カルテ：出口の設計の見出し・案内・枠と読み込み', /id="cs-exit"/.test(SRC) && /id="knav-exit"/.test(SRC) && /id="cl-exit"/.test(SRC) && /loadShindan\(custId\);\n    loadExitPlan\(custId,'partner'\);/.test(SRC));
   ok('顧客一覧にプランの印', /tags\+=planTag\(c\);/.test(SRC) && /select\('id,email,company_name,role,stage,created_at,plan'\)/.test(SRC));
   const cs = takeFn('ctSend');
@@ -223,13 +224,13 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
   ok('SQL：登録時にプランを引き継ぐ', /update public\.profiles set plan = o\.plan, plan_from = null, plan_prev = null/.test(SQL));
   ok('SQL：出口の設計は相続税評価額を持たない', /相続税評価額は持たない/.test(SQL) && !/inheritance|相続税評価額 integer/.test(SQL));
   ok('SQL の期待値', /期待値：列=4、表=2、関数=6、契約書にプラン=1/.test(SQL));
-  ok('pitch：2つのプランと優遇', /買い手プラン（成長）45,000円/.test(PITC) && /売り手プラン（譲渡準備）30,000円/.test(PITC) && /最大50%/.test(PITC));
+  ok('pitch：2つのプランと優遇', /買い手プラン（成長）45,000円/.test(PITC) && /売り手プラン（譲渡準備）35,000円/.test(PITC) && /最大50%/.test(PITC));
   ok('経営者説明書：プラン・優遇・出口の設計', /2つのプラン/.test(MANC) && /<h3>出口の設計<\/h3>/.test(MANC) && /持株会社などは、出口とは別に検討できます/.test(MANC));
   ok('パートナー説明書：プランを選ぶ・切替依頼・出口の設計', /金額ではなく<b>プラン<\/b>を選びます/.test(MANP) && /運営に依頼し、運営が切り替えます/.test(MANP) && /<h3>出口の設計<\/h3>/.test(MANP));
   ok('運営説明書：2プラン・切替は運営だけ・契約書の条文', /顧問料（2プラン）/.test(MANA) && /切替は運営だけ/.test(MANA) && /第2条の3/.test(MANA));
   ok('税額は出さないと明記', /税額は計算しません/.test(MANC) && /税額を計算しません/.test(SRC));
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260926-03', '20260926-03']);
+  is('版が揃う', [build, VER.build], ['20260926-05', '20260926-05']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

@@ -59,10 +59,10 @@ ok('入力のたびに確かめる', /blSenderCheck\(\);/.test(takeFn('blRatesSa
   const els = {}, stds = [];
   function inp(id, v) { els[id] = { value: v, classList: { on: false, toggle(c, f) { this.on = f; } } }; }
   function std(id, n) { const o = { id: id + '-std', getAttribute: () => String(n), textContent: '', className: '' }; stds.push(o); return o; }
-  inp('bl-seller', '35000'); inp('bl-adv', '45000');
-  const sS = std('bl-seller', 30000), sA = std('bl-adv', 45000);
+  inp('bl-seller', '40000'); inp('bl-adv', '45000');
+  const sS = std('bl-seller', 35000), sA = std('bl-adv', 45000);
   mk({ querySelectorAll: () => stds }, (id) => els[id])();
-  is('標準と違うと知らせる', [sS.textContent, sS.className, els['bl-seller'].classList.on], ['標準 30,000 から変えています', 'bl-std diff', true]);
+  is('標準と違うと知らせる', [sS.textContent, sS.className, els['bl-seller'].classList.on], ['標準 35,000 から変えています', 'bl-std diff', true]);
   is('標準どおりなら静かに', [sA.textContent, sA.className, els['bl-adv'].classList.on], ['標準 45,000', 'bl-std', false]);
   ok('入力のたびと読み込み後に印を付け直す', /blSenderCheck\(\); blStdMark\(\);/.test(takeFn('blRatesSave')) && /blSenderCheck\(\); blStdMark\(\);/.test(takeFn('blRatesLoad')));
 }
