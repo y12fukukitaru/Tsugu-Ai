@@ -83,7 +83,7 @@ function fn(name) {
    ['pitch-finance', PITF], ['manual-customer', MANC], ['manual-admin', MANA]].forEach(function (x) {
     ok(x[0] + '：初期導入費が2プラン', /100,000円/.test(x[1]) && /50,000\s?円/.test(x[1]));
   });
-  ok('金融機関向けの年間も直っている', /50,000 \+ 30,000×12 = <b>410,000円<\/b>/.test(PITF));
+  ok('金融機関向けの年間も直っている', /50,000 \+ 35,000×12 = <b>470,000円<\/b>／次年度以降 <b>420,000円<\/b>/.test(PITF));
 }
 // ⑤ M&A の手数料の条件
 {
@@ -156,11 +156,42 @@ function fn(name) {
   ok('EP-I の配分表は4行（顧問料と初期導入費 × 2プラン）',
     (s1.match(/epSplitRow\(/g) || []).length === 4);
   //  資料と説明書
-  ok('EP-I の資料に売り手の額', /売り手 30,000円/.test(PITE1) && /<b>24,000円<\/b>/.test(PITE1) && /<b>40,000円<\/b>/.test(PITE1));
-  ok('EP-II の資料に売り手の額', /売り手 30,000円　Lv\.2/.test(PITE2) && /買い手 4,500円／売り手 3,000円/.test(PITE2));
-  ok('EP 説明書に4行の配分表', /売り手 30,000円／社・月/.test(MANE) && /売り手 50,000円／社/.test(MANE)
-    && /本部 3,000円（一律10%）/.test(MANE));
+  ok('EP-I の資料に売り手の額', /売り手 35,000円/.test(PITE1) && /<b>28,000円<\/b><\/td><td style="text-align:right;">7,000円/.test(PITE1) && /<b>40,000円<\/b>/.test(PITE1));
+  ok('EP-II の資料に売り手の額', /売り手 35,000円　Lv\.2/.test(PITE2) && /買い手 4,500円／売り手 3,500円/.test(PITE2));
+  ok('EP 説明書に4行の配分表', /売り手 35,000円／社・月/.test(MANE) && /売り手 50,000円／社/.test(MANE)
+    && /本部 3,500円（一律10%）/.test(MANE) && /法人 28,000円（80%）<\/b>／TsuguAi 7,000円/.test(MANE));
   ok('EP 説明書：どちらのプランかは画面の札で分かる', /どちらのプランか/.test(MANE) && /の札で出ます/.test(MANE));
+}
+// ⑦ 売り手プランの顧問料は 35,000円（2026-09-26 に 30,000円 から変更）
+{
+  const PITE1 = R('pitch-ep1.html');
+  ok('本体の標準は 35,000', /var EP_SELLER_FEE=35000;/.test(SRC) && !/var EP_SELLER_FEE=30000;/.test(SRC));
+  ok('継ナビくんの知識も 35,000', /売り手プラン\(譲渡準備\)35,000円/.test(SRC) && !/売り手プラン\(譲渡準備\)30,000円/.test(SRC));
+  //  「運営直接担当 30,000円・一律」は廃止した旧価格の説明なので残してよい
+  const DOCS = ['pitch-customer.html', 'pitch-ep1.html', 'pitch-ep2.html', 'pitch-finance.html', 'pitch-bank.html',
+    'pitch-general.html', 'pitch-partner.html', 'manual-customer.html', 'manual-partner.html', 'manual-admin.html',
+    'manual-ep.html', 'recruit-partner.html'];
+  DOCS.forEach(function (f) {
+    const t = R(f).replace(/運営直接担当 30,000円・一律/g, '');
+    no(f + '：売り手の月額に 30,000円 が残っていない', /売り手[^。<]{0,20}30,000\s?円/.test(t));
+    no(f + '：売り手の月額に 30,000円（表の中）が残っていない', /売り手[^。]{0,40}<b>30,000円<\/b>|30,000 円<div[^>]*><span class="scr-tag gold">売り手/.test(t));
+  });
+  //  EP-I：80%＝28,000／20%＝7,000。10社・30社の例も計算どおり
+  ok('EP-I 1社：28,000／7,000', 35000 * 0.8 === 28000 && 35000 - 28000 === 7000);
+  ok('EP-I 10社：受取 344,000・差引 312,000・約374万',
+    8 * 36000 + 2 * 28000 === 344000 && 344000 - 32000 === 312000 && Math.round(312000 * 12 / 10000) === 374
+    && /<td>344,000円<\/td><td>−32,000円<\/td><td><b>312,000円<\/b><\/td><td>約374万円<\/td>/.test(PITE1));
+  ok('EP-I 30社：受取 1,032,000・差引 957,000・約1,148万',
+    24 * 36000 + 6 * 28000 === 1032000 && 1032000 - 75000 === 957000 && Math.round(957000 * 12 / 10000) === 1148
+    && /<td>1,032,000円<\/td><td>−75,000円<\/td><td><b>957,000円<\/b><\/td><td class="up">約1,148万円<\/td>/.test(PITE1));
+  //  EP-II：担当 Lv.2/3/4＝17,500/21,000/24,500、本部 3,500、TsuguAi は残り
+  ok('EP-II 売り手の配分', [[0.5, 17500, 14000], [0.6, 21000, 10500], [0.7, 24500, 7000]].every(function (r) {
+    return Math.round(35000 * r[0]) === r[1] && 35000 - r[1] - 3500 === r[2]
+      && new RegExp('<b>' + r[1].toLocaleString('en-US') + '</b></td><td style="text-align:right;">3,500</td><td style="text-align:right;color:#8A6A12;">' + r[2].toLocaleString('en-US') + '</td>').test(PITE2);
+  }));
+  ok('EP 説明書：担当者は 17,500〜24,500円', /Lvの料率（17,500〜24,500円）/.test(MANE));
+  ok('プラン変更の月額も 35,000', /月額は 35,000円 から <b>45,000円<\/b>/.test(MANC) && /月額は 45,000円 から <b>35,000円<\/b>/.test(MANC)
+    && /月額は 35,000円 → <b>45,000円<\/b>/.test(MANP) && /月額は 45,000円 → <b>35,000円<\/b>/.test(MANP));
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
