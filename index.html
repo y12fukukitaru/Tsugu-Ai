@@ -290,11 +290,7 @@
   .cl-gi{display:none;padding-left:5px;margin-bottom:5px;}
   .cl-grp.open>.cl-gi{display:block;}
   .cl-gd{font-size:10px;line-height:1.55;color:rgba(255,255,255,.42);padding:0 9px 5px 23px;}
-  /* 枝葉（ツリー）：組＝枝、項目＝葉、画面の中の見出し＝小枝 */
-  .cl-tree .cl-gi{margin-left:14px;padding-left:10px;border-left:1px solid rgba(255,255,255,.14);}
-  .cl-tree .cl-gi .cl-gd{padding-left:4px;}
-  .cl-tree .cl-gi>.cl-ni{position:relative;}
-  .cl-tree .cl-gi>.cl-ni::before{content:'';position:absolute;left:-10px;top:50%;width:8px;border-top:1px solid rgba(255,255,255,.14);}
+  /* 項目の下の小枝（画面の中の見出し） */
   .cl-twigs:empty{display:none;}
   .cl-twigs{margin:0 0 6px 20px;padding-left:10px;border-left:1px dashed rgba(207,168,96,.5);}
   .cl-tw{position:relative;font-size:11px;line-height:1.4;color:rgba(255,255,255,.6);padding:4px 7px;border-radius:6px;cursor:pointer;}
@@ -311,6 +307,41 @@
   #cl-main .ph{scroll-margin-top:10px;}
   .ph.cl-flash{animation:clflash 1.2s ease;}
   @keyframes clflash{0%{background:rgba(195,155,63,.28);}100%{background:transparent;}}
+  /* 2段のメニュー（Supabase 風）：左に組のアイコンと名前、右に選んだ組の項目 */
+  .cl-side.cl-rail2{display:flex;padding:0;background:transparent;overflow:hidden;}
+  #cl-modal .cl-side.cl-rail2{flex:0 0 280px;overflow:hidden;}
+  .cl-rail{flex:0 0 70px;display:flex;flex-direction:column;gap:3px;background:var(--deep);border-radius:12px 0 0 12px;padding:8px 5px;overflow-y:auto;}
+  .cl-rg{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 2px 7px;border-radius:9px;cursor:pointer;color:rgba(255,255,255,.62);text-align:center;transition:background .12s,color .12s;}
+  .cl-rg .ci{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.06);}
+  .cl-rg .cl-rl{font-size:9.5px;line-height:1.3;}
+  .cl-rg:hover,.cl-rg.hov{background:rgba(255,255,255,.09);color:#fff;}
+  .cl-rg.on{color:#fff;}
+  .cl-rg.on .ci{background:var(--gold);border-color:var(--gold);}
+  .cl-rg .clnb{position:absolute;top:3px;right:5px;}
+  .cl-rg-set{margin-top:auto;opacity:.7;}
+  .cl-panel{flex:1;min-width:0;background:var(--soft);border:1px solid var(--softline);border-left:none;border-radius:0 12px 12px 0;padding:12px 8px;overflow-y:auto;}
+  .cl-pg{display:none;}
+  .cl-pg.on{display:block;animation:mpop .12s ease;}
+  .cl-ph{font-size:13px;font-weight:700;color:var(--navy);padding:2px 8px;}
+  .cl-pd{font-size:10.5px;color:var(--muted);line-height:1.55;padding:3px 8px 9px;border-bottom:1px solid var(--softline);margin-bottom:7px;}
+  .cl-panel .cl-ni{color:var(--ink);font-size:12.5px;}
+  .cl-panel .cl-ni:hover{background:rgba(30,58,102,.06);color:var(--navy);}
+  .cl-panel .cl-ni.on{background:rgba(30,58,102,.09);color:var(--navy);font-weight:700;}
+  .cl-panel .cl-ni .ci{background:var(--card);border-color:var(--line);color:var(--navy);}
+  .cl-panel .cl-ni:hover .ci{background:var(--card);}
+  .cl-panel .cl-ni.on .ci{background:var(--gold);border-color:var(--gold);color:#fff;}
+  .cl-panel .cl-twigs{border-left-color:#D9C79A;margin-left:22px;}
+  .cl-panel .cl-tw{color:var(--muted);}
+  .cl-panel .cl-tw::before{border-top-color:#D9C79A;}
+  .cl-panel .cl-tw:hover{color:var(--navy);background:rgba(30,58,102,.05);}
+  .cl-panel .cl-tw.on{color:var(--navy);background:rgba(195,155,63,.16);}
+  @media(max-width:760px){
+    .cl-side.cl-rail2{flex-direction:column;}
+    .cl-rail{flex-direction:row;flex:0 0 auto;border-radius:12px 12px 0 0;overflow-x:auto;}
+    .cl-rg{flex:0 0 74px;}
+    .cl-rg-set{margin-top:0;}
+    .cl-panel{border:1px solid var(--softline);border-top:none;border-radius:0 0 12px 12px;}
+  }
   .cl-tgh{font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.06em;margin:13px 2px 6px;}
   .cl-tgh .cl-tgd{font-weight:400;color:var(--muted);margin-left:8px;letter-spacing:0;}
   .cl-sheet-body>.cl-tgh:first-child{margin-top:2px;}
@@ -1627,7 +1658,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260926-07';
+  var APP_BUILD='20260926-08';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -12336,9 +12367,9 @@
     clTwigsRender(id);
     if(!side)return;
     Array.prototype.forEach.call(side.querySelectorAll('.cl-ni'),function(n){ n.classList.toggle('on', n.id==='ni-'+id); });
-    // いま見ているタブの組は必ず開く。畳んだままだと現在地が見えない。
+    //  右の枠には、いま見ている項目の組を出す。組ごとに最後に見た項目も覚える
     var gi=clGroupIdx(id);
-    if(gi>=0){ var g=$('clg-'+gi); if(g && !g.classList.contains('open')){ g.classList.add('open'); clOpenSet(gi,true); } }
+    if(gi>=0){ CL_LAST_IN_G[gi]=id; clPanelShow(gi); }
   }
   //  タブの見出しになる id。ここに載っている見出しから、次に載っている見出しの
   //  直前までが1つのタブになる。載せなければ、その見出しは前のタブの中の小見出しに
@@ -12566,23 +12597,54 @@
     });
     return out;
   }
+  //  カルテのメニューは Supabase のような2段にした（2026-09-26）。
+  //    左の列  … 組（6つ）のアイコンと名前だけ
+  //    右の枠  … 選んだ組の項目。いま見ている項目の下には、画面の中の見出しが枝分かれして出る
+  //  組にカーソルを置くと、その組の項目が右の枠に出る（のぞくだけ）。押すとその組を開く。
+  //  23項目が一度に並んでいたのが、6つのアイコンと、選んだ組の数項目だけになる。
+  //  件数の札（clgb-／clnb-）と項目の id（ni-／tw-）は前と同じなので、数え方・移り方はそのまま
+  var CL_GROUP_ICON=['building','checks','doc','wallet','trend','cpu'];
+  var CL_LAST_IN_G={};   // 組ごとに、最後に見た項目（組を押したらそこへ戻る）
   function clSideHtml(){
-    var h='<div class="cl-side cl-tree" id="cl-side"><div class="sb-sec">メニュー</div>';
-    clNavByGroup().forEach(function(grp, gi){
+    var groups=clNavByGroup();
+    var h='<div class="cl-side cl-rail2" id="cl-side" onmouseleave="clRailLeave()"><div class="cl-rail">';
+    groups.forEach(function(grp, gi){
       if(!grp.items.length) return;
-      h+='<div class="cl-grp'+(clOpenIs(gi)?' open':'')+'" id="clg-'+gi+'">'
-        +'<div class="cl-gh" onclick="clGroupToggle('+gi+',event)">'
-          +'<svg class="cl-gc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6"/></svg>'
-          +'<span>'+esc(grp.name)+'</span>'
-          +'<span class="clnb hidden" id="clgb-'+gi+'">0</span>'
-        +'</div>'
-        +'<div class="cl-gi"><div class="cl-gd">'+esc(CL_GROUP_DESC[CL_GROUPS.indexOf(grp.name)]||'')+'</div>';
-      grp.items.forEach(function(it){ h+=clNi(it[0],it[1],it[2]); });
-      h+='</div></div>';
+      h+='<div class="cl-rg" id="clr-'+gi+'" onmouseenter="clRailHover('+gi+')" onclick="clRailPick('+gi+')" title="'+escA(grp.name)+'">'
+        +'<span class="ci">'+icoSvg(CL_GROUP_ICON[CL_GROUPS.indexOf(grp.name)]||'doc')+'</span>'
+        +'<span class="cl-rl">'+esc(grp.name)+'</span>'
+        +'<span class="clnb hidden" id="clgb-'+gi+'">0</span></div>';
     });
-    h+='<div class="cl-ni" onclick="clSheetOpen(true)"><span class="ci">'+icoSvg('gear')+'</span><span>並び順のカスタマイズ</span></div>';
-    return h+'</div>';
+    h+='<div class="cl-rg cl-rg-set" onclick="clSheetOpen(true)" title="並び順のカスタマイズ"><span class="ci">'+icoSvg('gear')+'</span><span class="cl-rl">並び順</span></div>';
+    h+='</div><div class="cl-panel">';
+    groups.forEach(function(grp, gi){
+      if(!grp.items.length) return;
+      h+='<div class="cl-pg" id="clg-'+gi+'">'
+        +'<div class="cl-ph">'+esc(grp.name)+'</div>'
+        +'<div class="cl-pd">'+esc(CL_GROUP_DESC[CL_GROUPS.indexOf(grp.name)]||'')+'</div>';
+      grp.items.forEach(function(it){ h+=clNi(it[0],it[1],it[2]); });
+      h+='</div>';
+    });
+    return h+'</div></div>';
   }
+  //  右の枠に出す組を切り替える（いま見ている組には .on、のぞいている組には .hov）
+  function clPanelShow(gi){
+    var cur=clGroupIdx(CL_ACTIVE);
+    Array.prototype.forEach.call(document.querySelectorAll('#cl-side .cl-pg'),function(g){ g.classList.toggle('on', g.id==='clg-'+gi); });
+    Array.prototype.forEach.call(document.querySelectorAll('#cl-side .cl-rg[id^="clr-"]'),function(r){
+      r.classList.toggle('on', r.id==='clr-'+cur);
+      r.classList.toggle('hov', r.id==='clr-'+gi && gi!==cur);
+    });
+  }
+  function clRailHover(gi){ clPanelShow(gi); }
+  function clRailLeave(){ clPanelShow(clGroupIdx(CL_ACTIVE)); }
+  function clRailPick(gi){
+    var grp=clNavByGroup()[gi]; if(!grp || !grp.items.length) return;
+    var last=CL_LAST_IN_G[gi], ok=false;
+    grp.items.forEach(function(it){ if(it[0]===last) ok=true; });
+    clNav(ok?last:grp.items[0][0]);
+  }
+
   // ===== ボトムシート型メニュー（スマホ）＋カスタマイズ =====
   var CL_EDIT=false;
   function clMenuToggle(e){

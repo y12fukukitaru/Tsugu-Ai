@@ -52,7 +52,24 @@ ok('よく聞かれること（資料の質問から）', /よく聞かれるこ
 ok('組は最初から全部ひらく', /if\(a===null\) return true;/.test(takeFn('clOpenIs')));
 ok('畳んだ組は覚える（最初は全部ひらいている前提で）', /a=CL_GROUPS\.map\(function\(g,i\)\{ return i; \}\)/.test(takeFn('clOpenSet')));
 ok('項目の下に小枝の入れ物', /<div class="cl-twigs" id="tw-'\+id\+'"><\/div>/.test(takeFn('clNi')));
-ok('ツリーの形', /class="cl-side cl-tree"/.test(takeFn('clSideHtml')) && /\.cl-tree \.cl-gi\{/.test(SRC) && /\.cl-tw::before\{/.test(SRC));
+//  2段のメニュー（Supabase 風、2026-09-26）：左に組、右に選んだ組の項目
+const side = takeFn('clSideHtml');
+ok('2段：左の列（組のアイコンと名前）と右の枠', /class="cl-side cl-rail2"/.test(side) && /<div class="cl-rail">/.test(side) && /<div class="cl-panel">/.test(side));
+ok('組にカーソルでのぞく・押して開く・離れたら戻る', /onmouseenter="clRailHover\('\+gi\+'\)"/.test(side) && /onclick="clRailPick\('\+gi\+'\)"/.test(side) && /onmouseleave="clRailLeave\(\)"/.test(side));
+ok('件数の札と項目の id は前と同じ', /id="clgb-'\+gi\+'"/.test(side) && /id="clg-'\+gi\+'"/.test(side) && /clNi\(it\[0\],it\[1\],it\[2\]\)/.test(side));
+ok('組を押したら、前にその組で見ていた項目へ', /CL_LAST_IN_G\[gi\]/.test(takeFn('clRailPick')) && /CL_LAST_IN_G\[gi\]=id; clPanelShow\(gi\);/.test(takeFn('clSpySet')));
+ok('右の枠の見た目', /\.cl-pg\.on\{display:block;/.test(SRC) && /\.cl-rg\.on \.ci\{background:var\(--gold\)/.test(SRC) && /\.cl-panel \.cl-tw\.on\{/.test(SRC));
+{
+  //  のぞく・戻る（DOM の代わりに作り物）
+  const mk = id => ({ id: id, cls: {}, classList: { toggle(c, f) { this.o[c] = !!f; }, o: {} } });
+  const pgs = [0, 1, 2].map(i => mk('clg-' + i)), rgs = [0, 1, 2].map(i => mk('clr-' + i));
+  const doc = { querySelectorAll: q => /cl-pg/.test(q) ? pgs : rgs };
+  const show = new Function('document', 'clGroupIdx', 'CL_ACTIVE', takeFn('clPanelShow') + 'return clPanelShow;')(doc, () => 1, 'x');
+  show(2);
+  is('のぞいている組の中身を出す', pgs.map(g => !!g.classList.o.on), [false, false, true]);
+  is('いま見ている組の印はそのまま', rgs.map(r => !!r.classList.o.on), [false, true, false]);
+  is('のぞいている組に印', rgs.map(r => !!r.classList.o.hov), [false, false, true]);
+}
 ok('いま見ている項目の見出しを拾う（.ph）', /classList\.contains\('ph'\)/.test(takeFn('clSubHeads')));
 ok('見出しへ動く', /scrollIntoView/.test(takeFn('clTwig')));
 ok('項目を移ると小枝を描き直す', /clTwigsRender\(id\);/.test(takeFn('clSpySet')));

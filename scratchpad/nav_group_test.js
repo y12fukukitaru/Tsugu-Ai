@@ -94,7 +94,8 @@ ok('経営者（顧問税理士の入力だけ）：見出しなしの1項目', 
   no('「フラットなメニュー」の書き置きを残さない', /フラットなメニュー（カテゴリー見出しなし/.test(SRC));
   ok('経営者のスマホのタイルも組ごと', /navGrouped\('customer', effectiveNav\('customer'\)\)\.forEach/.test(takeFn('dashSheetOpen')));
   ok('カルテ：組ごとの説明が6つ', (function () { const m = /var CL_GROUP_DESC=\[([\s\S]*?)\];/.exec(SRC); return m && (m[1].match(/'[^']+'/g) || []).length === 6; })());
-  ok('カルテ：開いた組の見出しの下に説明', /<div class="cl-gi"><div class="cl-gd">'\+esc\(CL_GROUP_DESC\[CL_GROUPS\.indexOf\(grp\.name\)\]\|\|''\)/.test(SRC));
+  //  2段のメニューにしてから、説明は右の枠の組名の下に出る
+  ok('カルテ：右の枠の組名の下に説明', /<div class="cl-pd">'\+esc\(CL_GROUP_DESC\[CL_GROUPS\.indexOf\(grp\.name\)\]\|\|''\)/.test(SRC));
   ok('カルテ：スマホのメニューにも説明', /<div class="cl-tgh">'\+esc\(grp\.name\)\+'<span class="cl-tgd">'/.test(SRC));
 }
 
