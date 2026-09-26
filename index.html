@@ -1537,7 +1537,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260926-01';
+  var APP_BUILD='20260926-02';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2895,6 +2895,10 @@
             +'<b style="color:var(--navy);">口座振替でお引き落としする請求には出ません。</b>'
             +'（当社が受け取る側の口座です。お客様・パートナーの口座はここには入れません）</div>'
           +'<input id="bl-bank" class="inp2" style="width:100%;max-width:520px;" placeholder="例）〇〇銀行 本店営業部 普通 1234567 カ）ツグアイ" oninput="blRatesSave()">'
+          +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:9px;">'
+            +'<button class="btn2" style="padding:6px 16px;" onclick="blRatesSaveNow()">保存する</button>'
+            +'<span class="bl-save-st" style="font-size:11.5px;color:#94A2B6;">入力すると自動で保存されます</span>'
+          +'</div>'
         +'</div>'
         //  総合振込ファイル（全銀フォーマット）の先頭に入る「委託者」。
         //  銀行から交付される委託者コードと、振込元にする継の口座。
@@ -2912,6 +2916,13 @@
             +'<div><label class="fl">支店コード（3桁）</label><input id="bl-sbranch" class="inp2" style="width:90px;" inputmode="numeric" placeholder="101" oninput="blRatesSave()"></div>'
             +'<div><label class="fl">種別</label><select id="bl-stype" class="inp2" onchange="blRatesSave()"><option value="1">普通</option><option value="2">当座</option></select></div>'
             +'<div><label class="fl">口座番号（7桁）</label><input id="bl-sacct" class="inp2" style="width:110px;" inputmode="numeric" placeholder="1234567" oninput="blRatesSave()"></div>'
+          +'</div>'
+          //  総合振込ファイルを作るときに Edge Function（payout-file）が確かめるのと同じ決まりで、
+          //  足りないものを先に出す。作る段になって「未設定です」と言われないように
+          +'<div id="bl-sender-check" style="font-size:11px;line-height:1.7;margin-top:7px;"></div>'
+          +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:9px;">'
+            +'<button class="btn2" style="padding:6px 16px;" onclick="blRatesSaveNow()">保存する</button>'
+            +'<span class="bl-save-st" style="font-size:11.5px;color:#94A2B6;">入力すると自動で保存されます</span>'
           +'</div>'
         +'</div>'
         +'<div style="margin-top:10px;border:1px solid var(--softline);border-radius:10px;padding:10px 12px;">'
@@ -3628,26 +3639,70 @@
   var BL_RATE_IDS=['bl-pbase','bl-pclient','bl-adv','bl-init','bl-ai','bl-seat','bl-seatpack','bl-seatpackn','bl-bank',
                    'bl-sc','bl-sname','bl-sbank','bl-sbranch','bl-stype','bl-sacct','bl-seller','bl-initseller'];
   var BL_RATES_OK=false, BL_SAVE_T=null;
-  function blRatesNote(t){ var el=$('bl-rates-note'); if(el) el.textContent=t?('　'+t):''; }
+  //  保存の状態は、画面の上（料率の説明の横）と、口座の欄の「保存する」の横の両方に出す。
+  //  上にしか出さないと、下の口座の欄を入れている人からは見えず、保存されたか分からない
+  function blRatesNote(t, color){
+    var el=$('bl-rates-note'); if(el){ el.textContent=t?('　'+t):''; el.style.color=color||'#27684A'; }
+    Array.prototype.forEach.call(document.querySelectorAll('.bl-save-st'), function(x){
+      x.textContent=t||'入力すると自動で保存されます'; x.style.color=color||'#27684A'; x.style.fontWeight=(color==='#A9403D'?'700':'400');
+    });
+  }
+  function blHm(d){ d=d?new Date(d):new Date(); return isNaN(d.getTime())?'':(d.getMonth()+1)+'/'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+  //  総合振込の委託者情報の確かめ。payout-file（Edge Function）の決まりと同じ
+  function blSenderIssues(v){
+    var dg=function(x){ return String(x==null?'':x).replace(/[^0-9]/g,''); };
+    var out=[];
+    if(!dg(v['bl-sc'])) out.push('委託者コード（無い銀行は 0）');
+    else if(dg(v['bl-sc']).length>10) out.push('委託者コードは10桁まで');
+    if(!String(v['bl-sname']||'').trim()) out.push('委託者名（カナ）');
+    if(dg(v['bl-sbank']).length!==4) out.push('銀行コード（4桁）');
+    if(dg(v['bl-sbranch']).length!==3) out.push('支店コード（3桁）');
+    if(!dg(v['bl-sacct'])) out.push('口座番号');
+    else if(dg(v['bl-sacct']).length>7) out.push('口座番号は7桁まで');
+    return out;
+  }
+  function blSenderCheck(){
+    var box=$('bl-sender-check'); if(!box) return;
+    var v={}; ['bl-sc','bl-sname','bl-sbank','bl-sbranch','bl-sacct'].forEach(function(id){ var el=$(id); v[id]=el?el.value:''; });
+    var iss=blSenderIssues(v);
+    box.innerHTML=iss.length
+      ? '<span style="color:#8A6A12;">総合振込ファイルを作るには、あと <b>'+esc(iss.join('・'))+'</b> が要ります。</span>'
+      : '<span style="color:#27684A;font-weight:700;">✓ 総合振込ファイルに必要な項目はそろっています。</span>';
+  }
   async function blRatesLoad(){
     try{
-      var r=await sb.from('app_settings').select('value').eq('key','billing_rates').maybeSingle();
-      if(r.error){ blRatesNote('（保存機能のSQL設定が未実施のため、現在は画面上の試算のみです）'); return; }
+      var r=await sb.from('app_settings').select('value,updated_at').eq('key','billing_rates').maybeSingle();
+      if(r.error){ blRatesNote('保存できません（保存機能のSQL設定が未実施のため、いまは画面上の試算のみです）','#A9403D'); blSenderCheck(); return; }
       BL_RATES_OK=true;
       var v=(r.data&&r.data.value)||{};
       BL_RATE_IDS.forEach(function(id){ var el=$(id); if(el && v[id]!=null && v[id]!=='') el.value=v[id]; });
+      blRatesNote(r.data&&r.data.updated_at?('✓ 保存済み（最終保存 '+blHm(r.data.updated_at)+'）'):'入力すると自動で保存されます', r.data?'#27684A':'#94A2B6');
     }catch(e){}
+    blSenderCheck();
   }
+  //  入力の0.8秒後に自動で保存する。「保存する」はそれを待たずに今すぐ保存する
   function blRatesSave(){
-    if(!BL_RATES_OK) return;
+    blSenderCheck();
+    if(!BL_RATES_OK){ blRatesNote('保存できません（保存機能のSQL設定が未実施です）','#A9403D'); return; }
     if(BL_SAVE_T) clearTimeout(BL_SAVE_T);
-    BL_SAVE_T=setTimeout(async function(){
-      var v={}; BL_RATE_IDS.forEach(function(id){ var el=$(id); if(el) v[id]=el.value; });
-      try{
-        var r=await sb.from('app_settings').upsert({ key:'billing_rates', value:v, updated_at:new Date().toISOString() });
-        blRatesNote(r.error?('保存に失敗しました：'+r.error.message):'✓ 保存しました');
-      }catch(e){ blRatesNote('保存に失敗しました'); }
-    }, 800);
+    blRatesNote('入力中…（手を止めると自動で保存します）','#94A2B6');
+    BL_SAVE_T=setTimeout(blRatesWrite, 800);
+  }
+  function blRatesSaveNow(){
+    if(BL_SAVE_T){ clearTimeout(BL_SAVE_T); BL_SAVE_T=null; }
+    blSenderCheck();
+    if(!BL_RATES_OK){ blRatesNote('保存できません（保存機能のSQL設定が未実施です）','#A9403D'); return; }
+    blRatesWrite();
+  }
+  async function blRatesWrite(){
+    BL_SAVE_T=null;
+    var v={}; BL_RATE_IDS.forEach(function(id){ var el=$(id); if(el) v[id]=el.value; });
+    blRatesNote('保存しています…','#94A2B6');
+    try{
+      var r=await sb.from('app_settings').upsert({ key:'billing_rates', value:v, updated_at:new Date().toISOString() });
+      if(r.error) blRatesNote('保存に失敗しました：'+r.error.message,'#A9403D');
+      else blRatesNote('✓ 保存しました（'+blHm()+'・運営全員に反映）','#27684A');
+    }catch(e){ blRatesNote('保存に失敗しました（通信を確かめて、もう一度「保存する」を押してください）','#A9403D'); }
   }
   function renderAdmBilling(){
     var box=$('bl-summary'); if(!box)return;
