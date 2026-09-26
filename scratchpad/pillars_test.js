@@ -123,7 +123,7 @@ ok('pillarsOf も PMI_STAGE（7）と譲受で切る', /function pillarsOf[\s\S]
   const f = takeFn('loadMyMa');
   ok('案件が無くても柱の絵を出す（早期 return の前）', /pb\.innerHTML=pillarHtml\(pillarsOf[\s\S]*if\(res\.error \|\| !\(res\.data\|\|\[\]\)\.length\)\{ box\.innerHTML=''; return; \}/.test(f));
   ok('置き場 my-pillar が「買いたい条件」の上にある', /id="my-pillar"><\/div>'\s*\n\s*\+'<div[^>]*>買いたい条件<\/div>'/.test(SRC));
-  ok('起動時に loadMyMa が呼ばれる', /loadMyMa\(\); loadBuyCriteria\(ME,'bc'\);/.test(SRC));
+  ok('起動時に loadMyMa が呼ばれる', /loadMyMa\(\); loadBuyCriteria\(SCOPE,'bc'\);/.test(SRC));
 }
 //  パートナーのカルテ
 {

@@ -66,7 +66,8 @@ const S = new Function(base + 'return {paths:SCALE_PATHS, st:SCALE_STATUS, nums:
 {
   const ctx = { revY: 24000, opY: 900, opRate: 3.75, cashM: 2.4, dscYears: 5, pillars: 1, net: 500, eqGrowth: 5, plan: 'buyer', prof: { company_name: '◯◯商事' } };
   const h0 = S.html({ main: null, targets: {}, items: {} }, ctx, 'customer', true);
-  ok('経営者には「パートナーと同じもの」', /担当パートナーと<b>同じもの<\/b>を見ています/.test(h0));
+  //  経営者の画面は確かめるだけ（2026-09-26）。上の案内は custReadOnly が出すので、描く関数は保存の案内を書かない
+  ok('経営者には保存の案内を書かない', !/ここで保存した内容は/.test(h0) && !/どちらで保存しても/.test(h0));
   is('主軸のボタンは7つ', (h0.match(/onclick="scaleMain\('/g) || []).length, 7);
   ok('合図のある道は主軸のボタンにも印', /🔧 いまの事業を深める<span class="tag gold"[^>]*>合図<\/span>/.test(h0));
   ok('見る数字の表（いま・目標・差）', /年商（直近12か月）/.test(h0) && /24,000万円/.test(h0) && /2\.4か月/.test(h0) && /1本/.test(h0));
@@ -96,7 +97,7 @@ const S = new Function(base + 'return {paths:SCALE_PATHS, st:SCALE_STATUS, nums:
 {
   ok('経営者のメニュー：出口の設計の次', /\['sec-exit','出口の設計'\],\['sec-scale','スケールの設計'\]\]/.test(SRC));
   ok('経営者の枠と、カルテの枠', /<div class="panel" id="sec-scale">/.test(SRC) && /<div id="my-scale">読み込み中\.\.\.<\/div>/.test(SRC) && /<div class="ph" id="cs-scale"/.test(SRC) && /<div id="cl-scale">読み込み中\.\.\.<\/div>/.test(SRC));
-  ok('経営者の初期化で読む', /loadExitPlan\(ME,'customer'\); loadScalePlan\(ME,'customer'\);/.test(SRC));
+  ok('経営者の初期化で読む', /loadExitPlan\(SCOPE,'customer'\); loadScalePlan\(SCOPE,'customer'\);/.test(SRC));
   is('カルテを開くと読む（出口の設計と一緒に）', (SRC.match(/loadExitPlan\(custId,'partner'\); loadScalePlan\(custId,'partner'\);/g) || []).length, 2);
   ok('絵は右肩上がり', /'sec-scale':'growth'/.test(SRC) && /growth:'<path d="M3\.5 17\.5 9 12l3\.5 3\.5L20\.5 7"\/>/.test(SRC));
   const lp = takeFn('loadScalePlan');
@@ -118,7 +119,7 @@ const S = new Function(base + 'return {paths:SCALE_PATHS, st:SCALE_STATUS, nums:
 // ⑥ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260926-04', '20260926-04']);
+  is('版が揃う', [build, VER.build], ['20260926-05', '20260926-05']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

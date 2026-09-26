@@ -210,7 +210,7 @@ async function runSave(fields, pfx) {
     // ---------------------------------------------------------------
     // ⑦ つなぎこみ
     // ---------------------------------------------------------------
-    ok('経営者の読み込みに買いたい条件が入っている', /loadMyMa\(\); loadBuyCriteria\(ME,'bc'\); loadMyPdca\(\);/.test(SRC));
+    ok('経営者の読み込みに買いたい条件が入っている', /loadMyMa\(\); loadBuyCriteria\(SCOPE,'bc'\); loadMyPdca\(\);/.test(SRC));
     ok('経営者パネルに買いたい条件の枠がある', /id="bc-box"/.test(SRC));
     ok('Tsugime の読み込みで自分の関心を先に取る', /await loadMyInterests\(\);\s*\n\s*renderMarket\(\);/.test(SRC));
     ok('カルテに買いたい条件の枠がある', /id="cbc-box"/.test(SRC));

@@ -94,7 +94,7 @@ const M = new Function(base + 'return {cats:AFTER_CATS, ind:AFTER_IND, topics:AF
 {
   ok('経営者のメニュー：買い手だけ「買った後に備える」', /\[\['sec-ma','買い手になる'\],\['sec-after','買った後に備える'\]\]/.test(SRC));
   ok('経営者の画面：案件の後ろに、買い手だけ', /id="sec-after"/.test(SRC) && /id="my-after"/.test(SRC) && SRC.indexOf('id="market-open"') < SRC.indexOf('id="sec-after"'));
-  ok('起動時に読む', /loadExitPlan\(ME,'customer'\); loadScalePlan\(ME,'customer'\); loadAfterPrep\(ME,'customer'\); knvInit\(\);/.test(SRC));
+  ok('起動時に読む', /loadExitPlan\(SCOPE,'customer'\); loadScalePlan\(SCOPE,'customer'\); loadAfterPrep\(SCOPE,'customer'\); knvInit\(\);/.test(SRC));
   ok('カルテ：見出し・案内・枠・読み込み', /id="cs-after"/.test(SRC) && /id="knav-after"/.test(SRC) && /id="cl-after"/.test(SRC) && /loadExitPlan\(custId,'partner'\); loadScalePlan\(custId,'partner'\);\n    loadAfterPrep\(custId,'partner'\);/.test(SRC));
   const knav = takeArr('KARTE_NAV');
   ok('カルテのナビに「買った後に備える」（出口の次）', /id:'after', sec:'cs-after'/.test(knav) && knav.indexOf("id:'after'") > knav.indexOf("id:'exit'") && knav.indexOf("id:'after'") < knav.indexOf("id:'ready'"));
@@ -104,7 +104,7 @@ const M = new Function(base + 'return {cats:AFTER_CATS, ind:AFTER_IND, topics:AF
   ok('SQL：表と RLS', /create table if not exists public\.buyer_prep/.test(SQL) && /customer_may\(customer_id\)/.test(SQL) && /期待値：表=1/.test(SQL));
   ok('説明書：経営者・パートナー', /<h3>買った後に備える<\/h3>/.test(MANC) && /<h3>買った後に備える<\/h3>/.test(MANP));
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260926-04', '20260926-04']);
+  is('版が揃う', [build, VER.build], ['20260926-05', '20260926-05']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
