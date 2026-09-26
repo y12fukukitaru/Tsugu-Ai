@@ -1682,7 +1682,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260927-05';
+  var APP_BUILD='20260927-06';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -3384,9 +3384,10 @@
         +'<div style="margin-top:10px;"><button class="btn2" onclick="postAnnouncement()">配信する</button><span id="bc-msg" style="font-size:12px;margin-left:8px;"></span></div>'
         +'<div id="bc-list" style="margin-top:12px;">読み込み中...</div></div>'
       +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.8"/><path d="m5.6 5.6 3.7 3.7M14.7 14.7l3.7 3.7M14.7 9.3l3.7-3.7M5.6 18.4l3.7-3.7"/></svg>サポート管理'
-        +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmCancels();loadAdmDeletions();loadAdmContracts();loadAdmTemplates();loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
+        +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmCancels();loadAdmPexits();loadAdmDeletions();loadAdmContracts();loadAdmTemplates();loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
         +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.5 12.5H16l-1.8 2.8H9.8L8 12.5H2.5"/><path d="M5.6 5.1 2.5 12.5V18a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-5.5l-3.1-7.4A2 2 0 0 0 16.6 4H7.4a2 2 0 0 0-1.8 1.1z"/></svg>パートナーからの問い合わせ</span><span id="adm-inq-count" class="nbadge hidden">0</span></div>'
         +'<div id="adm-cancels"></div>'
+        +'<div id="adm-pexits"></div>'
         +'<div id="adm-contracts"></div>'
         +'<div id="adm-ctpl"></div>'
         +'<div id="adm-deletions"></div>'
@@ -3673,11 +3674,13 @@
         +lastTag
         +'<span class="tag blue">診断 '+dc+'件</span>'
         +stalledTag
+        +(u.partner_status==='suspended'?'<span class="tag gold">停止中</span>':'')
         +(function(){ var k=(ADM_CACHE.kn||{})[u.id]; return k?('<span class="tag gold">ナレッジ '+k.posts+'件・参照 '+k.views+'</span>'):''; })()+'</div>'
         +'<div class="cl-em">'+esc(u.email)+'</div>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;">'
           +'<span style="font-size:11px;color:#5A6981;">ランク</span><select class="inp2" style="width:160px;" onchange="setRank(\''+u.id+'\',this.value)"><option value="">未設定</option>'+rankOpts+'</select>'
-        +'</div></div>';
+          +admPartnerActions(u.id, u.partner_status, 'fde-'+u.id)
+        +'</div><div id="pho-fde-'+u.id+'"></div></div>';
     });
     fb.innerHTML=h;
   }
@@ -3697,7 +3700,7 @@
       return (a.company_name||a.email||'').localeCompare(b.company_name||b.email||'','ja');
     });
     var h='';
-    var fdeOpts=(ADM_CACHE.fdes||[]).map(function(f){ return {id:f.id, name:(f.contact_name||f.company_name||f.email)}; });
+    var fdeOpts=(ADM_CACHE.fdes||[]).map(function(f){ return {id:f.id, name:(f.contact_name||f.company_name||f.email), sus:(f.partner_status==='suspended')}; });
     var admOpts=(ADM_CACHE.admins||[]).map(function(a){ return {id:a.id, name:(a.contact_name||a.company_name||a.email)}; });
     rows.forEach(function(u){
       var fdeTag=u.consultant_id
@@ -3706,7 +3709,7 @@
         :'<span class="tag red">担当未割当</span>';
       var assignSel='<select class="inp2" style="width:200px;" onchange="assignConsultant(\''+u.id+'\',this.value)"><option value="">（未割当）</option>'
         +(admOpts.length?('<optgroup label="運営（直接担当）">'+admOpts.map(function(f){ return '<option value="'+f.id+'"'+(u.consultant_id===f.id?' selected':'')+'>'+esc(f.name)+'（運営）</option>'; }).join('')+'</optgroup>'):'')
-        +(fdeOpts.length?('<optgroup label="認定パートナー">'+fdeOpts.map(function(f){ return '<option value="'+f.id+'"'+(u.consultant_id===f.id?' selected':'')+'>'+esc(f.name)+'</option>'; }).join('')+'</optgroup>'):'')
+        +(fdeOpts.length?('<optgroup label="認定パートナー">'+fdeOpts.map(function(f){ return '<option value="'+f.id+'"'+(u.consultant_id===f.id?' selected':'')+(f.sus&&u.consultant_id!==f.id?' disabled':'')+'>'+esc(f.name)+(f.sus?'（停止中）':'')+'</option>'; }).join('')+'</optgroup>'):'')
         +'</select>';
       h+='<div class="clcard" style="cursor:default;">'
         +'<div class="cl-top"><span class="cl-nm">'+esc(u.company_name||u.contact_name||u.email)+'</span>'
@@ -4407,6 +4410,7 @@
       view='<div class="panel" id="sec-flow"><span class="pill" style="background:#EAF0F9;color:#2C5DA8;">パートナーポータル</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">パートナーポータル</h2>'
         +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b>'+(prof.fde_rank?'　ランク：<b>'+esc(prof.fde_rank)+'</b>':'')+'</div>'
+        +pexitSuspendedHtml(prof)
         //  法人に所属している方には、そのことをはっきり出す。個人で活動する
         //  場合と、報酬の配分もお客さまとの関係も違うため。
         //  四半期アンケート（受付期間だけ出る。答えたら消える）
@@ -4742,6 +4746,8 @@
             +'外注費率は、入金額から消費税相当を外した<b>税抜</b>の額に掛けています。'
             +'源泉徴収は個人の方へのお支払いにのみ生じ（10.21%、100万円を超える部分は20.42%）、法人へのお支払いには生じません。'
             +'実際の振込額と異なる場合は運営にお問い合わせください。</div>'
+          //  ご契約の終了について（パートナー → 運営）。経営者の「ご契約について」と同じく、お金の画面の最後に置く
+          +'<div id="my-pexit"></div>'
         +'</div>'
         +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.8"/><path d="m5.6 5.6 3.7 3.7M14.7 14.7l3.7 3.7M14.7 9.3l3.7-3.7M5.6 18.4l3.7-3.7"/></svg>運営サポート'
           +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadSupportKnowledge();loadMyInquiries()">↺ 更新</span></div>'
@@ -4788,7 +4794,7 @@
     swipeHintOnce();
     if(eff==='customer' && ACCESS==='finance'){ loadAcct(); }
     else if(eff==='customer'){ loadDashHero(); loadMyCash(); loadPlanRates().then(loadMyContract); loadOnboard90(); loadMyImpact(); loadMembers(); loadAcctInvite(); loadMyPartner(); loadMyFinance(); loadMyActions(); buildAiChips(); loadMyNotes(); loadMyPayments(); loadMyInsurance(); loadMyValuation(); loadMyGoal(); loadMyReports(); loadMyObr(); loadMyMa(); loadBuyCriteria(SCOPE,'bc'); loadMyPdca(); loadMyMeetings(); loadMyAiProps(); loadMyNextMeeting(); loadMyListings(); loadMarket(); loadMyAnnouncements('customer'); restoreSecLog(); loadUnpaid('customer'); poInitDefaults(); loadAgentInsights(); loadSurvey('customer'); loadExitPlan(SCOPE,'customer'); loadScalePlan(SCOPE,'customer'); loadAfterPrep(SCOPE,'customer'); knvInit(); }
-    else if(eff==='consultant'){ if(EP_ME) loadEp(); loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadUnpaid('partner'); poInitDefaults(); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); loadPlanRates(); loadAgentInsights(); loadSurvey('consultant'); knvInit(); }
+    else if(eff==='consultant'){ if(EP_ME) loadEp(); loadClients(); loadKnowledge(); renderOfficialKnowledge(); loadMaDeals(); loadPdca(); loadMarketBroker(); loadMyAnnouncements('consultant'); restoreSecLog(); loadUnpaid('partner'); poInitDefaults(); loadMyPexit(); loadSupportKnowledge(); loadMyInquiries(); loadPartnerGrowth(); loadTraining(); loadBiz(); loadPlanRates(); loadAgentInsights(); loadSurvey('consultant'); knvInit(); }
     else {
       // 権限外の読み込みは走らせない（RLSでも弾かれるが、無用なエラー表示を避ける）
       loadAdmin(); loadAdmRoadmap(); loadMarketApps(); loadMarketBroker(); loadAdmAssign();
@@ -4798,7 +4804,7 @@
       if(adminCanSee('sec-team')) loadSignupCodes();
       if(adminCanSee('sec-exec')){ loadExecFunding(); loadExecWeekly(); }
       if(adminCanSee('sec-billing')){ loadPayout(); loadPayInbox(); }
-      if(adminCanSee('sec-support')){ loadAdmCancels(); loadAdmDeletions(); loadAdmContracts(); loadAdmTemplates(); loadAdmInquiries(); loadSupportKB(); }
+      if(adminCanSee('sec-support')){ loadAdmCancels(); loadAdmPexits(); loadAdmDeletions(); loadAdmContracts(); loadAdmTemplates(); loadAdmInquiries(); loadSupportKB(); }
       if(adminCanSee('sec-network')){ loadNetwork(); }
       if(adminCanSee('sec-subsidy')){ loadSubsidyAdmin(); }
       knvInit();
@@ -5471,6 +5477,7 @@
   async function claimClient(){
     var em=($('cl-email').value||'').trim();
     var msg=$('cl-msg');
+    if(partnerSuspended()){ msg.style.color='#A9403D'; msg.textContent=PEXIT_SUSPENDED_MSG; return; }
     if(!em){ msg.style.color='#A9403D'; msg.textContent='顧客のメールアドレスを入力してください'; return; }
     var res=await sb.rpc('claim_client', { p_email: em });
     if(res.error){ msg.style.color='#A9403D'; msg.textContent='エラー：'+res.error.message; return; }
@@ -5490,6 +5497,7 @@
   //  「担当パートナーの登録を待っています」の門は出ない。
   async function inviteClient(em){
     var msg=$('cl-msg');
+    if(partnerSuspended()){ msg.style.color='#A9403D'; msg.textContent=PEXIT_SUSPENDED_MSG; return; }
     var r=await sb.from('customer_invites').insert({ email:em, consultant_id:ME });
     if(r.error){
       var m=String(r.error.message||'');
@@ -9964,6 +9972,134 @@
     loadMyCancel();
   }
 
+  // ===== ご契約の終了（パートナー → 運営）=====
+  //  これまでパートナーには「やめる」ための場所がなく、継ナビくんの問い合わせに
+  //  書くしかなかった。ほかの質問に混ざると運営が見落とす。担当顧問先の引き継ぎと
+  //  最終月の報酬があるので、押した瞬間に終わるものではない。ここで預かるのは
+  //  「お申し出」まで。引き継ぎ・停止・アカウントの削除は運営が行う。
+  var MYPEXIT=null;
+  var PEXIT_SUSPENDED_MSG='ただいま停止中のため、新しい顧客の招待と顧問契約の送信はできません（運営で担当顧問先の引き継ぎを進めています）。';
+  var PEXIT_REASONS=['本業に専念するため','時間・体制の都合','報酬・条件の見直し','他の仕事に移るため','期待した成果が得られなかったため','その他'];
+  function partnerSuspended(){
+    //  運営が「パートナー」の見え方で見ているときは、運営自身の行なので止めない
+    var p=window.__prof||{};
+    return p.role==='consultant' && p.partner_status==='suspended';
+  }
+  function pexitSuspendedHtml(prof){
+    if(!prof || prof.role!=='consultant' || prof.partner_status!=='suspended') return '';
+    return '<div style="border:1.5px solid #EAD9AC;background:#FDFAF1;border-radius:11px;padding:11px 14px;margin:0 0 12px;">'
+      +'<div style="font-size:12.5px;font-weight:700;color:#8A6A12;">ただいま停止中です</div>'
+      +'<div style="font-size:11.5px;color:#5A6981;line-height:1.8;margin-top:3px;">'
+      +'運営で担当顧問先の引き継ぎを進めています。ログイン・カルテの閲覧・報酬明細は、これまでどおりお使いいただけます。'
+      +'<b style="color:var(--navy);">新しい顧客の招待と顧問契約の送信はできません。</b>'
+      +'ご不明な点は、右下の継ナビくん →「サポート」→「運営への問い合わせ」からどうぞ。</div></div>';
+  }
+  function pexitMonthLabel(d){
+    var m=/^(\d{4})-(\d{2})/.exec(String(d||'')); if(!m) return '';
+    return m[1]+'年'+Number(m[2])+'月末';
+  }
+  async function loadMyPexit(){
+    var box=$('my-pexit'); if(!box) return;
+    //  運営が「パートナー」の見え方で見ているときは出さない（運営自身は申し出る立場にない）
+    if(window.__role!=='consultant'){ box.innerHTML=''; return; }
+    var r;
+    try{
+      r=await sb.from('partner_exit_requests').select('*').eq('partner_id',ME)
+        .order('created_at',{ascending:false}).limit(1);
+    }catch(e){ r={error:1}; }
+    var head='<div style="border-top:1px solid #EDF1F6;margin-top:18px;padding-top:14px;">'
+      +'<div class="ph" style="font-size:13px;margin:0 0 4px;">ご契約の終了について</div>';
+    var ep=EP_ME
+      ? '<div style="font-size:11.5px;color:#8A6A12;background:#FDFAF1;border:1px solid #EAD9AC;border-radius:9px;padding:8px 11px;margin:6px 0 4px;line-height:1.75;">'
+        +'法人（'+esc(EP_ME.org&&EP_ME.org.name||'エンタープライズ')+'）に所属している方は、先に<b>法人の管理者</b>にご相談ください。'
+        +(epIsB(EP_ME.org.kind)
+          ? ' EP-I では TsuguAi との契約を法人が結んでいます。担当者の方が外れるときは、管理者が「担当者」タブで<b>席を外す</b>だけで済みます。ここからのお申し出は、<b>法人としての契約を終えるとき</b>（管理者の方）にお使いください。'
+          : ' EP-II の所属の方は、ご本人の契約なので、管理者とご相談のうえ、ここからお申し出ください。')+'</div>'
+      : '';
+    //  表がまだ無い環境でも、申し出る先だけは必ず出す
+    if(!r || r.error){
+      box.innerHTML=head+ep+'<div style="font-size:11.5px;color:var(--muted);line-height:1.85;">'
+        +'契約の終了をご希望の場合は、右下の継ナビくん →「サポート」→「運営への問い合わせ」からお知らせください。'
+        +'運営が承り、担当顧問先の引き継ぎと最終月の報酬についてご相談します。</div></div>';
+      return;
+    }
+    var last=(r.data||[])[0]||null;
+    MYPEXIT=(last && last.status==='open') ? last : null;
+    if(MYPEXIT){
+      box.innerHTML=head+ep+'<div style="border:1.5px solid #EAD9AC;background:#FDFAF1;border-radius:11px;padding:12px 15px;margin-top:6px;">'
+        +'<div style="font-size:13px;font-weight:700;color:#8A6A12;">契約の終了のお申し出を承りました</div>'
+        +'<div style="font-size:12px;color:#5A6981;line-height:1.85;margin-top:5px;">'
+        +esc(jstDay(MYPEXIT.created_at))+'にお申し出をいただいています。'
+        +(MYPEXIT.end_month?'ご希望の終了：<b style="color:var(--navy);">'+esc(pexitMonthLabel(MYPEXIT.end_month))+'</b>。':'')
+        +'運営より、担当顧問先の引き継ぎと最終月の報酬についてご連絡します。それまでは、これまでどおりお使いいただけます。</div>'
+        +'<button class="ghost" style="font-size:12px;border:1px solid #E2E7EF;border-radius:8px;padding:6px 12px;margin-top:9px;" onclick="pexitWithdraw()">取り下げる</button>'
+      +'</div></div>';
+      return;
+    }
+    box.innerHTML=head+ep+'<div style="font-size:11.5px;color:var(--muted);line-height:1.85;">'
+      +'契約の終了をご希望の場合は、こちらからお申し出ください。運営が承り、<b style="color:var(--navy);">担当顧問先の引き継ぎ</b>と<b style="color:var(--navy);">最終月の報酬</b>についてご相談します。'
+      +'<b style="color:var(--navy);">押してすぐに使えなくなることはありません。</b>'
+      +'顧問先のお客様にとって担当が変わるのは大きなことなので、引き継ぎの順番は運営とご一緒に決めます。</div>'
+      +'<button class="ghost" style="font-size:12px;border:1px solid #E2E7EF;border-radius:8px;padding:7px 13px;margin-top:9px;" onclick="pexitOpen()">契約の終了を申し出る</button>'
+    +'</div>';
+  }
+  function pexitOpen(){
+    var box=$('my-pexit'); if(!box) return;
+    var d=new Date(), opts='<option value="">運営と相談して決める</option>';
+    //  翌月から6か月先まで。その月の末日で終える想定
+    for(var i=1;i<=6;i++){
+      var x=new Date(d.getFullYear(), d.getMonth()+i, 1);
+      var v=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-01';
+      opts+='<option value="'+v+'">'+x.getFullYear()+'年'+(x.getMonth()+1)+'月末</option>';
+    }
+    box.innerHTML='<div style="border:1.5px solid #E2E7EF;border-radius:11px;padding:14px 16px;margin-top:18px;">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--navy);">契約の終了のお申し出</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.85;margin:5px 0 10px;">'
+      +'運営が承り、ご連絡します。<b style="color:var(--navy);">このボタンで契約が終わったり、アカウントが消えたりすることはありません。</b>'
+      +'担当顧問先の引き継ぎと最終月の報酬を済ませてから手続きします。</div>'
+      +'<label class="fl">ご希望の終了（任意）</label>'
+      +'<select id="px-month" class="inp2" style="width:100%;max-width:260px;">'+opts+'</select>'
+      +'<label class="fl" style="margin-top:9px;">差し支えなければ、理由をお聞かせください（任意）</label>'
+      +'<select id="px-reason" class="inp2" style="width:100%;max-width:320px;"><option value="">選択しない</option>'
+        +PEXIT_REASONS.map(function(t){ return '<option>'+esc(t)+'</option>'; }).join('')+'</select>'
+      +'<label class="fl" style="margin-top:9px;">お伝えしておきたいこと（任意）</label>'
+      +'<textarea id="px-note" class="inp2" rows="3" style="width:100%;" placeholder="担当顧問先の引き継ぎのご希望（引き継いでほしい方・時期）など"></textarea>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">'
+        +'<button class="btn2" onclick="pexitSend()">この内容で申し出る</button>'
+        +'<button class="ghost" style="border:1px solid #E2E7EF;border-radius:9px;padding:8px 14px;" onclick="loadMyPexit()">やめる</button>'
+      +'</div><div id="px-msg" style="font-size:12px;margin-top:8px;"></div>'
+    +'</div>';
+  }
+  async function pexitSend(){
+    var msg=$('px-msg');
+    var month=(($('px-month')||{}).value||'')||null;
+    var reason=(($('px-reason')||{}).value||'')||null;
+    var note=((($('px-note')||{}).value||'').trim())||null;
+    if(!confirm('契約の終了のお申し出を運営にお送りします。よろしいですか？\n（この操作で契約が終わったり、アカウントが消えたりすることはありません）')) return;
+    if(msg){ msg.style.color='#27684A'; msg.textContent='送信しています…'; }
+    var r=await sb.from('partner_exit_requests').insert({ partner_id:ME, end_month:month, reason:reason, note:note });
+    if(r.error){
+      var m=String(r.error.message||'');
+      if(msg){
+        msg.style.color='#A9403D';
+        msg.textContent=/duplicate|unique/i.test(m)
+          ? 'すでにお申し出を承っています。'
+          : (/relation|does not exist|schema cache/i.test(m)
+              ? 'いまこの機能をご利用いただけません。お手数ですが、右下の継ナビくん →「サポート」→「運営への問い合わせ」からお知らせください。'
+              : '送信できませんでした：'+m);
+      }
+      return;
+    }
+    loadMyPexit();
+  }
+  async function pexitWithdraw(){
+    if(!MYPEXIT) return;
+    if(!confirm('契約の終了のお申し出を取り下げます。よろしいですか？')) return;
+    var r=await sb.from('partner_exit_requests').update({ status:'withdrawn' }).eq('id',MYPEXIT.id);
+    if(r.error){ alert('取り下げできませんでした：'+r.error.message); return; }
+    loadMyPexit();
+  }
+
   // ===== 解約のご依頼（担当パートナーの画面）=====
   //  読む権限は最初から付けてありました（cancel_requests の「担当パートナー
   //  読み取り」）。けれど、それを出す画面をどこにも作っていませんでした。
@@ -10039,6 +10175,140 @@
     if(r.error){ alert('更新できませんでした：'+r.error.message); return; }
     loadAdmCancels();
     if(typeof knvAdminBadge==='function') knvAdminBadge();   // 右下の件数も減らす
+  }
+
+  // ===== 契約の終了のお申し出（パートナー → 運営）=====
+  //  経営者の解約のご依頼と同じく、サポート管理の上部に並べる。手順は
+  //  ①お話をうかがう ②停止中にする ③担当顧問先をまとめて引き継ぐ（代表のみ）
+  //  ④最終月の報酬 ⑤対応済みにする。アカウントの削除は Supabase から。
+  async function loadAdmPexits(){
+    var box=$('adm-pexits'); if(!box) return;
+    var r;
+    try{ r=await sb.from('partner_exit_requests').select('*').eq('status','open').order('created_at',{ascending:true}); }
+    catch(e){ r={error:1}; }
+    if(!r || r.error){ box.innerHTML=''; return; }
+    var rows=r.data||[];
+    if(!rows.length){ box.innerHTML=''; return; }
+    var people=await admPartnerPeople();
+    var h='<div style="border:1.5px solid #EAD9AC;background:#FDFAF1;border-radius:11px;padding:13px 16px;margin:6px 0 14px;">'
+      +'<div style="font-size:13px;font-weight:700;color:#8A6A12;">契約の終了のお申し出（パートナー・'+rows.length+'件）</div>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:4px;">'
+      +'① お話をうかがう → ② <b>停止中にする</b>（新しい顧客の招待・顧問契約の送信を止める。ログインと閲覧はそのまま）'
+      +' → ③ <b>担当顧問先を引き継ぐ</b>（代表のみ。顧問先にはひと言お知らせを） → ④ 最終月の報酬を支払う → ⑤ 対応済みにする。'
+      +'アカウントの削除は、報酬の支払いが済んでから Supabase の Authentication → Users で行います。</div>';
+    rows.forEach(function(x){
+      var p=people.byId[x.partner_id]||{};
+      var nm=admPersonName(p)||x.partner_id;
+      var nc=people.clients[x.partner_id]||0;
+      h+='<div style="border-top:1px solid #EFE3C2;padding:9px 0;">'
+        +'<div style="font-size:12.5px;font-weight:600;color:var(--ink);">'+esc(nm)
+          +(p.partner_status==='suspended'?' <span class="tag gold">停止中</span>':'')
+          +' <span class="tag '+(nc?'green':'gray')+'">担当 '+nc+'社</span></div>'
+        +'<div style="font-size:11px;color:var(--muted);margin-top:2px;">'+esc(jstDay(x.created_at))+' 受付'
+          +(x.end_month?('　ご希望の終了：'+esc(pexitMonthLabel(x.end_month))):'　ご希望の終了：相談')
+          +(x.reason?('　理由：'+esc(x.reason)):'')+'</div>'
+        +(x.note?('<div style="font-size:12px;color:var(--ink);white-space:pre-wrap;line-height:1.7;margin-top:4px;">'+esc(x.note)+'</div>'):'')
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">'
+          +admPartnerActions(x.partner_id, p.partner_status, 'px-'+x.id)
+          +'<button class="ghost" style="font-size:11px;border:1px solid #E2E7EF;border-radius:8px;padding:4px 10px;" onclick="admPexitDone(\''+x.id+'\')">対応済みにする</button>'
+        +'</div>'
+        +'<div id="pho-px-'+x.id+'"></div>'
+      +'</div>';
+    });
+    box.innerHTML=h+'</div>';
+  }
+  //  パートナー・運営の名前と、担当の社数。一覧（loadAdmin）を開いていなくても引けるように
+  async function admPartnerPeople(){
+    var out={ byId:{}, clients:{}, list:[] };
+    try{
+      var pr=await sb.from('profiles').select('id,role,company_name,contact_name,email,consultant_id,partner_status');
+      (pr.data||[]).forEach(function(p){
+        out.byId[p.id]=p;
+        if(p.role==='customer' && p.consultant_id) out.clients[p.consultant_id]=(out.clients[p.consultant_id]||0)+1;
+        if(p.role==='consultant' || p.role==='admin') out.list.push(p);
+      });
+    }catch(e){}
+    return out;
+  }
+  function admPersonName(p){ return p ? (p.contact_name||p.company_name||p.email||'') : ''; }
+  //  停止中にする／再開する・担当顧問先を引き継ぐ。お申し出の一覧とパートナー一覧の両方から使う
+  function admPartnerActions(pid, status, key){
+    var sus=(status==='suspended');
+    return '<button class="ghost" style="font-size:11px;border:1px solid '+(sus?'#C9D6EA':'#EAD9AC')+';color:'+(sus?'var(--navy)':'#8A6A12')+';border-radius:8px;padding:4px 10px;" '
+        +'onclick="admPartnerStatus(\''+pid+'\',\''+(sus?'active':'suspended')+'\')">'+(sus?'再開する':'停止中にする')+'</button>'
+      +'<button class="ghost" style="font-size:11px;border:1px solid #E2E7EF;border-radius:8px;padding:4px 10px;" '
+        +'onclick="admHandoverOpen(\''+pid+'\',\''+key+'\')">担当顧問先を引き継ぐ…</button>';
+  }
+  async function admPartnerStatus(pid, st){
+    var q=(st==='suspended')
+      ? 'このパートナーを「停止中」にします。\n・新しい顧客の招待と顧問契約の送信ができなくなります\n・ログイン、カルテの閲覧、報酬明細はそのままです\nよろしいですか？'
+      : 'このパートナーの停止を解いて、通常に戻します。よろしいですか？';
+    if(!confirm(q)) return;
+    var r=await sb.from('profiles').update({ partner_status:st }).eq('id',pid).select('partner_status');
+    if(r.error){
+      alert(/partner_status|column/i.test(String(r.error.message))
+        ? '停止の仕組みがまだ用意されていません（SQL 20260927000000_partner_exit.sql を実行してください）。'
+        : '変更できませんでした：'+r.error.message);
+      return;
+    }
+    var got=((r.data||[])[0]||{}).partner_status;
+    if(got!==st){ alert('変更できませんでした（運営の権限が必要です）。'); return; }
+    loadAdmPexits();
+    if($('adm-fde')) loadAdmin();
+  }
+  async function admHandoverOpen(pid, key){
+    var box=$('pho-'+key); if(!box) return;
+    if(box.innerHTML){ box.innerHTML=''; return; }   // もう一度押したら閉じる
+    if(ADMIN_ROLE!=='owner'){
+      box.innerHTML='<div style="font-size:11.5px;color:#A9403D;margin-top:8px;">担当顧問先の付け替えは、代表だけができます。</div>';
+      return;
+    }
+    box.innerHTML='<div style="font-size:11.5px;color:var(--muted);margin-top:8px;">読み込んでいます…</div>';
+    var people=await admPartnerPeople();
+    var from=people.byId[pid]||{};
+    var nc=people.clients[pid]||0;
+    var opts=people.list.filter(function(p){ return p.id!==pid && p.partner_status!=='suspended'; })
+      .sort(function(a,b){ return (a.role===b.role?0:(a.role==='consultant'?-1:1)); })
+      .map(function(p){ return '<option value="'+p.id+'">'+esc(admPersonName(p))+(p.role==='admin'?'（運営・直接担当）':'（担当 '+(people.clients[p.id]||0)+'社）')+'</option>'; }).join('');
+    box.innerHTML='<div style="border:1.5px solid #C9D6EA;background:#fff;border-radius:10px;padding:11px 13px;margin-top:8px;">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--navy);">'+esc(admPersonName(from))+' さんの担当顧問先（'+nc+'社）を引き継ぐ</div>'
+      +'<div style="font-size:11.5px;color:var(--ink);line-height:1.8;margin-top:5px;">'
+      +'担当の顧客をまとめて引き継ぎ先に付け替えます。あわせて、この方がメイン・サブの<b>2名体制は終了</b>し、'
+      +'<b>登録待ちの招待</b>と<b>同意待ちの顧問契約</b>の担当も引き継ぎ先に移します。'
+      +'1社ずつ分けたいときは、「顧客」一覧の担当のセレクタで付け替えてください。</div>'
+      +'<label class="fl" style="margin-top:8px;">引き継ぎ先</label>'
+      +'<select id="phos-'+key+'" class="inp2" style="width:100%;max-width:340px;"><option value="">選んでください</option>'+opts+'</select>'
+      +'<div style="display:flex;gap:8px;align-items:center;margin-top:9px;flex-wrap:wrap;">'
+      +'<button class="btn2" style="font-size:12px;padding:7px 14px;" onclick="admHandoverRun(\''+pid+'\',\''+key+'\')">まとめて引き継ぐ</button>'
+      +'<button class="ghost" style="font-size:11.5px;border:1px solid #E2E7EF;border-radius:8px;padding:6px 13px;" onclick="admHandoverOpen(\''+pid+'\',\''+key+'\')">やめる</button>'
+      +'<span id="phom-'+key+'" style="font-size:11.5px;"></span></div></div>';
+  }
+  async function admHandoverRun(pid, key){
+    var sel=$('phos-'+key), m=$('phom-'+key);
+    var to=sel?sel.value:'';
+    if(!to){ if(m){ m.style.color='#A9403D'; m.textContent='引き継ぎ先を選んでください。'; } return; }
+    var toName=sel.options[sel.selectedIndex].text;
+    if(!confirm('担当顧問先を「'+toName+'」にまとめて引き継ぎます。\n顧問先の皆さまには、担当が変わることをひと言お知らせください。\nよろしいですか？')) return;
+    if(m){ m.style.color='var(--muted)'; m.textContent='引き継いでいます…'; }
+    var r;
+    try{ r=await sb.rpc('partner_handover',{ p_from:pid, p_to:to }); }catch(e){ r={ error:{ message:String(e&&e.message||e) } }; }
+    var d=r&&r.data;
+    if(r.error || !d || !d.ok){
+      var why=(d&&d.error)||(r.error&&r.error.message)||'引き継げませんでした';
+      if(/partner_handover|function|schema cache/i.test(String(why))) why='引き継ぎの仕組みがまだ用意されていません（SQL 20260927000000_partner_exit.sql を実行してください）。';
+      if(m){ m.style.color='#A9403D'; m.textContent=why; }
+      return;
+    }
+    if(m){ m.style.color='#27684A'; m.textContent='引き継ぎました：担当 '+d.customers+'社・登録待ちの招待 '+d.invites+'件・同意待ちの顧問契約 '+d.offers+'件。2名体制の終了 '+d.teams_ended+'件。'; }
+    if($('adm-fde')) setTimeout(loadAdmin, 800);
+    setTimeout(loadAdmPexits, 800);
+  }
+  async function admPexitDone(id){
+    if(!confirm('このお申し出を対応済みにします。引き継ぎと最終月の報酬は済みましたか？')) return;
+    var r=await sb.from('partner_exit_requests').update({ status:'done', handled_at:new Date().toISOString(), handled_by:ME }).eq('id',id);
+    if(r.error){ alert('更新できませんでした：'+r.error.message); return; }
+    loadAdmPexits();
+    if(typeof knvAdminBadge==='function') knvAdminBadge();
   }
 
   // ===== アカウントの削除（運営）=====
@@ -15440,7 +15710,7 @@
     if(aisecPortal()==='consultant'){
       return common
         +'【パートナーポータルの画面ガイド】'
-        +'スマホではメニューは右上の≡か、画面の左右どちらの端からでも内側へ指で払うと、その側から開く(外側へ払うと閉じる。iPhoneのSafariでは左端からの払いが「戻る」と重なることがあり、そのときは右端からか≡。顧客カルテを開いているときは、カルテの2段のメニュー=左に組・右にその中身が出る。いま開いている組は金色。スマホでは組を一度押すとその組が開く。並び順は左の列のいちばん下の「⚙ 並び順」から▲▼で組の中で入れ替え)。ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全5章。必修10レッスン＋発展のM&A講座8レッスン、第5章の理解度チェックで修了)・FA実務講座(研修とは別の深く学ぶ場。序章＋7章：財務三表・正常収益力・企業価値評価・財務DD・税務の論点(助言はせず税理士につなぐ)・契約と会計・医療法人、理解度チェック10問。修了してもレベル・外注費率は変わらない。本文は fa-course.html)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。選んだ領域ごとに登録番号か資格証の写しを出して「確認を依頼する」。運営が確認済みにした領域だけが、ご自身の本業として実行できる領域になる(確認までは有資格者へつなぐ。IT・自動化は確認不要。本業の報酬はご自身の事務所・所属会社として受け取る)。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁/労働分配率=時給を上げたとき人件費÷粗利をどこに保ち利益を出し続けるか。業種別の目安と、時短・配置転換・値上げで要る大きさ。カルテの月次レポートの上からその会社の数字で開ける)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)。説明資料(経営者向け・パートナー候補向けなど)は継ナビくんの「サポート」タブから開き、右上の⛶で全画面。送りは ←→ か、紙を押す、スマホ・タブレットは指で左右にスワイプ。Escかもう一度⛶で解除、✕でプラットフォームに戻る／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内。その顧問先から解約のお申し出が出ているときは、カルテのいちばん上に赤い帯「⚠ 解約のご依頼が出ています」が出る(申し出の日・理由・伝えられたこと。手続きと最終月の請求は運営が行い、パートナーの画面から解約はできない。まず話を聞く。取り下げは経営者ご自身が「お支払い」→「ご契約について」から)。出口の設計はカルテ→企業価値・承継準備→出口の設計(企業価値診断の次)。経営者の左メニュー「出口の設計」と同じ表を見ているので、どちらで保存しても両方に出る。出口は8つ(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/資本提携(一部を譲る)/上場する(TOKYO PRO Market。プロ投資家向けで数値基準が無く、J-Adviserの伴走で2〜3年)/上場する(グロース市場など)/畳む(清算)/続けて、買い手になる)。資本提携・上場を選ぶと「知っておくこと」の箱が出る。上場の可否・費用はJ-Adviser・証券会社が決めるので経営者に断定しない。その下に、出口とは別の「株の持ち方・組織の検討」=持株会社(ホールディングス)/資産管理会社/分社化/種類株・属人的株式/従業員持株会/事業承継の信託の6つ。出口が決まっていなくても、検討中/専門家に相談中/実行済/見送りで記録でき、企業価値1億円超・株主の整理がまだ・万一の定めがまだ、などの合図が出る。相談先(税理士・司法書士・弁護士)も書いてある。税額は計算しない。これも経営者の画面と同じもの。その次に「スケールの設計」=大きくする道を7つ(いまの事業を深める/柱を増やす/M&Aで買う/デットで加速/エクイティで加速/グループ化/上場で加速)から主軸を一つ決め、目標の年と見る数字(年商・年間営業利益・現預金の月商倍率・柱の本数)のいま・目標・差。道ごとに検討中/取り組み中/済/見送りの札とメモ。数字から向いている道に合図(営業利益率5%未満・柱が1本・債務償還年数7年未満/10年超・現預金2か月分など)。借入・出資・上場の可否は断定しない。経営者の左メニュー「スケールの設計」と同じ表(ナビの12の道具には含めない)。プランの切替はカルテ→企業価値・承継準備→出口の設計の上段のボタンから運営に依頼(理由を書く小窓。空欄でも送れるので必ず書く。切替は運営が行い翌月の請求から。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。パートナーご自身が離れるときは運営サポートの「運営への問い合わせ」から(画面で契約を終える操作は無い)。カルテの「やること」の下に「今月の面談台本」(その会社の数字から見せる数字3つ・問い3つ・買い手の基盤へのつながり)と「継ナビくんのナビ」(土台→現金→余力→条件の順番と、済／次／あと)。ナビは12の道具(試算表→資金繰り→保険・固定費→支払予定→導入診断報告書→企業価値→出口の設計→買った後に備える→準備度→買いたい条件。AI診断・銀行提出は任意。売り手プランでは準備度・買いたい条件・買った後に備えるも任意)。各道具の見出しの下に「なぜ今・やると分かること・次の一手」の案内と「結果を継ナビくんと読む」ボタン。出口の設計(5つの出口・目標の年・見る数字のいま/目標/差・持株会社の合図。上部にいまの顧問プランとM&Aの優遇、「◯◯プラン への切替を運営に依頼」)と買った後に備える(6分類24項目・自社では・学ぶ・未着手/学んだ/準備した)はカルテの企業価値・承継準備の中。伴走の1年は契約の翌月1日を起点に暦の月で3か月ずつ、土台が整わなければ次の四半期も並行、四半期の終わりに検証)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（エクイティ・デット・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。継ナビくんは画面右下のボタンに常駐し(ボタンの場所は設定で右下・左下・右上・左上から、パネルの大きさは設定か見出しの⤢で標準・右半分・左半分・中央に大きく、から選べる。半分は本体を反対側に寄せて横に並べる)、パネルは7タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と担当顧客の面談・期日・支払予定が1枚に並ぶカレンダー。月/週/一覧。月・週は横に払う(スワイプ)と前後の月・週へ。操作列(月/週/一覧・‹ ›・今日・＋予定)と週の曜日・終日の帯は、下へ送っても上に残る。スマホの週表示は7日が幅に収まり、予定は色で塗って題名を折り返す。色は青=自分の予定・金=面談・橙=課題の期日・赤=支払・緑=資金調達・紫=補助金の締切、Googleから取り込んだ予定はGoogle側のカレンダーの色。暦の下に「色の見分け」が並ぶ。予定を押すと小窓が開いて全部読める。入力は金色の「＋ 予定」で別の窓が開く(スマホでもキーボードに隠れない)。✕や「やめる」は入力の窓だけ閉じ、継ナビくんは閉じない。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。この画面で入れた予定は、直しても消してもその場でGoogleに出る(同期のボタンを押す必要はない。「いま同期する」はGoogle側の予定を待たずに取り込みたいときだけ)。ただしGoogleから取り込んだ予定をこの画面で消したときは、この画面から消えるだけでGoogle側には残る(削除を押す前にその旨が出る)。取り込みをやめたいだけなら、アカウントの下の「取り込むカレンダー」のチェックを外す。Google→TsuguAiの向きだけ間がある(こちらからGoogleへは入れた時点ですぐ。逆は予定タブを開いたときに取りにいく。開くたび・最短5分おき。TsuguAiを開いていない間は取りにいかない)。すぐ合わせたいときは「いま同期する」。ただし毎朝の今日の一手（パートナー）と毎週月曜の今週のひとこと（経営者）は、本文を作る前にこちらからGoogleを見にいくので、画面を開いていなくてもGoogleの予定が入る。担当顧客との面談もGoogleに出るが、Google側で面談を消してもTsuguAiの面談は消えない(顧客との約束のため。消すのは顧客管理から)。Googleの予定は本人だけが見え、顧客にも運営にも見えない。私用を取り込みたくないときはアカウントの欄の「このアカウントの予定をこの画面に取り込む」のチェックを外す。Googleの「家族」「誕生日」「共有」「日本の祝日」なども、アカウントの下の「取り込むカレンダー」でチェックを入れれば入る(最初はメインだけ)。個人と会社などアカウントは2つ以上つなげ(「もう1つのアカウントをつなぐ」)、取り込みは全部から、この画面で入れた予定と面談は「送り先」に選んだ1つにだけ出る。「Googleでつなぐ」を押すとGoogleの画面に移り、許可が済むと自動でこの画面に戻って同期が始まる。会社のGoogle Workspaceアカウントで「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていない(Google管理コンソール→アプリ→Google Workspace→カレンダーを有効にする)。つなぎ直しても直らず、「送り先にする」も出ない。個人アカウントでつなぐ)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ。法人に所属している方には「エンタープライズ 操作説明書」も並ぶ)。'
+        +'スマホではメニューは右上の≡か、画面の左右どちらの端からでも内側へ指で払うと、その側から開く(外側へ払うと閉じる。iPhoneのSafariでは左端からの払いが「戻る」と重なることがあり、そのときは右端からか≡。顧客カルテを開いているときは、カルテの2段のメニュー=左に組・右にその中身が出る。いま開いている組は金色。スマホでは組を一度押すとその組が開く。並び順は左の列のいちばん下の「⚙ 並び順」から▲▼で組の中で入れ替え)。ダッシュボード=毎朝の「今日やること」／成長・研修=認定レベル(Lv.1〜4)・外注費率・研修プログラム(全5章。必修10レッスン＋発展のM&A講座8レッスン、第5章の理解度チェックで修了)・FA実務講座(研修とは別の深く学ぶ場。序章＋7章：財務三表・正常収益力・企業価値評価・財務DD・税務の論点(助言はせず税理士につなぐ)・契約と会計・医療法人、理解度チェック10問。修了してもレベル・外注費率は変わらない。本文は fa-course.html)／本業と連携=保有資格の登録・本業案件の記録・専門家への紹介。選んだ領域ごとに登録番号か資格証の写しを出して「確認を依頼する」。運営が確認済みにした領域だけが、ご自身の本業として実行できる領域になる(確認までは有資格者へつなぐ。IT・自動化は確認不要。本業の報酬はご自身の事務所・所属会社として受け取る)。各種シミュレーター(相続贈与/株対策/医療法人持分/退職金/価格転嫁/労働分配率=時給を上げたとき人件費÷粗利をどこに保ち利益を出し続けるか。業種別の目安と、時短・配置転換・値上げで要る大きさ。カルテの月次レポートの上からその会社の数字で開ける)もこの画面の中から開く(左メニューには無い)／営業ツール=課題ヒアリング診断(見込み客との商談用)。説明資料(経営者向け・パートナー候補向けなど)は継ナビくんの「サポート」タブから開き、右上の⛶で全画面。送りは ←→ か、紙を押す、スマホ・タブレットは指で左右にスワイプ。Escかもう一度⛶で解除、✕でプラットフォームに戻る／顧客管理=担当顧客の一覧とカルテ(面談記録・月次レポートの承認・2名体制の申請はカルテ内。その顧問先から解約のお申し出が出ているときは、カルテのいちばん上に赤い帯「⚠ 解約のご依頼が出ています」が出る(申し出の日・理由・伝えられたこと。手続きと最終月の請求は運営が行い、パートナーの画面から解約はできない。まず話を聞く。取り下げは経営者ご自身が「お支払い」→「ご契約について」から)。出口の設計はカルテ→企業価値・承継準備→出口の設計(企業価値診断の次)。経営者の左メニュー「出口の設計」と同じ表を見ているので、どちらで保存しても両方に出る。出口は8つ(第三者へ譲る/親族へ継ぐ/従業員へ継ぐ/資本提携(一部を譲る)/上場する(TOKYO PRO Market。プロ投資家向けで数値基準が無く、J-Adviserの伴走で2〜3年)/上場する(グロース市場など)/畳む(清算)/続けて、買い手になる)。資本提携・上場を選ぶと「知っておくこと」の箱が出る。上場の可否・費用はJ-Adviser・証券会社が決めるので経営者に断定しない。その下に、出口とは別の「株の持ち方・組織の検討」=持株会社(ホールディングス)/資産管理会社/分社化/種類株・属人的株式/従業員持株会/事業承継の信託の6つ。出口が決まっていなくても、検討中/専門家に相談中/実行済/見送りで記録でき、企業価値1億円超・株主の整理がまだ・万一の定めがまだ、などの合図が出る。相談先(税理士・司法書士・弁護士)も書いてある。税額は計算しない。これも経営者の画面と同じもの。その次に「スケールの設計」=大きくする道を7つ(いまの事業を深める/柱を増やす/M&Aで買う/デットで加速/エクイティで加速/グループ化/上場で加速)から主軸を一つ決め、目標の年と見る数字(年商・年間営業利益・現預金の月商倍率・柱の本数)のいま・目標・差。道ごとに検討中/取り組み中/済/見送りの札とメモ。数字から向いている道に合図(営業利益率5%未満・柱が1本・債務償還年数7年未満/10年超・現預金2か月分など)。借入・出資・上場の可否は断定しない。経営者の左メニュー「スケールの設計」と同じ表(ナビの12の道具には含めない)。プランの切替はカルテ→企業価値・承継準備→出口の設計の上段のボタンから運営に依頼(理由を書く小窓。空欄でも送れるので必ず書く。切替は運営が行い翌月の請求から。売り手→買い手は初月に差額50,000円(税別)、買い手→売り手は返金なしだが契約月の翌月から3か月目の月末までなら50,000円返金。優遇の年数は通算)。パートナーご自身が離れるときは運営サポートの「運営への問い合わせ」から(画面で契約を終える操作は無い)。カルテの「やること」の下に「今月の面談台本」(その会社の数字から見せる数字3つ・問い3つ・買い手の基盤へのつながり)と「継ナビくんのナビ」(土台→現金→余力→条件の順番と、済／次／あと)。ナビは12の道具(試算表→資金繰り→保険・固定費→支払予定→導入診断報告書→企業価値→出口の設計→買った後に備える→準備度→買いたい条件。AI診断・銀行提出は任意。売り手プランでは準備度・買いたい条件・買った後に備えるも任意)。各道具の見出しの下に「なぜ今・やると分かること・次の一手」の案内と「結果を継ナビくんと読む」ボタン。出口の設計(5つの出口・目標の年・見る数字のいま/目標/差・持株会社の合図。上部にいまの顧問プランとM&Aの優遇、「◯◯プラン への切替を運営に依頼」)と買った後に備える(6分類24項目・自社では・学ぶ・未着手/学んだ/準備した)はカルテの企業価値・承継準備の中。伴走の1年は契約の翌月1日を起点に暦の月で3か月ずつ、土台が整わなければ次の四半期も並行、四半期の終わりに検証)／課題PDCA=顧客の課題の進捗管理／M&A案件=案件のステージ管理／Tsugime -結-（エクイティ・デット・M&A）=プラットフォーム内マッチング(掲載は運営への申請制)／お支払い=プラットフォーム利用料と、運営からの外注費の支払明細(月次・確定申告用の年間明細。印刷/CSV出力可)。いちばん下に「ご契約の終了について」=ご自身がTsuguAiの契約を終えたいときは「契約の終了を申し出る」(ご希望の終了月・理由・伝えたいことはどれも任意。取り下げられる。押してすぐ終わるものではない)。そのあと運営がお話を聞き、停止中にして(ダッシュボードに黄色い帯。ログイン・カルテの閲覧・報酬明細はそのまま、新しい顧客の招待と顧問契約の送信はできない)、担当顧問先をまとめて後任へ引き継ぎ(2名体制は終わり、登録待ちの招待・同意待ちの顧問契約も後任へ)、最終月の報酬を支払う。法人に所属している方は先に法人の管理者へ(EP-Iの担当者は管理者が席を外すだけで済む)。継ナビくんは画面右下のボタンに常駐し(ボタンの場所は設定で右下・左下・右上・左上から、パネルの大きさは設定か見出しの⤢で標準・右半分・左半分・中央に大きく、から選べる。半分は本体を反対側に寄せて横に並べる)、パネルは7タブ: 相談(このチャット。🧭質問ガイドと🔍履歴検索つき。画面の写しやPDFを📎で添えて質問できる。写しは入力欄にそのまま貼り付けても、ドラッグして落としてもよい)／📅予定(自分の予定と担当顧客の面談・期日・支払予定が1枚に並ぶカレンダー。月/週/一覧。月・週は横に払う(スワイプ)と前後の月・週へ。操作列(月/週/一覧・‹ ›・今日・＋予定)と週の曜日・終日の帯は、下へ送っても上に残る。スマホの週表示は7日が幅に収まり、予定は色で塗って題名を折り返す。色は青=自分の予定・金=面談・橙=課題の期日・赤=支払・緑=資金調達・紫=補助金の締切、Googleから取り込んだ予定はGoogle側のカレンダーの色。暦の下に「色の見分け」が並ぶ。予定を押すと小窓が開いて全部読める。入力は金色の「＋ 予定」で別の窓が開く(スマホでもキーボードに隠れない)。✕や「やめる」は入力の窓だけ閉じ、継ナビくんは閉じない。「＋ 予定」か、話しかけて登録(継ナビくんに「◯日の◯時に◯◯、予定に入れて」と頼むと確認のカードが出て、「登録する」を押すと入る。押すまで登録されない)。いちばん下の「Googleでつなぐ」でGoogleカレンダーと双方向につながり、どちらに入れても両方に出る。この画面で入れた予定は、直しても消してもその場でGoogleに出る(同期のボタンを押す必要はない。「いま同期する」はGoogle側の予定を待たずに取り込みたいときだけ)。ただしGoogleから取り込んだ予定をこの画面で消したときは、この画面から消えるだけでGoogle側には残る(削除を押す前にその旨が出る)。取り込みをやめたいだけなら、アカウントの下の「取り込むカレンダー」のチェックを外す。Google→TsuguAiの向きだけ間がある(こちらからGoogleへは入れた時点ですぐ。逆は予定タブを開いたときに取りにいく。開くたび・最短5分おき。TsuguAiを開いていない間は取りにいかない)。すぐ合わせたいときは「いま同期する」。ただし毎朝の今日の一手（パートナー）と毎週月曜の今週のひとこと（経営者）は、本文を作る前にこちらからGoogleを見にいくので、画面を開いていなくてもGoogleの予定が入る。担当顧客との面談もGoogleに出るが、Google側で面談を消してもTsuguAiの面談は消えない(顧客との約束のため。消すのは顧客管理から)。Googleの予定は本人だけが見え、顧客にも運営にも見えない。私用を取り込みたくないときはアカウントの欄の「このアカウントの予定をこの画面に取り込む」のチェックを外す。Googleの「家族」「誕生日」「共有」「日本の祝日」なども、アカウントの下の「取り込むカレンダー」でチェックを入れれば入る(最初はメインだけ)。個人と会社などアカウントは2つ以上つなげ(「もう1つのアカウントをつなぐ」)、取り込みは全部から、この画面で入れた予定と面談は「送り先」に選んだ1つにだけ出る。「Googleでつなぐ」を押すとGoogleの画面に移り、許可が済むと自動でこの画面に戻って同期が始まる。会社のGoogle Workspaceアカウントで「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていない(Google管理コンソール→アプリ→Google Workspace→カレンダーを有効にする)。つなぎ直しても直らず、「送り先にする」も出ない。個人アカウントでつなぐ)／メッセージ(顧客との送受信・ファイル添付はここで完結)／ナレッジ(全パートナーの事例・Q&Aの検索と投稿。投稿は承認後に公開)／お知らせ(未読・期日・対応事項)／連携(スマホ通知・Googleカレンダー・LINE)／サポート(操作説明書と、規程・報酬など運営へのFAQ/お問い合わせ。法人に所属している方には「エンタープライズ 操作説明書」も並ぶ)。'
         +'操作説明書は右下パネルの「サポート」タブから開けます。毎朝の「今日の一手」とお知らせは右下ボタンのバッジに届きます。';
     }
     //  運営がここに落ちていました。運営コンソールを開いている方に
@@ -15466,6 +15736,7 @@
         +'月次の請求を立てたい→「課金・契約」→「請求と未収」タブ→年月とお支払い方法を選んで「この月の請求を立てる」。同じ月に二度立てても増えません。'
         +'FA手数料など単発の請求→同じ「請求と未収」タブの「単発の請求」から。顧問料はここでは立てられません（月次生成と二重になるため）。'
         +'パートナーの口座を確認したい→「課金・契約」の下部「お振込先の確認」。開くと記録が残ります。'
+        +'パートナーが契約を終えたい→本人が「お支払い」のいちばん下から申し出ると、サポート管理の上部に並ぶ(受付中は毎朝メール)。お話をうかがう→「停止中にする」(新しい招待・顧問契約の送信・担当追加を止める。ログイン・閲覧・報酬明細はそのまま)→「担当顧問先を引き継ぐ…」(代表のみ。担当顧客・2名体制・登録待ちの招待・同意待ちの顧問契約をまとめて)→最終月の報酬→「対応済みにする」。パートナー一覧からも停止・引き継ぎができる。アカウントの削除はSupabaseのAuthentication→Users。'
         +'継ナビくんは画面右下のボタンに常駐し(ボタンの場所は設定で右下・左下・右上・左上から、パネルの大きさは設定か見出しの⤢で標準・右半分・左半分・中央に大きく、から選べる。半分は本体を反対側に寄せて横に並べる)、パネルのタブは 相談／予定／お知らせ／連携／サポート（説明書3種・商談用スライド・社外向け資料・問い合わせ受信箱への導線）です。運営にメッセージタブとナレッジタブはありません。';
     }
     return common
@@ -15921,6 +16192,14 @@
         var c=await sb.from('cancel_requests').select('id').eq('status','open');
         if(!c.error && c.data) cx=c.data.length;
       }catch(e){}
+      //  パートナーからの契約の終了のお申し出も、同じ扱いで数える
+      var px=0;
+      try{
+        var pe=await sb.from('partner_exit_requests').select('id').eq('status','open');
+        if(!pe.error && pe.data) px=pe.data.length;
+      }catch(e){}
+      var wasPx=window.__KNV_PEXIT||0;
+      window.__KNV_PEXIT=px;
       //  未収も数える。お金が入っていないことは、開きに行かないと
       //  気づけない類のもの。放置したぶんがそのまま取りっぱぐれになる
       var ov=0;
@@ -15933,14 +16212,14 @@
       if(bn){ bn.textContent=String(ov); bn.classList.toggle('hidden', ov<=0); }
       var was=window.__KNV_CANCEL||0;
       window.__KNV_CANCEL=cx;
-      window.__KNV_BELL=todo+cx+ov;
+      window.__KNV_BELL=todo+cx+px+ov;
       window.__KNV_UNREAD=0; window.__KNV_TODO=todo;
       knvBadgesRender();
       //  サポートタブは一度組んだら作り直さない作りなので、件数が変わったときだけ
       //  組み直す。数が届く前に開いていた人に、いつまでも 0 件の画面を見せない。
       var wasOv=window.__KNV_OVERDUE_SEEN;
       window.__KNV_OVERDUE_SEEN=ov;
-      if(cx!==was || ov!==wasOv){
+      if(cx!==was || px!==wasPx || ov!==wasOv){
         var sp=$('knv-support');
         if(sp && sp.getAttribute('data-ready')){
           sp.removeAttribute('data-ready');
@@ -16827,6 +17106,13 @@
         +'最終月のご請求と資料のお渡しを済ませてから、アカウントを削除してください。</div>'
         +'<button class="btn2" style="font-size:12px;padding:7px 14px;margin-top:8px;" '
         +'onclick="knvToggle(false);goSec(\'sec-support\')">ご依頼を開く →</button></div>';
+      var pxn=window.__KNV_PEXIT||0;
+      if(pxn) h+='<div style="border:1.5px solid #EAD9AC;background:#FDFAF1;border-radius:11px;padding:11px 13px;margin-bottom:10px;">'
+        +'<div style="font-size:12.5px;font-weight:700;color:#8A6A12;">⚠ パートナーから契約の終了のお申し出が '+pxn+'件</div>'
+        +'<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-top:3px;">'
+        +'お話をうかがい、停止中にして、担当顧問先を引き継いでから、最終月の報酬を支払います。</div>'
+        +'<button class="btn2" style="font-size:12px;padding:7px 14px;margin-top:8px;" '
+        +'onclick="knvToggle(false);goSec(\'sec-support\')">お申し出を開く →</button></div>';
       //  未収も、開きに行かないと気づけない。放置したぶんが取りっぱぐれになる
       var ov=window.__KNV_OVERDUE||0;
       if(ov) h+='<div style="border:1.5px solid #E8C4C2;background:#FDF6F5;border-radius:11px;padding:11px 13px;margin-bottom:10px;">'
@@ -16880,14 +17166,16 @@
   function knvSummaryRender(){
     var box=$('knv-summary'); if(!box) return;
     var un=window.__KNV_UNREAD||0, todo=window.__KNV_TODO||0;
-    var cx=window.__KNV_CANCEL||0;
+    var cx=window.__KNV_CANCEL||0, px=window.__KNV_PEXIT||0;
     var ins=(typeof agentInsightsUnread==='function')?agentInsightsUnread():0;
-    if(!un && !todo && !cx && !ins){ box.classList.add('hidden'); return; }
+    if(!un && !todo && !cx && !px && !ins){ box.classList.add('hidden'); return; }
     var h='', isAdmin=((window.__eff||'')==='admin');
     //  解約のご依頼はいちばん前に、赤で出す。問い合わせと同じ扱いにすると、
     //  件数の多い問い合わせに埋もれる。
     if(cx && isAdmin) h+='<button style="border-color:#E8C4C2;color:#A9403D;font-weight:700;" '
       +'onclick="knvToggle(false);goSec(\'sec-support\')">⚠ 解約のご依頼 <b>'+cx+'</b>件</button>';
+    if(px && isAdmin) h+='<button style="border-color:#EAD9AC;color:#8A6A12;font-weight:700;" '
+      +'onclick="knvToggle(false);goSec(\'sec-support\')">⚠ パートナーの契約の終了 <b>'+px+'</b>件</button>';
     if(un)   h+='<button onclick="knvShowTab(\'notif\')">📩 未読 <b>'+un+'</b>件</button>';
     if(todo) h+=isAdmin
       ? '<button onclick="knvToggle(false);goSec(\'sec-support\')">🛟 未対応の問い合わせ <b>'+todo+'</b>件</button>'
@@ -23261,6 +23549,7 @@
     var msg=$(pfx+'-msg');
     var say=function(t,c){ if(msg){ msg.style.color=c||'#A9403D'; msg.textContent=t; } };
     if(!em || em.indexOf('@')<0) return say('送り先のメールアドレスを入れてください。');
+    if(kind==='customer' && partnerSuspended()) return say(PEXIT_SUSPENDED_MSG);
     var fee=null, plan=null;
     if(kind==='customer'){
       //  プランは選ばないと送れない。月額はプランから決まり、契約書には
@@ -23283,6 +23572,7 @@
     var r=await sb.from('contract_offers').insert(row);
     if(r.error){
       var m=String(r.error.message||'');
+      if(/partner_suspended/.test(m)) return say(PEXIT_SUSPENDED_MSG);
       if(/policy|permission|row-level/i.test(m)) return say('この契約を送る権限がありません。');
       return say('送れませんでした：'+m);
     }

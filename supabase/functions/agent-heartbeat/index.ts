@@ -155,11 +155,14 @@ async function runHeartbeat(sb: any) {
   // 運営には、受付中の解約のご依頼を毎朝知らせる（対応済みにするまで続く）
   const cancels = await adminCancelAlerts(sb);
 
+  // パートナーからの契約の終了のお申し出も、同じく毎朝（対応済みにするまで）
+  const pexits = await adminPartnerExitAlerts(sb);
+
   // 四半期アンケート（匿名）：受付が開いている朝にお願いし、7日後に一度だけ思い出していただく
   const surveys = await surveyInvites(sb);
 
-  console.log(`heartbeat done: partners=${byPartner.size} generated=${generated} meeting_briefs=${briefed} mentored=${mentored} succession=${radar} report_drafts=${drafts} ma_matches=${matches} customer_briefs=${custBriefs} customer_meeting_eve=${custEve} knowledge_digest=${digest} cancel_alerts=${cancels} surveys=${surveys}`);
-  return { partners: byPartner.size, generated, meeting_briefs: briefed, mentored, succession: radar, report_drafts: drafts, ma_matches: matches, customer_briefs: custBriefs, customer_meeting_eve: custEve, knowledge_digest: digest, cancel_alerts: cancels, surveys };
+  console.log(`heartbeat done: partners=${byPartner.size} generated=${generated} meeting_briefs=${briefed} mentored=${mentored} succession=${radar} report_drafts=${drafts} ma_matches=${matches} customer_briefs=${custBriefs} customer_meeting_eve=${custEve} knowledge_digest=${digest} cancel_alerts=${cancels} partner_exit_alerts=${pexits} surveys=${surveys}`);
+  return { partners: byPartner.size, generated, meeting_briefs: briefed, mentored, succession: radar, report_drafts: drafts, ma_matches: matches, customer_briefs: custBriefs, customer_meeting_eve: custEve, knowledge_digest: digest, cancel_alerts: cancels, partner_exit_alerts: pexits, surveys };
 }
 
 // ---- 四半期アンケート（匿名）のお願い ----
@@ -543,6 +546,72 @@ async function adminCancelAlerts(sb: any): Promise<number> {
       reason: `受付中の解約のご依頼${reqs.length}件`, priority: 1,
     });
     if (!insErr) { sent++; await deliver(sb, a.id, brief, "cancel_alert"); }
+  }
+  return sent;
+}
+
+// ---- 運営向け パートナーの契約の終了のお申し出（毎朝・受付中があるあいだ毎日）----
+//  経営者の解約のご依頼と同じ考え方。パートナーがやめるときは、担当顧問先の
+//  引き継ぎがあり、放っておくと顧問先が宙に浮く。対応済みにすれば翌朝から止まる。
+//  AIは呼ばない。伝えるのは事実（誰が・いつ・いつまでに・何社）だけ。
+async function adminPartnerExitAlerts(sb: any): Promise<number> {
+  const { data: reqs, error } = await sb
+    .from("partner_exit_requests")
+    .select("partner_id, end_month, reason, note, created_at")
+    .eq("status", "open")
+    .order("created_at", { ascending: true })
+    .limit(50);
+  //  表がまだ無い環境では黙って何もしない。ほかの朝の便りは止めない
+  if (error || !reqs?.length) return 0;
+
+  const { data: admins } = await sb.from("profiles").select("id").eq("role", "admin");
+  if (!admins?.length) return 0;
+
+  const ids = [...new Set(reqs.map((r: any) => r.partner_id))];
+  const { data: parts } = await sb
+    .from("profiles").select("id, company_name, contact_name, email, partner_status").in("id", ids);
+  const pmap = new Map<string, any>((parts ?? []).map((p: any) => [p.id, p]));
+  //  担当の社数。引き継ぐ量が一目で分かるように
+  const { data: custs } = await sb
+    .from("profiles").select("consultant_id").eq("role", "customer").in("consultant_id", ids);
+  const count = new Map<string, number>();
+  for (const c of custs ?? []) count.set(c.consultant_id, (count.get(c.consultant_id) ?? 0) + 1);
+  const nameOf = (p: any) => p ? (p.contact_name || p.company_name || p.email || "（不明）") : "（不明）";
+
+  const today = Date.now();
+  const lines = reqs.map((r: any) => {
+    const p = pmap.get(r.partner_id);
+    const days = Math.max(0, Math.floor((today - new Date(r.created_at).getTime()) / 86400000));
+    const waited = days === 0 ? "本日" : `${days}日前`;
+    const m = /^(\d{4})-(\d{2})/.exec(String(r.end_month ?? ""));
+    const end = m ? `${m[1]}年${Number(m[2])}月末` : "相談";
+    const st = p?.partner_status === "suspended" ? "・停止中" : "";
+    const why = [r.reason, r.note].filter(Boolean).join(" / ");
+    return `- **${nameOf(p)}**（${waited}受付・ご希望の終了：${end}・担当${count.get(r.partner_id) ?? 0}社${st}）` + (why ? `\n  理由：${why}` : "");
+  });
+
+  const brief = {
+    title: reqs.length === 1 ? "パートナーから契約の終了のお申し出が1件あります" : `パートナーから契約の終了のお申し出が${reqs.length}件あります`,
+    body:
+      lines.join("\n") +
+      "\n\nお話をうかがい、停止中にして、担当顧問先を引き継いでから、最終月の報酬を支払ってください。" +
+      "済んだらサポート管理の画面で「対応済みにする」を押すと、このお知らせは止まります。" +
+      "\n\n開き方：画面右下の継ナビくん →「サポート」→「お申し出を開く」",
+  };
+
+  let sent = 0;
+  for (const a of admins) {
+    const { data: dup } = await sb
+      .from("agent_insights").select("id")
+      .eq("user_id", a.id).eq("kind", "partner_exit_alert")
+      .gte("created_at", daysAgo(0.8)).limit(1);
+    if (dup?.length) continue;
+    const { error: insErr } = await sb.from("agent_insights").insert({
+      user_id: a.id, kind: "partner_exit_alert",
+      title: brief.title, body: brief.body,
+      reason: `受付中の契約の終了のお申し出${reqs.length}件`, priority: 1,
+    });
+    if (!insErr) { sent++; await deliver(sb, a.id, brief, "partner_exit_alert"); }
   }
   return sent;
 }
