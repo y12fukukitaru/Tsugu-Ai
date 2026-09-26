@@ -92,11 +92,11 @@ ok('経営者（顧問税理士の入力だけ）：見出しなしの1項目', 
 {
   ok('左メニュー（PC・スマホのドロワー）に見出し', /navGrouped\(r, items\)\.map\(function\(g\)\{\n        return \(g\.name\?'<div class="sb-sec" title="'\+escA\(g\.desc\)\+'">'\+esc\(g\.name\)\+'<\/div>':''\)/.test(takeFn('buildNav')));
   no('「フラットなメニュー」の書き置きを残さない', /フラットなメニュー（カテゴリー見出しなし/.test(SRC));
-  ok('経営者のスマホのタイルも組ごと', /navGrouped\('customer', effectiveNav\('customer'\)\)\.forEach/.test(takeFn('dashSheetOpen')));
+  ok('経営者のスマホの≡も、組ごとのドロワー（タイルのシートは無くなった）', !/function dashSheetOpen|id="dash-sheet"/.test(SRC) && !/dashSheetOpen/.test(takeFn('openDrawer')));
   ok('カルテ：組ごとの説明が6つ', (function () { const m = /var CL_GROUP_DESC=\[([\s\S]*?)\];/.exec(SRC); return m && (m[1].match(/'[^']+'/g) || []).length === 6; })());
   //  2段のメニューにしてから、説明は右の枠の組名の下に出る
   ok('カルテ：右の枠の組名の下に説明', /<div class="cl-pd">'\+esc\(CL_GROUP_DESC\[CL_GROUPS\.indexOf\(grp\.name\)\]\|\|''\)/.test(SRC));
-  ok('カルテ：スマホのメニューにも説明', /<div class="cl-tgh">'\+esc\(grp\.name\)\+'<span class="cl-tgd">'/.test(SRC));
+  ok('カルテ：スマホのメニュー（2段のドロワー）にも組の説明', /\+'<div class="cl-pd">'\+esc\(CL_GROUP_DESC\[CL_GROUPS\.indexOf\(grp\.name\)\]\|\|''\)\+'<\/div>'/.test(SRC));
 }
 
 // ④ 説明書
