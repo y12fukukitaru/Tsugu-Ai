@@ -545,6 +545,19 @@
   .ni.active .ni-ic{background:var(--gold);border-color:var(--gold);}
   .ni-tx{flex:1;min-width:0;}
   .sb-foot{padding:14px 16px;border-top:1px solid rgba(255,255,255,.07);}
+  /* 表示モード（運営だけ）：左のメニューの最上部に置き、メニューを下へ送っても上に残す */
+  .sb-va{position:sticky;top:0;z-index:2;background:var(--deep);padding:10px 14px 12px;border-bottom:1px solid rgba(255,255,255,.07);}
+  .sb-va-l{font-size:10px;font-weight:600;color:rgba(255,255,255,.45);letter-spacing:.1em;margin:0 2px 6px;}
+  .sb-vaseg{display:flex;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:3px;gap:3px;}
+  .sb-vaseg button{flex:1 1 0;min-width:0;padding:7px 0;border:none;background:transparent;border-radius:7px;font-size:11.5px;font-weight:600;color:rgba(255,255,255,.62);cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s,color .15s;}
+  .sb-vaseg button:hover{color:#fff;background:rgba(255,255,255,.07);}
+  .sb-vaseg button.on{background:var(--gold);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+  .sb-vaseg button.on:hover{background:var(--gold);}
+  .drawer .sb-va{position:static;padding:12px 16px 14px;}
+  .drawer .sb-vaseg button{padding:9px 0;font-size:12.5px;}
+  .ds-va{margin:0 0 12px;}
+  .ds-va .vaseg{display:flex;width:100%;}
+  .ds-va .vaseg button{width:auto;}
   .sb-email{display:block;font-size:11px;color:rgba(255,255,255,.55);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   /* 週表示（バーチカル）：横に7日、縦に時間。パネルが狭いときは横スクロール */
   .wk-wrap{overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;border:1px solid var(--softline);border-radius:10px;background:var(--card);}
@@ -700,12 +713,6 @@
   /* ===== ハンバーガーメニュー＆ドロワー（スマホ用） ===== */
   .hbg{display:none;position:relative;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--soft);cursor:pointer;padding:0;flex-shrink:0;}
   .hbg .b{display:block;width:18px;height:2px;border-radius:99px;background:var(--navy);}
-  /* 表示モード切替：スマホでも1行に収める */
-  @media(max-width:640px){
-    .viewas-row{flex-wrap:nowrap;gap:6px;}
-    .viewas-row span{font-size:11px;white-space:nowrap;flex-shrink:0;}
-    .viewas-row .sbtn{padding:8px 10px;font-size:12px;white-space:nowrap;flex:0 1 auto;min-width:0;}
-  }
   .drawer-back{position:fixed;inset:0;background:rgba(7,13,25,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:60;}
   .drawer{position:fixed;top:0;right:0;bottom:0;width:82%;max-width:300px;background:var(--deep);color:#fff;z-index:61;transform:translateX(105%);visibility:hidden;transition:transform .25s ease, visibility 0s linear .25s;display:flex;flex-direction:column;box-shadow:-12px 0 40px rgba(0,0,0,.4);}
   .drawer.open{transform:none;visibility:visible;transition:transform .25s ease;}
@@ -1440,6 +1447,7 @@
       <div class="logo-tg">AIと人による伴走型経営支援</div>
     </div>
     <div class="sb-co"><div id="sb-co-nm" class="co-nm">—</div><span id="app-role" class="plan-pill"></span></div>
+    <div id="sb-va" class="sb-va hidden"></div>
     <nav id="app-nav" class="sb-nav"></nav>
     <div class="sb-foot"><div class="me-row"><span id="me-ico" class="me-ico"></span><span id="app-email" class="sb-email"></span></div><button class="sb-out" onclick="openSettings()" style="margin-bottom:6px;">⚙️ 設定</button><button class="sb-out" onclick="signOut()">ログアウト</button></div>
   </aside>
@@ -1457,6 +1465,7 @@
     <button class="drawer-close" onclick="closeDrawer()" aria-label="閉じる">×</button>
   </div>
   <div class="drawer-co"><div id="dw-co-nm" class="co-nm">—</div><span id="dw-role" class="plan-pill"></span></div>
+  <div id="dw-va" class="sb-va hidden"></div>
   <nav id="drawer-nav" class="drawer-nav"></nav>
   <div class="drawer-foot"><div class="me-row"><span id="dw-ico" class="me-ico"></span><span id="dw-email" class="sb-email"></span></div><button class="sb-out" onclick="openSettings()" style="margin-bottom:6px;">⚙️ 設定</button><button class="sb-out" onclick="signOut()">ログアウト</button></div>
 </aside>
@@ -1675,7 +1684,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260926-10';
+  var APP_BUILD='20260927-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2266,8 +2275,6 @@
     if(role==='admin' && !adminCanSee(grp)) grp=first||grp;
     Array.prototype.forEach.call(els,function(el,i){
       var g=grpOf[i];
-      // 表示モードの切替バーはダッシュボード（メニュー先頭）でのみ表示する
-      if(el.classList.contains('vaswitch')){ el.style.display=(grp===first)?'':'none'; return; }
       el.style.display=(g===null || g===grp)?'':'none';
     });
     CURRENT_SEC=grp;
@@ -2947,7 +2954,7 @@
       document.body.style.overflow='hidden';
       return;
     }
-    var h='';
+    var h=vaSheetHtml();
     navGrouped('customer', effectiveNav('customer')).forEach(function(g){
       if(g.name) h+='<div class="cl-tgh">'+esc(g.name)+'<span class="cl-tgd">'+esc(g.desc)+'</span></div>';
       h+='<div class="cl-tiles">';
@@ -2976,19 +2983,29 @@
   }
 
   var VIEWAS_NOTE=1; // 運営の表示モードは VIEWAS で管理
-  function setAdminView(m){ VIEWAS=m; renderApp(window.__prof, window.__email); }
-  function adminSwitchHtml(active){
-    // 表示モードの切替バーはダッシュボードでのみ出す（showSectionが .vaswitch を制御）
-    return '<div class="panel vaswitch" style="padding:12px 16px;"><div class="viewas-row" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="font-size:12px;color:var(--muted);">表示モード</span>'
-      +'<div class="vaseg" role="group" aria-label="表示モード">'
-      +'<button class="'+(active==='admin'?'on':'')+'" onclick="setAdminView(\'admin\')">運営</button>'
-      +'<button class="'+(active==='fde'?'on':'')+'" onclick="setAdminView(\'fde\')">パートナー</button>'
-      +'<button class="'+(active==='customer'?'on':'')+'" onclick="setAdminView(\'customer\')">顧客</button>'
-      +'</div></div></div>';
+  function setAdminView(m){ VIEWAS=m; dashSheetClose(); renderApp(window.__prof, window.__email); }
+  //  表示モード（運営だけ）。以前はダッシュボードの中にだけあったが、どの画面にいても切り替えられるよう
+  //  左のメニューの最上部（スマホはドロワーの上・経営者の見え方ではメニューのシートの上）に置く
+  function vaActive(){ return VIEWAS==='fde'?'fde':(VIEWAS==='customer'?'customer':'admin'); }
+  function vaButtons(){
+    var a=vaActive();
+    return [['admin','運営'],['fde','パートナー'],['customer','顧客']].map(function(x){
+      return '<button type="button" class="'+(a===x[0]?'on':'')+'" aria-pressed="'+(a===x[0])+'" onclick="setAdminView(\''+x[0]+'\')">'+x[1]+'</button>';
+    }).join('');
+  }
+  function vaSideRender(){
+    var on=(window.__role==='admin');
+    ['sb-va','dw-va'].forEach(function(id){
+      var el=$(id); if(!el) return;
+      el.classList.toggle('hidden', !on);
+      el.innerHTML=on ? '<div class="sb-va-l">表示モード</div><div class="sb-vaseg" role="group" aria-label="表示モード">'+vaButtons()+'</div>' : '';
+    });
+  }
+  function vaSheetHtml(){
+    return (window.__role==='admin') ? '<div class="ds-va"><div class="cl-tgh" style="margin-top:2px;">表示モード</div><div class="vaseg" role="group" aria-label="表示モード">'+vaButtons()+'</div></div>' : '';
   }
   function adminViewHtml(email, prof){
-    return adminSwitchHtml('admin')
-      +'<div class="panel"><span class="pill" style="background:#F7EFDC;color:#C39B3F;">運営コンソール</span>'
+    return '<div class="panel"><span class="pill" style="background:#F7EFDC;color:#C39B3F;">運営コンソール</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">運営管理</h2>'
         +'<div class="kv">ログイン中：<b>'+esc(email)+'</b>　役割：<b>運営</b></div>'
         +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:10px;">操作説明書（運営・パートナー・顧客）は、右下の継ナビくん「サポート」タブから開けます。</div>'
@@ -4214,6 +4231,7 @@
     $('app-email').textContent=email||'';
     var dr=$('dw-role'); if(dr){ dr.textContent=roleLabel(r); dr.style.background=roleColor(r); dr.style.color='#fff'; }
     var de=$('dw-email'); if(de) de.textContent=email||'';
+    vaSideRender();
     avatarRemember(); renderAvatar();
     closeDrawer();
     buildNav(eff);
@@ -4227,8 +4245,7 @@
       view=acctViewHtml(email);
     }
     else if(eff==='customer'){
-      view=(r==='admin'?adminSwitchHtml('customer'):'')
-        +'<div class="panel" id="sec-flow"><span class="pill">顧客ポータル</span>'
+      view='<div class="panel" id="sec-flow"><span class="pill">顧客ポータル</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">'+esc(prof.company_name||'経営者ダッシュボード')+'</h2>'
         +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b></div>'
         +'<div style="margin-bottom:12px;"><button id="ct-btn" class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;font-weight:600;" onclick="ctStart(true)"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5.5 3.5-5.5 3.5z"/></svg>使い方ガイド（1分）</button>'
@@ -4412,8 +4429,7 @@
         ;
 
     } else if(eff==='consultant'){
-      view=(r==='admin'?adminSwitchHtml('fde'):'')
-        +'<div class="panel" id="sec-flow"><span class="pill" style="background:#EAF0F9;color:#2C5DA8;">パートナーポータル</span>'
+      view='<div class="panel" id="sec-flow"><span class="pill" style="background:#EAF0F9;color:#2C5DA8;">パートナーポータル</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">パートナーポータル</h2>'
         +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b>'+(prof.fde_rank?'　ランク：<b>'+esc(prof.fde_rank)+'</b>':'')+'</div>'
         //  法人に所属している方には、そのことをはっきり出す。個人で活動する
