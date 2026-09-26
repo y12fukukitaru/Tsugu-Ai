@@ -1675,7 +1675,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260926-09';
+  var APP_BUILD='20260926-10';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2867,8 +2867,7 @@
   function swipeCtx(){
     var m=$('cl-modal');
     if(m && !m.classList.contains('hidden')){
-      //  カルテの上に別の小窓（シート）が出ているときは払いを拾わない
-      var sh=$('cl-menu'); if(sh && !sh.classList.contains('hidden')) return null;
+      //  タイルのメニュー（シート）が出ていても、右端から払えばシートを閉じて2段のメニューを出す
       return 'karte';
     }
     var app=$('app'); if(!app || app.classList.contains('hidden')) return null;
@@ -2878,7 +2877,8 @@
     return 'app';
   }
   function swipeParts(ctx){
-    if(ctx==='karte'){ var e=clDrawerEls(); return { el:e.box, back:e.back, open:clDrawerOpen, close:clDrawerClose, prep:clDrawerMount }; }
+    if(ctx==='karte'){ var e=clDrawerEls(); return { el:e.box, back:e.back, open:clDrawerOpen, close:clDrawerClose,
+      prep:function(){ var sh=$('cl-menu'); if(sh && !sh.classList.contains('hidden')) clMenuClose(); clDrawerMount(); } }; }
     return { el:$('drawer'), back:$('drawer-back'), open:openSideDrawer, close:closeDrawer, prep:function(){} };
   }
   //  はじめてスマホで開いたときに一度だけ、払えることを知らせる（その端末で覚える）
@@ -12802,6 +12802,9 @@
   }
   function clSheetOpen(edit){
     var d=$('cl-menu'); if(!d)return;
+    //  カルテの窓（上下にスクロールし、背景にぼかし）の中に置いたままだと、シートが画面に
+    //  固定されず、下へ送った分だけ上へずれて、上のパンくずの下に潜る。body 直下へ移して開く
+    if(d.parentNode!==document.body) document.body.appendChild(d);
     CL_EDIT=!!edit;
     d.classList.remove('hidden');
     clSheetRender();
