@@ -43,7 +43,7 @@ function no(name, cond) { is(name, !!cond, false); }
   ok('表がまだ無い環境でも止めない', /\} catch \{ return new Set<string>\(\); \}   \/\/ 表がまだ無い環境でも止めない/.test(HB));
   //  毎朝（パートナー）と毎週（経営者）の両方。どちらも自分の場所で一覧を引く
   is('一覧を引くのは2か所（毎朝・毎週）', (HB.match(/const linked = await googleLinked\(sb\);/g) || []).length, 2);
-  ok('毎朝：予定を読む前に取り込む', /if \(linked\.has\(partnerId\)\) await syncGoogle\(partnerId\);\s*\n\s*\n\s*const signals = await collectSignals\(sb, customerIds\);\s*\n\s*const agenda = await todayAgenda\(sb, partnerId, customerIds\);/.test(HB));
+  ok('毎朝：予定を読む前に取り込む', /if \(linked\.has\(partnerId\)\) await syncGoogle\(partnerId\);\s*\n\s*\n\s*const signals = customerIds\.length \? await collectSignals\(sb, customerIds\) : \[\];\s*\n\s*const agenda = await todayAgenda\(sb, partnerId, customerIds\);/.test(HB));
   ok('毎週：今週の予定を読む前に取り込む', /if \(linked\.has\(c\.id\)\) await syncGoogle\(c\.id\);   \/\/ 今週の予定を読む前に取り込む\s*\n\s*const agenda = await weekAgenda\(sb, c\.id\);/.test(HB));
   //  二重生成を避ける確かめのあと。出さない相手のぶんまで取り込まない
   const i = HB.indexOf('if (dup?.length) continue;');
@@ -64,7 +64,7 @@ function no(name, cond) { is(name, !!cond, false); }
 // ④ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260927-08', '20260927-08']);
+  is('版が揃う', [build, VER.build], ['20260927-09', '20260927-09']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

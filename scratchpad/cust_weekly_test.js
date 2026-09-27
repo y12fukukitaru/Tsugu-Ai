@@ -38,7 +38,7 @@ function no(name, cond) { is(name, !!cond, false); }
   ok('説明書：お知らせタブの先頭', /メール・LINEで届いたものと同じ内容が、<b>「お知らせ」タブの先頭<\/b>にあります/.test(MANC));
   ok('説明書：翌週に入れ替わる', /その週のうちは同じ場所で読み返せます。まとめて畳むときは<b>「すべて既読」<\/b>。翌週には新しいものに入れ替わります。/.test(MANC));
   ok('説明書：週の行が二重になっていない', (MANC.match(/<tr><th>毎週月曜の朝/g) || []).length === 1);
-  ok('説明書：結びも週', /<b>お伝えすることが無い週は、無理にお送りしません。<\/b>今週のひとことは、数字も予定も動いていない週は届かないことがあります。/.test(MANC));
+  ok('説明書：結びも週', /<b>お伝えすることが無い週は、無理にお送りしません。<\/b>今週のひとことは、数字も予定もTODOも動いていない週は届かないことがあります。/.test(MANC));
   ok('説明書：画面の写しの説明', /<b>④<\/b> 毎週月曜の「今週のひとこと」は「お知らせ」タブの先頭。/.test(MANC));
   ok('説明書：Google連携の但し書き', /毎週月曜の「今週のひとこと」でも触れます。/.test(MANC));
   ok('説明書：予定の枠は【今週の予定】', /<th>今週の予定の並び<\/th>/.test(MANC));
@@ -60,7 +60,7 @@ function no(name, cond) { is(name, !!cond, false); }
 // ⑤ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260927-08', '20260927-08']);
+  is('版が揃う', [build, VER.build], ['20260927-09', '20260927-09']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

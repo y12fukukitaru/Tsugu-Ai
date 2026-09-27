@@ -85,11 +85,16 @@ async function runHeartbeat(sb: any) {
     add(a.sub_id, a.customer_id);
   }
 
+  //  担当顧客がいなくても、期限が今日までの TODO が残っているパートナーには朝の便りを出す。
+  //  byPartner そのものには足さない（面談準備・指南など、顧客のいる方向けの処理に混ぜないため）
+  const briefTargets = new Map(byPartner);
+  await addTodoPartners(sb, briefTargets);
+
   //  Googleカレンダーをつないでいる方。便りを作る前に取り込む
   const linked = await googleLinked(sb);
 
   let generated = 0;
-  for (const [partnerId, customerSet] of byPartner) {
+  for (const [partnerId, customerSet] of briefTargets) {
     const customerIds = [...customerSet];
 
     // 同じ日に二重生成しない（再実行・リトライ対策）
@@ -105,21 +110,26 @@ async function runHeartbeat(sb: any) {
     //  予定を読む前に取り込む。Googleにだけ入れた予定も拾えるようにする
     if (linked.has(partnerId)) await syncGoogle(partnerId);
 
-    const signals = await collectSignals(sb, customerIds);
+    const signals = customerIds.length ? await collectSignals(sb, customerIds) : [];
     const agenda = await todayAgenda(sb, partnerId, customerIds);
-    // 予定が入っている日は、シグナルが無くても朝のひとことを届ける
-    if (!signals.length && !agenda.length) continue;
+    //  継ナビくんの TODO（期限が今日まで。期限切れを含む）
+    const todos = await todoItems(sb, partnerId, jstToday().date);
+    // 予定や TODO がある日は、シグナルが無くても朝のひとことを届ける
+    if (!signals.length && !agenda.length && !todos.length) continue;
 
-    const brief = await composeBrief(signals, agenda);
+    //  シグナルも予定も無く TODO だけの日は、AIを呼ばない（伝えるのは TODO の一覧だけ）
+    const brief = (!signals.length && !agenda.length)
+      ? { title: `今日までのTODOが${todos.length}件あります`, body: "" }
+      : await composeBrief(signals, agenda);
     if (!brief) continue;
-    brief.body = agendaBlock(agenda) + brief.body;
+    brief.body = agendaBlock(agenda) + todoBlock(todos, "今日まで") + brief.body;
 
     const { error: insErr } = await sb.from("agent_insights").insert({
       user_id: partnerId,
       kind: "daily_brief",
       title: brief.title,
       body: brief.body,
-      reason: [...signals.map((s) => s.fact), ...agenda.map((a) => "予定: " + agendaFlat(a))].join(" / "),
+      reason: [...signals.map((s) => s.fact), ...agenda.map((a) => "予定: " + agendaFlat(a)), ...todos.map((a) => "TODO: " + a.text)].join(" / "),
       priority: signals.length ? Math.min(...signals.map((s) => s.priority)) : 3,
     });
     if (!insErr) {
@@ -329,8 +339,10 @@ async function customerBriefs(sb: any): Promise<number> {
     }
     if (linked.has(c.id)) await syncGoogle(c.id);   // 今週の予定を読む前に取り込む
     const agenda = await weekAgenda(sb, c.id);
-    // 予定が入っている週は、ほかに何も無くてもひとことを届ける
-    if (!signals.length && !agenda.length) continue;
+    //  継ナビくんの TODO（今週末までが期限のもの。期限切れを含む）。本人だけの控え
+    const myTodos = await todoItems(sb, c.id, jstDateAfter(6));
+    // 予定か TODO が入っている週は、ほかに何も無くてもひとことを届ける
+    if (!signals.length && !agenda.length && !myTodos.length) continue;
 
     const sys =
       "あなたは経営支援プラットフォーム「TsuguAi -継-」のAIエージェント「継ナビくん」です。" +
@@ -357,14 +369,17 @@ async function customerBriefs(sb: any): Promise<number> {
     const usr = `会社: ${c.company_name || ""}\n今日は${tj.label}、今週のはじまりです。\n`
       + (agenda.length ? `今週の予定:\n${agenda.map((a) => "- " + agendaFlat(a)).join("\n")}\n` : "")
       + (signals.length ? `\n今週の状況:\n${signals.map((x) => "- " + x).join("\n")}` : "");
-    const brief = await callClaudeJson(sys, usr, 700);
+    //  TODO だけの週は AI を呼ばない（並べるだけで足りる）
+    const brief = (!signals.length && !agenda.length)
+      ? { title: `今週までのTODOが${myTodos.length}件あります`, body: "" }
+      : await callClaudeJson(sys, usr, 700);
     if (!brief) continue;
-    brief.body = weekBlock(agenda) + brief.body;
+    brief.body = weekBlock(agenda) + todoBlock(myTodos, "今週まで") + brief.body;
 
     const { error: insErr } = await sb.from("agent_insights").insert({
       user_id: c.id, kind: "weekly_brief",
       title: brief.title, body: brief.body,
-      reason: [...signals, ...agenda.map((a) => "予定: " + agendaFlat(a))].join(" / "), priority: signals.length ? 2 : 3,
+      reason: [...signals, ...agenda.map((a) => "予定: " + agendaFlat(a)), ...myTodos.map((a) => "TODO: " + a.text)].join(" / "), priority: signals.length ? 2 : 3,
     });
     if (!insErr) { made++; await deliver(sb, c.id, brief, "weekly_brief"); }
   }
@@ -584,10 +599,10 @@ async function adminPartnerExitAlerts(sb: any): Promise<number> {
     const days = Math.max(0, Math.floor((today - new Date(r.created_at).getTime()) / 86400000));
     const waited = days === 0 ? "本日" : `${days}日前`;
     const m = /^(\d{4})-(\d{2})/.exec(String(r.end_month ?? ""));
-    const end = m ? `${m[1]}年${Number(m[2])}月末` : "相談";
+    const end = m ? `${m[1]}年${Number(m[2])}月末` : "お申し出の月の翌月末";
     const st = p?.partner_status === "suspended" ? "・停止中" : "";
     const why = [r.reason, r.note].filter(Boolean).join(" / ");
-    return `- **${nameOf(p)}**（${waited}受付・ご希望の終了：${end}・担当${count.get(r.partner_id) ?? 0}社${st}）` + (why ? `\n  理由：${why}` : "");
+    return `- **${nameOf(p)}**（${waited}受付・契約の終了日：${end}・担当${count.get(r.partner_id) ?? 0}社${st}）` + (why ? `\n  理由：${why}` : "");
   });
 
   const brief = {
@@ -1468,6 +1483,49 @@ function agendaFlat(a: AgendaItem): string { return a.place ? `${a.text}（${a.p
 //   ・17:00 高重さん
 //   　　安田幼稚園（広島市中区白島中町2-25）
 //  下げ幅は全角空白2つ。半角空白だとLINEで潰れて見えるため。
+// ---- 継ナビくんの TODO ----
+//  本人が TODO タブに書いた用事のうち、期限が upto（YYYY-MM-DD）までで済んでいないもの。
+//  期限切れも含めて出す（忘れないための仕組みなので、過ぎたものほど出す）。
+async function todoItems(sb: any, ownerId: string, upto: string): Promise<AgendaItem[]> {
+  try {
+    const { data } = await sb.from("todos")
+      .select("title, due_date, due_time")
+      .eq("owner_id", ownerId).is("done_at", null)
+      .not("due_date", "is", null).lte("due_date", upto)
+      .order("due_date", { ascending: true }).limit(15);
+    const today = jstToday().date;
+    return (data ?? []).map((t: any) => {
+      const tm = t.due_time ? " " + String(t.due_time).slice(0, 5) : "";
+      const when = t.due_date < today ? `期限切れ ${fmtMdw(t.due_date)}` : (t.due_date === today ? "今日" : fmtMdw(t.due_date));
+      return { text: `${when}${tm} ${t.title ?? "TODO"}` };
+    });
+  } catch { return []; /* 表が無い環境でも止めない */ }
+}
+//  予定の下に置く TODO の枠。無い日は出さない（予定の枠と違い、空の報告は要らない）
+function todoBlock(items: AgendaItem[], span: string): string {
+  if (!items.length) return "";
+  return `**【TODO（${span}）】**\n` + agendaLines(items) + "\n\n────────────\n\n";
+}
+//  担当顧客がいないパートナーにも、TODO があれば朝の便りを出すために加える
+async function addTodoPartners(sb: any, byPartner: Map<string, Set<string>>) {
+  try {
+    const { data } = await sb.from("todos").select("owner_id")
+      .is("done_at", null).not("due_date", "is", null).lte("due_date", jstToday().date).limit(500);
+    const ids = [...new Set((data ?? []).map((r: any) => r.owner_id))].filter((id) => !byPartner.has(id as string));
+    if (!ids.length) return;
+    const { data: ps } = await sb.from("profiles").select("id").in("id", ids).eq("role", "consultant");
+    for (const p of ps ?? []) byPartner.set(p.id, new Set());
+  } catch { /* 表が無い環境でも止めない */ }
+}
+function fmtMdw(ymd: string): string {
+  const d = new Date(ymd + "T00:00:00Z");
+  return `${d.getUTCMonth() + 1}/${d.getUTCDate()}（${"日月火水木金土"[d.getUTCDay()]}）`;
+}
+//  日本時間の今日から n 日後の日付（YYYY-MM-DD）
+function jstDateAfter(n: number): string {
+  return new Date(Date.now() + 9 * 3600000 + n * 86400000).toISOString().slice(0, 10);
+}
+
 function agendaLines(items: AgendaItem[]): string {
   return items.map((a) => (a.place ? `・${a.text}\n　　${a.place}` : `・${a.text}`)).join("\n");
 }
