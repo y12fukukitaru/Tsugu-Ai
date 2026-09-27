@@ -77,7 +77,7 @@ function takeFn(name) {
 {
   ok('経営者むけの案内に新しい場所', /お支払い=画面のいちばん上に「ご契約について」/.test(SRC));
   ok('パートナーむけの案内に赤い帯', /カルテのいちばん上に赤い帯/.test(SRC));
-  ok('パートナー自身の離脱は運営サポートへ', /パートナーご自身が離れるときは運営サポート/.test(SRC));
+  ok('パートナー自身の離脱は「お支払い」から申し出る（翌月末で満了）', /パートナーご自身が離れるときは「お支払い」のいちばん下の「ご契約の終了について」から申し出る\(お申し出の月の翌月末で満了\)/.test(SRC));
 }
 // ⑥ 説明書
 {
@@ -112,7 +112,7 @@ function takeFn(name) {
 // ⑦ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20260927-08', '20260927-08']);
+  is('版が揃う', [build, VER.build], ['20260927-09', '20260927-09']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

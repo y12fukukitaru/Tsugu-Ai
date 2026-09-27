@@ -50,7 +50,15 @@ ok('受付中は「承りました」と取り下げ', /契約の終了のお申
 ok('押してすぐ使えなくならないと言う', /押してすぐに使えなくなることはありません/.test(lp));
 ok('法人所属の方への案内（EP-I は席を外すだけ）', /席を外す<\/b>だけで済みます/.test(lp) && /EP-II の所属の方は、ご本人の契約なので/.test(lp));
 const po = takeFn('pexitOpen');
-ok('希望の終了は翌月〜6か月先の月末か「相談」', /for\(var i=1;i<=6;i\+\+\)/.test(po) && /運営と相談して決める/.test(po));
+ok('終了日は選ばせない（申し出た月の翌月末で固定）', !/for\(var i=1;i<=6;i\+\+\)/.test(po) && !/運営と相談して決める/.test(po) && !/<select id="pexit-month"/.test(po) && /お申し出の月の<b>翌月末<\/b>で満了します/.test(po) && /pexitEndMonth\(\)/.test(po));
+{
+  //  翌月末の1日を end_month に入れる（12月→翌年1月、月末日でもずれない）
+  const fn = new Function(takeFn('pexitEndMonth') + '; return pexitEndMonth;')();
+  ok('9月中 → 10月末', fn(new Date(2026, 8, 30)) === '2026-10-01');
+  ok('9月1日 → 10月末', fn(new Date(2026, 8, 1)) === '2026-10-01');
+  ok('12月 → 翌年1月末', fn(new Date(2026, 11, 31)) === '2027-01-01');
+  ok('1月31日 → 2月末', fn(new Date(2027, 0, 31)) === '2027-02-01');
+}
 ok('理由と伝えたいことは任意', /理由をお聞かせください（任意）/.test(po) && /お伝えしておきたいこと（任意）/.test(po));
 const ps = takeFn('pexitSend');
 ok('送る中身', /insert\(\{ partner_id:ME, end_month:month, reason:reason, note:note \}\)/.test(ps) && /すでにお申し出を承っています/.test(ps));
