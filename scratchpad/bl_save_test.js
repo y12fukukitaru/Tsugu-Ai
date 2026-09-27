@@ -5,6 +5,9 @@
 //   ① お振込先・委託者情報の欄それぞれに「保存する」と状態の表示がある
 //   ② 状態は上の説明と、欄の横の両方に出る（失敗は赤）
 //   ③ 総合振込の委託者情報は、payout-file と同じ決まりで足りないものを先に出す
+//   2026-09-27：口座の欄は「保存する」を押したときだけ保存する（自動保存しない）。
+//   欄ごとに、その欄の口座だけを保存する（受け取る口座と振り込む口座を連動させない）。
+//   詳しい動きは acct_save_test.js
 // =============================================================
 const fs = require('fs');
 const SRC = fs.readFileSync(__dirname + '/../index.html', 'utf8');
@@ -21,18 +24,17 @@ function takeFn(name) {
   return SRC.slice(last.index, SRC.indexOf('\n  }\n', last.index) + 4);
 }
 // ① 欄ごとの「保存する」
-is('「保存する」は口座の欄2つに', (SRC.match(/onclick="blRatesSaveNow\(\)">保存する<\/button>/g) || []).length, 2);
-is('状態の表示も2つ', (SRC.match(/class="bl-save-st"/g) || []).length, 2);
-ok('お振込先の欄の中にある', /id="bl-bank"[\s\S]{0,400}blRatesSaveNow/.test(SRC));
-ok('委託者情報の欄の中にある', /id="bl-sacct"[\s\S]{0,900}blRatesSaveNow/.test(SRC));
+ok('「保存する」は欄ごと（お振込先・委託者情報）', /onclick="blAcctSave\(\\''\+g\+'\\'\)">保存する<\/button>/.test(takeFn('blAcctBar')) && /id="bl-acct-st-'\+g\+'"/.test(takeFn('blAcctBar')));
+ok('お振込先の欄の中にある', /id="bl-bank"[\s\S]{0,300}\+blAcctBar\('recv'\)/.test(SRC));
+ok('委託者情報の欄の中にある', /id="bl-sender-check"[^\n]*\n\s*\+blAcctBar\('send'\)/.test(SRC));
 ok('委託者情報の確かめの枠', /id="bl-sender-check"/.test(SRC));
 // ② 状態
-ok('状態は上と欄の横の両方に出す', /querySelectorAll\('\.bl-save-st'\)/.test(takeFn('blRatesNote')));
+ok('料率の状態は上に、口座の状態は欄の横に（混ぜない）', !/bl-save-st/.test(SRC) && /\$\('bl-acct-st-'\+g\)/.test(takeFn('blAcctNote')));
 ok('保存できたら時刻つきで「✓ 保存しました」', /✓ 保存しました（'\+blHm\(\)\+'・運営全員に反映）/.test(takeFn('blRatesWrite')));
-ok('失敗は赤で出す', /保存に失敗しました：'\+r\.error\.message,'#A9403D'/.test(takeFn('blRatesWrite')));
+ok('失敗は赤で出す', /保存に失敗しました：'\+err,'#A9403D'/.test(takeFn('blRatesWrite')) && /保存に失敗しました：'\+err\+'（もう一度「保存する」を押してください）','#A9403D'/.test(takeFn('blAcctSave')));
 ok('読み込んだら最終保存の時刻', /最終保存 '\+blHm\(r\.data\.updated_at\)/.test(takeFn('blRatesLoad')));
 ok('保存の仕組みが無いときは「保存できません」と赤で', /保存できません（保存機能のSQL設定が未実施のため/.test(takeFn('blRatesLoad')));
-ok('「保存する」は待たずに保存する', /clearTimeout\(BL_SAVE_T\)[\s\S]*blRatesWrite\(\);/.test(takeFn('blRatesSaveNow')));
+ok('料率と口座をまとめて保存する関数は無くした', !/function blRatesSaveNow\(/.test(SRC) && !/blRatesSaveNow/.test(SRC));
 ok('自動保存は0.8秒後に同じ書き込み', /setTimeout\(blRatesWrite, 800\)/.test(takeFn('blRatesSave')));
 ok('読み込むのは value と updated_at', /select\('value,updated_at'\)/.test(takeFn('blRatesLoad')));
 // ③ 委託者情報の決まり
@@ -42,7 +44,7 @@ is('そろっていれば無し', issues({ 'bl-sc': '0', 'bl-sname': 'ｶ)ﾂｸ
 is('桁の違い', issues({ 'bl-sc': '12345678901', 'bl-sname': 'ｱ', 'bl-sbank': '310', 'bl-sbranch': '1010', 'bl-sacct': '12345678' }),
   ['委託者コードは10桁まで', '銀行コード（4桁）', '支店コード（3桁）', '口座番号は7桁まで']);
 ok('Edge Function も同じ項目を確かめている', /sender\.bank\.length !== 4/.test(FN) && /sender\.branch\.length !== 3/.test(FN) && /missing\.push\("委託者コード"\)/.test(FN));
-ok('入力のたびに確かめる', /blSenderCheck\(\);/.test(takeFn('blRatesSave')));
+ok('入力のたびに確かめる', /if\(g==='send'\) blSenderCheck\(\);/.test(takeFn('blAcctDirty')));
 
 // ④ 料金の欄の整理（2026-09-26）
 {
