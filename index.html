@@ -1307,7 +1307,7 @@
     top .35s cubic-bezier(.4,0,.2,1),width .35s cubic-bezier(.4,0,.2,1),height .35s cubic-bezier(.4,0,.2,1);}
   #ct-pop{position:absolute;width:310px;max-width:calc(100vw - 24px);background:var(--card);
     border:1px solid var(--line);border-radius:13px;box-shadow:0 22px 55px rgba(4,9,20,.4);
-    padding:15px 17px 13px;transition:left .35s cubic-bezier(.4,0,.2,1),top .35s cubic-bezier(.4,0,.2,1);}
+    padding:15px 17px 13px;transition:left .35s cubic-bezier(.4,0,.2,1),top .35s cubic-bezier(.4,0,.2,1),opacity .2s ease;}
   #ct-pop .ct-n{font-size:10.5px;color:var(--muted);letter-spacing:.06em;}
   #ct-pop .ct-t{font-size:14.5px;font-weight:700;color:var(--navy);margin:3px 0 6px;line-height:1.5;}
   #ct-pop .ct-b{font-size:12.5px;color:var(--ink);line-height:1.8;}
@@ -1698,7 +1698,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260927-09';
+  var APP_BUILD='20260927-11';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2905,8 +2905,13 @@
   function swipeHintOnce(){
     if(!swipeMobile()) return;
     var k='tsugu_swipe_hint_v2';
-    try{ if(localStorage.getItem(k)) return; localStorage.setItem(k,'1'); }catch(e){ return; }
+    try{ if(localStorage.getItem(k)) return; }catch(e){ return; }
     setTimeout(function(){
+      //  はじめての経営者には、同じころに使い方ガイドが始まる。重ねると両方読めないので、
+      //  ガイドが開いているあいだは出さず、次に開いたときに回す（覚えるのは出したときだけ）。
+      //  ガイドの「画面の切り替え」の段でも、払えることを伝えている。
+      if(typeof CT!=='undefined' && CT) return;
+      try{ localStorage.setItem(k,'1'); }catch(e){}
       var d=document.createElement('div'); d.className='swipe-hint';
       d.innerHTML='<span class="swipe-hint-a">‹‹</span>画面の左右どちらの端からでも、内側へ払うとメニューが開きます';
       d.onclick=function(){ d.remove(); };
@@ -3144,7 +3149,7 @@
         +'</div>'
         // ---- タブ1：概要（MRRサマリー・料率設定・M&Aフィー） ----
         +'<div id="bl-tab-overview">'
-        +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">登録済みのパートナー・顧客から月次の売上（MRR）を自動試算します。料率・割引は下で調整でき、<b style="color:#27684A;">変更は自動保存されて運営メンバー全員のコンソールに反映</b>されます。<span id="bl-rates-note" style="color:#27684A;"></span></div>'
+        +'<div style="font-size:12px;color:#94A2B6;margin:0 0 10px;">登録済みのパートナー・顧客から月次の売上（MRR）を自動試算します。料率・割引は下で調整でき、<b style="color:#27684A;">料率の変更は自動保存されて運営メンバー全員のコンソールに反映</b>されます。<b style="color:var(--navy);">口座（お振込先・総合振込の委託者情報）は、それぞれの「保存する」を押したときだけ保存されます。</b><span id="bl-rates-note" style="color:#27684A;"></span></div>'
         +'<div id="bl-summary" style="margin-bottom:12px;">読み込み中...</div>'
         +'<div class="bl-sec">料金<span>変えると、試算・請求・配分・契約書にそのまま使われます</span></div>'
         //  料金の設定。以前は8つの欄が横一列に折り返して並び、何の料金かが読みにくかった。
@@ -3197,11 +3202,8 @@
             +'銀行振込でご請求するとき、顧客の画面にそのまま表示されます。'
             +'<b style="color:var(--navy);">口座振替でお引き落としする請求には出ません。</b>'
             +'（当社が受け取る側の口座です。お客様・パートナーの口座はここには入れません）</div>'
-          +'<input id="bl-bank" class="inp2" style="width:100%;max-width:520px;" placeholder="例）〇〇銀行 本店営業部 普通 1234567 カ）ツグアイ" oninput="blRatesSave()">'
-          +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:9px;">'
-            +'<button class="btn2" style="padding:6px 16px;" onclick="blRatesSaveNow()">保存する</button>'
-            +'<span class="bl-save-st" style="font-size:11.5px;color:#94A2B6;">入力すると自動で保存されます</span>'
-          +'</div>'
+          +'<input id="bl-bank" class="inp2" style="width:100%;max-width:520px;" placeholder="例）〇〇銀行 本店営業部 普通 1234567 カ）ツグアイ" oninput="blAcctDirty(\'recv\')">'
+          +blAcctBar('recv')
         +'</div>'
         //  総合振込ファイル（全銀フォーマット）の先頭に入る「委託者」。
         //  銀行から交付される委託者コードと、振込元にする継の口座。
@@ -3213,20 +3215,17 @@
             +'委託者コードは、ネットバンキングの総合振込の画面で確認できる10桁の番号です（無い銀行は 0 のまま）。'
             +'委託者名は半角カナで、法人格は「ｶ)」のように略します。</div>'
           +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
-            +'<div><label class="fl">委託者コード（10桁）</label><input id="bl-sc" class="inp2" style="width:130px;" inputmode="numeric" placeholder="0000000000" oninput="blRatesSave()"></div>'
-            +'<div style="flex:1 1 200px;min-width:180px;"><label class="fl">委託者名（カナ）</label><input id="bl-sname" class="inp2" style="width:100%;" placeholder="ｶ)ﾂｸﾞｱｲ" oninput="blRatesSave()"></div>'
-            +'<div><label class="fl">銀行コード（4桁）</label><input id="bl-sbank" class="inp2" style="width:90px;" inputmode="numeric" placeholder="0310" oninput="blRatesSave()"></div>'
-            +'<div><label class="fl">支店コード（3桁）</label><input id="bl-sbranch" class="inp2" style="width:90px;" inputmode="numeric" placeholder="101" oninput="blRatesSave()"></div>'
-            +'<div><label class="fl">種別</label><select id="bl-stype" class="inp2" onchange="blRatesSave()"><option value="1">普通</option><option value="2">当座</option></select></div>'
-            +'<div><label class="fl">口座番号（7桁）</label><input id="bl-sacct" class="inp2" style="width:110px;" inputmode="numeric" placeholder="1234567" oninput="blRatesSave()"></div>'
+            +'<div><label class="fl">委託者コード（10桁）</label><input id="bl-sc" class="inp2" style="width:130px;" inputmode="numeric" placeholder="0000000000" oninput="blAcctDirty(\'send\')"></div>'
+            +'<div style="flex:1 1 200px;min-width:180px;"><label class="fl">委託者名（カナ）</label><input id="bl-sname" class="inp2" style="width:100%;" placeholder="ｶ)ﾂｸﾞｱｲ" oninput="blAcctDirty(\'send\')"></div>'
+            +'<div><label class="fl">銀行コード（4桁）</label><input id="bl-sbank" class="inp2" style="width:90px;" inputmode="numeric" placeholder="0310" oninput="blAcctDirty(\'send\')"></div>'
+            +'<div><label class="fl">支店コード（3桁）</label><input id="bl-sbranch" class="inp2" style="width:90px;" inputmode="numeric" placeholder="101" oninput="blAcctDirty(\'send\')"></div>'
+            +'<div><label class="fl">種別</label><select id="bl-stype" class="inp2" onchange="blAcctDirty(\'send\')"><option value="1">普通</option><option value="2">当座</option></select></div>'
+            +'<div><label class="fl">口座番号（7桁）</label><input id="bl-sacct" class="inp2" style="width:110px;" inputmode="numeric" placeholder="1234567" oninput="blAcctDirty(\'send\')"></div>'
           +'</div>'
           //  総合振込ファイルを作るときに Edge Function（payout-file）が確かめるのと同じ決まりで、
           //  足りないものを先に出す。作る段になって「未設定です」と言われないように
           +'<div id="bl-sender-check" style="font-size:11px;line-height:1.7;margin-top:7px;"></div>'
-          +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:9px;">'
-            +'<button class="btn2" style="padding:6px 16px;" onclick="blRatesSaveNow()">保存する</button>'
-            +'<span class="bl-save-st" style="font-size:11.5px;color:#94A2B6;">入力すると自動で保存されます</span>'
-          +'</div>'
+          +blAcctBar('send')
         +'</div>'
         +'<div class="ph" style="font-size:13px;margin-top:18px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.5 14.5 14.5 9.5"/><path d="M11 6.5 12.4 5a4.2 4.2 0 0 1 6 6L17 12.4"/><path d="M13 17.5 11.6 19a4.2 4.2 0 0 1-6-6L7 11.6"/></svg>M&A仲介フィーシミュレーター（レーマン方式）</span></div>'
         //  料金表（LP・特定商取引法の表示）と同じ条件をここにも書く。
@@ -3246,7 +3245,7 @@
         +'<div id="bl-tab-partners" class="hidden">'
         +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">'
           +'<div class="ph" style="font-size:13px;margin:0;flex:1;">パートナー別 月額内訳</div>'
-          +'<input id="bl-p-search" class="inp2" style="width:200px;" placeholder="🔍 名前で絞り込み" oninput="renderAdmBilling();blRatesSave()">'
+          +'<input id="bl-p-search" class="inp2" style="width:200px;" placeholder="🔍 名前で絞り込み" oninput="renderAdmBilling()">'
         +'</div>'
         +'<div id="bl-detail" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
@@ -3254,7 +3253,7 @@
         +'<div id="bl-tab-customers" class="hidden">'
         +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">'
           +'<div class="ph" style="font-size:13px;margin:0;flex:1;">顧客別 顧問料（プラン別）</div>'
-          +'<input id="bl-c-search" class="inp2" style="width:200px;" placeholder="🔍 会社名で絞り込み" oninput="renderAdmBilling();blRatesSave()">'
+          +'<input id="bl-c-search" class="inp2" style="width:200px;" placeholder="🔍 会社名で絞り込み" oninput="renderAdmBilling()">'
         +'</div>'
         +'<div id="bl-cust" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
@@ -3937,13 +3936,89 @@
   var BL_RATE_IDS=['bl-pbase','bl-pclient','bl-adv','bl-init','bl-ai','bl-seat','bl-seatpack','bl-seatpackn','bl-bank',
                    'bl-sc','bl-sname','bl-sbank','bl-sbranch','bl-stype','bl-sacct','bl-seller','bl-initseller'];
   var BL_RATES_OK=false, BL_SAVE_T=null;
-  //  保存の状態は、画面の上（料率の説明の横）と、口座の欄の「保存する」の横の両方に出す。
-  //  上にしか出さないと、下の口座の欄を入れている人からは見えず、保存されたか分からない
+  //  口座の欄は「保存する」を押したときだけ保存する（料率のような自動保存はしない）。
+  //  以前は料率と同じ一つの保存に乗っていたため、口座を打ちかけた途中の値が0.8秒後に
+  //  そのまま保存され、受け取る口座と振り込む口座の「保存する」もどちらを押しても
+  //  両方を保存していた。お金の行き先が打ちかけの値で上書きされるのは危ない。
+  //    recv … お振込先（TsuguAiが受け取る口座。顧客の画面に出る）
+  //    send … 総合振込の委託者情報（パートナーへ振り込むTsuguAiの口座）
+  var BL_ACCT={ recv:['bl-bank'], send:['bl-sc','bl-sname','bl-sbank','bl-sbranch','bl-stype','bl-sacct'] };
+  var BL_ACCT_IDS=BL_ACCT.recv.concat(BL_ACCT.send);
+  var BL_SAVED={};                  // 最後に読み込んだ・保存した値（口座はここを正とする）
+  var BL_DIRTY={ recv:false, send:false };
+  var BL_WRITE_Q=Promise.resolve(); // 保存は一つずつ順に（前の保存の結果を土台にする）
+  function blIsAcct(id){ return BL_ACCT_IDS.indexOf(id)>=0; }
+  function blAcctBar(g){
+    return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:9px;">'
+      +'<button class="btn2" id="bl-acct-save-'+g+'" style="padding:6px 16px;" onclick="blAcctSave(\''+g+'\')">保存する</button>'
+      +'<button class="ghost hidden" id="bl-acct-undo-'+g+'" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:6px 12px;" onclick="blAcctUndo(\''+g+'\')">変更を取り消す</button>'
+      +'<span id="bl-acct-st-'+g+'" style="font-size:11.5px;color:#94A2B6;">「保存する」を押すと保存されます</span>'
+    +'</div>';
+  }
+  function blAcctNote(g, t, color){
+    var el=$('bl-acct-st-'+g); if(!el) return;
+    el.textContent=t; el.style.color=color||'#94A2B6'; el.style.fontWeight=(color==='#A9403D'||color==='#8A6A12')?'700':'400';
+  }
+  function blAcctValues(g){ var v={}; BL_ACCT[g].forEach(function(id){ var el=$(id); v[id]=el?el.value:''; }); return v; }
+  function blAcctSame(g){
+    var cur=blAcctValues(g);
+    return BL_ACCT[g].every(function(id){ return String(cur[id]==null?'':cur[id])===String(BL_SAVED[id]==null?(id==='bl-stype'?'1':''):BL_SAVED[id]); });
+  }
+  //  入力しただけでは保存しない。保存していない変更があることを、その欄のそばに出す
+  function blAcctDirty(g){
+    if(g==='send') blSenderCheck();
+    BL_DIRTY[g]=!blAcctSame(g);
+    var u=$('bl-acct-undo-'+g); if(u) u.classList.toggle('hidden', !BL_DIRTY[g]);
+    if(BL_DIRTY[g]) blAcctNote(g,'● まだ保存していません。「保存する」を押すと保存されます','#8A6A12');
+    else blAcctNote(g, BL_SAVED.__acctAt&&BL_SAVED.__acctAt[g] ? ('✓ 保存済み（最終保存 '+blHm(BL_SAVED.__acctAt[g])+'）') : '「保存する」を押すと保存されます', BL_SAVED.__acctAt&&BL_SAVED.__acctAt[g]?'#27684A':'#94A2B6');
+  }
+  function blAcctFill(g){
+    BL_ACCT[g].forEach(function(id){ var el=$(id); if(!el) return;
+      el.value = (BL_SAVED[id]!=null && BL_SAVED[id]!=='') ? BL_SAVED[id] : (id==='bl-stype'?'1':''); });
+  }
+  function blAcctUndo(g){
+    blAcctFill(g);
+    if(g==='send') blSenderCheck();
+    blAcctDirty(g);
+  }
+  //  その欄の口座だけを保存する。もう一方の口座と料率は、保存済みの値のまま
+  function blAcctSave(g){
+    if(!BL_RATES_OK){ blAcctNote(g,'保存できません（保存機能のSQL設定が未実施です）','#A9403D'); return; }
+    var cur=blAcctValues(g);
+    if(g==='send'){
+      var iss=blSenderIssues(cur);
+      if(iss.length && !confirm('総合振込ファイルを作るには、まだ次の項目が足りません。\n・'+iss.join('\n・')+'\n\nこのまま保存しますか？')) return;
+    }
+    var btn=$('bl-acct-save-'+g); if(btn) btn.disabled=true;
+    blAcctNote(g,'保存しています…','#94A2B6');
+    blWrite(function(v){
+      BL_ACCT[g].forEach(function(id){ v[id]=cur[id]; });
+      v.__acctAt=Object.assign({}, v.__acctAt||{}); v.__acctAt[g]=new Date().toISOString();
+    }).then(function(err){
+      if(btn) btn.disabled=false;
+      if(err){ blAcctNote(g,'保存に失敗しました：'+err+'（もう一度「保存する」を押してください）','#A9403D'); return; }
+      blAcctDirty(g);
+      if(!BL_DIRTY[g]) blAcctNote(g,'✓ 保存しました（'+blHm()+'・運営全員に反映）','#27684A');
+    });
+  }
+  //  保存の本体。保存済みの値（BL_SAVED）を土台に、変える項目だけを差し替えて書く。
+  //  順番待ちにして、前の保存が終わってから次の土台を作る（古い土台で上書きしない）
+  function blWrite(patch){
+    var job=BL_WRITE_Q.then(async function(){
+      var v=JSON.parse(JSON.stringify(BL_SAVED||{}));
+      patch(v);
+      try{
+        var r=await sb.from('app_settings').upsert({ key:'billing_rates', value:v, updated_at:new Date().toISOString() });
+        if(r.error) return r.error.message||'エラー';
+        BL_SAVED=v; return null;
+      }catch(e){ return '通信を確かめてください'; }
+    });
+    BL_WRITE_Q=job.catch(function(){});
+    return job;
+  }
+  //  保存の状態：料率は画面の上（料率の説明の横）。口座はそれぞれの「保存する」の横（blAcctNote）
   function blRatesNote(t, color){
     var el=$('bl-rates-note'); if(el){ el.textContent=t?('　'+t):''; el.style.color=color||'#27684A'; }
-    Array.prototype.forEach.call(document.querySelectorAll('.bl-save-st'), function(x){
-      x.textContent=t||'入力すると自動で保存されます'; x.style.color=color||'#27684A'; x.style.fontWeight=(color==='#A9403D'?'700':'400');
-    });
   }
   function blHm(d){ d=d?new Date(d):new Date(); return isNaN(d.getTime())?'':(d.getMonth()+1)+'/'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
   //  総合振込の委託者情報の確かめ。payout-file（Edge Function）の決まりと同じ
@@ -3973,12 +4048,20 @@
       if(r.error){ blRatesNote('保存できません（保存機能のSQL設定が未実施のため、いまは画面上の試算のみです）','#A9403D'); blSenderCheck(); return; }
       BL_RATES_OK=true;
       var v=(r.data&&r.data.value)||{};
-      BL_RATE_IDS.forEach(function(id){ var el=$(id); if(el && v[id]!=null && v[id]!=='') el.value=v[id]; });
+      BL_SAVED=JSON.parse(JSON.stringify(v));
+      BL_RATE_IDS.forEach(function(id){ var el=$(id); if(el && !blIsAcct(id) && v[id]!=null && v[id]!=='') el.value=v[id]; });
+      //  口座は、打ちかけ（未保存）の値があるときは上書きしない。
+      //  ただし画面を描き直して欄が空になっているときは、保存済みの値を入れ直す
+      ['recv','send'].forEach(function(g){
+        var blank=BL_ACCT[g].every(function(id){ var el=$(id); return id==='bl-stype' || !el || !el.value; });
+        if(!BL_DIRTY[g] || blank){ BL_DIRTY[g]=false; blAcctFill(g); }
+      });
       blRatesNote(r.data&&r.data.updated_at?('✓ 保存済み（最終保存 '+blHm(r.data.updated_at)+'）'):'入力すると自動で保存されます', r.data?'#27684A':'#94A2B6');
     }catch(e){}
     blSenderCheck(); blStdMark();
+    ['recv','send'].forEach(blAcctDirty);
   }
-  //  入力の0.8秒後に自動で保存する。「保存する」はそれを待たずに今すぐ保存する
+  //  料率は、入力の0.8秒後に自動で保存する（口座の欄は自動では保存しない。blAcctSave）
   function blRatesSave(){
     blSenderCheck(); blStdMark();
     if(!BL_RATES_OK){ blRatesNote('保存できません（保存機能のSQL設定が未実施です）','#A9403D'); return; }
@@ -3986,21 +4069,15 @@
     blRatesNote('入力中…（手を止めると自動で保存します）','#94A2B6');
     BL_SAVE_T=setTimeout(blRatesWrite, 800);
   }
-  function blRatesSaveNow(){
-    if(BL_SAVE_T){ clearTimeout(BL_SAVE_T); BL_SAVE_T=null; }
-    blSenderCheck();
-    if(!BL_RATES_OK){ blRatesNote('保存できません（保存機能のSQL設定が未実施です）','#A9403D'); return; }
-    blRatesWrite();
-  }
+
+  //  料率だけを書く。口座は保存済みの値のまま（画面で打ちかけの口座は入れない）
   async function blRatesWrite(){
     BL_SAVE_T=null;
-    var v={}; BL_RATE_IDS.forEach(function(id){ var el=$(id); if(el) v[id]=el.value; });
+    var cur={}; BL_RATE_IDS.forEach(function(id){ if(blIsAcct(id)) return; var el=$(id); if(el) cur[id]=el.value; });
     blRatesNote('保存しています…','#94A2B6');
-    try{
-      var r=await sb.from('app_settings').upsert({ key:'billing_rates', value:v, updated_at:new Date().toISOString() });
-      if(r.error) blRatesNote('保存に失敗しました：'+r.error.message,'#A9403D');
-      else blRatesNote('✓ 保存しました（'+blHm()+'・運営全員に反映）','#27684A');
-    }catch(e){ blRatesNote('保存に失敗しました（通信を確かめて、もう一度「保存する」を押してください）','#A9403D'); }
+    var err=await blWrite(function(v){ Object.keys(cur).forEach(function(id){ v[id]=cur[id]; }); });
+    if(err) blRatesNote('保存に失敗しました：'+err,'#A9403D');
+    else blRatesNote('✓ 保存しました（'+blHm()+'・運営全員に反映）','#27684A');
   }
   function renderAdmBilling(){
     var box=$('bl-summary'); if(!box)return;
@@ -4242,7 +4319,7 @@
       view='<div class="panel" id="sec-flow"><span class="pill">顧客ポータル</span>'
         +'<h2 style="font-size:18px;font-weight:500;margin:12px 0 6px;">'+esc(prof.company_name||'経営者ダッシュボード')+'</h2>'
         +'<div class="kv" style="margin-bottom:10px;">ログイン中：<b>'+esc(email)+'</b></div>'
-        +'<div style="margin-bottom:12px;"><button id="ct-btn" class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;font-weight:600;" onclick="ctStart(true)"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5.5 3.5-5.5 3.5z"/></svg>使い方ガイド（1分）</button>'
+        +'<div style="margin-bottom:12px;"><button id="ct-btn" class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;font-weight:600;" onclick="ctStart(true)"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5.5 3.5-5.5 3.5z"/></svg>使い方ガイド（2分）</button>'
           +'</div>'
         //  四半期アンケート（受付期間だけ出る。答えたら消える）。いちばん上に置く
         +'<div id="survey-box"></div>'
@@ -23447,19 +23524,29 @@
   // 対象要素が無い／非表示のステップは自動で飛ばすので、
   // 契約状況によって出ない画面があっても途中で止まらない。
   // ============================================================
+  //  並びは画面の上から下、メニューの上から下の順。行ったり来たりさせると
+  //  そのたびに大きく動き、どこを見ればよいかを見失う。
+  //  中身が無い欄（innerHTML が空）は自動で飛ばす。
+  function ctFilled(id){ var e=$(id); return (e && e.innerHTML) ? e : null; }
   var CT_STEPS=[
-    { sec:'sec-flow', find:function(){ return $('sec-flow'); },
+    { sec:'sec-flow', find:function(){ return $('dash-hero')||$('sec-flow'); },
       t:'経営者ダッシュボードへようこそ',
-      b:'ここは、あなたの会社の状態がひと目で分かる画面です。1分ほどで、見かたをご案内します。' },
-    { sec:'sec-flow', find:function(){ var e=$('my-cash'); return (e && e.innerHTML) ? e : null; },
+      b:'ここは、あなたの会社の状態がひと目で分かる画面です。2分ほどで、見かたをご案内します。まずは、この枠の3つだけ覚えておいてください。' },
+    { sec:'sec-flow', find:function(){ return ctFilled('my-cash'); },
       t:'いまの手元資金（ご自身で入れるのはここだけ）',
       b:'いまの預金残高を、数字ひとつ入れるだけです。30秒で終わります。入れておくと、薄くなりそうなときに先にお知らせできます。任意ですが、これがいちばん役に立つ欄です。' },
-    { sec:'sec-flow', find:function(){ var e=$('my-obr'); return (e && e.innerHTML) ? e : null; },
-      t:'導入診断報告書',
-      b:'はじめの90日（土台づくり）の仕上げとして、担当パートナーがお渡しする報告書です。①企業価値 ②資金繰り ③保険・固定費の棚卸し ④12か月の改善ロードマップ。ここから伴走の1年が始まります。' },
-    { sec:'sec-flow', find:function(){ var e=$('my-impact'); return (e && e.innerHTML) ? e : null; },
+    { sec:'sec-flow', find:function(){ return ctFilled('my-onboard'); },
+      t:'土台づくりと、伴走の1年',
+      b:'いま何か月目で、どの段階にいるかが分かります。最初は「数字が見える」「お金の流れが分かる」「1年の道筋が決まる」の3つの節目で、お待ちしている資料もここに出ます。その先は3か月ごとに、現金を増やす → 買い手の余力を測る → 次の1社の条件を決める、と進みます。' },
+    { sec:'sec-flow', find:function(){ return ctFilled('my-impact'); },
       t:'これまでに増えた現金',
       b:'保険の見直しやコスト削減で、実際にいくら現金が増えたかの累計です。単月の数字ではなく、積み上がった総額をここで確認できます。' },
+    { sec:'sec-flow', find:function(){ return ctFilled('my-members')||ctFilled('my-acct'); },
+      t:'一緒に見る人・顧問税理士',
+      b:'社長のほかに2名まで（専務や経理のご担当など）、同じ画面を見ていただけます。すぐ下の欄からは、顧問税理士の先生に毎月の試算表の数字を直接入れていただくよう依頼できます（先生に見えるのは入力の画面だけです）。' },
+    { sec:'sec-flow', find:function(){ return ctFilled('my-partner')||ctFilled('my-nextmeet'); },
+      t:'担当パートナーと、次の面談',
+      b:'担当パートナーと、次回の面談の予定がここに並びます。面談の日時は、継ナビくんの「予定」にも自動で入ります。面談の記録（議事録）は「月次レポート」の画面で読めます。' },
     { sec:'sec-flow', find:function(){ return $('cash-status')||$('sec-status'); },
       t:'資金繰りステータス',
       b:'いま資金がどうなっているかを、信号のように色でお知らせします。ここが赤や黄色になったときは、担当パートナーからもご連絡します。' },
@@ -23472,40 +23559,68 @@
     { sec:'sec-flow', find:function(){ return $('sec-journey'); },
       t:'価値の流れ（支援ステップ）',
       b:'①現状把握 → ②AI・自動化 → ③コスト削減 → ④余力 → ⑤次の投資、という順で伴走します。色が付いているところが、あなたの現在地です。' },
+    { sec:'sec-flow', find:function(){ return ctFilled('my-notes'); },
+      t:'担当パートナーからの提案',
+      b:'担当パートナーが、あなたの会社のために書いた提案やひとことが、ここに届きます。' },
     { sec:'sec-flow', find:function(){ return $('knv-fab'); },
       t:'メッセージ',
       b:'担当パートナーとのメッセージは、右下の継ナビくんの「メッセージ」タブで送受信できます。月次の売上なども、表に入力せずメッセージで伝えるだけで大丈夫です。' },
     { sec:'sec-reports', find:function(){ return $('my-reports')||$('sec-reports'); },
       t:'月次レポート',
       b:'毎月の数字と、担当パートナーのコメントがまとまったレポートです。パートナーが確認・承認したものだけがここに並びます。' },
+    { sec:'sec-reports', find:function(){ return ctFilled('my-obr'); },
+      t:'導入診断報告書',
+      b:'はじめの90日（土台づくり）の仕上げとして、担当パートナーがお渡しする報告書です。①企業価値 ②資金繰り ③保険・固定費の棚卸し ④12か月の改善ロードマップ。ここから伴走の1年が始まります。' },
+    { sec:'sec-reports', find:function(){ return ctFilled('my-meetings'); },
+      t:'面談の記録（議事録）',
+      b:'担当パートナーとの面談の記録です。担当パートナーが共有したものだけが、ここで読めます。' },
     { sec:'sec-mypdca', find:function(){ return $('my-pdca')||$('sec-mypdca'); },
       t:'経営課題の取り組み',
-      b:'いま一緒に進めている課題の進捗です。追加や変更のご希望は、メッセージでお知らせください。' },
+      b:'いま一緒に進めている課題の進捗です。追加や変更のご希望は、メッセージでお知らせください。同じ画面の下の「やることメモ」に明日やることを書いておくと、担当パートナーにも見えます。' },
+    { sec:'sec-billpay', find:function(){ return $('sec-billpay'); },
+      t:'お支払い・ご契約',
+      b:'いまの顧問プランと、運営が受け取ったお支払いの記録です。プランの変更やご利用の終了のお申し出もここからです。押してすぐに何かが変わることはありません。' },
+    { sec:'sec-cash', find:function(){ return $('sec-cash'); },
+      t:'財務・資金繰り',
+      b:'担当パートナーが入れた月次の数字と、借入返済・納税・賞与などの支払予定を確かめられます。数字や資料は、メッセージで送っていただくだけで大丈夫です。' },
     { sec:'sec-value', find:function(){ return $('sec-value'); },
       t:'企業価値・承継シミュレーション',
       b:'会社の値段の毎月の推移に加えて、「この会社を買ったら？」「いま譲るなら？」を30秒で試せる承継シミュレーションがあります。まだ先の話でも、未来の選択肢を数字で体験できます。' },
-    { sec:'sec-flow', find:function(){ return $('knv-fab'); },
+    //  右下に固定されたボタン。画面は切り替えない（いまの画面のまま指す）
+    { sec:null, find:function(){ return $('knv-fab'); },
       t:'継ナビくん（右下にいつでも）',
-      b:'画面右下の継ナビくんは、24時間いつでも使える相談相手です。「この数字は良いのか」「銀行にどう説明するか」など、何でも聞けます。相談の続きは別の端末でも読めて、気に入った答えは担当パートナーにそのまま伝えられます。お知らせの確認や、LINE・スマホ通知の設定もここからです。' },
-    { sec:'sec-flow', find:function(){
+      b:'画面右下の継ナビくんは、24時間いつでも使える相談相手です。「この数字は良いのか」「銀行にどう説明するか」など、何でも聞けます。「予定」タブには面談や支払予定が並び、「TODO」タブには忘れたくない用事を書いておけます。気に入った答えは担当パートナーにそのまま伝えられ、LINE・スマホ通知の設定もここからです。' },
+    { sec:null, find:function(){
         var n=document.querySelector('#app-nav .ni');
         if(n && n.getBoundingClientRect().width>0) return n.parentNode;
         var h=$('hbg'); return (h && h.getBoundingClientRect().width>0) ? h : null; },
       t:'画面の切り替え',
-      b:'各画面へはここから移動します。よく使う項目だけを残す・並べ替えることもできます（設定メニュー）。' },
+      b:'各画面へはここから移動します。出口の設計・スケールの設計・買い手になる、など会社の先を考える画面もここから開きます。スマホでは、右上の≡か、画面の左右どちらの端からでも内側へ指で払うと開きます。よく使う項目だけを残す・並べ替えることもできます（設定メニュー）。' },
     { sec:'sec-flow', find:function(){ return $('ct-btn'); },
       t:'このガイドはいつでも見返せます',
       b:'分からなくなったら、このボタンからもう一度ご覧ください。それでも解決しないときは、メッセージで担当パートナーにお尋ねいただくのがいちばん早いです。' }
   ];
-  var CT=null, CT_KEY='tourV1';
+  var CT=null, CT_KEY='tourV1', CT_TOK=0, CT_SCROLL_TOK=0;
+  //  右下の継ナビくんのような固定の要素は offsetParent が null になる。
+  //  それを「見えていない」と判定すると、その段がまるごと落ちる（実際に落ちていた）。
   function ctVisible(el){
     if(!el) return false;
     var r=el.getBoundingClientRect();
-    return !!(r.width>0 && r.height>0 && el.offsetParent!==null);
+    if(!(r.width>0 && r.height>0)) return false;
+    var cs=getComputedStyle(el);
+    if(cs.display==='none' || cs.visibility==='hidden') return false;
+    return el.offsetParent!==null || cs.position==='fixed';
+  }
+  function ctIsFixed(el){
+    for(var e=el; e && e!==document.body; e=e.parentElement){
+      var p=getComputedStyle(e).position;
+      if(p==='fixed' || p==='sticky') return true;
+    }
+    return false;
   }
   // 対象がそもそも無いステップだけを落とす。
   // ここでセクションを切り替えると画面がちらつくため、判定はDOM上の存在だけで行う
-  // （非表示のパネルの中身も要素としては存在する）。表示の有無は ctGo で見る。
+  // （非表示のパネルの中身も要素としては存在する）。表示の有無は ctStep で見る。
   function ctBuild(){
     var out=[];
     CT_STEPS.forEach(function(s){
@@ -23523,7 +23638,7 @@
     var back=CURRENT_SEC;
     var steps=ctBuild();
     if(!steps.length) return;
-    CT={ steps:steps, i:-1, back:back };
+    CT={ steps:steps, i:-1, back:back, anim:false };
     $('ct-layer').classList.remove('hidden');
     window.addEventListener('resize', ctReposition);
     window.addEventListener('scroll', ctReposition, true);
@@ -23536,19 +23651,127 @@
     else if(e.key==='ArrowRight'){ ctGo(CT.i+1); }
     else if(e.key==='ArrowLeft'){ ctGo(CT.i-1); }
   }
+  // ---- 動かし方 ----
+  //  以前は scrollIntoView（ブラウザ任せのなめらかスクロール）と、枠・吹き出しの
+  //  CSS の移動（0.35秒）が別々に動いていた。枠と吹き出しは「動く前の位置」
+  //  （画面の外や真ん中）へ先に向かい、そのあとスクロールに追いつこうとするため、
+  //  「一旦真ん中へ行ってから目的地へ」行くように見えていた。
+  //  いまは、行き先（スクロールの終点）を先に計算し、
+  //    ・ページのスクロール
+  //    ・枠と吹き出しの移動
+  //  を同じ時間・同じ緩急で一度に動かす。三つが同時に着く。
+  var CT_EASE='cubic-bezier(.65,0,.35,1)';
+  function ctEase(k){ return k<.5 ? 4*k*k*k : 1-Math.pow(-2*k+2,3)/2; }
+  function ctReduced(){ try{ return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } }
+  //  上に貼り付く見出しの帯（.topbar2）の下端。そこより上に対象を入れると隠れる
+  function ctTopInset(){
+    var t=document.querySelector('.topbar2'), y=0;
+    if(t){ var r=t.getBoundingClientRect(); if(r.height>0 && r.top<=1) y=r.bottom; else if(r.height>0 && getComputedStyle(t).position==='sticky') y=r.height; }
+    return y+10;
+  }
+  //  対象と吹き出しをひとかたまりにして、画面の中ほどに収まるスクロール位置。
+  //  入りきらない大きな対象は、上の帯のすぐ下から見せる。
+  function ctTargetY(el){
+    var y=window.scrollY||window.pageYOffset||0;
+    if(ctIsFixed(el)) return y;
+    var r=el.getBoundingClientRect(), vh=window.innerHeight;
+    var inset=ctTopInset(), ph=($('ct-pop')&&$('ct-pop').offsetHeight)||170;
+    var room=vh-inset-8, block=r.height+14+ph, t;
+    if(block<=room) t=y+r.top-inset-(room-block)/2;
+    else if(r.height<=room) t=y+r.top-inset-Math.max(0,(room-r.height)/2);
+    else t=y+r.top-inset;
+    var max=Math.max(0, document.documentElement.scrollHeight-vh);
+    return Math.round(Math.min(max, Math.max(0, t)));
+  }
+  function ctScrollAnim(to, dur, done){
+    var tok=++CT_SCROLL_TOK;
+    var from=window.scrollY||window.pageYOffset||0, d=to-from;
+    if(Math.abs(d)<2 || dur<=0 || !window.requestAnimationFrame){ window.scrollTo(0,to); if(done) done(); return; }
+    var t0=null;
+    requestAnimationFrame(function step(ts){
+      if(tok!==CT_SCROLL_TOK) return;              // 次の段へ進んだ・閉じた
+      if(t0===null) t0=ts;
+      var k=Math.min(1,(ts-t0)/dur);
+      window.scrollTo(0, Math.round(from+d*ctEase(k)));
+      if(k<1) requestAnimationFrame(step); else if(done) done();
+    });
+  }
+  //  枠と吹き出しを rect の位置に置く。dur=0 は即座に（スクロールに貼り付ける）
+  function ctPlace(r, dur){
+    var ring=$('ct-ring'), pop=$('ct-pop'); if(!ring||!pop) return;
+    var tr = dur>0
+      ? ['left','top','width','height'].map(function(k){ return k+' '+dur+'ms '+CT_EASE; }).join(',')
+      : 'none';
+    ring.style.transition=tr;
+    pop.style.transition = dur>0 ? ('left '+dur+'ms '+CT_EASE+',top '+dur+'ms '+CT_EASE+',opacity .2s ease') : 'opacity .2s ease';
+    var pad=6;
+    ring.style.left=(r.left-pad)+'px'; ring.style.top=(r.top-pad)+'px';
+    ring.style.width=(r.width+pad*2)+'px'; ring.style.height=(r.height+pad*2)+'px';
+    var pw=pop.offsetWidth||310, ph=pop.offsetHeight||170;
+    var vw=window.innerWidth, vh=window.innerHeight, bottom=r.top+r.height;
+    var top;
+    if(bottom+14+ph<=vh-8) top=bottom+14;                  // 下に置ける
+    else if(r.top-14-ph>=8) top=r.top-14-ph;               // 上に置ける
+    else top=Math.max(8, vh-ph-8);                         // 収まらないので画面下端
+    var left=Math.min(Math.max(8, r.left+r.width/2-pw/2), vw-pw-8);
+    pop.style.top=top+'px'; pop.style.left=left+'px';
+  }
+  //  着いたあとも少しのあいだ対象に貼り付ける。切り替えた画面のパネルは
+  //  下から少し浮き上がって現れる（入場の動き）ので、置いた瞬間の位置のままだと
+  //  枠が数px下にずれて残る。
+  function ctFollow(tok, ms){
+    if(!window.requestAnimationFrame) return;
+    var t0=null;
+    requestAnimationFrame(function f(ts){
+      if(!CT || tok!==CT_TOK || CT.anim) return;
+      if(t0===null) t0=ts;
+      ctPlace(CT.el.getBoundingClientRect(), 0);
+      if(ts-t0<ms) requestAnimationFrame(f);
+    });
+  }
+  //  利用者が自分でスクロールしたとき・画面の大きさが変わったときは、その場で貼り付ける
+  function ctReposition(){
+    if(!CT||!CT.el||CT.anim) return;
+    ctPlace(CT.el.getBoundingClientRect(), 0);
+  }
+  //  画面（セクション）を切り替えるときは、本文をいったん薄くしてから入れ替える。
+  //  入れ替えた瞬間はページの長さが変わり、スクロール位置が勝手に飛ぶ（長い画面の
+  //  いちばん下から短い画面へ移ると、途中の位置で止まって見える）。
+  //  その飛びを見せないために、見えていないあいだに行き先へ置いてから戻す。
+  function ctFade(out){
+    //  枠（周りを暗くしている影）は薄くしない。薄くすると一瞬画面が明るく光る
+    var ab=$('app-body'), pop=$('ct-pop');
+    [ab,pop].forEach(function(e){ if(!e) return;
+      if(e===ab) e.style.transition='opacity .16s ease';
+      e.style.opacity = out ? '0' : '';
+    });
+  }
   function ctGo(i){
     if(!CT) return;
     if(i>=CT.steps.length){ ctEnd(true); return; }
     if(i<0) i=0;
     CT.i=i;
+    var tok=++CT_TOK;
+    CT_SCROLL_TOK++;                               // 走っているスクロールは止める
+    CT.anim=false;
     var s=CT.steps[i];
-    //  切り替えだけさせて、スクロールはこちらで一度だけ行う（下の doScroll）
-    if(s.sec && $(s.sec)) showSection(s.sec, true);
+    var switching = !!(s.sec && $(s.sec) && s.sec!==CURRENT_SEC);
+    if(!switching){ ctStep(i, tok, false); return; }
+    ctFade(true);
+    setTimeout(function(){
+      if(!CT || tok!==CT_TOK) return;
+      showSection(s.sec, true);                    // 切り替えだけ。スクロールはこちらで
+      ctStep(i, tok, true);
+    }, 170);
+  }
+  function ctStep(i, tok, switched){
+    var s=CT.steps[i];
     var el=null; try{ el=s.find(); }catch(e){}
     if(!ctVisible(el)){
       // 開始後の再描画で対象が消えた場合。飛ばすだけだと「2 / 13」の次が「4 / 13」に
       // なってしまうため、ステップ自体を取り除いて番号を振り直す。
       CT.steps.splice(i,1);
+      if(switched) ctFade(false);
       if(!CT.steps.length){ ctEnd(true); return; }
       ctGo(Math.min(i, CT.steps.length-1));
       return;
@@ -23569,53 +23792,59 @@
         +(i>0?'<button class="bk" onclick="ctGo('+(i-1)+')">戻る</button>':'')
         +'<button class="btn2 nx" onclick="'+(last?'ctEnd(true)':'ctGo('+(i+1)+')')+'">'+(last?'はじめる':'次へ')+'</button>'
       +'</div>';
-    //  ここで初めてスクロールする。順番に意味がある。
-    //   ① 吹き出しの中身を先に入れる（大きさが決まらないと置き場所を誤る）
-    //   ② セクションを切り替えた直後は配置がまだ定まっていないので、次の描画を待つ
-    //   ③ そのうえで一度だけ動かす
-    //  ②を待たずに動かすと、古い配置を目指して飛んでから改めて動くため、
-    //  「一旦ずれて止まり、それから目的地へ行く」ように見える。
-    var doScroll=function(){
-      if(!CT || CT.el!==el) return;               // その間に次へ進んでいたら何もしない
-      var big=el.getBoundingClientRect().height > window.innerHeight*0.7;
-      try{ el.scrollIntoView({behavior:'smooth', block:big?'start':'center'}); }
-      catch(e){ el.scrollIntoView(); }
-      // スクロールのアニメーション中も枠が追従するよう、少しの間なぞる
-      ctReposition();
-      var n=0, iv=setInterval(function(){ if(!CT||++n>18){ clearInterval(iv); return; } ctReposition(); },30);
+    //  吹き出しの中身を入れてから（大きさが決まってから）、配置が落ち着く次の描画を待って動かす
+    var run=function(){
+      if(!CT || tok!==CT_TOK || CT.el!==el) return;
+      var from=window.scrollY||window.pageYOffset||0, to=ctTargetY(el);
+      if(switched){
+        //  見えていないあいだに行き先へ置き、そこで戻す
+        window.scrollTo(0,to);
+        ctPlace(el.getBoundingClientRect(), 0);
+        ctFade(false);
+        ctFollow(tok, 650);
+        return;
+      }
+      var d=to-from;
+      if(Math.abs(d)<2){
+        ctPlace(el.getBoundingClientRect(), 380);
+        //  右下の継ナビくんのように固定された対象は、小さく跳ねる動きがあるので、この段のあいだは貼り付けておく
+        setTimeout(function(){ ctFollow(tok, ctIsFixed(el) ? 6e5 : 200); }, 400);
+        return;
+      }
+      var dur=ctReduced() ? 0 : Math.round(Math.min(900, Math.max(420, 320+Math.abs(d)*0.2)));
+      var r=el.getBoundingClientRect();
+      //  スクロールが終わったときに対象がいる場所へ、枠と吹き出しを同じ時間で動かす
+      CT.anim=true;
+      ctPlace({ left:r.left, top:r.top-d, width:r.width, height:r.height }, dur);
+      ctScrollAnim(to, dur, function(){
+        if(!CT || tok!==CT_TOK) return;
+        CT.anim=false;
+        ctPlace(el.getBoundingClientRect(), 0);    // 最後にずれを消す
+        ctFollow(tok, 300);
+      });
     };
-    ctReposition();                                // 待つあいだ、枠が前の位置に残らないように
     if(window.requestAnimationFrame){
-      requestAnimationFrame(function(){ requestAnimationFrame(doScroll); });
-    }else{ setTimeout(doScroll,32); }
-  }
-  function ctReposition(){
-    if(!CT||!CT.el) return;
-    var r=CT.el.getBoundingClientRect(), pad=6;
-    var ring=$('ct-ring'), pop=$('ct-pop');
-    if(!ring||!pop) return;
-    ring.style.left=(r.left-pad)+'px'; ring.style.top=(r.top-pad)+'px';
-    ring.style.width=(r.width+pad*2)+'px'; ring.style.height=(r.height+pad*2)+'px';
-    var pw=pop.offsetWidth||310, ph=pop.offsetHeight||170;
-    var vw=window.innerWidth, vh=window.innerHeight;
-    var top;
-    if(r.bottom+14+ph<=vh-8) top=r.bottom+14;             // 下に置ける
-    else if(r.top-14-ph>=8) top=r.top-14-ph;              // 上に置ける
-    else top=Math.max(8, vh-ph-8);                        // 収まらないので画面下端
-    var left=Math.min(Math.max(8, r.left+r.width/2-pw/2), vw-pw-8);
-    pop.style.top=top+'px'; pop.style.left=left+'px';
+      requestAnimationFrame(function(){ requestAnimationFrame(run); });
+    }else{ setTimeout(run,32); }
   }
   function ctEnd(done){
     if(!CT) return;
     var back=CT.back;
-    CT=null;
+    CT=null; CT_TOK++; CT_SCROLL_TOK++;
     $('ct-layer').classList.add('hidden');
     window.removeEventListener('resize', ctReposition);
     window.removeEventListener('scroll', ctReposition, true);
     document.removeEventListener('keydown', ctKey);
+    ctFade(false);
     try{ var p=loadPrefs(); p[CT_KEY]=new Date().toISOString(); savePrefs(p); }catch(e){}
-    if(back && $(back)) showSection(back);
-    try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(e){ window.scrollTo(0,0); }
+    if(back && $(back) && back!==CURRENT_SEC){
+      //  元の画面へ。いまの画面のいちばん上へ流してから切り替えると二度動くので、切り替えて上に置く
+      showSection(back, true);
+      window.scrollTo(0,0);
+      return;
+    }
+    var y=window.scrollY||window.pageYOffset||0;
+    ctScrollAnim(0, ctReduced()?0:Math.round(Math.min(900, Math.max(420, 320+y*0.2))));
   }
 
   // ---- パートナー成長ロードマップ（認定レベル）----
