@@ -6,6 +6,9 @@
 //   ④ SQL：本人が出すと必ず確認待ちに戻る・確認済みにできるのは運営だけ・写しは非公開
 //   ⑤ ガイドライン④：本業の報酬を、本人の事務所・所属会社として受け取るのは対象外
 //   ⑥ 説明書・継ナビくんの知識も同じことを言う
+//   2026-09-29：IT・自動化は資格ではないので「実行できる領域」にも実行体制にも数えない
+//   （専門家と連携で扱う）。資格証の写しは預からず、登録番号だけで確認する。
+//   詳しくは expert_link_test.js
 // =============================================================
 const fs = require('fs');
 const R = (f) => fs.readFileSync(__dirname + '/../' + f, 'utf8');
@@ -24,6 +27,11 @@ function takeFn(name) {
   is('定義は一つだけ: ' + name, cnt, 1);
   return SRC.slice(last.index, SRC.indexOf('\n  }\n', last.index) + 4);
 }
+function takeOne(name) {
+  const m = SRC.match(new RegExp('\\n  function ' + name + '\\([^)]*\\)\\{[^\\n]*\\}\\n'));
+  if (!m) throw new Error('見つかりません: ' + name);
+  return m[0];
+}
 function takeBlock(name) {
   const i = SRC.indexOf('\n  var ' + name + '=');
   if (i < 0) throw new Error('見つかりません: ' + name);
@@ -32,7 +40,8 @@ function takeBlock(name) {
 const ESC = 'function esc(s){ return String(s==null?"":s).replace(/[&<>"\']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;","\'":"&#39;"}[c];}); }'
   + 'function escA(s){ return esc(s); }';
 const L = new Function(ESC
-  + takeBlock('BIZ_FIELDS') + takeBlock('LIC') + takeBlock('LIC_PLACEHOLDER') + takeBlock('LIC_ST')
+  + takeBlock('BIZ_FIELDS') + takeBlock('IT_FIELD') + takeBlock('EXPERT_FIELDS') + takeBlock('BIZ_MAIN_OTHER') + takeOne('bizIsLic')
+  + takeBlock('LIC') + takeBlock('LIC_PLACEHOLDER') + takeBlock('LIC_ST')
   + 'var NET={ partners:[], lics:[], names:{} }, NET_ERR={};'
   + takeFn('bizFieldName') + takeFn('licNeeds') + takeFn('licHasEvidence') + takeFn('licStatus')
   + takeFn('licExecFields') + takeFn('licRowsHtml') + takeFn('netExecLicenses')
@@ -54,15 +63,16 @@ const L = new Function(ESC
   is('以前の自己申告（仮番号）は「出してください」', L.licStatus('tax'), 'missing');
   is('差し戻し', L.licStatus('legal'), 'rejected');
   is('行が無ければ「出してください」', L.licStatus('labor'), 'missing');
-  is('IT・自動化は確認不要', L.licStatus('it'), 'free');
   const lic = ['insurance', 'realestate', 'tax', 'legal', 'labor', 'it'];
-  is('実行できるのは確認済みとITだけ', L.licExecFields(lic).map(f => f.id), ['insurance', 'it']);
+  is('実行できるのは確認済みだけ（IT・自動化は資格ではないので入らない）', L.licExecFields(lic).map(f => f.id), ['insurance']);
   is('選んでいない領域は、確認済みでも実行できる領域に入らない', L.licExecFields(['realestate']).map(f => f.id), []);
   const h = L.licRowsHtml(lic);
   ok('確認の行：保険は「確認済み」', /保険[\s\S]*?確認済み/.test(h));
   ok('確認の行：差し戻しの理由が出る', /運営より：番号が見つかりません/.test(h));
   ok('確認の行：仮番号は入力欄に出さない', !/value="（未提出）"/.test(h));
-  ok('確認の行：写しの名前か「資格証」が出る', /licOpenFile\('u\/realestate_1\.pdf'\)/.test(h));
+  ok('確認の行：以前の写しは「運営が削除します」とだけ出す（開かせない）', /以前お預かりした資格証の写しは、確認が済みしだい運営が削除します。/.test(h) && !/licOpenFile/.test(h));
+  no('確認の行：写しを選ぶ欄は無い', /type="file"/.test(h));
+  ok('確認の行：写しは預からないと言う', /資格証の写しはお預かりしません/.test(h));
   no('確認の行：IT・自動化の行は出ない', /lic-no-it"/.test(h));
   ok('確認の行：未提出は「確認を依頼する」', /licSubmit\('labor'\)">確認を依頼する/.test(h));
   L.LIC.remote = false;
@@ -76,19 +86,20 @@ const L = new Function(ESC
     { user_id: 'p1', field: 'tax', status: 'pending' },
     { user_id: 'p2', field: 'insurance', status: 'rejected' }
   ];
-  is('確認済みとITだけを数える', L.netExecLicenses({ user_id: 'p1', licenses: 'insurance,tax,it' }), ['insurance', 'it']);
+  is('確認済みだけを数える（ITは数えない）', L.netExecLicenses({ user_id: 'p1', licenses: 'insurance,tax,it' }), ['insurance']);
   is('他の人の確認済みは数えない', L.netExecLicenses({ user_id: 'p2', licenses: 'insurance' }), []);
   L.setErr('relation does not exist');
   is('表が無いときは自己申告のまま', L.netExecLicenses({ user_id: 'p2', licenses: 'insurance' }), ['insurance']);
+  is('表が無いときもITは資格に数えない', L.netExecLicenses({ user_id: 'p2', licenses: 'insurance,it' }), ['insurance']);
   L.setErr(undefined);
 }
 // 画面のつなぎ
-ok('本業と連携の読み込みで資格も読む', /await bizLoad\(\); await refLoad\(\); await licLoad\(\); renderBiz\(\);/.test(SRC));
+ok('本業と連携の読み込みで資格も読む', /await bizLoad\(\); await licLoad\(\); renderBiz\(\);/.test(SRC));
 ok('あなたが実行する領域は licExecFields で決める', /var mine=SELF_EXEC_OK \? licExecFields\(P\.lic\)/.test(SRC));
 ok('確認待ちの領域を分けて出す', /確認待ち：'\+waiting\.map/.test(SRC));
-ok('写しは license-docs に本人のIDのフォルダで置く', /var path=ME\+'\/'\+id\+'_'\+Date\.now\(\)/.test(SRC) && /storage\.from\('license-docs'\)\.upload/.test(SRC));
+no('写しはもう受け付けない（アップロードしない）', /storage\.from\('license-docs'\)\.upload/.test(SRC));
 ok('運営の確認：専門家ネットワークに「⓪ 資格の確認」', /⓪ 資格の確認/.test(SRC) && /h\+=netLicHtml\(\);/.test(SRC));
-ok('運営の確認：確認済み・差し戻しを書き込む', /update\(\{ status:ok\?'approved':'rejected'/.test(SRC));
+ok('運営の確認：確認済み・差し戻しを書き込む', /var upd=\{ status:ok\?'approved':'rejected', note:ok\?null:\(note\|\|null\) \};/.test(SRC) && /update\(upd\)/.test(SRC));
 ok('実行体制は netExecLicenses で数える', /netExecLicenses\(p\)\.forEach/.test(SRC));
 ok('今日の動きに「確認待ちの資格」', /chip\('確認待ちの資格'/.test(SRC) && /admMovesHtml\(rows, nameOf, pending, new Date\(\), contracts, invites, licPend\)/.test(SRC));
 
@@ -114,15 +125,15 @@ ok('今日の動きに「確認待ちの資格」', /chip\('確認待ちの資�
   ok('④：当社の業務の対価の直接授受は禁止のまま', /<b>当社の業務の対価<\/b>を、顧客から直接受け取ること/.test(SRC));
   ok('④：本業の報酬を本人の事務所・所属会社として受け取るのは対象外', /<b>ご自身の事務所・所属会社（代理店など）として<\/b>、それぞれの業法に沿って受け取るのは、この禁止の対象外です/.test(SRC));
   no('④：「正規ルート（当社の請求）外での報酬受領」の一律の禁止は残っていない', /正規ルート（当社の請求）外での報酬受領/.test(SRC));
-  ok('補足：運営が確認した領域に限る', /本業と連携で登録番号か資格証の写しを出し、運営が確認した領域<\/b>に限ります/.test(SRC));
+  ok('補足：運営が確認した領域に限る', /本業と連携で資格の登録番号を出し、運営が確認した領域<\/b>に限ります（資格証の写しはお預かりしません）/.test(SRC));
 }
 // ⑥ 説明書・継ナビくん
 {
-  ok('パートナー説明書：資格の確認の手順', /<b>資格の確認<\/b>を依頼する/.test(MANP) && /登録番号か資格証の写し<\/b>（どちらか一つ）/.test(MANP));
+  ok('パートナー説明書：資格の確認の手順', /<b>資格の確認<\/b>を依頼する/.test(MANP) && /<b>資格の登録番号<\/b>を入れて「確認を依頼する」/.test(MANP));
   ok('パートナー説明書：禁止行為の要点も本業の報酬は対象外', /本業の報酬<\/b>を、ご自身の事務所・所属会社として受け取るのは対象外/.test(MANP));
-  ok('運営説明書：資格の確認', /<b>資格の確認<\/b>（パートナーが出した登録番号・資格証の写しを確かめ/.test(MANA));
+  ok('運営説明書：資格の確認', /<b>資格の確認<\/b>（パートナーが出した登録番号を、公開の名簿で照合するか/.test(MANA));
   ok('運営説明書：今日の動きは7つ', /今日の動き（7つの数字）/.test(MANA) && /確認待ちの資格<\/b>/.test(MANA));
-  ok('継ナビくん：確認済みの領域だけが実行できる', /運営が確認済みにした領域だけが、ご自身の本業として実行できる領域になる/.test(SRC));
+  ok('継ナビくん：確認済みの領域だけが実行できる', /確認済みにした領域だけが、ご自身の本業として実行できる領域になる/.test(SRC));
 }
 
 if (bad.length) { bad.forEach(b => console.log('NG', b.name, '\n   got ', b.got, '\n   want', b.want)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
