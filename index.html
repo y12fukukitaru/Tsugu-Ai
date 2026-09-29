@@ -325,12 +325,47 @@
   .cl-pg.on{display:block;animation:mpop .12s ease;}
   .cl-ph{font-size:13px;font-weight:700;color:var(--navy);padding:2px 8px;}
   .cl-pd{font-size:10.5px;color:var(--muted);line-height:1.55;padding:3px 8px 9px;border-bottom:1px solid var(--softline);margin-bottom:7px;}
-  .cl-panel .cl-ni{color:var(--ink);font-size:12.5px;}
-  .cl-panel .cl-ni:hover{background:rgba(30,58,102,.06);color:var(--navy);}
-  .cl-panel .cl-ni.on{background:rgba(30,58,102,.09);color:var(--navy);font-weight:700;}
-  .cl-panel .cl-ni .ci{background:var(--card);border-color:var(--line);color:var(--navy);}
-  .cl-panel .cl-ni:hover .ci{background:var(--card);}
-  .cl-panel .cl-ni.on .ci{background:var(--gold);border-color:var(--gold);color:#fff;}
+  /* 右の列（明るい地）の項目。
+     以前は、下の方にある暗い地向けの決まり（.cl-ni:hover .ci{color:#fff}）が勝って、
+     カーソルを置くと白い枠に白い線のアイコンになり、マークが空欄に見えていた。
+     ここは「.cl-panel .cl-ni:hover .ci」まで書いて、必ずこちらが勝つようにしてある。
+       ふだん … 白い札に紺の線
+       カーソル … 行に金のうすい光、左に金の細い帯が伸びる。札は淡い金地に金茶の線で、少し浮く
+       選択中 … 札は金のグラデーションに白い線、行は金の帯と少し濃い光、文字は太字 */
+  .cl-panel .cl-ni{position:relative;color:var(--ink);font-size:12.5px;
+    transition:background .2s ease,color .2s ease,padding-left .2s ease;}
+  .cl-panel .cl-ni::before{content:'';position:absolute;left:0;top:7px;bottom:7px;width:3px;border-radius:3px;
+    background:linear-gradient(180deg,#E3C47E,#C39B3F);transform:scaleY(0);transform-origin:center;
+    transition:transform .22s cubic-bezier(.2,.8,.2,1);}
+  .cl-panel .cl-ni .ci{background:var(--card);border-color:var(--line);color:var(--navy);
+    box-shadow:0 1px 2px rgba(20,35,60,.06);
+    transition:background .2s ease,border-color .2s ease,color .2s ease,box-shadow .2s ease,transform .2s cubic-bezier(.2,.8,.2,1);}
+  .cl-panel .cl-ni:hover,.cl-panel .cl-ni:focus-visible{
+    background:linear-gradient(90deg,rgba(195,155,63,.16),rgba(195,155,63,.04) 70%,rgba(195,155,63,0));
+    color:var(--navy);padding-left:12px;outline:none;}
+  .cl-panel .cl-ni:hover::before,.cl-panel .cl-ni:focus-visible::before{transform:scaleY(1);}
+  .cl-panel .cl-ni:hover .ci,.cl-panel .cl-ni:focus-visible .ci{
+    background:linear-gradient(135deg,#FFF9EC,#F5E6C3);border-color:#E3CD98;color:#8A6D2F;
+    box-shadow:0 4px 10px rgba(195,155,63,.24);transform:translateY(-1px) scale(1.06);}
+  .cl-panel .cl-ni.on{
+    background:linear-gradient(90deg,rgba(195,155,63,.24),rgba(195,155,63,.08) 70%,rgba(195,155,63,.02));
+    color:var(--navy);font-weight:700;padding-left:12px;}
+  .cl-panel .cl-ni.on::before{transform:scaleY(1);}
+  .cl-panel .cl-ni.on .ci,.cl-panel .cl-ni.on:hover .ci{
+    background:linear-gradient(135deg,#DDBD72,#B8902F);border-color:#B8902F;color:#fff;
+    box-shadow:0 4px 12px rgba(184,144,47,.38);transform:none;}
+  .cl-panel .cl-ni:active .ci{transform:scale(.95);}
+  body.dark .cl-panel .cl-ni:hover .ci,body.dark .cl-panel .cl-ni:focus-visible .ci{
+    background:linear-gradient(135deg,rgba(207,173,98,.28),rgba(207,173,98,.12));border-color:rgba(207,173,98,.5);color:#EBD092;
+    box-shadow:0 4px 12px rgba(0,0,0,.35);}
+  /* 夜の画面でも、選んでいる項目は金の札のまま（カーソルを置いても暗くしない） */
+  body.dark .cl-panel .cl-ni.on .ci,body.dark .cl-panel .cl-ni.on:hover .ci{
+    background:linear-gradient(135deg,#DDBD72,#B8902F);border-color:#B8902F;color:#0C0F16;
+    box-shadow:0 4px 12px rgba(0,0,0,.4);transform:none;}
+  @media (prefers-reduced-motion: reduce){
+    .cl-panel .cl-ni,.cl-panel .cl-ni::before,.cl-panel .cl-ni .ci{transition:none;}
+    .cl-panel .cl-ni:hover .ci{transform:none;}
+  }
   .cl-panel .cl-twigs{border-left-color:#D9C79A;margin-left:22px;}
   .cl-panel .cl-tw{color:var(--muted);}
   .cl-panel .cl-tw::before{border-top-color:#D9C79A;}
@@ -1698,7 +1733,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260927-11';
+  var APP_BUILD='20260929-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
