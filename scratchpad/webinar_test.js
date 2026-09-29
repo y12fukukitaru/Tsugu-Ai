@@ -1,0 +1,80 @@
+// =============================================================
+// 認定パートナー説明会（ウェビナー）の試験（2026-09-29）
+//   ① 60分の構成・どの頁にも「話す内容」と時間
+//   ② お金の数字は、アプリの決まり（料率・利用料・顧問料）から計算して一致する
+//   ③ 収入を保証しない・前払いなし・0社の月は0円 を、例の頁と同じ場所に書く
+//   ④ ご契約の流れ：概要書面はメール（了承のうえ）→ スタート画面で同意・登録 → 契約書面もメール
+//   ⑤ 条件（1年・自動更新／申し出た月の翌月末で満了）と、資格の確認（番号だけ）がアプリと同じ
+//   ⑥ 運営キット（告知・メール・面談・弁護士の確認事項）と、継ナビくんの資料一覧
+// =============================================================
+const fs = require('fs');
+const R = (f) => fs.readFileSync(__dirname + '/../' + f, 'utf8');
+const W = R('webinar-partner.html'), SRC = R('index.html'), KIT = R('docs/webinar-partner-kit.md');
+const CON = R('supabase/migrations/20260905000000_contracts.sql');
+let n = 0, bad = [];
+function ok(name, c) { n++; if (!c) bad.push(name); }
+const slides = W.split('<section class="slide').slice(1).map((s) => s.slice(0, s.indexOf('</section>')));
+const slide = (t) => slides.find((s) => s.indexOf('data-t="' + t + '"') >= 0) || '';
+const num = (re) => Number((SRC.match(re) || [])[1]);
+
+// ① 構成
+ok('26頁', slides.length === 26);
+ok('どの頁にも「話す内容」', slides.every((s) => /<div class="talk">/.test(s)));
+ok('本編の頁には時間の目安', ['本日の流れ', '3つの問い', 'なぜいま', 'あなたの役割', '計算の例', 'ご負担', '契約の条件', '始め方', '書面について', 'まとめ']
+  .every((t) => /<b>時間<\/b>/.test(slide(t))));
+ok('60分（本編40・ご質問15・ご案内5）', /本編40分・ご質問15分・ご案内5分/.test(W) && /Zoom ウェビナー（オンライン）／60分/.test(KIT));
+ok('題名', /<title>認定パートナー説明会（ウェビナー） \| TsuguAi -継-<\/title>/.test(W));
+ok('目次から読む・全画面・話す内容の操作', /<script src="doc-reader.js"><\/script>/.test(W) && /talkToggle\(\)/.test(W) && /href="pitch-wa\.css"/.test(W));
+ok('スマホで表がはみ出さない', /@media\(max-width:820px\)\{\s*\.slide \.nt th,\.slide \.nt td\{white-space:normal;/.test(W) && /class="grid g-story"/.test(W));
+
+// ② お金の数字（アプリの決まりから計算して一致）
+const STD = num(/var EP_STD_FEE=(\d+);/), AI = num(/var EP_AI_FEE=(\d+);/), SELL = num(/var EP_SELLER_FEE=(\d+);/);
+const BASE = Number((SRC.match(/var uBase=blRate\('bl-pbase',(\d+)\)/) || [])[1]);
+ok('アプリの決まりを読めた', STD === 45000 && AI === 2000 && BASE === 3000 && SELL === 35000);
+const yen = (v) => v.toLocaleString('ja-JP') + '円';
+const ex = slide('計算の例');
+[[1, 0.5], [5, 0.5], [10, 0.6]].forEach(([c, r]) => {
+  const pay = STD * r * c, use = BASE + AI * c;
+  ok('計算の例：' + c + '社', ex.indexOf('<td>' + yen(pay) + '</td><td>' + yen(use) + '</td><td><b>' + yen(pay - use) + '</b></td>') >= 0);
+});
+ok('計算の例：10社は Lv.3 の条件（顧問契約10件）', /\{ lv:3, key:'Executive',[^\n]*need:\{cl:10,hd:0\}/.test(SRC) && /10社（Lv\.3・60%）/.test(ex));
+ok('料率はアプリのレベル表と同じ', /fee:'50%'/.test(SRC) && /fee:'60%'/.test(SRC) && /fee:'70%', scale:\{cl:30, fee:'80%'\}/.test(SRC)
+  && /<b>50%<\/b>/.test(slide('収入の仕組み')) && /<b>60%<\/b>/.test(slide('収入の仕組み')) && /<b>70%<\/b>（30社以上で80%）/.test(slide('収入の仕組み')));
+ok('ご利用料の式', /基本料 3,000円<\/b>＋<b>AI利用料 2,000円 × その月に入金のあった顧問先の数<\/b>（税別）/.test(slide('ご負担')));
+ok('顧問料', /買い手プラン 月45,000円／売り手プラン 月35,000円・税別/.test(slide('TsuguAiとは')));
+
+// ③ 保証しない・前払いなし・0社の月は0円
+ok('例の頁に「保証・約束しない」', /収入を保証・約束するものではありません/.test(ex) && /担当先を得られない月は、報酬もご利用料も0円です/.test(ex));
+ok('前払いなし・カード登録なし', /先にお支払いいただくことはありません/.test(slide('ご負担')) && /カードのご登録もありません/.test(slide('ご負担')));
+ok('0社の月は0円（アプリの計算と同じ）', /<b>0社の月は0円<\/b>/.test(slide('ご負担')) && /if\(n<=0\) return \{ ex:0, inc:0/.test(SRC));
+ok('消費税・源泉徴収に触れる', /消費税と、個人の方は源泉徴収が加わります/.test(ex));
+ok('時間を数字で約束しない', !/月2〜3時間/.test(W) && /面談は<b>担当先1社につき月1回<\/b>が目安/.test(slide('1日の動き')));
+ok('架空の例と断る', /架空の会社（株式会社継）の例です/.test(slide('伴走の3年間')) && /結果を約束するものではありません/.test(slide('伴走の3年間')));
+
+// ④ ご契約の流れ
+const st = slide('始め方'), doc = slide('書面について');
+ok('概要書面はメール（了承のうえ）', /メールでのお受け取りにご了承いただいたうえで/.test(st) && /メールでのお受け取りにご了承いただいた方に、メールでお送りします/.test(doc) && /紙でもお送りします/.test(doc));
+ok('契約はスタート画面で読み、同意して登録', /TsuguAiのスタート画面で契約書を読み、同意して登録<\/b>/.test(st) && /スタート画面で<b>全文を読み、同意して<\/b>登録します/.test(doc));
+ok('契約書面もメールで・リンクで見返せる', /同じリンクからいつでも見返せ、<b>契約書面はメールでもお送りします<\/b>/.test(doc));
+ok('クーリング・オフは書面で案内（日数を断定しない）', /クーリング・オフなど、ご契約の解除に関することも書面に記載しています/.test(doc) && !/20日/.test(W));
+ok('今日決めなくてよい', /今日この場でお決めいただく必要はありません/.test(slide('個別面談のご案内')));
+ok('アプリの契約：同意した人がパートナーになる（同じメールで登録）', /update public\.profiles set role = 'consultant'/.test(CON) && /契約を送ったのと同じメールアドレスで登録/.test(KIT));
+
+// ⑤ 条件と資格の確認
+ok('1年・自動更新（契約書と同じ）', /本契約は同意日より1年間とし、いずれからも申し出がない場合は同一条件で更新されます。/.test(CON) && /同意日から<b>1年間<\/b>。どちらからも申し出がなければ、同じ条件で更新されます。/.test(slide('契約の条件')));
+ok('終えるとき：申し出た月の翌月末で満了', /申し出た月の翌月末で満了<\/b>/.test(slide('契約の条件')) && /function pexitEndMonth/.test(SRC));
+ok('資格は登録番号だけ・写しは預からない', /<b>資格証の写しはお預かりしません<\/b>/.test(slide('保険・士業の方へ')) && /<b>写しはお預かりしません<\/b>/.test(slide('Q 辞めるとき')));
+ok('非公開金融情報・抱き合わせ', /事前の同意なく募集に使わない/.test(slide('保険・士業の方へ')) && /<b>抱き合わせはしない<\/b>/.test(slide('保険・士業の方へ')));
+ok('研修は全5章・必修10', /<b>全5章・必修10レッスン<\/b>/.test(slide('研修とサポート')) && /全5章、必修10レッスン/.test(R('manual-partner.html')));
+
+// ⑥ 運営キット・資料一覧
+['## 3. 告知文', '## 4. リマインド', '## 5. お礼のメール', '## 6. 個別面談の進め方', '## 7. アンケート', '## 8. 概要書面の送付メール', '## 9. ご契約のご案内と、同意のあと', '## 10. 弁護士に確かめていただくこと']
+  .forEach((h) => ok('キット：' + h, KIT.indexOf(h) >= 0));
+ok('キット：メールで渡す了承を記録', /了承をいただいた日時と方法を記録/.test(KIT));
+ok('キット：同意のあと契約書面をメールで', /契約書面をメールでお送りする/.test(KIT));
+ok('キット：告知にご負担と特商法の表示', /特定商取引法に基づく表示/.test(KIT) && /基本料 3,000円＋AI利用料 2,000円×入金のあった顧問先の数」（税別）/.test(KIT) && /収入を保証するものではありません/.test(KIT));
+ok('キット：弁護士の確認事項（業務提供誘引販売・広告・書面・クーリング・オフ）', /業務提供誘引販売取引/.test(KIT) && /広告の表示事項/.test(KIT) && /\*\*概要書面\*\*/.test(KIT) && /\*\*契約書面\*\*/.test(KIT) && /\*\*クーリング・オフ\*\*/.test(KIT));
+ok('継ナビくんの資料一覧に（運営だけ）', /\{ f:'webinar-partner\.html', i:'📡', n:'認定パートナー説明会（ウェビナー）'[^\n]*who:\{ admin:'' \}, sec:'pitch' \}/.test(SRC));
+
+if (bad.length) { bad.forEach((b) => console.log('NG ' + b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
+console.log('ALL OK ' + n + ' checks, 0 failed');
