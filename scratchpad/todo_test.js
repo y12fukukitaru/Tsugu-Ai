@@ -81,8 +81,8 @@ ok('書く欄：題名（Enter で入る。変換中は入らない）', /id="td
 ok('書く欄：期限の札と「なし」', /todoQuick\(\)\.map/.test(paint) && /todoSetDue\(\\'\\'\)">なし<\/button>/.test(paint));
 ok('書く欄：日付・時刻・メモ', /id="td-date" type="date"/.test(paint) && /id="td-time" type="time"/.test(paint) && /id="td-note"/.test(paint));
 ok('書く欄：顧客のひも付けはパートナーだけ', /id="td-cust"/.test(paint) && /顧客にひも付けない/.test(paint));
-ok('並び：期限切れ・今日・これから・期限なし', /'期限切れ'/.test(paint) && /'今日'/.test(paint) && /'これから'/.test(paint) && /'期限なし'/.test(paint));
-ok('済んだもの：見る／隠す', /済んだものを隠す/.test(paint) && /済んだもの（'\+done\.length\+'件）を見る/.test(paint));
+ok('並び：期限ごとの束で描く（束の名前は TODO_GROUPS）', /TODO_GROUPS\.forEach\(function\(g\)\{/.test(paint) && /todoGroup\(t\)===g\[0\]/.test(paint));
+ok('済んだもの：今日の分は残し、それより前は見る／隠す', /✓ 今日済んだこと/.test(paint) && /それより前に済んだものを隠す/.test(paint) && /それより前に済んだもの（'\+doneOld\.length\+'件）を見る/.test(paint));
 ok('経営者には「やることメモ」との違いを言う', /===\s*'customer'/.test(paint) && /ご自身だけ<\/b>が見る控えです/.test(paint) && /goSec\(\\'sec-mypdca\\'\)">経営課題の「やることメモ」<\/a>へ/.test(paint));
 const quick = takeFn('todoQuick');
 ok('札：今日・明日・金曜・来週月曜', /'今日'/.test(quick) && /'明日'/.test(quick) && /金曜/.test(quick) && /来週月曜/.test(quick));
@@ -164,7 +164,7 @@ ok('知識：パートナーは8タブ・経営者は7タブ', /パネルは8タ
 ok('知識：TODO の説明（両方）', (SRC.match(/／✅TODO\(自分用のやること控え。本人だけが見え/g) || []).length === 2);
 ok('知識：予定の色に青緑（両方）', (SRC.match(/紫=補助金の締切・青緑=TODO/g) || []).length === 2);
 const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-ok('版が揃う', build === VER.build && build === '20260929-03');
+ok('版が揃う', build === VER.build && build === '20260929-04');
 
 if (bad.length) { bad.forEach((b) => console.log('NG ' + b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK ' + n + ' checks, 0 failed');
