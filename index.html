@@ -1733,7 +1733,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20260929-02';
+  var APP_BUILD='20260929-03';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -17086,6 +17086,7 @@
     { f:'manual-admin.html', i:'🗂️', n:'運営向け 操作説明書', d:'コンソールの全機能・月次の運営業務', who:{ admin:'' }, sec:'manual' },
     { f:'pitch-customer.html', i:'🎤', n:'顧客候補向け プロダクト説明', d:'「社長、会社の値段をご存知ですか」——3つの問いかけで始まる15分の商談スライド。→キーで進み、そのまま画面共有・印刷もOK', who:{ consultant:'', admin:'パートナーが経営者に見せる商談スライド。内容確認・研修用に' }, sec:'pitch' },
     { f:'pitch-partner.html', i:'🤝', n:'パートナー候補向け プロダクト説明', d:'「顧問先に承継という未来を売れる人へ」——収入の波・一度きりの関係への問いかけから始まる説明スライド', who:{ admin:'' }, sec:'pitch' },
+    { f:'webinar-partner.html', i:'📡', n:'認定パートナー説明会（ウェビナー）', d:'保険・士業の方向け、Zoom 60分（本編40分・ご質問15分・ご案内5分）。役割・収入の仕組み・<b>ご負担（費用）</b>・ご契約の流れ（概要書面はメール、契約はスタート画面で同意・登録）まで。各頁に時間と話す内容つき。告知文・メール・チェックリストは docs/webinar-partner-kit.md', who:{ admin:'' }, sec:'pitch' },
     { f:'pitch-ep1.html', i:'🏛️', n:'EP-I（顧客基盤型）向け プロダクト説明', d:'税理士法人・社労士法人など、顧客基盤をお持ちの法人へ。事業承継・M&A支援部門の立ち上げ（すみわけ・組織図・90日・成績表・よくあるご質問）から、顧客は御社のもの・配分80%・担当の割当まで', who:{ admin:'' }, sec:'pitch' },
     { f:'pitch-ep2.html', i:'🏛️', n:'EP-II（所属営業型）向け プロダクト説明', d:'保険代理店など、営業を抱える本部へ。契約2本立て・本部は一律10%でご負担なし・担当表まで', who:{ admin:'' }, sec:'pitch' },
     { f:'pitch-bank.html', i:'🏦', n:'金融機関向け 提携のご提案', d:'「後継者不在は御行の課題でもあります」——紹介の流れ・線引き・情報の取り扱いまで。手数料のやり取りが無いことも明記', who:{ admin:'' }, sec:'ext' },
