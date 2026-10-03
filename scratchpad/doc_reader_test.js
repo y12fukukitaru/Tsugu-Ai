@@ -100,6 +100,17 @@ DOCS.forEach(function (f) {
   ok('doc-reader.js：24字を超える語は索引に入れない', /s\.length>24/.test(J));
   ok('doc-reader.js：目次から読むでは矢印で送らない', /ArrowRight\|ArrowLeft/.test(J) && /e\.stopPropagation\(\);/.test(J) && /W\.mv=function\(d\)\{ if\(isRead\(\)\) return;/.test(J));
   ok('doc-reader.js：iframe では「プラットフォームに戻る」', /tsugu:'closeManual'/.test(J));
+  // 右上の並び（2026-10-03）：✕は印だけ／全画面は両方の見え方に／切り替えは見え方で動かない
+  ok('doc-reader.js：✕は印だけ（文字を付けない）', /b\.className='dr-ib dr-x'/.test(J) && /b\.innerHTML=SVG_X;/.test(J) && /aria-label','プラットフォームに戻る'/.test(J) && !/'プラットフォームに戻る ✕'/.test(J));
+  ok('doc-reader.js：説明書の「戻る」も✕にする', /act\.appendChild\(makeX\(backBtn\)\);/.test(J));
+  ok('doc-reader.js：並びは［☰］［切り替え］［全画面］［✕］（☰は左＝切り替えが動かない）', /act\.appendChild\(makeMenuBtn\(\)\); act\.appendChild\(makeSeg\(\)\); act\.appendChild\(makeFs\(\)\);/.test(J));
+  ok('doc-reader.js：商談スライドは右上の［全画面］［✕］の頭に切り替えを入れる（左上に別に置かない）', /pfTop\.insertBefore\(makeSeg\(\), pfTop\.firstChild\);/.test(J) && !/dr-float/.test(J));
+  ok('doc-reader.js：目次から読むでも右上の並びはいつも見え、帯はその幅を空ける', /body\.dr-read \.pf-top\{opacity:1!important;top:10px!important;right:12px!important;\}/.test(J) && /--dr-actw/.test(J) && !/body\.dr-read \.pf-top,/.test(J));
+  ok('doc-reader.js：全画面（商談スライドは pitch-fit.js、ほかはブラウザの全画面。使えない端末では出さない）', /if\(typeof W\.pitchFull==='function'\)\{ W\.pitchFull\(\); return; \}/.test(J) && /if\(!fsCan\(\)\) b\.style\.display='none';/.test(J));
+  ok('doc-reader.js：目次から読むでも F で全画面', /if\(\(k==='f'\|\|k==='F'\) && !e\.ctrlKey/.test(J) && !/\|t\|T\|f\|F\|Escape\)\$/.test(J));
+  ok('doc-reader.js：✕は全画面を解いてから戻る', /if\(fsEl\(\)\) \(D\.exitFullscreen\|\|D\.webkitExitFullscreen\)\.call\(D\);/.test(J));
+  ok('説明書（パートナー）・知識：右上の並びは同じ場所・目次から読むでも全画面', /どちらの見え方でも、どの資料・説明書でも<b>同じ場所<\/b>/.test(R('manual-partner.html')) && /右上の並び［スライドで見る｜目次から読む］［⛶］［✕］は、どちらの見え方でもどの資料でも同じ場所/.test(R('index.html')));
+  ok('doc-reader.js：スマホでは切り替えを短く（スライド｜目次）', /<span class="s">スライド<\/span>/.test(J) && /<span class="s">目次<\/span>/.test(J));
   ok('doc-reader.js：印刷は目次から読むとき縦・全頁', /@page\{size:A4 portrait/.test(J) && /pageSt\.media='print'/.test(J) && /pageSt\.media='not all'/.test(J));
   ok('doc-reader.js：スマホの設えは画面だけ（印刷に効かせない）', !/@media\(max-width/.test(J));
   ok('doc-reader.js：写しの頁を section.slide にしない（数え間違いを防ぐ）', /' dr-slide'/.test(J) && /replace\(\/ slide \| on \/g,' '\)/.test(J));

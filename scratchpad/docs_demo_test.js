@@ -134,13 +134,14 @@ const IDX = R('index.html');
   ok('ブラウザ側で解除されたときも見た目を合わせる', /fullscreenchange/.test(FIT) && /webkitfullscreenchange/.test(FIT));
   ok('スワイプ：横だけ・45px 以上', /touchstart/.test(FIT) && /touchend/.test(FIT) && /Math\.abs\(dx\)>45/.test(FIT) && /Math\.abs\(dx\)>Math\.abs\(dy\)/.test(FIT));
   ok('スワイプ直後の click は握りつぶす（二重に進まない）', /if\(swiped\)\{ swiped=false; e\.stopPropagation\(\); e\.preventDefault\(\); \}/.test(FIT));
-  ok('右上：全画面と戻るの2つ、全画面中は戻るを出さない', /aria-label', on\?'全画面を解除':'全画面で表示'/.test(FIT) && /btnBack\.style\.display = \(on\|\|window\.parent===window\) \? 'none' : ''/.test(FIT));
+  ok('右上：全画面と戻るの2つ。全画面中も戻るは同じ場所（押すと全画面を解いてから戻る）', /aria-label', on\?'全画面を解除':'全画面で表示'/.test(FIT) && /btnBack\.style\.display = \(window\.parent===window\) \? 'none' : ''/.test(FIT) && /if\(body\.classList\.contains\('pf-on'\)\) leave\(\);\n      if\(window\.parent!==window\)/.test(FIT));
   ok('右上の印は線で描く（端末で形が変わらないように）', /SVG_OPEN=/.test(FIT) && /SVG_CLOSE=/.test(FIT) && /SVG_X=/.test(FIT));
   ok('戻るは枠の親に合図を送る', /parent\.postMessage\(\{tsugu:'closeManual'\}/.test(FIT));
   ok('全画面のあいだ、バーは普段退いている', /body\.pf-on \.bar\{transform:translateY\(115%\)/.test(WA) && /body\.pf-on\.pf-ui \.bar\{transform:none;\}/.test(WA));
   //  頁を送っただけでは操作を出さない。出すのは、そこへ近づいたときだけ
   ok('近づいたときだけ出す', /showUi\(e\.clientY > window\.innerHeight - HOT_BOTTOM\);/.test(FIT)
-    && /showTop\(e\.clientY < HOT_TOP && e\.clientX > window\.innerWidth - HOT_RIGHT\);/.test(FIT));
+    && /hr=Math\.max\(HOT_RIGHT, tp \? tp\.offsetWidth\+48 : 0\);/.test(FIT) && /showTop\(e\.clientY < HOT_TOP && e\.clientX > window\.innerWidth - hr\);/.test(FIT));
+  ok('F は打っている最中には効かせない', /if\(\/\^\(INPUT\|TEXTAREA\|SELECT\)\$\/\.test\(tg\)/.test(FIT));
   no('全画面に入った直後には出さない', /add\('pf-on'\); showUi\(\);/.test(FIT));
   no('キー操作だけでは出さない', /if\(e\.key==='f'\|\|e\.key==='F'\)\{ toggle\(\); \}\n    showUi\(\);/.test(FIT));
   ok('動かしていないあいだはカーソルも消す', /body\.pf-on\{cursor:none;\}/.test(WA)

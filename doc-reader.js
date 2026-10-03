@@ -99,32 +99,45 @@
   ':root{--dr-navy:#1E3A66;--dr-gold:#C39B3F;--dr-muted:#5A6981;--dr-soft:#F8F9FC;--dr-line:#E2E7EF;--dr-ink:#18202E;--dr-toph:56px;}',
   /* 切り替え（スライドで見る／目次から読む） */
   '.dr-seg{display:inline-flex;flex:0 0 auto;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:2px;gap:2px;}',
-  '.dr-seg button{font-family:inherit;font-size:12.5px;font-weight:600;line-height:1.2;color:#DCE3EE;background:transparent;border:none;border-radius:8px;padding:7px 11px;cursor:pointer;white-space:nowrap;}',
+  '.dr-seg button{font-family:inherit;font-size:12.5px;font-weight:600;line-height:1.2;color:#DCE3EE;background:transparent;border:none;border-radius:8px;height:32px;padding:0 11px;cursor:pointer;white-space:nowrap;}',
+  '.dr-seg .s{display:none;}',
   '.dr-seg button:hover{color:#fff;background:rgba(255,255,255,.08);}',
   '.dr-seg button[aria-pressed="true"]{background:#fff;color:var(--dr-navy);}',
-  '.dr-seg button:focus-visible,.dr-mbtn:focus-visible{outline:2px solid var(--dr-gold);outline-offset:1px;}',
-  '.dr-ctl{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;}',
-  '.dr-mbtn{display:none;font-family:inherit;font-size:12.5px;font-weight:700;color:#0E1B33;background:var(--dr-gold);border:none;border-radius:9px;padding:8px 12px;cursor:pointer;white-space:nowrap;}',
+  '.dr-seg button:focus-visible,.dr-mbtn:focus-visible,.dr-act .dr-ib:focus-visible{outline:2px solid var(--dr-gold);outline-offset:1px;}',
+  /* 右上の操作は、どの資料・どちらの見え方でも同じ並び・同じ場所：
+     ［☰ 目次（スマホの目次から読むだけ）］［スライドで見る｜目次から読む］［全画面］［✕］ */
+  '.dr-act{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;}',
+  '.dr-act .dr-ib{width:38px;height:38px;padding:0;margin:0;border-radius:11px;cursor:pointer;border:1px solid rgba(233,220,187,.3);background:rgba(255,255,255,.06);color:#E9DCBB;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;font:inherit;opacity:1;}',
+  '.dr-act .dr-ib:hover{background:rgba(195,155,63,.28);border-color:rgba(195,155,63,.55);color:#fff;}',
+  '.dr-act .dr-ib svg{width:17px;height:17px;display:block;}',
+  '.dr-mbtn{display:none;font-family:inherit;font-size:12.5px;font-weight:700;color:#0E1B33;background:var(--dr-gold);border:none;border-radius:10px;height:38px;padding:0 12px;cursor:pointer;white-space:nowrap;flex:0 0 auto;}',
+  '@media screen and (max-width:560px){ .dr-seg .l,.dr-mbtn .l{display:none;} .dr-seg .s{display:inline;} .dr-seg button{padding:0 10px;} }',
   /* 資料に上の帯が無いとき（商談スライドの目次から読む／募集案内）に出す帯 */
-  '.dr-top{position:fixed;top:0;left:0;right:0;z-index:60;display:none;align-items:center;gap:10px;padding:9px 14px;background:rgba(26,32,48,.96);border-bottom:1px solid rgba(195,155,63,.35);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);}',
-  '.dr-top .t{color:#fff;font-size:13.5px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.03em;}',
-  '.dr-top .dr-back{font-family:inherit;font-size:13px;font-weight:700;background:#C39B3F;color:#0E1B33;border:none;border-radius:9px;padding:9px 14px;cursor:pointer;white-space:nowrap;}',
+  '.dr-top{position:fixed;top:0;left:0;right:0;z-index:60;display:none;align-items:center;gap:6px;padding:10px 12px 10px 14px;min-height:58px;box-sizing:border-box;background:rgba(26,32,48,.96);border-bottom:1px solid rgba(195,155,63,.35);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);}',
+  '.dr-top .t,.mnv-top .t{color:#fff;font-size:13.5px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.03em;}',
   'body.dr-owntop .dr-top{display:flex;}',
   'body.dr-deck:not(.dr-read) .dr-top{display:none;}',
-  /* 商談スライドのスライド表示では、左上に小さく置く（右上の全画面ボタンと対に） */
-  '.dr-float{position:fixed;top:10px;left:12px;z-index:25;opacity:.62;transition:opacity .2s;}',
-  '.dr-float:hover,.dr-float:focus-within{opacity:1;}',
-  '.dr-float .dr-seg{background:rgba(14,27,51,.72);border-color:rgba(195,155,63,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}',
-  'body.pf-on .dr-float,body.dr-read .dr-float{display:none!important;}',
-  'body.pf-hint .dr-float{opacity:.9;}',
-  '@media screen and (max-width:820px){ body.dr-deck:not(.dr-read) .deck{padding-top:58px!important;} .dr-float{opacity:.92;} }',
+  /* 説明書の帯も、右上の並びの位置を合わせる */
+  '.mnv-top.dr-has{gap:6px;padding:10px 12px 10px 14px;min-height:58px;box-sizing:border-box;}',
+  /* 商談スライド：切り替えは右上の［全画面］［✕］の並び（pitch-fit.js の .pf-top）に入れる。
+     スライドで見るでも目次から読むでも、同じ一つの並びが同じ場所にある */
+  '.pf-top .dr-seg{background:rgba(16,22,36,.5);border-color:rgba(233,220,187,.3);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}',
+  '.pf-top{align-items:center;}',
+  /* 切り替えが入ったぶん、普段も見つけられる濃さに（近づけば濃く・全画面では消える） */
+  'body.dr-deck:not(.pf-on):not(.pf-topui):not(.pf-hint):not(.dr-read) .pf-top:not(:hover):not(:focus-within){opacity:.6;}',
+  'body.dr-deck.pf-on .pf-top{top:10px;right:12px;}',
+  /* 目次から読むでは、右上はいつも見える。帯の右に、その幅だけ場所を空ける */
+  'body.dr-read .pf-top{opacity:1!important;top:10px!important;right:12px!important;}',
+  'body.dr-deck .dr-top{padding-right:var(--dr-actw,12px);}',
+  'body.dr-read.pf-on,body.dr-read.pf-on *{cursor:auto;}',
+  '@media screen and (max-width:820px){ body.dr-deck:not(.dr-read) .deck{padding-top:58px!important;} }',
   /* 上の帯の高さに合わせて、本文を下げる（説明書は2段になることがある） */
   '@media screen{ body.dr-stack .deck{padding-top:calc(var(--dr-toph) + 14px)!important;} }',
   'body.dr-stack .slide{scroll-margin-top:calc(var(--dr-toph) + 10px);}',
   /* ===== 目次から読む ===== */
   '#dr{display:none;}',
   'body.dr-read #dr{display:grid;}',
-  'body.dr-read .deck,body.dr-read .bar,body.dr-read .pf-top,body.dr-read #talkp,body.dr-read .toc{display:none!important;}',
+  'body.dr-read .deck,body.dr-read .bar,body.dr-read #talkp,body.dr-read .toc{display:none!important;}',
   'body.dr-read{background-color:#FAF8F3;background-image:var(--wa-asanoha-paper,none);}',
   '#dr{grid-template-columns:300px minmax(0,1fr);gap:28px;max-width:1320px;margin:0 auto;padding:calc(var(--dr-toph) + 18px) 22px 80px;align-items:start;color:var(--dr-ink);}',
   /* 左：目次・質問・索引 */
@@ -259,7 +272,7 @@
   '}',
   /* ===== 印刷：目次から読むは、全部の頁を順に ===== */
   '@media print{',
-  '  .dr-float,.dr-top,.dr-side,.dr-tools,.dr-scrim,.dr-ch a{display:none!important;}',
+  '  .dr-top,.pf-top,.dr-side,.dr-tools,.dr-scrim,.dr-ch a{display:none!important;}',
   '  body.dr-read .mnv-top{display:none!important;}',
   '  body.dr-read{background:#fff!important;background-image:none!important;}',
   '  body.dr-read #dr{display:block!important;padding:0!important;max-width:none;}',
@@ -277,13 +290,19 @@
 
   body.classList.add('dr-on', KIND==='deck'?'dr-deck':'dr-stack');
 
-  // ---------- 切り替え ----------
+  // ---------- 切り替え・全画面・✕ ----------
+  //  右上の並びは、どの資料・どちらの見え方でも同じ：
+  //    ［☰ 目次（スマホの目次から読むだけ）］［スライドで見る｜目次から読む］［全画面］［✕］
+  //  ☰ は左に置く。出たり消えたりしても、切り替えの位置が動かないように
+  var SVG_OPEN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+  var SVG_SHUT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+  var SVG_X='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
   var segs=[];
   function makeSeg(){
     var s=el('div','dr-seg');
     s.setAttribute('role','group'); s.setAttribute('aria-label','表示の切り替え');
-    s.innerHTML='<button type="button" data-v="slide" aria-pressed="true">スライドで見る</button>'
-               +'<button type="button" data-v="read" aria-pressed="false">目次から読む</button>';
+    s.innerHTML='<button type="button" data-v="slide" aria-pressed="true" title="スライドで見る"><span class="l">スライドで見る</span><span class="s">スライド</span></button>'
+               +'<button type="button" data-v="read" aria-pressed="false" title="目次から読む"><span class="l">目次から読む</span><span class="s">目次</span></button>';
     s.addEventListener('click',function(e){
       var b=e.target.closest ? e.target.closest('button') : e.target;
       if(!b||!b.getAttribute('data-v')) return;
@@ -293,43 +312,94 @@
     segs.push(s); return s;
   }
   function makeMenuBtn(){
-    var b=el('button','dr-mbtn','☰ 目次・さがす'); b.type='button';
+    var b=el('button','dr-mbtn','☰<span class="l"> 目次・さがす</span>'); b.type='button';
     b.setAttribute('aria-controls','dr-side'); b.setAttribute('aria-expanded','false');
+    b.setAttribute('aria-label','目次・さがす');
     b.addEventListener('click',function(e){ e.stopPropagation(); drawer(!body.classList.contains('dr-drawer')); });
     return b;
   }
-  function makeCtl(){ var c=el('div','dr-ctl'); c.appendChild(makeSeg()); c.appendChild(makeMenuBtn()); return c; }
   function goBack(){
     if(W.self!==W.top){ try{ parent.postMessage({tsugu:'closeManual'},'*'); return; }catch(e){} }
     if(history.length>1) history.back(); else location.href='./index.html';
   }
+  //  ✕：文字は付けず、印だけ。何のボタンかは読み上げ・カーソルで分かる
+  function makeX(btn){
+    var b=btn||el('button');
+    b.type='button'; b.className='dr-ib dr-x'; b.removeAttribute('id');
+    b.innerHTML=SVG_X;
+    b.setAttribute('aria-label','プラットフォームに戻る'); b.setAttribute('title','プラットフォームに戻る');
+    b.onclick=function(e){
+      if(e) e.stopPropagation();
+      //  全画面のまま戻ると、閉じたあとも全画面が残る。先に解く
+      try{ if(fsEl()) (D.exitFullscreen||D.webkitExitFullscreen).call(D); }catch(er){}
+      if(body.classList.contains('pf-on') && typeof W.pitchFull==='function') W.pitchFull();
+      goBack();
+    };
+    return b;
+  }
+  //  全画面。商談スライドは pitch-fit.js の全画面（使えない端末では見立ての全画面）をそのまま使う。
+  //  ほかの資料は、ブラウザの全画面。使えない端末（iPhone の Safari）ではボタンを出さない
+  function fsEl(){ return D.fullscreenElement||D.webkitFullscreenElement||null; }
+  function fsCan(){ return !!(html.requestFullscreen||html.webkitRequestFullscreen) && (D.fullscreenEnabled!==false || D.webkitFullscreenEnabled); }
+  function fsOn(){ return !!fsEl() || body.classList.contains('pf-on'); }
+  function fsToggle(){
+    if(typeof W.pitchFull==='function'){ W.pitchFull(); return; }
+    try{
+      if(fsEl()){ (D.exitFullscreen||D.webkitExitFullscreen).call(D); }
+      else if(html.requestFullscreen){ var pr=html.requestFullscreen(); if(pr&&pr.catch) pr.catch(function(){}); }
+      else if(html.webkitRequestFullscreen) html.webkitRequestFullscreen();
+    }catch(e){}
+  }
+  var fsBtn=null;
+  function makeFs(){
+    var b=el('button','dr-ib dr-fs'); b.type='button';
+    b.addEventListener('click',function(e){ e.stopPropagation(); fsToggle(); });
+    if(!fsCan()) b.style.display='none';
+    fsBtn=b; return b;
+  }
+  function paintFs(){
+    var on=fsOn();
+    if(fsBtn){
+      fsBtn.innerHTML=on?SVG_SHUT:SVG_OPEN;
+      fsBtn.setAttribute('aria-label',on?'全画面を解除':'全画面で表示');
+      fsBtn.setAttribute('title',on?'全画面を解除（Esc）':'全画面で表示（F）');
+    }
+  }
+  ['fullscreenchange','webkitfullscreenchange'].forEach(function(ev){ D.addEventListener(ev,function(){ paintFs(); measureTop(); }); });
 
-  var mnvTop=D.querySelector('.mnv-top'), drTop=null, floatBox=null;
+  var mnvTop=D.querySelector('.mnv-top'), drTop=null, pfTop=null, act=null;
   if(mnvTop){
+    //  説明書：帯の右に［☰］［切り替え］［全画面］［✕］
     mnvTop.classList.add('dr-has');
     var backBtn=mnvTop.querySelector('button');
-    mnvTop.insertBefore(makeCtl(), backBtn||null);
+    act=el('div','dr-act');
+    act.appendChild(makeMenuBtn()); act.appendChild(makeSeg()); act.appendChild(makeFs());
+    act.appendChild(makeX(backBtn));
+    mnvTop.appendChild(act);
   }else{
     drTop=el('div','dr-top');
     drTop.innerHTML='<span class="t">'+esc(TITLE)+'</span>';
-    drTop.appendChild(makeCtl());
-    //  戻る：商談スライドの右上の ✕ と同じく、プラットフォームの中で開いたときだけ出す
-    if(W.self!==W.top){
-      var bb=el('button','dr-back','プラットフォームに戻る ✕'); bb.type='button';
-      bb.addEventListener('click',function(e){ e.stopPropagation(); goBack(); });
-      drTop.appendChild(bb);
+    act=el('div','dr-act');
+    act.appendChild(makeMenuBtn());
+    pfTop=(KIND==='deck') ? D.querySelector('.pf-top') : null;
+    if(pfTop){
+      //  商談スライド：切り替えは右上の［全画面］［✕］の前へ。帯（目次から読む）は、その幅だけ右を空ける
+      pfTop.insertBefore(makeSeg(), pfTop.firstChild);
+    }else{
+      act.appendChild(makeSeg()); act.appendChild(makeFs());
+      //  ✕：プラットフォームの中で開いたときだけ（商談スライドの右上と同じ）
+      if(W.self!==W.top) act.appendChild(makeX());
     }
+    drTop.appendChild(act);
     body.appendChild(drTop);
     body.classList.add('dr-owntop');
-    if(KIND==='deck'){
-      floatBox=el('div','dr-float'); floatBox.appendChild(makeSeg());
-      body.appendChild(floatBox);
-    }
   }
+  paintFs();
   function topBar(){ return mnvTop || ((KIND==='stack'||body.classList.contains('dr-read')) ? drTop : null); }
   function measureTop(){
     var b=topBar(); var h=b ? b.offsetHeight : 0;
     html.style.setProperty('--dr-toph', (h||0)+'px');
+    if(pfTop && pfTop.offsetWidth) html.style.setProperty('--dr-actw', (pfTop.offsetWidth+12+6)+'px');
   }
 
   // ---------- 目次から読むの中身（最初に開いたときに組む） ----------
@@ -821,10 +891,21 @@
     if(!typing && k==='/'){ e.preventDefault(); e.stopPropagation(); if(W.innerWidth<900) drawer(true); if(qInput){ qInput.focus(); qInput.select(); } return; }
     //  資料の側のキー（→ ← スペース Enter T F など）には渡さない。
     //  既定の動き（スペースで下へ、入力欄への文字）はそのまま効く
-    if(/^(ArrowRight|ArrowLeft|ArrowUp|ArrowDown|PageUp|PageDown|Home|End| |Enter|t|T|f|F|Escape)$/.test(k)){
+    if((k==='f'||k==='F') && !e.ctrlKey && !e.metaKey && !e.altKey){ e.preventDefault(); e.stopPropagation(); if(pfTop || (fsBtn && fsBtn.style.display!=='none')) fsToggle(); return; }
+    if(k==='Escape' && body.classList.contains('pf-on')) return;   // 見立ての全画面を抜ける（pitch-fit.js）
+    if(/^(ArrowRight|ArrowLeft|ArrowUp|ArrowDown|PageUp|PageDown|Home|End| |Enter|t|T|Escape)$/.test(k)){
       e.stopPropagation();
     }
   }, true);
+  //  説明書・募集案内のスライドで見るでも、F で全画面（商談スライドは pitch-fit.js が受ける）
+  if(KIND!=='deck'){
+    W.addEventListener('keydown',function(e){
+      if(isRead() || e.ctrlKey || e.metaKey || e.altKey) return;
+      var tag=(e.target&&e.target.tagName)||'';
+      if(/^(INPUT|TEXTAREA|SELECT)$/.test(tag)||(e.target&&e.target.isContentEditable)) return;
+      if((e.key==='f'||e.key==='F') && fsBtn && fsBtn.style.display!=='none'){ e.preventDefault(); fsToggle(); }
+    });
+  }
   //  スワイプ（pitch-fit.js）や紙を押したときの「次へ」も、目次から読むでは効かせない
   if(typeof W.mv==='function'){
     var _mv=W.mv;
@@ -906,5 +987,5 @@
   W.addEventListener('load', settle);
   try{ if(D.fonts && D.fonts.ready) D.fonts.ready.then(settle); }catch(e){}
   W.addEventListener('resize', function(){ measureTop(); if(W.innerWidth>=900) drawer(false); });
-  try{ if(W.ResizeObserver){ var ro=new ResizeObserver(measureTop); if(mnvTop) ro.observe(mnvTop); if(drTop) ro.observe(drTop); } }catch(e){}
+  try{ if(W.ResizeObserver){ var ro=new ResizeObserver(measureTop); if(mnvTop) ro.observe(mnvTop); if(drTop) ro.observe(drTop); if(pfTop) ro.observe(pfTop); } }catch(e){}
 })();
