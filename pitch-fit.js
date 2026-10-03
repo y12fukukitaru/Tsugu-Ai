@@ -20,8 +20,8 @@
         進まないように）
      ④ 右上の操作    … 「⛶ 全画面」と「✕ プラットフォームに戻る」。
         話の邪魔をしないよう普段は薄く、近づくと濃くなる。
-        全画面のあいだは ✕ を出さない（全画面 → 解除 → 戻る の順に
-        すると、どこへ戻るのかが迷子にならない）
+        全画面のあいだも ✕ は同じ場所に置く（押すと全画面を解いてから戻る）。
+        doc-reader.js が、この並びの頭に「スライドで見る｜目次から読む」を足す
 
    読み込む順番： 各資料のインラインの script（show/mv を定義）→ pitch-fit.js
    ============================================================= */
@@ -155,9 +155,9 @@
     btnFull.innerHTML = on ? SVG_CLOSE : SVG_OPEN;
     btnFull.setAttribute('aria-label', on?'全画面を解除':'全画面で表示');
     btnFull.setAttribute('title', on?'全画面を解除（Esc）':'全画面で表示（F）');
-    //  全画面のあいだは「戻る」を出さない。全画面 → 解除 → 戻る の順に置くと、
-    //  どこへ戻るのかが分かったうえで押せる
-    if(btnBack) btnBack.style.display = (on||window.parent===window) ? 'none' : '';
+    //  全画面のあいだも「戻る」は出したまま（並びの位置を動かさない）。
+    //  押したら全画面を解いてから戻る
+    if(btnBack) btnBack.style.display = (window.parent===window) ? 'none' : '';
   }
   function build(){
     var top=document.createElement('div'); top.className='pf-top';
@@ -168,6 +168,7 @@
     btnBack.setAttribute('title','プラットフォームに戻る');
     btnBack.onclick=function(e){
       e.stopPropagation();
+      if(body.classList.contains('pf-on')) leave();
       if(window.parent!==window){ try{ parent.postMessage({tsugu:'closeManual'},'*'); return; }catch(err){} }
       if(history.length>1) history.back(); else location.href='./index.html';
     };
@@ -211,6 +212,9 @@
   }
   document.addEventListener('keydown', function(e){
     if(e.key==='Escape' && body.classList.contains('pf-on') && !fsOn()){ leave(); }
+    //  検索の欄などに打っている「f」では全画面にしない
+    var tg=(e.target&&e.target.tagName)||'';
+    if(/^(INPUT|TEXTAREA|SELECT)$/.test(tg)||(e.target&&e.target.isContentEditable)||e.ctrlKey||e.metaKey||e.altKey) return;
     if(e.key==='f'||e.key==='F'){ toggle(); }
   });
   //  近づいたら出す。下の帯（バー）と右上（操作）を、それぞれの近さで判定する
@@ -219,7 +223,9 @@
     if(!body.classList.contains('pf-on')) return;
     wakeCursor();
     showUi(e.clientY > window.innerHeight - HOT_BOTTOM);
-    showTop(e.clientY < HOT_TOP && e.clientX > window.innerWidth - HOT_RIGHT);
+    //  右上の並びは、資料によって切り替えが入って幅が広がる。その幅まで近づいたら出す
+    var tp=document.querySelector('.pf-top'), hr=Math.max(HOT_RIGHT, tp ? tp.offsetWidth+48 : 0);
+    showTop(e.clientY < HOT_TOP && e.clientX > window.innerWidth - hr);
   });
   ['fullscreenchange','webkitfullscreenchange'].forEach(function(ev){
     document.addEventListener(ev, function(){
