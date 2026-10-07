@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>本部に所属したまま、法人営業へ | TsuguAi -継- EP-II 所属パートナー候補の方へ</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Shippori+Mincho:wght@500;600;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1E3A66;--blue:#2C5DA8;--gold:#C39B3F;--ink:#18202E;--muted:#5A6981;
+  --line:#E2E7EF;--soft:#F8F9FC;--softline:#EDF1F6;--deep:#0E1B33;--green:#27684A;--red:#A9403D;}
+*{box-sizing:border-box;}
+body{margin:0;background:#0B1220;font-family:'Noto Sans JP',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;}
+.deck{padding:22px 14px 84px;}
+.slide{position:relative;width:100%;max-width:1080px;aspect-ratio:16/9;margin:0 auto;background:#fff;
+  border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.42);padding:44px 54px;overflow:hidden;display:none;}
+.slide.on{display:block;}
+.slide:not(.on){display:none!important;}
+.slide::after{content:attr(data-n);position:absolute;right:24px;bottom:14px;font-family:'DM Sans',sans-serif;font-size:12px;color:#B7C4D6;}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.15em;color:var(--gold);margin-bottom:12px;}
+h1{font-size:44px;font-weight:600;color:var(--navy);margin:0 0 16px;line-height:1.45;}
+h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:1.45;}
+.sub{font-size:16px;color:var(--muted);line-height:2;margin:0 0 18px;max-width:78ch;}
+.sub b{color:var(--navy);}
+.grid{display:grid;gap:14px;}
+.g2{grid-template-columns:1fr 1fr;} .g3{grid-template-columns:repeat(3,1fr);}
+.card{border:1px solid var(--line);border-radius:13px;padding:18px 20px;background:#fff;text-align:center;}
+.card.soft{background:var(--soft);}
+.card.g{border-color:#CFE3D6;background:rgba(39,104,74,.06);}
+.card.w{border-color:#EBDDB4;background:rgba(195,155,63,.09);}
+.card.r{border-color:#E3B9B7;background:rgba(169,64,61,.06);}
+.card h3{font-size:17px;font-weight:700;color:var(--navy);margin:0 0 8px;line-height:1.5;}
+.card.r h3{color:var(--red);}
+.card p{font-size:13.5px;color:var(--muted);line-height:1.85;margin:0;text-align:left;}
+.card p b{color:var(--ink);}
+.q{border:1.5px solid var(--line);border-radius:14px;padding:18px 24px;font-size:20px;font-weight:600;color:var(--ink);line-height:1.7;display:flex;gap:14px;align-items:center;}
+.q .n{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--navy);color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;}
+.note{border-left:3px solid var(--gold);background:var(--soft);border-radius:0 10px 10px 0;padding:13px 18px;font-size:13.5px;color:var(--muted);line-height:1.95;}
+.note b{color:var(--navy);}
+.walls{display:flex;gap:10px;}
+.walls div.wl{flex:1;border:1.5px solid #EBDDB4;background:#FDFAF1;border-radius:12px;padding:14px 10px;text-align:center;}
+.walls .w-t{font-size:16px;font-weight:700;color:#8A6A12;}
+.walls .w-c{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.65;}
+.cover.on{display:flex!important;flex-direction:column;justify-content:center;}
+.cover{background:linear-gradient(140deg,#0E1B33 0%,#1E3A66 62%,#2C5DA8 100%);color:#fff;}
+.cover h1{color:#fff;font-size:46px;}
+.cover .sub{color:rgba(255,255,255,.85);font-size:17px;}
+.cover .mark{font-family:'DM Sans',sans-serif;font-size:21px;letter-spacing:.14em;color:var(--gold);margin-bottom:24px;}
+.cover::after{color:rgba(255,255,255,.35);}
+.big{font-size:26px;font-weight:700;color:var(--navy);line-height:1.7;}
+.big b{color:var(--gold);}
+.bar{position:fixed;left:0;right:0;bottom:0;height:58px;background:rgba(14,27,51,.95);backdrop-filter:blur(10px);display:flex;align-items:center;gap:10px;padding:0 16px;z-index:20;}
+.bar button{font-family:inherit;font-size:13px;background:rgba(255,255,255,.1);color:#E7ECF4;border:none;border-radius:9px;padding:9px 16px;cursor:pointer;}
+.bar button:hover{background:rgba(255,255,255,.22);}
+.bar .pos{font-family:'DM Sans',sans-serif;color:#B7C4D6;font-size:13px;min-width:66px;text-align:center;}
+.bar .ttl{color:#fff;font-size:13px;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ===== ピクトグラム（イラスト） ===== */
+.cico{display:flex;justify-content:center;margin-bottom:10px;}
+.cico svg{width:54px;height:54px;color:var(--navy);}
+.card.r .cico svg{color:var(--red);}
+.card.g .cico svg{color:var(--green);}
+.card.w .cico svg{color:#8A6A12;}
+.walls .cico{margin-bottom:6px;}
+.walls .cico svg{width:44px;height:44px;color:#8A6A12;}
+.duo{display:flex;gap:34px;align-items:center;margin-top:14px;}
+.duo .txt{flex:1;min-width:0;}
+.duo .art{flex:0 0 190px;color:var(--navy);opacity:.9;}
+.duo .art svg{width:100%;height:auto;}
+.hero-art{position:absolute;right:46px;top:50%;transform:translateY(-50%);width:250px;color:rgba(207,173,98,.85);}
+.hero-art svg{width:100%;height:auto;}
+.cover .hx{position:relative;z-index:1;max-width:640px;}
+@media(max-width:820px){ .hero-art{display:none;} .duo{flex-direction:column;} .duo .art{flex:0 0 auto;width:150px;} }
+
+@media(max-width:820px){
+  .slide{aspect-ratio:auto;min-height:72vh;padding:26px 20px 44px;}
+  h1{font-size:29px;} .cover h1{font-size:30px;} h2{font-size:22px;}
+  .g2,.g3{grid-template-columns:1fr;} .walls{flex-direction:column;}
+  .q{font-size:16px;} .big{font-size:20px;}
+}
+@media print{
+  body{background:#fff;} .bar, .deck{padding:0;}
+  .slide,.slide:not(.on){display:block!important;box-shadow:none;border-radius:0;margin:0;max-width:none;width:100%;aspect-ratio:auto;height:100vh;page-break-after:always;}
+  @page{size:A4 landscape;margin:0;}
+}
+
+/* ===== 1社の3年間（物語） =====
+   デモの画面は「何ができるか」を見せる。こちらは「使うと会社がどうなるか」。
+   数字は架空の株式会社継で、アプリの企業価値診断と同じ式で出してある
+   （EBITDA×5＋現預金−借入）。1年後の数字がデモの画面とぴったり合う */
+.tl{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-top:14px;}
+.tl .s{border:1px solid var(--line);border-radius:11px;padding:10px 9px 9px;background:#fff;}
+.tl .s .w{font-family:'DM Sans','Noto Sans JP',sans-serif;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--gold);}
+.tl .s .h{font-size:13.5px;font-weight:700;color:var(--navy);margin:3px 0 5px;line-height:1.45;}
+.tl .s .d{font-size:11.5px;color:var(--muted);line-height:1.7;}
+.tl .s .sc{margin-top:6px;font-size:10.5px;font-weight:700;color:var(--blue);}
+.tl .s.y1{background:var(--soft);}
+.tl .s.y2{background:rgba(195,155,63,.08);border-color:#EBDDB4;}
+.tl .s.y3{background:rgba(39,104,74,.07);border-color:#CFE3D6;}
+.st3{display:grid;grid-template-columns:1fr 1fr 1.1fr;gap:12px;margin-top:14px;}
+.st3 .c{border:1px solid var(--line);border-radius:12px;padding:13px 15px;background:#fff;}
+.st3 .c.num{background:var(--soft);}
+.st3 .c h4{margin:0 0 7px;font-size:13px;font-weight:700;color:var(--navy);}
+.st3 .c ul{margin:0;padding-left:1.1em;font-size:12.5px;color:var(--ink);line-height:1.8;}
+.st3 .c ul li{margin-bottom:2px;}
+.st3 .c ul li b{color:var(--navy);}
+.nt{width:100%;border-collapse:collapse;font-size:12.5px;}
+.nt th,.nt td{padding:5px 7px;border-bottom:1px solid var(--softline);text-align:right;white-space:nowrap;}
+.nt th:first-child,.nt td:first-child{text-align:left;color:var(--muted);font-weight:500;white-space:normal;}
+.nt thead th{font-size:11px;color:var(--muted);font-weight:700;border-bottom:1.5px solid var(--line);}
+.nt td.up{color:var(--green);font-weight:700;}
+.nt td.dn{color:var(--red);font-weight:700;}
+.nt td b{color:var(--navy);}
+.nt.big{font-size:14px;}
+.nt.big th,.nt.big td{padding:6px 10px;}
+.scn{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center;font-size:12px;color:var(--muted);}
+.scn .k{display:inline-block;border:1px solid #C9D6EA;background:#EFF3FB;color:var(--blue);border-radius:99px;padding:2px 10px;font-weight:700;font-size:11.5px;}
+.eg{font-size:11px;color:#94A2B6;margin-top:8px;line-height:1.7;}
+.say{border:1px solid #EBDDB4;background:#FDFAF1;border-radius:11px;padding:10px 13px;font-size:13px;color:#5C4A12;line-height:1.75;}
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:14px;}
+.flow .f{border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:#fff;}
+.flow .f .n{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.06em;}
+.flow .f .h{font-size:13.5px;font-weight:700;color:var(--navy);margin:2px 0 3px;}
+.flow .f .who{font-size:10.5px;font-weight:700;color:var(--blue);margin-bottom:3px;}
+.flow .f .d{font-size:11.5px;color:var(--muted);line-height:1.65;}
+@media(max-width:820px){ .tl,.flow{grid-template-columns:1fr 1fr;} .st3{grid-template-columns:1fr;} }
+
+/* ===== 法人営業の壁と越え方（場面ごとの表） =====
+   左＝場面、中＝つまずき、右＝TsuguAiでの越え方。スマホでは1行ずつ札に組み直す */
+.bt{width:100%;border-collapse:separate;border-spacing:0 6px;font-size:12.5px;margin-top:4px;}
+.bt th{font-size:11px;color:var(--muted);font-weight:700;text-align:left;padding:0 12px 0;letter-spacing:.04em;}
+.bt td{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:7px 12px;line-height:1.6;vertical-align:middle;color:var(--ink);}
+.bt td:first-child{border-left:3px solid var(--gold);border-radius:10px 0 0 10px;font-weight:700;color:#8A6A12;white-space:nowrap;background:#FDFAF1;font-size:13px;}
+.bt td:nth-child(2){color:#7A3431;background:rgba(169,64,61,.04);width:27%;}
+.bt td:last-child{border-right:1px solid var(--line);border-radius:0 10px 10px 0;background:rgba(39,104,74,.05);}
+.bt td b{color:var(--navy);}
+@media(max-width:820px){
+  .bt,.bt tbody,.bt tr,.bt td{display:block;width:auto!important;}
+  .bt thead{display:none;}
+  .bt tr{margin-bottom:9px;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:10px;overflow:hidden;}
+  .bt td,.bt td:first-child,.bt td:last-child{border:none;border-radius:0;white-space:normal;}
+}
+
+/* ===== 話す内容（発表する人だけが見る） =====
+   紙の中には出さない（倍率を測るときにも数えない）。下のバーの
+   「🗣 話す内容」か T キーで、いま出ている一枚のぶんだけを開く。
+   お客様と同じ画面で見せているときは開かないこと */
+.talk{display:none!important;}
+/* 「プロダクト」は説明文が長く、下の一行が切れていた。絵を少し小さくして収める */
+.slide[data-t="プロダクト"] .cico svg{width:42px;height:42px;}
+.slide[data-t="プロダクト"] .cico{margin-bottom:6px;}
+.slide[data-t="プロダクト"] .sub{line-height:1.8;}
+#talkp{position:fixed;left:12px;right:12px;bottom:66px;max-height:40vh;overflow:auto;overscroll-behavior:contain;
+  background:#FFFDF6;border:1px solid #E6D6AE;border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.4);
+  padding:12px 18px 14px;font-size:14px;line-height:1.9;color:#18202E;z-index:30;display:none;}
+body.talk-on #talkp{display:block;}
+#talkp .th{font-size:11px;font-weight:700;letter-spacing:.12em;color:#8A6A12;margin-bottom:4px;}
+#talkp b{color:#1E3A66;}
+#talkp p>b:first-child{display:inline-block;min-width:5.4em;margin-right:.5em;color:#8A6A12;font-size:12.5px;}
+#talkp p{margin:0 0 6px;}
+.bar button.on{background:rgba(207,173,98,.35);color:#fff;}
+@media print{ #talkp{display:none!important;} }
+</style>
+<link rel="stylesheet" href="tsugu-wa.css">
+<link rel="stylesheet" href="pitch-wa.css">
+<link rel="stylesheet" href="pitch-demo.css">
+</head>
+<body>
+<div class="deck">
+<section class="slide cover on" data-t="表紙">
+  <div class="hero-art"><span class="tsg-mado"><svg viewBox="0 -4 64 64" aria-hidden="true" focusable="false"><path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/><rect x="9.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="49.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="14" y="23" width="36" height="30" rx="10" fill="#fff" stroke="#cfa860" stroke-width="1.6"/><circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/><circle cx="20.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><circle cx="43.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/></svg></span></div>
+  <div class="hx">
+  <div class="mark">TSUGU AI -継-</div>
+  <h1>本部に所属したまま、<br><span style="color:#CFAD62;">法人営業</span>へ。</h1>
+  <p class="sub">EP-II（所属営業型）の<b style="color:#fff;">認定パートナー候補</b>の皆さまへ。決算書の読み解きも、社長と話す論点も、AIがそろえて渡します。<br>顧問先を<b style="color:#fff;">「買い手」に育てる</b>、これからの仕事への招待です。</p>
+  </div>
+  <div class="talk"><p><b>言うこと</b>本部に所属したまま、法人営業へ。社長と経営の話をする材料はAIがそろえる。顧問先を買い手に育てる、これからの仕事への招待です、から入る。</p>
+<p><b>流れ</b>問いかけ（法人営業をしてみたい？）→ 壁（なぜ踏み出せない）→ 機会（社長は隣で支える人を待っている）→ 私たちの答え（買い手に育てる顧問）→ 壁の越え方 → 本部と一緒に動く形 → あなたの収入 → 1社の3年間 → あなたの未来 → 画面 → 始め方。どの頁も、次の頁の問いで終わる。</p>
+<p><b>時間</b>全部で30分ほど。15分なら：3つの問い → 法人営業の壁 → 買い手に育てる顧問 → 壁の越え方（社長の前で）→ 本部と一緒に → あなたの収入 → あなたが描く未来 → 始め方。</p>
+<p><b>話す人</b>本部の管理者か運営。自分の経歴を話すときは自分の言葉で。ほかの人の経歴を自分のことのように話さない。</p>
+<p><b>操作</b>→ かスペースで次へ、F で全画面、T でこの欄。</p></div>
+</section>
+
+<section class="slide" data-t="3つの問い" data-g="問いかけ" data-q="法人営業をしてみたい|今の営業のままでいいか迷っている">
+  <div class="eyebrow">営業のプロのあなたに、3つだけ</div>
+  <h2>ひとつでも頷いたら、この先はあなたの話です</h2>
+  <div style="display:flex;flex-direction:column;gap:14px;margin-top:22px;">
+    <div class="q"><span class="n">1</span>法人営業を、してみたいと思いませんか？——社長と、経営の話ができる営業に。</div>
+    <div class="q"><span class="n">2</span>お客様との関係が、契約のたびに「ゼロ」に戻っていませんか？</div>
+    <div class="q"><span class="n">3</span>毎月の数字に追われる、波のある働き方を続けていませんか？</div>
+  </div>
+  <div class="talk"><p><b>言うこと</b>3つを読み上げ、頷いた番号を聞く。1つ目が今日の本題。</p>
+<p><b>つなぎ</b>「法人営業をしてみたい。でも、なかなか踏み出せない。なぜでしょう」と言って次へ。</p></div>
+</section>
+
+<section class="slide" data-t="法人営業の壁" data-g="問いかけ" data-q="法人営業をしたい|なぜ法人営業はハードルが高い？|営業の経験は役に立つ？">
+  <div class="eyebrow">法人営業をしてみたい。でも——</div>
+  <h2>なぜ、踏み出せないのか</h2>
+  <p class="sub" style="margin-bottom:10px;">こんな悩みはありませんか。踏み出せない理由は、たいていこの5つです。</p>
+  <div class="walls">
+    <div class="wl"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14h16a6 6 0 0 1 6 6v30a5 5 0 0 0-5-5H12z"/><path d="M52 14H36a6 6 0 0 0-6 6v30a5 5 0 0 1 5-5h17z"/></svg></div><div class="w-t">何を学ぶか</div><div class="w-c">財務・税務・承継…範囲が広く、<b>どこから学べばいいか</b>分からない</div></div>
+    <div class="wl"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="10" y="14" width="44" height="30" rx="4"/><path d="M24 52h16M32 44v8"/><path d="M28 24a4 4 0 1 1 5 4c-1 .6-1 1.4-1 2.4M32 35v.5"/></svg></div><div class="w-t">どのセミナーか</div><div class="w-c">本やセミナーを渡り歩いても、<b>現場で使える形</b>にならない</div></div>
+    <div class="wl"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="26" cy="30" r="16"/><path d="M26 21v9l6 4"/><circle cx="46" cy="44" r="10"/><path d="M42 40l4 4 4-4M46 44v7M42 47h8"/></svg></div><div class="w-t">時間とお金</div><div class="w-c">本業の合間では時間が足りず、<b>成果より先に費用</b>が出ていく</div></div>
+    <div class="wl"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 8h24l10 10v38H16z"/><path d="M40 8v10h10"/><path d="M23 44V36M30 44V30M37 44v-6"/></svg></div><div class="w-t">決算書が読めない</div><div class="w-c">決算書を前にしても、<b>どこを見れば</b>困りごとが分かるのか</div></div>
+    <div class="wl"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 14h30v20H22l-8 7v-7H8z"/><path d="M42 24h14v18h-5v6l-7-6H30v-4"/></svg></div><div class="w-t">社長と何を話すか</div><div class="w-c">商品の話から入ると<b>身構えられ</b>、経営の話に移れない</div></div>
+  </div>
+  <div class="note" style="margin-top:14px;"><b>なぜ、ハードルが高いのか。</b>法人営業で問われるのは「商品」ではなく<b>「経営の判断」</b>だからです。社長が決めるのは、会社のお金の使い道。会社の数字と、その先（退職金・借入・承継）を一緒に見られる人にだけ、相談が来ます。足りないのは商品知識ではなく、<b>社長の隣で数字を話せる立場</b>です。</div>
+  <div class="talk"><p><b>聞く</b>「5つのうち、いくつ当てはまりますか」。指で数えてもらう。</p>
+<p><b>言うこと</b>法人営業で問われるのは商品ではなく経営の判断。足りないのは商品知識ではなく、社長の隣で数字を話せる立場。</p>
+<p><b>つなぎ</b>「では、その社長たちは、いま何に困っているのか」と言って次へ。5つの越え方は、このあと「私たちの答え」のあとでお見せする。</p></div>
+</section>
+
+<section class="slide" data-t="市場" data-g="問いかけ" data-q="なぜ、いま承継なの？|買い手が足りないとは？">
+  <div class="eyebrow">なぜ、いまなのか</div>
+  <h2>社長は、隣で判断を支える人を待っています</h2>
+  <div class="grid g3" style="margin-top:16px;">
+    <div class="card r"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="18" y="12" width="28" height="40" rx="3" stroke-dasharray="5 5"/><path stroke-dasharray="3 4" d="M26 22h4M34 22h4M26 31h4M34 31h4M26 40h4M34 40h4"/><path d="M12 52h40"/></svg></div><h3>後継者がいない</h3><p>後継者不在のまま経営を続ける会社が全国に。<b>あなたのお客様の中にも</b>必ずいます。</p></div>
+    <div class="card"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="27" cy="27" r="15"/><path d="m38 38 14 14"/><text x="22.5" y="33" font-size="16" font-weight="700" fill="#C39B3F" stroke="none" font-family="inherit">¥</text></svg></div><h3>引き受け手が足りない</h3><p>譲りたい会社はあるのに、<b>引き受けられる会社（買い手）</b>が育っていない。人・技術・販路が、そのまま消えていく。</p></div>
+    <div class="card w"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="32" cy="17" r="8"/><path d="M13 52c0-11 8.5-18 19-18s19 7 19 18"/></svg></div><h3>買い手に育てる人がいない</h3><p>仲介は案件を運び、コンサルは課題ごと。<b>毎月の数字で、次の1社を引き受けられる会社に育てる存在</b>は空白です。</p></div>
+  </div>
+  <div class="note" style="margin-top:16px;"><b>社会の課題と、あなたの仕事が、同じ方向を向いています。</b>足りないのは案件ではなく、社長の隣で判断を支え、買い手に育てる人です。</div>
+  <div class="talk"><p><b>言うこと</b>後継者のいない会社はあなたのお客様の中にもいる。足りないのは引き受け手（買い手）と、その手前で育てる人。</p>
+<p><b>つなぎ</b>「この空白を埋めるのが、TsuguAi -継- と、本部と一緒に動くあなたです」と言って次へ。</p></div>
+</section>
+
+<section class="slide" data-t="買い手に育てる顧問" data-g="私たちの答え" data-q="このプロダクトの肝は？|買い手プランとは？|仲介やコンサルと何が違う？|これからの仕事になる？">
+  <div class="eyebrow">このプロダクトの肝 — 買い手に育てる顧問</div>
+  <h2>顧問先を「買い手」に育てる。<br>これからの、法人営業の仕事です</h2>
+  <div class="grid g3" style="margin-top:12px;">
+    <div class="card soft"><h3>仲介会社</h3><p>売りたい会社と買いたい会社を<b>引き合わせる</b>。成約で役目が終わり、その会社の数字を毎月見るわけではない。</p></div>
+    <div class="card soft"><h3>コンサル・顧問</h3><p>目の前の<b>課題ごと</b>に解決する。「次の1社を引き受けられる会社か」を育てるところまでは見ない。</p></div>
+    <div class="card g"><h3>TsuguAi -継- の認定パートナー</h3><p>毎月の数字で地盤を厚くし、<b>次の1社を引き受けられる会社（買い手）に育てる</b>。買う前のお金の谷も、買った後の100日も隣に。</p></div>
+  </div>
+  <div class="note" style="margin-top:12px;"><b>買い手プラン（月45,000円・税別）が、このプロダクトの肝です。</b>社長には、柱が増えて揺るがない会社を（株式会社継・架空の例：会社の値段 9,700万 → 約2.2億）。あなたには、毎月の顧問料の配分と長く続く関係、成約したときのM&amp;Aの報酬（手数料のうち4割）を。そして、後継者のいない会社の雇用と技術が引き継がれます。</div>
+  <div class="eg">買い手に育てる顧問は、これまでの仕組みにはほとんどありませんでした。本部で最初に立つあなたが、この仕事の基準になります。数字は架空の会社の例で、結果を約束するものではありません。</div>
+  <div class="talk"><p><b>言うこと</b>仲介は引き合わせ、コンサルは課題ごと。顧問先を買い手に育てる顧問は、これまでほとんどなかった。これからの仕事で、その道具が TsuguAi。</p>
+<p><b>見せる所</b>右の緑と、下の「買い手プランが肝」。社長・あなた・社会の三方に良い。</p>
+<p><b>必ず言う</b>「日本初」「唯一」とは言い切らない（裏付けが要る表現）。仲介やコンサルを否定しない（役割が違う）。数字は架空の例で約束しない。</p>
+<p><b>つなぎ</b>「でも、法人営業が初めての自分にできるのか。できます。さっきの壁を、一つずつ越えます」と言って次へ。</p></div>
+</section>
+
+<section class="slide" data-t="壁の越え方（始める前）" data-g="壁の越え方" data-q="法人営業の経験がなくてもできる？|勉強やセミナーは必要？|本業があって時間が取れない|先に費用がかかる？|資格は要る？|ひとりで判断できるか不安">
+  <div class="eyebrow">壁の越え方 ① — 始める前</div>
+  <h2>経験も、知識も、時間も。壁だったものは、AIが引き受けます</h2>
+  <table class="bt">
+    <thead><tr><th>壁</th><th>つまずき</th><th>TsuguAi -継- では</th></tr></thead>
+    <tr><td>経験</td><td>法人営業をしたことがない。資格もない</td><td>国家資格も法人営業の経験も要りません。<b>研修（全5章・必修11レッスン）</b>を修了すれば認定。研修の最後に、継ナビくんが社長役になる<b>ロールプレイ</b>で面談の流れを先に体験します。</td></tr>
+    <tr><td>知識</td><td>財務・税務・承継…範囲が広く、独学では追いつけない</td><td>知識は<b>AIが担います</b>。用語も制度も継ナビくんがかみ砕いて答えます。深めたい方には<b>FA実務講座</b>（財務三表・正常収益力・企業価値評価…）。</td></tr>
+    <tr><td>時間</td><td>本業の合間に、準備の時間が取れない</td><td>面談の準備ブリーフ・面談台本・月次レポートの下書き・議事録は<b>AI</b>。あなたに残るのは<b>月1回の面談</b>と対話です。<b>本部の仕事と並行して</b>始められます。</td></tr>
+    <tr><td>お金</td><td>成果より先に、費用が出ていくのでは</td><td>研修は無料、<b>前払いはありません</b>。ご利用料は顧問料の入金があった月だけ、報酬から差し引きます。<b>入金のない月は0円</b>です。本部へのお支払いもありません。</td></tr>
+    <tr><td>ひとり</td><td>判断に迷っても、相談相手がいない</td><td>継ナビくんが<b>選択肢と根拠</b>を出します。迷ったら実行の前に運営へ。本部には<b>同じ道を歩く仲間</b>がいます。価格交渉・契約実務・法務税務は<b>専門家と運営</b>が引き受けます。</td></tr>
+  </table>
+  <div class="note" style="margin-top:8px;"><b>求められるのは、知識より「聴く力」と「続ける力」。</b>人と向き合い、信頼を築いてきたあなたに足りなかったのは、社長と経営の話をするための道具だけです。</div>
+  <div class="talk"><p><b>言うこと</b>経験・知識・時間・お金・ひとり。始める前の5つの壁は、AIと研修と運営が引き受ける。</p>
+<p><b>見せる所</b>「お金」の行。研修は無料、前払いなし、入金のない月は0円。</p>
+<p><b>つなぎ</b>「始める前の壁は越えられる。では、社長の前では」と言って次へ。</p>
+<p><b>聞かれたら</b>「本当に月1回で回るか」→ 面談は担当先1社につき月1回が目安。準備はAI。かかる時間は会社の状況で変わる、と添える。</p></div>
+</section>
+
+<section class="slide" data-t="壁の越え方（社長の前で）" data-g="壁の越え方" data-q="社長と何を話せばいい？|決算書が読めなくても大丈夫？|面談で質問に詰まったら？|議事録やフォローが大変そう|法人への提案はいつできる？">
+  <div class="eyebrow">壁の越え方 ② — 社長の前で</div>
+  <h2>切り出す前から、面談のあとまで。場面ごとにAIが隣に</h2>
+  <table class="bt">
+    <thead><tr><th>場面</th><th>つまずき</th><th>TsuguAi -継- では</th></tr></thead>
+    <tr><td>切り出す</td><td>何から話せばいいか分からない。売り込みと思われる</td><td><b>1分の事業承継リスク診断</b>（5つの質問・登録不要）を社長と一緒に開く。営業ツールの<b>課題ヒアリング診断</b>（8つの問い）も。商品ではなく、会社の話から入れます。</td></tr>
+    <tr><td>面談の前</td><td>決算書が読めない。何を話せばいいか</td><td>試算表・決算書を取り込めば（形式は問いません）<b>AIが読み取り</b>、資金繰り・利益率・会社の値段まで。カルテの<b>面談台本</b>に見せる数字3つ・問い3つ。前日には<b>準備ブリーフ</b>。</td></tr>
+    <tr><td>面談の場で</td><td>専門用語や制度を聞かれて詰まる</td><td>継ナビくんに<b>その場で</b>聞けます。「持ち帰って調べます」が減ります。</td></tr>
+    <tr><td>面談のあと</td><td>議事録とフォローが重い</td><td>走り書きのメモを<b>AIが議事録に</b>整え、やることを分けます。月次レポートの下書きもAI。</td></tr>
+    <tr><td>続ける</td><td>次に何をすればいいか分からなくなる</td><td>毎朝の<b>「今日の一手」</b>と、カルテの<b>ナビ</b>（道具をやる順番）が次の一手を示します。</td></tr>
+  </table>
+  <div class="note" style="margin-top:8px;"><b>本業の相談は、あとから来ます。</b>固定費の見直し → 役員退職金・事業承継の準備 → 次の1社の買収。会社のお金を一緒に見るうちに、保険・不動産・税務・労務の相談が出てきます。提案は<b>社長の了承を得てから</b>、あなたの本業として。顧問の立場と本業の立場を<b>先に明示</b>し、顧問で知った預金・借入などの情報を<b>事前の同意なく募集・本業の提案に使わない</b>、顧問契約との<b>抱き合わせはしない</b>。売り込まない設計だから、相談されます。</div>
+  <div class="talk"><p><b>言うこと</b>入口・材料・継続。切り出しは1分の承継リスク診断、材料はAIが決算書から、続けるのは毎月の面談。</p>
+<p><b>見せる所</b>「切り出す」の行。事業承継リスク診断は経営者向けのページ（fuku-tsugu.jp/owner の「承継リスク診断」）にあり、登録なしで社長と一緒に開ける。</p>
+<p><b>必ず言う</b>本業の提案は社長の了承を得てから。保険募集人の方には、非公開金融情報の扱い（保険業法施行規則）と抱き合わせの禁止を必ず。</p>
+<p><b>つなぎ</b>「では、本部に所属したまま、どういう形で動くのか」と言って次へ。</p>
+<p><b>聞かれたら</b>「すぐ法人の契約が取れるか」→ 約束しない。顧問として数字を見続けた先に、相談が来る順番。</p></div>
+</section>
+
+<section class="slide" data-t="本部と一緒に" data-g="本部と一緒に" data-q="本部に所属したままできる？|顧客と契約するのは誰？|本部に取り分を取られる？|本部を離れたら？">
+  <div class="eyebrow">EP-II 所属 — 本部と一緒に動く形</div>
+  <h2>顧客と向き合うのは、あなた。<br>本部は監督と応援、TsuguAiは道具と集金を</h2>
+  <div class="grid g3" style="margin-top:14px;">
+    <div class="card g"><h3>あなた（認定パートナー）</h3><p>顧問先に毎月伴走し、<b>顧問契約もご自身で送ります</b>。取り分は、単独で活動する認定パートナーと<b>同じ料率</b>です。</p></div>
+    <div class="card"><h3>本部</h3><p>あなたをTsuguAiに届け出て、<b>業務品質と法令遵守を監督</b>します。本部の受取（顧問料の10%）は<b>TsuguAiの取り分から</b>出るので、あなたの手取りは減りません。</p></div>
+    <div class="card"><h3>TsuguAi</h3><p>道具（AI・見える化・承継の伴走）と研修。顧客へのご請求・集金・<b>あなたへのお振込み</b>を引き受けます。</p></div>
+  </div>
+  <div class="note" style="margin-top:14px;"><b>契約は2本立て。</b>本部とTsuguAiが1本、あなたとTsuguAiが1本（認定パートナー契約書［EP-II 所属］・冒頭に所属本部名）。本部とあなたの間の取り決めは、この契約とは別に本部と定めます。<b>顧客はTsuguAiに帰属</b>し、本部を離れたときはこの契約は終了します。個人として続けるには、TsuguAiとの再契約が必要です。</div>
+  <div class="talk"><p><b>言うこと</b>顧客と向き合うのはあなた。本部は届け出と監督、TsuguAiは道具と集金。取り分は単独の認定パートナーと同じ料率で、本部の10%はTsuguAiの取り分から出る。</p>
+<p><b>必ず言う</b>顧客はTsuguAiに帰属。本部を離れたら、この契約は終わる。続けるならTsuguAiと再契約。ここを曖昧にしない。</p>
+<p><b>聞かれたら</b>本部と所属の方の間の取り決め（社内の評価や手当など）は、本部とご本人の間で決めること。TsuguAiの契約には入らない。</p>
+<p><b>つなぎ</b>「では、あなたに入る収入を数字で」と言って次へ。</p></div>
+</section>
+
+<section class="slide" data-t="あなたの収入" data-g="本部と一緒に" data-q="報酬はいくら？|ご利用料はいくら？|ランクはどう上がる？|M&amp;Aの報酬は？">
+  <div class="eyebrow">あなたの収入 — 単独の認定パートナーと同じ料率</div>
+  <h2>毎月の顧問料の配分と、M&amp;Aの報酬</h2>
+  <div class="grid g2" style="margin-top:12px;">
+    <div class="card" style="text-align:left;"><h3>顧問料の配分（1社・月・税別）</h3>
+      <table class="kv tight" style="margin-top:6px;width:100%;"><tr><th></th><th style="text-align:right;">料率</th><th style="text-align:right;">あなた</th><th style="text-align:right;">本部</th></tr>
+      <tr><th>買い手 45,000円　Lv.2</th><td style="text-align:right;">50%</td><td style="text-align:right;"><b>22,500</b></td><td style="text-align:right;">4,500</td></tr>
+      <tr><th>買い手 45,000円　Lv.3</th><td style="text-align:right;">60%</td><td style="text-align:right;"><b>27,000</b></td><td style="text-align:right;">4,500</td></tr>
+      <tr><th>買い手 45,000円　Lv.4</th><td style="text-align:right;">70%</td><td style="text-align:right;"><b>31,500</b></td><td style="text-align:right;">4,500</td></tr>
+      <tr><th>売り手 35,000円　Lv.2</th><td style="text-align:right;">50%</td><td style="text-align:right;"><b>17,500</b></td><td style="text-align:right;">3,500</td></tr>
+      <tr><th>売り手 35,000円　Lv.4</th><td style="text-align:right;">70%</td><td style="text-align:right;"><b>24,500</b></td><td style="text-align:right;">3,500</td></tr></table>
+      <p style="margin-top:8px;">1社目の顧問契約から<b>Lv.2（50%）</b>。顧問契約<b>10件でLv.3（60%）</b>、<b>20件でLv.4（70%）</b>。上がった率は、メインで担当する全社に効きます。</p></div>
+    <div class="card g" style="text-align:left;"><h3>例：買い手3社・Lv.2 の月</h3>
+      <table class="kv tight" style="margin-top:6px;width:100%;"><tr><th>報酬（税抜 × 50%）</th><td style="text-align:right;"><b>67,500円</b></td></tr>
+      <tr><th>源泉徴収（10.21%）</th><td style="text-align:right;color:#A9403D;">−6,892円</td></tr>
+      <tr><th>ご利用料（3,000円＋2,000円×3社・税込）</th><td style="text-align:right;color:#A9403D;">−9,900円</td></tr>
+      <tr><th>お振込額（目安）</th><td style="text-align:right;color:#27684A;"><b>50,708円</b></td></tr></table>
+      <p style="margin-top:8px;">ご利用料は<b>担当者登録使用料3,000円＋AI利用料2,000円×入金のあった顧問先</b>（税別）。入金のない月は0円。本部の受取は別口で、<b>あなたの報酬からは引かれません</b>。</p></div>
+  </div>
+  <div class="note" style="margin-top:12px;"><b>M&amp;Aが成約したとき。</b>TsuguAi（福來）が受け取った手数料から税金分を差し引いた額のうち、<b>あなたに4割、本部に1割</b>（運営が5割）。例：運営のFA報酬117万（税別）なら、<b>あなたに46.8万</b>。EP-II では30社の80%はなく、<b>Lv.4（70%）が上限</b>です。</div>
+  <div class="talk"><p><b>言うこと</b>料率は単独の認定パートナーと同じ。1社目でLv.2の50%、10件で60%、20件で70%。本部の4,500円はTsuguAiの取り分から出るので、あなたの手取りは減らない。</p>
+<p><b>見せる所</b>右の例。3社で報酬67,500円、源泉とご利用料を引いてお振込み約5万円。</p>
+<p><b>必ず言う</b>収入の保証ではない。担当先がいない月は報酬もご利用料も0円。EP-IIはLv.4（70%）が上限。M&amp;Aは成約も金額も約束しない。</p>
+<p><b>つなぎ</b>「では、この数字の裏で、あなたと社長の間に何が起きるか。1社の3年間で」と言って次へ。</p></div>
+</section>
+
+<section class="slide" data-t="1社の3年間" data-g="物語" data-q="1社の3年間はどう変わる？|保険のお客様が顧問先になる？">
+  <div class="eyebrow">物語 — 継ライフ保険サービスの佐藤さんと、株式会社継（どちらも架空）</div>
+  <h2>年に一度の更新の相手が、毎月会う顧問先に変わると</h2>
+  <div class="tl">
+    <div class="s"><div class="w">これまで</div><div class="h">年に一度の更新</div><div class="d">社長62歳・後継者未定。「会社をどうするか」は聞けずにいた。</div></div>
+    <div class="s y1"><div class="w">契約した月</div><div class="h">顧問契約を送る</div><div class="d">佐藤さんが自分で送り、社長が同意。会社の値段 <b>9,700万</b>。</div><div class="sc">画面⑤</div></div>
+    <div class="s y1"><div class="w">1〜6か月</div><div class="h">土台と現金</div><div class="d">月次レポートを届け、固定費と値付けを見直す。営業利益 年<b>＋360万</b>。</div><div class="sc">所属の方のカルテ</div></div>
+    <div class="s y1"><div class="w">7〜12か月</div><div class="h">買い手の準備</div><div class="d">買える大きさ<b>2,600万</b>。会社の値段は<b>1億2,400万</b>に。</div><div class="sc">顧問先の画面</div></div>
+    <div class="s y2"><div class="w">2年目</div><div class="h">M&amp;Aで譲り受け</div><div class="d">運送会社を<b>2,600万</b>で。実行は専門家と運営。</div></div>
+    <div class="s y3"><div class="w">3年目</div><div class="h">柱が2本に</div><div class="d">営業利益 <b>3,280万</b>。会社の値段 <b>約2億2,000万</b>。</div></div>
+    <div class="s y3"><div class="w">佐藤さんには</div><div class="h">続く関係</div><div class="d">次の1社・No.2への承継・持株会社。<b>次の相談</b>が佐藤さんに来る。</div></div>
+  </div>
+  <div class="note" style="margin-top:16px;">佐藤さんの手取りは、この1社で月22,500円（Lv.2）。2年目のM&amp;A（運営のFA報酬117万・税別の例）では、<b>本部に11.7万、佐藤さんに46.8万</b>。<b>毎月会う理由</b>ができたことで、社長の相談はまず佐藤さんに来るようになります。</div>
+  <div class="eg">架空の会社の例で、結果をお約束するものではありません。会社の値段＝EBITDA×5＋現預金−借入（TsuguAiの企業価値診断と同じ式）。</div>
+  <div class="talk"><p><b>言うこと</b>架空の所属の方・佐藤さんと、保険のお客様だった株式会社継。年に一度の更新の相手が、毎月会う顧問先に変わる。</p>
+<p><b>見せる所</b>左から順に。会社の値段が9,700万から約2億2,000万に。</p>
+<p><b>強調</b>佐藤さんの手取りはこの1社で月22,500円（Lv.2）。M&amp;Aでは46.8万。それ以上に、毎月会う理由ができて、社長の相談がまず佐藤さんに来るようになる。</p>
+<p><b>必ず言う</b>架空の例で、結果のお約束ではありません。</p>
+<p><b>つなぎ</b>「2年目のM&amp;Aで、佐藤さんは何をして、何をしなかったか」と言って次へ。</p></div>
+</section>
+
+<section class="slide" data-t="M&amp;Aでのあなたの役割" data-g="物語" data-q="M&amp;Aでは何をする？何をしない？">
+  <div class="eyebrow">あなたが伴走すると — 2年目のM&amp;A</div>
+  <h2>8つの段で、あなたがやること・やらないこと</h2>
+  <div class="flow">
+    <div class="f"><div class="n">1 関心</div><div class="h">一緒に決める</div><div class="who">あなた</div><div class="d">関心はあなたに届く。買い手の余力と条件を横に、進めるかを社長と決める。</div></div>
+    <div class="f"><div class="n">2 秘密保持</div><div class="h">案件に登録する</div><div class="who">あなた → 運営</div><div class="d">手続きは運営。相手に直接連絡はしない。</div></div>
+    <div class="f"><div class="n">3 資料・面談</div><div class="h">社長の隣に座る</div><div class="who">あなた・社長</div><div class="d">事業・人・取引先を一緒に見る。合わなければ、やめる判断を支える。</div></div>
+    <div class="f"><div class="n">4 価格とお金</div><div class="h">お金の谷を示す</div><div class="who">あなた</div><div class="d">承継シミュレーションを開き、手元資金の薄くなり方を先に見せる。<b>価格交渉はしない。</b></div></div>
+    <div class="f"><div class="n">5 基本合意</div><div class="h">迷いを聞く</div><div class="who">専門家・運営</div><div class="d">条件の取りまとめは専門家と運営。あなたは社長の迷いを聞く。</div></div>
+    <div class="f"><div class="n">6 買収監査</div><div class="h">資料集めの段取り</div><div class="who">専門家</div><div class="d">財務・税務・労務・法務は専門家。あなたは資料の段取りを手伝う。</div></div>
+    <div class="f"><div class="n">7 最終契約</div><div class="h">見守る</div><div class="who">専門家・運営</div><div class="d">契約実務・法務税務には入らない。</div></div>
+    <div class="f"><div class="n">8 引き渡し</div><div class="h">100日を見守る</div><div class="who">あなた</div><div class="d">月次のPMIチェックで、買った後の100日に付き添う。</div></div>
+  </div>
+  <div class="note" style="margin-top:14px;"><b>仲介ではなく、水先案内人。</b>価格交渉・契約実務・法務税務は専門家と運営が引き継ぎます。あなたの仕事は、社長が<b>数字を見て自分で決められる</b>ように、隣にいることです。</div>
+  <div class="talk"><p><b>言うこと</b>8つの段で、あなたがやること・やらないこと。価格交渉・契約実務・法務税務はやらない。</p>
+<p><b>見せる所</b>4「価格とお金」でのあなたの仕事は、手元資金の谷を先に見せること。株式会社継なら2.1→1.0か月分。</p>
+<p><b>安心させる</b>大きな責任は負わない。社長が自分で決められるように隣にいるのが仕事。</p>
+<p><b>つなぎ</b>「この仕事を続けると、あなたの働き方はどう変わるか」と言って次へ。</p></div>
+</section>
+
+<section class="slide" data-t="あなたが描く未来" data-g="物語" data-q="パートナーになると、どんな未来が描ける？|営業の仕事はどう変わる？|本部の仕事と両立できる？|ランクはどう上がる？">
+  <div class="eyebrow">このツールで、あなたが描ける未来 — 4つのステージ</div>
+  <h2>いち営業から、一緒に会社を強くする人へ</h2>
+  <div class="flow" style="margin-top:12px;">
+    <div class="f" style="background:var(--soft);"><div class="n">1期 — START</div><div class="h">アソシエイト</div><div class="d">研修を修了して認定。AIエージェントがつき、<b>本部の仕事を続けたまま</b>1社目の顧問契約を目指す。</div></div>
+    <div class="f"><div class="n">2期 — 1社目から</div><div class="h">シニア（50%）</div><div class="d">1社目の顧問契約から報酬の対象に。顧問料の配分が毎月積み上がる。例：6社（買い手3・売り手3）なら<b>月120,000円</b>（税別）。</div></div>
+    <div class="f" style="background:rgba(195,155,63,.08);border-color:#EBDDB4;"><div class="n">3期 — 成長期</div><div class="h">エグゼクティブ（60%）</div><div class="d">顧問契約<b>10件</b>。いろいろな業種と課題を経験し、率はメインで担当する全社に。</div></div>
+    <div class="f" style="background:rgba(39,104,74,.07);border-color:#CFE3D6;"><div class="n">4期 — 最上位</div><div class="h">プレミアム（70%）</div><div class="d">顧問契約<b>20件</b>。EP-II の上限の率。<b>法人営業が仕事の柱</b>になる段階。</div></div>
+  </div>
+  <div class="grid g3" style="margin-top:12px;">
+    <div class="card soft"><h3>関係</h3><p>一度きりの契約 → <b>毎月続く顧問</b>。「ずっと担当してほしい」に応え続けられる。</p></div>
+    <div class="card soft"><h3>入口</h3><p>商品の説明 → <b>会社のお金の話</b>。法人の課題を、商品の話より先に知る立場に。</p></div>
+    <div class="card soft"><h3>あなた自身</h3><p>売る人 → <b>会社を買い手に育てる人</b>。承継・M&Aの実績が、あなたの経歴に積み上がります。</p></div>
+  </div>
+  <div class="eg">収入を保証・約束するものではありません。担当先を得られない月は、報酬もご利用料も0円です。金額は顧問料の配分（税別）で、ご利用料・源泉徴収を差し引く前です。率の適用とレベルの認定は運営が行います。</div>
+  <div class="talk"><p><b>言うこと</b>いち営業から、一緒に会社を強くする人へ。本部の仕事を続けたまま始め、経験を重ね、法人営業を仕事の柱に。4つのステージ。</p>
+<p><b>見せる所</b>3期・4期。率は顧問契約の件数で上がり、上がった率はメインで担当する全社に効く。</p>
+<p><b>つなぎ</b>「その毎日を、実際の画面でお見せします」と言って次へ。</p>
+<p><b>EP-II では</b>30社の80%はなく、Lv.4（70%）が上限。本部の仕事との両立のしかたは、本部との取り決めに従う。</p>
+<p><b>必ず言う</b>収入の保証ではない。担当先がいない月は報酬もご利用料も0円。金額は配分の例（税別・差し引く前）。</p></div>
+</section>
+
+<section class="slide divider" data-t="画面で見る" data-g="画面で見る">
+  <div class="mark">DEMO</div>
+  <h1>ここからは、あなたの画面でお見せします。</h1>
+  <p class="sub">毎朝どこを開き、面談の前に何を見て、社長の画面で何が起き、<br>月末にいくら入るか。4つの画面を、実際の並びで。</p>
+  <div class="talk"><p><b>言うこと</b>ここからは、あなたの画面で。毎朝・面談の前・社長の画面・月末の明細の4つ。</p></div>
+</section>
+
+<section class="slide dm" data-t="①あなたの画面" data-g="画面で見る" data-q="所属の方はどんな画面を使う？">
+  <div class="eyebrow">画面で見る ①</div>
+  <h2>あなたが毎日使うのは、こちらの画面です</h2>
+  <div class="demo">
+    <div class="scr">
+      <div class="scr-top">パートナーポータル<span class="dt">佐藤 花子（継ライフ保険サービス 所属）</span></div>
+      <div class="scr-body">
+        <div class="scr-sb"><div class="lg">TsuguAi<i>-継-</i></div><div class="co">継ライフ保険サービス</div>
+          <div class="ni on"><b>▦</b>ダッシュボード</div><div class="ni dim"><b>▲</b>成長・研修</div><div class="ni dim"><b>◇</b>本業と連携</div><div class="ni dim"><b>✎</b>営業ツール</div><div class="ni dim"><b>☷</b>顧客管理</div><div class="ni dim"><b>🏢</b>エンタープライズ</div><div class="ni dim"><b>↻</b>課題PDCA</div><div class="ni dim"><b>⇄</b>M&amp;A案件</div><div class="ni dim"><b>¥</b>お支払い</div></div>
+        <div class="scr-main">
+          <div class="scr-panel hot"><i class="mk ab">1</i><div class="scr-ph">▦ 今日やること</div>
+            <div class="scr-list"><li><span class="nm">佐藤建設　月次レポートの承認</span><span class="scr-tag gold">期限 今日</span><span class="to">開く →</span></li>
+              <li><span class="nm">北川食品　出口の設計が未着手</span><span class="scr-tag">3か月の節目</span><span class="to">開く →</span></li>
+              <li><span class="nm">みなと物流　未読 2件</span><span class="scr-tag red">返信待ち</span><span class="to">開く →</span></li></div>
+            <div class="scr-chips" style="margin-top:6px;"><div class="scr-chip"><div class="l">顧問契約</div><div class="v">3 社</div></div><div class="scr-chip"><div class="l">認定レベル</div><div class="v">Lv.2</div><div class="s">シニア・料率50%</div></div><div class="scr-chip"><div class="l">今月の報酬（目安）</div><div class="v g">67,500 円</div></div></div>
+          </div>
+          <div class="scr-row" style="gap:6px;">
+            <div class="scr-card l4 blue" style="flex:1;margin-top:0;"><div class="t">☷ 顧客管理</div><div class="d">担当している3社の一覧とカルテ。<b>顧問契約もここから送ります。</b></div></div>
+            <div class="scr-card l4 green" style="flex:1;margin-top:0;"><div class="t">▲ 成長・研修</div><div class="d">全5章・必修11レッスンの認定研修（ロールプレイつき）と、Lvの上がり方。<b>単独の方と同じ道</b>です。</div></div>
+          </div>
+          <div class="scr-fab"><svg viewBox="0 -4 64 64" aria-hidden="true"><rect x="14" y="23" width="36" height="30" rx="10" fill="#fff"/><circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/><path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/><path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/></svg><i class="bd">2</i></div>
+        </div>
+      </div>
+    </div>
+    <div class="dsteps">
+      <div class="dstep"><i class="mk">1</i><div><span class="act">所属の方の画面は、単独の認定パートナーとまったく同じ</span><span class="see">ダッシュボードの<b>「今日やること」</b>、顧客管理とカルテ、営業ツール、M&amp;A案件、継ナビくん。<b>制限された版ではありません。</b></span><span class="then">違うのは、左メニューに「エンタープライズ」が増えることと、カルテの上に本部名の札が出ることだけです。</span></div></div>
+      <div class="dstep g"><i class="mk">✓</i><div><span class="act">顧問契約も、所属の方ご本人が送ります</span><span class="see">顧客管理の「顧問契約を送る」から、メールアドレスとプランを選ぶだけ。<b>顧客と契約するのはご本人</b>です（EP-I は法人が送ります）。</span><span class="then">相手が同意して登録すると、自動でその方の担当顧客になり、担当表にも並びます。</span></div></div>
+      <div class="dstep w"><i class="mk">!</i><div><span class="act">本部からは、顧客のやり取りの中身は見えません</span><span class="see">本部が見るのは<b>担当表（誰が何社を持っているか）</b>までです。カルテの中身や顧客とのやり取りは、担当の方と顧客のものです。</span><span class="then">監督のために必要な「誰にどこまで任せているか」は、担当表と記録で確かめられます。</span></div></div>
+    </div>
+  </div>
+  <div class="talk"><p><b>言うこと</b>あなたの画面は、単独の認定パートナーとまったく同じ。制限版ではない。毎朝の「今日やること」から始まり、顧問契約もご自身で送る。</p>
+<p><b>強調</b>本部からは、顧客とのやり取りの中身は見えない。本部が見るのは担当表（誰が何社を持つか）まで。</p>
+<p><b>つなぎ</b>「面談の前には、カルテを開きます」と言って次へ。</p></div>
+</section>
+
+<section class="slide dm" data-t="②カルテ" data-g="画面で見る">
+  <div class="eyebrow">画面で見る ② — 株式会社継のカルテ（契約から5か月目）</div>
+  <h2>ナビが「次はこれ」を示し、台本が「見せる数字と問い」を出す</h2>
+  <div class="demo">
+    <div class="scr">
+      <div class="scr-top">株式会社継 ― カルテ<span class="dt">第2｜現金を増やす（契約から5か月目）</span></div>
+      <div class="scr-body">
+        <div class="scr-sb narrow"><div class="lg" style="font-size:9px;">カルテの左メニュー</div>
+          <div class="ni dim"><b>1</b>基本</div><div class="ni dim"><b>2</b>導入</div><div class="ni on"><b>3</b>月次の運営</div><div class="ni dim"><b>4</b>資金・銀行</div><div class="ni dim"><b>5</b>企業価値・承継</div><div class="ni dim"><b>6</b>その他の診断</div><div style="border-top:1px solid rgba(255,255,255,.1);margin:5px 0;"></div><div class="ni dim" style="font-size:8px;">顧客からの共有</div><div class="ni dim" style="font-size:8px;">会社情報（代行入力）</div><div class="ni dim" style="font-size:8px;">Tsugime 掲載申請</div></div>
+        <div class="scr-main">
+          <div class="scr-panel hot"><i class="mk ab">1</i><div class="scr-ph">継ナビくんのナビ（道具をやる順番）</div>
+            <div class="scr-steps"><span class="done">✓ 試算表</span><span class="done">✓ 資金繰り</span><span class="on">▶ 保険・固定費</span><span>支払予定</span><span>導入診断報告書</span><span>企業価値</span><span>出口の設計</span><span>買った後に備える</span><span>準備度</span><span>買いたい条件</span><span>AI診断*</span><span>銀行提出*</span></div>
+            <div class="scr-card l4 blue"><div class="t">次はこれ：保険・固定費の棚卸し</div><div class="d"><b>なぜ：</b>毎月出ていくお金の中で、いちばん見直し余地が大きいところ。第1の節目「お金の流れが分かる」の半分。<br><b>分かること：</b>見直した場合に、年間いくら現金が残るか。<span class="scr-link">🌱 結果を継ナビくんと読む</span></div></div>
+          </div>
+          <div class="scr-panel hot"><i class="mk ab">2</i><div class="scr-ph">今月の面談台本 ― 数字→問い→買い手の基盤へ</div>
+            <div class="scr-row" style="gap:6px;">
+              <div style="flex:1;"><div style="font-size:9px;font-weight:700;color:#1E3A66;">見せる数字（3つ）</div><table class="scr-tbl"><tr><td>手元資金のもち</td><td class="r">2.1か月</td></tr><tr><td>営業利益率</td><td>7.5%</td></tr><tr><td>現預金の月商倍率</td><td class="r">0.5か月</td></tr></table></div>
+              <div style="flex:1.3;"><div style="font-size:9px;font-weight:700;color:#1E3A66;">問い（3つ）</div><div style="font-size:9px;color:#18202E;line-height:1.6;">①「保険と固定費、最後に見直したのはいつですか」<br>②「9月の賞与のあと、残高はいくらになりますか」<br>③「値付けを1%上げたら、年でいくら残りますか」</div></div>
+            </div>
+            <div class="scr-row"><span class="scr-tag green">次の一歩：保険証券を預かり、棚卸しへ</span><span class="scr-btn ghost sm">🌱 この台本で練習する</span></div>
+          </div>
+          <div class="scr-panel"><div class="scr-ph">顧客からの共有</div><div class="scr-row" style="gap:6px;margin-top:0;"><div class="scr-card l4 gold" style="flex:1;margin-top:0;"><div class="t">継ナビくんへの相談（社長が「伝える」を押したぶん）</div><div class="d">9/13「来月、賞与800万の支払いがある…」→ 答えの要点</div></div><div class="scr-card l4 green" style="flex:1;margin-top:0;"><div class="t">社長からの手元資金</div><div class="d">9/13　1,200万円（前回 1,350万 ▼150万）</div></div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="dsteps">
+      <div class="dstep"><i class="mk">1</i><div><span class="act">「継ナビくんのナビ」で、✓と「次はこれ」を見る</span><span class="see">12の道具の順番。試算表 → 資金繰り → 保険・固定費 → 支払予定 → 導入診断報告書 → 企業価値 → 出口の設計 → 買った後に備える → 準備度 → 買いたい条件（AI診断・銀行提出は任意）。<b>なぜ今やるか・何が分かるか</b>が道具ごとに書いてあります。</span><span class="then">結果が出たら「継ナビくんと読む」。売り手プランでは準備度・買いたい条件・買った後に備えるが任意になります。</span></div></div>
+      <div class="dstep"><i class="mk">2</i><div><span class="act">面談前に「今月の面談台本」を開く</span><span class="see">節目に合わせた<b>見せる数字3つ・問い3つ・次の一歩</b>。数字は試算表と手元資金から自動で入ります。</span><span class="then">「顧客からの共有」に、社長が伝えてきた相談と手元資金が並びます。面談はここから始めれば足ります。</span></div></div>
+    </div>
+  </div>
+  <div class="talk"><p><b>言うこと</b>あなたが面談の前に開く画面。契約から5か月目の株式会社継。</p>
+<p><b>見せる所</b>ナビの「次はこれ」と、今月の面談台本（見せる数字3つ・問い3つ）。</p>
+<p><b>保険</b>棚卸しで見直しが見つかったら、募集人資格のある方はご自身の本業として締結まで行える。そのときは顧問の立場と募集人の立場を先に明示し、意向把握・比較説明・カルテへの記録を。資格のない方は有資格者へ取り次ぐ。</p>
+<p><b>つなぎ</b>「社長の側の画面では、何が起きているか」と言って次へ。</p></div>
+</section>
+
+<section class="slide dm" data-t="③社長の画面" data-g="画面で見る">
+  <div class="eyebrow">画面で見る ③ — 株式会社継の1年後（社長が見る画面）</div>
+  <h2>社長の画面で、「この会社を買ったら？」が30秒で数字になる</h2>
+  <div class="demo">
+    <div class="scr">
+      <div class="scr-top">経営者ダッシュボード<span class="dt">企業価値・試算結果</span></div>
+      <div class="scr-body">
+        <div class="scr-sb"><div class="lg">TsuguAi<i>-継-</i></div><div class="co">株式会社継</div>
+          <div class="ni"><b>▦</b>ダッシュボード</div><div class="ni"><b>▤</b>月次レポート</div><div class="ni"><b>✓</b>経営課題</div><div class="ni"><b>¥</b>お支払い</div><div class="ni"><b>≈</b>財務・資金繰り</div><div class="ni on hot"><i class="mk ab" style="left:-9px;">1</i><b>◆</b>企業価値・試算結果</div><div class="ni"><b>⚙</b>AI自動化診断</div><div class="ni"><b>⇢</b>出口の設計</div><div class="ni"><b>↗</b>スケールの設計</div><div class="ni"><b>▣</b>買い手になる</div><div class="ni"><b>☰</b>買った後に備える</div><div class="ni"><b>🌱</b>継ナビくん</div></div>
+        <div class="scr-main">
+          <div class="scr-panel"><div class="scr-ph">企業価値（推定）</div><div class="scr-chips"><div class="scr-chip"><div class="l">推定企業価値</div><div class="v">1億2,400万</div><div class="s">EBITDA法・8月時点</div></div><div class="scr-chip"><div class="l">前月比</div><div class="v g">＋320万</div></div><div class="scr-chip"><div class="l">旗（目標）</div><div class="v">2億円 / 2029</div><div class="s">利益なら月 +127万で届く</div></div></div></div>
+          <div class="scr-panel"><div class="scr-ph">🔁 承継シミュレーション（買う・売る）</div>
+            <div class="scr-row"><span class="scr-sbtn on hot"><i class="mk" style="width:13px;height:13px;font-size:8px;">2</i>🏢 買う側を体験</span><span class="scr-sbtn">🌱 譲る側を体験</span></div>
+            <div class="scr-row end" style="margin-top:6px;"><div><span class="scr-lab">相手の業種</span><span class="scr-inp">運送業</span></div><div><span class="scr-lab">相手の年商（万円）</span><span class="scr-inp">6,800</span></div><div><span class="scr-lab">相手の営業利益（万円）</span><span class="scr-inp">520</span></div><div><span class="scr-lab">想定価格（万円・任意）</span><span class="scr-inp ph">空欄なら目安を提案</span></div></div>
+            <div class="scr-row"><span class="scr-btn ghost sm" style="border-style:dashed;">📄 相手の決算書を添付（任意・精度UP）</span></div>
+            <div class="scr-row"><span class="scr-btn ai hot"><i class="mk" style="width:13px;height:13px;font-size:8px;">3</i>この会社を買ったら？を試算する</span></div>
+            <div class="scr-card l4 gold" style="margin-top:7px;"><div class="t">🌱 継ナビくんの試算</div><div class="d"><b>価格の目安：</b>2,080〜3,120万円（営業利益の4〜6倍）<br><b>御社のキャッシュ：</b>2,600万で、自己資金600万＋借入2,000万なら、返済は月28万。手元資金は 2.1か月分 → 1.0か月分に薄くなるので、<b>先に運転資金の枠を確保</b>。<br><b>買ったあと：</b>営業利益は年 2,160万 → 2,680万（統合コストを除く）。</div></div>
+            <div class="scr-row"><span class="scr-btn ghost sm hot"><i class="mk" style="width:13px;height:13px;font-size:8px;">4</i>✉️ この結果を担当パートナーに相談する</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dsteps">
+      <div class="dstep"><i class="mk">1</i><div><span class="act">左メニュー「企業価値・試算結果」を開く</span><span class="see">会社の値段の毎月の推移と、旗（目標）までの道筋。<b>ここが「会社の値段」の答え</b>です。</span></div></div>
+      <div class="dstep"><i class="mk">2</i><div><span class="act">「🏢 買う側を体験」を押し、相手の業種・年商・営業利益を入れる</span><span class="see">価格は空欄でよく、目安を継ナビくんが提案します。決算書を添付すれば読み取って精度が上がります。</span></div></div>
+      <div class="dstep"><i class="mk">3</i><div><span class="act">「この会社を買ったら？を試算する」</span><span class="see"><b>価格の目安・その会社のキャッシュの動き・買ったあとの利益</b>が、その会社の数字で出ます。</span><span class="then">「🌱 譲る側を体験」なら「いま譲るなら？ 2年磨けば？」。売る予定がなくても健康診断として。</span></div></div>
+      <div class="dstep w"><i class="mk">4</i><div><span class="act">「✉️ この結果を担当パートナーに相談する」</span><span class="then">本格的に検討するときは、担当パートナーと専門家（運営がおつなぎ）が伴走します。AIの試算は目安で、価格を保証するものではありません。</span></div></div>
+    </div>
+  </div>
+  <div class="talk"><p><b>言うこと</b>社長が見る画面。1年後の株式会社継。会社の値段1億2,400万、「この会社を買ったら？」が30秒で数字になる。</p>
+<p><b>強調</b>社長が自分で試し、あなたが隣で一緒に読む。承継の相談に、材料を持って答えられる。</p>
+<p><b>つなぎ</b>「月末には、明細とお振込みが届きます」と言って次へ。</p>
+<p><b>聞かれたら</b>AIの簡易試算で、価格は保証しません。</p></div>
+</section>
+
+<section class="slide dm" data-t="④明細とお振込み" data-g="画面で見る" data-q="振込はどうなる？|本部のぶんは引かれる？">
+  <div class="eyebrow">画面で見る ④</div>
+  <h2>あなたへは料率ぶん、本部へは10%。別々にお振込み</h2>
+  <div class="demo">
+    <div class="scr">
+      <div class="scr-top">パートナーポータル<span class="dt">お支払い</span></div>
+      <div class="scr-body">
+        <div class="scr-main">
+          <div class="scr-panel"><div class="scr-ph">¥ 所属の方の明細（2026年9月・佐藤 花子 Lv.2）</div>
+            <table class="scr-tbl" style="margin-top:3px;"><tr><th>顧客</th><th style="text-align:left;">区分</th><th>入金額</th><th>税抜</th><th>率</th><th>報酬（目安）</th></tr>
+              <tr><td>佐藤建設</td><td style="text-align:left;">顧問料</td><td>49,500</td><td>45,000</td><td>50%</td><td class="g">22,500</td></tr>
+              <tr><td>北川食品</td><td style="text-align:left;">顧問料</td><td>49,500</td><td>45,000</td><td>50%</td><td class="g">22,500</td></tr>
+              <tr><td>みなと物流</td><td style="text-align:left;">顧問料</td><td>49,500</td><td>45,000</td><td>50%</td><td class="g">22,500</td></tr>
+              <tr><td><b>合計</b></td><td></td><td><b>148,500</b></td><td><b>135,000</b></td><td></td><td class="g"><b>67,500</b></td></tr></table>
+            <div class="scr-card l4 blue hot" style="margin-top:6px;"><i class="mk ab">1</i>
+              <table class="scr-tbl"><tr><td>報酬（税抜 × 外注費率）</td><td><b>67,500 円</b></td></tr>
+                <tr><td style="color:#A9403D;">源泉徴収（10.21%）</td><td style="color:#A9403D;">− 6,892 円</td></tr>
+                <tr><td style="color:#A9403D;">プラットフォーム利用料</td><td style="color:#A9403D;">− 9,900 円</td></tr>
+                <tr><td><b>お振込額（目安）</b></td><td class="g"><b>50,708 円</b></td></tr></table>
+              <div class="d" style="margin-top:3px;">担当者登録使用料 3,000円 ＋ AI利用料 2,000円 × 3社 ＝ 9,000円（税抜）→ 9,900円（税込）</div></div>
+          </div>
+          <div class="scr-panel hot"><i class="mk ab">2</i><div class="scr-ph">¥ 運営の配分画面（同じ月）</div>
+            <div class="scr-card l4 blue"><div class="t">EP-II：本部へのお支払い（一律10%）</div>
+              <div class="d">所属の方への報酬とは<b>別口のお支払い</b>です。税抜の入金額の10%で、本部の利用料はいただきません（差し引きもありません）。</div>
+              <div class="scr-row" style="margin-top:4px;"><b style="font-size:10px;">継ライフ保険サービス</b><span class="scr-tag">◯◯銀行 ****1234</span><span style="flex:1;"></span><b style="font-size:11px;color:#27684A;">40,500 円</b></div>
+              <div class="d">内訳：山田 太郎・佐藤 花子・鈴木 一郎 の担当ぶん（税抜 × 10%）</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dsteps">
+      <div class="dstep"><i class="mk">1</i><div><span class="act">所属の方の明細は、ご本人の画面に出ます</span><span class="see">誰の担当でいくら入り、<b>ご自身の料率でいくらになったか</b>。源泉徴収（個人の方のみ）と<b>ご利用料</b>を差し引いた、お振込額まで出ます。</span><span class="then">ご利用料は<b>差し引いて精算</b>します。カードでのお支払いはありません。報酬より大きい月は「ご請求」として分けてご案内します。</span></div></div>
+      <div class="dstep g"><i class="mk">2</i><div><span class="act">本部へのお支払いは、別口で起こります</span><span class="see">所属の方の報酬とは<b>まったく別</b>に、担当社数 × 4,500円が本部へ。<b>差し引きは一切ありません。</b></span><span class="then">お振込先は、本部の<b>管理者</b>が「設定 → お振込先」から登録した口座です。運営が「確認しました」を押すと、その月から総合振込の対象になります。</span></div></div>
+      <div class="dstep w"><i class="mk">!</i><div><span class="act">管理者の席がないと、お振込みできません</span><span class="see">本部に有効な管理者の席が無い場合、運営の画面に<b>「管理者が未設定」</b>と赤く出て、振込ファイルに入りません。</span><span class="then">「担当者」タブで管理者を置き、その方に口座をご登録いただければ解消します。<b>黙って0円にはしません。</b></span></div></div>
+    </div>
+  </div>
+  <div class="talk"><p><b>言うこと</b>あなたの明細は、ご自身の画面に。誰の担当でいくら入り、ご自身の料率でいくらになったか。源泉とご利用料を引いたお振込額まで出る。</p>
+<p><b>強調</b>本部へのお支払いは別口。あなたの報酬から本部のぶんが引かれることはない。</p>
+<p><b>つなぎ</b>「最後に、やること・やらないことと、始め方です」と言って次へ。</p></div>
+</section>
+
+<section class="slide" data-t="役割" data-g="始め方" data-q="仲介や価格交渉もするの？|責任はどこまで？">
+  <div class="eyebrow">あなたの役割</div>
+  <h2>仲介ではなく「水先案内人」。<br>大きな責任は負いません。</h2>
+  <div class="grid g3" style="margin-top:16px;">
+    <div class="card g"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="22" cy="17" r="7.5"/><path d="M5 51c0-10 7.5-16 17-16s17 6 17 16"/><circle cx="46" cy="20" r="6" stroke="#C39B3F"/><path stroke="#C39B3F" d="M36 51c0-8 4.5-13 10-13s10 5 10 13"/></svg></div><h3>やること</h3><p>月次で伴走し、承継を日常の話題に。迷う経営者と<b>一緒にシミュレーションを開く</b>。</p></div>
+    <div class="card w"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="10" y="16" width="44" height="34"/><path d="M10 27h44M10 39h44"/><path d="M26 16v11M42 16v11M18 27v12M34 27v12M50 27v12M26 39v11M42 39v11"/></svg></div><h3>やらないこと</h3><p>仲介・価格交渉・契約実務・法務税務。<b>専門家と運営が引き継ぎます</b>。</p></div>
+    <div class="card soft"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M32 8l20 7v15c0 13-8.5 20-20 26C20.5 50 12 43 12 30V15z"/><path stroke="#C39B3F" d="m23 31 7 7 12-13"/></svg></div><h3>守られる体制</h3><p>禁止行為ガイドラインを整備。<b>迷ったら運営に聞ける</b>。</p></div>
+  </div>
+  <div class="talk"><p><b>言うこと</b>仲介ではなく水先案内人。価格交渉・契約実務・法務税務はやらない。</p>
+<p><b>聞かれたら</b>迷ったら運営に聞ける。禁止行為ガイドライン（保険業法・税理士法・弁護士法等への抵触防止）に沿って動く。本部も監督の立場で見ている。</p>
+<p><b>つなぎ</b>「では、始め方です」と言って次へ。</p></div>
+</section>
+
+<section class="slide" data-t="始め方" data-g="始め方" data-q="どうやって始める？|研修はどれくらい？">
+  <div class="eyebrow">始め方</div>
+  <h2>4つの手順で、1社目へ</h2>
+  <div class="duo" style="margin-top:12px;">
+    <div class="txt">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="q"><span class="n">1</span>本部の管理者に「参加したい」と伝える</div>
+        <div class="q"><span class="n">2</span>認定パートナー契約［EP-II 所属］を結び、登録する</div>
+        <div class="q"><span class="n">3</span>認定研修（全5章・必修11レッスン）を修了する</div>
+        <div class="q"><span class="n">4</span>本部から席を受け取り、1社目に顧問契約を送る</div>
+      </div>
+      <p class="sub" style="margin-top:12px;">まずは、<b>承継の話ができていないお客様を1社</b>。翌月から3か月で土台づくりに入ります。研修は無料で、最後はAIの社長とのロールプレイ。前払いはありません。</p>
+    </div>
+    <div class="art" style="color:#C39B3F;"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 52h14V38h14V24h14V10h6"/><path stroke="#C39B3F" d="m44 18 6-6 6 6"/></svg></div>
+  </div>
+  <div class="talk"><p><b>言うこと</b>本部の管理者に伝える → 契約と登録（契約書は運営から届く。冒頭に所属本部名）→ 認定研修とロールプレイ → 席を受け取り、1社目に顧問契約を送る。</p>
+<p><b>締め</b>「社長と経営の話ができる営業へ。いま思い浮かんだ、承継の話ができていないお客様。その1社から始めましょう」。</p>
+<p><b>聞かれたら</b>研修の所要は人によるが、必修11レッスン。本部の仕事と並行して進められる。</p></div>
+</section>
+</div>
+<div id="talkp" aria-live="polite"></div>
+<div class="bar">
+  <button onclick="mv(-1)">← 前へ</button>
+  <button onclick="mv(1)">次へ →</button>
+  <span class="pos" id="pos"></span>
+  <span class="ttl" id="ttl"></span>
+  <button id="talkb" onclick="talkToggle()" title="発表する人だけが見る欄（T）">🗣 話す内容</button>
+  <button onclick="window.print()">🖨 印刷</button>
+</div>
+<script>
+var S=[].slice.call(document.querySelectorAll('.slide')), CUR=0;
+function show(i){
+  CUR=Math.max(0,Math.min(S.length-1,i));
+  S.forEach(function(s,j){ s.classList.toggle('on', j===CUR); s.setAttribute('data-n',(j+1)+' / '+S.length); });
+  document.getElementById('pos').textContent=(CUR+1)+' / '+S.length;
+  document.getElementById('ttl').textContent=S[CUR].getAttribute('data-t')||'';
+  talkPaint();
+}
+//  話す内容。紙には出さず、下の欄にいまの一枚のぶんだけ。T キーでも開け閉めできる
+function talkPaint(){
+  var p=document.getElementById('talkp'); if(!p) return;
+  var n=S[CUR] && S[CUR].querySelector('.talk');
+  p.innerHTML='<div class="th">話す内容 — '+(S[CUR].getAttribute('data-t')||'')+'</div>'+(n?n.innerHTML:'<p>この頁のメモはありません。</p>');
+}
+function talkToggle(){
+  var on=!document.body.classList.contains('talk-on');
+  document.body.classList.toggle('talk-on',on);
+  var b=document.getElementById('talkb'); if(b) b.classList.toggle('on',on);
+  try{ localStorage.setItem('tsugu_talk', on?'1':''); }catch(e){}
+  talkPaint();
+}
+function mv(d){ show(CUR+d); }
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'||e.key===' '||e.key==='Enter'){ e.preventDefault(); mv(1); }
+  if(e.key==='ArrowLeft'){ e.preventDefault(); mv(-1); }
+  if(e.key==='t'||e.key==='T'){ e.preventDefault(); talkToggle(); }
+});
+try{ if(localStorage.getItem('tsugu_talk')){ document.body.classList.add('talk-on'); var tb=document.getElementById('talkb'); if(tb) tb.classList.add('on'); } }catch(e){}
+S.forEach(function(s){ s.addEventListener('click',function(e){ if(e.target.tagName!=='A') mv(1); }); });
+show(0);
+</script>
+<script src="pitch-fit.js"></script>
+<script src="doc-reader.js"></script>
+</body>
+</html>

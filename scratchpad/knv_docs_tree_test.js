@@ -26,7 +26,9 @@ const f = (eff, ep) => D(ep).knvDocsFor(eff).map(d => d.f);
 is('経営者には経営者向けの説明書だけ', f('customer', null), ['manual-customer.html']);
 is('パートナー（個人）', f('consultant', null), ['manual-customer.html', 'manual-partner.html', 'pitch-customer.html']);
 is('パートナー（法人所属）にはエンタープライズも', f('consultant', { org: {} }), ['manual-customer.html', 'manual-partner.html', 'manual-ep.html', 'pitch-customer.html']);
-is('運営には全部（認定パートナー説明会を含む）', f('admin', null).length, 12);
+is('運営には全部（認定パートナー説明会を含む）', f('admin', null).length, 13);
+is('EP-II 所属の方には、所属パートナー候補向けの資料も', f('consultant', { org: { kind: 'EP2' } }), ['manual-customer.html', 'manual-partner.html', 'manual-ep.html', 'pitch-customer.html', 'pitch-ep2-member.html']);
+is('EP-I 所属の方には、所属パートナー候補向けの資料は出さない', f('consultant', { org: { kind: 'EP1' } }).indexOf('pitch-ep2-member.html'), -1);
 ok('どの資料にも2つの開き方', /📑 目次から読む/.test(takeFn('knvDocRow')) && /▶ スライドで見る/.test(takeFn('knvDocRow')));
 ok('開き方：?view=read／?view=slide と #t=題名', /'\?view=read':'\?view=slide'/.test(takeFn('knvDocOpen')) && /'#t='\+encodeURIComponent\(t\)/.test(takeFn('knvDocOpen')));
 // ② 探す
