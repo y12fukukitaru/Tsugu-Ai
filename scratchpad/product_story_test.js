@@ -41,12 +41,12 @@ ok('表紙の話す内容：初めての方には 問題 → 解決 → 未来',
 ok('収入：30社で全社の率が80%に', /<b>30社で、全社の率が80%に。<\/b>/.test(slideOf(PP, '収入')) && /scale:\{cl:30, fee:'80%'\}/.test(SRC));
 
 // ② 書いてあることが、アプリにある
-ok('研修は全5章・必修10（アプリの知識と同じ）', /研修プログラム\(全5章。必修10レッスン＋発展のM&A講座8レッスン/.test(SRC) && /全5章・必修10レッスン/.test(over) && /全5章・必修10レッスン/.test(PP));
+ok('研修は全5章・必修11（アプリの知識と同じ）', /研修プログラム\(全5章。必修11レッスン＋発展のM&A講座8レッスン/.test(SRC) && /全5章・必修11レッスン/.test(over) && /全5章・必修11レッスン/.test(PP));
 ok('古い「全4章」がパートナー向け資料に残っていない', ![PP, WP, RP].some((h) => /全4章/.test(h)));
 ok('FA実務講座の中身（財務三表・正常収益力・企業価値評価）', /財務三表 → 正常収益力 → 企業価値評価/.test(SRC) && /財務三表・正常収益力・企業価値評価/.test(over));
 ok('決算書は形式を問わずAIが読み取る', /試算表・決算書を読み取る経理アシスタントです。様式・書式は問わず/.test(SRC) && /形式は問いません/.test(over));
 ok('面談台本：見せる数字3つ・問い3つ', /見せる数字（3つ）/.test(SRC) && /問い（3つ）/.test(SRC) && /見せる数字3つ・問い3つ/.test(over));
-ok('商談練習の相手（継ナビくん）', /🎭 継ナビくんと商談練習/.test(SRC) && /社長役になる<b>商談練習<\/b>/.test(over));
+ok('研修の最後にロールプレイ（継ナビくんが社長役）', /kind:'roleplay'/.test(SRC) && /🎭 継ナビくんと商談練習/.test(SRC) && /社長役になる<b>ロールプレイ<\/b>/.test(over));
 ok('切り出し：事業承継リスク診断（5つの質問・登録不要）と課題ヒアリング診断（8つの問い）', /<b>1分の事業承継リスク診断<\/b>（5つの質問・登録不要）/.test(B) && /8つの問いかけで潜在ニーズを引き出し/.test(SRC) && /<b>課題ヒアリング診断<\/b>（8つの問い）/.test(B));
 ok('面談のあと：議事録はAIで整える（アプリにある）', /runMeetingAi/.test(SRC) && /議事録担当です/.test(SRC) && /<b>AIが議事録に<\/b>整え/.test(B));
 ok('準備ブリーフ・ナビ・今日の一手', /<b>準備ブリーフ<\/b>/.test(B) && /<b>「今日の一手」<\/b>/.test(B) && /カルテの<b>ナビ<\/b>/.test(B));
@@ -59,8 +59,8 @@ const STD = Number((SRC.match(/var EP_STD_FEE=(\d+);/) || [])[1]), SELL = Number
 const lv2 = /\{ lv:2, key:'Senior',[^\n]*need:\{cl:1,hd:0\}, fee:'50%' \}/.test(SRC), lv3 = /\{ lv:3, key:'Executive',[^\n]*fee:'60%'/.test(SRC);
 const six = (STD * 3 + SELL * 3) * 0.5;
 ok('例の金額：6社（買い手3・売り手3）×50% = 月120,000円', lv2 && six === 120000 && /<b>月120,000円<\/b>（税別）/.test(fut) && /シニア（50%）/.test(fut));
-const lv4 = /\{ lv:4, key:'Premium Partner',[^\n]*need:\{cl:20,hd:0\}, alt:\{hd:3\}, fee:'70%', scale:\{cl:30, fee:'80%'\}/.test(SRC);
-ok('レベルの条件がアプリと同じ（10件または成約1件／20件または成約3件／30社で80%）', lv2 && lv3 && lv4 && /顧問契約10件、<b>または成約1件<\/b>/.test(fut) && /顧問契約20件、または成約3件/.test(fut) && /<b>30社で80%<\/b>/.test(fut));
+const lv4 = /\{ lv:4, key:'Premium Partner',[^\n]*need:\{cl:20,hd:0\}, fee:'70%', scale:\{cl:30, fee:'80%'\}/.test(SRC);
+ok('レベルの条件がアプリと同じ（10件／20件／30社で80%。成約の道は無い）', lv2 && lv3 && lv4 && /顧問契約<b>10件<\/b>/.test(fut) && /顧問契約<b>20件<\/b>/.test(fut) && /<b>30社で80%<\/b>/.test(fut) && !/または成約/.test(fut));
 ok('未来の頁に「保証しない・0円の月・差し引く前・運営が認定」', /収入を保証・約束するものではありません/.test(fut) && /担当先を得られない月は、報酬もご利用料も0円です/.test(fut) && /ご利用料・源泉徴収を差し引く前/.test(fut) && /率の適用とレベルの認定は運営が行います/.test(fut));
 ok('法人営業の成約を約束しない（話す内容）', /「すぐ法人の契約が取れるか」→ 約束しない/.test(over));
 
@@ -93,6 +93,24 @@ const MR = slideOf(MP, 'ランクと報酬');
 ok('M&Aの報酬は運営とパートナーで折半（商談スライド・説明会・募集案内・説明書・知識）。古い「案件ごとに取り決め」は残さない',
   [PP, WP, RP].every((h) => /運営とパートナーで折半/.test(h) && !/案件ごとに(運営と事前に)?取り決め/.test(h)) && /<b>M&amp;Aの報酬は、運営とパートナーで折半します。<\/b>/.test(MR)
   && /当社が受け取る報酬を運営とパートナーで折半\)/.test(SRC));
+// 研修のロールプレイ（2026-10-07 LP「動画 → ロールプレイ → 認定試験」と同じ順）
+{
+  const a = SRC.indexOf('var TRAINING=['), z = SRC.indexOf('var FA_COURSE=[');
+  const T = new Function('tgShell', 'tgCard', 'tgRow', 'esc', SRC.slice(a, z) + '; return TRAINING;')(() => '', () => '', () => '', (x) => x);
+  const ch5 = T.find((c) => c.n === 5), ids = ch5.lessons.map((l) => l.id);
+  const req = T.filter((c) => !c.opt).reduce((n, c) => n + c.lessons.length, 0);
+  ok('研修：第5章はロールプレイ → 理解度チェック', ids.join(',') === 't4-0,t4-1' && ch5.lessons[0].kind === 'roleplay');
+  ok('研修：必修は11レッスン（資料の「必修11」と同じ）', req === 11 && /全5章・必修11レッスン/.test(PP) && /全5章・必修11レッスン/.test(WP) && /全5章・必修11レッスン/.test(RP) && /必修11レッスン/.test(MP));
+  ok('研修：ロールプレイは始めてから「終えた」を押せる・相手の型が入れ替わる', /function trRoleplayStart\(\)/.test(SRC) && /prospectPractice\(n % PROSPECT_PERSONAS\.length\)/.test(SRC) && /\(started\?'':' disabled/.test(SRC));
+  ok('研修：ロールプレイを足す前に修了した方は修了のまま（記録は書かない）', /function trGrandfather\(\)\{\s*if\(TR_PROG\['t4-1'\] && !TR_PROG\['t4-0'\] && String\(TR_PROG\['t4-1'\]\) < TR_RP_SINCE\) TR_PROG\['t4-0'\]=TR_PROG\['t4-1'\];/.test(SRC)
+    && (SRC.match(/trGrandfather\(\);/g) || []).length === 2);
+  {
+    const g = new Function("var TR_PROG=arguments[0], TR_RP_SINCE='2026-10-08';" + SRC.slice(SRC.indexOf('function trGrandfather(){'), SRC.indexOf('var TR_RP_SINCE')) + 'trGrandfather(); return TR_PROG;');
+    const old = g({ 't4-1': '2026-09-01T00:00:00Z' }), neu = g({ 't4-1': '2026-10-09T00:00:00Z' });
+    ok('研修：以前の合格はロールプレイ済み、これからの合格はロールプレイが要る', old['t4-0'] === '2026-09-01T00:00:00Z' && !neu['t4-0']);
+  }
+  ok('知識・説明書：修了はロールプレイと理解度チェック', /第5章のロールプレイ\(継ナビくんが社長役の商談練習\)と理解度チェックで修了/.test(SRC) && /<b>ロールプレイ<\/b>（継ナビくんが社長役になり/.test(MP));
+}
 const prom = slideOf(PC, '約束すること・しないこと');
 ok('経営者向け：担当の本業（保険など）を押し付けない', /✔ 担当の本業（保険など）を押し付けない（ご了承なく財務の情報を使わず、抱き合わせもしない）/.test(prom) && /保険を売り込まれない？/.test(prom) && /<b>担当が保険の方なら<\/b>/.test(prom));
 
