@@ -81,7 +81,7 @@ const M = new Function(base + 'return {pillarsOf:pillarsOf,pillarSub:pillarSub,p
   is('PMI_STAGE は 7 のまま（⑤の hd と同じ線）', M.PMI_STAGE, 7);
 }
 //  ⑤のレベル判定の hd と同じ線引きであること（コード上で）
-ok('レベル判定の hd は「stage>=7 かつ 譲受」', /\(d\.stage\|\|0\)>=7 && d\.deal_type==='譲受'\) hd\+\+/.test(SRC));
+ok('レベル判定は顧問契約の件数だけ（成約は数えない。2026-10-07）', /ランクは顧問契約の件数だけで決まる（成約の件数は数えない）/.test(SRC) && !/d\.deal_type==='譲受'\) hd\+\+/.test(SRC));
 ok('pillarsOf も PMI_STAGE（7）と譲受で切る', /function pillarsOf[\s\S]{0,400}deal_type!=='譲受'[\s\S]{0,200}s>=PMI_STAGE/.test(SRC));
 
 // ---------------------------------------------------------------

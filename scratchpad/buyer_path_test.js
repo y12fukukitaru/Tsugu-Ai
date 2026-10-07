@@ -98,7 +98,7 @@ ok('作るときの既定も譲受', /deal_type:\(\$\('ma-type'\)\|\|\{\}\)\.val
 //  判定の式は loadPartnerGrowth の中にある。そこだけ切り出して動かす。
 //  写しを書くと、本体を直したときに試験だけ古いままになる
 const judgeSrc = (() => {
-  const a = SRC.indexOf('PG_LEVELS.forEach(function(L){\n      var byClients');
+  const a = SRC.indexOf('PG_LEVELS.forEach(function(L){\n      if(cl>=L.need.cl');
   if (a < 0) throw new Error('レベル判定が見つかりません');
   const b = SRC.indexOf('});', a);
   return SRC.slice(a, b + 3);
@@ -118,23 +118,18 @@ is('顧問5 → Lv2（改定：Lv3 は10件から）', levelFor(5, 0), 2);
 is('顧問10 → Lv3（改定）', levelFor(10, 0), 3);
 is('顧問19 → Lv3 のまま', levelFor(19, 0), 3);
 is('顧問20 → Lv4（改定：Lv4 は20件から）', levelFor(20, 0), 4);
-is('顧問1・成約1 → Lv3（成約の道）', levelFor(1, 1), 3);
-is('顧問1・成約3 → Lv4（成約の道）', levelFor(1, 3), 4);
-is('顧問1・成約2 → Lv3 のまま（3件に届かない）', levelFor(1, 2), 3);
-is('顧問0・成約1 → Lv3（顧問0でも成約が効く。ただし Lv2 は飛ぶ）', levelFor(0, 1), 3);
-is('顧問5・成約1 → Lv3（重ねても4には届かない）', levelFor(5, 1), 3);
-ok('Lv3 に成約の道がある', LV[2].alt && LV[2].alt.hd === 1);
-ok('Lv4 に成約の道がある', LV[3].alt && LV[3].alt.hd === 3);
-no('Lv2 には成約の道が無い（最初の顧問契約が先）', !!LV[1].alt);
-ok('Lv3 の条件文に「成約」が書いてある', /成約/.test(LV[2].cond));
-ok('Lv4 の条件文に「成約」が書いてある', /成約/.test(LV[3].cond));
-//  数え方：譲受だけ、クロージング以降だけ
-ok('成約は deal_type を見て数える', /select\('customer_id,stage,deal_type'\)\.in\('customer_id',ids\)/.test(SRC));
-ok('成約は譲受だけを数える', /\(d\.stage\|\|0\)>=7 && d\.deal_type==='譲受'\) hd\+\+/.test(SRC));
+//  2026-10-07：「または顧問先の成約」の道は無くした（LP と同じ）。ランクは顧問契約の件数だけ
+is('顧問1・成約1 → Lv2 のまま（成約では上がらない）', levelFor(1, 1), 2);
+is('顧問5・成約3 → Lv2 のまま', levelFor(5, 3), 2);
+no('どのレベルにも成約の道が無い', LV.some((L) => !!L.alt));
+ok('条件の文言は件数だけ', LV[2].cond === '顧問契約10件を達成' && LV[3].cond === '顧問契約20件を達成');
+no('Lv3・Lv4 の条件文に「成約」は無い（顧問契約の件数だけ）', /成約/.test(LV[2].cond) || /成約/.test(LV[3].cond));
+//  成約の件数はもう数えない（ランクに使わないので、M&A案件を読みにいかない）
+no('ランクのために ma_deals を読みにいかない', /select\('customer_id,stage,deal_type'\)\.in\('customer_id',ids\)/.test(SRC));
 //  見せ方
-ok('次のレベルの札に「または」の道が出る', /bar\('顧問先の成約（譲受）', hd, L\.alt\.hd\)/.test(SRC));
-ok('あと何件、に成約の道も並ぶ', /または 顧問先の成約 あと'\+needHd\+'件/.test(SRC));
-ok('現在の数に成約も出る', /顧問契約 '\+cl\+'件・顧問先の成約 '\+hd\+'件/.test(SRC));
+no('次のレベルの札に「または」の道が出ない', /bar\('顧問先の成約（譲受）'/.test(SRC));
+no('あと何件、に成約の道は並ばない', /または 顧問先の成約 あと/.test(SRC));
+ok('現在の数は顧問契約だけ', /（現在：顧問契約 '\+cl\+'件）/.test(SRC) && !/顧問先の成約 '\+hd\+'件/.test(SRC));
 //  外注費率は触っていない（運営が手で入れる fde_rank から引く）
 ok('料率は fde_rank から引いたまま', /function rankFeeRate\(rankName/.test(SRC));
 is('料率の値はこれまでどおり', LV.map(L => L.fee), ['—', '50%', '60%', '70%']);

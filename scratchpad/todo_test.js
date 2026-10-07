@@ -164,7 +164,7 @@ ok('知識：パートナーは8タブ・経営者は7タブ', /パネルは8タ
 ok('知識：TODO の説明（両方）', (SRC.match(/／✅TODO\(自分用のやること控え。本人だけが見え/g) || []).length === 2);
 ok('知識：予定の色に青緑（両方）', (SRC.match(/紫=補助金の締切・青緑=TODO/g) || []).length === 2);
 const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-ok('版が揃う', build === VER.build && build === '20261006-01');
+ok('版が揃う', build === VER.build && build === '20261007-02');
 
 if (bad.length) { bad.forEach((b) => console.log('NG ' + b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK ' + n + ' checks, 0 failed');

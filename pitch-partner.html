@@ -127,6 +127,22 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
 .flow .f .d{font-size:11.5px;color:var(--muted);line-height:1.65;}
 @media(max-width:820px){ .tl,.flow{grid-template-columns:1fr 1fr;} .st3{grid-template-columns:1fr;} }
 
+/* ===== 法人営業の壁と越え方（場面ごとの表） =====
+   左＝場面、中＝つまずき、右＝TsuguAiでの越え方。スマホでは1行ずつ札に組み直す */
+.bt{width:100%;border-collapse:separate;border-spacing:0 6px;font-size:12.5px;margin-top:4px;}
+.bt th{font-size:11px;color:var(--muted);font-weight:700;text-align:left;padding:0 12px 0;letter-spacing:.04em;}
+.bt td{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:7px 12px;line-height:1.6;vertical-align:middle;color:var(--ink);}
+.bt td:first-child{border-left:3px solid var(--gold);border-radius:10px 0 0 10px;font-weight:700;color:#8A6A12;white-space:nowrap;background:#FDFAF1;font-size:13px;}
+.bt td:nth-child(2){color:#7A3431;background:rgba(169,64,61,.04);width:27%;}
+.bt td:last-child{border-right:1px solid var(--line);border-radius:0 10px 10px 0;background:rgba(39,104,74,.05);}
+.bt td b{color:var(--navy);}
+@media(max-width:820px){
+  .bt,.bt tbody,.bt tr,.bt td{display:block;width:auto!important;}
+  .bt thead{display:none;}
+  .bt tr{margin-bottom:9px;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:10px;overflow:hidden;}
+  .bt td,.bt td:first-child,.bt td:last-child{border:none;border-radius:0;white-space:normal;}
+}
+
 /* ===== 話す内容（発表する人だけが見る） =====
    紙の中には出さない（倍率を測るときにも数えない）。下のバーの
    「🗣 話す内容」か T キーで、いま出ている一枚のぶんだけを開く。
@@ -157,12 +173,12 @@ body.talk-on #talkp{display:block;}
   <div class="hero-art"><span class="tsg-mado"><svg viewBox="0 -4 64 64" aria-hidden="true" focusable="false"><path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/><rect x="9.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="49.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="14" y="23" width="36" height="30" rx="10" fill="#fff" stroke="#cfa860" stroke-width="1.6"/><circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/><circle cx="20.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><circle cx="43.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/></svg></span></div>
   <div class="hx">
   <div class="mark">TSUGU AI -継-</div>
-  <h1>これは、仕事の紹介ではなく<br><span style="color:#CFAD62;">挑戦への招待</span>です。</h1>
-  <p class="sub">お客様と信頼を築いてきたあなたへ。まず、私たちがなぜこの事業を始めたのかから。</p>
+  <h1>社長と、<br><span style="color:#CFAD62;">経営の話ができる人</span>へ。</h1>
+  <p class="sub">決算書の読み解きも、話すべき論点も、AIがそろえて渡します。<b style="color:#fff;">法人営業に挑むための、コンサルツール</b>です。これは仕事の紹介ではなく、挑戦への招待です。</p>
   </div>
-  <div class="talk"><p><b>言うこと</b>仕事の紹介ではなく、挑戦への招待です、から入る。</p>
+  <div class="talk"><p><b>言うこと</b>「社長と経営の話がしたい。けれど何から切り出せばいいか分からない」——その材料をAIがそろえる、法人営業に挑むためのコンサルツール。仕事の紹介ではなく、挑戦への招待です、から入る。</p>
 <p><b>時間</b>全部で30分ほど。15分なら：3つの問い → 役割 → 収入 → 伴走の3年間 → あなたに残るもの → ①今日やること → ④カルテ → 始め方。</p>
-<p><b>保険の方には</b>3つの問いの次に「法人営業の壁」「法人営業の壁の越え方」、最後の前に「あなたが描く未来」。問題 → 解決 → 未来の順で。</p>
+<p><b>法人営業が初めての方には</b>3つの問いの次に「法人営業の壁」→「壁の越え方（始める前）」→「壁の越え方（社長の前で）」、最後の前に「あなたが描く未来」。問題 → 解決 → 未来の順で。</p>
 <p><b>操作</b>→ かスペースで次へ、F で全画面、T でこの欄。</p></div>
 </section>
 
@@ -246,20 +262,37 @@ body.talk-on #talkp{display:block;}
 <p><b>士業の方には</b>この頁と次の頁は飛ばしてよい（「法人の顧客と数字で話す」は同じなので、触れるなら次の頁の④⑤だけ）。</p></div>
 </section>
 
-<section class="slide" data-t="法人営業の壁の越え方" data-g="課題" data-q="決算書が読めなくても大丈夫？|社長と何を話せばいい？|勉強やセミナーは必要？|法人への提案はいつできる？">
-  <div class="eyebrow">TsuguAi -継- なら</div>
-  <h2>5つの壁を、毎月の顧問の仕事の中で越えていく</h2>
-  <div class="grid g3" style="margin-top:8px;gap:12px;">
-    <div class="card"><div style="font-size:11.5px;font-weight:700;color:#8A6A12;letter-spacing:.04em;margin-bottom:2px;">何を学ぶか →</div><h3>① 学ぶ順番が決まっている</h3><p>研修は<b>全5章・必修10レッスン</b>（＋発展8）。深く学ぶ<b>FA実務講座</b>（財務三表・正常収益力・企業価値評価…）も。</p></div>
-    <div class="card"><div style="font-size:11.5px;font-weight:700;color:#8A6A12;letter-spacing:.04em;margin-bottom:2px;">どのセミナーか →</div><h3>② アプリの中で学び、練習できる</h3><p>継ナビくんが<b>社長役の商談練習の相手</b>に。全パートナーの事例とQ&Aを<b>ナレッジ</b>で探せます。</p></div>
-    <div class="card"><div style="font-size:11.5px;font-weight:700;color:#8A6A12;letter-spacing:.04em;margin-bottom:2px;">時間とお金 →</div><h3>③ 前払いなし・毎朝5分</h3><p>研修や道具のために<b>先にお支払いいただく費用はありません</b>。毎朝の「今日の一手」で、その日やることが分かります。</p></div>
-    <div class="card"><div style="font-size:11.5px;font-weight:700;color:#8A6A12;letter-spacing:.04em;margin-bottom:2px;">決算書が読めない →</div><h3>④ 読むのはAI、伝えるのはあなた</h3><p>試算表・決算書を取り込めば（形式は問いません）、AIが読み取り<b>資金繰り・利益率・会社の値段</b>まで。「継ナビくんと読む」で解説も。</p></div>
-    <div class="card"><div style="font-size:11.5px;font-weight:700;color:#8A6A12;letter-spacing:.04em;margin-bottom:2px;">社長と何を話すか →</div><h3>⑤ 台本がその会社の数字から出る</h3><p>カルテの「今月の面談台本」に<b>見せる数字3つ・問い3つ</b>。保険ではなく、<b>会社のお金の話</b>から入れます。</p></div>
-    <div class="card g"><div style="font-size:11.5px;font-weight:700;color:var(--green);letter-spacing:.04em;margin-bottom:2px;">そして →</div><h3>法人の相談は、あとから来る</h3><p><b>保険・固定費の棚卸し</b>（まずムダを減らす）→ <b>役員退職金</b> → <b>事業承継・株対策</b>のシミュレーター。提案は<b>社長の了承を得てから</b>、あなたの本業として。</p></div>
-  </div>
-  <div class="note" style="margin-top:12px;"><b>守ること：</b>顧問の立場と募集人の立場を<b>先に明示</b>／顧問で知った預金・借入などの情報を<b>事前の同意なく募集に使わない</b>／顧問契約と保険の<b>抱き合わせはしない</b>。<b>売り込まない設計だから、相談されます。</b></div>
-  <div class="talk"><p><b>言うこと</b>5つの壁に、1つずつ答える。学ぶ順番・練習相手・前払いなし・読むのはAI・台本。</p>
-<p><b>見せる所</b>右下の緑。法人の相談は、保険の見直し（ムダを減らす）→ 退職金 → 承継の順で、あとから来る。</p>
+<section class="slide" data-t="壁の越え方（始める前）" data-g="課題" data-q="法人営業の経験がなくてもできる？|勉強やセミナーは必要？|本業があって時間が取れない|先に費用がかかる？|資格は要る？|ひとりで判断できるか不安">
+  <div class="eyebrow">壁の越え方 ① — 始める前</div>
+  <h2>経験も、知識も、時間も。壁だったものは、AIが引き受けます</h2>
+  <table class="bt">
+    <thead><tr><th>壁</th><th>つまずき</th><th>TsuguAi -継- では</th></tr></thead>
+    <tr><td>経験</td><td>法人営業をしたことがない。資格もない</td><td>国家資格も法人営業の経験も要りません。<b>研修（全5章・必修11レッスン）</b>を修了すれば認定。研修の最後に、継ナビくんが社長役になる<b>ロールプレイ</b>で面談の流れを先に体験します。</td></tr>
+    <tr><td>知識</td><td>財務・税務・承継…範囲が広く、独学では追いつけない</td><td>知識は<b>AIが担います</b>。用語も制度も継ナビくんがかみ砕いて答えます。深めたい方には<b>FA実務講座</b>（財務三表・正常収益力・企業価値評価…）。</td></tr>
+    <tr><td>時間</td><td>本業の合間に、準備の時間が取れない</td><td>面談の準備ブリーフ・面談台本・月次レポートの下書き・議事録は<b>AI</b>。あなたに残るのは<b>月1回の面談</b>と対話です。<b>副業から</b>始められます。</td></tr>
+    <tr><td>お金</td><td>成果より先に、費用が出ていくのでは</td><td>研修は無料、<b>前払いはありません</b>。ご利用料は顧問料の入金があった月だけ、報酬から差し引きます。<b>入金のない月は0円</b>です。</td></tr>
+    <tr><td>ひとり</td><td>判断に迷っても、相談相手がいない</td><td>継ナビくんが<b>選択肢と根拠</b>を出します。迷ったら実行の前に運営へ。価格交渉・契約実務・法務税務は<b>専門家と運営</b>が引き受けます。</td></tr>
+  </table>
+  <div class="note" style="margin-top:8px;"><b>求められるのは、知識より「聴く力」と「続ける力」。</b>人と向き合い、信頼を築いてきたあなたに足りなかったのは、社長と経営の話をするための道具だけです。</div>
+  <div class="talk"><p><b>言うこと</b>経験・知識・時間・お金・ひとり。始める前の5つの壁は、AIと研修と運営が引き受ける。</p>
+<p><b>見せる所</b>「お金」の行。研修は無料、前払いなし、入金のない月は0円。</p>
+<p><b>聞かれたら</b>「本当に月1回で回るか」→ 面談は担当先1社につき月1回が目安。準備はAI。かかる時間は会社の状況で変わる、と添える。</p></div>
+</section>
+
+<section class="slide" data-t="壁の越え方（社長の前で）" data-g="課題" data-q="社長と何を話せばいい？|決算書が読めなくても大丈夫？|面談で質問に詰まったら？|議事録やフォローが大変そう|法人への提案はいつできる？">
+  <div class="eyebrow">壁の越え方 ② — 社長の前で</div>
+  <h2>切り出す前から、面談のあとまで。場面ごとにAIが隣に</h2>
+  <table class="bt">
+    <thead><tr><th>場面</th><th>つまずき</th><th>TsuguAi -継- では</th></tr></thead>
+    <tr><td>切り出す</td><td>何から話せばいいか分からない。売り込みと思われる</td><td><b>1分の事業承継リスク診断</b>（5つの質問・登録不要）を社長と一緒に開く。営業ツールの<b>課題ヒアリング診断</b>（8つの問い）も。商品ではなく、会社の話から入れます。</td></tr>
+    <tr><td>面談の前</td><td>決算書が読めない。何を話せばいいか</td><td>試算表・決算書を取り込めば（形式は問いません）<b>AIが読み取り</b>、資金繰り・利益率・会社の値段まで。カルテの<b>面談台本</b>に見せる数字3つ・問い3つ。前日には<b>準備ブリーフ</b>。</td></tr>
+    <tr><td>面談の場で</td><td>専門用語や制度を聞かれて詰まる</td><td>継ナビくんに<b>その場で</b>聞けます。「持ち帰って調べます」が減ります。</td></tr>
+    <tr><td>面談のあと</td><td>議事録とフォローが重い</td><td>走り書きのメモを<b>AIが議事録に</b>整え、やることを分けます。月次レポートの下書きもAI。</td></tr>
+    <tr><td>続ける</td><td>次に何をすればいいか分からなくなる</td><td>毎朝の<b>「今日の一手」</b>と、カルテの<b>ナビ</b>（道具をやる順番）が次の一手を示します。</td></tr>
+  </table>
+  <div class="note" style="margin-top:8px;"><b>法人の相談は、あとから来ます。</b>保険・固定費の棚卸し（まずムダを減らす）→ 役員退職金 → 事業承継・株対策。提案は<b>社長の了承を得てから</b>、あなたの本業として。顧問の立場と募集人の立場を<b>先に明示</b>し、顧問で知った預金・借入などの情報を<b>事前の同意なく募集に使わない</b>、顧問契約との<b>抱き合わせはしない</b>。売り込まない設計だから、相談されます。</div>
+  <div class="talk"><p><b>言うこと</b>入口・材料・継続。切り出しは1分の承継リスク診断、材料はAIが決算書から、続けるのは毎月の面談。</p>
+<p><b>見せる所</b>「切り出す」の行。事業承継リスク診断は経営者向けのページ（fuku-tsugu.jp/owner の「承継リスク診断」）にあり、登録なしで社長と一緒に開ける。</p>
 <p><b>必ず言う</b>非公開金融情報の扱い（保険業法施行規則）と、抱き合わせの禁止。提案は社長の了承を得てから、所属代理店の募集人として。</p>
 <p><b>聞かれたら</b>「すぐ法人の契約が取れるか」→ 約束しない。顧問として数字を見続けた先に、相談が来る順番。</p></div>
 </section>
@@ -295,10 +328,10 @@ body.talk-on #talkp{display:block;}
   <h2>「フルコミッションに安定収入を」を、形に</h2>
   <div class="grid g2" style="margin-top:16px;">
     <div class="card"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="26" cy="44" rx="15" ry="6"/><path d="M11 44v-9c0-3.3 6.7-6 15-6s15 2.7 15 6v9"/><path d="M11 35v-9c0-3.3 6.7-6 15-6s15 2.7 15 6v9"/><circle cx="47" cy="43" r="9" stroke="#C39B3F"/><text x="43.5" y="48" font-size="13" font-weight="700" fill="#C39B3F" stroke="none" font-family="inherit">¥</text></svg></div><h3>💼 毎月の顧問料ストック</h3><p>認定レベルに応じた<b>外注費率（〜80%）</b>。顧客が増えるほど積み上がり、<b>収入の波をならします</b>。明細は確定申告用に出力可。</p></div>
-    <div class="card w"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h20v10a10 10 0 0 1-20 0z"/><path d="M22 15h-7a7 7 0 0 0 7 9M42 15h7a7 7 0 0 1-7 9"/><path d="M32 32v8"/><path stroke="#C39B3F" d="M24 46h16v6H24z"/></svg></div><h3>🤝 M&A成功報酬</h3><p>承継の成約（HD化）で<b>成功報酬の配分</b>とレベル昇格。1件がストックとは<b>桁違い</b>の成果に。</p></div>
+    <div class="card w"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h20v10a10 10 0 0 1-20 0z"/><path d="M22 15h-7a7 7 0 0 0 7 9M42 15h7a7 7 0 0 1-7 9"/><path d="M32 32v8"/><path stroke="#C39B3F" d="M24 46h16v6H24z"/></svg></div><h3>🤝 M&A成功報酬</h3><p>ご紹介でM&Aが成約すると、当社が受け取る報酬を<b>運営とパートナーで折半</b>。レベルも昇格。1件がストックとは<b>桁違い</b>の成果に。</p></div>
   </div>
-  <div class="note" style="margin-top:16px;"><b>本業と競合しません。</b>顧問として内側に入ることで、保険・不動産・士業の案件が<b>あなたに戻ってくる</b>設計。顧問先が1年を超えると、その会社のM&amp;Aの FA 報酬に優遇（年10%ずつ最大50%引き）が効き、出口の話が切り出しやすくなります。</div>
-  <div class="talk"><p><b>言うこと</b>毎月の顧問料の配分（〜80%）と、M&amp;Aの成約。収入の波をならす。</p>
+  <div class="note" style="margin-top:16px;"><b>30社で、全社の率が80%に。</b>プレミアムで顧問契約30社に届くと、増えた分だけでなく、それまでの全社の率が上がります。<br><b>本業と競合しません。</b>顧問として内側に入ることで、保険・不動産・士業の案件が<b>あなたに戻ってくる</b>設計。顧問先が1年を超えると、その会社のM&amp;Aの FA 報酬に優遇（年10%ずつ最大50%引き）が効き、出口の話が切り出しやすくなります。</div>
+  <div class="talk"><p><b>言うこと</b>毎月の顧問料の配分（〜80%）と、M&amp;Aの報酬（運営と折半）。収入の波をならす。</p>
 <p><b>つなぎ</b>具体的な数字は、このあと1社の3年間でお見せします。</p></div>
 </section>
 
@@ -306,12 +339,12 @@ body.talk-on #talkp{display:block;}
   <div class="eyebrow">M&A未経験でも</div>
   <h2>道具と研修は、すべてそろっています</h2>
   <div class="grid g2" style="margin-top:16px;">
-    <div class="card"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M32 14c-5-4-12-5-20-4v38c8-1 15 0 20 4 5-4 12-5 20-4V10c-8-1-15 0-20 4z"/><path d="M32 14v38"/><path stroke="#C39B3F" d="M18 22h8M18 30h8"/></svg></div><h3>研修プログラム</h3><p>全5章・必修10レッスン（＋発展のM&A講座8）。<b>ゼロから認定パートナーへ</b>。</p></div>
+    <div class="card"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M32 14c-5-4-12-5-20-4v38c8-1 15 0 20 4 5-4 12-5 20-4V10c-8-1-15 0-20 4z"/><path d="M32 14v38"/><path stroke="#C39B3F" d="M18 22h8M18 30h8"/></svg></div><h3>研修プログラム</h3><p>全5章・必修11レッスン（＋発展のM&A講座8）。<b>ゼロから認定パートナーへ</b>。</p></div>
     <div class="card"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="16" y="24" width="32" height="26" rx="8"/><circle cx="26" cy="35" r="2.5" fill="currentColor" stroke="none"/><circle cx="38" cy="35" r="2.5" fill="currentColor" stroke="none"/><path d="M27 43q5 4 10 0"/><path stroke="#C39B3F" d="M32 10l1.8 5.2L39 17l-5.2 1.8L32 24l-1.8-5.2L25 17l5.2-1.8z"/><path d="M10 34v8M54 34v8"/></svg></div><h3>継ナビくん（AI）</h3><p>「明日の商談の準備を」——<b>ロールプレイ相手</b>にもなります。</p></div>
     <div class="card"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8h20l10 10v38H18z"/><path d="M38 8v10h10"/><path d="M25 30h14M25 38h14"/><path stroke="#C39B3F" d="M25 46h8"/></svg></div><h3>伴走ガイド・営業ツール</h3><p>M&A伴走ガイドと<b>デモ台本（15分の型）</b>を常設。</p></div>
     <div class="card"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="22" cy="17" r="7.5"/><path d="M5 51c0-10 7.5-16 17-16s17 6 17 16"/><circle cx="46" cy="20" r="6" stroke="#C39B3F"/><path stroke="#C39B3F" d="M36 51c0-8 4.5-13 10-13s10 5 10 13"/></svg></div><h3>ナレッジ・専門家</h3><p>全パートナーの事例を検索。<b>実行は専門家＋運営</b>が引き継ぎ。</p></div>
   </div>
-  <div class="talk"><p><b>言うこと</b>研修は全5章・必修10レッスン（＋発展8）、継ナビくん（ロールプレイ相手にもなる）、デモ台本、ナレッジ、実行は専門家と運営。</p></div>
+  <div class="talk"><p><b>言うこと</b>研修は全5章・必修11レッスン（＋発展8）、継ナビくん（ロールプレイ相手にもなる）、デモ台本、ナレッジ、実行は専門家と運営。</p></div>
 </section>
 
 <section class="slide" data-t="実際の動き方" data-g="役割と収入" data-q="毎日どれくらい時間がかかる？|毎月の仕事は？">
@@ -394,33 +427,33 @@ body.talk-on #talkp{display:block;}
   <div class="eyebrow">あなたが伴走すると — あなたに残るもの</div>
   <h2>1社の3年間から、あなたに残るもの</h2>
   <div class="grid g3" style="margin-top:16px;">
-    <div class="card" style="text-align:left;"><h3>毎月の顧問料の配分</h3><p>株式会社継（買い手プラン 月45,000円）なら、<b>Lv.2 シニアで50%＝月22,500円</b>。<br>担当先の成約1件で <b>Lv.3（60%）の条件</b>がそろい、率は<b>メインで担当する全社</b>に効きます。</p><p style="margin-top:8px;">例：6社（買い手3・売り手3）なら顧問料は月240,000円。<br>50%で 120,000円 → 60%で <b>144,000円</b>。</p></div>
-    <div class="card" style="text-align:left;"><h3>成約の実績</h3><p>M&amp;Aの成約は、<b>あなたの実績</b>として記録されます。成功報酬の配分は、案件ごとに運営と事前に取り決めます。</p><p style="margin-top:8px;">顧問1年を過ぎた担当先は、FA報酬が<b>10%引き</b>（株式会社継なら117万）。出口の話を切り出しやすくなります。</p></div>
+    <div class="card" style="text-align:left;"><h3>毎月の顧問料の配分</h3><p>株式会社継（買い手プラン 月45,000円）なら、<b>Lv.2 シニアで50%＝月22,500円</b>。<br>顧問契約10件で <b>Lv.3（60%）</b>になり、率は<b>メインで担当する全社</b>に効きます。</p><p style="margin-top:8px;">例：10社（買い手5・売り手5）なら顧問料は月400,000円。<br>50%なら 200,000円 → 60%で <b>240,000円</b>。</p></div>
+    <div class="card" style="text-align:left;"><h3>成約の実績</h3><p>M&amp;Aの成約は、<b>あなたの実績</b>として記録されます。成約したとき当社が受け取るM&Aの報酬は、<b>運営とパートナーで折半</b>します（顧問報酬とは別の収入です）。</p><p style="margin-top:8px;">顧問1年を過ぎた担当先は、FA報酬が<b>10%引き</b>（株式会社継なら117万）。出口の話を切り出しやすくなります。</p></div>
     <div class="card" style="text-align:left;"><h3>続く関係</h3><p>3年目の社長には、<b>次の1社</b>・<b>No.2への承継</b>・<b>持株会社</b>と、次の相談があります。</p><p style="margin-top:8px;">譲り受けた会社の保険・労務・登記の見直しも、<b>社長の了承のうえで</b>、あなたの本業の相談として戻ってきます。</p></div>
   </div>
   <div class="eg">率の適用とレベルの認定は運営が行います。顧問料の率はいまの決まり（Lv.2 50%／Lv.3 60%／Lv.4 70%・30社以上80%）です。</div>
   <div class="talk"><p><b>言うこと</b>顧問料の配分・成約の実績・続く関係の3つ。</p>
-<p><b>見せる所</b>成約1件でLv.3（60%）の条件。率はメインで担当する全社に効くので、6社なら月120,000円→144,000円。</p>
-<p><b>気をつける</b>成功報酬の配分は数字を言わない（案件ごとに運営と取り決め）。レベルの認定と率の適用は運営が行う。</p></div>
+<p><b>見せる所</b>顧問契約10件でLv.3（60%）。率はメインで担当する全社に効くので、10社なら月200,000円→240,000円。</p>
+<p><b>気をつける</b>M&Aの報酬は運営と折半。ただし成約・金額は約束しない（報酬の額は案件の譲渡価額などで変わる）。レベルの認定と率の適用は運営が行う。</p></div>
 </section>
 
-<section class="slide" data-t="あなたが描く未来" data-g="物語" data-q="パートナーになると、どんな未来が描ける？|保険の仕事はどう変わる？">
-  <div class="eyebrow">このツールで、あなたが描ける未来</div>
-  <h2>「売り込む人」から、「毎月、相談される人」へ</h2>
+<section class="slide" data-t="あなたが描く未来" data-g="物語" data-q="パートナーになると、どんな未来が描ける？|保険の仕事はどう変わる？|副業から本業にできる？|ランクはどう上がる？">
+  <div class="eyebrow">このツールで、あなたが描ける未来 — 4つのステージ</div>
+  <h2>いち営業から、一緒に会社を強くする人へ</h2>
   <div class="flow" style="margin-top:12px;">
-    <div class="f" style="background:var(--soft);"><div class="n">いま</div><div class="h">毎月、ゼロから</div><div class="d">個人保険が中心。成約の月と、ゼロの月。社長に会っても、保険の話しかできない。</div></div>
-    <div class="f"><div class="n">最初の1社</div><div class="h">社長と、数字で話す</div><div class="d">研修を終えて<b>Lv.1</b>、最初の顧問契約で<b>Lv.2（50%）</b>。毎月の面談が、会社のお金の話から始まる。</div></div>
-    <div class="f" style="background:rgba(195,155,63,.08);border-color:#EBDDB4;"><div class="n">顧問先が増える</div><div class="h">収入の波がならされる</div><div class="d">顧問料の配分が毎月積み上がる。例：6社（買い手3・売り手3）なら<b>月120,000円</b>（50%・税別）。</div></div>
-    <div class="f" style="background:rgba(39,104,74,.07);border-color:#CFE3D6;"><div class="n">承継まで伴走</div><div class="h">相談が、続いていく</div><div class="d">成約1件で<b>Lv.3（60%）</b>。次の1社・No.2への承継・持株会社。譲り受けた会社の保険・労務も、社長の了承のうえで本業へ。</div></div>
+    <div class="f" style="background:var(--soft);"><div class="n">1期 — START</div><div class="h">アソシエイト</div><div class="d">研修を修了して認定。AIエージェントがつき、<b>本業を続けたまま</b>1社目の顧問契約を目指す。</div></div>
+    <div class="f"><div class="n">2期 — 副業スタート</div><div class="h">シニア（50%）</div><div class="d">1社目の顧問契約から報酬の対象に。顧問料の配分が毎月積み上がる。例：6社（買い手3・売り手3）なら<b>月120,000円</b>（税別）。</div></div>
+    <div class="f" style="background:rgba(195,155,63,.08);border-color:#EBDDB4;"><div class="n">3期 — 成長期</div><div class="h">エグゼクティブ（60%）</div><div class="d">顧問契約<b>10件</b>。いろいろな業種と課題を経験し、率はメインで担当する全社に。</div></div>
+    <div class="f" style="background:rgba(39,104,74,.07);border-color:#CFE3D6;"><div class="n">4期 — 最上位</div><div class="h">プレミアム（70%）</div><div class="d">顧問契約<b>20件</b>。<b>30社で80%</b>（それまでの全社に）。<b>副業から本業へ</b>を選べる段階。</div></div>
   </div>
   <div class="grid g3" style="margin-top:12px;">
-    <div class="card soft"><h3>関係</h3><p>一度きりの契約 → <b>毎月続く顧問</b>。担当先の数は、ご自身で決められます。</p></div>
-    <div class="card soft"><h3>入口</h3><p>商品の説明 → <b>会社のお金の話</b>。法人の課題を、保険の話より先に知る立場に。</p></div>
-    <div class="card soft"><h3>あなた自身</h3><p>保険の人 → <b>経営の相談相手</b>。承継・M&Aの実績が、あなたの経歴に積み上がります。</p></div>
+    <div class="card soft"><h3>関係</h3><p>一度きりの契約 → <b>毎月続く顧問</b>。「ずっと担当してほしい」に応え続けられる。</p></div>
+    <div class="card soft"><h3>入口</h3><p>商品の説明 → <b>会社のお金の話</b>。法人の課題を、商品の話より先に知る立場に。</p></div>
+    <div class="card soft"><h3>あなた自身</h3><p>売る人 → <b>経営に伴走する人</b>。承継・M&Aの実績が、あなたの経歴に積み上がります。</p></div>
   </div>
   <div class="eg">収入を保証・約束するものではありません。担当先を得られない月は、報酬もご利用料も0円です。金額は顧問料の配分（税別）で、ご利用料・源泉徴収を差し引く前です。率の適用とレベルの認定は運営が行います。</div>
-  <div class="talk"><p><b>言うこと</b>売り込む人から、毎月相談される人へ。いま → 最初の1社 → 顧問先が増える → 承継まで伴走。</p>
-<p><b>見せる所</b>下の3つ。関係・入口・あなた自身が変わる。</p>
+  <div class="talk"><p><b>言うこと</b>いち営業から、一緒に会社を強くする人へ。副業から始め、経験を重ね、本業へ。4つのステージ。</p>
+<p><b>見せる所</b>3期・4期。率は顧問契約の件数で上がり、上がった率はメインで担当する全社に効く。</p>
 <p><b>必ず言う</b>収入の保証ではない。担当先がいない月は報酬もご利用料も0円。金額は配分の例（税別・差し引く前）。</p></div>
 </section>
 
@@ -628,9 +661,9 @@ body.talk-on #talkp{display:block;}
         <div class="scr-sb"><div class="lg">TsuguAi<i>-継-</i></div><div class="co">山田事務所</div>
           <div class="ni dim"><b>▦</b>ダッシュボード</div><div class="ni on"><b>▲</b>成長・研修</div><div class="ni dim"><b>◇</b>本業と連携</div><div class="ni dim"><b>✎</b>営業ツール</div><div class="ni dim"><b>☷</b>顧客管理</div><div class="ni dim"><b>↻</b>課題PDCA</div><div class="ni dim"><b>⇄</b>M&amp;A案件</div><div class="ni dim"><b>◎</b>Tsugime -結-</div><div class="ni dim"><b>▤</b>ナレッジ</div><div class="ni on"><b>¥</b>お支払い</div><div class="ni dim"><b>?</b>運営サポート</div></div>
         <div class="scr-main">
-          <div class="scr-panel hot"><i class="mk ab">1</i><div class="scr-ph">認定レベルと外注費率　<span style="font-weight:400;font-size:9px;color:#5A6981;">実績は自動集計（顧問契約 6社・顧問先の成約 1件）</span></div>
-            <table class="scr-tbl"><tr><th>レベル</th><th>条件</th><th>外注費率</th><th></th></tr><tr><td>Lv.1 アソシエイト</td><td>研修修了でスタート</td><td>—</td><td></td></tr><tr class="g"><td>Lv.2 シニア ← いま</td><td>初の顧問契約</td><td class="g">50%</td><td class="g">✓</td></tr><tr><td>Lv.3 エグゼクティブ</td><td>顧問契約10件 または 成約1件</td><td>60%</td><td><span class="scr-tag gold">成約1件で条件達成</span></td></tr><tr><td>Lv.4 プレミアム</td><td>顧問契約20件 または 成約3件</td><td>70%</td><td><span style="font-size:8px;color:#5A6981;">30社以上で 80%</span></td></tr></table>
-            <div style="font-size:9px;color:#5A6981;margin-top:3px;">正式なレベル認定と率の適用は運営が行います。研修：必修10レッスン ＋ M&amp;Aを深く学ぶ8レッスン（発展）。</div>
+          <div class="scr-panel hot"><i class="mk ab">1</i><div class="scr-ph">認定レベルと外注費率　<span style="font-weight:400;font-size:9px;color:#5A6981;">実績は自動集計（顧問契約 6社）</span></div>
+            <table class="scr-tbl"><tr><th>レベル</th><th>条件</th><th>外注費率</th><th></th></tr><tr><td>Lv.1 アソシエイト</td><td>研修修了でスタート</td><td>—</td><td></td></tr><tr class="g"><td>Lv.2 シニア ← いま</td><td>初の顧問契約</td><td class="g">50%</td><td class="g">✓</td></tr><tr><td>Lv.3 エグゼクティブ</td><td>顧問契約10件</td><td>60%</td><td><span class="scr-tag gold">あと4件</span></td></tr><tr><td>Lv.4 プレミアム</td><td>顧問契約20件</td><td>70%</td><td><span style="font-size:8px;color:#5A6981;">30社以上で 80%</span></td></tr></table>
+            <div style="font-size:9px;color:#5A6981;margin-top:3px;">正式なレベル認定と率の適用は運営が行います。研修：必修11レッスン ＋ M&amp;Aを深く学ぶ8レッスン（発展）。</div>
           </div>
           <div class="scr-panel hot"><i class="mk ab">2</i><div class="scr-ph">お支払い ― 2026年9月分の明細</div>
             <table class="scr-tbl"><tr><th>顧問先</th><th>顧問料（税抜）</th><th>率</th><th>報酬</th></tr><tr><td>株式会社継（買い手）</td><td>45,000</td><td>50%</td><td>22,500</td></tr><tr><td>みどり運輸（売り手）</td><td>35,000</td><td>50%</td><td>17,500</td></tr><tr><td>ほか4社</td><td>170,000</td><td>50%</td><td>85,000</td></tr><tr><td><b>合計</b></td><td></td><td></td><td><b>125,000</b></td></tr><tr><td>源泉徴収（個人・10.21%）</td><td></td><td></td><td class="r">−12,762</td></tr><tr><td>プラットフォーム利用料の相殺（基本3,000＋6社×2,000）</td><td></td><td></td><td class="r">−15,000</td></tr><tr><td><b>お振込額</b></td><td></td><td></td><td class="g"><b>97,238</b></td></tr></table>
@@ -640,13 +673,13 @@ body.talk-on #talkp{display:block;}
       </div>
     </div>
     <div class="dsteps">
-      <div class="dstep"><i class="mk">1</i><div><span class="act">「成長・研修」でランクと実績を見る</span><span class="see">顧問契約の数と、顧問先の成約（譲受）数が自動で集まります。<b>登録漏れがなければ、申告は要りません。</b></span><span class="then">エグゼクティブは10件 または 成約1件、プレミアムは20件 または 成約3件。30社で80%。</span></div></div>
+      <div class="dstep"><i class="mk">1</i><div><span class="act">「成長・研修」でランクと実績を見る</span><span class="see">顧問契約の数が自動で集まります。<b>登録漏れがなければ、申告は要りません。</b></span><span class="then">エグゼクティブは顧問契約10件、プレミアムは20件。30社で80%。</span></div></div>
       <div class="dstep"><i class="mk">2</i><div><span class="act">「お支払い」で毎月の明細を見る</span><span class="see">顧問料（税抜）× 率 → 源泉（個人のみ）→ 利用料の相殺 → <b>お振込額</b>。カード払いはなく、利用料は報酬から差し引き。</span><span class="then">運営が総合振込で振り込みます。2名体制（サブ担当）の配分もここに反映されます。</span></div></div>
       <div class="dstep g"><i class="mk">✓</i><div><span class="act">1社目から、翌月に立つ</span><span class="see">顧問先が6社なら月12.5万、20社（プレミアム70%）なら月50万前後——<b>波の無い土台</b>ができます。M&amp;A成約は、その上に乗ります。</span></div></div>
     </div>
   </div>
   <div class="talk"><p><b>言うこと</b>実績は自動で集まり、レベルと率が決まり、明細に振込額が立つ。</p>
-<p><b>見せる所</b>Lv.3の条件「成約1件」。伴走の3年間の2年目がここにつながる。</p></div>
+<p><b>見せる所</b>Lv.3は顧問契約10件。いまは6社なので「あと4件」と出る。</p></div>
 </section>
 
 <section class="slide" data-t="始め方" data-g="始め方" data-q="どうやって始める？">

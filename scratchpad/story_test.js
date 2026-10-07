@@ -99,8 +99,8 @@ const rate = (y) => Math.round(y.op / y.sales * 1000) / 10;          // 利益�
   ok('パートナー向け：伴走の3年間・担当先の数字・M&Aでの役割・残るもの',
     ['伴走の3年間', '担当先の3年間を数字で', 'M&amp;Aでのあなたの役割', 'あなたに残るもの'].every(function (t) { return PITP.indexOf('data-t="' + t + '"') >= 0; }));
   ok('パートナー向け：月商倍率の単位は「か月」', PITP.indexOf('>0.5か月<') >= 0 && PITP.indexOf('>0.5倍<') < 0);
-  //  成功報酬の配分は決まった数字が無い。資料で作らない
-  ok('パートナー向け：成功報酬の配分は案件ごと', PITP.indexOf('成功報酬の配分は、案件ごとに運営と事前に') >= 0);
+  //  M&Aの報酬は運営とパートナーで折半（2026-10-07 決定。LP と同じ）。金額は約束しない
+  ok('パートナー向け：M&Aの報酬は運営と折半・金額は約束しない', PITP.indexOf('当社が受け取るM&Aの報酬は、<b>運営とパートナーで折半</b>します') >= 0 && PITP.indexOf('成約・金額は約束しない') >= 0 && PITP.indexOf('案件ごとに運営と事前に') < 0);
   ok('一般向け：1社の3年間', PITG.indexOf('data-t="1社の3年間"') >= 0);
   [['pitch-general', PITG], ['pitch-bank', PITB], ['recruit-partner', REC], ['pitch-partner', PITP]].forEach(function (x) {
     no(x[0] + '：古い価格の目安（2,400〜3,600万）が残っていない', x[1].indexOf('2,400〜3,600万') >= 0);
