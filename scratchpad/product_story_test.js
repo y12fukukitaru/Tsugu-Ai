@@ -120,7 +120,7 @@ ok('M&Aの報酬は運営とパートナーで折半（商談スライド・説�
   ok('パートナー：言い切らない（日本初・唯一）・否定しない・架空の例', /「日本初」「唯一」とは言い切らない/.test(core) && /仲介やコンサルを否定しない/.test(core) && /架空の会社の例で、結果を約束するものではありません/.test(core) && !/日本初|唯一の/.test(core.replace(/<div class="talk">[\s\S]*$/, '')));
   ok('パートナー：数字は物語と同じ（9,700万 → 約2.2億・M&Aの報酬は折半）', /9,700万 → 約2\.2億/.test(core) && /会社の値段<\/td><td>9,700万<\/td>/.test(PP) && /M&amp;Aの報酬（運営と折半）/.test(core));
   ok('経営者：表紙は「次の1社を引き受けて、大きく育つ会社へ」', /<h1>次の1社を引き受けて、<br><span style="color:#CFAD62;">大きく育つ会社<\/span>へ。<\/h1>/.test(PC) && /「買い手」に育てる<\/b>、これまでになかった顧問です/.test(PC));
-  ok('経営者：並び 3つの問い → 先送りのコスト → 4つの壁 → なぜ始めたのか → 買い手に育てる顧問 → 答え①', ['表紙', '3つの問い', '先送りのコスト', '4つの壁', 'なぜ始めたのか', '買い手に育てる顧問', '答え①シミュレーション'].join(',') === CO2.slice(0, 7).join(','));
+  ok('経営者：並び 3つの問い → 先送りのコスト → 4つの壁 → なぜ生まれたのか → 買い手に育てる顧問 → 答え①', ['表紙', '3つの問い', '先送りのコスト', '4つの壁', 'なぜ生まれたのか', '買い手に育てる顧問', '答え①シミュレーション'].join(',') === CO2.slice(0, 7).join(','));
   ok('経営者：買い手となり、大きく成長しましょう・ほかの専門家を否定しない', /<b>買い手となり、大きく成長しましょう。<\/b>/.test(cc) && /どれも大切な役割/.test(cc) && /「日本初」「唯一」とは言い切らない/.test(cc));
   ok('経営者：4つの壁は「買える側に立つ手前」（LP と同じ）', /<h2>買える側に立つ手前に、4つの壁があります<\/h2>/.test(slideOf(PC, '4つの壁')));
   ok('経営者：次の一歩は「この会社を買ったら？」から', /「この会社を買ったら？」を見てみませんか。/.test(slideOf(PC, '次の一歩')) && /画面②の「買う側を体験」を開く/.test(slideOf(PC, '次の一歩')));
@@ -129,6 +129,74 @@ ok('M&Aの報酬は運営とパートナーで折半（商談スライド・説�
 }
 const prom = slideOf(PC, '約束すること・しないこと');
 ok('経営者向け：担当の本業（保険など）を押し付けない', /✔ 担当の本業（保険など）を押し付けない（ご了承なく財務の情報を使わず、抱き合わせもしない）/.test(prom) && /保険を売り込まれない？/.test(prom) && /<b>担当が保険の方なら<\/b>/.test(prom));
+
+// ⑥ EP-I・EP-II・所属パートナー候補（2026-10-07）と、経営者向けに個人の経歴を入れない
+{
+  const E1 = R('pitch-ep1.html'), E2 = R('pitch-ep2.html'), EM = R('pitch-ep2-member.html');
+  const o1 = order(E1), o2 = order(E2), om = order(EM);
+  const noTalk = (h) => h.replace(/<div class="talk">[\s\S]*?<\/div>\s*<\/section>/g, '</section>');
+  ok('EP-II：表紙は「御社に、法人営業部門を創りませんか？」', /<h1>御社に、<br><span style="color:#CFAD62;">法人営業部門<\/span>を<br>創りませんか？<\/h1>/.test(E2) && /<title>御社に、法人営業部門を/.test(E2));
+  ok('EP-II：並び 3つの問い → 法人営業部門の壁 → いま起きていること → 買い手に育てる顧問 → 部門の創り方 → EP-IIとは',
+    ['表紙', '3つの問い', '法人営業部門の壁', 'いま起きていること', '買い手に育てる顧問', '部門の創り方', 'EP-IIとは'].join(',') === o2.slice(0, 7).join(','));
+  ok('EP-II：本部の収入の形は配分の直前', o2.indexOf('本部の収入の形') === o2.indexOf('配分') - 1);
+  ok('EP-II：1つ目の問いが法人営業部門', /御社に、法人営業部門を創りませんか？/.test(slideOf(E2, '3つの問い')));
+  ok('EP-II：部門の創り方に研修（必修11・ロールプレイ）・本部の負担0円・面談台本・承継リスク診断・担当表', (function (h) {
+    return /全5章・必修11レッスン/.test(h) && /ロールプレイ/.test(h) && /本部のご負担は0円/.test(h) && /面談台本/.test(h) && /1分の事業承継リスク診断/.test(h) && /担当表と記録/.test(h); })(slideOf(E2, '部門の創り方')));
+  ok('EP-II：保険の提案の決まり（了承・明示・非公開情報・抱き合わせ）', /社長の了承を得てから/.test(slideOf(E2, '部門の創り方')) && /事前の同意なく募集に使わない/.test(slideOf(E2, '部門の創り方')) && /抱き合わせはしない/.test(slideOf(E2, '部門の創り方')));
+  ok('EP-II：M&Aは本部1割・所属4割・運営5割（折半の内側）', /本部に1割、担当の所属パートナーに4割<\/b>をお支払いします（運営が5割）/.test(slideOf(E2, '配分')) && /運営とパートナー側で折半/.test(slideOf(E2, '配分')));
+  ok('EP-II：保険だけに寄せない（本業の手数料）', /本業（保険など）の手数料/.test(slideOf(E2, '本部の収入の形')) && !/<h2>保険の手数料/.test(E2));
+  ok('EP-II：始め方は必修11・所属の方向けの資料へ', /認定研修（全5章・必修11レッスン）を修了し、個別に契約/.test(slideOf(E2, '始め方')) && /所属パートナー候補向けの資料/.test(slideOf(E2, '始め方')));
+  ok('EP-I：つかみは「顧問先の担当者を、買い手に育てるコンサルにしませんか？」・その先に部門', /<h1 style="font-size:40px;">顧問先の担当者を、<br><span style="color:#CFAD62;">買い手に育てるコンサル<\/span>に<br>しませんか？<\/h1>/.test(E1) && /事業承継・M&amp;A支援部門<\/b>が生まれます/.test(secs(E1)[0]) && /買い手企業に育てられるコンサルにしたいと思いませんか？/.test(slideOf(E1, '3つの問い')) && /<title>顧問先の担当者を、買い手に育てるコンサルに/.test(E1));
+  ok('EP-I：並び 3つの問い → いま起きていること → 顧問先の行き先 → 買い手に育てる顧問 → 2つの顧問契約',
+    ['表紙', '3つの問い', 'いま起きていること', '顧問先の行き先', '買い手に育てる顧問', '2つの顧問契約'].join(',') === o1.slice(0, 6).join(','));
+  ok('EP-I：研修は必修11・ロールプレイ', /全5章・必修11レッスン・AIが社長役のロールプレイ/.test(slideOf(E1, '部門をつくる')) && /必修11レッスン/.test(slideOf(E1, '担当者の方へ')) && /必修11レッスン/.test(slideOf(E1, '始め方')));
+  ok('EP-I：説明の頁はすべて「つなぎ」で次へ（画面と始め方を除く）', secs(E1).filter((x) => !/class="slide (cover|dm|divider)/.test('<section class="slide' + x) && !/data-t="(始め方|デモの地図|お金の流れ|決めごと)"/.test(x)).every((x) => /<b>つなぎ<\/b>/.test(x)));
+  ok('EP-I・EP-II：言い切らない（日本初・唯一）', [E1, E2, EM].every((h) => !/日本初|唯一の/.test(noTalk(h))));
+  ok('所属候補：表紙は「本部に所属したまま、法人営業へ。」', /<h1>本部に所属したまま、<br><span style="color:#CFAD62;">法人営業<\/span>へ。<\/h1>/.test(EM));
+  ok('所属候補：並び 問い → 壁 → 市場 → 買い手に育てる顧問 → 越え方2つ → 本部と一緒に → あなたの収入',
+    ['表紙', '3つの問い', '法人営業の壁', '市場', '買い手に育てる顧問', '壁の越え方（始める前）', '壁の越え方（社長の前で）', '本部と一緒に', 'あなたの収入'].join(',') === om.slice(0, 9).join(','));
+  ok('所属候補：最後は始め方', om[om.length - 1] === '始め方');
+  ok('所属候補：個人の率から本部10%を差し引く・顧客はTsuguAiに帰属・離れたら終了', (function (h) {
+    return /本部の10%を差し引いた率<\/b>/.test(h) && /あなたの料率から差し引く形<\/b>/.test(h) && /顧客はTsuguAiに帰属<\/b>し、本部を離れたときはこの契約は終了/.test(h) && !/同じ料率|手取りは減りません/.test(h); })(slideOf(EM, '本部と一緒に')));
+  ok('所属候補：収入は 40%・50%・60%・30社以上70%・M&Aは4割', (function (h) {
+    return /<b>18,000<\/b>/.test(h) && /Lv\.2（40%）/.test(h) && /10件でLv\.3（50%）/.test(h) && /20件でLv\.4（60%）/.test(h) && /30社以上で70%/.test(h) && /あなたに4割、本部に1割<\/b>（運営が5割）/.test(h) && /54,000円/.test(h) && /−5,513円/.test(h) && /38,587円/.test(h); })(slideOf(EM, 'あなたの収入')));
+  ok('所属候補：80%・折半（個人の決まり）を持ち込まない', !/で80%|運営と折半/.test(noTalk(EM)));
+  ok('所属候補：始め方は必修11・ロールプレイ', /必修11レッスン/.test(slideOf(EM, '始め方')) && /ロールプレイ/.test(slideOf(EM, '始め方')));
+  ok('所属候補：資料一覧に EP-II 所属の方だけへ出す', /f:'pitch-ep2-member\.html'[^\n]*who:\{ consultant:'ep2', admin:/.test(SRC) && /d\.who\[eff\]==='ep2'\) return !!\(EP_ME && EP_ME\.org && EP_ME\.org\.kind==='EP2'\)/.test(SRC));
+  ok('所属候補：個人の経歴（19年など）を入れない', !/19年|保険19年/.test(EM));
+  const why = slideOf(PC, 'なぜ生まれたのか');
+  ok('経営者：創業者の経歴を入れない（どのパートナーでも話せる）', !/19年|保険の仕事で/.test(PC) && /経営者の隣で仕事をしてきた人ほど/.test(why) && /認定研修を修了した伴走者/.test(why) && /ほかの人の経歴を自分のことのように話さない/.test(why));
+  ok('経営者：「私たちは始めました」を言わせない', !/私たちは始めました/.test(PC) && /だから、TsuguAi -継- が生まれました/.test(slideOf(PC, '4つの壁')));
+  ok('経営者：目指す社会は運営会社の社名として', /運営会社の社名「<b>福來（ふくきたる）<\/b>」/.test(slideOf(PC, '目指す社会')) && !/私たちにとっても/.test(PC));
+}
+
+// ⑦ EP-II の料率（2026-10-07）：所属の方は個人の率から本部の10%を差し引く
+//     シニア40%・エグゼクティブ50%・プレミアム60%・30社以上70%。本部は10%、継の取り分は個人と同じ
+{
+  const take = (name) => { const i = SRC.indexOf('function ' + name + '('); if (i < 0) throw new Error(name); return SRC.slice(i, SRC.indexOf('\n  }\n', i) + 4); };
+  const lv = SRC.slice(SRC.indexOf('var PG_LEVELS=['), SRC.indexOf('\n  ];\n', SRC.indexOf('var PG_LEVELS=[')) + 5);
+  const F = new Function('var EP_HQ_PCT=0.10;\n' + lv + '\nfunction epMemberRate(r){ return (r==null) ? null : Math.round((Number(r)-EP_HQ_PCT)*100)/100; }\n'
+    + take('pgLevelOf') + '\n' + SRC.match(/function pgPct\(v\)\{[^\n]*\n/)[0] + take('rankFeeRate') + '\n' + take('epSplit')
+    + '\nreturn { rankFeeRate: rankFeeRate, epSplit: epSplit };')();
+  ok('EP-II の率を作る関数がアプリにある', /function epMemberRate\(r\)\{ return \(r==null\) \? null : Math\.round\(\(Number\(r\)-EP_HQ_PCT\)\*100\)\/100; \}/.test(SRC));
+  const r = (rk, cl, e) => F.rankFeeRate(rk, cl, e);
+  ok('個人：50%・60%・70%・30社以上80%（これまでどおり）', [r('Senior', 3), r('Executive', 12), r('Premium Partner', 25), r('Premium Partner', 30)].join() === '0.5,0.6,0.7,0.8');
+  ok('EP-II：40%・50%・60%・30社以上70%', [r('Senior', 3, true), r('Executive', 12, true), r('Premium Partner', 25, true), r('Premium Partner', 30, true)].join() === '0.4,0.5,0.6,0.7');
+  ok('社数が分からないときは基本の率（上へ倒さない）', r('Premium Partner', undefined, true) === 0.6 && r('Premium Partner') === 0.7);
+  ok('個別設定・未設定は率なし', r('なし', 3, true) === null && r('', 3, true) === null);
+  const s2 = F.epSplit(45000, 'EP2', 0.4), s1 = F.epSplit(45000, 'solo', 0.5);
+  ok('EP-II 45,000円・Lv.2：所属18,000／本部4,500／継22,500（継は個人と同じ）', s2.partner === 18000 && s2.hq === 4500 && s2.tsugu === 22500 && s1.tsugu === 22500);
+  ok('配分の画面の表は差し引いた率で（30社以上の行も）', /var r=epMemberRate\(pgPct\(L\.fee\)\);/.test(SRC) && /'（'\+L\.scale\.cl\+'社以上）'/.test(SRC));
+  ok('振込の計算は rankFeeRate に EP-II かどうかを渡す', /rankFeeRate\(p\.fde_rank, payClients\[c\.consultant_id\]\|\|0, !!ep2\[c\.consultant_id\]\)/.test(SRC) && /rankFeeRate\(\(window\.__prof\|\|\{\}\)\.fde_rank, myClients==null\?undefined:myClients, !!myEp2\[ME\]\)/.test(SRC));
+  ok('アプリから古い説明（同じ料率・70%上限・スケール対象外）が消えた', !/スケール対象外|スケール到達（80%）はありません|Lvの料率そのまま|担当者の方の手取りは減りません/.test(SRC));
+  ok('成長の画面：EP-II の方には差し引いた率を出す', /function pgFeeFor\(fee\)/.test(SRC) && /外注費率 <b>'\+pgFeeFor\(L\.fee\)\+'<\/b>'/.test(SRC));
+  const E2b = R('pitch-ep2.html'), ME_ = R('manual-ep.html'), MP = R('manual-partner.html'), MA = R('manual-admin.html'), E1b = R('pitch-ep1.html'), EMb = R('pitch-ep2-member.html');
+  ok('EP-II 資料：配分の表は 40/50/60/70%', /買い手 45,000円　Lv\.2<\/th><td style="text-align:right;">40%<\/td><td style="text-align:right;"><b>18,000<\/b>/.test(E2b) && /買い手 45,000円　30社以上<\/th><td style="text-align:right;">70%<\/td>/.test(E2b) && /本部の10%は<b>所属の方の取り分から<\/b>出します/.test(E2b));
+  ok('EP-II 資料：明細の例は 54,000円・源泉5,513円・お振込み38,587円', [E2b, EMb].every((h) => /<b>54,000 円<\/b>/.test(h) && /− 5,513 円/.test(h) && /<b>38,587 円<\/b>/.test(h) && /シニア・料率40%（EP-II）/.test(h)));
+  ok('EP 資料・説明書に古い率が残っていない', [E2b, EMb, E1b, ME_, MP, MA].every((h) => !/同じ料率です|手取りは減りません|手取りは、減りません|70%が上限|Lv\.4（70%）が上限|スケール対象外|Lvの料率（50〜70%）/.test(h)));
+  ok('違いの表：担当者は個人の料率−10%（40〜70%）', /個人の料率−10%（<b>40〜70%<\/b>）/.test(E2b) && /個人の料率−10%（40〜70%）/.test(E1b) && /個人の料率から10%を差し引いた率（40〜70%）/.test(ME_));
+  ok('説明書：EP-II の方は各段−10%', /各段の率から本部の10%を差し引いた率です。<\/b>シニア40%／エグゼクティブ50%／プレミアム60%／30社以上70%/.test(MP) && /個人の率から<b>10%を差し引いた率<\/b>（40〜70%）/.test(MA));
+}
 
 if (bad.length) { bad.forEach((b) => console.log('NG ' + b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK ' + n + ' checks, 0 failed');

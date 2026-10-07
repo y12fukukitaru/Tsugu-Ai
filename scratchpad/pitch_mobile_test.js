@@ -14,7 +14,7 @@ ok('PCは、いちばん高い一枚にそろえたまま', /min-height:var\(--s
 const pc = CSS.indexOf('min-height:var(--slideh,0);'), sp = CSS.indexOf('@media screen and (max-width:820px){');
 ok('スマホの決まりはPCの決まりより後ろ（上書きする）', pc > 0 && sp > pc);
 ok('下の操作列：字を折らない・題を隠す', /@media\(max-width:560px\)\{[^}]*\.bar\{gap:6px;padding:0 8px;\}\s*\.bar button\{white-space:nowrap;[^}]*\}\s*\.bar \.ttl\{display:none;\}/.test(CSS));
-['pitch-customer', 'pitch-partner', 'pitch-general', 'pitch-bank', 'pitch-finance', 'pitch-ep1', 'pitch-ep2', 'webinar-partner'].forEach(d =>
+['pitch-customer', 'pitch-partner', 'pitch-general', 'pitch-bank', 'pitch-finance', 'pitch-ep1', 'pitch-ep2', 'pitch-ep2-member', 'webinar-partner'].forEach(d =>
   ok(d + ' は pitch-wa.css を読む', /href="pitch-wa\.css"/.test(fs.readFileSync(__dirname + '/../' + d + '.html', 'utf8'))));
 if (bad.length) { bad.forEach(b => console.log('NG', b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK ' + n + ' checks, 0 failed');

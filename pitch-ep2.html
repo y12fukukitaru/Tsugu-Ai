@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>所属の営業に、続く収入と続く関係を | TsuguAi -継- EP-II（所属営業型）のご案内</title>
+<title>御社に、法人営業部門を | TsuguAi -継- EP-II（所属営業型）のご案内</title>
 <meta name="robots" content="noindex">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -129,6 +129,22 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
 .flow .f .d{font-size:11.5px;color:var(--muted);line-height:1.65;}
 @media(max-width:820px){ .tl,.flow{grid-template-columns:1fr 1fr;} .st3{grid-template-columns:1fr;} }
 
+/* ===== 法人営業の壁と越え方（場面ごとの表） =====
+   左＝場面、中＝つまずき、右＝TsuguAiでの越え方。スマホでは1行ずつ札に組み直す */
+.bt{width:100%;border-collapse:separate;border-spacing:0 6px;font-size:12.5px;margin-top:4px;}
+.bt th{font-size:11px;color:var(--muted);font-weight:700;text-align:left;padding:0 12px 0;letter-spacing:.04em;}
+.bt td{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:7px 12px;line-height:1.6;vertical-align:middle;color:var(--ink);}
+.bt td:first-child{border-left:3px solid var(--gold);border-radius:10px 0 0 10px;font-weight:700;color:#8A6A12;white-space:nowrap;background:#FDFAF1;font-size:13px;}
+.bt td:nth-child(2){color:#7A3431;background:rgba(169,64,61,.04);width:27%;}
+.bt td:last-child{border-right:1px solid var(--line);border-radius:0 10px 10px 0;background:rgba(39,104,74,.05);}
+.bt td b{color:var(--navy);}
+@media(max-width:820px){
+  .bt,.bt tbody,.bt tr,.bt td{display:block;width:auto!important;}
+  .bt thead{display:none;}
+  .bt tr{margin-bottom:9px;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:10px;overflow:hidden;}
+  .bt td,.bt td:first-child,.bt td:last-child{border:none;border-radius:0;white-space:normal;}
+}
+
 /* ===== 話す内容（発表する人だけが見る） =====
    紙の中には出さない（倍率を測るときにも数えない）。下のバーの
    「🗣 話す内容」か T キーで、いま出ている一枚のぶんだけを開く。
@@ -156,33 +172,129 @@ body.talk-on #talkp{display:block;}
   <div class="hero-art"><span class="tsg-mado"><svg viewBox="0 -4 64 64" aria-hidden="true" focusable="false"><path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/><rect x="9.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="49.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="14" y="23" width="36" height="30" rx="10" fill="#fff" stroke="#cfa860" stroke-width="1.6"/><circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/><circle cx="20.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><circle cx="43.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/></svg></span></div>
   <div class="hx">
   <div class="mark">TSUGU AI -継-</div>
-  <h1>所属の営業に、<br><span style="color:#CFAD62;">続く収入と、続く関係</span>を。</h1>
-  <p class="sub">エンタープライズ・パートナー <b style="color:#CFAD62;">EP-II（所属営業型）</b> のご案内。<br>本部のご負担はありません。</p>
+  <h1>御社に、<br><span style="color:#CFAD62;">法人営業部門</span>を<br>創りませんか？</h1>
+  <p class="sub">所属の営業が、社長と<b style="color:#fff;">経営の話ができる営業</b>に。顧問先を<b style="color:#fff;">「買い手」に育てる</b>——これまでになかった法人向けの顧問を、御社の部門の看板に。<br>エンタープライズ・パートナー <b style="color:#CFAD62;">EP-II（所属営業型）</b> のご案内。<br>本部のご負担はありません。</p>
   </div>
   <div class="talk"><p><b>言うこと</b>所属の営業に、続く収入と続く関係を。本部のご負担はありません、から入る。</p>
 <p><b>時間</b>全部で30分ほど。15分しかないときは次の順だけ：本部の収入の形 → 配分 → 積み上がる受取 → 1社の3年間 → 関係が変わる → 画面② → 画面③ → 画面⑥ → 始め方。</p>
 <p><b>操作</b>→ かスペースで次へ、F で全画面、T でこの欄の開け閉め。</p></div>
 </section>
 
-<section class="slide" data-t="いま起きていること" data-g="課題" data-q="なぜ、いまこの提案？">
-  <div class="eyebrow">WHY — なぜ、このご提案なのか</div>
+<section class="slide" data-t="3つの問い" data-g="問いかけ" data-q="法人営業部門を創りたい|所属の方の収入の波が気になる|承継の相談を受け止めたい">
+  <div class="eyebrow">本部の皆さまに、3つだけ</div>
+  <h2>ひとつでも頷いたら、この先は御社の話です</h2>
+  <div style="display:flex;flex-direction:column;gap:14px;margin-top:22px;">
+    <div class="q"><span class="n">1</span>御社に、法人営業部門を創りませんか？<br>——所属の方が、社長と経営の話をする部門を。</div>
+    <div class="q"><span class="n">2</span>所属の方の収入が、成約の月とゼロの月で波打っていませんか？</div>
+    <div class="q"><span class="n">3</span>お客様の社長に「会社をどうするか」と相談されたとき、受け止められる人がいますか？</div>
+  </div>
+  <div class="talk"><p><b>言うこと</b>3つを読み上げ、頷いた番号を聞く。1つ目が今日の本題。</p>
+<p><b>つなぎ</b>「法人営業に力を入れたい、という本部は多い。けれど、なかなか部門が育たない。なぜでしょう」と言って次へ。</p></div>
+</section>
+
+<section class="slide" data-t="法人営業部門の壁" data-g="問いかけ" data-q="なぜ法人営業部門が育たない？|法人営業を教えられる人がいない|先行投資が心配">
+  <div class="eyebrow">法人営業部門を創りたい。でも——</div>
+  <h2>なぜ、営業の組織に法人営業が育ちにくいのか</h2>
+  <p class="sub" style="margin-bottom:10px;">こんなお悩みはありませんか。止まる理由は、たいていこの5つです。</p>
+  <div class="walls">
+    <div class="wl"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14h16a6 6 0 0 1 6 6v30a5 5 0 0 0-5-5H12z"/><path d="M52 14H36a6 6 0 0 0-6 6v30a5 5 0 0 1 5-5h17z"/></svg></div><div class="w-t">教える人</div><div class="w-c">法人営業を<b>教えられる人</b>が、社内にいない</div></div>
+    <div class="wl"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="10" y="14" width="44" height="30" rx="4"/><path d="M24 52h16M32 44v8"/><path d="M28 24a4 4 0 1 1 5 4c-1 .6-1 1.4-1 2.4M32 35v.5"/></svg></div><div class="w-t">研修と道具</div><div class="w-c">研修・教材・システムに、<b>先に投資</b>が要る</div></div>
+    <div class="wl"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 8h24l10 10v38H16z"/><path d="M40 8v10h10"/><path d="M23 44V36M30 44V30M37 44v-6"/></svg></div><div class="w-t">決算書</div><div class="w-c">決算書を前に、<b>どこを見て何を話すか</b>分からない</div></div>
+    <div class="wl"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 14h30v20H22l-8 7v-7H8z"/><path d="M42 24h14v18h-5v6l-7-6H30v-4"/></svg></div><div class="w-t">社長との入口</div><div class="w-c">商品の話から入ると<b>身構えられ</b>、経営の話に移れない</div></div>
+    <div class="wl"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="26" cy="30" r="16"/><path d="M26 21v9l6 4"/><circle cx="46" cy="44" r="10"/><path d="M42 40l4 4 4-4M46 44v7M42 47h8"/></svg></div><div class="w-t">続く仕組み</div><div class="w-c">成果が出るまでに、<b>所属の方の収入が先に細る</b></div></div>
+  </div>
+  <div class="note" style="margin-top:14px;"><b>なぜ、育ちにくいのか。</b>法人営業で問われるのは「商品」ではなく<b>「経営の判断」</b>だからです。社長が決めるのは会社のお金の使い道。会社の数字と、その先（退職金・借入・承継）を一緒に見られる人にだけ、相談が来ます。部門に足りないのは人数や予算ではなく、所属の方が<b>社長の隣で数字を話せる立場と道具</b>です。</div>
+  <div class="talk"><p><b>聞く</b>「5つのうち、御社で止まっているのはどれですか」。指してもらう。</p>
+<p><b>言うこと</b>法人営業で問われるのは商品ではなく経営の判断。部門に足りないのは人数や予算ではなく、社長の隣で数字を話せる立場と道具。</p>
+<p><b>つなぎ</b>「その一方で、所属の方とお客様の間では、いまこんなことが起きています」と言って次へ。5つの越え方は、このあと「部門の創り方」でお見せする。</p></div>
+</section>
+
+<section class="slide" data-t="いま起きていること" data-g="問いかけ" data-q="なぜ、いまこの提案？">
+  <div class="eyebrow">WHY — 所属の方とお客様の間で、いま起きていること</div>
   <h2>成約の月と、ゼロの月。<br>その波を、所属の方が一人で受けています。</h2>
   <div class="grid g3" style="margin-top:16px;">
     <div class="card r"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 10v42h46"/><path stroke="#C39B3F" stroke-width="7" d="M20 46V24M31 46v-6M42 46V30M53 46v-9"/><path stroke-dasharray="4 4" d="M14 32h44"/></svg></div><h3>収入の波</h3><p>誠実に信頼を積み上げる方ほど、<b>フルコミッションの波</b>に消耗していきます。</p></div>
     <div class="card r"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="18" y="12" width="28" height="40" rx="3" stroke-dasharray="5 5"/><path stroke-dasharray="3 4" d="M26 22h4M34 22h4M26 31h4M34 31h4M26 40h4M34 40h4"/><path d="M12 52h40"/></svg></div><h3>一度きりの関係</h3><p>契約が決まれば、次にお会いするのは更新のとき。<b>あいだの1年</b>に接点がありません。</p></div>
     <div class="card w"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="32" cy="17" r="8"/><path d="M13 52c0-11 8.5-18 19-18s19 7 19 18"/></svg></div><h3>承継の話に答えられない</h3><p>顧客の多くが<b>承継の当事者</b>。聞かれても、材料が無ければ受け止めきれません。</p></div>
   </div>
-  <div class="note" style="margin-top:16px;">TsuguAi -継- は、<b>明確な出口（ゴール）を経営者と一緒に決め、管理しながら伴走するプラットフォーム</b>です。交渉前の準備から交渉中、交渉後もずっと一緒にいます。<b>EP-II は、所属の方が認定パートナーとして動き、本部がそれを束ねる形</b>です。</div>
+  <div class="note" style="margin-top:16px;">TsuguAi -継- は、<b>明確な出口（ゴール）を経営者と一緒に決め、管理しながら伴走するプラットフォーム</b>です。交渉前の準備から交渉中、交渉後もずっと一緒にいます。<b>EP-II は、所属の方が認定パートナーとして動き、本部がそれを法人営業部門として束ねる形</b>です。</div>
   <div class="talk"><p><b>言うこと</b>成約の月とゼロの月。その波を、所属の方が一人で受けている。</p>
-<p><b>問いかけ</b>「お客様の中に、後継者が決まっていない社長は何人いますか」。答えを待つ。</p></div>
+<p><b>問いかけ</b>「お客様の中に、後継者が決まっていない社長は何人いますか」。答えを待つ。</p>
+<p><b>つなぎ</b>「収入の波、一度きりの関係、承継の相談。この3つを1つの仕組みで変えられないか——その答えが、次の頁です」。</p></div>
 </section>
 
-<section class="slide" data-t="本部の収入の形" data-g="課題" data-q="本部にはいくら入る？|保険の手数料とどう違う？">
+<section class="slide" data-t="買い手に育てる顧問" data-g="私たちの答え" data-q="このプロダクトの肝は？|部門の看板は何になる？|仲介やコンサルと何が違う？">
+  <div class="eyebrow">私たちの答え — 部門の看板は「買い手に育てる顧問」</div>
+  <h2>顧問先を「買い手」に育てる。<br>これからの法人営業部門の仕事です</h2>
+  <div class="grid g3" style="margin-top:12px;">
+    <div class="card soft"><h3>仲介会社</h3><p>売りたい会社と買いたい会社を<b>引き合わせる</b>。成約で役目が終わり、その会社の数字を毎月見るわけではない。</p></div>
+    <div class="card soft"><h3>コンサル・顧問</h3><p>目の前の<b>課題ごと</b>に解決する。「次の1社を引き受けられる会社か」を育てるところまでは見ない。</p></div>
+    <div class="card g"><h3>御社の法人営業部門</h3><p>所属の方が認定パートナーとして、毎月の数字で地盤を厚くし、<b>次の1社を引き受けられる会社（買い手）に育てる</b>。道具はTsuguAi -継-。</p></div>
+  </div>
+  <div class="note" style="margin-top:12px;"><b>買い手プラン（月45,000円・税別）が、この部門の肝です。</b>社長には、柱が増えて揺るがない会社を（株式会社継・架空の例：会社の値段 9,700万 → 約2.2億）。所属の方には、毎月の顧問料の配分と長く続く関係を。本部には、<b>1社ごとに毎月4,500円</b>と、成約したときのM&amp;Aの報酬の1割を。</div>
+  <div class="eg">買い手に育てる顧問は、これまでの仕組みにはほとんどありませんでした。最初に部門を創る本部が、この仕事の基準になります。数字は架空の例で、結果を約束するものではありません。</div>
+  <div class="talk"><p><b>言うこと</b>仲介は引き合わせ、コンサルは課題ごと。顧問先を買い手に育てる顧問は、これまでほとんどなかった。それを御社の法人営業部門の看板に。</p>
+<p><b>見せる所</b>右の緑と、下の「買い手プランが肝」。社長・所属の方・本部の三方に良い。</p>
+<p><b>必ず言う</b>「日本初」「唯一」とは言い切らない。仲介やコンサルを否定しない（役割が違う）。数字は架空の例で約束しない。</p>
+<p><b>つなぎ</b>「では、さっきの5つの壁を、どう越えるか」と言って次へ。</p></div>
+</section>
+
+<section class="slide" data-t="部門の創り方" data-g="部門の創り方" data-q="法人営業を教えられる人がいなくてもできる？|研修や道具の費用は？|決算書が読めなくても大丈夫？|部門の動きは見える？|保険の提案はできる？">
+  <div class="eyebrow">部門の創り方 — 5つの壁の越え方</div>
+  <h2>教える人も、先行投資も要りません。<br>壁だったものは、仕組みが引き受けます</h2>
+  <table class="bt">
+    <thead><tr><th>壁</th><th>止まるところ</th><th>EP-II では</th></tr></thead>
+    <tr><td>教える人</td><td>法人営業を教えられる人が社内にいない</td><td>所属の方が各自で<b>認定研修（全5章・必修11レッスン）</b>。最後に継ナビくんが社長役になる<b>ロールプレイ</b>で面談を先に体験します。本部で講師や教材を用意する必要はありません。</td></tr>
+    <tr><td>研修と道具</td><td>研修・教材・システムに先に投資が要る</td><td><b>本部のご負担は0円</b>。研修は無料、前払いもありません。所属の方のご利用料も、顧問料の入金があった月だけ報酬から差し引きます。</td></tr>
+    <tr><td>決算書</td><td>どこを見て何を話すか分からない</td><td>試算表・決算書を取り込めば<b>AIが読み取り</b>、資金繰り・利益率・会社の値段まで。カルテの<b>面談台本</b>に、見せる数字3つ・問い3つ。</td></tr>
+    <tr><td>社長との入口</td><td>商品の話から入ると身構えられる</td><td><b>1分の事業承継リスク診断</b>（登録不要）や<b>課題ヒアリング診断</b>を社長と一緒に開く。商品ではなく、会社の話から入れます。</td></tr>
+    <tr><td>続く仕組み</td><td>成果が出る前に、所属の方の収入が細る</td><td>顧問料が<b>毎月</b>入り、担当社数に比例して積み上がります。誰が何社を持つかは<b>担当表と記録</b>で自動で見え、本部の登録作業はありません。</td></tr>
+  </table>
+  <div class="note" style="margin-top:8px;"><b>本業（保険など）の相談は、あとから来ます。</b>会社のお金を一緒に見るうちに、固定費・役員退職金・承継の準備の相談が出てきます。募集人資格をお持ちの所属の方は、<b>社長の了承を得てから</b>ご自身の本業として。顧問の立場と募集人の立場を<b>先に明示</b>し、顧問で知った預金・借入などの情報を<b>事前の同意なく募集に使わない</b>、顧問契約との<b>抱き合わせはしない</b>。売り込まない設計だから、相談されます。</div>
+  <div class="talk"><p><b>言うこと</b>教える人・研修と道具・決算書・社長との入口・続く仕組み。5つの壁は、研修とAIと毎月の顧問料が引き受ける。本部の負担は0円。</p>
+<p><b>見せる所</b>「教える人」の行。本部で講師を用意しなくても、所属の方が各自で研修とロールプレイを受けられる。</p>
+<p><b>必ず言う</b>保険の提案は社長の了承を得てから。非公開金融情報の扱い（保険業法施行規則）と抱き合わせの禁止。</p>
+<p><b>つなぎ</b>「では、部門の仕組みを。契約は2本立てです」と言って次へ。</p></div>
+</section>
+
+<section class="slide" data-t="EP-IIとは" data-g="仕組み" data-q="契約は何本？|顧客は誰に帰属する？|本部の役割は？">
+  <div class="eyebrow">EP-II（所属営業型）</div>
+  <h2>顧客と向き合うのは所属の方。本部は、監督と受け取りの側に。</h2>
+  <p class="sub">本部とTsuguAiが1本、所属の方おひとりずつとTsuguAiが1本、<b>契約は2本立て</b>です。本部だけでは実際に顧客と向き合う方が何にも縛られず、個人だけでは監督する本部の責任が定まりません。両方が要ります。</p>
+  <div class="grid g3" style="margin-top:14px;">
+    <div class="card"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="10" y="16" width="44" height="34" rx="3"/><path d="M10 27h44"/><path d="M22 38h20"/></svg></div><h3>本部の役割</h3><p>所属の方をTsuguAiに届け出て、<b>業務品質と法令遵守を監督</b>します（契約書 第4条）。顧問先の登録作業はありません。</p></div>
+    <div class="card g"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="22" cy="17" r="7.5"/><path d="M5 51c0-10 7.5-16 17-16s17 6 17 16"/><circle cx="46" cy="20" r="6" stroke="#C39B3F"/><path stroke="#C39B3F" d="M36 51c0-8 4.5-13 10-13s10 5 10 13"/></svg></div><h3>所属の方の役割</h3><p>認定パートナーとして顧問先に伴走します。<b>取り分は、単独で活動する方の料率から本部の10%を差し引いた率</b>です。</p></div>
+    <div class="card"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="16" y="24" width="32" height="26" rx="8"/><circle cx="26" cy="35" r="2.5" fill="currentColor" stroke="none"/><circle cx="38" cy="35" r="2.5" fill="currentColor" stroke="none"/><path d="M27 43q5 4 10 0"/><path stroke="#C39B3F" d="M32 10l1.8 5.2L39 17l-5.2 1.8L32 24l-1.8-5.2L25 17l5.2-1.8z"/><path d="M10 34v8M54 34v8"/></svg></div><h3>TsuguAiの役割</h3><p>道具（AI・見える化・承継の伴走）と、顧客のご請求・集金・お振込みを引き受けます。</p></div>
+  </div>
+  <div class="note" style="margin-top:14px;"><b>顧客はTsuguAiに帰属します。</b>担当はTsuguAiが設定するため、本部での登録作業はありません。ご担当が退職されたときは、<b>後任のご指名を運営までお知らせください</b>。顧問先はそのまま続きます。</div>
+  <div class="talk"><p><b>言うこと</b>契約は2本立て。顧客と向き合うのは所属の方、本部は監督と受け取りの側。</p>
+<p><b>強調</b>顧問先の登録作業は本部にはない。担当はTsuguAiが設定する。</p>
+<p><b>つなぎ</b>「顧客基盤をお持ちの法人向けには、もうひとつの形があります」と言って次へ。</p></div>
+</section>
+
+<section class="slide" data-t="EP-IとEP-IIの違い" data-g="仕組み" data-q="EP-IとEP-IIの違いは？">
+  <div class="eyebrow">2つの形</div>
+  <h2>営業組織をお持ちなら EP-II、顧客基盤をお持ちなら EP-I</h2>
+  <table class="kv" style="margin-top:10px;">
+    <tr><th style="width:22%;"></th><th style="width:39%;color:#2C5DA8;">EP-II（所属営業型）</th><th style="width:39%;color:#8A6A12;">EP-I（顧客基盤型）</th></tr>
+    <tr><th>想定する相手</th><td>保険代理店など、<b>営業を抱え、法人営業部門を創りたい本部</b></td><td>税理士法人・社労士法人など、顧客基盤をお持ちの法人</td></tr>
+    <tr><th>顧客の帰属</th><td><b>TsuguAi</b></td><td>その法人</td></tr>
+    <tr><th>顧客と契約するのは</th><td><b>所属の認定パートナーご本人</b></td><td>法人</td></tr>
+    <tr><th>TsuguAiとの契約</th><td>本部と1本 ＋ 所属の方ごとに1本の<b>2本立て</b></td><td>法人と1本</td></tr>
+    <tr><th>取り分</th><td>担当者が個人の料率−10%（<b>40〜70%</b>）／本部が<b>一律10%</b></td><td>法人が80%（担当者への配分は社内で）</td></tr>
+    <tr><th>TsuguAiへのご利用料</th><td><b>所属の方がご負担</b>（本部のご負担はありません）</td><td>法人がまとめてご負担</td></tr>
+  </table>
+  <div class="note" style="margin-top:12px;">どちらも<b>ボリュームディスカウント・EP登録料・月額下限・法人管理料はありません</b>。顧問料は全社一律です。</div>
+  <div class="talk"><p><b>言うこと</b>営業組織をお持ちならEP-II。担当者はLvの料率、本部は一律10%、利用料は所属の方のご負担。</p>
+<p><b>つなぎ</b>「では、部門ができると、本部にはどんな収入が入るのか」と言って次へ。</p></div>
+</section>
+
+<section class="slide" data-t="本部の収入の形" data-g="収入" data-q="本部にはいくら入る？|本業の手数料とどう違う？">
   <div class="eyebrow">WHY — 本部の収入を、もう1本</div>
-  <h2>保険の手数料とは別の、毎月積み上がる収入を</h2>
+  <h2>本業の手数料とは別の、毎月積み上がる収入を</h2>
   <div class="grid g2" style="margin-top:12px;gap:14px;">
     <div class="card" style="text-align:left;">
-      <h3>保険の手数料</h3>
+      <h3>本業（保険など）の手数料</h3>
       <p>・新しい契約が決まるかどうかで、<b>月ごとに波</b>がある</p>
       <p>・所属の方の成約に連動する</p>
       <p>・契約のあと、次にお客様と深く話すのは更新のとき</p>
@@ -194,56 +306,27 @@ body.talk-on #talkp{display:block;}
       <p>・担当社数に比例して<b>積み上がる</b>。本部のご負担は<b>0円</b></p>
     </div>
   </div>
-  <div class="note" style="margin-top:14px;">保険の手数料に代わるものではなく、<b>その横にもう1本立つ柱</b>です。本部の受取はTsuguAiの取り分から出しているので、所属の方の手取りは減りません。</div>
-  <div class="talk"><p><b>言うこと</b>保険の手数料とは別の、毎月積み上がる収入をもう1本。</p>
+  <div class="note" style="margin-top:14px;">本業の手数料に代わるものではなく、<b>その横にもう1本立つ柱</b>です。本部の受取は所属の方の料率から10%を差し引く形で出すので、<b>本部のご負担はありません</b>。</div>
+  <div class="talk"><p><b>言うこと</b>本業の手数料とは別の、毎月積み上がる収入をもう1本。</p>
 <p><b>見せる所</b>右の箱。所属の方が1社持つたびに、本部に毎月4,500円。本部のご負担は0円。</p>
-<p><b>強調</b>保険に代わるものではなく、その横に立つもう1本の柱。本部の10%はTsuguAiの取り分から出るので、所属の方の手取りは減らない。</p>
-<p><b>気をつける</b>保険の手数料の額や率には触れない（会社ごとに違う）。</p></div>
+<p><b>強調</b>本業に代わるものではなく、その横に立つもう1本の柱。本部の10%は所属の方の料率から差し引く形で出る（シニア40%・エグゼクティブ50%・プレミアム60%・30社以上70%）。本部の持ち出しはない。</p>
+<p><b>気をつける</b>本業（保険など）の手数料の額や率には触れない（会社ごとに違う）。</p>
+<p><b>つなぎ</b>「では、配分を数字で」と言って次へ。</p></div>
 </section>
 
-<section class="slide" data-t="EP-IIとは" data-g="ご提案" data-q="契約は何本？|顧客は誰に帰属する？|本部の役割は？">
-  <div class="eyebrow">EP-II（所属営業型）</div>
-  <h2>顧客と向き合うのは所属の方。本部は、監督と受け取りの側に。</h2>
-  <p class="sub">本部とTsuguAiが1本、所属の方おひとりずつとTsuguAiが1本、<b>契約は2本立て</b>です。本部だけでは実際に顧客と向き合う方が何にも縛られず、個人だけでは監督する本部の責任が定まりません。両方が要ります。</p>
-  <div class="grid g3" style="margin-top:14px;">
-    <div class="card"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="10" y="16" width="44" height="34" rx="3"/><path d="M10 27h44"/><path d="M22 38h20"/></svg></div><h3>本部の役割</h3><p>所属の方をTsuguAiに届け出て、<b>業務品質と法令遵守を監督</b>します（契約書 第4条）。顧問先の登録作業はありません。</p></div>
-    <div class="card g"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="22" cy="17" r="7.5"/><path d="M5 51c0-10 7.5-16 17-16s17 6 17 16"/><circle cx="46" cy="20" r="6" stroke="#C39B3F"/><path stroke="#C39B3F" d="M36 51c0-8 4.5-13 10-13s10 5 10 13"/></svg></div><h3>所属の方の役割</h3><p>認定パートナーとして顧問先に伴走します。<b>取り分は単独で活動する方と同じ料率</b>です。</p></div>
-    <div class="card"><div class="cico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="16" y="24" width="32" height="26" rx="8"/><circle cx="26" cy="35" r="2.5" fill="currentColor" stroke="none"/><circle cx="38" cy="35" r="2.5" fill="currentColor" stroke="none"/><path d="M27 43q5 4 10 0"/><path stroke="#C39B3F" d="M32 10l1.8 5.2L39 17l-5.2 1.8L32 24l-1.8-5.2L25 17l5.2-1.8z"/><path d="M10 34v8M54 34v8"/></svg></div><h3>TsuguAiの役割</h3><p>道具（AI・見える化・承継の伴走）と、顧客のご請求・集金・お振込みを引き受けます。</p></div>
-  </div>
-  <div class="note" style="margin-top:14px;"><b>顧客はTsuguAiに帰属します。</b>担当はTsuguAiが設定するため、本部での登録作業はありません。ご担当が退職されたときは、<b>後任のご指名を運営までお知らせください</b>。顧問先はそのまま続きます。</div>
-  <div class="talk"><p><b>言うこと</b>契約は2本立て。顧客と向き合うのは所属の方、本部は監督と受け取りの側。</p>
-<p><b>強調</b>顧問先の登録作業は本部にはない。担当はTsuguAiが設定する。</p></div>
-</section>
-
-<section class="slide" data-t="EP-IとEP-IIの違い" data-g="ご提案" data-q="EP-IとEP-IIの違いは？">
-  <div class="eyebrow">2つの形</div>
-  <h2>営業組織をお持ちなら EP-II、顧客基盤をお持ちなら EP-I</h2>
-  <table class="kv" style="margin-top:10px;">
-    <tr><th style="width:22%;"></th><th style="width:39%;color:#2C5DA8;">EP-II（所属営業型）</th><th style="width:39%;color:#8A6A12;">EP-I（顧客基盤型）</th></tr>
-    <tr><th>想定する相手</th><td>保険代理店など、<b>営業を抱える本部</b></td><td>税理士法人・社労士法人など、顧客基盤をお持ちの法人</td></tr>
-    <tr><th>顧客の帰属</th><td><b>TsuguAi</b></td><td>その法人</td></tr>
-    <tr><th>顧客と契約するのは</th><td><b>所属の認定パートナーご本人</b></td><td>法人</td></tr>
-    <tr><th>TsuguAiとの契約</th><td>本部と1本 ＋ 所属の方ごとに1本の<b>2本立て</b></td><td>法人と1本</td></tr>
-    <tr><th>取り分</th><td>担当者がLvの料率（50〜70%）／本部が<b>一律10%</b></td><td>法人が80%（担当者への配分は社内で）</td></tr>
-    <tr><th>TsuguAiへのご利用料</th><td><b>所属の方がご負担</b>（本部のご負担はありません）</td><td>法人がまとめてご負担</td></tr>
-  </table>
-  <div class="note" style="margin-top:12px;">どちらも<b>ボリュームディスカウント・EP登録料・月額下限・法人管理料はありません</b>。顧問料は全社一律です。</div>
-  <div class="talk"><p><b>言うこと</b>営業組織をお持ちならEP-II。担当者はLvの料率、本部は一律10%、利用料は所属の方のご負担。</p></div>
-</section>
-
-<section class="slide" data-t="配分" data-g="収入" data-q="本部の取り分は？|所属の方の手取りは減る？|本部の負担は？">
+<section class="slide" data-t="配分" data-g="収入" data-q="本部の取り分は？|所属の方の料率は？|本部の負担は？">
   <div class="eyebrow">配分</div>
-  <h2>本部は一律10%。所属の方の手取りは、減りません。</h2>
-  <p class="sub">本部の10%は<b>TsuguAiの取り分から出しています</b>。所属の方の取り分は、単独で活動されている認定パートナーとまったく同じ料率です。</p>
+  <h2>本部は一律10%。所属の方は、個人の率から10%を差し引いた率</h2>
+  <p class="sub">本部の10%は<b>所属の方の取り分から</b>出します。所属の方は<b>シニア40%／エグゼクティブ50%／プレミアム60%／30社以上70%</b>。TsuguAiの取り分は単独の場合と同じです。</p>
   <div class="grid g2" style="margin-top:12px;">
     <div class="card"><h3>基本顧問料の配分（月・税別）</h3>
       <table class="kv tight" style="margin-top:6px;"><tr><th></th><th style="text-align:right;">料率</th><th style="text-align:right;">担当者</th><th style="text-align:right;">本部</th><th style="text-align:right;">TsuguAi</th></tr>
-      <tr><th>買い手 45,000円　Lv.2</th><td style="text-align:right;">50%</td><td style="text-align:right;"><b>22,500</b></td><td style="text-align:right;">4,500</td><td style="text-align:right;color:#8A6A12;">18,000</td></tr>
-      <tr><th>買い手 45,000円　Lv.3</th><td style="text-align:right;">60%</td><td style="text-align:right;"><b>27,000</b></td><td style="text-align:right;">4,500</td><td style="text-align:right;color:#8A6A12;">13,500</td></tr>
-      <tr><th>買い手 45,000円　Lv.4</th><td style="text-align:right;">70%</td><td style="text-align:right;"><b>31,500</b></td><td style="text-align:right;">4,500</td><td style="text-align:right;color:#8A6A12;">9,000</td></tr>
-      <tr><th>売り手 35,000円　Lv.2</th><td style="text-align:right;">50%</td><td style="text-align:right;"><b>17,500</b></td><td style="text-align:right;">3,500</td><td style="text-align:right;color:#8A6A12;">14,000</td></tr>
-      <tr><th>売り手 35,000円　Lv.3</th><td style="text-align:right;">60%</td><td style="text-align:right;"><b>21,000</b></td><td style="text-align:right;">3,500</td><td style="text-align:right;color:#8A6A12;">10,500</td></tr>
-      <tr><th>売り手 35,000円　Lv.4</th><td style="text-align:right;">70%</td><td style="text-align:right;"><b>24,500</b></td><td style="text-align:right;">3,500</td><td style="text-align:right;color:#8A6A12;">7,000</td></tr></table></div>
+      <tr><th>買い手 45,000円　Lv.2</th><td style="text-align:right;">40%</td><td style="text-align:right;"><b>18,000</b></td><td style="text-align:right;">4,500</td><td style="text-align:right;color:#8A6A12;">22,500</td></tr>
+      <tr><th>買い手 45,000円　Lv.3</th><td style="text-align:right;">50%</td><td style="text-align:right;"><b>22,500</b></td><td style="text-align:right;">4,500</td><td style="text-align:right;color:#8A6A12;">18,000</td></tr>
+      <tr><th>買い手 45,000円　Lv.4</th><td style="text-align:right;">60%</td><td style="text-align:right;"><b>27,000</b></td><td style="text-align:right;">4,500</td><td style="text-align:right;color:#8A6A12;">13,500</td></tr>
+      <tr><th>買い手 45,000円　30社以上</th><td style="text-align:right;">70%</td><td style="text-align:right;"><b>31,500</b></td><td style="text-align:right;">4,500</td><td style="text-align:right;color:#8A6A12;">9,000</td></tr>
+      <tr><th>売り手 35,000円　Lv.2</th><td style="text-align:right;">40%</td><td style="text-align:right;"><b>14,000</b></td><td style="text-align:right;">3,500</td><td style="text-align:right;color:#8A6A12;">17,500</td></tr>
+      <tr><th>売り手 35,000円　Lv.4</th><td style="text-align:right;">60%</td><td style="text-align:right;"><b>21,000</b></td><td style="text-align:right;">3,500</td><td style="text-align:right;color:#8A6A12;">10,500</td></tr></table></div>
     <div class="card g"><h3>本部の受取（月・税別）</h3>
       <table class="kv tight" style="margin-top:6px;"><tr><th>所属10名・担当30社（買い手）</th><td style="text-align:right;"><b>135,000円</b></td></tr>
       <tr><th>所属20名・担当60社（買い手）</th><td style="text-align:right;"><b>270,000円</b></td></tr>
@@ -252,9 +335,10 @@ body.talk-on #talkp{display:block;}
       <p style="margin-top:8px;">1社あたり<b>顧問料の一律10%</b>（買い手 4,500円／売り手 3,500円）。担当する会社が増えるほど積み上がります。初期導入費も同じ料率で、本部は買い手 10,000円／売り手 5,000円です。</p></div>
   </div>
   <div class="note" style="margin-top:12px;"><b>M&amp;Aが成約したとき。</b>TsuguAi（福來）が受け取った手数料から税金分を差し引いた額のうち、<b>本部に1割、担当の所属パートナーに4割</b>をお支払いします（運営が5割）。TsuguAiの役割は<b>買い手候補の特定まで</b>です。</div>
-  <div class="talk"><p><b>言うこと</b>本部は一律10%。所属の方の料率は単独の認定パートナーと同じ。</p>
+  <div class="talk"><p><b>言うこと</b>本部は一律10%。所属の方の率は、単独の認定パートナーの率から10%を差し引いた率（40%／50%／60%／30社以上70%）。TsuguAiの取り分は単独と同じ。</p>
 <p><b>見せる所</b>表の本部の列。どのレベルでも買い手4,500円・売り手3,500円。</p>
-<p><b>M&amp;A</b>成約したときは、手数料（税抜き）のうち本部に1割、担当の所属パートナーに4割（運営5割）。</p></div>
+<p><b>M&amp;A</b>成約したときは、手数料（税抜き）のうち本部に1割、担当の所属パートナーに4割（運営5割）。運営とパートナー側で折半し、パートナー側の半分を本部と所属の方で分ける形。</p>
+<p><b>つなぎ</b>「これが3年でどう積み上がるか」と言って次へ。</p></div>
 </section>
 
 <section class="slide" data-t="積み上がる受取" data-g="収入" data-q="3年でいくらになる？|担当が替わったら？">
@@ -268,14 +352,15 @@ body.talk-on #talkp{display:block;}
   </table>
   <div class="grid g3" style="margin-top:14px;">
     <div class="card soft"><h3>本部のご負担 0円</h3><p>ご利用料は所属の方ご本人のご負担。本部へのご請求はありません。</p></div>
-    <div class="card soft"><h3>所属の方の手取りも</h3><p>Lv.2（50%）で3社なら月67,500円。顧問10件でLv.3（60%）に。</p></div>
+    <div class="card soft"><h3>所属の方の取り分も</h3><p>Lv.2（40%）で3社なら月54,000円。顧問10件でLv.3（50%）に。</p></div>
     <div class="card soft"><h3>担当が替わっても続く</h3><p>顧客はTsuguAiに帰属。後任をご指名いただければ、そのまま続きます。</p></div>
   </div>
   <div class="eg">税別。すべて買い手プラン（1社 4,500円・初期導入費 10,000円）・解約のない場合の単純計算です。売り手プランなら1社 3,500円／5,000円。所属の方の額は源泉徴収とご利用料を差し引く前の額です。</div>
   <div class="talk"><p><b>言うこと</b>所属10名が、おひとり年3社ずつ持つと、3年目の終わりに90社・本部に月40万5千円。年にして486万円。</p>
 <p><b>強調</b>本部のご負担は0円。担当が替わっても、後任をご指名いただけば顧問先は続く。</p>
-<p><b>所属の方</b>Lv.2で3社なら月67,500円。顧問10件でLv.3（60%）。</p>
-<p><b>必ず言う</b>すべて買い手プラン・解約のない場合の単純計算です。</p></div>
+<p><b>所属の方</b>Lv.2（40%）で3社なら月54,000円。顧問10件でLv.3（50%）。</p>
+<p><b>必ず言う</b>すべて買い手プラン・解約のない場合の単純計算です。</p>
+<p><b>つなぎ</b>「数字の裏で、所属の方とお客様の間に何が起きるか。1社の3年間でお見せします」と言って次へ。</p></div>
 </section>
 
 <section class="slide" data-t="1社の3年間" data-g="物語" data-q="所属の方の収入の例は？">
@@ -290,7 +375,7 @@ body.talk-on #talkp{display:block;}
     <div class="s y3"><div class="w">3年目</div><div class="h">柱が2本に</div><div class="d">営業利益 <b>3,280万</b>。会社の値段 <b>約2億2,000万</b>。</div></div>
     <div class="s y3"><div class="w">本部には</div><div class="h">毎月の受取</div><div class="d">この1社で月4,500円。<b>所属の方全員の担当社数</b>で積み上がる。</div></div>
   </div>
-  <div class="note" style="margin-top:16px;">佐藤さんの手取りは、この1社で月22,500円（Lv.2）。2年目のM&amp;A（運営のFA報酬117万・税別の例）では、<b>本部に11.7万、佐藤さんに46.8万</b>。<b>毎月会う理由</b>ができたことで、社長の相談はまず佐藤さんに来るようになります。</div>
+  <div class="note" style="margin-top:16px;">佐藤さんの取り分は、この1社で月18,000円（Lv.2・40%）。2年目のM&amp;A（運営のFA報酬117万・税別の例）では、<b>本部に11.7万、佐藤さんに46.8万</b>。<b>毎月会う理由</b>ができたことで、社長の相談はまず佐藤さんに来るようになります。</div>
   <div class="eg">架空の会社の例で、結果をお約束するものではありません。会社の値段＝EBITDA×5＋現預金−借入（TsuguAiの企業価値診断と同じ式）。</div>
   <div class="talk"><p><b>言うこと</b>架空の所属の方・佐藤さんと、保険のお客様だった株式会社継。年に一度の更新の相手が、毎月会う顧問先に変わる。</p>
 <p><b>見せる所</b>左から順に。会社の値段が9,700万から約2億2,000万に。</p>
@@ -369,7 +454,7 @@ body.talk-on #talkp{display:block;}
 
 <section class="slide" data-t="関係が変わる" data-g="物語" data-q="保険の締結はしてもいい？|本部にM&amp;Aの報酬は入る？">
   <div class="eyebrow">顧問先が変わると、誰に何が起きるか</div>
-  <h2>社長にも、所属の方にも、本部にも返ってきます</h2>
+  <h2>法人営業部門は、社長にも、所属の方にも、本部にも返ってきます</h2>
   <div class="st3">
     <div class="c"><h4>顧問先の社長</h4><ul>
       <li>会社の値段 <b>9,700万 → 約2億2,000万</b>（3年）</li>
@@ -379,21 +464,22 @@ body.talk-on #talkp{display:block;}
       <li>年に一度の接点が、<b>毎月の面談</b>に</li>
       <li>顧問料は毎月入るので、<b>収入の波が小さくなる</b></li>
       <li>承継の相談に、材料を持って答えられる</li>
-      <li>Lvが上がれば料率も上がる（上限70%）</li>
+      <li>Lvが上がれば料率も上がる（30社以上で70%）</li>
       <li>顧問先で見つかった保険の相談は、<b>ご自身の本業</b>として</li></ul></div>
     <div class="c num"><h4>本部</h4><ul>
-      <li>保険とは別の<b>ストック収入</b></li>
+      <li>本業とは別の<b>ストック収入</b></li>
+      <li><b>法人営業部門</b>という、新しい看板</li>
       <li>M&amp;Aが成約すれば、手数料（税抜き）の<b>1割</b></li>
-      <li>所属の方が、続けやすい収入の形に</li>
-      <li>席の付け外しが残り、<b>監督の記録</b>になる</li>
+            <li>席の付け外しが残り、<b>監督の記録</b>になる</li>
       <li>ご負担は<b>0円</b></li></ul></div>
   </div>
   <div class="note" style="margin-top:14px;">保険の締結は、<b>募集人資格をお持ちの所属の方なら、ご自身の本業として</b>行えます（顧問としての立場と、募集人としての立場を先に明示します）。TsuguAiは保険を売り込むための道具ではなく、社長が<b>「保険のこともこの人に相談したい」</b>と思う関係を、毎月の伴走で作る道具です。</div>
   <div class="talk"><p><b>言うこと</b>顧問先が変わると、社長・所属の方・本部の三者に返ってくる。</p>
-<p><b>見せる所</b>右の「本部」。保険とは別のストック収入／M&amp;Aで1割／続けやすい収入の形／監督の記録／負担0円。</p>
+<p><b>見せる所</b>右の「本部」。本業とは別のストック収入／法人営業部門という看板／M&amp;Aで1割／続けやすい収入の形／監督の記録／負担0円。</p>
 <p><b>保険</b>募集人資格のある所属の方は、顧問先の保険の相談をご自身の本業として締結まで。ただし売り込みの道具ではない。顧問の立場と募集人の立場を先に明示する——ここを曖昧にすると信頼を失う。</p>
 <p><b>M&amp;A</b>手数料（税抜き）のうち本部1割・所属の方4割・運営5割。117万の例なら本部11.7万、所属の方46.8万。</p>
-<p><b>気をつける</b>「所属の方が辞めなくなる」とは言い切らない。「続けやすい収入の形に」までにとどめる。</p></div>
+<p><b>気をつける</b>「所属の方が辞めなくなる」とは言い切らない。「続けやすい収入の形に」までにとどめる。</p>
+<p><b>つなぎ</b>「ここからは、本部と所属の方が実際に使う画面でお見せします」と言って次へ。</p></div>
 </section>
 
 <section class="slide divider" data-t="画面で見る" data-g="画面で見る">
@@ -435,12 +521,12 @@ body.talk-on #talkp{display:block;}
             <div class="scr-chips" style="margin-top:7px;"><div class="scr-chip"><div class="l">所属している方</div><div class="v">3 名</div><div class="s">担当者登録使用料はご本人のご負担</div></div><div class="scr-chip"><div class="l">担当している会社</div><div class="v">9 社</div><div class="s">担当表に出ている顧客（買い手 7／売り手 2）</div></div><div class="scr-chip hot"><i class="mk ab">2</i><div class="l">本部の受取（月）</div><div class="v">38,500 円</div><div class="s">買い手 7 × 4,500 ＋ 売り手 2 × 3,500（一律10%）</div></div><div class="scr-chip"><div class="l">本部のご負担（月）</div><div class="v g">0 円</div><div class="s">利用料は所属の方それぞれのご負担</div></div></div>
             <div class="scr-card" style="margin-top:7px;"><div class="t">基本顧問料 45,000 円の配分（月・税別）</div>
               <table class="scr-tbl" style="margin-top:3px;"><tr><th></th><th>料率</th><th>担当者</th><th>本部</th><th>TsuguAi</th></tr>
-              <tr><td>買い手 Lv.2</td><td>50%</td><td><b>22,500</b></td><td><b>4,500</b></td><td>18,000</td></tr>
-              <tr><td>買い手 Lv.3</td><td>60%</td><td><b>27,000</b></td><td><b>4,500</b></td><td>13,500</td></tr>
-              <tr><td>買い手 Lv.4</td><td>70%</td><td><b>31,500</b></td><td><b>4,500</b></td><td>9,000</td></tr>
-              <tr><td>売り手 Lv.2</td><td>50%</td><td><b>17,500</b></td><td><b>3,500</b></td><td>14,000</td></tr>
-              <tr><td>売り手 Lv.4</td><td>70%</td><td><b>24,500</b></td><td><b>3,500</b></td><td>7,000</td></tr></table>
-              <div class="d" style="margin-top:3px;">担当者の方の取り分は、単独で活動されている認定パートナーと<b>同じ料率</b>です。本部の10%はTsuguAiの取り分から出しており、担当者の方の手取りは減りません。なお EP-II では<b>スケール到達（80%）はありません</b>。Lv.4（70%）が上限です。</div></div>
+              <tr><td>買い手 Lv.2</td><td>40%</td><td><b>18,000</b></td><td><b>4,500</b></td><td>22,500</td></tr>
+              <tr><td>買い手 Lv.3</td><td>50%</td><td><b>22,500</b></td><td><b>4,500</b></td><td>18,000</td></tr>
+              <tr><td>買い手 Lv.4</td><td>60%</td><td><b>27,000</b></td><td><b>4,500</b></td><td>13,500</td></tr><tr><td>買い手 30社以上</td><td>70%</td><td><b>31,500</b></td><td><b>4,500</b></td><td>9,000</td></tr>
+              <tr><td>売り手 Lv.2</td><td>40%</td><td><b>14,000</b></td><td><b>3,500</b></td><td>17,500</td></tr>
+              </table>
+              <div class="d" style="margin-top:3px;">担当者の方の取り分は、単独の認定パートナーの料率から<b>本部の10%を差し引いた率</b>です（30社以上で70%）。TsuguAiの取り分は単独の場合と同じです。</div></div>
             <div class="scr-card hot"><i class="mk ab">3</i><div class="t">TsuguAiへのご利用料（本部のご負担はありません）</div>
               <div class="d">EP-II では、プラットフォームのご利用料は<b>所属の認定パートナーご本人</b>にお願いしています。本部へのご請求はありません。お一人あたりの目安は、担当者登録使用料 <b>3,000 円</b> ＋ AI利用料 <b>2,000 円 × 入金のあった顧問先の数</b>（いずれも税別）で、毎月の配分から差し引いて精算します。入金のあった顧問先が0社の月は、基本料もいただきません。</div></div>
           </div>
@@ -511,7 +597,7 @@ body.talk-on #talkp{display:block;}
     </div>
     <div class="dsteps">
       <div class="dstep"><i class="mk">1</i><div><span class="act">EP-II に「顧問先」タブはありません</span><span class="see">顧客はTsuguAiに帰属し、担当は<b>個々の認定パートナー</b>に付きます。本部が別に登録すると<b>二重管理になって必ず食い違う</b>ので、その入り口を作っていません。</span><span class="then">代わりに、この「担当表」がその場で集めて出します。<b>本部での登録作業はゼロ</b>です。</span></div></div>
-      <div class="dstep"><i class="mk">2</i><div><span class="act">おひとりずつ、認定レベルと担当先の会社名</span><span class="see">上のレベルの方ほど料率が高く、手取りが増えます（Lv.2 50%／Lv.3 60%／Lv.4 70%）。本部の受取は<b>どのレベルでも顧問料の10%</b>（買い手 4,500円／売り手 3,500円）です。会社名の横に、どちらのプランかが札で出ます。</span><span class="then">運営が顧客に担当パートナーを設定すると、ここに<b>自動で並びます</b>。上の「概要」の担当社数も同時に動きます。</span></div></div>
+      <div class="dstep"><i class="mk">2</i><div><span class="act">おひとりずつ、認定レベルと担当先の会社名</span><span class="see">上のレベルの方ほど料率が高く、手取りが増えます（Lv.2 40%／Lv.3 50%／Lv.4 60%／30社以上70%）。本部の受取は<b>どのレベルでも顧問料の10%</b>（買い手 4,500円／売り手 3,500円）です。会社名の横に、どちらのプランかが札で出ます。</span><span class="then">運営が顧客に担当パートナーを設定すると、ここに<b>自動で並びます</b>。上の「概要」の担当社数も同時に動きます。</span></div></div>
       <div class="dstep w"><i class="mk">!</i><div><span class="act">担当を替えたいときは、運営へ</span><span class="see">EP-II の担当はTsuguAiが設定します。ご担当が退職・交代されるときは、<b>後任のご指名を運営までお知らせください。</b></span><span class="then">顧問先はそのまま続きます。顧客から見れば「担当が替わった」だけで、契約や履歴は途切れません。</span></div></div>
     </div>
   </div>
@@ -561,11 +647,11 @@ body.talk-on #talkp{display:block;}
             <div class="scr-list"><li><span class="nm">佐藤建設　月次レポートの承認</span><span class="scr-tag gold">期限 今日</span><span class="to">開く →</span></li>
               <li><span class="nm">北川食品　出口の設計が未着手</span><span class="scr-tag">3か月の節目</span><span class="to">開く →</span></li>
               <li><span class="nm">みなと物流　未読 2件</span><span class="scr-tag red">返信待ち</span><span class="to">開く →</span></li></div>
-            <div class="scr-chips" style="margin-top:6px;"><div class="scr-chip"><div class="l">顧問契約</div><div class="v">3 社</div></div><div class="scr-chip"><div class="l">認定レベル</div><div class="v">Lv.2</div><div class="s">シニア・料率50%</div></div><div class="scr-chip"><div class="l">今月の報酬（目安）</div><div class="v g">67,500 円</div></div></div>
+            <div class="scr-chips" style="margin-top:6px;"><div class="scr-chip"><div class="l">顧問契約</div><div class="v">3 社</div></div><div class="scr-chip"><div class="l">認定レベル</div><div class="v">Lv.2</div><div class="s">シニア・料率40%（EP-II）</div></div><div class="scr-chip"><div class="l">今月の報酬（目安）</div><div class="v g">54,000 円</div></div></div>
           </div>
           <div class="scr-row" style="gap:6px;">
             <div class="scr-card l4 blue" style="flex:1;margin-top:0;"><div class="t">☷ 顧客管理</div><div class="d">担当している3社の一覧とカルテ。<b>顧問契約もここから送ります。</b></div></div>
-            <div class="scr-card l4 green" style="flex:1;margin-top:0;"><div class="t">▲ 成長・研修</div><div class="d">全5章の認定研修と、Lvの上がり方。<b>単独の方と同じ道</b>です。</div></div>
+            <div class="scr-card l4 green" style="flex:1;margin-top:0;"><div class="t">▲ 成長・研修</div><div class="d">全5章・必修11レッスンの認定研修（ロールプレイつき）と、Lvの上がり方。<b>単独の方と同じ道</b>です。</div></div>
           </div>
           <div class="scr-fab"><svg viewBox="0 -4 64 64" aria-hidden="true"><rect x="14" y="23" width="36" height="30" rx="10" fill="#fff"/><circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/><path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/><path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/></svg><i class="bd">2</i></div>
         </div>
@@ -591,15 +677,15 @@ body.talk-on #talkp{display:block;}
         <div class="scr-main">
           <div class="scr-panel"><div class="scr-ph">¥ 所属の方の明細（2026年9月・佐藤 花子 Lv.2）</div>
             <table class="scr-tbl" style="margin-top:3px;"><tr><th>顧客</th><th style="text-align:left;">区分</th><th>入金額</th><th>税抜</th><th>率</th><th>報酬（目安）</th></tr>
-              <tr><td>佐藤建設</td><td style="text-align:left;">顧問料</td><td>49,500</td><td>45,000</td><td>50%</td><td class="g">22,500</td></tr>
-              <tr><td>北川食品</td><td style="text-align:left;">顧問料</td><td>49,500</td><td>45,000</td><td>50%</td><td class="g">22,500</td></tr>
-              <tr><td>みなと物流</td><td style="text-align:left;">顧問料</td><td>49,500</td><td>45,000</td><td>50%</td><td class="g">22,500</td></tr>
-              <tr><td><b>合計</b></td><td></td><td><b>148,500</b></td><td><b>135,000</b></td><td></td><td class="g"><b>67,500</b></td></tr></table>
+              <tr><td>佐藤建設</td><td style="text-align:left;">顧問料</td><td>49,500</td><td>45,000</td><td>40%</td><td class="g">18,000</td></tr>
+              <tr><td>北川食品</td><td style="text-align:left;">顧問料</td><td>49,500</td><td>45,000</td><td>40%</td><td class="g">18,000</td></tr>
+              <tr><td>みなと物流</td><td style="text-align:left;">顧問料</td><td>49,500</td><td>45,000</td><td>40%</td><td class="g">18,000</td></tr>
+              <tr><td><b>合計</b></td><td></td><td><b>148,500</b></td><td><b>135,000</b></td><td></td><td class="g"><b>54,000</b></td></tr></table>
             <div class="scr-card l4 blue hot" style="margin-top:6px;"><i class="mk ab">1</i>
-              <table class="scr-tbl"><tr><td>報酬（税抜 × 外注費率）</td><td><b>67,500 円</b></td></tr>
-                <tr><td style="color:#A9403D;">源泉徴収（10.21%）</td><td style="color:#A9403D;">− 6,892 円</td></tr>
+              <table class="scr-tbl"><tr><td>報酬（税抜 × 外注費率）</td><td><b>54,000 円</b></td></tr>
+                <tr><td style="color:#A9403D;">源泉徴収（10.21%）</td><td style="color:#A9403D;">− 5,513 円</td></tr>
                 <tr><td style="color:#A9403D;">プラットフォーム利用料</td><td style="color:#A9403D;">− 9,900 円</td></tr>
-                <tr><td><b>お振込額（目安）</b></td><td class="g"><b>50,708 円</b></td></tr></table>
+                <tr><td><b>お振込額（目安）</b></td><td class="g"><b>38,587 円</b></td></tr></table>
               <div class="d" style="margin-top:3px;">担当者登録使用料 3,000円 ＋ AI利用料 2,000円 × 3社 ＝ 9,000円（税抜）→ 9,900円（税込）</div></div>
           </div>
           <div class="scr-panel hot"><i class="mk ab">2</i><div class="scr-ph">¥ 運営の配分画面（同じ月）</div>
@@ -630,25 +716,27 @@ body.talk-on #talkp{display:block;}
   </div>
   <div class="note" style="margin-top:14px;"><b>やらないこと。</b>所属の方は仲介・価格交渉・契約実務・法務税務の判断を行いません。実行段階は専門家と運営が引き継ぎます。禁止行為ガイドライン（保険業法・税理士法・弁護士法等への抵触防止）に基づいて活動します。</div>
   <div class="talk"><p><b>言うこと</b>本部は監督の責任を持つ（第4条）。所属の方は仲介・価格交渉・契約実務・法務税務はしない。</p>
-<p><b>強調</b>禁止行為ガイドライン（保険業法・税理士法・弁護士法）に沿って活動する。</p></div>
+<p><b>強調</b>禁止行為ガイドライン（保険業法・税理士法・弁護士法）に沿って活動する。</p>
+<p><b>つなぎ</b>「最後に、始め方です」と言って次へ。</p></div>
 </section>
 
 <section class="slide" data-t="始め方" data-g="始め方" data-q="どう始める？">
   <div class="eyebrow">始め方</div>
-  <h2>3つの手順で、来月から動けます</h2>
+  <h2>法人営業部門は、3つの手順で来月から</h2>
   <div class="duo" style="margin-top:14px;">
     <div class="txt">
       <div style="display:flex;flex-direction:column;gap:12px;">
         <div class="q"><span class="n">1</span>本部契約（EP-II）を結び、管理者を1名決める</div>
-        <div class="q"><span class="n">2</span>所属の方に研修（全5章）を受けていただき、個別に契約</div>
+        <div class="q"><span class="n">2</span>所属の方が認定研修（全5章・必修11レッスン）を修了し、個別に契約</div>
         <div class="q"><span class="n">3</span>おひとり1社から。翌月から3か月で土台づくり</div>
       </div>
-      <p class="sub" style="margin-top:16px;">所属の方が5名、おひとり3社をお持ちになれば、本部の受取は月<b>67,500円</b>。ご負担はありません。</p>
+      <p class="sub" style="margin-top:16px;">所属の方が5名、おひとり3社をお持ちになれば、本部の受取は月<b>67,500円</b>。ご負担はありません。<br>所属の方へのご説明には、<b>所属パートナー候補向けの資料</b>をお使いください。</p>
     </div>
     <div class="art" style="color:#C39B3F;"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 52h14V38h14V24h14V10h6"/><path stroke="#C39B3F" d="m44 18 6-6 6 6"/></svg></div>
   </div>
   <div class="talk"><p><b>言うこと</b>本部契約と管理者 → 所属の方の研修と個別の契約 → おひとり1社から。</p>
-<p><b>締め</b>「所属の方が5名、おひとり3社で、本部に毎月67,500円。まずは、承継の話ができていないお客様を1社ずつ」。</p></div>
+<p><b>締め</b>「御社の法人営業部門は、所属の方1名・1社から創れます。所属の方が5名、おひとり3社で、本部に毎月67,500円。まずは、承継の話ができていないお客様を1社ずつ」。</p>
+<p><b>次の約束</b>所属の方向けの説明会の日程をその場で決める。資料は「EP-II 所属パートナー候補向け プロダクト説明」。</p></div>
 </section>
 </div>
 <div id="talkp" aria-live="polite"></div>
