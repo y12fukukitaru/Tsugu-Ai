@@ -92,6 +92,12 @@ h2{font-size:30px;font-weight:600;color:var(--navy);margin:0 0 12px;line-height:
    （EBITDA×5＋現預金−借入）。1年後の数字がデモの画面とぴったり合う */
 .tl{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-top:14px;}
 .tl .s{border:1px solid var(--line);border-radius:11px;padding:10px 9px 9px;background:#fff;}
+/* 十年の未来設計図：5段なので、1段を大きく読ませる */
+.slide[data-t="十年の未来設計図"] .tl .s{padding:14px 13px 13px;}
+.slide[data-t="十年の未来設計図"] .tl .s .w{font-size:12px;}
+.slide[data-t="十年の未来設計図"] .tl .s .h{font-size:17px;margin:4px 0 7px;}
+.slide[data-t="十年の未来設計図"] .tl .s .d{font-size:13px;line-height:1.75;}
+@media(max-width:820px){ .slide[data-t="十年の未来設計図"] .tl{grid-template-columns:1fr!important;} }
 .tl .s .w{font-family:'DM Sans','Noto Sans JP',sans-serif;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--gold);}
 .tl .s .h{font-size:13.5px;font-weight:700;color:var(--navy);margin:3px 0 5px;line-height:1.45;}
 .tl .s .d{font-size:11.5px;color:var(--muted);line-height:1.7;}
@@ -836,6 +842,23 @@ body.talk-on #talkp{display:block;}
   <div class="talk"><p><b>言うこと</b>最後に一枚で。契約した月・1年後・3年後。</p>
 <p><b>見せる所</b>右の「何が効いたか」。1年目は見直しで＋360万、2〜3年目はM&amp;Aで＋1,120万。</p>
 <p><b>必ず言う</b>架空の会社の例で、結果のお約束ではありません。式はTsuguAiの企業価値診断と同じです。</p></div>
+</section>
+
+<section class="slide" data-t="十年の未来設計図" data-g="物語：2年目・3年目" data-q="10年先まで考えてくれる？|3年のあとはどうなる？|持株会社にしないといけない？">
+  <div class="eyebrow">その先 — 十年の未来設計図</div>
+  <h2>十年先までの道筋を、いま、一緒に描く</h2>
+  <p class="sub" style="margin-bottom:6px;">目の前の相談に乗るだけではありません。地盤を厚くし、柱を増やし、やがて次の世代へ手渡す。その設計図を、毎月の数字を手元に置いて一緒に描きます。</p>
+  <div class="tl" style="grid-template-columns:repeat(5,1fr);">
+    <div class="s y1"><div class="w">Phase 1 ｜ 0〜2年</div><div class="h">承継期</div><div class="d">経営を軌道に。毎月の数字と月次の伴走で、会社を自分の手で動かせる状態に。</div></div>
+    <div class="s y1"><div class="w">Phase 2 ｜ 2〜4年</div><div class="h">軌道化・安定期</div><div class="d">成長の手と財務の最適化。次のステージに向けた資本政策も一緒に。</div></div>
+    <div class="s y2"><div class="w">Phase 3 ｜ 4〜6年</div><div class="h">拡大期</div><div class="d">M&Aで2社目。統合の伴走で、グループ経営の土台を。</div></div>
+    <div class="s y2"><div class="w">Phase 4 ｜ 6年〜</div><div class="h">柱を増やす</div><div class="d">3社目以降へ。規模に応じて持株会社という形も。<b>目的ではなく、選び方の一つ</b>です。</div></div>
+    <div class="s y3"><div class="w">Phase 5 ｜ 10年〜</div><div class="h">次世代承継</div><div class="d">ご自身も次の世代へ。承継計画・出口の設計まで、最後まで伴走します。</div></div>
+  </div>
+  <div class="note" style="margin-top:12px;">株式会社継は、2年目に2社目を譲り受けた例（架空）です。<b>年数は目安で、進み方は会社ごとに違います。</b>いつか託したいとお考えの社長は、Phase 5 から——会社の価値を整え、創業の意思を託せる相手へ橋渡しするまでを一緒に設計します（このあと「譲る側の社長へ」）。</div>
+  <div class="talk"><p><b>言うこと</b>3年の物語は入口。十年先まで、地盤を厚くし、柱を増やし、次の世代へ手渡す設計図を一緒に描く。</p>
+<p><b>見せる所</b>Phase 4。持株会社は目的ではなく選び方の一つ。</p>
+<p><b>必ず言う</b>年数は目安。結果を約束するものではない。株式会社継は架空の例で、2年目に2社目を譲り受けている。</p></div>
 </section>
 
 <section class="slide" data-t="譲る側の社長へ" data-g="譲る側の社長へ" data-q="譲るのが先でも、今から契約する意味は？|売り手プランの料金は？">
