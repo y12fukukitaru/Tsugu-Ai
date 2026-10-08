@@ -157,6 +157,18 @@ ok('継ナビくんの知識にも', /スマホ通知は毎朝のブリーフに
   })();
 }
 
+// ⑤ 説明書（2026-10-09）：3つの説明書に「スマホ通知とバッジ」の頁
+{
+  const MA = R('manual-admin.html'), sec = (h, t) => { const i = h.indexOf('data-t="' + t + '"'); return i < 0 ? '' : h.slice(i, h.indexOf('</section>', i)); };
+  const order = (h) => (h.match(/data-t="([^"]*)"/g) || []).map((x) => x.slice(8, -1));
+  const P1 = sec(MP, 'スマホ通知とバッジ'), C1 = sec(MC, 'スマホ通知とバッジ'), A1 = sec(MA, 'スマホ通知とバッジ');
+  ok('説明書：パートナーは TODO の次・経営者は「お知らせが届くとき」の次・運営は「自動の通知」の次', order(MP).indexOf('スマホ通知とバッジ') === order(MP).indexOf('TODO（やること）') + 1 && order(MC).indexOf('スマホ通知とバッジ') === order(MC).indexOf('お知らせが届くとき') + 1 && order(MA).indexOf('スマホ通知とバッジ') === order(MA).indexOf('自動の通知') + 1);
+  ok('説明書：始め方（ホーム画面に追加 → 連携 → 許可 → 試しの通知）・届かないときの順番', [P1, C1].every((h) => /ホーム画面に追加/.test(h) && /この端末に試しに通知を出す/.test(h) && /届かないときは、この順に。/.test(h) && /知らせない/.test(h)));
+  ok('説明書：役割ごとの中身（パートナー＝相談の共有／経営者＝対応のお願い・月次レポート）', /継ナビくんの相談を<b>「伝える」<\/b>で共有したとき/.test(P1) && /<b>対応のお願い<\/b>/.test(C1) && /月次レポートが届いたとき/.test(C1));
+  ok('説明書：バッジ（開くと正しい数・止め方）', [P1, C1].every((h) => /アイコンの数字（バッジ）/.test(h) && /開くと正しい数/.test(h) && /バッジ をオフ/.test(h)));
+  ok('運営の説明書：運営に届くもの・仕組み・確かめる SQL', /解約のご依頼/.test(A1) && /push_reminder_log/.test(A1) && /cron\.job_run_details/.test(A1) && /<code>push-reminders<\/code> が<b>1分ごと<\/b>/.test(sec(MA, '自動の通知')));
+}
+
 function done() {
 if (bad.length) { bad.forEach((b) => console.log('NG ' + b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK ' + n + ' checks, 0 failed');
