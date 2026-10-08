@@ -1,6 +1,6 @@
 // @ts-nocheck  下の「何を送るか」の部分を素の JavaScript のまま試験で動かすため、型の検査はしない
 // =============================================================
-// push-reminders: 予定とTODOを、スマホ（ホーム画面に追加したアプリ）へ知らせる
+// push-reminders: 予定・TODO・メッセージ・対応が必要なことを、スマホ（ホーム画面に追加したアプリ）へ知らせる
 // ---------------------------------------------------------------
 //  これまでプッシュ通知で届いていたのは、毎朝のブリーフ（agent-heartbeat）
 //  だけだった。予定の直前や TODO の期限の時刻には何も来ないので、アプリを
@@ -10,8 +10,19 @@
 //    ・予定（継ナビくんの予定タブ＝agenda_events）……開始の 10／30／60 分前（既定30分）
 //    ・面談（meetings_scheduled）……同じく開始前。経営者ご本人と担当パートナーの両方へ
 //    ・TODO（todos。期限の時刻があるもの）……期限の時刻に
-//    ・終日の予定・時刻のない今日の TODO・経営者の「やること」（customer_todos）
-//        ……朝8時（日本時間）にまとめて1通
+//    ・終日の予定・時刻のない今日の TODO・経営者の「やること」（customer_todos）・
+//      期日が今日の対応事項（action_items）……朝8時（日本時間）にまとめて1通
+//
+//  新しく届いたものは、届いてすぐ（1分ごとの呼び出しで）
+//    メッセージ（msg_on）
+//    ・担当とのメッセージ（chat_messages）……経営者 ⇄ 担当パートナー
+//    ・運営からの回答（support_inquiries.admin_reply）……問い合わせたパートナーへ
+//    ・運営からのお知らせ（announcements）……宛先（全員／パートナー／顧客）へ
+//    対応が必要なこと（act_on）
+//    ・対応事項（action_items）……担当パートナーが登録したら、経営者へ
+//    ・継ナビくんの相談の共有（ai_shares）……経営者が「伝える」を押したら、担当パートナーへ
+//    ・月次レポート（monthly_reports）……公開されたら、経営者へ
+//    ・問い合わせ・解約のご依頼・契約の終了のお申し出・プラン切替の依頼……運営（admin）へ
 //
 //  二度送らない：送る前に push_reminder_log へ (誰・種類・id・時刻) を書き込み、
 //  書き込めたものだけ送る。呼び出しが重なっても、遅れても、同じ通知は1回だけ。
@@ -21,7 +32,8 @@
 //  デプロイ: Supabase Dashboard → Edge Functions → push-reminders（Verify JWT はオフ）
 //   Secrets は既存のものを使う：CRON_SECRET／VAPID_PUBLIC_KEY／VAPID_PRIVATE_KEY／
 //   VAPID_SUBJECT／APP_URL（agent-heartbeat と同じ）
-//  呼び出し: pg_cron が5分ごと（migrations/20261008010000_push_reminders.sql）
+//  呼び出し: pg_cron が1分ごと（migrations/20261008010000_push_reminders.sql で登録、
+//            20261008020000_push_messages.sql で5分→1分に）
 //  確かめる: ?dry=1 を付けると送らずに「いま送るもの」を JSON で返す
 // =============================================================
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -71,8 +83,16 @@ async function run(sb: any, now: number, dry: boolean) {
   // ---- 設定（表がまだ無い環境では、全員を既定として扱う）----
   const prefs: Record<string, any> = {};
   await eachChunk(users, async (ids) => {
-    const { data, error } = await sb.from("notify_prefs").select("user_id, event_on, event_before_min, todo_on").in("user_id", ids);
-    if (!error) for (const p of data ?? []) prefs[p.user_id] = p;
+    let r = await sb.from("notify_prefs").select("user_id, event_on, event_before_min, todo_on, msg_on, act_on").in("user_id", ids);
+    //  メッセージの列をまだ足していない環境でも、予定とTODOの設定は読む
+    if (r.error) r = await sb.from("notify_prefs").select("user_id, event_on, event_before_min, todo_on").in("user_id", ids);
+    if (!r.error) for (const p of r.data ?? []) prefs[p.user_id] = p;
+  });
+  //  役割（運営あての通知と、お知らせの宛先に使う）
+  const roles: Record<string, string> = {};
+  await eachChunk(users, async (ids) => {
+    const { data } = await sb.from("profiles").select("id, role").in("id", ids);
+    for (const p of data ?? []) roles[p.id] = p.role;
   });
 
   // ---- 時刻のある予定（これから61分のうちに始まるもの）----
@@ -122,9 +142,37 @@ async function run(sb: any, now: number, dry: boolean) {
     });
   }
 
+  // ---- 新しく届いたもの（この GRACE_MIN 分のうちに書かれたもの）----
+  //  どれも、表や列がまだ無い環境では黙って空にする（ほかの通知は止めない）
+  const since = new Date(now - GRACE_MIN * MIN).toISOString();
+  const pick = async (q: any) => { try { const { data, error } = await q; return error ? [] : (data ?? []); } catch { return []; } };
+  const msgs = await pick(sb.from("chat_messages").select("customer_id, sender_id, sender_role, body, attachment_name, created_at")
+    .gt("created_at", since).order("created_at", { ascending: true }).limit(300));
+  const replies = await pick(sb.from("support_inquiries").select("id, partner_id, subject, admin_reply, replied_at")
+    .gt("replied_at", since).limit(100));
+  const anns = await pick(sb.from("announcements").select("id, audience, title, body, created_at").gt("created_at", since).limit(20));
+  const acts = await pick(sb.from("action_items").select("id, customer_id, title, due_date, created_by, created_at")
+    .gt("created_at", since).limit(200));
+  const shares = await pick(sb.from("ai_shares").select("id, customer_id, question, created_at").gt("created_at", since).limit(200));
+  const reports = await pick(sb.from("monthly_reports").select("id, customer_id, report_month, published_at")
+    .eq("status", "published").gt("published_at", since).limit(200));
+  const inquiries = await pick(sb.from("support_inquiries").select("id, partner_id, subject, created_at").gt("created_at", since).limit(100));
+  const cancels = await pick(sb.from("cancel_requests").select("id, customer_id, created_at").gt("created_at", since).limit(50));
+  const exits = await pick(sb.from("partner_exit_requests").select("id, partner_id, created_at").gt("created_at", since).limit(50));
+  const planReqs = await pick(sb.from("plan_requests").select("id, customer_id, to_plan, created_at").gt("created_at", since).limit(50));
+  const dayActs = morning ? await pick(sb.from("action_items").select("id, customer_id, title")
+    .eq("due_date", today).neq("status", "done").limit(500)) : [];
+  //  会社名と担当（メッセージ・共有・面談の宛先を決めるのに使う）
+  const cids = [...new Set([...msgs, ...shares, ...cancels, ...planReqs].map((m: any) => m.customer_id).filter((id: string) => id && !people[id]))];
+  await eachChunk(cids, async (ids) => {
+    const { data: ps } = await sb.from("profiles").select("id, company_name, consultant_id").in("id", ids);
+    for (const p of ps ?? []) people[p.id] = p;
+  });
+
   const plan = buildPlan({
     now, users: new Set(users), prefs, events, meetings, people, todos,
     allDay, dayTodos, custTodos, appUrl: APP_URL,
+    roles, msgs, replies, anns, acts, shares, reports, inquiries, cancels, exits, planReqs, dayActs,
   });
   if (dry) return { users: users.length, planned: plan.length, sent: 0, dry, morning, plan };
 
@@ -185,10 +233,14 @@ function due(fire, now) { return fire <= now && fire > now - GRACE_MIN * MIN; }
 function prefOf(prefs, uid) {
   const p = prefs[uid] || {};
   const b = [10, 30, 60].indexOf(Number(p.event_before_min)) >= 0 ? Number(p.event_before_min) : 30;
-  return { event: p.event_on !== false, before: b, todo: p.todo_on !== false };
+  return { event: p.event_on !== false, before: b, todo: p.todo_on !== false, msg: p.msg_on !== false, act: p.act_on !== false };
 }
 function linkTo(appUrl, tab) { return String(appUrl || "./").replace(/\/?$/, "/") + "?knv=" + tab; }
 function cut(t, n) { t = String(t || "").replace(/\s+/g, " ").trim(); return t.length > n ? t.slice(0, n - 1) + "…" : t; }
+//  新しく届いたもの：書かれてから GRACE_MIN 分のうち（時計のずれで少し先の時刻も受ける）
+function fresh(iso, now) { const t = Date.parse(iso || ""); return !isNaN(t) && t > now - GRACE_MIN * MIN && t <= now + MIN; }
+function ymJp(ym) { const m = /^(\d{4})-(\d{2})/.exec(String(ym || "")); return m ? m[1] + "年" + Number(m[2]) + "月" : String(ym || ""); }
+function mdJp(ymd) { const m = /^\d{4}-(\d{2})-(\d{2})/.exec(String(ymd || "")); return m ? Number(m[1]) + "/" + Number(m[2]) : ""; }
 
 function buildPlan(x) {
   const out = [], now = x.now;
@@ -240,6 +292,7 @@ function buildPlan(x) {
     for (const e of x.allDay || []) if (x.users.has(e.owner_id) && prefOf(x.prefs, e.owner_id).event) add(e.owner_id, "・終日 " + cut(e.title || "予定", 30));
     for (const t of x.dayTodos || []) if (x.users.has(t.owner_id) && prefOf(x.prefs, t.owner_id).todo) add(t.owner_id, "・TODO " + cut(t.title || "TODO", 30));
     for (const t of x.custTodos || []) if (x.users.has(t.customer_id) && prefOf(x.prefs, t.customer_id).todo) add(t.customer_id, "・やること " + cut(t.title || "やること", 30));
+    for (const a of x.dayActs || []) if (x.users.has(a.customer_id) && prefOf(x.prefs, a.customer_id).act) add(a.customer_id, "・対応 " + cut(a.title || "対応事項", 30));
     for (const uid of Object.keys(lines)) {
       const ls = lines[uid], shown = ls.slice(0, 5);
       out.push({ user_id: uid, kind: "morning", ref_id: day, fire_at: fire,
@@ -248,6 +301,73 @@ function buildPlan(x) {
         url: linkTo(x.appUrl, ls.some((s) => s.indexOf("・終日") === 0) ? "cal" : "todo"), tag: "morning-" + day });
     }
   }
+  //  ---- 新しく届いたもの ----
+  const home = linkTo(x.appUrl, "").replace(/\?knv=$/, "");
+  const roles = x.roles || {}, people = x.people || {};
+  const push = (uid, kind, ref, at, cat, title, body, url, tag) => {
+    if (!uid || !x.users.has(uid)) return;
+    const p = prefOf(x.prefs, uid); if (cat === "msg" ? !p.msg : !p.act) return;
+    out.push({ user_id: uid, kind, ref_id: String(ref), fire_at: Date.parse(at), title, body, url, tag });
+  };
+  const company = (cid) => cut((people[cid] || {}).company_name || "顧客", 24);
+  // メッセージ（経営者 ⇄ 担当パートナー）。同じ会社とのやり取りは通知を1枚に重ねる
+  for (const m of x.msgs || []) {
+    if (!fresh(m.created_at, now)) continue;
+    const text = m.body ? cut(m.body, 90) : (m.attachment_name ? "📎 " + cut(m.attachment_name, 60) : "（添付ファイル）");
+    const ref = m.customer_id + "|" + m.sender_role + "|" + m.created_at;
+    if (m.sender_role === "customer") {
+      const pid = (people[m.customer_id] || {}).consultant_id;
+      if (pid !== m.sender_id) push(pid, "msg", ref, m.created_at, "msg", "✉️ " + company(m.customer_id) + "からメッセージ", text, linkTo(x.appUrl, "msg"), "msg-" + m.customer_id);
+    } else if (m.customer_id !== m.sender_id) {
+      push(m.customer_id, "msg", ref, m.created_at, "msg", "✉️ 担当パートナーからメッセージ", text, linkTo(x.appUrl, "msg"), "msg-" + m.customer_id);
+    }
+  }
+  // 運営からの回答（問い合わせたパートナーへ）
+  for (const r of x.replies || []) {
+    if (!fresh(r.replied_at, now) || !r.admin_reply) continue;
+    push(r.partner_id, "reply", r.id + "|" + r.replied_at, r.replied_at, "msg", "✉️ 運営から回答：" + cut(r.subject || "お問い合わせ", 30),
+      cut(r.admin_reply, 90), linkTo(x.appUrl, "support"), "reply-" + r.id);
+  }
+  // 運営からのお知らせ（宛先の役割の方へ。運営には送らない）
+  for (const a of x.anns || []) {
+    if (!fresh(a.created_at, now)) continue;
+    for (const uid of x.users) {
+      const r = roles[uid];
+      if (!r || r === "admin") continue;
+      if (a.audience !== "all" && a.audience !== r) continue;
+      push(uid, "ann", a.id, a.created_at, "msg", "📢 運営からのお知らせ：" + cut(a.title || "お知らせ", 30), cut(a.body, 90), home, "ann-" + a.id);
+    }
+  }
+  // 対応事項（担当パートナーが登録したら、経営者へ）
+  for (const a of x.acts || []) {
+    if (!fresh(a.created_at, now) || a.created_by === a.customer_id) continue;
+    push(a.customer_id, "act", a.id, a.created_at, "act", "📌 対応のお願い：" + cut(a.title || "対応事項", 36),
+      "担当パートナーから" + (a.due_date ? "（期日 " + mdJp(a.due_date) + "）" : ""), home, "act-" + a.id);
+  }
+  // 継ナビくんの相談の共有（経営者 → 担当パートナー）
+  for (const s of x.shares || []) {
+    if (!fresh(s.created_at, now)) continue;
+    push((people[s.customer_id] || {}).consultant_id, "share", s.id, s.created_at, "act",
+      "📌 " + company(s.customer_id) + "から相談の共有", cut(s.question, 90), home, "share-" + s.id);
+  }
+  // 月次レポート（公開されたら、経営者へ）
+  for (const r of x.reports || []) {
+    if (!fresh(r.published_at, now)) continue;
+    push(r.customer_id, "report", r.id + "|" + r.published_at, r.published_at, "act", "📄 " + ymJp(r.report_month) + "の月次レポートが届きました",
+      "担当パートナーからです。数字の動きと、次の一手が書いてあります。", home, "report-" + r.id);
+  }
+  // 運営あて（問い合わせ・解約のご依頼・契約の終了・プラン切替）
+  const admins = [...x.users].filter((u) => roles[u] === "admin");
+  const toAdmins = (kind, list, title, body) => {
+    for (const it of list || []) {
+      if (!fresh(it.created_at, now)) continue;
+      for (const uid of admins) push(uid, kind, it.id, it.created_at, "act", title(it), body(it), home, kind + "-" + it.id);
+    }
+  };
+  toAdmins("inq", x.inquiries, (i) => "🛟 パートナーから問い合わせ：" + cut(i.subject || "（件名なし）", 30), () => "サポート管理の受信箱で回答できます。");
+  toAdmins("cancel", x.cancels, () => "⚠ 解約のご依頼が届きました", (c) => company(c.customer_id) + "から。お話をうかがってから手続きへ。");
+  toAdmins("pexit", x.exits, () => "⚠ パートナーから契約の終了のお申し出", () => "担当顧問先の引き継ぎと最終月の報酬を進めます。");
+  toAdmins("plan", x.planReqs, () => "🔁 プラン切替の依頼が届きました", (r) => company(r.customer_id) + "：" + (r.to_plan === "buyer" ? "買い手プラン" : "売り手プラン") + "へ");
   return out;
 }
 // ===== PLAN END =====

@@ -63,6 +63,47 @@ ok('朝8時：TODOを知らせない人には予定だけ', r.some((x) => x.user
 r = run({ now: J(D, '08:05'), dayTodos: [1, 2, 3, 4, 5, 6, 7].map((i) => ({ id: 'd' + i, owner_id: 'u1', title: 'T' + i })) });
 ok('朝8時：多いときは5件まで並べて「ほか◯件」', r.length === 1 && /ほか 2件$/.test(r[0].body) && r[0].title === '☀️ 今日の予定とTODO（7件）');
 
+// ①' メッセージと対応が必要なこと（2026-10-08 追加）
+{
+  const at = (hm) => iso(J(D, hm));
+  const ppl = { c1: { company_name: '株式会社継', consultant_id: 'p1' } };
+  r = run({ people: ppl, msgs: [{ customer_id: 'c1', sender_id: 'c1', sender_role: 'customer', body: '来月の賞与の件で相談があります', created_at: at('13:59') }] });
+  ok('メッセージ：経営者から → 担当パートナーへ・メッセージタブ・会社ごとに1枚に重ねる', r.length === 1 && r[0].user_id === 'p1' && r[0].title === '✉️ 株式会社継からメッセージ' && r[0].body === '来月の賞与の件で相談があります' && r[0].url.endsWith('?knv=msg') && r[0].tag === 'msg-c1');
+  r = run({ people: ppl, msgs: [{ customer_id: 'c1', sender_id: 'p1', sender_role: 'consultant', body: '', attachment_name: '試算表.pdf', created_at: at('13:59') }] });
+  ok('メッセージ：担当パートナーから → 経営者へ（添付だけでも）', r.length === 1 && r[0].user_id === 'c1' && r[0].title === '✉️ 担当パートナーからメッセージ' && r[0].body === '📎 試算表.pdf');
+  r = run({ people: ppl, msgs: [{ customer_id: 'c1', sender_id: 'c1', sender_role: 'customer', body: 'A', created_at: at('13:30') }] });
+  ok('メッセージ：20分より前のものは送らない', r.length === 0);
+  r = run({ people: ppl, prefs: { p1: { msg_on: false } }, msgs: [{ customer_id: 'c1', sender_id: 'c1', sender_role: 'customer', body: 'A', created_at: at('13:59') }] });
+  ok('メッセージ：知らせない設定なら送らない', r.length === 0);
+  const r1 = run({ people: ppl, msgs: [{ customer_id: 'c1', sender_id: 'c1', sender_role: 'customer', body: 'A', created_at: at('13:58') }, { customer_id: 'c1', sender_id: 'c1', sender_role: 'customer', body: 'B', created_at: at('13:59') }] });
+  ok('メッセージ：1通ずつ記録（同じものは二度送らない）', r1.length === 2 && r1[0].ref_id !== r1[1].ref_id && r1[0].kind === 'msg');
+  r = run({ replies: [{ id: 'q1', partner_id: 'p1', subject: '報酬の締め日', admin_reply: '毎月末です', replied_at: at('13:59') }] });
+  ok('運営からの回答 → パートナーへ・サポートタブ', r.length === 1 && r[0].title === '✉️ 運営から回答：報酬の締め日' && r[0].body === '毎月末です' && r[0].url.endsWith('?knv=support'));
+  const roles = { u1: 'consultant', p1: 'consultant', c1: 'customer', a1: 'admin' };
+  r = run({ users: U('u1', 'p1', 'c1', 'a1'), roles, anns: [{ id: 'n1', audience: 'consultant', title: '研修の更新', body: '第5章にロールプレイ', created_at: at('13:59') }] });
+  ok('お知らせ：宛先の役割の方だけ（運営には送らない）', r.length === 2 && r.every((x) => ['u1', 'p1'].includes(x.user_id)) && r[0].title === '📢 運営からのお知らせ：研修の更新');
+  r = run({ users: U('u1', 'p1', 'c1', 'a1'), roles, anns: [{ id: 'n1', audience: 'all', title: 'T', body: 'B', created_at: at('13:59') }] });
+  ok('お知らせ：全員あては運営以外の全員へ', r.length === 3 && !r.some((x) => x.user_id === 'a1'));
+  r = run({ acts: [{ id: 'k1', customer_id: 'c1', title: '試算表を送る', due_date: '2026-10-10', created_by: 'p1', created_at: at('13:59') }] });
+  ok('対応事項：担当が登録したら経営者へ（期日つき）', r.length === 1 && r[0].user_id === 'c1' && r[0].title === '📌 対応のお願い：試算表を送る' && r[0].body === '担当パートナーから（期日 10/10）' && r[0].url === 'https://x.example/app/');
+  r = run({ acts: [{ id: 'k1', customer_id: 'c1', title: 'A', created_by: 'c1', created_at: at('13:59') }] });
+  ok('対応事項：経営者が自分で書いたものは知らせない', r.length === 0);
+  r = run({ prefs: { c1: { act_on: false } }, acts: [{ id: 'k1', customer_id: 'c1', title: 'A', created_by: 'p1', created_at: at('13:59') }] });
+  ok('対応事項：知らせない設定なら送らない', r.length === 0);
+  r = run({ people: ppl, shares: [{ id: 's1', customer_id: 'c1', question: '後継者がいないとき、何から始めればいい？', created_at: at('13:59') }] });
+  ok('相談の共有 → 担当パートナーへ', r.length === 1 && r[0].user_id === 'p1' && r[0].title === '📌 株式会社継から相談の共有');
+  r = run({ reports: [{ id: 'm1', customer_id: 'c1', report_month: '2026-09', published_at: at('13:59') }] });
+  ok('月次レポートの公開 → 経営者へ', r.length === 1 && r[0].title === '📄 2026年9月の月次レポートが届きました');
+  r = run({ users: U('a1', 'p1'), roles, people: ppl, inquiries: [{ id: 'i1', partner_id: 'p1', subject: '契約書', created_at: at('13:59') }],
+    cancels: [{ id: 'x1', customer_id: 'c1', created_at: at('13:59') }], exits: [{ id: 'e1', partner_id: 'p1', created_at: at('13:59') }],
+    planReqs: [{ id: 'r1', customer_id: 'c1', to_plan: 'buyer', created_at: at('13:59') }] });
+  ok('運営あて：問い合わせ・解約・契約の終了・プラン切替は運営だけへ', r.length === 4 && r.every((x) => x.user_id === 'a1')
+    && r.some((x) => x.title === '🛟 パートナーから問い合わせ：契約書') && r.some((x) => x.title === '⚠ 解約のご依頼が届きました' && x.body.startsWith('株式会社継から'))
+    && r.some((x) => x.title === '🔁 プラン切替の依頼が届きました' && /買い手プランへ/.test(x.body)));
+  r = run({ now: J(D, '08:05'), dayActs: [{ id: 'k1', customer_id: 'c1', title: '試算表を送る' }] });
+  ok('朝8時：期日が今日の対応事項もまとめに', r.length === 1 && r[0].body === '・対応 試算表を送る');
+}
+
 // ② 送る側
 ok('関数：合言葉が無ければ断る・?dry=1 は送らずに中身を返す', /given !== CRON_SECRET\) return json\(\{ error: "forbidden" \}, 403\)/.test(FN) && /if \(dry\) return \{ users: users\.length, planned: plan\.length, sent: 0, dry, morning, plan \}/.test(FN));
 ok('関数：記録に書き込めたものだけ送る（二度送らない）', /\.upsert\(\{ user_id: n\.user_id, kind: n\.kind, ref_id: n\.ref_id, fire_at: new Date\(n\.fire_at\)\.toISOString\(\) \},\s*\{ onConflict: "user_id,kind,ref_id,fire_at", ignoreDuplicates: true \}\)/.test(FN) && /if \(!got\?\.length\) continue;/.test(FN));
@@ -77,10 +118,16 @@ ok('SQL：二度流しても上書きしない・確かめる行がある', /if 
 // ③ アプリ
 ok('sw.js：tag で重ねて鳴らし直す', /if \(d\.tag\) \{ opt\.tag = d\.tag; opt\.renotify = true; \}/.test(SW));
 ok('sw.js：押すと開いているアプリに知らせる／無ければ URL で開く', /postMessage\(\{ type: 'knv-open', tab: tab \}\)/.test(SW) && /return self\.clients\.openWindow\(url\);/.test(SW));
-ok('アプリ：通知から開いたらそのタブへ（ログインのあと）', /knvDeepLink\(\);  \/\/ 予定・TODO の通知から開いたなら、そのタブへ/.test(SRC) && /var KNV_LINK_TABS=\['cal','todo','notif','msg','chat'\];/.test(SRC) && /d\.type==='knv-open' && KNV_LINK_TABS\.indexOf\(d\.tab\)>=0/.test(SRC));
+ok('アプリ：通知から開いたらそのタブへ（ログインのあと）', /knvDeepLink\(\);  \/\/ 予定・TODO の通知から開いたなら、そのタブへ/.test(SRC) && /var KNV_LINK_TABS=\['cal','todo','notif','msg','chat','support'\];/.test(SRC) && /d\.type==='knv-open' && KNV_LINK_TABS\.indexOf\(d\.tab\)>=0/.test(SRC));
 ok('アプリ：連携タブに設定（何分前・TODO・試しの通知）', /<div id="notify-prefs-box"><\/div>/.test(SRC) && /pushStatusPaint\(\); notifyPrefsLoad\(\);/.test(SRC) && /opt\('10','開始の10分前',ev\)\+opt\('30','開始の30分前',ev\)\+opt\('60','開始の1時間前',ev\)\+opt\('off','知らせない',ev\)/.test(SRC) && /onclick="notifyTest\(\)"/.test(SRC));
 ok('アプリ：保存は本人の行に upsert', /sb\.from\('notify_prefs'\)\.upsert\(row,\{ onConflict:'user_id' \}\)/.test(SRC) && /var row=\{ user_id:ME, event_on:ev!=='off'/.test(SRC));
 ok('アプリ：受け取り中かをボタンに出す・毎朝だけと言わない', /この端末で受け取っています（押すと登録し直します）/.test(SRC) && !/この端末で毎朝の通知を受け取ります/.test(SRC));
+ok('関数：新しく届いたものも読む（表が無くても止めない）', /const pick = async \(q: any\) => \{ try \{/.test(FN) && /from\("chat_messages"\)/.test(FN) && /from\("action_items"\)/.test(FN) && /from\("announcements"\)/.test(FN) && /roles, msgs, replies, anns, acts, shares, reports, inquiries, cancels, exits, planReqs, dayActs/.test(FN));
+ok('関数：列が無い環境でも予定とTODOの設定は読む', /if \(r\.error\) r = await sb\.from\("notify_prefs"\)\.select\("user_id, event_on, event_before_min, todo_on"\)/.test(FN));
+const SQL2 = R('supabase/migrations/20261008020000_push_messages.sql');
+ok('SQL：メッセージ・対応の列を足し、1分ごとに', /add column if not exists msg_on boolean not null default true/.test(SQL2) && /add column if not exists act_on boolean not null default true/.test(SQL2) && /cron\.alter_job\(job_id := j, schedule := '\* \* \* \* \*'\)/.test(SQL2));
+ok('アプリ：メッセージと対応の設定・役割ごとの説明・列が無いときは予定とTODOだけ保存', /id="np-mg"/.test(SRC) && /id="np-ac"/.test(SRC) && /function notifyWhatHtml\(\)/.test(SRC) && /msg_on:mg!=='off', act_on:ac!=='off'/.test(SRC) && /delete row\.msg_on; delete row\.act_on;/.test(SRC));
+ok('アプリ：通知からサポートタブへも', /var KNV_LINK_TABS=\['cal','todo','notif','msg','chat','support'\];/.test(SRC));
 ok('説明書：予定の前・TODOの期限・朝8時', /予定の前（10／30／60分前・面談も）とTODOの期限の時刻/.test(MP) && /予定の前（既定30分前）とTODOの期限の時刻/.test(MC));
 ok('継ナビくんの知識にも', /スマホ通知は毎朝のブリーフに加えて、予定の10\/30\/60分前/.test(SRC));
 
