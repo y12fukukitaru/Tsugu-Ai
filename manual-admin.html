@@ -426,9 +426,24 @@ ul.dots li{font-size:14.5px;}
     <tr><th>パートナー</th><td><b>毎朝</b>「今日の一手」。担当顧客全社のシグナルから3件まで。ほかに面談準備ブリーフ、新人指南、承継レーダー（月）、M&amp;Aマッチング（水）、ナレッジ便り（金）。</td></tr>
     <tr><th>経営者</th><td><b>毎週月曜の朝</b>「今週のひとこと」。今週の予定・新しい月次レポート・期日超過の課題・未返信のメッセージ・手元資金の記録から。<br><b>面談の前日</b>にもお知らせが出ます（曜日を問いません）。</td></tr>
     <tr><th>経営者・パートナー<br>（四半期）</th><td>四半期アンケートの受付が始まった朝に<b>お願い</b>、7日後に一度だけ<b>思い出し</b>（メール＋LINE）。答えた方には届きません。</td></tr>
+    <tr><th>スマホ通知<br>（すぐ・全員）</th><td><code>push-reminders</code> が<b>1分ごと</b>に走ります。予定の前（既定30分）・TODOの期限の時刻・朝8時のまとめ、メッセージ（担当とのやり取り・運営からの回答・お知らせ）、対応が必要なこと。届く中身は役割で違い、くわしくは次の頁。</td></tr>
     <tr><th>運営</th><td><b>毎朝のエスカレーション</b>（7日以上の返信滞留・担当未割当の顧客）／<b>解約のご依頼</b>（受付中のあいだ毎朝）／<b>契約締結の知らせ</b>（お知らせ＋メール＋LINE）／<b>月次レポート</b>の自動生成の結果（<code>monthly-report</code>／毎月1日）。</td></tr>
   </table>
   <div class="note r" style="margin-top:12px;"><b>経営者向けは、もとは毎朝でした。</b>社長は毎朝アプリを開く方ではなく、毎朝届く通知は3週間ほどで無視されるようになります。無視された通知は二度と読まれないため、<b>週に一度</b>に改めました。ただし<b>初めての方には曜日を待たせません</b>。登録した週にいちども便りが来ないのは、いちばん期待されている時期に沈黙することになるためです。お伝えすることが無い週は<b>送りません</b>。</div>
+</section>
+
+<section class="slide" data-t="スマホ通知とバッジ" data-g="数字を見る" data-q="スマホ通知の仕組みは？|運営にはどんな通知が届く？|通知が届かないと言われた|通知が送られているか確かめたい|アイコンの数字（バッジ）は何の数？">
+  <div class="eyebrow">スマホ通知 — push-reminders</div>
+  <h2>誰に、何が、いつ届くか（スマホ通知）</h2>
+  <table class="kv tight">
+    <tr><th>全員</th><td>📅 予定タブの予定と面談を開始の<b>30分前</b>（本人が10分・1時間前・知らせないを選べる）／✅ TODO を期限の時刻に／終日の予定・時刻のないTODOは<b>朝8時</b>にまとめて1通。</td></tr>
+    <tr><th>運営（admin）</th><td>📌 <b>パートナーからの問い合わせ</b>・<b>解約のご依頼</b>・<b>契約の終了のお申し出</b>・<b>プラン切替の依頼</b>が届いたとき。運営あてのメッセージ（運営からのお知らせ）は送りません。</td></tr>
+    <tr><th>パートナー</th><td>✉️ 担当先の経営者からのメッセージ・運営からの回答・お知らせ／📌 経営者から継ナビくんの相談が共有されたとき。</td></tr>
+    <tr><th>経営者</th><td>✉️ 担当パートナーからのメッセージ・お知らせ／📌 担当パートナーが登録した対応事項（期日の日は朝8時にも）・月次レポートの公開。</td></tr>
+    <tr><th>アイコンの数字</th><td>右下の継ナビくんのボタンと同じ数（未読・期日と対応・提案・今日までのTODO）。閉じているあいだは通知ごとに1つ増え、開くと正しい数に戻る。</td></tr>
+    <tr><th>仕組み</th><td>pg_cron の <code>push-reminders</code>（毎分）が Edge Function を呼ぶ（URL と合言葉は <code>agent-heartbeat-daily</code> から写したもの）。送る前に <code>push_reminder_log</code> へ書き込めたものだけ送るので<b>二度送らない</b>。時刻を20分以上過ぎたものは送らない。記録は2週間で消える。設定は <code>notify_prefs</code>（本人だけ読み書き。行が無い方は既定）。受け取る端末は <code>push_subscriptions</code>。</td></tr>
+  </table>
+  <div class="note" style="margin-top:12px;"><b>「届かない」と言われたら。</b>まず本人に、連携タブの🔔が「✅ この端末で受け取っています」か、「この端末に試しに通知を出す」が出るかを確かめてもらいます（出なければ端末側の通知の許可）。送る側は SQL Editor で確かめられます：<br><code>select status, start_time from cron.job_run_details where jobid=(select jobid from cron.job where jobname='push-reminders') order by start_time desc limit 5;</code>（呼び出しが動いているか）<br><code>select kind, count(*) from push_reminder_log where sent_at &gt; now() - interval '1 day' group by kind;</code>（何を何件送ったか）</div>
 </section>
 
 <section class="slide" data-t="相談と手元資金" data-g="数字を見る" data-q="経営者の継ナビくんへの相談を読める？|社長の手元資金を直せる？">
@@ -450,6 +465,7 @@ ul.dots li{font-size:14.5px;}
 </section>
 
 <!-- ===== 支払い章 ===== -->
+
 <section class="slide divider" data-t="■ 支払い・課金の章" data-g="お金の章">
   <div class="mark">SECTION</div>
   <h1>課金・契約管理／<br>支払いのすべて</h1>
