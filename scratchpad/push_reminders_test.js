@@ -131,5 +131,33 @@ ok('アプリ：通知からサポートタブへも', /var KNV_LINK_TABS=\['cal
 ok('説明書：予定の前・TODOの期限・朝8時', /予定の前（10／30／60分前・面談も）とTODOの期限の時刻/.test(MP) && /予定の前（既定30分前）とTODOの期限の時刻/.test(MC));
 ok('継ナビくんの知識にも', /スマホ通知は毎朝のブリーフに加えて、予定の10\/30\/60分前/.test(SRC));
 
+// ④ アプリのアイコンのバッジ（2026-10-08）
+{
+  ok('アプリ：右下のボタンと同じ数をアイコンにも・0なら消す・ログアウトで消す', /appBadgeSet\(fabN\);/.test(SRC) && /navigator\.setAppBadge\(n\)/.test(SRC) && /navigator\.clearAppBadge\(\)/.test(SRC) && /await sb\.auth\.signOut\(\);\s*appBadgeSet\(0\);/.test(SRC));
+  ok('アプリ：sw.js と同じ置き場に数を書く・設定画面に説明', /caches\.open\('tsugu-badge'\)\.then\(function\(c\)\{ return c\.put\('badge-n', new Response\(String\(n\)\)\); \}\)/.test(SRC) && /未確認の数（バッジ）/.test(SRC));
+  //  sw.js を偽の端末で動かす：通知が届くたびに1つ足す
+  const store = {}, badges = [], shown = [], handlers = {};
+  const sandbox = {
+    self: null, caches: { open: async () => ({ match: async (k) => (k in store ? { text: async () => store[k] } : undefined), put: async (k, r) => { store[k] = await r.text(); } }) },
+    Response: class { constructor(t) { this.t = t; } async text() { return this.t; } }, Promise,
+  };
+  sandbox.self = { navigator: { setAppBadge: async (n) => badges.push(n) }, caches: sandbox.caches, addEventListener: (t, f) => { handlers[t] = f; },
+    registration: { showNotification: async (t, o) => shown.push([t, o]) }, clients: { claim: async () => {} }, skipWaiting() {} };
+  new Function('self', 'caches', 'Response', 'Promise', SW)(sandbox.self, sandbox.caches, sandbox.Response, Promise);
+  const fire = async (d) => { let w; handlers.push({ data: { json: () => d }, waitUntil: (p) => { w = p; } }); await w; };
+  (async () => {
+    store['badge-n'] = '3';                         // アプリを最後に開いたときは3件
+    await fire({ title: 'A', body: 'x', tag: 'msg-c1' });
+    await fire({ title: 'B', body: 'y' });
+    ok('sw.js：届くたびにアイコンの数を1つ足す（3→4→5）・通知も出す', badges.join() === '4,5' && store['badge-n'] === '5' && shown.length === 2 && shown[0][1].tag === 'msg-c1' && shown[0][1].renotify === true);
+    delete sandbox.self.navigator.setAppBadge;
+    await fire({ title: 'C' });
+    ok('sw.js：バッジに対応していない端末でも通知は出す', shown.length === 3 && badges.length === 2);
+    done();
+  })();
+}
+
+function done() {
 if (bad.length) { bad.forEach((b) => console.log('NG ' + b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK ' + n + ' checks, 0 failed');
+}
