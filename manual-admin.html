@@ -441,9 +441,11 @@ ul.dots li{font-size:14.5px;}
     <tr><th>パートナー</th><td>✉️ 担当先の経営者からのメッセージ・運営からの回答・お知らせ／📌 経営者から継ナビくんの相談が共有されたとき。</td></tr>
     <tr><th>経営者</th><td>✉️ 担当パートナーからのメッセージ・お知らせ／📌 担当パートナーが登録した対応事項（期日の日は朝8時にも）・月次レポートの公開。</td></tr>
     <tr><th>アイコンの数字</th><td>右下の継ナビくんのボタンと同じ数（未読・期日と対応・提案・今日までのTODO）。閉じているあいだは通知ごとに1つ増え、開くと正しい数に戻る。</td></tr>
+    <tr><th>はじめの案内</th><td>ログインの約2秒後、許可がまだの端末には画面の下に<b>「🔔 スマホに通知を受け取りますか？」</b>（［受け取る］の1回で許可の確認画面へ。［あとで］は7日間出さない）。許可済みの端末は押さなくても購読を保存し直す。「許可しない」の端末には出さない。iPhone・iPad の Safari のタブには「ホーム画面に追加すると届きます」（閉じると14日間出さない）。<b>自動でオンにはできません</b>（本人の許可が要る決まり）。</td></tr>
+    <tr><th>端末ごとの違い</th><td><b>iPhone・iPad</b>：ホーム画面に追加したアプリだけ（iOS 16.4 以降）。アイコンに数字。<b>Android</b>：ブラウザのままでも届く。アイコンは数字でなく点。ステータスバーの小さなアイコンは <code>badge-96.png</code>（透明の背景に白い形）。<b>パソコン</b>：Chrome・Edge・Safari。</td></tr>
     <tr><th>仕組み</th><td>pg_cron の <code>push-reminders</code>（毎分）が Edge Function を呼ぶ（URL と合言葉は <code>agent-heartbeat-daily</code> から写したもの）。送る前に <code>push_reminder_log</code> へ書き込めたものだけ送るので<b>二度送らない</b>。時刻を20分以上過ぎたものは送らない。記録は2週間で消える。設定は <code>notify_prefs</code>（本人だけ読み書き。行が無い方は既定）。受け取る端末は <code>push_subscriptions</code>。</td></tr>
   </table>
-  <div class="note" style="margin-top:12px;"><b>「届かない」と言われたら。</b>まず本人に、連携タブの🔔が「✅ この端末で受け取っています」か、「この端末に試しに通知を出す」が出るかを確かめてもらいます（出なければ端末側の通知の許可）。送る側は SQL Editor で確かめられます：<br><code>select status, start_time from cron.job_run_details where jobid=(select jobid from cron.job where jobname='push-reminders') order by start_time desc limit 5;</code>（呼び出しが動いているか）<br><code>select kind, count(*) from push_reminder_log where sent_at &gt; now() - interval '1 day' group by kind;</code>（何を何件送ったか）</div>
+  <div class="note" style="margin-top:12px;"><b>「届かない」と言われたら。</b>まず本人に、連携タブの🔔が「✅ この端末で受け取っています」か、「この端末に試しに通知を出す」が出るか、<b>「🔴 アイコンの数字」の一行</b>に何と出ているかを確かめてもらいます（非対応・ホーム画面で開いていない・許可がまだ・「許可しない」・0件のどれかが出ます）。<b>iPhone の 設定 → 通知 に TsuguAi が無い</b>のは、許可の確認画面が一度も出ていないということ。ホーム画面のアイコンから開き、🔔を押して「許可」を選んでもらいます。送る側は SQL Editor で確かめられます：<br><code>select status, start_time from cron.job_run_details where jobid=(select jobid from cron.job where jobname='push-reminders') order by start_time desc limit 5;</code>（呼び出しが動いているか）<br><code>select kind, count(*) from push_reminder_log where sent_at &gt; now() - interval '1 day' group by kind;</code>（何を何件送ったか）</div>
 </section>
 
 <section class="slide" data-t="相談と手元資金" data-g="数字を見る" data-q="経営者の継ナビくんへの相談を読める？|社長の手元資金を直せる？">
