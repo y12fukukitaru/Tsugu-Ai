@@ -190,6 +190,16 @@ ok('継ナビくんの知識にも', /スマホ通知は毎朝のブリーフに
   ok('運営の説明書：運営に届くもの・仕組み・確かめる SQL', /解約のご依頼/.test(A1) && /push_reminder_log/.test(A1) && /cron\.job_run_details/.test(A1) && /<code>push-reminders<\/code> が<b>1分ごと<\/b>/.test(sec(MA, '自動の通知')));
 }
 
+// ⑥ 説明書（2026-10-09 その2）：はじめの案内・端末ごとの違い・困ったとき
+{
+  const MA2 = R('manual-admin.html');
+  const sec2 = (h, t) => { const i = h.indexOf('data-t="' + t + '"'); return i < 0 ? '' : h.slice(i, h.indexOf('</section>', i)); };
+  ok('説明書：はじめの設定（パートナー）・最初の3つ（経営者）に、ログイン後の通知の案内', /スマホに通知を受け取りますか？/.test(sec2(MP, 'はじめの設定')) && /スマホに通知を受け取りますか？/.test(sec2(MC, '最初の3つ')));
+  ok('説明書：端末ごとの違い（iPhone・iPad／Android／パソコン）', [sec2(MP, 'スマホ通知とバッジ'), sec2(MC, 'スマホ通知とバッジ')].every((h) => /📱 端末ごとの違い/.test(h) && /<b>Android<\/b>：Chrome などのブラウザのままでも届きます/.test(h) && /<b>パソコン<\/b>/.test(h)));
+  ok('経営者の困ったとき：通知が届かない・数字が出ない', /スマホに通知が届かない・アイコンに数字が出ない/.test(sec2(MC, '困ったときは')) && /スマホに通知が届かない"/.test(MC));
+  ok('運営の説明書：はじめの案内・端末ごとの違い・設定に TsuguAi が無いとき', /<th>はじめの案内<\/th>/.test(MA2) && /自動でオンにはできません/.test(MA2) && /badge-96\.png/.test(MA2) && /設定 → 通知 に TsuguAi が無い<\/b>のは、許可の確認画面が一度も出ていない/.test(MA2));
+}
+
 function done() {
 if (bad.length) { bad.forEach((b) => console.log('NG ' + b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK ' + n + ' checks, 0 failed');
