@@ -1841,7 +1841,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261008-03';
+  var APP_BUILD='20261009-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -15906,6 +15906,8 @@
       var r=await sb.from('push_subscriptions').insert({ user_id:ME, subscription:j });
       if(r.error){ alert('登録できませんでした：'+r.error.message+'（Supabaseで継ナビくんPhase2のSQLを実行してください）'); return; }
       say('✅ この端末で通知を受け取ります', true);
+      appBadgeApply();   // 許可が出たので、いまの数をアイコンに出し直す
+      var bs=$('np-badge'); if(bs) bs.innerHTML=appBadgeStatusHtml();
     }catch(e){ alert('設定に失敗しました：'+(e&&e.message||e)); }
   }
   //  この端末がもう通知を受け取る設定になっているかを、ボタンの文字に出す。
@@ -15928,20 +15930,51 @@
   //  アプリを閉じているあいだは、通知が届くたびに sw.js が1つずつ足す。そのために
   //  いまの数を sw.js と同じ置き場（Cache Storage の 'tsugu-badge'）に書いておく。
   //  次にアプリを開くと、ここで正しい数に置き直す。
-  var APP_BADGE_LAST=-1;
+  //  ※ 数が同じでも、毎回アイコンに出し直す（2026-10-09）。以前は「前と同じ数なら何もしない」
+  //    にしていたため、通知の許可が出る前に一度呼ばれると（iPhone は許可が無いと出ない）、
+  //    あとで許可しても数が変わるまで出ないままだった。呼ぶのは軽いので、毎回でよい。
+  var APP_BADGE_N=0, APP_BADGE_STORED=-1;
   function appBadgeSet(n){
     n=Math.max(0, Number(n)||0);
-    if(n===APP_BADGE_LAST) return;
-    APP_BADGE_LAST=n;
+    APP_BADGE_N=n;
+    appBadgeApply();
+    if(n===APP_BADGE_STORED) return;
+    APP_BADGE_STORED=n;
+    try{
+      if(window.caches) caches.open('tsugu-badge').then(function(c){ return c.put('badge-n', new Response(String(n))); }).catch(function(){});
+    }catch(e){}
+  }
+  function appBadgeApply(){
+    var n=APP_BADGE_N;
     try{
       if('setAppBadge' in navigator){
         if(n>0) navigator.setAppBadge(n).catch(function(){});
         else if('clearAppBadge' in navigator) navigator.clearAppBadge().catch(function(){});
       }
     }catch(e){}
-    try{
-      if(window.caches) caches.open('tsugu-badge').then(function(c){ return c.put('badge-n', new Response(String(n))); }).catch(function(){});
-    }catch(e){}
+  }
+  //  アプリに戻ってきたとき（ホーム画面から開き直したとき）にも出し直す
+  try{ document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') appBadgeApply(); }); }catch(e){}
+  //  この端末でアイコンの数字が出せるかを、連携タブで言葉にする。
+  //  「出ない」ときに、端末のせいか・許可のせいか・数が0なのかを見分けられるように
+  function appBadgeStatusHtml(){
+    var ios=/iPad|iPhone|iPod/.test(navigator.userAgent), android=/Android/.test(navigator.userAgent);
+    var standalone=(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true;
+    var perm=('Notification' in window)?Notification.permission:'unsupported';
+    var t, ok=false;
+    if(!('setAppBadge' in navigator)){
+      t=android ? 'Android はアイコンに数字を出す仕組みに対応していません。<b>通知が届くと、アイコンに点</b>が付きます（ホーム画面の設定による）。'
+        : (ios && !standalone ? '<b>ホーム画面に追加したアイコンから</b>開くと出せます（Safari のタブでは出ません）。'
+        : 'この端末・ブラウザは、アイコンの数字に対応していません。');
+    }else if(!standalone){
+      t='<b>ホーム画面に追加したアプリ</b>（インストールしたアプリ）で開いたときに出ます。';
+    }else if(perm!=='granted'){
+      t='<b>通知の許可がまだ</b>のため出ません。上の🔔を押して、通知を許可してください。';
+    }else{
+      ok=true;
+      t=APP_BADGE_N>0 ? 'いま <b>'+APP_BADGE_N+'</b> をアイコンに出しています。' : 'いまは未確認が<b>0件</b>のため、数字は出ていません（1件以上で出ます）。';
+    }
+    return '<div style="font-size:11px;line-height:1.7;margin-top:6px;color:'+(ok?'#27684A':'#8A6A12')+';">🔴 アイコンの数字：'+t+'</div>';
   }
 
   // ===== 予定・TODO の通知の設定（notify_prefs）=====
@@ -15975,6 +16008,7 @@
         +opt('on','対応が必要なことを知らせる',p.act_on===false?'off':'on')+opt('off','知らせない',p.act_on===false?'off':'on')+'</select></div>'
       +'<div style="font-size:11px;color:var(--muted);line-height:1.7;">予定タブの予定と面談、TODOタブの期限が対象です。<b>終日の予定と、時刻のない今日のTODO</b>は、朝8時にまとめて1通。'
         +notifyWhatHtml()+'<br>アプリのアイコンには、右下のボタンと同じ<b>未確認の数（バッジ）</b>が出ます。<br>'
+        +'<div id="np-badge">'+appBadgeStatusHtml()+'</div>'
         +'届くのは、上の🔔で通知を受け取る設定にした端末です（iPhoneはホーム画面に追加したアプリ）。</div>'
       +'<div id="np-msg" style="font-size:11px;margin-top:5px;color:'+(ok?'var(--muted)':'#A9403D')+';">'
         +(ok?'':'設定を読み込めませんでした。通知は既定（予定は30分前・TODOは期限の時刻）で届きます。')+'</div>'

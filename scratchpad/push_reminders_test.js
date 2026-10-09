@@ -134,6 +134,8 @@ ok('継ナビくんの知識にも', /スマホ通知は毎朝のブリーフに
 // ④ アプリのアイコンのバッジ（2026-10-08）
 {
   ok('アプリ：右下のボタンと同じ数をアイコンにも・0なら消す・ログアウトで消す', /appBadgeSet\(fabN\);/.test(SRC) && /navigator\.setAppBadge\(n\)/.test(SRC) && /navigator\.clearAppBadge\(\)/.test(SRC) && /await sb\.auth\.signOut\(\);\s*appBadgeSet\(0\);/.test(SRC));
+  ok('アプリ：同じ数でも毎回出し直す（許可のあとに出ないままにしない）・戻ってきたときも・許可が出たら', !/if\(n===APP_BADGE_LAST\) return;/.test(SRC) && /APP_BADGE_N=n;\s*appBadgeApply\(\);/.test(SRC) && /visibilityState==='visible'\) appBadgeApply\(\);/.test(SRC) && /say\('✅ この端末で通知を受け取ります', true\);\s*appBadgeApply\(\);/.test(SRC));
+  ok('アプリ：連携タブに、アイコンの数字が出せるかを言葉で（非対応・ホーム画面・許可・0件）', /function appBadgeStatusHtml\(\)/.test(SRC) && /Android はアイコンに数字を出す仕組みに対応していません/.test(SRC) && /通知の許可がまだ<\/b>のため出ません/.test(SRC) && /未確認が<b>0件<\/b>のため/.test(SRC) && /<div id="np-badge">/.test(SRC));
   ok('アプリ：sw.js と同じ置き場に数を書く・設定画面に説明', /caches\.open\('tsugu-badge'\)\.then\(function\(c\)\{ return c\.put\('badge-n', new Response\(String\(n\)\)\); \}\)/.test(SRC) && /未確認の数（バッジ）/.test(SRC));
   //  sw.js を偽の端末で動かす：通知が届くたびに1つ足す
   const store = {}, badges = [], shown = [], handlers = {};
