@@ -134,6 +134,15 @@ ok('継ナビくんの知識にも', /スマホ通知は毎朝のブリーフに
 // ④ アプリのアイコンのバッジ（2026-10-08）
 {
   ok('アプリ：右下のボタンと同じ数をアイコンにも・0なら消す・ログアウトで消す', /appBadgeSet\(fabN\);/.test(SRC) && /navigator\.setAppBadge\(n\)/.test(SRC) && /navigator\.clearAppBadge\(\)/.test(SRC) && /await sb\.auth\.signOut\(\);\s*appBadgeSet\(0\);/.test(SRC));
+  ok('アプリ：同じ数でも毎回出し直す（許可のあとに出ないままにしない）・戻ってきたときも・許可が出たら', !/if\(n===APP_BADGE_LAST\) return;/.test(SRC) && /APP_BADGE_N=n;\s*appBadgeApply\(\);/.test(SRC) && /visibilityState==='visible'\) appBadgeApply\(\);/.test(SRC) && /say\('✅ この端末で通知を受け取ります', true\);\s*appBadgeApply\(\);/.test(SRC));
+  ok('アプリ：連携タブに、アイコンの数字が出せるかを言葉で（非対応・ホーム画面・許可・0件）', /function appBadgeStatusHtml\(\)/.test(SRC) && /Android はアイコンに数字を出す仕組みに対応していません/.test(SRC) && /通知の許可がまだ<\/b>のため出ません/.test(SRC) && /未確認が<b>0件<\/b>のため/.test(SRC) && /<div id="np-badge">/.test(SRC));
+  //  iPhone は「押した直後」でないと許可の確認画面を出さない。先に何かを待つと、設定に TsuguAi が現れない
+  const ep = SRC.slice(SRC.indexOf('async function enablePush'), SRC.indexOf('async function pushStatusPaint'));
+  ok('許可は押した直後にいちばん先に求める（sw.js の登録より前・その前に await しない）', ep.indexOf('Notification.requestPermission()') > 0 && ep.indexOf('Notification.requestPermission()') < ep.indexOf("navigator.serviceWorker.register('sw.js')") && !/await/.test(ep.slice(0, ep.indexOf('perm=await Notification.requestPermission()'))));
+  ok('購読は sw.js が有効になってから・既にある購読は使い回す', /var reg=await navigator\.serviceWorker\.ready;/.test(ep) && /await reg\.pushManager\.getSubscription\(\)\) \|\| \(await reg\.pushManager\.subscribe/.test(ep));
+  ok('「許可しない」のときは直し方（iPhone は 設定 → 通知 → TsuguAi）・iOS 16.4 未満の案内', /iPhone の「設定」→「通知」→「TsuguAi」で「通知を許可」をオン/.test(ep) && /iOS 16\.4 以降に更新/.test(ep));
+  ok('ホーム画面のアプリでは sw.js を先に登録しておく', /if\(__sa && 'serviceWorker' in navigator\) navigator\.serviceWorker\.register\('sw\.js'\)/.test(SRC));
+  ok('説明書：設定に TsuguAi が無いときの説明', [MP, MC].every((h) => /設定 → 通知 に「TsuguAi」が無いとき/.test(h)));
   ok('アプリ：sw.js と同じ置き場に数を書く・設定画面に説明', /caches\.open\('tsugu-badge'\)\.then\(function\(c\)\{ return c\.put\('badge-n', new Response\(String\(n\)\)\); \}\)/.test(SRC) && /未確認の数（バッジ）/.test(SRC));
   //  sw.js を偽の端末で動かす：通知が届くたびに1つ足す
   const store = {}, badges = [], shown = [], handlers = {};

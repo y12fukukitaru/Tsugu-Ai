@@ -1841,7 +1841,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261008-03';
+  var APP_BUILD='20261009-02';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -15895,19 +15895,45 @@
         alert('iPhone/iPadでは、先にこのページを「ホーム画面に追加」してください。\n\n手順：共有ボタン（□に↑）→「ホーム画面に追加」→ 追加したアイコンから開き直して、もう一度このボタンを押してください。');
         return;
       }
-      if(!pushSupported()){ alert('この端末・ブラウザはプッシュ通知に対応していません。'); return; }
-      var reg=await navigator.serviceWorker.register('sw.js');
-      var perm=await Notification.requestPermission();
-      if(perm!=='granted'){ alert('通知が許可されませんでした。端末の設定から通知を許可してください。'); return; }
-      var sub=await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:pushB64ToU8(VAPID_PUBLIC_KEY) });
+      if(!pushSupported()){
+        alert(isIOS ? 'この iPhone/iPad は通知に対応していません。iOS 16.4 以降に更新してから、ホーム画面のアイコンで開き直してください。'
+                    : 'この端末・ブラウザはプッシュ通知に対応していません。');
+        return;
+      }
+      //  ※ 許可は、押した直後にいちばん先に求める（2026-10-09）。
+      //    以前は先に sw.js の登録を待ってから許可を求めていた。iPhone は「押した直後」で
+      //    なくなると、確認の画面を出さずに断る。そのため確認の画面が一度も出ず、
+      //    iPhone の 設定 → 通知 に TsuguAi が現れないままだった。
+      var perm=Notification.permission;
+      if(perm!=='granted'){ say('通知の許可を確認しています…'); perm=await Notification.requestPermission(); }
+      if(perm!=='granted'){
+        say('🔔 スマホ通知をこの端末で受け取る');
+        alert(perm==='denied'
+          ? '通知が「許可しない」になっています。\n\n'+(isIOS?'iPhone の「設定」→「通知」→「TsuguAi」で「通知を許可」をオンにしてから、':'ブラウザのサイトの設定で通知を許可してから、')+'もう一度このボタンを押してください。'
+          : '通知が許可されませんでした。もう一度このボタンを押して、確認の画面で「許可」を選んでください。');
+        return;
+      }
+      say('この端末を登録しています…');
+      await navigator.serviceWorker.register('sw.js');
+      //  有効になるまで待ってから購読する（登録した直後だと、まだ動いておらず断られることがある）
+      var reg=await navigator.serviceWorker.ready;
+      var sub=(await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:pushB64ToU8(VAPID_PUBLIC_KEY) }));
       var j=sub.toJSON();
       // 同じ端末の古い購読が残っていれば置き換える
       try{ await sb.from('push_subscriptions').delete().eq('user_id',ME).eq('subscription->>endpoint', j.endpoint); }catch(e){}
       var r=await sb.from('push_subscriptions').insert({ user_id:ME, subscription:j });
       if(r.error){ alert('登録できませんでした：'+r.error.message+'（Supabaseで継ナビくんPhase2のSQLを実行してください）'); return; }
       say('✅ この端末で通知を受け取ります', true);
-    }catch(e){ alert('設定に失敗しました：'+(e&&e.message||e)); }
+      appBadgeApply();   // 許可が出たので、いまの数をアイコンに出し直す
+      var bs=$('np-badge'); if(bs) bs.innerHTML=appBadgeStatusHtml();
+    }catch(e){ say('🔔 スマホ通知をこの端末で受け取る'); alert('設定に失敗しました：'+(e&&e.message||e)); }
   }
+  //  ホーム画面のアプリで開いたときは、sw.js を先に登録しておく（ページは一切キャッシュしない作り）。
+  //  通知の許可を押したときに、待たずに済む。アイコンの数字も、閉じているあいだに足せる
+  try{
+    var __sa=(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true;
+    if(__sa && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
+  }catch(e){}
   //  この端末がもう通知を受け取る設定になっているかを、ボタンの文字に出す。
   //  押す前から「受け取っている」と分かれば、押し直して迷うことがない
   async function pushStatusPaint(){
@@ -15917,6 +15943,8 @@
       var sub=reg && await reg.pushManager.getSubscription();
       if(sub && Notification.permission==='granted'){
         btn.textContent='✅ この端末で受け取っています（押すと登録し直します）'; btn.style.color='#27684A';
+      }else if(Notification.permission==='denied'){
+        btn.textContent='⚠ 通知が「許可しない」になっています（押すと直し方が出ます）'; btn.style.color='#A9403D';
       }
     }catch(e){}
   }
@@ -15928,20 +15956,51 @@
   //  アプリを閉じているあいだは、通知が届くたびに sw.js が1つずつ足す。そのために
   //  いまの数を sw.js と同じ置き場（Cache Storage の 'tsugu-badge'）に書いておく。
   //  次にアプリを開くと、ここで正しい数に置き直す。
-  var APP_BADGE_LAST=-1;
+  //  ※ 数が同じでも、毎回アイコンに出し直す（2026-10-09）。以前は「前と同じ数なら何もしない」
+  //    にしていたため、通知の許可が出る前に一度呼ばれると（iPhone は許可が無いと出ない）、
+  //    あとで許可しても数が変わるまで出ないままだった。呼ぶのは軽いので、毎回でよい。
+  var APP_BADGE_N=0, APP_BADGE_STORED=-1;
   function appBadgeSet(n){
     n=Math.max(0, Number(n)||0);
-    if(n===APP_BADGE_LAST) return;
-    APP_BADGE_LAST=n;
+    APP_BADGE_N=n;
+    appBadgeApply();
+    if(n===APP_BADGE_STORED) return;
+    APP_BADGE_STORED=n;
+    try{
+      if(window.caches) caches.open('tsugu-badge').then(function(c){ return c.put('badge-n', new Response(String(n))); }).catch(function(){});
+    }catch(e){}
+  }
+  function appBadgeApply(){
+    var n=APP_BADGE_N;
     try{
       if('setAppBadge' in navigator){
         if(n>0) navigator.setAppBadge(n).catch(function(){});
         else if('clearAppBadge' in navigator) navigator.clearAppBadge().catch(function(){});
       }
     }catch(e){}
-    try{
-      if(window.caches) caches.open('tsugu-badge').then(function(c){ return c.put('badge-n', new Response(String(n))); }).catch(function(){});
-    }catch(e){}
+  }
+  //  アプリに戻ってきたとき（ホーム画面から開き直したとき）にも出し直す
+  try{ document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') appBadgeApply(); }); }catch(e){}
+  //  この端末でアイコンの数字が出せるかを、連携タブで言葉にする。
+  //  「出ない」ときに、端末のせいか・許可のせいか・数が0なのかを見分けられるように
+  function appBadgeStatusHtml(){
+    var ios=/iPad|iPhone|iPod/.test(navigator.userAgent), android=/Android/.test(navigator.userAgent);
+    var standalone=(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true;
+    var perm=('Notification' in window)?Notification.permission:'unsupported';
+    var t, ok=false;
+    if(!('setAppBadge' in navigator)){
+      t=android ? 'Android はアイコンに数字を出す仕組みに対応していません。<b>通知が届くと、アイコンに点</b>が付きます（ホーム画面の設定による）。'
+        : (ios && !standalone ? '<b>ホーム画面に追加したアイコンから</b>開くと出せます（Safari のタブでは出ません）。'
+        : 'この端末・ブラウザは、アイコンの数字に対応していません。');
+    }else if(!standalone){
+      t='<b>ホーム画面に追加したアプリ</b>（インストールしたアプリ）で開いたときに出ます。';
+    }else if(perm!=='granted'){
+      t='<b>通知の許可がまだ</b>のため出ません。上の🔔を押して、通知を許可してください。';
+    }else{
+      ok=true;
+      t=APP_BADGE_N>0 ? 'いま <b>'+APP_BADGE_N+'</b> をアイコンに出しています。' : 'いまは未確認が<b>0件</b>のため、数字は出ていません（1件以上で出ます）。';
+    }
+    return '<div style="font-size:11px;line-height:1.7;margin-top:6px;color:'+(ok?'#27684A':'#8A6A12')+';">🔴 アイコンの数字：'+t+'</div>';
   }
 
   // ===== 予定・TODO の通知の設定（notify_prefs）=====
@@ -15975,6 +16034,7 @@
         +opt('on','対応が必要なことを知らせる',p.act_on===false?'off':'on')+opt('off','知らせない',p.act_on===false?'off':'on')+'</select></div>'
       +'<div style="font-size:11px;color:var(--muted);line-height:1.7;">予定タブの予定と面談、TODOタブの期限が対象です。<b>終日の予定と、時刻のない今日のTODO</b>は、朝8時にまとめて1通。'
         +notifyWhatHtml()+'<br>アプリのアイコンには、右下のボタンと同じ<b>未確認の数（バッジ）</b>が出ます。<br>'
+        +'<div id="np-badge">'+appBadgeStatusHtml()+'</div>'
         +'届くのは、上の🔔で通知を受け取る設定にした端末です（iPhoneはホーム画面に追加したアプリ）。</div>'
       +'<div id="np-msg" style="font-size:11px;margin-top:5px;color:'+(ok?'var(--muted)':'#A9403D')+';">'
         +(ok?'':'設定を読み込めませんでした。通知は既定（予定は30分前・TODOは期限の時刻）で届きます。')+'</div>'
