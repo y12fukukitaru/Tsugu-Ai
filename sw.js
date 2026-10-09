@@ -26,7 +26,9 @@ self.addEventListener('push', function (e) {
   var opt = {
     body: d.body || '',
     icon: 'icon-192.png',
-    badge: 'favicon-32.png',
+    //  ステータスバーの小さなアイコン。Android は形（透明でない所）だけを白く出すので、
+    //  色付きの四角いファビコンだと白い四角になる。透明の背景に白い形だけの絵を使う
+    badge: 'badge-96.png',
     lang: 'ja',
     data: { url: d.url || './' }
   };
