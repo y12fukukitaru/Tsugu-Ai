@@ -1841,7 +1841,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261009-02';
+  var APP_BUILD='20261009-04';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -1981,6 +1981,7 @@
     await sb.auth.signOut();
     appBadgeSet(0);   // ログアウトしたら、アイコンの数字も消す（別の方の件数を残さない）
     ['login-pw','signup-email','signup-pw','signup-pw2','reset-email','rec-pw','rec-pw2'].forEach(function(id){ var e=$(id); if(e)e.value=''; });
+    pushAskClose();
     ME=null; showAuth();
   }
 
@@ -15884,12 +15885,16 @@
     for(var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
     return arr;
   }
+  //  iPhone・iPad か。iPadOS の Safari はパソコン（Mac）と名乗るので、触れる画面かどうかでも見分ける
+  function isIOSDevice(){
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && (navigator.maxTouchPoints||0)>1);
+  }
   function pushSupported(){ return ('serviceWorker' in navigator)&&('PushManager' in window)&&('Notification' in window); }
   async function enablePush(){
     var btn=$('push-btn');
     function say(t,ok){ if(btn){ btn.textContent=t; btn.style.color=ok?'#27684A':''; } }
     try{
-      var isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+      var isIOS=isIOSDevice(), isAndroid=/Android/.test(navigator.userAgent);
       var standalone=window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
       if(isIOS&&!standalone){
         alert('iPhone/iPadでは、先にこのページを「ホーム画面に追加」してください。\n\n手順：共有ボタン（□に↑）→「ホーム画面に追加」→ 追加したアイコンから開き直して、もう一度このボタンを押してください。');
@@ -15907,10 +15912,14 @@
       var perm=Notification.permission;
       if(perm!=='granted'){ say('通知の許可を確認しています…'); perm=await Notification.requestPermission(); }
       if(perm!=='granted'){
-        say('🔔 スマホ通知をこの端末で受け取る');
+        say('🔔 スマホ通知をこの端末で受け取る'); pushAskClose();
         alert(perm==='denied'
-          ? '通知が「許可しない」になっています。\n\n'+(isIOS?'iPhone の「設定」→「通知」→「TsuguAi」で「通知を許可」をオンにしてから、':'ブラウザのサイトの設定で通知を許可してから、')+'もう一度このボタンを押してください。'
-          : '通知が許可されませんでした。もう一度このボタンを押して、確認の画面で「許可」を選んでください。');
+          ? '通知が「許可しない」になっています。\n\n'
+            +(isIOS ? 'iPhone の「設定」→「通知」→「TsuguAi」で「通知を許可」をオンにしてから、'
+              : isAndroid ? 'Android は、アドレスバー左の「⚙」や鍵のマーク →「権限」（または「サイトの設定」）→「通知」を「許可」にしてから（ホーム画面に追加したアプリは、端末の「設定」→「アプリ」→ TsuguAi →「通知」）、'
+              : 'ブラウザのサイトの設定で通知を許可してから、')+'もう一度このボタンを押してください。'
+          : '通知が許可されませんでした。もう一度このボタンを押して、確認の画面で「許可」を選んでください。'
+            +(isAndroid?'\n\n確認の画面が出ないときは、アドレスバーに出る🔔（斜線つきのベル）を押すと許可できます。':''));
         return;
       }
       say('この端末を登録しています…');
@@ -15918,16 +15927,80 @@
       //  有効になるまで待ってから購読する（登録した直後だと、まだ動いておらず断られることがある）
       var reg=await navigator.serviceWorker.ready;
       var sub=(await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:pushB64ToU8(VAPID_PUBLIC_KEY) }));
-      var j=sub.toJSON();
-      // 同じ端末の古い購読が残っていれば置き換える
-      try{ await sb.from('push_subscriptions').delete().eq('user_id',ME).eq('subscription->>endpoint', j.endpoint); }catch(e){}
-      var r=await sb.from('push_subscriptions').insert({ user_id:ME, subscription:j });
+      var r=await pushSave(sub);
       if(r.error){ alert('登録できませんでした：'+r.error.message+'（Supabaseで継ナビくんPhase2のSQLを実行してください）'); return; }
       say('✅ この端末で通知を受け取ります', true);
+      pushAskClose();
       appBadgeApply();   // 許可が出たので、いまの数をアイコンに出し直す
       var bs=$('np-badge'); if(bs) bs.innerHTML=appBadgeStatusHtml();
     }catch(e){ say('🔔 スマホ通知をこの端末で受け取る'); alert('設定に失敗しました：'+(e&&e.message||e)); }
   }
+  //  この端末の購読を、いまログインしている方の宛先として保存する。
+  //  同じ端末の古い行が残っていれば置き換える（同じ通知が二重に届かないように）
+  async function pushSave(sub){
+    var j=sub.toJSON();
+    try{ await sb.from('push_subscriptions').delete().eq('user_id',ME).eq('subscription->>endpoint', j.endpoint); }catch(e){}
+    return await sb.from('push_subscriptions').insert({ user_id:ME, subscription:j });
+  }
+
+  // ===== はじめから通知を受け取れるように（2026-10-09）=====
+  //  iPhone も Android も、通知は「本人が押して許可する」まで出せない決まり（自動でオンにはできない）。
+  //  そこで、連携タブを探しに行かなくて済むように、ログインのあとこちらから一度だけ聞く。
+  //   ・許可がまだ  → 画面の下に「通知を受け取りますか？」。［受け取る］の1回で許可の確認画面へ
+  //   ・許可済み    → この端末の購読を、黙って保存し直す（別の方でログインし直したときも届くように）
+  //   ・許可しない  → 何も出さない（しつこくしない。直し方は連携タブに出る）
+  //   ・iPhone の Safari のタブ → 「ホーム画面に追加すると届きます」を一度だけ
+  //  ［あとで］を押したら、7日間は聞かない。
+  var PUSH_ASK_KEY='tsugu_push_ask_until';
+  function pushStandalone(){ return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true; }
+  function pushAskSnoozed(){ try{ return Number(localStorage.getItem(PUSH_ASK_KEY)||0)>Date.now(); }catch(e){ return false; } }
+  function pushAskLater(days){ try{ localStorage.setItem(PUSH_ASK_KEY, String(Date.now()+(days||7)*86400000)); }catch(e){} pushAskClose(); }
+  function pushAskClose(){ var b=$('push-ask'); if(b) b.remove(); }
+  async function pushAutoSetup(){
+    if(!ME || !pushSupported()){
+      //  iPhone の Safari のタブでは、ホーム画面に追加しないと通知が使えない。そのことを一度だけ
+      var ios=isIOSDevice();
+      if(ME && ios && !pushStandalone() && !pushAskSnoozed()) pushAskShow('home');
+      return;
+    }
+    var perm=Notification.permission;
+    if(perm==='granted'){ pushEnsure(); return; }
+    if(perm==='denied' || pushAskSnoozed()) return;
+    var ios2=isIOSDevice();
+    if(ios2 && !pushStandalone()){ pushAskShow('home'); return; }
+    pushAskShow('ask');
+  }
+  //  許可済みの端末は、押さなくても購読を保存し直す（許可が出ている限り、確認画面は要らない）
+  async function pushEnsure(){
+    try{
+      await navigator.serviceWorker.register('sw.js');
+      var reg=await navigator.serviceWorker.ready;
+      var sub=(await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:pushB64ToU8(VAPID_PUBLIC_KEY) }));
+      await pushSave(sub);
+      appBadgeApply();
+    }catch(e){}
+  }
+  function pushAskShow(kind){
+    if($('push-ask')) return;
+    var d=document.createElement('div');
+    d.id='push-ask';
+    d.setAttribute('role','dialog');
+    d.style.cssText='position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:9000;max-width:460px;margin:0 auto;'
+      +'background:var(--card,#fff);color:var(--ink,#18202E);border:1px solid var(--line,#E2E7EF);border-radius:14px;'
+      +'box-shadow:0 14px 38px rgba(0,0,0,.28);padding:14px 16px;font-size:12.5px;line-height:1.7;';
+    d.innerHTML=(kind==='home'
+      ? '<div style="font-weight:700;color:var(--navy,#1E3A66);margin-bottom:3px;">📲 ホーム画面に追加すると、通知が届きます</div>'
+        +'<div style="color:var(--muted,#5A6981);">共有ボタン（□に↑）→「ホーム画面に追加」→ 追加したアイコンから開くと、予定・TODO・メッセージをスマホに知らせ、アイコンに未確認の数が出ます。</div>'
+        +'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:9px;">'
+          +'<button type="button" class="btn2" style="font-size:12px;padding:7px 14px;" onclick="pushAskLater(14)">閉じる</button></div>'
+      : '<div style="font-weight:700;color:var(--navy,#1E3A66);margin-bottom:3px;">🔔 スマホに通知を受け取りますか？</div>'
+        +'<div style="color:var(--muted,#5A6981);">予定の前・TODOの期限・メッセージ・対応が必要なことをお知らせし、アイコンに未確認の数を出します。次に出る確認で<b>「許可」</b>を選んでください。何を知らせるかは、あとで継ナビくんの「連携」タブで選べます。</div>'
+        +'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:9px;">'
+          +'<button type="button" class="btn2" style="font-size:12px;padding:7px 14px;background:transparent;color:var(--muted,#5A6981);border:1px solid var(--line,#E2E7EF);" onclick="pushAskLater(7)">あとで</button>'
+          +'<button type="button" id="push-ask-ok" class="btn2" style="font-size:12px;padding:7px 16px;" onclick="enablePush()">受け取る</button></div>');
+    document.body.appendChild(d);
+  }
+
   //  ホーム画面のアプリで開いたときは、sw.js を先に登録しておく（ページは一切キャッシュしない作り）。
   //  通知の許可を押したときに、待たずに済む。アイコンの数字も、閉じているあいだに足せる
   try{
@@ -15984,7 +16057,7 @@
   //  この端末でアイコンの数字が出せるかを、連携タブで言葉にする。
   //  「出ない」ときに、端末のせいか・許可のせいか・数が0なのかを見分けられるように
   function appBadgeStatusHtml(){
-    var ios=/iPad|iPhone|iPod/.test(navigator.userAgent), android=/Android/.test(navigator.userAgent);
+    var ios=isIOSDevice(), android=/Android/.test(navigator.userAgent);
     var standalone=(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true;
     var perm=('Notification' in window)?Notification.permission:'unsupported';
     var t, ok=false;
@@ -15994,6 +16067,8 @@
         : 'この端末・ブラウザは、アイコンの数字に対応していません。');
     }else if(!standalone){
       t='<b>ホーム画面に追加したアプリ</b>（インストールしたアプリ）で開いたときに出ます。';
+    }else if(perm==='denied'){
+      t='通知が<b>「許可しない」</b>になっているため出ません。'+(ios?'iPhone の 設定 → 通知 → TsuguAi で「通知を許可」と「バッジ」をオンにしてください。':'端末やブラウザの設定で、このアプリの通知を許可してください。');
     }else if(perm!=='granted'){
       t='<b>通知の許可がまだ</b>のため出ません。上の🔔を押して、通知を許可してください。';
     }else{
@@ -16073,7 +16148,7 @@
       var reg=(await navigator.serviceWorker.getRegistration()) || (await navigator.serviceWorker.register('sw.js'));
       await reg.showNotification('📅 30分後：（試し）担当パートナーとの面談', {
         body:'予定やTODOのお知らせは、このように届きます。押すと予定タブが開きます。',
-        icon:'icon-192.png', badge:'favicon-32.png', lang:'ja', tag:'tsugu-test', data:{ url:'./?knv=cal' } });
+        icon:'icon-192.png', badge:'badge-96.png', lang:'ja', tag:'tsugu-test', data:{ url:'./?knv=cal' } });
     }catch(e){ alert('通知を出せませんでした：'+(e&&e.message||e)); }
   }
   //  通知から開いたとき（?knv=cal ／ ?knv=todo）に、そのタブを開く。
@@ -16661,6 +16736,7 @@
     TODO_ROWS=null; TODO_CLIENTS=null; TODO_EDIT=null; todoLoad();   // 期限が今日までの TODO の数を、タブと右下のボタンに
     gcalReturn();   // Google の画面から戻ってきたなら、予定タブへ
     knvDeepLink();  // 予定・TODO の通知から開いたなら、そのタブへ
+    setTimeout(pushAutoSetup, 2500);   // 通知をまだ受け取っていなければ、こちらから一度聞く
   }
   // 運営：未対応の問い合わせ件数をバッジに反映
   async function knvAdminBadge(){
