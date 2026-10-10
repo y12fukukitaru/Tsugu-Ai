@@ -21,14 +21,22 @@ function takeFn(name) {
 }
 function takeBlock(name) { const i = SRC.indexOf('\n  var ' + name + '='); if (i < 0) throw new Error(name); return SRC.slice(i, SRC.indexOf('\n  ];\n', i) + 5); }
 // ① 資料
-const D = new Function('EP_ME', takeBlock('KNV_DOCS') + takeFn('knvDocsFor') + 'return { KNV_DOCS: KNV_DOCS, knvDocsFor: knvDocsFor };');
-const f = (eff, ep) => D(ep).knvDocsFor(eff).map(d => d.f);
-is('経営者には経営者向けの説明書と、情報の守りの資料', f('customer', null), ['manual-customer.html', 'security.html']);
-is('パートナー（個人）', f('consultant', null), ['manual-customer.html', 'manual-partner.html', 'security.html', 'pitch-customer.html']);
-is('パートナー（法人所属）にはエンタープライズも', f('consultant', { org: {} }), ['manual-customer.html', 'manual-partner.html', 'manual-ep.html', 'security.html', 'pitch-customer.html']);
-is('運営には全部（認定パートナー説明会を含む）', f('admin', null).length, 14);
-is('EP-II 所属の方には、所属パートナー候補向けの資料も', f('consultant', { org: { kind: 'EP2' } }), ['manual-customer.html', 'manual-partner.html', 'manual-ep.html', 'security.html', 'pitch-customer.html', 'pitch-ep2-member.html']);
+const D = new Function('EP_ME', 'planOf', 'window', takeBlock('KNV_DOCS') + takeFn('knvDocsFor') + 'return { KNV_DOCS: KNV_DOCS, knvDocsFor: knvDocsFor };');
+const planOf = (p) => (p && p.plan === 'seller') ? 'seller' : 'buyer';
+const f = (eff, ep, plan) => D(ep, planOf, { __prof: { plan: plan || 'buyer' } }).knvDocsFor(eff).map(d => d.f);
+//  経営者向けの説明書はプランで分けた2本。経営者には自分のプランの1本だけ（2026-10-10）
+is('経営者（買い手プラン）には買い手版の説明書と、情報の守りの資料', f('customer', null, 'buyer'), ['manual-buyer.html', 'security.html']);
+is('経営者（売り手プラン）には売り手版の説明書と、情報の守りの資料', f('customer', null, 'seller'), ['manual-seller.html', 'security.html']);
+const P1 = ['manual-buyer.html', 'manual-seller.html', 'manual-partner.html', 'security.html', 'sheet-partner.html', 'sheet-buyer.html', 'sheet-seller.html', 'pitch-buyer.html', 'pitch-seller.html', 'pitch-customer.html'];
+is('パートナー（個人）：説明書は買い手版・売り手版の両方、一枚紙3種、短い説明2本と詳しい版', f('consultant', null), P1);
+is('パートナー（法人所属）にはエンタープライズも', f('consultant', { org: {} }), P1.slice(0, 3).concat(['manual-ep.html']).concat(P1.slice(3)));
+is('運営には全部（認定パートナー説明会を含む）', f('admin', null).length, 20);
+is('EP-II 所属の方には、所属パートナー候補向けの資料も', f('consultant', { org: { kind: 'EP2' } }), P1.slice(0, 3).concat(['manual-ep.html']).concat(P1.slice(3)).concat(['pitch-ep2-member.html']));
 is('EP-I 所属の方には、所属パートナー候補向けの資料は出さない', f('consultant', { org: { kind: 'EP1' } }).indexOf('pitch-ep2-member.html'), -1);
+ok('経営者のプランは、渡されなければ自分のプロフィールから', /if\(eff==='customer' && !plan\) plan=planOf\(window\.__prof\);/.test(takeFn('knvDocsFor')));
+ok('両方の説明書が出る方は、元の説明書（両方入り）1本で探す（同じ頁を二重に出さない）', /f:'manual-customer\.html'/.test(takeFn('knvDocIndex')));
+ok('一枚紙は「開いて印刷する」', /d\.one/.test(takeFn('knvDocRow')) && /🖨 開いて印刷する/.test(takeFn('knvDocRow')));
+ok('資料一覧の組：説明書 → 一枚紙 → 商談用スライド → 社外向け', /\['manual','sheet','pitch','ext'\]/.test(takeFn('knvDocHubHtml')));
 ok('どの資料にも2つの開き方', /📑 目次から読む/.test(takeFn('knvDocRow')) && /▶ スライドで見る/.test(takeFn('knvDocRow')));
 ok('開き方：?view=read／?view=slide と #t=題名', /'\?view=read':'\?view=slide'/.test(takeFn('knvDocOpen')) && /'#t='\+encodeURIComponent\(t\)/.test(takeFn('knvDocOpen')));
 // ② 探す
