@@ -689,6 +689,30 @@
   .cal-cell .d{font-size:11.5px;color:var(--ink);font-feature-settings:'tnum';line-height:1.2;}
   .cal-cell.sun .d{color:#A9403D;} .cal-cell.sat .d{color:#2C5DA8;}
   .cal-dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;}
+  /* 暦（六曜・天赦日・一粒万倍日）。目安なので控えめに、大安と吉日の札だけ色を付ける */
+  .kyo{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:1px 2px;line-height:1.1;}
+  .kyo-rk{font-size:9px;color:#8A93A3;letter-spacing:-.02em;white-space:nowrap;}
+  .kyo-rk.tai{color:#B3362F;font-weight:700;}
+  .kyo-b{font-size:8.5px;font-weight:700;border-radius:3px;padding:0 2px;line-height:1.35;white-space:nowrap;}
+  .kyo-b.ten{background:#C39B3F;color:#fff;}
+  .kyo-b.mb{background:#DCEFEA;color:#0F6559;}
+  .cal-dr{display:flex;align-items:center;gap:4px;min-width:0;}
+  .cal-dr .kyo{justify-content:flex-start;}
+  .wk-hcell .kyo{margin-top:1px;}
+  .kyo-line{display:flex;flex-wrap:wrap;align-items:center;gap:5px 6px;margin:-2px 0 8px;font-size:11.5px;}
+  .kyo-line .kyo-rk{font-size:12px;font-weight:700;color:var(--navy);border:1px solid var(--line);border-radius:99px;padding:1px 9px;}
+  .kyo-line .kyo-rk.tai{color:#B3362F;border-color:#E8B9B5;background:#FBEFEE;}
+  .kyo-t{font-weight:700;border-radius:99px;padding:1px 9px;}
+  .kyo-t i{font-style:normal;font-weight:500;font-size:10.5px;margin-left:4px;opacity:.85;}
+  .kyo-t.ten{background:#C39B3F;color:#fff;}
+  .kyo-t.mb{background:#DCEFEA;color:#0F6559;}
+  .kyo-t.tora{background:#F6EEDB;color:#8A6A12;}
+  .kyo-s{color:var(--muted);font-size:11px;}
+  .kyo-sw{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--navy);margin-top:10px;cursor:pointer;}
+  .kyo-sw input{width:18px;height:18px;}
+  .kyo-lg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--muted);margin-top:6px;line-height:1.6;}
+  .kyo-lg b{margin-right:4px;}
+  .kyo-note{flex-basis:100%;font-size:10.5px;color:#94A2B6;}
   .cal-dot{width:6px;height:6px;border-radius:50%;display:block;}
   .cal-more{font-size:9px;color:var(--muted);line-height:1;}
   /* 月表示（広いとき）：点ではなく、予定そのもの（時刻＋題名）を色つきで並べる。
@@ -895,6 +919,24 @@
   .scan-cam{font-size:34px;line-height:1;}
   .scan-add b{font-size:13px;}
   .scan-msg{font-size:12.5px;color:var(--navy);background:#FDF6E3;border:1px solid #EBDDB4;border-radius:9px;padding:8px 11px;margin-top:10px;}
+  .scan-q{font-size:13px;font-weight:700;color:var(--navy);margin:14px 0 8px;}
+  .scan-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+  .scan-main{grid-column:1/-1;min-height:50px;font-size:15px;}
+  .scan-main[disabled],.scan-act[disabled]{opacity:.45;cursor:default;}
+  .scan-act{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:72px;border:1.5px solid #9CCFC6;border-radius:12px;background:var(--card);color:#0F6559;font:700 13.5px 'Noto Sans JP',sans-serif;cursor:pointer;padding:8px;}
+  .scan-act span{font-size:22px;line-height:1;}
+  .scan-act i{font-style:normal;font-weight:500;font-size:11px;color:var(--muted);}
+  .scan-out{border:1.5px solid #9CCFC6;background:rgba(20,122,110,.05);border-radius:12px;padding:11px 12px;margin-top:12px;}
+  .scan-out-h{font-size:13.5px;font-weight:700;color:#0F6559;margin-bottom:8px;}
+  .scan-out-l{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--muted);margin-bottom:8px;}
+  .scan-out-l input{font-size:16px;padding:8px 10px;}
+  .scan-out-b{display:flex;gap:8px;flex-wrap:wrap;}
+  .scan-out-b button{min-height:46px;font-size:14px;padding:0 16px;flex:1 1 140px;}
+  .scan-out-b .ghost{border:1px solid var(--line);border-radius:10px;}
+  .scan-out-n{font-size:11px;color:var(--muted);margin-top:7px;line-height:1.6;}
+  .scan-text{width:100%;min-height:180px;font-size:14px;line-height:1.7;margin-bottom:8px;box-sizing:border-box;}
+  .scan-only{display:none !important;}
+  @media (pointer:coarse){ .scan-only{display:inline-flex !important;} }
   .scan-ft{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;}
   .scan-ft .ghost{border:1px solid var(--line);border-radius:10px;padding:0 16px;min-height:46px;font-size:13px;}
   .scan-ft .btn2{min-height:46px;font-size:14px;padding:0 18px;}
@@ -1855,6 +1897,7 @@
     <div style="display:flex;gap:8px;align-items:flex-end;">
       <input type="file" id="knv-ask-file" class="hidden" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" onchange="knvAskAttach(this)">
       <button class="ghost" id="knv-ask-att" style="font-size:15px;border:1px solid var(--line);border-radius:9px;padding:8px 11px;line-height:1;flex:0 0 auto;" onclick="knvAskPick()" title="画面の写しやファイルを添えて聞く" aria-label="ファイルを添える">📎</button>
+      <button class="ghost scan-only" id="knv-ask-scan" style="font-size:15px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;line-height:1;flex:0 0 auto;" onclick="knvAskScan()" title="書類をカメラで撮って見せる" aria-label="書類をスキャン">📷</button>
       <textarea id="knv-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="相談・使い方の質問など、なんでもどうぞ（画面の写しはそのまま貼れます）"></textarea>
       <button class="btn2" id="knv-send" onclick="secretarySend('knv')">送信</button>
     </div>
@@ -1973,7 +2016,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261010-18';
+  var APP_BUILD='20261010-19';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -6101,13 +6144,21 @@
     finSetImportRows(await finAskAI(content), 'AI読み取り');
   }
   // ===== 書類のスキャン（2026-10-10）=====
-  //  スマホのカメラで決算書・試算表を1枚ずつ撮り、そのまま AI で読み取る。
-  //  撮った写真は端末の中で、長い辺1600pxに縮め、白黒にして濃淡を整えてから送る
-  //  （文字が読みやすくなり、送る大きさも小さくなる）。写真は端末にもサーバーにも残さない。
-  var SCAN={ pages:[], done:null, title:'' };
+  //  スマホのカメラで書類を1枚ずつ撮り、撮ったものを色々なことに使う。
+  //    ・PDFにして保存・共有（LINE・メールなどに渡せる）…どこから開いても使える
+  //    ・文字に書き起こす（コピーして使える）            …どこから開いても使える
+  //    ・決算書・試算表の数字を読み取る／PDFで送る／継ナビくんに見せる …開いた場所に合わせて1つ
+  //  撮った写真は端末の中で、長い辺1600pxに縮め、白黒にして濃淡を整えてから使う
+  //  （文字が読みやすくなり、大きさも小さくなる）。写真は端末にもサーバーにも残さない。
+  var SCAN={ pages:[], title:'', main:null, out:null };
   var SCAN_MAX=8;
-  function scanOpen(title, done){
-    SCAN={ pages:[], done:done, title:title||'書類をスキャン' };
+  //  main … 開いた場所の使い道 { label:'数字を読み取る', ai:true, run:function(imgs){…} }
+  //         ai:true は撮った写真を AI に送る使い道（run には base64 の配列が渡る）。
+  //         ai が無いものは PDF のファイルが渡る（run(file)）
+  //  古い書き方 scanOpen(題, function(imgs){…}) は「読み取る」として扱う
+  function scanOpen(title, main){
+    if(typeof main==='function') main={ label:'読み取る', ai:true, run:main };
+    SCAN={ pages:[], title:title||'書類をスキャン', main:main||null, out:null };
     var m=$('scan-modal');
     if(!m){
       m=document.createElement('div'); m.id='scan-modal'; m.className='scan-modal';
@@ -6121,7 +6172,8 @@
     var m=$('scan-modal'); if(m) m.classList.add('hidden');
     document.body.style.overflow='';
     SCAN.pages.forEach(function(pg){ try{ URL.revokeObjectURL(pg.url); }catch(e){} });
-    SCAN={ pages:[], done:null, title:'' };
+    if(SCAN.out && SCAN.out.url) try{ URL.revokeObjectURL(SCAN.out.url); }catch(e){}
+    SCAN={ pages:[], title:'', main:null, out:null };
   }
   function scanPaint(msg){
     var m=$('scan-modal'); if(!m) return;
@@ -6140,13 +6192,45 @@
           +'<input type="file" accept="image/*" capture="environment" onchange="scanAdd(this)"></label>':'')
       +'</div>'
       +(msg?'<div class="scan-msg">'+msg+'</div>':'')
-      +'<div class="scan-ft">'
-        +'<button type="button" class="ghost" onclick="scanClose()">やめる</button>'
-        +'<button type="button" class="btn2"'+(n?'':' disabled')+' onclick="scanGo()">'+(n?'この'+n+'枚を読み取る →':'撮るとここで読み取れます')+'</button>'
+      +(n?'<div class="scan-q">撮った'+n+'枚を、どうしますか？</div>':'')
+      +'<div class="scan-acts">'
+        +(SCAN.main?'<button type="button" class="btn2 scan-main"'+(n?'':' disabled')+' onclick="scanDo(\'main\')">'+esc(SCAN.main.label)+' →</button>':'')
+        +'<button type="button" class="scan-act"'+(n?'':' disabled')+' onclick="scanDo(\'pdf\')"><span>📄</span>PDFにする<i>保存・共有</i></button>'
+        +'<button type="button" class="scan-act"'+(n?'':' disabled')+' onclick="scanDo(\'text\')"><span>📝</span>文字に書き起こす<i>コピーして使える</i></button>'
       +'</div>'
+      +scanOutHtml()
+      +'<div class="scan-ft"><button type="button" class="ghost" onclick="scanClose()">'+(SCAN.out?'閉じる':'やめる')+'</button></div>'
     +'</div>';
   }
+  //  できあがったもの（PDF・書き起こした文字）を、画面の下に出す
+  function scanOutHtml(){
+    var o=SCAN.out; if(!o) return '';
+    if(o.kind==='pdf'){
+      var canShare=false;
+      try{ canShare=!!(navigator.canShare && navigator.canShare({ files:[o.file] })); }catch(e){}
+      return '<div class="scan-out"><div class="scan-out-h">📄 PDFができました（'+o.pages+'ページ・'+knvSize(o.file.size)+'）</div>'
+        +'<label class="scan-out-l">ファイル名<input class="inp2" id="scan-pdf-name" value="'+esc(o.file.name.replace(/\.pdf$/,''))+'"></label>'
+        +'<div class="scan-out-b">'
+          +(canShare?'<button type="button" class="btn2" onclick="scanPdfShare()">📤 送る・共有する</button>':'')
+          +'<button type="button" class="'+(canShare?'ghost':'btn2')+'" onclick="scanPdfSave()">⬇ 端末に保存する</button>'
+        +'</div>'
+        +(canShare?'<div class="scan-out-n">「送る・共有する」から、LINE・メール・ファイルなどに渡せます。</div>':'')
+      +'</div>';
+    }
+    if(o.kind==='text'){
+      return '<div class="scan-out"><div class="scan-out-h">📝 書き起こした文字</div>'
+        +'<textarea class="inp2 scan-text" id="scan-text">'+esc(o.text)+'</textarea>'
+        +'<div class="scan-out-b">'
+          +'<button type="button" class="btn2" onclick="scanTextCopy()">📋 コピーする</button>'
+          +'<button type="button" class="ghost" onclick="scanTextSave()">⬇ 保存する</button>'
+        +'</div>'
+        +'<div class="scan-out-n">AIの書き起こしです。数字や固有名詞は、元の書類とお確かめください。</div>'
+      +'</div>';
+    }
+    return '';
+  }
   //  写真を整える：縮める → 白黒 → 濃淡を伸ばす（下2%と上2%を基準に）→ JPEG
+  //  PDF に入れるため、できた画像の幅と高さも返す
   function scanEnhance(blob, rot){
     return new Promise(function(resolve, reject){
       var url=URL.createObjectURL(blob), img=new Image();
@@ -6168,7 +6252,8 @@
           var sc=255/(hi-lo);
           for(i=0;i<px.length;i+=4){ y=Math.max(0, Math.min(255, (px[i]-lo)*sc)); px[i]=px[i+1]=px[i+2]=y; }
           g.setTransform(1,0,0,1,0,0); g.putImageData(d,0,0);
-          c.toBlob(function(b){ URL.revokeObjectURL(url); if(b) resolve(b); else reject(new Error('画像を作れませんでした')); }, 'image/jpeg', 0.85);
+          var W=c.width, H=c.height;
+          c.toBlob(function(b){ URL.revokeObjectURL(url); if(b) resolve({ blob:b, w:W, h:H }); else reject(new Error('画像を作れませんでした')); }, 'image/jpeg', 0.85);
         }catch(e){ URL.revokeObjectURL(url); reject(e); }
       };
       img.onerror=function(){ URL.revokeObjectURL(url); reject(new Error('写真を読み込めませんでした')); };
@@ -6181,35 +6266,146 @@
     if(!/^image\//.test(f.type||'image/')){ scanPaint('写真（画像）を選んでください。'); return; }
     scanPaint('整えています…');
     try{
-      var b=await scanEnhance(f, 0);
-      SCAN.pages.push({ orig:f, rot:0, blob:b, url:URL.createObjectURL(b) });
-      scanPaint();
+      var r=await scanEnhance(f, 0);
+      SCAN.pages.push({ orig:f, rot:0, blob:r.blob, w:r.w, h:r.h, url:URL.createObjectURL(r.blob) });
+      scanOutDrop(); scanPaint();
     }catch(e){ scanPaint('この写真は使えませんでした：'+esc(e.message||e)); }
   }
   async function scanRotate(i){
     var pg=SCAN.pages[i]; if(!pg) return;
     pg.rot=(pg.rot+1)%4;
-    try{ var b=await scanEnhance(pg.orig, pg.rot); try{ URL.revokeObjectURL(pg.url); }catch(e){} pg.blob=b; pg.url=URL.createObjectURL(b); }catch(e){}
-    scanPaint();
+    try{ var r=await scanEnhance(pg.orig, pg.rot); try{ URL.revokeObjectURL(pg.url); }catch(e){} pg.blob=r.blob; pg.w=r.w; pg.h=r.h; pg.url=URL.createObjectURL(r.blob); }catch(e){}
+    scanOutDrop(); scanPaint();
   }
-  function scanDel(i){ var pg=SCAN.pages.splice(i,1)[0]; if(pg) try{ URL.revokeObjectURL(pg.url); }catch(e){} scanPaint(); }
+  function scanDel(i){ var pg=SCAN.pages.splice(i,1)[0]; if(pg) try{ URL.revokeObjectURL(pg.url); }catch(e){} scanOutDrop(); scanPaint(); }
+  //  ページを足したり回したりしたら、前に作った PDF・書き起こしは古くなるので消す
+  function scanOutDrop(){ if(SCAN.out && SCAN.out.url) try{ URL.revokeObjectURL(SCAN.out.url); }catch(e){} SCAN.out=null; }
   function scanB64(blob){
     return new Promise(function(resolve,reject){ var r=new FileReader(); r.onload=function(){ resolve(String(r.result).split(',')[1]||''); }; r.onerror=reject; r.readAsDataURL(blob); });
   }
-  async function scanGo(){
-    if(!SCAN.pages.length || !SCAN.done) return;
-    var done=SCAN.done, pages=SCAN.pages.slice();
-    scanPaint('読み取っています…（1枚につき数秒かかります）');
-    try{
-      var imgs=[];
-      for(var i=0;i<pages.length;i++) imgs.push(await scanB64(pages[i].blob));
-      //  一度に送れるのは 8MB まで（ai-proxy の上限）。余裕を見て 7MB で止める
-      var tot=imgs.reduce(function(a,b){ return a+b.length; }, 0);
-      if(tot>7*1024*1024){ scanPaint('写真が大きすぎます。枚数を減らして（'+Math.max(1,Math.floor(pages.length*7*1024*1024/tot))+'枚まで）、2回に分けて読み取ってください。'); return; }
-      scanClose();
-      await done(imgs);
-    }catch(e){ scanPaint('読み取れませんでした：'+esc(e.message||e)); }
+  function scanBytes(blob){
+    if(blob.arrayBuffer) return blob.arrayBuffer().then(function(b){ return new Uint8Array(b); });
+    return new Promise(function(resolve,reject){ var r=new FileReader(); r.onload=function(){ resolve(new Uint8Array(r.result)); }; r.onerror=reject; r.readAsArrayBuffer(blob); });
   }
+  //  撮った写真を AI に送れる形（base64）にする。一度に送れるのは 8MB まで（ai-proxy の上限）。余裕を見て 7MB で止める
+  async function scanImgs(){
+    var imgs=[];
+    for(var i=0;i<SCAN.pages.length;i++) imgs.push(await scanB64(SCAN.pages[i].blob));
+    var tot=imgs.reduce(function(a,b){ return a+b.length; }, 0);
+    if(tot>7*1024*1024) throw new Error('写真が大きすぎます。枚数を減らして（'+Math.max(1,Math.floor(SCAN.pages.length*7*1024*1024/tot))+'枚まで）、2回に分けてください。');
+    return imgs;
+  }
+  //  ファイル名：題名_年月日-時分.pdf（使えない文字は外す）
+  function scanFileName(ext){
+    var d=new Date(), p=function(n){ return ('0'+n).slice(-2); };
+    var base=String(SCAN.title||'スキャン').replace(/をスキャン$/,'').replace(/[\\\/:*?"<>|\s]+/g,'_').slice(0,30)||'スキャン';
+    return base+'_'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+'.'+ext;
+  }
+  //  撮った写真を1つの PDF にする（1枚＝A4 1ページ。横長の写真は横向きの頁）。
+  //  JPEG はそのまま PDF に入れられる（DCTDecode）ので、部品を足さずに作れる
+  function scanPdfBytes(pages){
+    var enc=new TextEncoder(), parts=[], len=0, offs=[];
+    function put(x){ var b=(typeof x==='string')?enc.encode(x):x; parts.push(b); len+=b.length; }
+    function obj(no, body){ offs[no]=len; put(no+' 0 obj\n'); body(); put('\nendobj\n'); }
+    var np=pages.length, kids=[];
+    for(var i=0;i<np;i++) kids.push((3+i*3)+' 0 R');
+    put('%PDF-1.4\n%âãÏÓ\n');
+    obj(1, function(){ put('<< /Type /Catalog /Pages 2 0 R >>'); });
+    obj(2, function(){ put('<< /Type /Pages /Kids ['+kids.join(' ')+'] /Count '+np+' >>'); });
+    pages.forEach(function(pg, i){
+      var land=pg.w>pg.h, PW=land?841.89:595.28, PH=land?595.28:841.89;
+      var k=Math.min(PW/pg.w, PH/pg.h), dw=+(pg.w*k).toFixed(2), dh=+(pg.h*k).toFixed(2);
+      var dx=+((PW-dw)/2).toFixed(2), dy=+((PH-dh)/2).toFixed(2);
+      var pno=3+i*3, cno=pno+1, ino=pno+2;
+      var cs='q '+dw+' 0 0 '+dh+' '+dx+' '+dy+' cm /Im0 Do Q';
+      obj(pno, function(){ put('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+PW+' '+PH+'] /Resources << /XObject << /Im0 '+ino+' 0 R >> >> /Contents '+cno+' 0 R >>'); });
+      obj(cno, function(){ put('<< /Length '+cs.length+' >>\nstream\n'+cs+'\nendstream'); });
+      obj(ino, function(){
+        put('<< /Type /XObject /Subtype /Image /Width '+pg.w+' /Height '+pg.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+pg.jpg.length+' >>\nstream\n');
+        put(pg.jpg); put('\nendstream');
+      });
+    });
+    var nobj=3+np*3, xref=len;
+    var x='xref\n0 '+nobj+'\n0000000000 65535 f \n';
+    for(var j=1;j<nobj;j++) x+=('0000000000'+offs[j]).slice(-10)+' 00000 n \n';
+    put(x+'trailer\n<< /Size '+nobj+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF\n');
+    return parts;
+  }
+  async function scanPdf(){
+    var pages=[];
+    for(var i=0;i<SCAN.pages.length;i++){ var pg=SCAN.pages[i]; pages.push({ w:pg.w, h:pg.h, jpg:await scanBytes(pg.blob) }); }
+    return new File(scanPdfBytes(pages), scanFileName('pdf'), { type:'application/pdf' });
+  }
+  //  使い道ボタン
+  async function scanDo(kind){
+    if(!SCAN.pages.length) return;
+    var main=SCAN.main;
+    try{
+      if(kind==='pdf'){
+        scanPaint('PDFにしています…');
+        var f=await scanPdf();
+        scanOutDrop(); SCAN.out={ kind:'pdf', file:f, pages:SCAN.pages.length };
+        scanPaint(); scanOutShow(); return;
+      }
+      if(kind==='text'){
+        scanPaint('文字を書き起こしています…（1枚につき数秒かかります）');
+        var t=await scanTranscribe(await scanImgs());
+        scanOutDrop(); SCAN.out={ kind:'text', text:t };
+        scanPaint(); scanOutShow(); return;
+      }
+      if(kind==='main' && main){
+        if(main.ai){
+          scanPaint('読み取っています…（1枚につき数秒かかります）');
+          var imgs=await scanImgs();
+          scanClose(); await main.run(imgs); return;
+        }
+        scanPaint('PDFにしています…');
+        var file=await scanPdf();
+        scanClose(); await main.run(file); return;
+      }
+    }catch(e){ scanPaint(esc((e&&e.message)||e)); }
+  }
+  function scanOutShow(){ var o=document.querySelector('#scan-modal .scan-out'); if(o && o.scrollIntoView) try{ o.scrollIntoView({ block:'nearest', behavior:'smooth' }); }catch(e){} }
+  //  直したファイル名で作り直す（中身は同じ）
+  function scanPdfFile(){
+    var o=SCAN.out; if(!o || o.kind!=='pdf') return null;
+    var inp=$('scan-pdf-name'), nm=String(inp?inp.value:'').trim().replace(/[\\\/:*?"<>|]+/g,'_').replace(/\.pdf$/i,'').slice(0,60);
+    if(nm && nm+'.pdf'!==o.file.name) o.file=new File([o.file], nm+'.pdf', { type:'application/pdf' });
+    return o.file;
+  }
+  async function scanPdfShare(){
+    var f=scanPdfFile(); if(!f) return;
+    try{ await navigator.share({ files:[f], title:f.name }); }
+    catch(e){ if(e && e.name==='AbortError') return; scanPdfSave(); }
+  }
+  function scanDownload(blob, name){
+    var url=URL.createObjectURL(blob), a=document.createElement('a');
+    a.href=url; a.download=name; a.rel='noopener'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, 30000);
+  }
+  function scanPdfSave(){ var f=scanPdfFile(); if(f) scanDownload(f, f.name); }
+  //  文字に書き起こす。表は「｜」で区切った行に、読めない所は［判読不能］とする
+  async function scanTranscribe(imgs){
+    var content=imgs.map(function(b64){ return { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:b64 } }; });
+    content.push({ type:'text', text:'この'+imgs.length+'枚は、1つの書類をページごとに撮った写真です（白黒に整えてあります）。書いてある文字を、そのまま書き起こしてください。' });
+    var sys='あなたは書類の文字を書き起こす係です。写真に書いてある文字だけを、上から順に、そのまま書き起こします。'
+      +'要約・言い換え・説明・前置きはしない。表は1行ずつ、欄を「｜」で区切る。ページが変わるところには「―― n枚目 ――」と入れる。'
+      +'読めない所は［判読不能］と書き、憶測で文字や数字を作らない。';
+    var res=await sb.functions.invoke('ai-proxy',{ body:{ system:sys, messages:[{role:'user',content:content}], model:'claude-sonnet-4-6', max_tokens:4000 } });
+    if(res.error) throw new Error('書き起こせませんでした：'+(res.error.message||''));
+    var txt=''; try{ var d=res.data; txt=(d&&d.content&&d.content.map?d.content.map(function(c){return c.text||'';}).join(''):(d&&d.text)||String(d||'')); }catch(_){ txt=String(res.data||''); }
+    txt=String(txt||'').trim();
+    if(!txt) throw new Error('文字を読み取れませんでした。明るい所で撮り直してみてください。');
+    return txt;
+  }
+  async function scanTextCopy(){
+    var t=$('scan-text'); if(!t) return;
+    var ok=false;
+    try{ await navigator.clipboard.writeText(t.value); ok=true; }catch(e){ try{ t.select(); ok=document.execCommand('copy'); }catch(_){} }
+    scanToast(ok?'コピーしました':'コピーできませんでした。文字を長押しして選んでください');
+  }
+  function scanTextSave(){ var t=$('scan-text'); if(t) scanDownload(new Blob([t.value], { type:'text/plain;charset=utf-8' }), scanFileName('txt')); }
+  function scanToast(s){ var h=document.querySelector('#scan-modal .scan-out-h'); if(!h) return; var old=h.getAttribute('data-t')||h.textContent; h.setAttribute('data-t', old); h.textContent='✓ '+s; setTimeout(function(){ if(h.isConnected) h.textContent=old; }, 1800); }
   //  撮った数枚を、1つの書類として AI で読み取る（finAskAI と同じ決まりで、万円にそろえる）
   async function parseScanByAI(imgs){
     var content=imgs.map(function(b64){ return { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:b64 } }; });
@@ -6220,11 +6416,22 @@
   //  スキャンのボタンは、指で操作する端末（スマホ・タブレット）にだけ出す
   function scanCan(){ try{ return window.matchMedia('(pointer:coarse)').matches; }catch(e){ return false; } }
   function finScan(custId){
-    scanOpen('試算表・決算書をスキャン', async function(imgs){
+    scanOpen('試算表・決算書をスキャン', { label:'📊 数字を読み取る', ai:true, run:async function(imgs){
       var msg=$('fin-import-msg'); if(msg){ msg.style.color='#5A6981'; msg.textContent='スキャンした'+imgs.length+'枚を読み取り中…'; }
       try{ await parseScanByAI(imgs); if(msg) msg.textContent=''; renderFinPreview(custId); }
       catch(e){ if(msg){ msg.style.color='#A9403D'; msg.textContent='読み取りに失敗：'+e.message; } }
-    });
+    } });
+  }
+  //  メッセージ：撮った書類を PDF にして、送る前の下見に置く（送るのはいつもの「送信」）
+  function knvMsgScan(){
+    scanOpen('書類をスキャン', { label:'✉️ PDFにして送る', run:function(f){ knvMsgPreview(f); } });
+  }
+  //  相談：撮った書類を PDF にして、質問に添える（5MBまで。超えたら枚数を減らしてもらう）
+  function knvAskScan(){
+    scanOpen('書類をスキャン', { label:'💬 継ナビくんに見せる', run:function(f){
+      knvAskPreview(f);
+      var inp=$('knv-input'); if(inp && !inp.value.trim()){ inp.value='この書類について教えてください。'; }
+    } });
   }
   function renderFinPreview(custId){
     var box=$('fin-preview'); if(!box||!FIN_IMPORT_ROWS)return;
@@ -17956,6 +18163,7 @@
       +'<div id="knv-msg-pv"></div>'
       +'<div style="display:flex;gap:6px;align-items:flex-end;">'
         +'<button class="ghost" id="knv-msg-att" title="ファイルを添付（10MBまで）" style="flex:0 0 auto;font-size:15px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;line-height:1;" onclick="$(\'knv-msg-file\').click()">📎</button>'
+        +'<button class="ghost scan-only" id="knv-msg-scan" title="書類をカメラで撮ってPDFで送る" aria-label="書類をスキャン" style="flex:0 0 auto;font-size:15px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;line-height:1;" onclick="knvMsgScan()">📷</button>'
         +'<input type="file" id="knv-msg-file" class="hidden" accept="image/*,.pdf,.xlsx,.xls,.csv,.docx,.doc,.pptx,.txt" onchange="knvMsgAttach(this)">'
         +'<textarea id="knv-msg-input" rows="2" class="inp2" style="width:100%;flex:1;" placeholder="メッセージを入力（Enterで改行／送信は「送信」ボタン・画像はそのまま貼り付け）"></textarea>'
         +'<button class="btn2" id="knv-msg-send" onclick="knvMsgSend()">送信</button>'
@@ -19272,6 +19480,105 @@
   }
   //  add を true にすると「＋ この日」が付く。日付を打ち直さずに、
   //  いま見ている日のまま予定を足せる。一覧では日ごとに出ると煩いので付けない。
+  // ===== 暦（六曜・天赦日・一粒万倍日・寅の日・二十四節気）2026-10-10 =====
+  //  予定の画面で「大安」「天赦日」などが分かるように。旧暦は月の満ち欠け（朔）と
+  //  太陽の位置（中気）で決まり、式だけでは出せないため、天文計算で前もって作った
+  //  表を持つ（2024〜2032年。2033年は旧暦の決まりで月が定まらない年なので入れない）。
+  //    m … 旧暦の月を1か月1文字で。(月-1)*4 + 閏なら2 + 30日の月なら1 を KOYO_A の文字に
+  //    s … 年ごとに24桁。1月から順に「節の日（1桁）」「中気の日−15（1桁）」
+  //  確かめ：2024-01-01 甲子・天赦日・一粒万倍日／2025年の天赦日は 3/10・5/25・7/24・8/7・10/6・12/21
+  //         旧正月 2024-02-10・2025-01-29・2026-02-17／閏月 2025年6月・2028年5月・2031年3月
+  //  暦注は昔からの目安。決まりの細かいところは暦の作り手によって違うことがある
+  var KOYOMI={ b:[2023,12,13], y0:2024,
+    m:'ej058CHKPTWbfi149CGLMPSXbfi149CGLOTWbfj058DGKPSWbfj059CHIKPSWbfi158DHKOTWafj058DHKPSXafi149ADGLPSXafi148DGLPSXbe',
+    s:['654455445556677777887776','553355455656777878887777','554455555666787878887777','554466556666788888898777','654455445556677777887766','553355455656777878887776','554355555656787878887777','554466556666788888888777','654455445556677777887766'] };
+  var KOYO_A='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkl';
+  var KOYO_RK=['大安','赤口','先勝','友引','先負','仏滅'];
+  var KOYO_K10='甲乙丙丁戊己庚辛壬癸', KOYO_K12='子丑寅卯辰巳午未申酉戌亥';
+  var KOYO_SEKKI=['小寒','大寒','立春','雨水','啓蟄','春分','清明','穀雨','立夏','小満','芒種','夏至','小暑','大暑','立秋','処暑','白露','秋分','寒露','霜降','立冬','小雪','大雪','冬至'];
+  //  一粒万倍日：節で区切った月（立春からが1月）ごとに、日の十二支で決まる
+  var KOYO_MB={ 1:[1,6], 2:[9,2], 3:[0,3], 4:[3,4], 5:[5,6], 6:[9,6], 7:[0,7], 8:[3,8], 9:[9,6], 10:[9,10], 11:[11,0], 12:[3,0] };
+  //  天赦日：季節ごとに1つの干支（春 戊寅・夏 甲午・秋 戊申・冬 甲子）
+  var KOYO_TEN=[14,30,44,0];
+  var KOYO_MS=null;
+  function koyoDay(y,m,d){ return Math.round(Date.UTC(y,m-1,d)/864e5); }
+  function koyoMonths(){
+    if(KOYO_MS) return KOYO_MS;
+    var st=koyoDay(KOYOMI.b[0],KOYOMI.b[1],KOYOMI.b[2]), out=[];
+    for(var i=0;i<KOYOMI.m.length;i++){
+      var v=KOYO_A.indexOf(KOYOMI.m.charAt(i));
+      out.push({ s:st, no:(v>>2)+1, leap:!!(v&2) });
+      st+=29+(v&1);
+    }
+    out.push({ s:st });   // 表の終わり
+    return KOYO_MS=out;
+  }
+  //  その日の暦。表の外の年は null
+  function koyomi(d){
+    if(!d || !d.getFullYear) return null;
+    var y=d.getFullYear(), mo=d.getMonth()+1, da=d.getDate();
+    var s=KOYOMI.s[y-KOYOMI.y0]; if(!s) return null;
+    var n=koyoDay(y,mo,da), M=koyoMonths(), lo=0, hi=M.length-2;
+    if(n<M[0].s || n>=M[M.length-1].s) return null;
+    while(lo<hi){ var mid=(lo+hi+1)>>1; if(M[mid].s<=n) lo=mid; else hi=mid-1; }
+    var lm=M[lo], ld=n-lm.s+1;
+    var k=((n+2440588+49)%60+60)%60;               // 日の干支（0＝甲子）
+    var sd=+s.charAt((mo-1)*2), cd=+s.charAt((mo-1)*2+1)+15;
+    var sm=((mo+10)%12)+(da>=sd?1:0); if(sm<1) sm+=12;   // 節で区切った月（1＝寅月）
+    var mb=KOYO_MB[sm], br=k%12;
+    var sk=da===sd ? KOYO_SEKKI[(mo-1)*2] : (da===cd ? KOYO_SEKKI[(mo-1)*2+1] : '');
+    return { rk:KOYO_RK[(lm.no+ld)%6], kan:KOYO_K10.charAt(k%10)+KOYO_K12.charAt(br),
+             ten:k===KOYO_TEN[Math.floor((sm-1)/3)], mb:(br===mb[0]||br===mb[1]), tora:br===2,
+             lm:lm.no, ld:ld, leap:lm.leap, sk:sk };
+  }
+  function koyoOn(){ try{ return loadPrefs().koyomi!==false; }catch(e){ return true; } }
+  function koyoToggle(on){ var p=loadPrefs(); p.koyomi=!!on; savePrefs(p); knvRenderCal(); }
+  //  月表示の小さな印：六曜（大安は赤）と、天赦日・一粒万倍日の札
+  function koyoCell(d){
+    if(!koyoOn()) return '';
+    var k=koyomi(d); if(!k) return '';
+    return '<span class="kyo">'
+      +'<span class="kyo-rk'+(k.rk==='大安'?' tai':'')+'">'+k.rk+'</span>'
+      +(k.ten?'<span class="kyo-b ten" title="天赦日">天赦</span>':'')
+      +(k.mb?'<span class="kyo-b mb" title="一粒万倍日">万倍</span>':'')
+    +'</span>';
+  }
+  //  選んだ日の見出しの下：その日の暦をことばで
+  function koyoLine(d){
+    if(!koyoOn()) return '';
+    var k=koyomi(d); if(!k) return '';
+    var tags=[];
+    if(k.ten) tags.push('<span class="kyo-t ten">天赦日<i>最上の吉日</i></span>');
+    if(k.mb) tags.push('<span class="kyo-t mb">一粒万倍日<i>始めごとに良い</i></span>');
+    if(k.tora) tags.push('<span class="kyo-t tora">寅の日<i>金運</i></span>');
+    return '<div class="kyo-line"><span class="kyo-rk'+(k.rk==='大安'?' tai':'')+'">'+k.rk+'</span>'
+      +tags.join('')
+      +'<span class="kyo-s">'+k.kan+'・旧暦'+(k.leap?'閏':'')+k.lm+'月'+k.ld+'日'+(k.sk?'・'+k.sk:'')+'</span>'
+    +'</div>';
+  }
+  //  継ナビくんへ：今日の暦と、この先60日の大安・天赦日・一粒万倍日（「次の大安は？」に答えられるように）
+  function koyoAiNote(today){
+    var t=koyomi(today); if(!t) return '';
+    var w='日月火水木金土', g={ tai:[], ten:[], mb:[] };
+    for(var i=1;i<=60;i++){
+      var d=new Date(today.getFullYear(), today.getMonth(), today.getDate()+i), k=koyomi(d); if(!k) break;
+      var lab=(d.getMonth()+1)+'/'+d.getDate()+'('+w.charAt(d.getDay())+')';
+      if(k.rk==='大安') g.tai.push(lab); if(k.ten) g.ten.push(lab); if(k.mb) g.mb.push(lab);
+    }
+    return ' 【暦】今日は'+t.rk+(t.ten?'・天赦日':'')+(t.mb?'・一粒万倍日':'')+(t.tora?'・寅の日':'')
+      +'（'+t.kan+'、旧暦'+(t.leap?'閏':'')+t.lm+'月'+t.ld+'日'+(t.sk?'、'+t.sk:'')+'）。'
+      +'この先60日の大安: '+(g.tai.join('、')||'なし')+'。天赦日: '+(g.ten.join('、')||'なし')+'。一粒万倍日: '+(g.mb.join('、')||'なし')+'。'
+      +'暦（六曜・吉日）を聞かれたらこれを使う。ここに無い日の暦は推測で答えず、予定タブの月表示で見られると案内する。'
+      +'暦は昔からの目安として伝え、良し悪しを断定しない。';
+  }
+  function koyoLegend(){
+    var on=koyoOn();
+    return '<label class="kyo-sw"><input type="checkbox"'+(on?' checked':'')+' onchange="koyoToggle(this.checked)"> 暦（六曜・天赦日・一粒万倍日）を表示する</label>'
+      +(on?'<div class="kyo-lg"><span><b class="kyo-rk tai">大安</b>何事にも良い日</span>'
+        +'<span><b class="kyo-b ten">天赦</b>天赦日：年に数回の最上の吉日</span>'
+        +'<span><b class="kyo-b mb">万倍</b>一粒万倍日：始めたことが大きく実る日</span>'
+        +'<span class="kyo-note">昔からの目安です（2024〜2032年）。暦によって細かい違いがあります。</span></div>':'');
+  }
   function calDayHead(d, extra, add){
     var w='日月火水木金土'.charAt(d.getDay());
     var key=calDkey(d);
@@ -19279,7 +19586,7 @@
       +'<span style="font-size:11.5px;color:#8A6A12;letter-spacing:.06em;font-weight:700;">'
         +(d.getMonth()+1)+'月'+d.getDate()+'日（'+w+'）'+(extra?'　'+esc(extra):'')+'</span>'
       +(add?'<button class="ghost" style="margin-left:auto;font-size:11px;border:1px solid var(--line);border-radius:8px;padding:3px 9px;white-space:nowrap;" onclick="calOpenForm(\'\',\''+escJ(key)+'T09:00\')">＋ この日</button>':'')
-    +'</div>';
+    +'</div>'+koyoLine(d);
   }
   function calRel(d){
     var n=new Date(), a=new Date(d.getFullYear(),d.getMonth(),d.getDate()), b=new Date(n.getFullYear(),n.getMonth(),n.getDate());
@@ -20213,7 +20520,7 @@
     days.forEach(function(d){
       var k=calDkey(d), cls='wk-hcell'+(d.getDay()===0?' sun':(d.getDay()===6?' sat':''))+(k===tKey?' today':'');
       head+='<div class="'+cls+'" onclick="calPick(\''+k+'\')">'+'日月火水木金土'.charAt(d.getDay())
-        +'<span class="n">'+d.getDate()+'</span></div>';
+        +'<span class="n">'+d.getDate()+'</span>'+koyoCell(d)+'</div>';
     });
     head+='</div>';
     // 終日の帯も見出しと一緒に貼り付ける。ただし祝日や連休で増えると背が
@@ -20420,7 +20727,7 @@
           var its=items.slice().sort(function(a,b){ return (b.allDay?1:0)-(a.allDay?1:0) || new Date(a.when)-new Date(b.when); });
           var MAXE=3, showN=its.length>MAXE?MAXE-1:its.length;
           h+='<div class="'+cls+'" onclick="calPick(\''+key+'\')" title="'+(d.getMonth()+1)+'/'+d.getDate()+'（'+its.length+'件）">'
-            +'<span class="d">'+(d.getDate()===1?(d.getMonth()+1)+'/1':d.getDate())+'</span>'
+            +'<div class="cal-dr"><span class="d">'+(d.getDate()===1?(d.getMonth()+1)+'/1':d.getDate())+'</span>'+koyoCell(d)+'</div>'
             +'<div class="cal-evs">'+its.slice(0,showN).map(calChip).join('')
               +(its.length>showN?'<button type="button" class="cal-evmore" onclick="event.stopPropagation();calPickMore(\''+key+'\')">＋'+(its.length-showN)+'件</button>':'')
             +'</div>'
@@ -20430,6 +20737,7 @@
         }
         h+='<div class="'+cls+'" onclick="calPick(\''+key+'\')">'
           +'<span class="d">'+d.getDate()+'</span>'
+          +koyoCell(d)
           +'<span class="cal-dots">'
           +items.slice(0,4).map(function(x){
               var k=calKindOf(x);
@@ -20478,6 +20786,7 @@
 
     //  色の見分け。読み込んだ予定にある種類だけ並ぶ
     h+=calLegend(CAL_ROWS.rows);
+    h+=koyoLegend();
     h+='<div style="font-size:11px;color:#94A2B6;line-height:1.7;margin-top:6px;">'
       +'色の付いた予定（面談・課題・支払・調達・補助金・週次）は、それぞれの画面から自動で並びます。ここでは変更できません。'
       +'<br>自分で入れた予定と合わせて、継ナビくんが把握しています。</div>';
@@ -21555,7 +21864,7 @@
   function knvAgendaNote(list){
     var d=new Date();
     var head=' 【今日の情報】今日は'+d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日（'
-      +'日月火水木金土'.charAt(d.getDay())+'）です。日付や曜日を聞かれたらこれを使ってください。';
+      +'日月火水木金土'.charAt(d.getDay())+'）です。日付や曜日を聞かれたらこれを使ってください。'+koyoAiNote(d);
     if(!list) return head;
     if(!list.length){
       return head+' 登録されている予定はありません。「予定」を聞かれたら、予定は入っていない旨を伝えたうえで、'
@@ -24888,7 +25197,7 @@
   }
   //  スマホのカメラで撮って読み取る（税理士の先生の入力画面）
   function acctScan(cid){
-    scanOpen('試算表をスキャン', function(imgs){ return acctRead(cid, function(){ return parseScanByAI(imgs); }); });
+    scanOpen('試算表をスキャン', { label:'📊 数字を読み取る', ai:true, run:function(imgs){ return acctRead(cid, function(){ return parseScanByAI(imgs); }); } });
   }
   //  読み取り（ファイル・スキャン共通）→ 対象月の数字を欄に流し込む
   async function acctRead(cid, parse){

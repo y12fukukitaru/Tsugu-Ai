@@ -481,7 +481,7 @@ function takeFn(name) {
   ok('種類の色は CAL_KINDS の fg', /CAL_KINDS\[k\]\.fg\+'/.test(lg) && /esc\(CAL_KINDS\[k\]\.label\)/.test(lg));
   ok('Google のカレンダーは色と名前（重複なし）', /if\(!gcal\[x\.calId\]\)\{ gcal\[x\.calId\]=\{ color:x\.color, name:x\.calName\|\|'Google' \}; gorder\.push\(x\.calId\); \}/.test(lg));
   ok('Google の色は文字を無害化して出す', /background:'\+esc\(gcal\[id\]\.color\)\+'/.test(lg));
-  ok('暦の下に並ぶ', /h\+=calLegend\(CAL_ROWS\.rows\);\s*\n\s*h\+='<div style="font-size:11px;color:#94A2B6;line-height:1\.7;margin-top:6px;">'/.test(takeFn('knvRenderCal')));
+  ok('暦の下に並ぶ', /h\+=calLegend\(CAL_ROWS\.rows\);\s*\n\s*h\+=koyoLegend\(\);\s*\n\s*h\+='<div style="font-size:11px;color:#94A2B6;line-height:1\.7;margin-top:6px;">'/.test(takeFn('knvRenderCal')));
   ok('凡例の CSS', /\.cal-lg\{display:flex;flex-wrap:wrap;gap:4px 11px;/.test(SRC) && /\.cal-lg i\{width:9px;height:9px;border-radius:50%;/.test(SRC));
   //  実際に動かして確かめる
   const F = new Function('esc', 'CAL_KINDS', lg + '\nreturn calLegend;');
@@ -522,7 +522,7 @@ function takeFn(name) {
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261010-18', '20261010-18']);
+  is('版が揃う', [build, VER.build], ['20261010-19', '20261010-19']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
