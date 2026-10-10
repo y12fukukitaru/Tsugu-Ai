@@ -271,7 +271,11 @@ Deno.serve(async (req: Request) => {
   if (p.data) fromName = p.data.company_name || p.data.contact_name || fromName;
 
   // 宛先は契約に書かれているアドレスだけ。画面から受け取らない
-  const url = String(body.url ?? "").trim() || `${APP_URL}?c=${token}`;
+  //  リンクはここで組み立てる。画面から渡された url は使わない。
+  //  使うと、契約を作れる人なら誰でも、TsuguAi の名前で好きな宛先に好きなリンクを
+  //  送れてしまう（なりすましメールの踏み台になる）。トークンは英数字と - _ だけ。
+  if (!/^[A-Za-z0-9_\-]{32,}$/.test(token)) return json({ ok: false, error: "契約が指定されていません" }, 400);
+  const url = `${APP_URL}?c=${token}`;
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",

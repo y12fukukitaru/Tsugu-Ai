@@ -124,6 +124,9 @@ Deno.serve(async (req) => {
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
   if (!apiKey) return json({ ok: false, error: "ANTHROPIC_API_KEY が未設定です" });
 
+  //  大きすぎる依頼は読まずに断る（添付は5MBまでなので、base64 にしても 8MB に収まる）
+  const len = Number(req.headers.get("content-length") || "0");
+  if (len > 8 * 1024 * 1024) return json({ ok: false, error: "送る内容が大きすぎます（添付は5MBまで）" }, 413);
   let body: any = {};
   try { body = await req.json(); } catch { return json({ ok: false, error: "invalid json" }); }
 

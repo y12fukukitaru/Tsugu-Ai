@@ -83,7 +83,9 @@ async function run(sb: any, now: number, dry: boolean) {
   // ---- 設定（表がまだ無い環境では、全員を既定として扱う）----
   const prefs: Record<string, any> = {};
   await eachChunk(users, async (ids) => {
-    let r = await sb.from("notify_prefs").select("user_id, event_on, event_before_min, todo_on, msg_on, act_on").in("user_id", ids);
+    let r = await sb.from("notify_prefs").select("user_id, event_on, event_before_min, todo_on, msg_on, act_on, preview_on").in("user_id", ids);
+    //  中身を出すかの列（preview_on）がまだ無い環境では、中身を出さない（安全な側）
+    if (r.error) r = await sb.from("notify_prefs").select("user_id, event_on, event_before_min, todo_on, msg_on, act_on").in("user_id", ids);
     //  メッセージの列をまだ足していない環境でも、予定とTODOの設定は読む
     if (r.error) r = await sb.from("notify_prefs").select("user_id, event_on, event_before_min, todo_on").in("user_id", ids);
     if (!r.error) for (const p of r.data ?? []) prefs[p.user_id] = p;
@@ -169,11 +171,11 @@ async function run(sb: any, now: number, dry: boolean) {
     for (const p of ps ?? []) people[p.id] = p;
   });
 
-  const plan = buildPlan({
+  const plan = maskPlan(buildPlan({
     now, users: new Set(users), prefs, events, meetings, people, todos,
     allDay, dayTodos, custTodos, appUrl: APP_URL,
     roles, msgs, replies, anns, acts, shares, reports, inquiries, cancels, exits, planReqs, dayActs,
-  });
+  }), prefs);
   if (dry) return { users: users.length, planned: plan.length, sent: 0, dry, morning, plan };
 
   // ---- 送る（記録に書き込めたものだけ）----
@@ -233,7 +235,24 @@ function due(fire, now) { return fire <= now && fire > now - GRACE_MIN * MIN; }
 function prefOf(prefs, uid) {
   const p = prefs[uid] || {};
   const b = [10, 30, 60].indexOf(Number(p.event_before_min)) >= 0 ? Number(p.event_before_min) : 30;
-  return { event: p.event_on !== false, before: b, todo: p.todo_on !== false, msg: p.msg_on !== false, act: p.act_on !== false };
+  return { event: p.event_on !== false, before: b, todo: p.todo_on !== false, msg: p.msg_on !== false, act: p.act_on !== false,
+    preview: p.preview_on === true };
+}
+//  ---- ロック画面に中身を出さない（2026-10-10 情報の守り）----
+//  通知はロック画面に出るので、机に置いたスマホを横から見られることがある。
+//  既定では「何が届いたか」の種類だけを出し、会社名・メッセージの文・予定の場所・
+//  TODO の題は出さない。ご本人が連携タブで「通知に中身を出す」を選んだときだけ、元の文で送る。
+const SAFE_TEXT = {
+  event: "📅 まもなく予定があります", meeting: "📅 まもなく面談があります", todo: "✅ TODO の期限です",
+  morning: "☀️ 今日の予定とTODOがあります", msg: "✉️ 新しいメッセージが届きました", reply: "✉️ 運営から回答が届きました",
+  ann: "📢 運営からのお知らせがあります", act: "📌 対応のお願いが届きました", share: "📌 相談の共有が届きました",
+  report: "📄 月次レポートが届きました", inq: "🛟 問い合わせが届きました", cancel: "⚠ 解約のご依頼が届きました",
+  pexit: "⚠ 契約の終了のお申し出が届きました", plan: "🔁 プラン切替の依頼が届きました",
+};
+const SAFE_BODY = "内容はアプリを開いてご確認ください";
+function maskPlan(plan, prefs) {
+  return plan.map((n) => prefOf(prefs, n.user_id).preview ? n
+    : Object.assign({}, n, { title: SAFE_TEXT[n.kind] || "🔔 新しいお知らせがあります", body: SAFE_BODY }));
 }
 function linkTo(appUrl, tab) { return String(appUrl || "./").replace(/\/?$/, "/") + "?knv=" + tab; }
 function cut(t, n) { t = String(t || "").replace(/\s+/g, " ").trim(); return t.length > n ? t.slice(0, n - 1) + "…" : t; }
