@@ -55,16 +55,17 @@ const at = (y, mo, d, h) => new Date(Date.UTC(y, mo - 1, d, h, 0));   // 日本�
   const ra = takeFn('renderAgentInsights');
   ok('今日の一手はダッシュボードと、開いていればお知らせタブへ', /\$\('agent-insights-box'\)/.test(ra) && /renderNotifCenter\(\)/.test(ra) && !/knv-insights/.test(ra));
   const rn = takeFn('renderNotifCenter');
-  ok('お知らせタブの先頭に今日の一手', /var insH=\(typeof agentInsightsHtml==='function'\)\?agentInsightsHtml\(\):'';/.test(rn) && /b\.innerHTML=insH\+html;/.test(rn));
+  //  2026-10-10：パートナーは、番号つきのやること（道すじ）を先に、今日の一手（長い文）を後ろに
+  ok('お知らせタブ：経営者・運営は先頭に今日の一手、パートナーはやることの後ろ', /var insH=\(typeof agentInsightsHtml==='function'\)\?agentInsightsHtml\(\):'';/.test(rn) && /var insAfter=\(\(window\.__eff\|\|''\)==='consultant'\);/.test(rn) && /b\.innerHTML=insAfter \? html\+insH : insH\+html;/.test(rn));
   const st = takeFn('knvShowTab');
   no('相談タブを開いても既読にしない', /agentInsightReadAll/.test(st));
   const kb = takeFn('knvBadgesRender');
   ok('お知らせタブのバッジは提案を含む合計', /tb\.textContent=total>9\?'9\+':total; tb\.classList\.toggle\('hidden', !total\);/.test(kb));
   const ks = takeFn('knvSummaryRender');
   ok('内訳の「提案」ボタンはお知らせタブへ', /onclick="knvShowTab\(\\'notif\\'\)">✦ 継ナビくんの提案/.test(ks));
-  ok('説明書：今日の一手はお知らせタブの先頭', /「お知らせ」タブの先頭<\/b>にあります（相談タブには出ません）/.test(MANP));
+  ok('説明書：今日の一手はお知らせタブの、やることの下', /<b>「お知らせ」タブ<\/b>の、番号つきのやることの下にあります（相談タブには出ません）/.test(MANP));
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261010-11', '20261010-11']);
+  is('版が揃う', [build, VER.build], ['20261010-12', '20261010-12']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

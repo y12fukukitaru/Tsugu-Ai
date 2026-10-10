@@ -806,6 +806,21 @@
     .todo-ic .lb{display:none;}
   }
   body.dark .todo-ic{background:transparent;}
+  /* お知らせの道すじ（2026-10-10） */
+  .nt-guide{display:flex;gap:10px;align-items:flex-start;background:#FDF6E3;border:1px solid #EBDDB4;border-radius:12px;padding:12px 14px;margin-bottom:12px;}
+  .nt-guide-t{font-size:14px;font-weight:700;color:var(--navy);line-height:1.6;}
+  .nt-guide-d{font-size:12.5px;color:var(--ink);line-height:1.75;margin-top:2px;}
+  .nt-sec{display:flex;align-items:center;gap:8px;margin:14px 0 8px;font-size:13px;font-weight:700;color:var(--navy);}
+  .nt-mini{font-size:11px;margin-left:auto;border:1px solid var(--line);border-radius:7px;padding:3px 9px;}
+  .nt-card{margin-bottom:8px;}
+  .nt-num{flex:none;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;font:700 12.5px 'DM Sans',sans-serif;margin-right:8px;}
+  .nt-how{font-size:12px;color:#27684A;background:#EBF2ED;border-radius:8px;padding:6px 10px;margin:4px 0;line-height:1.6;}
+  .nt-how ol{margin:3px 0 0;padding-left:20px;}
+  .nt-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .nt-btns .btn2{font-size:12.5px;padding:9px 16px;}
+  .nt-sub{font-size:12px;border:1px solid var(--line);border-radius:8px;padding:8px 12px;}
+  body.dark .nt-guide{background:rgba(195,155,63,.10);border-color:rgba(195,155,63,.35);}
+  body.dark .nt-how{background:rgba(39,104,74,.18);color:#9FD3B8;}
   .todo-done-h{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;color:var(--muted);margin:16px 2px 6px;}
   .todo-done-h b{color:#147A6E;}
   .todo-clear{border:1px dashed #BFE0DA;border-radius:12px;padding:12px 14px;margin:4px 0 10px;background:rgba(20,122,110,.05);color:#147A6E;font-size:12.5px;font-weight:600;line-height:1.7;}
@@ -1861,7 +1876,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261010-11';
+  var APP_BUILD='20261010-12';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -10204,13 +10219,45 @@
     if(/やり取りなし|更新なし|やり取りなし/.test(txt)) return 'しばらく接点がありません。フォロー連絡をしましょう';
     return '内容を確認して対応しましょう';
   }
+  //  お知らせの「片づけ方」（2026-10-10）。何をすればこのお知らせが消えるのか、
+  //  どのボタンを押せばよいのかを、タグごとに言い切る（buildTodos の消える条件と同じ）。
+  //  k: 'msg' … メッセージを開くボタン／'karte' … 顧客のカルテを開くボタン
+  function notifResolve(tags){
+    var txt=(tags||[]).join(' ').replace(/<[^>]*>/g,' ');
+    var out=[];
+    function add(how, k){ if(!out.some(function(x){ return x.how===how; })) out.push({ how:how, k:k }); }
+    //  並びは notifActionLine と同じ（いちばん急ぐものを先に。青いボタンは先頭のもの）
+    if(/(^|[^題])期日超過/.test(txt))           add('カルテの資金調達で、状態（実行済・見送り）か期日を直すと消えます', 'karte');
+    if(/課題期日超過/.test(txt))                add('カルテの経営課題で、進み具合か期日を直すと消えます', 'karte');
+    if(/PMI要注意/.test(txt))                   add('カルテのM&A案件で、PMIの状況を確かめましょう', 'karte');
+    if(/PMIチェック未回収/.test(txt))           add('今月のPMIチェックがそろうと消えます（社長にひと声かけましょう）', 'msg');
+    if(/本日面談|明日面談|面談まで/.test(txt))  add('面談の日が過ぎると消えます。準備はカルテから', 'karte');
+    if(/面談予定日を過ぎ/.test(txt))            add('カルテで、次回の面談日を入れると消えます', 'karte');
+    if(/返信待ち|未読/.test(txt))              add('メッセージに返信すると消えます', 'msg');
+    if(/調達期日/.test(txt))                    add('カルテの資金調達で、状態（実行済・見送り）か期日を直すと消えます', 'karte');
+    if(/支払予定/.test(txt))                    add('支払日が過ぎると消えます。前もって社長に確かめましょう', 'msg');
+    if(/税理士が/.test(txt))                    add('カルテで、その月の月次レポートを作ると消えます', 'karte');
+    if(/レポート承認待ち/.test(txt))            add('カルテで、月次レポートを確定すると消えます', 'karte');
+    if(/課題期日 あと|課題 \d+日更新なし/.test(txt)) add('カルテの経営課題で、進み具合か期日を直すと消えます', 'karte');
+    if(/M&A目標日/.test(txt))                   add('カルテのM&A案件で、目標日に向けた準備を確かめましょう', 'karte');
+    if(/M&A案件 \d+日停滞/.test(txt))           add('カルテのM&A案件で、段階か内容を更新すると消えます', 'karte');
+    if(/案件に関心あり/.test(txt))              add('社長にメッセージで連絡し、橋渡しを進めましょう（14日で消えます）', 'msg');
+    if(/やり取りなし/.test(txt))                add('メッセージを1通送ると消えます（近況を伺うひと言で十分です）', 'msg');
+    if(!out.length) add('カルテを開いて、内容を確かめましょう', 'karte');
+    return out;
+  }
+  //  番号の丸（上から順に片づける道すじ）
+  function notifNum(i){ return '<span class="nt-num">'+i+'</span>'; }
   function renderNotifCenter(){
     // 出力先：継ナビくんパネルの「お知らせ」タブ（旧・通知センターのモーダルが残っていればそちらにも）
     var targets=['knv-notif','notif-body'].map(function(id){ return $(id); }).filter(Boolean);
     if(!targets.length) return;
     //  今日の一手（継ナビくんからの提案）は、このタブの先頭に置く
     var insH=(typeof agentInsightsHtml==='function')?agentInsightsHtml():'';
-    function write(html){ targets.forEach(function(b){ b.innerHTML=insH+html; }); }
+    //  パートナーは、やること（番号つきの道すじ）を先に、提案（長い文）を後ろに。
+    //  提案が先頭にあると、どこを押せばよいかが下に押し出されて見えない
+    var insAfter=((window.__eff||'')==='consultant');
+    function write(html){ targets.forEach(function(b){ b.innerHTML=insAfter ? html+insH : insH+html; }); }
     // 運営：パートナーからの未対応問い合わせを案内
     if((window.__eff||'')==='admin'){
       var na=window.__KNV_BELL||0, ah;
@@ -10267,84 +10314,105 @@
     var todoCount=todoRows.length;
     var todoTop=todoRows.slice(0,6);
 
-    var totalToDo=unreadIds.length+todoCount; // 対応が必要な「顧客」の総数感
+    var myTodo=window.__KNV_MYTODO||0;
+    var insUn=(typeof agentInsightsUnread==='function')?agentInsightsUnread():0;
+    var steps=unreadIds.length+todoCount+(myTodo?1:0);
     var h='';
-    // 今日の一手は write() が先頭に付ける（ここで足すと二重に出る）
+    // 今日の一手（提案）は write() が後ろに付ける（ここで足すと二重に出る）
 
-    // ヘッダー：まず「今どれだけ対応が必要か」を一言で
-    if(!totalUnread && !todoCount){
-      h+='<div style="display:flex;gap:9px;align-items:flex-start;background:#EBF2ED;border-radius:11px;padding:13px 15px;">'
+    if(!steps){
+      h+='<div style="display:flex;gap:9px;align-items:flex-start;background:#EBF2ED;border-radius:11px;padding:13px 15px;margin-bottom:14px;">'
         +'<span class="tsg-face" style="width:28px;height:28px;">'+tsgNaviSvg()+'</span>'
         +'<div style="min-width:0;"><div class="tsg-name">継ナビくん</div>'
-        +'<div style="font-size:13.5px;color:#27684A;line-height:1.7;">✅ いま対応が必要な項目はありません。すべて順調です🌱</div></div>'
-      +'</div>';
+        +'<div style="font-size:13.5px;color:#27684A;line-height:1.7;">✅ いま対応が必要な項目はありません。すべて順調です🌱</div>'
+        +(insUn?'<div style="font-size:12px;color:var(--ink);line-height:1.7;margin-top:4px;">下の<b>継ナビくんからの提案</b>を読んだら「✓ 読んだ」を押してください。</div>':'')
+        +'</div></div>';
       write(h); return;
     }
-    h+='<div style="display:flex;gap:9px;align-items:flex-start;background:var(--soft);border-radius:11px;padding:12px 14px;margin-bottom:14px;">'
-      +'<span class="tsg-face" style="width:28px;height:28px;">'+tsgNaviSvg()+'</span>'
-      +'<div style="min-width:0;font-size:13px;color:var(--ink);line-height:1.7;"><div class="tsg-name">継ナビくん</div>'
-      +'<b style="color:var(--navy);">'+notifLead(totalUnread, todoCount)+'</b>'
-      +'</div></div>';
+    //  道すじ：右下の数字の中身と、どう減らすかを先に言い切る
+    var parts=[];
+    if(unreadIds.length) parts.push('未読メッセージ '+unreadIds.length+'社');
+    if(todoCount) parts.push('期日・対応 '+todoCount+'社');
+    if(myTodo) parts.push('今日までのTODO '+myTodo+'件');
+    if(insUn) parts.push('提案 '+insUn+'件');
+    h+='<div class="nt-guide">'
+      +'<span class="tsg-face" style="width:30px;height:30px;">'+tsgNaviSvg()+'</span>'
+      +'<div style="min-width:0;">'
+        +'<div class="nt-guide-t">片づけることが '+steps+' つあります</div>'
+        +'<div class="nt-guide-d">右下の継ナビくんの数字は、<b>'+esc(parts.join('・'))+'</b>の合計です。'
+          +'下の<b>①から順に、青いボタンを押して</b>片づけてください。片づくと、そのお知らせと数字が消えます。</div>'
+      +'</div>'
+    +'</div>';
 
-    // 立っているものを先に置く。0件のものが先頭に大きく出ると、
-    // どれが立っているのかが一目で分からない。0件は最後に1行だけ。
-    var secs=[];
-
-    // 未読メッセージ（返信が必要）
-    var msgBody='';
+    var num=0;
+    //  ① 未読メッセージ（返信が必要）
     if(unreadIds.length){
+      h+='<div class="nt-sec"><span>未読メッセージ（返信）</span><span class="tag red">'+unreadIds.length+'社</span>'
+        +'<button class="ghost nt-mini" onclick="notifMarkAllRead()">すべて既読</button></div>';
       unreadIds.forEach(function(id){
-        var c=byId[id];
+        var c=byId[id]; num++;
         var nm=c?(c.company_name||c.email):'顧客';
-        msgBody+='<div class="clcard" style="margin-bottom:8px;">'
-          +'<div class="cl-top"><span class="cl-nm">'+esc(nm)+'</span>'
+        h+='<div class="clcard nt-card">'
+          +'<div class="cl-top">'+notifNum(num)+'<span class="cl-nm">'+esc(nm)+'</span>'
           +'<span class="tag red" style="margin-left:auto;">未読 '+per[id]+'件</span></div>'
-          +'<div style="font-size:12px;color:var(--muted);margin:6px 0 8px;">📩 メッセージに返信しましょう</div>'
-          +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-            +'<button class="btn2" style="font-size:12px;padding:7px 14px;" onclick="knvOpenMsg(\''+id+'\')">メッセージを開いて返信 →</button>'
-            +'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:6px 12px;" onclick="notifMarkRead(\''+id+'\')">確認済みにする</button>'
+          +'<div class="nt-how">✅ 片づけ方：メッセージに返信すると消えます</div>'
+          +'<div class="nt-btns">'
+            +'<button class="btn2" onclick="knvOpenMsg(\''+id+'\')">💬 メッセージを開いて返信 →</button>'
+            +'<button class="ghost nt-sub" onclick="notifMarkRead(\''+id+'\')">確認済みにする</button>'
           +'</div>'
         +'</div>';
       });
     }
-    msgBody+='<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;margin-bottom:4px;" onclick="knvShowTab(\'msg\')">✉️ こちらから送る（メッセージタブへ） →</button>';
-    secs.push({ n:totalUnread, ttl:'未読メッセージ（返信）', tag:'red',
-      head:(unreadIds.length?'<button class="ghost" style="font-size:11px;margin-left:auto;border:1px solid var(--line);border-radius:7px;padding:3px 9px;" onclick="notifMarkAllRead()">すべて既読</button>':''),
-      body:msgBody });
-
-    // 期日・対応事項（今日やること）
-    var todoBody='';
+    //  ② 期日・対応事項
     if(todoTop.length){
+      h+='<div class="nt-sec"><span>期日・対応事項</span><span class="tag gold">'+todoCount+'社</span></div>';
       todoTop.forEach(function(r){
+        num++;
         var nm=r.c.company_name||r.c.email;
-        todoBody+='<div class="clcard" style="margin-bottom:8px;">'
-          +'<div class="cl-top"><span class="cl-nm">'+esc(nm)+'</span></div>'
-          +'<div style="font-size:12.5px;color:var(--navy);font-weight:600;margin:6px 0 6px;">👉 '+esc(notifActionLine(r.tags))+'</div>'
-          +'<div class="cl-tags" style="margin-bottom:8px;">'+r.tags.join('')+'</div>'
-          +'<button class="btn2" style="font-size:12px;padding:7px 14px;" onclick="notifOpenClient(\''+r.c.id+'\')">この顧客を開いて対応 →</button>'
+        var rs=notifResolve(r.tags);
+        var first=rs[0].k, other=rs.some(function(x){ return x.k!==first; });
+        var bMsg='onclick="knvOpenMsg(\''+r.c.id+'\')">💬 メッセージを送る →</button>';
+        var bKar='onclick="notifOpenClient(\''+r.c.id+'\')">📋 カルテを開いて対応 →</button>';
+        h+='<div class="clcard nt-card">'
+          +'<div class="cl-top">'+notifNum(num)+'<span class="cl-nm">'+esc(nm)+'</span></div>'
+          +'<div style="font-size:12.5px;color:var(--navy);font-weight:600;margin:6px 0 4px;">👉 '+esc(notifActionLine(r.tags))+'</div>'
+          +'<div class="cl-tags" style="margin-bottom:6px;">'+r.tags.join('')+'</div>'
+          +(rs.length>1
+            ? '<div class="nt-how"><b>✅ 片づけ方</b>（'+rs.length+'つとも済むと、この札が消えます）<ol>'+rs.map(function(x){ return '<li>'+esc(x.how)+'</li>'; }).join('')+'</ol></div>'
+            : '<div class="nt-how">✅ 片づけ方：'+esc(rs[0].how)+'</div>')
+          +'<div class="nt-btns">'
+            +'<button class="btn2" '+(first==='msg'?bMsg:bKar)
+            +(other
+              ? '<button class="ghost nt-sub" '+(first==='msg'?bKar:bMsg)
+              : (first==='msg' ? '<button class="ghost nt-sub" onclick="notifOpenClient(\''+r.c.id+'\')">カルテを見る</button>' : ''))
+          +'</div>'
         +'</div>';
       });
       if(todoCount>todoTop.length){
-        todoBody+='<div style="font-size:11.5px;color:var(--muted);margin:6px 2px;">ほか '+(todoCount-todoTop.length)+'件あります。</div>';
+        h+='<div style="font-size:11.5px;color:var(--muted);margin:6px 2px;">ほか '+(todoCount-todoTop.length)+'社あります。'
+          +'<a onclick="closeNotif();knvToggle(false);goSec(\'sec-flow\')" style="color:var(--blue);cursor:pointer;">「今日やること」の一覧で見る →</a></div>';
       }
-      todoBody+='<button class="ghost" style="font-size:12px;margin-top:6px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;" onclick="closeNotif();knvToggle(false);goSec(\'sec-flow\')">「今日やること」一覧をすべて見る →</button>';
     }
-    secs.push({ n:todoCount, ttl:'期日・対応事項', tag:'gold', head:'', body:todoBody });
-
-    // 件数のあるものを先に。同じなら元の順のまま。
-    secs.sort(function(a,b){ return (b.n?1:0)-(a.n?1:0); });
-    secs.forEach(function(sec){
-      if(!sec.n){
-        // 0件は1行だけ。目立たせない。
-        h+='<div style="display:flex;align-items:center;gap:7px;font-size:12px;color:#27684A;background:#EBF2ED;border-radius:9px;padding:8px 12px;margin-bottom:8px;">'
-          +'<span>✅</span><span>'+esc(sec.ttl)+'</span><span style="color:var(--muted);">なし</span></div>';
-        return;
-      }
-      h+='<div style="display:flex;align-items:center;gap:8px;margin:14px 0 8px;">'
-        +'<span style="font-size:13px;font-weight:700;color:var(--navy);">'+esc(sec.ttl)+'</span>'
-        +'<span class="tag '+sec.tag+'">'+sec.n+'件</span>'+sec.head
-      +'</div>'+sec.body;
-    });
+    //  ③ ご自身の TODO（期限が今日まで・期限切れ）。右下の数字に入っているのに、
+    //  このタブに出ていなかったので、どこを片づければ減るのか分からなかった
+    if(myTodo){
+      num++;
+      h+='<div class="nt-sec"><span>あなたのTODO</span><span class="tag gold">'+myTodo+'件</span></div>'
+        +'<div class="clcard nt-card">'
+          +'<div class="cl-top">'+notifNum(num)+'<span class="cl-nm">期限が今日まで（期限切れを含む）のTODO</span></div>'
+          +'<div class="nt-how">✅ 片づけ方：TODO タブで、済んだものの ○ を押すと消えます（期限を延ばしても消えます）</div>'
+          +'<div class="nt-btns"><button class="btn2" onclick="knvShowTab(\'todo\')">☑️ TODO を開く →</button></div>'
+        +'</div>';
+    }
+    if(insUn){
+      h+='<div class="nt-sec"><span>継ナビくんからの提案</span><span class="tag gold">'+insUn+'件</span></div>'
+        +'<div style="font-size:12px;color:var(--muted);line-height:1.7;margin:-2px 2px 8px;">この下にあります。読んだら「✓ 読んだ」を押すと数字が減ります。</div>';
+    }
+    //  未読が無いときも、こちらから送る入口は残す
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px;">'
+      +(totalUnread?'':'<div style="display:flex;align-items:center;gap:7px;font-size:12px;color:#27684A;background:#EBF2ED;border-radius:9px;padding:8px 12px;"><span>✅</span><span>未読メッセージ（返信）</span><span style="color:var(--muted);">なし</span></div>')
+      +'<button class="ghost nt-sub" onclick="knvShowTab(\'msg\')">✉️ こちらから送る（メッセージタブへ） →</button>'
+    +'</div>';
 
     write(h);
   }
