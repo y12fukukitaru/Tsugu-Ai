@@ -10,7 +10,7 @@ const SRC = R('index.html');
 ok('運営とパートナーは必須', /var MFA_REQUIRED_ROLES=\['admin','consultant'\];/.test(SRC));
 ok('ログインの最初にコードを確かめる（プロフィールを読む前）', /ME=session\.user\.id;\s*\/\/[^\n]*\n\s*\/\/[^\n]*\n\s*if\(await mfaNeedsChallenge\(\)\)\{ showMfa\('challenge'\); return; \}\s*var prof=await getProfile\(session\);/.test(SRC));
 ok('アプリに入る前に、必須の方は設定', /async function enterApp\(prof, email\)\{\s*\/\/[^\n]*\n\s*if\(mfaRequiredFor\(prof && prof\.role\) && !\(await mfaHasFactor\(\)\)\)\{ showMfa\('enroll', true\); return; \}/.test(SRC));
-ok('aal2 が要るのに aal1 ならコード', /d\.nextLevel==='aal2' && d\.currentLevel!=='aal2'/.test(SRC));
+ok('aal2 ならコードは要らない・確かめられないときは控えで', /if\(d && d\.currentLevel==='aal2'\) return false;/.test(SRC) && /if\(l\.error\) return !!\(d && d\.nextLevel==='aal2'\);/.test(SRC));
 ok('確かめられないときは止めない', /if\(l\.error\) return true;/.test(SRC));
 ok('設定：途中でやめた要素を片づけてから作る', /all\[i\]\.status!=='verified'\)\{ try\{ await sb\.auth\.mfa\.unenroll/.test(SRC) && /sb\.auth\.mfa\.enroll\(\{ factorType:'totp'/.test(SRC));
 ok('設定：QR・アプリで開く・手で入れる', /alt="設定用のQRコード"/.test(SRC) && /📲 認証アプリで開く/.test(SRC) && /手で入れるとき：/.test(SRC));
@@ -55,6 +55,11 @@ ok('記録を一覧', /from\('mfa_resets'\)\.select\('\*'\)\.order\('done_at'/.t
 const sqlq = new Function("return function sqlq(v){ return \"'\"+String(v==null?'':v).replace(/'/g,\"''\")+\"'\"; }")();
 ok('エスケープの中身', sqlq("O'Brien'); drop") === "'O''Brien''); drop'");
 ok('説明書：サポート管理から', /サポート管理 →「🔐 二段階認証のやり直し」/.test(R('manual-admin.html')));
+
+// 別の端末で設定したあと、この端末の控えが古いまま（2026-10-10 スマホで運営に「はじめの設定」が出た）
+ok('コードが要るかは、サーバーに確かめる（listFactors）', /async function mfaNeedsChallenge\(\)\{[\s\S]{0,300}if\(d && d\.currentLevel==='aal2'\) return false;\s*var l=await sb\.auth\.mfa\.listFactors\(\);/.test(SRC));
+ok('プロフィールが読めないとき、経営者とみなさない', /if\(up\.error \|\| !up\.data\) return \{ __unreadable:true, role:null, email:email \};/.test(SRC) && !/prof=up\.data \|\| \{ role:'customer'/.test(SRC));
+ok('読めないときは、コードの画面か、止めて知らせる', /if\(prof && prof\.__unreadable\)\{\s*\/\/[^\n]*\n\s*if\(await mfaNeedsChallenge\(\)\)\{ showMfa\('challenge'\); return; \}/.test(SRC));
 
 if (bad.length) { console.log(bad.join('\n')); console.log(n + ' 件中 ' + bad.length + ' 件 不合格'); process.exit(1); }
 console.log(n + ' 件 ぜんぶ通りました');

@@ -1851,7 +1851,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261010-05';
+  var APP_BUILD='20261010-06';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2035,11 +2035,19 @@
   var MFA_REQUIRED_ROLES=['admin','consultant'];
   var MFA_ENROLL=null, MFA_MODE=null, MFA_REQ=false, MFA_SWITCH=false;
   function mfaRequiredFor(role){ return MFA_REQUIRED_ROLES.indexOf(role)>=0; }
+  //  コードが要るか。端末に控えてあるログインの情報（session.user.factors）は、
+  //  別の端末で二段階認証を設定したあとも古いまま残る。それで判断すると、
+  //  データベースは「コードを入れるまで返さない」のに、画面はコードを聞かずに進み、
+  //  プロフィールが読めず「はじめての方」に見えてしまう（2026-10-10 スマホで起きた）。
+  //  そこで、設定の有無は毎回サーバーに確かめる（listFactors はサーバーから読み直す）。
   async function mfaNeedsChallenge(){
     try{
       var a=await sb.auth.mfa.getAuthenticatorAssuranceLevel();
       var d=a && a.data;
-      return !!(d && d.nextLevel==='aal2' && d.currentLevel!=='aal2');
+      if(d && d.currentLevel==='aal2') return false;
+      var l=await sb.auth.mfa.listFactors();
+      if(l.error) return !!(d && d.nextLevel==='aal2');
+      return !!(l.data && (l.data.totp||[]).length);
     }catch(e){ return false; }
   }
   //  確かめられないとき（認証の設定で二段階認証が切られている等）は、止めずに通す。
@@ -2233,7 +2241,10 @@
     var prof=q.data;
     if(!prof){
       var up=await sb.from('profiles').upsert({ id:uid, email:email, role:'customer' }).select('role,full_name,email').maybeSingle();
-      prof=up.data || { role:'customer', email:email, full_name:null };
+      //  読めない・作れない＝権限で止まっている（二段階認証のコードがまだ、など）。
+      //  ここで「経営者」とみなすと、運営やパートナーに「はじめの設定」が出てしまう
+      if(up.error || !up.data) return { __unreadable:true, role:null, email:email };
+      prof=up.data;
     }
     return prof;
   }
@@ -2245,6 +2256,14 @@
     //  （データベースの側でも、コードを入れるまでは1行も返さない）
     if(await mfaNeedsChallenge()){ showMfa('challenge'); return; }
     var prof=await getProfile(session);
+    if(prof && prof.__unreadable){
+      //  コードがまだなら、コードの画面へ。それ以外は、はじめの設定に進ませず止める
+      if(await mfaNeedsChallenge()){ showMfa('challenge'); return; }
+      try{ bootDone(); }catch(e){}
+      alert('アカウントの情報を読み込めませんでした。通信の状態を確かめて、もう一度ログインしてください。続くときは運営にお知らせください。');
+      await signOut();
+      return;
+    }
     MYROLE=prof.role||'customer';
     await claimLinks(session.user.email);   // メールで指名された枠を本人と結びつける
     await resolveScope();                   // 閲覧メンバーなら、招かれた会社を見る
