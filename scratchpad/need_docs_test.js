@@ -87,5 +87,13 @@ ok('表紙と題にプラン', /<title>経営者ダッシュボード 操作説�
 ok('書き出したものに印は残さない', ![MB, MS].some((h) => /<!--plan:|<!--only:|data-plan=/.test(h)));
 ok('元の説明書では、売り手版だけの文は隠れている（コメントの中）', /<!--only:seller[\s\S]*?第3｜会社の値段を上げる[\s\S]*?-->/.test(MC));
 
+// ④ 説明書に載せる（2026-10-10）
+{
+  const MP = R('manual-partner.html'), MA = R('manual-admin.html');
+  ok('パートナー向け説明書：一枚紙と短い説明の頁', /data-t="一枚紙と短い説明"/.test(MP) && /「🖨 開いて印刷する」<\/b>/.test(MP) && /<b>あなたのお名前・所属・メール<\/b>が自動で入ります/.test(MP) && /「⚙️ 設定」の「電話番号」/.test(MP));
+  ok('パートナー向け説明書：売り手の Tsugime は出口の設計の下', /Tsugime -結-（案件と、社長の会社の掲載の進み具合）は<b>「出口の設計」の画面の下<\/b>/.test(MP));
+  ok('運営向け説明書：資料一覧と一枚紙の手入れ（説明書の作り直し・電話のSQL）', /data-t="資料一覧と一枚紙（運営の手入れ）"/.test(MA) && /python3 tools\/split-manual\.py/.test(MA) && /20261010020000_partner_phone\.sql/.test(MA));
+  ok('運営向け説明書：TODO のボタン・払って閉じる・お知らせの番号', /「✏️ 直す」「🗑 消す」はいつも出ています/.test(MA) && /<b>スマホでは下か横に払う<\/b>で閉じます/.test(MA) && /<b>①②③…の番号つき<\/b>/.test(MA));
+}
 if (bad.length) { console.log('FAILED', bad.length, 'of', n); bad.forEach((b) => console.log(' ✗', b)); process.exit(1); }
 console.log('ALL OK', n, 'checks, 0 failed');
