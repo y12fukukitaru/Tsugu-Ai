@@ -11,7 +11,14 @@
 <link rel="stylesheet" href="sheet.css">
 </head>
 <body>
-<div class="bar"><button type="button" class="bk" onclick="sheetClose()">← 閉じる</button><button type="button" onclick="sheetPrint()">🖨 印刷する（A4・1枚）</button><span>社長にお渡しする一枚紙（買い手向け）です。</span></div>
+<div class="bar"><button type="button" class="bk" onclick="sheetClose()">← 閉じる</button><button type="button" onclick="sheetPrint()">🖨 印刷する（A4・1枚）</button><button type="button" class="bk" onclick="sheetMeEdit()">✏ 担当・連絡先</button><span>社長にお渡しする一枚紙（買い手向け）です。</span></div>
+<div class="who-edit" id="who-edit">
+  <p>右下の「担当・連絡先」に入る内容です。アプリから開くと、お名前・メールは自動で入ります。直したところはこの端末に覚えます。</p>
+  <label>お名前<input data-k="n" oninput="sheetMeInput(this)" placeholder="山田 太郎"></label>
+  <label>所属<input data-k="co" oninput="sheetMeInput(this)" placeholder="（任意）〇〇保険事務所"></label>
+  <label>電話<input data-k="tel" oninput="sheetMeInput(this)" placeholder="090-0000-0000" inputmode="tel"></label>
+  <label>メール<input data-k="mail" oninput="sheetMeInput(this)" placeholder="name@example.com" inputmode="email"></label>
+</div>
 
 <section class="slide sheet" data-t="買い手になる社長へ" data-g="一枚紙（経営者）" data-q="M&Aの買い手になるメリットは？|なぜ今、買い手になるの？|会社を買うとどうなる？|人が採れない|新しい事業を始めたい|何から始めればいい？">
   <div class="hd"><div><div class="who">経営者の方へ ｜ 次の一手</div>
@@ -56,21 +63,8 @@
   <div class="cta"><div style="font-size:26px;">🏢</div><div><div class="big">まずは無料・30秒。「この会社を買ったら？」を、御社の数字で。</div>
     <div class="sm">買い手プラン（成長）月45,000円（税別）・初期導入費100,000円。登録も入力も、担当パートナーが代行します。顧問1年を過ぎると、M&amp;Aの報酬は1年ごとに10%ずつ（最大50%）割り引き。</div></div></div>
 
-  <div class="ft">AIの試算は目安で、実際の価格を保証するものではありません。利益・会社の値段・M&amp;Aの成否をお約束するものではありません。調査の数字は発表の年で変わります。　株式会社福來　TsuguAi -継-　担当：＿＿＿＿＿＿＿＿　連絡先：＿＿＿＿＿＿＿＿</div>
+  <div class="ft"><div class="who">株式会社福來　TsuguAi -継-　｜　担当：<b id="who-n">＿＿＿＿＿＿＿＿</b>　連絡先：<b id="who-c">＿＿＿＿＿＿＿＿</b></div>AIの試算は目安で、実際の価格を保証するものではありません。利益・会社の値段・M&amp;Aの成否をお約束するものではありません。調査の数字は発表の年で変わります。</div>
 </section>
-<script>
-//  アプリの中（枠の中）で開いたときは、別のタブで開いてから印刷する。
-//  枠のまま印刷すると、スマホでは画面全体が印刷されることがあるため
-function inFrame(){ try{ return window.self!==window.top; }catch(e){ return true; } }
-function sheetPrint(){
-  if(inFrame()){ var w=window.open(location.href.split('#')[0]+'#print','_blank'); if(w) return; }
-  window.print();
-}
-function sheetClose(){
-  if(inFrame()){ try{ window.parent.postMessage({ tsugu:'closeManual' }, '*'); }catch(e){} return; }
-  if(history.length>1) history.back(); else window.close();
-}
-if(location.hash==='#print') window.addEventListener('load', function(){ setTimeout(function(){ window.print(); }, 400); });
-</script>
+<script src="sheet.js"></script>
 </body>
 </html>

@@ -11,6 +11,7 @@ body{background:#0B1220;font-family:'Noto Sans JP',sans-serif;color:var(--ink);-
 .bar button{font:700 13px 'Noto Sans JP',sans-serif;background:var(--gold);color:#fff;border:0;border-radius:9px;padding:9px 18px;cursor:pointer;}
 .bar span{font-size:11.5px;color:#B7C4D6;}
 .bar button.bk{background:transparent;border:1px solid #3A4A66;color:#D8E0EC;}
+@media screen and (max-width:820px){ .bar{flex-wrap:wrap;gap:8px;} .bar button{white-space:nowrap;padding:8px 12px;font-size:12.5px;} .bar span{flex-basis:100%;text-align:center;} }
 .sheet{width:210mm;min-height:297mm;margin:8px auto 40px;background:#fff;padding:11mm 12mm 10mm;box-shadow:0 18px 50px rgba(0,0,0,.42);
   display:flex;flex-direction:column;gap:3.2mm;}
 @media screen and (max-width:820px){ .sheet{width:100%;min-height:0;margin:0 0 24px;padding:18px 16px;} }
@@ -62,3 +63,14 @@ table.tb td b{color:var(--navy);}
   .sheet{width:210mm;height:297mm;min-height:0;margin:0;box-shadow:none;overflow:hidden;}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 }
+
+/* 担当・連絡先（右下の欄）。アプリから開くと自動で入り、上の「✏ 担当・連絡先」で直せる */
+.ft .who{font-size:11px;color:var(--muted);margin-bottom:1mm;}
+.ft b{color:var(--ink);font-weight:700;}
+.who-edit{display:none;max-width:210mm;margin:0 auto;background:#14203A;color:#D8E0EC;border-radius:10px;padding:10px 14px;font-size:12px;}
+.who-edit.on{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;}
+.who-edit p{grid-column:1/-1;margin:0;color:#B7C4D6;font-size:11.5px;line-height:1.6;}
+.who-edit label{display:flex;flex-direction:column;gap:3px;font-weight:700;}
+.who-edit input{font:400 13px 'Noto Sans JP',sans-serif;padding:7px 9px;border-radius:7px;border:1px solid #3A4A66;background:#0B1220;color:#fff;}
+@media screen and (max-width:820px){ .who-edit.on{grid-template-columns:1fr;margin:0 12px;} }
+@media print{ .who-edit{display:none!important;} }

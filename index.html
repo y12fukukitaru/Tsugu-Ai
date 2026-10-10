@@ -1851,7 +1851,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261010-08';
+  var APP_BUILD='20261010-09';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -17915,8 +17915,8 @@
     { f:'manual-admin.html', i:'🗂️', n:'運営向け 操作説明書', d:'コンソールの全機能・月次の運営業務', who:{ admin:'' }, sec:'manual' },
     { f:'security.html', i:'🔒', n:'お客様の情報を守る仕組み', d:'試算表・入力・計算の結果・M&Aの情報を、どう守っているか。5つの約束・見られる人・外部のサービス・退会のときまで。お客様・金融機関にそのまま見せられる形', who:{ customer:'情報の守り（誰が見られるか・AI・通知・退会のとき）', consultant:'お客様に「情報は大丈夫？」と聞かれたとき、そのまま見せる', admin:'お客様・金融機関に説明するとき、そのまま見せる' }, sec:'manual' },
     { f:'sheet-partner.html', i:'🧭', n:'一枚紙｜社長に感謝される使い道（パートナー用）', d:'こんな社長に刺さる・社長の悩みにこう応える・最初の一言・なぜ感謝されるか。A4・1枚で印刷', who:{ consultant:'手元用。社長の悩みからの入り方', admin:'パートナーの研修・説明会で配る' }, sec:'sheet', one:true },
-    { f:'sheet-buyer.html', i:'🏢', n:'一枚紙｜買い手になる社長へ', d:'こんなお悩みはありませんか？→M&Aの買い手になる4つのメリット→なぜ今→4つの壁をどう越えるか。A4・1枚で印刷して社長に', who:{ consultant:'社長にお渡しする（買い手）', admin:'社長にお渡しする（買い手）' }, sec:'sheet', one:true },
-    { f:'sheet-seller.html', i:'🌱', n:'一枚紙｜会社の未来を選ぶ社長へ', d:'こんなお悩みはありませんか？→売り時は、いちばん良いとき→待つほど増えるリスク・早く始める得→選べる状態をつくる。A4・1枚で印刷して社長に', who:{ consultant:'社長にお渡しする（売り手）', admin:'社長にお渡しする（売り手）' }, sec:'sheet', one:true },
+    { f:'sheet-buyer.html', i:'🏢', n:'一枚紙｜買い手になる社長へ', d:'こんなお悩みはありませんか？→M&Aの買い手になる4つのメリット→なぜ今→4つの壁をどう越えるか。A4・1枚で印刷して社長に。右下の担当・連絡先はあなたの名前とメールが自動で入ります', who:{ consultant:'社長にお渡しする（買い手）', admin:'社長にお渡しする（買い手）' }, sec:'sheet', one:true },
+    { f:'sheet-seller.html', i:'🌱', n:'一枚紙｜会社の未来を選ぶ社長へ', d:'こんなお悩みはありませんか？→売り時は、いちばん良いとき→待つほど増えるリスク・早く始める得→選べる状態をつくる。A4・1枚で印刷して社長に。右下の担当・連絡先はあなたの名前とメールが自動で入ります', who:{ consultant:'社長にお渡しする（売り手）', admin:'社長にお渡しする（売り手）' }, sec:'sheet', one:true },
     { f:'pitch-buyer.html', i:'🏢', n:'買い手になる社長へ（短い説明・10分）', d:'「社長、次の1社を引き受けて、大きく育ちませんか」——3つの問い→買い手になるメリット→なぜ今→4つの壁と答え→料金。→キーで進み、そのまま画面共有・印刷もOK', who:{ consultant:'買い手の社長に見せる（最初の面談はこれ）', admin:'パートナーが買い手の社長に見せる短い説明' }, sec:'pitch' },
     { f:'pitch-seller.html', i:'🌱', n:'会社の未来を選ぶ社長へ（短い説明・10分）', d:'「社長、ご自身の会社の『いまの値段』を、ご存知ですか」——3つの問い→価値のあるうちに→待つリスク・早く始める得→選べる状態をつくる→8つの出口→料金', who:{ consultant:'売り手の社長に見せる（最初の面談はこれ）', admin:'パートナーが売り手の社長に見せる短い説明' }, sec:'pitch' },
     { f:'pitch-customer.html', i:'🎤', n:'顧客候補向け プロダクト説明（詳しい版・1社の物語）', d:'買い手・売り手の両方と、1社の3年間の物語まで通した30分の詳しい版。2回目の面談や、じっくり聞きたい社長に', who:{ consultant:'2回目の面談・じっくり聞きたい社長に', admin:'パートナーが経営者に見せる詳しい版。内容確認・研修用に' }, sec:'pitch' },
@@ -17950,6 +17950,23 @@
     var q=(mode==='read'?'?view=read':'?view=slide');
     openManual(f+q+(t?('#t='+encodeURIComponent(t)):''));
   }
+  //  一枚紙を開く。右下の「担当・連絡先」に、ログイン中のパートナーの名前・所属・メールが
+  //  自動で入るよう、開く前に localStorage（tsugu_sheet_me）へ置く（一枚紙は同じ場所のページなので読める）。
+  //  一枚紙で直した内容（電話番号など）は、そのパートナーの設定 sheetContact に覚えていて、次からはそちらを使う。
+  //  ログアウトのときは tsugu_sheet_me も消える（signOutWipe）
+  function sheetOpen(f){
+    try{
+      var me=window.__prof||{}, c=loadPrefs().sheetContact||{};
+      localStorage.setItem('tsugu_sheet_me', JSON.stringify({
+        n: c.n || me.full_name || me.contact_name || '',
+        co: c.co || (EP_ME && EP_ME.org && EP_ME.org.name) || '',
+        tel: c.tel || '',
+        mail: c.mail || window.__email || '',
+        key: prefKey()
+      }));
+    }catch(e){}
+    openManual(f);
+  }
   function knvDocRow(d, eff){
     var sub=(d.who[eff] && d.who[eff]!=='ep' && d.who[eff]!=='ep2')?d.who[eff]:d.d;
     return '<div class="knv-doc">'
@@ -17958,7 +17975,7 @@
         +'<div class="knv-doc-a">'
           +(d.one
             //  一枚紙は頁が1枚なので、開いて上の「🖨 印刷する」から印刷する
-            ? '<button type="button" onclick="openManual(\''+d.f+'\')">🖨 開いて印刷する</button>'
+            ? '<button type="button" onclick="sheetOpen(\''+d.f+'\')">🖨 開いて印刷する</button>'
             : '<button type="button" onclick="knvDocOpen(\''+d.f+'\',\'read\')">📑 目次から読む</button>'
               +'<button type="button" onclick="knvDocOpen(\''+d.f+'\',\'slide\')">▶ スライドで見る</button>')
         +'</div></div></div>';
