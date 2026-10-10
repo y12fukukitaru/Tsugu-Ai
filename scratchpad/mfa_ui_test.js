@@ -43,7 +43,18 @@ ok('やり直し：設定を外し・全端末ログアウト・記録', /delete
 ok('記録の表', /create table if not exists public\.mfa_resets/.test(SQL) && /"mfa resets admin read"/.test(SQL));
 ['manual-customer.html', 'manual-partner.html'].forEach((f) => ok(f + '：スマホを替える・なくしたとき', /data-t="スマホを替える・なくしたとき"/.test(R(f)) && /📱 スマホを替える/.test(R(f))));
 ok('運営：やり直しの手順', /data-t="二段階認証のやり直し（紛失のとき）"/.test(R('manual-admin.html')) && /MFA_RESET\.sql/.test(R('manual-admin.html')));
-ok('継ナビくん：機種変更・紛失を答えられる', /機種変更\(前のスマホが手元にある\)は/.test(SRC) && /MFA_RESET\.sql\(代表だけ/.test(SRC));
+ok('継ナビくん：機種変更・紛失を答えられる', /機種変更\(前のスマホが手元にある\)は/.test(SRC) && /サポート管理の「🔐 二段階認証のやり直し」/.test(SRC));
+
+// 運営コンソール：やり直しの手順とSQL
+ok('サポート管理に欄', /<div id="adm-mfareset"><\/div>/.test(SRC) && /loadAdmDeletions\(\); loadAdmMfaReset\(\);/.test(SRC));
+ok('本人確認の印が2つ以上でないと作らない', /if\(cks\.length<2\) return ng\('ご本人の確かめを2つ以上してから作ってください'\);/.test(SRC));
+ok('値は引用符をエスケープ', /function sqlq\(v\)\{ return "'"\+String\(v==null\?'':v\)\.replace\(\/'\/g,"''"\)\+"'"; \}/.test(SRC));
+ok('作るSQLは MFA_RESET と同じ3つ', /delete from auth\.mfa_factors where user_id in \(select id from target\)/.test(SRC) && /delete from auth\.sessions where user_id in \(select id from target\)/.test(SRC) && /insert into public\.mfa_resets/.test(SRC));
+ok('画面は実行しない（SQL Editor を開くだけ）', /var SUPABASE_SQL_URL='https:\/\/supabase\.com\/dashboard\/project\/[a-z]+\/sql\/new';/.test(SRC) && !/sb\.rpc\('mfa_reset/.test(SRC));
+ok('記録を一覧', /from\('mfa_resets'\)\.select\('\*'\)\.order\('done_at'/.test(SRC));
+const sqlq = new Function("return function sqlq(v){ return \"'\"+String(v==null?'':v).replace(/'/g,\"''\")+\"'\"; }")();
+ok('エスケープの中身', sqlq("O'Brien'); drop") === "'O''Brien''); drop'");
+ok('説明書：サポート管理から', /サポート管理 →「🔐 二段階認証のやり直し」/.test(R('manual-admin.html')));
 
 if (bad.length) { console.log(bad.join('\n')); console.log(n + ' 件中 ' + bad.length + ' 件 不合格'); process.exit(1); }
 console.log(n + ' 件 ぜんぶ通りました');
