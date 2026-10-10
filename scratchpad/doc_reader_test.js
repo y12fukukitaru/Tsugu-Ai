@@ -14,11 +14,13 @@ function no(name, cond) { ok(name, !cond); }
 
 const DOCS = ['manual-customer.html', 'manual-partner.html', 'manual-admin.html', 'manual-ep.html',
   'pitch-customer.html', 'pitch-partner.html', 'pitch-general.html', 'pitch-bank.html', 'pitch-finance.html',
-  'pitch-ep1.html', 'pitch-ep2.html', 'pitch-ep2-member.html', 'recruit-partner.html', 'webinar-partner.html', 'security.html'];
+  'pitch-ep1.html', 'pitch-ep2.html', 'pitch-ep2-member.html', 'recruit-partner.html', 'webinar-partner.html', 'security.html',
+  'manual-buyer.html', 'manual-seller.html', 'pitch-buyer.html', 'pitch-seller.html'];
 //  質問の数の下限（説明書は 40〜120、商談スライドはそれより少なめ）
 const MIN_Q = {
   'manual-customer.html': 80, 'manual-partner.html': 100, 'manual-admin.html': 70, 'manual-ep.html': 30,
-  'pitch-customer.html': 40, 'pitch-partner.html': 25, 'pitch-ep1.html': 30, 'pitch-ep2.html': 20, 'pitch-ep2-member.html': 20, 'webinar-partner.html': 40, 'security.html': 40
+  'pitch-customer.html': 40, 'pitch-partner.html': 25, 'pitch-ep1.html': 30, 'pitch-ep2.html': 20, 'pitch-ep2-member.html': 20, 'webinar-partner.html': 40, 'security.html': 40,
+  'manual-buyer.html': 80, 'manual-seller.html': 80, 'pitch-buyer.html': 20, 'pitch-seller.html': 20
 };
 const dec = (s) => s.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 

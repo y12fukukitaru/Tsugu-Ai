@@ -1851,7 +1851,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261010-06';
+  var APP_BUILD='20261010-07';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -17900,13 +17900,21 @@
   //  f: ファイル／who: 出す相手（customer・consultant・admin。'ep' は法人所属の方だけ、'ep2' は EP-II 所属の方だけ）／sec: 組
   //  doc-reader.js を入れた資料は ?view=read で「目次から読む」、#t=題名 でその頁から開く
   var KNV_DOCS=[
-    { f:'manual-customer.html', i:'📖', n:'経営者向け 操作説明書', d:'各画面でできること・メッセージの使い方など', who:{ customer:'操作説明書', consultant:'経営者に聞かれたとき用', admin:'経営者に案内するときの確認用' }, sec:'manual' },
+    //  経営者向けの説明書は、プランで分けた2本（元は manual-customer.html。tools/split-manual.py で作る）。
+    //  経営者には自分のプランの1本だけ、パートナー・運営には2本とも
+    { f:'manual-buyer.html', plan:'buyer', i:'📖', n:'経営者向け 操作説明書（買い手プラン）', d:'各画面でできること・メッセージの使い方・買い手になる・買った後に備える', who:{ customer:'操作説明書', consultant:'買い手プランの社長に聞かれたとき用', admin:'買い手プランの社長に案内するときの確認用' }, sec:'manual' },
+    { f:'manual-seller.html', plan:'seller', i:'📖', n:'経営者向け 操作説明書（売り手プラン）', d:'各画面でできること・メッセージの使い方・出口の設計・Tsugime -結- と掲載', who:{ customer:'操作説明書', consultant:'売り手プランの社長に聞かれたとき用', admin:'売り手プランの社長に案内するときの確認用' }, sec:'manual' },
     { f:'manual-partner.html', i:'🤝', n:'パートナー向け 操作説明書', d:'画面の使い方・日々の業務の流れを1本のドキュメントで', who:{ consultant:'', admin:'パートナーに案内するときの確認用' }, sec:'manual' },
     { f:'manual-ep.html', i:'🏢', n:'エンタープライズ 操作説明書', d:'席の配りかた・担当の割当／担当表・配分とご利用料・担当交代のときの手順', who:{ consultant:'ep', admin:'法人パートナー（EP-I／EP-II）に案内するときの確認用' }, sec:'manual' },
     { f:'manual-admin.html', i:'🗂️', n:'運営向け 操作説明書', d:'コンソールの全機能・月次の運営業務', who:{ admin:'' }, sec:'manual' },
     { f:'security.html', i:'🔒', n:'お客様の情報を守る仕組み', d:'試算表・入力・計算の結果・M&Aの情報を、どう守っているか。5つの約束・見られる人・外部のサービス・退会のときまで。お客様・金融機関にそのまま見せられる形', who:{ customer:'情報の守り（誰が見られるか・AI・通知・退会のとき）', consultant:'お客様に「情報は大丈夫？」と聞かれたとき、そのまま見せる', admin:'お客様・金融機関に説明するとき、そのまま見せる' }, sec:'manual' },
-    { f:'pitch-customer.html', i:'🎤', n:'顧客候補向け プロダクト説明', d:'「社長、会社の値段をご存知ですか」——3つの問いかけで始まる15分の商談スライド。→キーで進み、そのまま画面共有・印刷もOK', who:{ consultant:'', admin:'パートナーが経営者に見せる商談スライド。内容確認・研修用に' }, sec:'pitch' },
-    { f:'pitch-partner.html', i:'🤝', n:'パートナー候補向け プロダクト説明', d:'「顧問先に承継という未来を売れる人へ」——収入の波・一度きりの関係への問いかけから始まる説明スライド', who:{ admin:'' }, sec:'pitch' },
+    { f:'sheet-partner.html', i:'🧭', n:'一枚紙｜社長に感謝される使い道（パートナー用）', d:'こんな社長に刺さる・社長の悩みにこう応える・最初の一言・なぜ感謝されるか。A4・1枚で印刷', who:{ consultant:'手元用。社長の悩みからの入り方', admin:'パートナーの研修・説明会で配る' }, sec:'sheet', one:true },
+    { f:'sheet-buyer.html', i:'🏢', n:'一枚紙｜買い手になる社長へ', d:'こんなお悩みはありませんか？→M&Aの買い手になる4つのメリット→なぜ今→4つの壁をどう越えるか。A4・1枚で印刷して社長に', who:{ consultant:'社長にお渡しする（買い手）', admin:'社長にお渡しする（買い手）' }, sec:'sheet', one:true },
+    { f:'sheet-seller.html', i:'🌱', n:'一枚紙｜会社の未来を選ぶ社長へ', d:'こんなお悩みはありませんか？→売り時は、いちばん良いとき→待つほど増えるリスク・早く始める得→選べる状態をつくる。A4・1枚で印刷して社長に', who:{ consultant:'社長にお渡しする（売り手）', admin:'社長にお渡しする（売り手）' }, sec:'sheet', one:true },
+    { f:'pitch-buyer.html', i:'🏢', n:'買い手になる社長へ（短い説明・10分）', d:'「社長、次の1社を引き受けて、大きく育ちませんか」——3つの問い→買い手になるメリット→なぜ今→4つの壁と答え→料金。→キーで進み、そのまま画面共有・印刷もOK', who:{ consultant:'買い手の社長に見せる（最初の面談はこれ）', admin:'パートナーが買い手の社長に見せる短い説明' }, sec:'pitch' },
+    { f:'pitch-seller.html', i:'🌱', n:'会社の未来を選ぶ社長へ（短い説明・10分）', d:'「社長、ご自身の会社の『いまの値段』を、ご存知ですか」——3つの問い→価値のあるうちに→待つリスク・早く始める得→選べる状態をつくる→8つの出口→料金', who:{ consultant:'売り手の社長に見せる（最初の面談はこれ）', admin:'パートナーが売り手の社長に見せる短い説明' }, sec:'pitch' },
+    { f:'pitch-customer.html', i:'🎤', n:'顧客候補向け プロダクト説明（詳しい版・1社の物語）', d:'買い手・売り手の両方と、1社の3年間の物語まで通した30分の詳しい版。2回目の面談や、じっくり聞きたい社長に', who:{ consultant:'2回目の面談・じっくり聞きたい社長に', admin:'パートナーが経営者に見せる詳しい版。内容確認・研修用に' }, sec:'pitch' },
+    { f:'pitch-partner.html', i:'🤝', n:'パートナー候補向け プロダクト説明', d:'「社長に、売り込みではなく相談をされる法人営業へ」——3つの問いかけ→法人営業の壁→社長に感謝される使い道（社長の悩みに、その場で答えを見せる）から始まる説明スライド', who:{ admin:'' }, sec:'pitch' },
     { f:'webinar-partner.html', i:'📡', n:'認定パートナー説明会（ウェビナー）', d:'保険・士業の方向け、Zoom 60分（本編40分・ご質問15分・ご案内5分）。役割・収入の仕組み・<b>ご負担（費用）</b>・ご契約の流れ（概要書面はメール、契約はスタート画面で同意・登録）まで。各頁に時間と話す内容つき。告知文・メール・チェックリストは docs/webinar-partner-kit.md', who:{ admin:'' }, sec:'pitch' },
     { f:'pitch-ep1.html', i:'🏛️', n:'EP-I（顧客基盤型）向け プロダクト説明', d:'税理士法人・社労士法人など、顧客基盤をお持ちの法人へ。事業承継・M&A支援部門の立ち上げ（すみわけ・組織図・90日・成績表・よくあるご質問）から、顧客は御社のもの・配分80%・担当の割当まで', who:{ admin:'' }, sec:'pitch' },
     { f:'pitch-ep2.html', i:'🏛️', n:'EP-II（所属営業型）向け プロダクト説明', d:'「御社に、法人営業部門を創りませんか？」——保険代理店など、営業を抱える本部へ。部門の壁と創り方・契約2本立て・本部は一律10%でご負担なし・担当表まで', who:{ admin:'' }, sec:'pitch' },
@@ -17917,13 +17925,16 @@
   ];
   var KNV_DOC_SECS={
     manual:{ customer:'📖 操作説明書', consultant:'📖 操作説明書', admin:'📖 操作説明書' },
+    sheet:{ consultant:'🖨 一枚紙（印刷して社長に渡す）', admin:'🖨 一枚紙（印刷して社長に渡す）' },
     pitch:{ consultant:'🎤 商談用スライド（お客様に見せる）', admin:'🎤 商談用スライド（説明会・面談で見せる）' },
     ext:{ admin:'🏦 社外向け説明資料' }
   };
   //  役割ごとに出す資料。エンタープライズの説明書は、法人に所属している方にだけ
-  function knvDocsFor(eff){
+  function knvDocsFor(eff, plan){
+    if(eff==='customer' && !plan) plan=planOf(window.__prof);
     return KNV_DOCS.filter(function(d){
       if(!(eff in d.who)) return false;
+      if(d.plan && eff==='customer' && d.plan!==plan) return false;
       if(d.who[eff]==='ep') return !!EP_ME;
       if(d.who[eff]==='ep2') return !!(EP_ME && EP_ME.org && EP_ME.org.kind==='EP2');
       return true;
@@ -17939,8 +17950,11 @@
       +'<span class="knv-doc-i">'+d.i+'</span>'
       +'<div class="knv-doc-b"><div class="knv-doc-n">'+esc(d.n)+'</div><div class="knv-doc-d">'+sub+'</div>'
         +'<div class="knv-doc-a">'
-          +'<button type="button" onclick="knvDocOpen(\''+d.f+'\',\'read\')">📑 目次から読む</button>'
-          +'<button type="button" onclick="knvDocOpen(\''+d.f+'\',\'slide\')">▶ スライドで見る</button>'
+          +(d.one
+            //  一枚紙は頁が1枚なので、開いて上の「🖨 印刷する」から印刷する
+            ? '<button type="button" onclick="openManual(\''+d.f+'\')">🖨 開いて印刷する</button>'
+            : '<button type="button" onclick="knvDocOpen(\''+d.f+'\',\'read\')">📑 目次から読む</button>'
+              +'<button type="button" onclick="knvDocOpen(\''+d.f+'\',\'slide\')">▶ スライドで見る</button>')
         +'</div></div></div>';
   }
   function knvDocHubHtml(eff){
@@ -17951,7 +17965,7 @@
       +'<div id="knv-dq-chips" class="knv-dchips"></div>'
       +'<div id="knv-dq-res"></div>'
     +'</div>';
-    ['manual','pitch','ext'].forEach(function(sec){
+    ['manual','sheet','pitch','ext'].forEach(function(sec){
       var list=docs.filter(function(d){ return d.sec===sec; });
       if(!list.length || !KNV_DOC_SECS[sec][eff]) return;
       h+='<div style="font-size:12.5px;font-weight:700;color:var(--navy);margin:12px 0 8px;">'+KNV_DOC_SECS[sec][eff]+'</div>'
@@ -17966,6 +17980,13 @@
   function knvDocIndex(){
     if(KNV_DOCIDX) return KNV_DOCIDX;
     var eff=window.__eff||'customer', docs=knvDocsFor(eff);
+    //  買い手版・売り手版の両方が出る方（パートナー・運営）は、同じ頁が二重に見つからないよう、
+    //  元の説明書（両方入り）1本で探す
+    if(docs.filter(function(d){ return d.plan; }).length>1){
+      var one=false;
+      docs=docs.filter(function(d){ if(!d.plan) return true; if(one) return false; one=true; return true; })
+        .map(function(d){ return d.plan ? { f:'manual-customer.html', n:'経営者向け 操作説明書（買い手・売り手）', sec:d.sec, who:d.who } : d; });
+    }
     KNV_DOCIDX=Promise.all(docs.map(function(d){
       return fetch('./'+d.f,{ cache:'no-cache' }).then(function(r){ return r.ok?r.text():''; }).then(function(html){
         if(!html) return [];

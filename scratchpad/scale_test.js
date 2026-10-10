@@ -109,7 +109,7 @@ const S = new Function(base + 'return {paths:SCALE_PATHS, st:SCALE_STATUS, nums:
   ok('表と RLS', /create table if not exists public\.scale_plans/.test(SQL) && /using \(public\.customer_may\(customer_id\)\)/.test(SQL) && /with check \(public\.customer_may\(customer_id\)\)/.test(SQL));
   ok('主軸は7つに限る', /check \(main in \('deepen','pillar','buy','debt','equity','group','list'\)\)/.test(SQL));
   no('税額の列は無い', /税額|tax/.test(SQL.replace('税額は持たない', '')));
-  ok('経営者説明書：頁と表の行とメニュー', /data-t="スケールの設計"/.test(MANC) && /<th>スケールの設計<\/th>/.test(MANC) && /出口の設計／スケールの設計。買い手プランの方には/.test(MANC));
+  ok('経営者説明書：頁と表の行とメニュー', /data-t="スケールの設計"/.test(MANC) && /<th>スケールの設計<\/th>/.test(MANC) && /出口の設計／スケールの設計。<!--plan:buyer-->買い手プランの方には/.test(MANC));
   ok('経営者説明書：目安であって可否ではない', /目安であって、可否の判断ではありません/.test(MANC));
   ok('パートナー説明書：頁と、12の道具には含めない', /data-t="スケールの設計"/.test(MANP) && /ナビの12の道具には含めません/.test(MANP) && /経営者に断定しないでください/.test(MANP));
   is('経営者説明書の写しのメニューに出る', (MANC.match(/スケールの設計<\/div>/g) || []).length, (MANC.match(/⇢<\/b>出口の設計<\/div>/g) || []).length);
@@ -119,7 +119,7 @@ const S = new Function(base + 'return {paths:SCALE_PATHS, st:SCALE_STATUS, nums:
 // ⑥ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261010-06', '20261010-06']);
+  is('版が揃う', [build, VER.build], ['20261010-07', '20261010-07']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
