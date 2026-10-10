@@ -70,17 +70,34 @@ ok('顧問税理士の入力画面は変えていない', JSON.stringify(new Fun
   const a = SRC.indexOf("else if(eff==='customer'){");
   const b = SRC.indexOf("} else if(eff==='consultant'){", a);
   ok('経営者の画面の範囲が取れる', a > 0 && b > a);
-  const panels = [];
-  const re = /class="panel" id="(sec-[a-z0-9]+)"/g; let m;
+  //  Tsugime（sec-market）は変数 mktHtml に入れ、プランで置き場所を変える（2026-10-10）
+  //  買い手＝「買い手になる」の下／売り手＝「出口の設計」の下
   const part = SRC.slice(a, b);
-  while ((m = re.exec(part)) !== null) panels.push(m[1]);
-  ok('sec-market のパネルは経営者の画面に残っている', panels.indexOf('sec-market') >= 0);
+  const defAt = part.indexOf('var mktHtml=');
+  const defEnd = part.indexOf("view='<div class=\"panel\" id=\"sec-flow\"", defAt);
+  ok('Tsugime のパネルは変数にまとめて1か所で書く', defAt > 0 && defEnd > defAt && (part.match(/id="sec-market"/g) || []).length === 1);
+  const body = part.slice(defEnd);
+  const panelsOf = (plan) => {
+    const out = []; const re = /class="panel" id="(sec-[a-z0-9]+)"|planOf\(prof\)==='(buyer|seller)' \? mktHtml/g; let m;
+    while ((m = re.exec(body)) !== null) {
+      if (m[1]) { if (plan === 'seller' && (m[1] === 'sec-ma' || m[1] === 'sec-after')) continue; out.push(m[1]); }
+      else if (m[2] === plan) out.push('sec-market');
+    }
+    return out;
+  };
+  const panels = panelsOf('buyer'), sp = panelsOf('seller');
+  ok('sec-market のパネルは経営者の画面に残っている（どちらのプランでも1つ）', panels.filter(x => x === 'sec-market').length === 1 && sp.filter(x => x === 'sec-market').length === 1);
   //  showSection と同じ：navDefs にある id が来るたびに「いまの組」が変わる
-  const navIds = {}; cust.forEach(id => navIds[id] = 1);
-  let cur = null; const grp = {};
-  panels.forEach(id => { if (navIds[id]) cur = id; grp[id] = cur; });
+  const grpOf = (list, nav) => { const navIds = {}; nav.forEach(id => navIds[id] = 1); let cur = null; const g = {}; list.forEach(id => { if (navIds[id]) cur = id; g[id] = cur; }); return g; };
+  const grp = grpOf(panels, cust);
   is('Tsugime のパネルは「買い手になる」の組に入る', grp['sec-market'], 'sec-ma');
   is('sec-market は sec-ma の直後（間に別の項目が挟まらない）', panels[panels.indexOf('sec-ma') + 1], 'sec-market');
+  //  売り手のメニュー（買い手になる・買った後に備える が無い）
+  const custS = cust.filter(id => id !== 'sec-ma' && id !== 'sec-after');
+  const gs = grpOf(sp, custS);
+  is('売り手：Tsugime のパネルは「出口の設計」の組に入る', gs['sec-market'], 'sec-exit');
+  is('売り手：sec-market は sec-exit の直後', sp[sp.indexOf('sec-exit') + 1], 'sec-market');
+  ok('売り手：出口の設計の冒頭に案件と掲載への入口', /planOf\(prof\)==='seller' \? '　<a onclick="goSec\(\\'sec-market\\'\)"[^>]*>案件と掲載を見る（Tsugime -結-）↓<\/a>'/.test(body));
   is('試算結果が企業価値の組に入るのと同じ仕組み', grp['sec-ins'], 'sec-value');
   //  goSec('sec-market') は経営者でも別の場所へ逸らされない
   const g = takeFn('goSec');
@@ -93,7 +110,8 @@ ok('顧問税理士の入力画面は変えていない', JSON.stringify(new Fun
 // ---------------------------------------------------------------
 {
   const i = SRC.indexOf('id="sec-ma"><div class="ph">買い手になる</div>');
-  const j = SRC.indexOf('id="sec-market"', i);
+  const j = SRC.indexOf("planOf(prof)==='buyer' ? mktHtml", i);
+  ok('「買い手になる」の範囲が取れる', i > 0 && j > i);
   const ma = SRC.slice(i, j);
   ok('「買い手になる」の冒頭に案件への入口がある', /goSec\(\\'sec-market\\'\)[^>]*>案件を見る（Tsugime -結-）↓<\/a>/.test(ma));
   ok('入口は柱の絵より前', ma.indexOf("goSec(\\'sec-market\\')") < ma.indexOf('id="my-pillar"'));
