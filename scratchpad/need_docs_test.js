@@ -26,11 +26,27 @@ for (const f of ['sheet-partner.html', 'sheet-buyer.html', 'sheet-seller.html'])
   const h = R(f);
   ok(f + '：頁は1枚', secs(h).length === 1 && /class="slide sheet"/.test(h));
   ok(f + '：閉じる・印刷する', /onclick="sheetClose\(\)">← 閉じる/.test(h) && /onclick="sheetPrint\(\)">🖨 印刷する（A4・1枚）/.test(h));
-  ok(f + '：アプリの枠の中では別のタブで開いてから印刷', /window\.open\(location\.href\.split\('#'\)\[0\]\+'#print','_blank'\)/.test(h) && /location\.hash==='#print'/.test(h));
-  ok(f + '：枠の中で閉じるとアプリに戻る', /postMessage\(\{ tsugu:'closeManual' \}, '\*'\)/.test(h));
+  ok(f + '：共通の動きは sheet.js', /<script src="sheet\.js"><\/script>/.test(h) && !/function sheetPrint/.test(h));
   ok(f + '：探せるように 題・組・質問（6つまで）', /data-t="[^"]+" data-g="[^"]+" data-q="[^"]+"/.test(h) && (h.match(/data-q="([^"]*)"/)[1].split('|').length <= 6));
   ok(f + '：言い切らない言葉は使わない', !NG.test(body(h)));
 }
+const SJ = R('sheet.js');
+ok('sheet.js：アプリの枠の中では別のタブで開いてから印刷', /window\.open\(location\.href\.split\('#'\)\[0\]\+'#print','_blank'\)/.test(SJ) && /location\.hash==='#print'/.test(SJ));
+ok('sheet.js：枠の中で閉じるとアプリに戻る', /postMessage\(\{ tsugu:'closeManual' \}, '\*'\)/.test(SJ));
+//  担当・連絡先の自動入力（2026-10-10）
+ok('sheet.js：アプリが置いた担当（tsugu_sheet_me）を読み、空なら手書き用の下線', /localStorage\.getItem\('tsugu_sheet_me'\)/.test(SJ) && /SHEET_BLANK='＿＿＿＿＿＿＿＿'/.test(SJ));
+ok('sheet.js：直した内容はそのパートナーの設定（tsugu_prefs_…）の sheetContact に覚える', /\/\^tsugu_prefs_\/\.test\(SHEET_ME\.key\)/.test(SJ) && /p\.sheetContact=/.test(SJ));
+ok('sheet.css：直す欄は印刷しない', /@media print\{ \.who-edit\{display:none!important;\} \}/.test(CSS));
+for (const f of ['sheet-buyer.html', 'sheet-seller.html']) {
+  const h = R(f);
+  ok(f + '：右下に担当・連絡先の欄', /担当：<b id="who-n">＿＿＿＿＿＿＿＿<\/b>　連絡先：<b id="who-c">＿＿＿＿＿＿＿＿<\/b>/.test(h));
+  ok(f + '：「✏ 担当・連絡先」で直せる（名前・所属・電話・メール）', /onclick="sheetMeEdit\(\)">✏ 担当・連絡先/.test(h) && ['n', 'co', 'tel', 'mail'].every((k) => new RegExp('data-k="' + k + '" oninput="sheetMeInput\\(this\\)"').test(h)));
+}
+ok('パートナーの手元用には担当の欄を置かない', !/id="who-n"/.test(R('sheet-partner.html')));
+const SO = (() => { const i = SRC.indexOf('\n  function sheetOpen('); return SRC.slice(i, SRC.indexOf('\n  }\n', i)); })();
+ok('アプリ：一枚紙は sheetOpen で開く', /onclick="sheetOpen\(\\''\+d\.f\+'\\'\)">🖨 開いて印刷する/.test(SRC));
+ok('アプリ：開く前に名前・所属・メールを置く（直した内容があればそちら）', /localStorage\.setItem\('tsugu_sheet_me'/.test(SO) && /n: c\.n \|\| me\.full_name \|\| me\.contact_name/.test(SO) && /co: c\.co \|\| \(EP_ME && EP_ME\.org && EP_ME\.org\.name\)/.test(SO) && /mail: c\.mail \|\| window\.__email/.test(SO) && /key: prefKey\(\)/.test(SO));
+ok('アプリ：ログアウトで tsugu_sheet_me は消える（tsugu_ で始まり、残す一覧に無い）', /\/\^tsugu\[_\.\]\//.test(SRC) && !/WIPE_KEEP=\[[^\]]*tsugu_sheet_me/.test(SRC));
 const SB = R('sheet-buyer.html'), SS = R('sheet-seller.html'), SP = R('sheet-partner.html');
 ok('買い手の一枚紙：お悩み → 4つのメリット → なぜ今 → 4つの壁 → 料金', /こんなお悩みはありませんか？/.test(SB) && /4つのメリット/.test(SB) && /なぜ、いまなのか/.test(SB) && /4つの壁/.test(SB) && /月45,000円/.test(SB));
 ok('売り手の一枚紙：お悩み → 売り時 → 待つリスク・早く始める得 → 選べる状態 → 料金', /こんなお悩みはありませんか？/.test(SS) && /売り時は/.test(SS) && /待つほど増えるリスク/.test(SS) && /早く始めるほど増える得/.test(SS) && /月35,000円/.test(SS));

@@ -64,19 +64,6 @@
 
   <div class="ft">守ること：本業（保険など）を押し付けない・ご了承なく財務の情報を使わない・抱き合わせない。数字や結果を約束しない（会社の値段・利益・M&amp;Aの成否）。相続税・贈与税の額は税理士の仕事で、計算しない。　株式会社福來　TsuguAi -継-</div>
 </section>
-<script>
-//  アプリの中（枠の中）で開いたときは、別のタブで開いてから印刷する。
-//  枠のまま印刷すると、スマホでは画面全体が印刷されることがあるため
-function inFrame(){ try{ return window.self!==window.top; }catch(e){ return true; } }
-function sheetPrint(){
-  if(inFrame()){ var w=window.open(location.href.split('#')[0]+'#print','_blank'); if(w) return; }
-  window.print();
-}
-function sheetClose(){
-  if(inFrame()){ try{ window.parent.postMessage({ tsugu:'closeManual' }, '*'); }catch(e){} return; }
-  if(history.length>1) history.back(); else window.close();
-}
-if(location.hash==='#print') window.addEventListener('load', function(){ setTimeout(function(){ window.print(); }, 400); });
-</script>
+<script src="sheet.js"></script>
 </body>
 </html>
