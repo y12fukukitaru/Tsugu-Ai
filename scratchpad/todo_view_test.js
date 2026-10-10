@@ -135,7 +135,7 @@ ok('知識：月表示に予定そのもの（両方）', (SRC.match(/月表示�
 {
   const paint = (() => { const i = SRC.indexOf('\n  function todoPaint('); return SRC.slice(i, SRC.indexOf('\n  }\n', i)); })();
   ok('日時・メモは枠のあるボタン（スマホ38px）', /class="todo-more-btn'\+\(more\?' on':''\)\+'"/.test(paint) && /\.todo-more-btn\{font-size:13px;min-height:38px;/.test(SRC));
-  ok('日付・時刻・顧客・メモに名前', /<label class="tf"[^>]*><span>日付<\/span><input id="td-date"/.test(paint) && /<span>時刻<\/span><div class="tf-time">'\n\s*\+'<input id="td-time"/.test(paint) && /<span>メモ（任意）<\/span><textarea id="td-note"/.test(paint));
+  ok('日付・時刻・顧客・メモに名前', /<div class="tf"><span>日付　<b id="td-date-lab" class="td-date-lab"><\/b><\/span>'\n\s*\+'<input id="td-date" type="hidden"/.test(paint) && /<span>時刻<\/span><div class="tf-time">'\n\s*\+'<input id="td-time"/.test(paint) && /<span>メモ（任意）<\/span><textarea id="td-note"/.test(paint));
   ok('スマホの欄は44px・文字16px（拡大しない）', /\.todo-more input\[type=date\],\.todo-more input\[type=time\],\.todo-more select,\.todo-more textarea\{min-height:44px;font-size:16px;\}/.test(SRC));
   ok('スマホの期限の札も大きく', /\.todo-chip\{font-size:12\.5px;padding:0 13px;min-height:36px;\}/.test(SRC));
   const tg = takeFn('todoMoreToggle');
@@ -155,5 +155,23 @@ ok('説明書：日時・メモのボタンと、いまの日時', ['manual-cust
   ok('スマホの終日ボタンは44px', /\.todo-allday\{min-height:44px;/.test(SRC));
 }
 ok('説明書：時刻の横の「終日」', ['manual-customer.html', 'manual-partner.html'].every((f) => /時刻を決めないときは時刻の横の<b>「終日」<\/b>/.test(fs.readFileSync(__dirname + '/../' + f, 'utf8'))) && /時刻を決めないときは「終日」/.test(fs.readFileSync(__dirname + '/../manual-admin.html', 'utf8')));
+//  2026-10-10：明後日と、色で様子が分かる期限の暦
+{
+  const Q = new Function(takeFn('todoYmd') + takeFn('todoQuick') + 'return todoQuick;')();
+  const labs = Q().map((q) => q[0]), days = Q().map((q) => q[1]);
+  ok('期限の札に「明後日」', labs.indexOf('明後日') === 2);
+  ok('同じ日になる札は一つだけ', new Set(days).size === days.length);
+  const C = new Function('TODO_ROWS', takeFn('todoDayCount') + 'return todoDayCount;');
+  const cnt = C([{ due_date: '2026-10-12' }, { due_date: '2026-10-12' }, { due_date: '2026-10-08' }, { due_date: '2026-10-05', done_at: 'x' }, { due_date: null }])();
+  ok('日ごとの数は、済んでいないものだけ', cnt['2026-10-12'] === 2 && cnt['2026-10-08'] === 1 && !cnt['2026-10-05']);
+  const cp = takeFn('todoCalPaint');
+  ok('暦の色：今日・やることがある日・期限切れが残っている日・選んだ日', /if\(v===today\) cls\.push\('today'\);/.test(cp) && /if\(n\) cls\.push\(v<today\?'over':'has'\);/.test(cp) && /if\(v===sel\) cls\.push\('sel'\);/.test(cp));
+  ok('暦の凡例', /今日<\/span>/.test(cp) && /やることがある日<\/span>/.test(cp) && /期限切れが残っている日<\/span>/.test(cp) && /選んだ日<\/span>/.test(cp));
+  ok('色：やること＝緑・期限切れ＝赤・今日＝紺の枠・選んだ日＝塗りつぶし', /\.todo-cal-g \.d\.has\{background:rgba\(20,122,110,\.12\)/.test(SRC) && /\.todo-cal-g \.d\.over\{background:#FBE3E0;color:#A9403D;\}/.test(SRC) && /\.todo-cal-g \.d\.today\{border-color:var\(--navy\)/.test(SRC) && /\.todo-cal-g \.d\.sel\{background:#147A6E;/.test(SRC));
+  ok('札・暦・「なし」のどれで選んでも、暦と札の印がそろう', /todoCalPaint\(\);\n  \}/.test(takeFn('todoDueMark') + '\n  }') && /todoDueMark\(\);/.test(takeFn('todoCalPick')));
+  ok('札にも、その日のやることの数', /class="todo-chip-n">'\+n\+'<\/i>/.test(SRC));
+  ok('暦の前後の月へ', /onclick="todoCalMove\(-1\)"/.test(cp) && /onclick="todoCalMove\(1\)"/.test(cp));
+}
+ok('説明書：明後日・暦の色（経営者・パートナー・運営）', ['manual-customer.html', 'manual-partner.html'].every((f) => { const m = fs.readFileSync(__dirname + '/../' + f, 'utf8'); return /「今日」「明日」「明後日」「金曜」「来週月曜」/.test(m) && /<b>今日＝紺の枠／やることがある日＝緑／期限切れが残っている日＝赤／選んだ日＝塗りつぶし<\/b>/.test(m); }) && /今日＝紺の枠、やることがある日＝緑、期限切れが残っている日＝赤/.test(fs.readFileSync(__dirname + '/../manual-admin.html', 'utf8')));
 if (bad.length) { bad.forEach((b) => console.log('NG ' + b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK ' + n + ' checks, 0 failed');
