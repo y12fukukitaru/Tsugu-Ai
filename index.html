@@ -3831,13 +3831,14 @@
         +'<div style="margin-top:10px;"><button class="btn2" onclick="postAnnouncement()">配信する</button><span id="bc-msg" style="font-size:12px;margin-left:8px;"></span></div>'
         +'<div id="bc-list" style="margin-top:12px;">読み込み中...</div></div>'
       +'<div class="panel" id="sec-support"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.8"/><path d="m5.6 5.6 3.7 3.7M14.7 14.7l3.7 3.7M14.7 9.3l3.7-3.7M5.6 18.4l3.7-3.7"/></svg>サポート管理'
-        +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmCancels();loadAdmPexits();loadAdmDeletions();loadAdmContracts();loadAdmTemplates();loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
+        +'</span><span class="ghost" style="font-size:11px;font-weight:400;" onclick="loadAdmCancels();loadAdmPexits();loadAdmDeletions();loadAdmMfaReset();loadAdmContracts();loadAdmTemplates();loadAdmInquiries();loadSupportKB()">↺ 更新</span></div>'
         +'<div class="ph" style="font-size:13px;display:flex;align-items:center;gap:8px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.5 12.5H16l-1.8 2.8H9.8L8 12.5H2.5"/><path d="M5.6 5.1 2.5 12.5V18a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-5.5l-3.1-7.4A2 2 0 0 0 16.6 4H7.4a2 2 0 0 0-1.8 1.1z"/></svg>パートナーからの問い合わせ</span><span id="adm-inq-count" class="nbadge hidden">0</span></div>'
         +'<div id="adm-cancels"></div>'
         +'<div id="adm-pexits"></div>'
         +'<div id="adm-contracts"></div>'
         +'<div id="adm-ctpl"></div>'
         +'<div id="adm-deletions"></div>'
+        +'<div id="adm-mfareset"></div>'
         +'<div id="adm-inq-list" style="margin-top:6px;">読み込み中...</div>'
         +'<div style="border-top:1px solid #EDF1F6;margin-top:16px;padding-top:14px;">'
           +'<div class="ph" style="font-size:13px;"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 19.2A2.8 2.8 0 0 1 6.8 16.4H20"/><path d="M6.8 3H20v18H6.8A2.8 2.8 0 0 1 4 18.2V5.8A2.8 2.8 0 0 1 6.8 3z"/></svg>サポートBotナレッジ（AIの回答ネタ）</span></div>'
@@ -5338,7 +5339,7 @@
       if(adminCanSee('sec-team')) loadSignupCodes();
       if(adminCanSee('sec-exec')){ loadExecFunding(); loadExecWeekly(); }
       if(adminCanSee('sec-billing')){ loadPayout(); loadPayInbox(); }
-      if(adminCanSee('sec-support')){ loadAdmCancels(); loadAdmPexits(); loadAdmDeletions(); loadAdmContracts(); loadAdmTemplates(); loadAdmInquiries(); loadSupportKB(); }
+      if(adminCanSee('sec-support')){ loadAdmCancels(); loadAdmPexits(); loadAdmDeletions(); loadAdmMfaReset(); loadAdmContracts(); loadAdmTemplates(); loadAdmInquiries(); loadSupportKB(); }
       if(adminCanSee('sec-network')){ loadNetwork(); }
       if(adminCanSee('sec-subsidy')){ loadSubsidyAdmin(); }
       knvInit();
@@ -10944,6 +10945,104 @@
     box.innerHTML=h+'</div>';
   }
 
+  // ===== 二段階認証のやり直し（スマホの紛失・故障）=====
+  //  紛失のときにだけ使う手順と SQL を、埋もれないようにサポート管理に置く。
+  //  この画面は SQL を「作る」だけで、実行はしない。実行できるのは Supabase の
+  //  SQL Editor に入れる代表だけ（画面に強い権限を持たせない）。
+  //  ご本人の確かめは2つ以上。メールだけでは外さない（受信箱ごと乗っ取られていることがある）。
+  var MFA_RESET_CHECKS=[
+    ['video','ビデオ通話で、お顔と身分証（運転免許証など）を見た'],
+    ['phone','契約・登録で控えた電話番号へ、運営から折り返して話した'],
+    ['know','ご本人しか知らないこと（担当パートナー名・ご契約の月・所在地など）が合っていた']
+  ];
+  var SUPABASE_SQL_URL='https://supabase.com/dashboard/project/yaururnkxjhtiowkpvyu/sql/new';
+  function sqlq(v){ return "'"+String(v==null?'':v).replace(/'/g,"''")+"'"; }
+  function mfaResetSql(email, reason, how){
+    return "-- 二段階認証のやり直し（"+new Date().toLocaleDateString('ja-JP')+" 運営コンソールで作成）\n"
+      +"with target as (\n"
+      +"  select id, email from auth.users where lower(email) = lower("+sqlq(email)+")\n"
+      +"),\n"
+      +"removed_factors as (\n"
+      +"  delete from auth.mfa_factors where user_id in (select id from target) returning 1\n"
+      +"),\n"
+      +"removed_sessions as (\n"
+      +"  delete from auth.sessions where user_id in (select id from target) returning 1\n"
+      +")\n"
+      +"insert into public.mfa_resets (user_id, email, reason, verified_how, factors_removed, sessions_removed)\n"
+      +"select t.id, t.email, "+sqlq(reason)+", "+sqlq(how)+",\n"
+      +"       (select count(*) from removed_factors), (select count(*) from removed_sessions)\n"
+      +"  from target t\n"
+      +"returning email, reason, verified_how, factors_removed as \"外した設定\", sessions_removed as \"切ったログイン\", done_at;";
+  }
+  async function loadAdmMfaReset(){
+    var box=$('adm-mfareset'); if(!box) return;
+    var hist='';
+    try{
+      var r=await sb.from('mfa_resets').select('*').order('done_at',{ascending:false}).limit(20);
+      if(!r.error && (r.data||[]).length){
+        hist='<div style="margin-top:12px;border-top:1px solid #EDF1F6;padding-top:8px;">'
+          +'<div style="font-size:12px;font-weight:700;color:var(--navy);">これまでのやり直し（'+r.data.length+'件）</div>'
+          +r.data.map(function(x){
+            return '<div style="border-top:1px solid #EDF1F6;padding:6px 0;font-size:11.5px;line-height:1.7;">'
+              +'<span style="color:#94A2B6;">'+esc(jstDay(x.done_at))+'</span>　<b>'+esc(x.email||'')+'</b>　'+esc(x.reason||'')
+              +'<div style="color:var(--muted);">確かめかた：'+esc(x.verified_how||'')+'（外した設定 '+(x.factors_removed|0)+'・切ったログイン '+(x.sessions_removed|0)+'）</div></div>';
+          }).join('')+'</div>';
+      }
+    }catch(e){}
+    box.innerHTML='<details id="mfar-d" style="border:1px solid #E2E7EF;background:#F8F9FC;border-radius:11px;padding:12px 15px;margin:0 0 14px;">'
+      +'<summary style="cursor:pointer;font-size:12.5px;font-weight:700;color:var(--navy);">🔐 二段階認証のやり直し（スマホの紛失・故障）</summary>'
+      +'<div style="font-size:11.5px;color:var(--muted);line-height:1.85;margin-top:8px;">'
+        +'<b style="color:var(--navy);">機種変更（前のスマホが手元にある）なら、運営の作業は要りません。</b>ご本人に「設定 → 🔐 二段階認証 →「📱 スマホを替える」」をご案内してください。<br>'
+        +'ここは<b>スマホをなくした・壊れた</b>ときの手順です。この画面は SQL を作るだけで、実行は <b>代表が Supabase の SQL Editor で</b>行います。'
+      +'</div>'
+      +'<ol style="font-size:12px;line-height:1.9;padding-left:20px;margin:10px 0 6px;color:var(--ink);">'
+        +'<li><b>ご本人であることを確かめる（2つ以上）。メールだけのご依頼では外しません。</b>経営者の方は担当パートナー経由で受け、確かめは運営が行います。</li>'
+      +'</ol>'
+      +MFA_RESET_CHECKS.map(function(c){
+        return '<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:1.7;margin:3px 0 3px 20px;cursor:pointer;">'
+          +'<input type="checkbox" class="mfar-ck" value="'+c[0]+'" style="margin-top:4px;">'+esc(c[1])+'</label>';
+      }).join('')
+      +'<ol start="2" style="font-size:12px;line-height:1.9;padding-left:20px;margin:8px 0 6px;color:var(--ink);"><li><b>SQL を作る</b></li></ol>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-left:20px;">'
+        +'<input id="mfar-email" class="inp2" style="flex:1;min-width:220px;" placeholder="その方のログインのメール">'
+        +'<select id="mfar-reason" class="inp2"><option>紛失</option><option>故障</option><option>盗難</option><option>その他</option></select>'
+      +'</div>'
+      +'<input id="mfar-memo" class="inp2" style="width:calc(100% - 20px);margin:6px 0 0 20px;" placeholder="確かめの補足（任意）：例 10/12 14:00 ビデオ通話、免許証の氏名・住所を確認">'
+      +'<div style="margin:8px 0 0 20px;"><button class="btn2" style="font-size:12px;" onclick="admMfaResetMake()">SQL を作る</button>'
+        +'<span id="mfar-msg" style="font-size:11.5px;margin-left:8px;"></span></div>'
+      +'<div id="mfar-out" style="margin-left:20px;"></div>'
+      +'<ol start="3" style="font-size:12px;line-height:1.9;padding-left:20px;margin:10px 0 0;color:var(--ink);">'
+        +'<li><b>代表が実行する</b>：「SQL Editor を開く」→ 貼り付けて Run。結果に1行出れば完了（0行ならメールが登録と違う）。<b>設定が外れ、すべての端末からログアウト</b>し、下の記録に残ります。</li>'
+        +'<li><b>ご本人に伝える</b>：①パスワードを変える ②次のログインで新しいスマホに設定（運営・パートナーは自動で設定画面が出る。経営者は 設定 → 🔐 二段階認証）。</li>'
+      +'</ol>'
+      +hist
+    +'</details>';
+  }
+  function admMfaResetMake(){
+    var msg=$('mfar-msg'), out=$('mfar-out');
+    function ng(t){ if(msg){ msg.style.color='#A9403D'; msg.textContent=t; } if(out) out.innerHTML=''; }
+    var email=String(($('mfar-email')||{}).value||'').trim();
+    if(!/^[^\s@'"<>]+@[^\s@'"<>]+\.[^\s@'"<>]+$/.test(email)) return ng('メールの形が正しくありません');
+    var cks=[].slice.call(document.querySelectorAll('.mfar-ck:checked')).map(function(c){ return c.value; });
+    if(cks.length<2) return ng('ご本人の確かめを2つ以上してから作ってください');
+    var labels=MFA_RESET_CHECKS.filter(function(c){ return cks.indexOf(c[0])>=0; }).map(function(c){ return c[1]; });
+    var memo=String(($('mfar-memo')||{}).value||'').trim();
+    var how=labels.join('／')+(memo?('（'+memo+'）'):'');
+    var reason=String(($('mfar-reason')||{}).value||'紛失');
+    var sql=mfaResetSql(email, reason, how);
+    if(msg){ msg.style.color='#27684A'; msg.textContent='作りました。代表が SQL Editor で実行してください。'; }
+    out.innerHTML='<textarea id="mfar-sql" class="inp2" readonly rows="11" style="width:100%;margin-top:8px;font-family:ui-monospace,Menlo,monospace;font-size:11px;">'+esc(sql)+'</textarea>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">'
+        +'<button class="btn2" style="font-size:12px;" onclick="admMfaResetCopy()">📋 コピー</button>'
+        +'<a class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:6px 12px;" href="'+escA(SUPABASE_SQL_URL)+'" target="_blank" rel="noopener">↗ SQL Editor を開く</a>'
+      +'</div>';
+  }
+  async function admMfaResetCopy(){
+    var t=$('mfar-sql'); if(!t) return;
+    try{ await navigator.clipboard.writeText(t.value); }catch(e){ t.select(); try{ document.execCommand('copy'); }catch(e2){} }
+    var msg=$('mfar-msg'); if(msg){ msg.style.color='#27684A'; msg.textContent='コピーしました。SQL Editor に貼り付けて Run してください。'; }
+  }
+
   async function loadMyPartner(){
     var box=$('my-partner'); if(!box) return;
     try{
@@ -16544,7 +16643,7 @@
       + ((aisecPortal()==='consultant')
           ? 'パートナーに伝えること=お客様の試算表・決算書・画面の写しを、TsuguAiの外のAI(無料の生成AIなど)・個人のLINE・私用のメールに貼らない。やり取りはアプリのメッセージで。説明書「パートナー向け操作説明書」の「お客様の情報を守る」の頁。'
           : (aisecPortal()==='admin')
-            ? '運営の手順=SQL 20261010000000_security_hardening.sql(確かめがすべて1で完了)と 20261010010000_mfa_required.sql(守りの無い表=0。新しい表を足したら流し直す)と、スマホをなくした方のやり直しは MFA_RESET.sql(代表だけ。ご本人を2つ以上の方法で確かめてから。メール・理由・確かめかたを書き換えて Run。設定を外し全端末ログアウト、mfa_resets に記録。説明書「二段階認証のやり直し（紛失のとき）」)と、Edge Function(push-reminders・agent-heartbeat・contract-send・ai-proxy・admin-delete-user)の再デプロイ。Dashboard の Authentication でパスワードの最低文字数・漏れたパスワードの拒否・二段階認証(TOTP)。説明書「運営向け操作説明書」の「情報の守り（運営の手順）」の頁。'
+            ? '運営の手順=SQL 20261010000000_security_hardening.sql(確かめがすべて1で完了)と 20261010010000_mfa_required.sql(守りの無い表=0。新しい表を足したら流し直す)と、スマホをなくした方のやり直しは、サポート管理の「🔐 二段階認証のやり直し」(確かめた項目に2つ以上印→メールと理由→SQLを作る→コピー→SQL Editorを開いて代表がRun。ひな形は MFA_RESET.sql。代表だけ。ご本人を2つ以上の方法で確かめてから。設定を外し全端末ログアウト、mfa_resets に記録。説明書「二段階認証のやり直し（紛失のとき）」)と、Edge Function(push-reminders・agent-heartbeat・contract-send・ai-proxy・admin-delete-user)の再デプロイ。Dashboard の Authentication でパスワードの最低文字数・漏れたパスワードの拒否・二段階認証(TOTP)。説明書「運営向け操作説明書」の「情報の守り（運営の手順）」の頁。'
             : '');
     if(aisecPortal()==='consultant'){
       return common
