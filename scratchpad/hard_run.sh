@@ -14,3 +14,7 @@ su postgres -c "psql -q -d hard -f scratchpad/hard_test.sql" 2>&1 | grep -v NOTI
 su postgres -c "$P -d hard -f supabase/migrations/20261010010000_mfa_required.sql" 2>&1 | grep -v NOTICE | grep -v '^$' | tail -3
 su postgres -c "$P -d hard -f supabase/migrations/20261010010000_mfa_required.sql" 2>&1 | grep -v NOTICE | grep -v '^$' | tail -1
 su postgres -c "psql -q -d hard -f scratchpad/mfa_test.sql" 2>&1 | grep -v NOTICE | grep -v '^ *$'
+#  スマホをなくした方のやり直し（ひな形のメールを試験の方に差し替えて流す）
+sed "s/ここにその方のメール/P2@x/" supabase/migrations/MFA_RESET.sql > scratchpad/_mfa_reset_run.sql
+su postgres -c "psql -q -d hard -f scratchpad/mfa_reset_test.sql" 2>&1 | grep -v NOTICE | grep -v '^ *$'
+rm -f scratchpad/_mfa_reset_run.sql

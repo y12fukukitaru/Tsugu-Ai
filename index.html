@@ -1851,7 +1851,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261010-02';
+  var APP_BUILD='20261010-03';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2031,7 +2031,7 @@
   //  画面で止めるだけでなく、データベースも「設定した方は、コードを入れるまで1行も返さない」
   //  （SQL 20261010010000_mfa_required.sql）。パスワードが盗まれても中身は見えない。
   var MFA_REQUIRED_ROLES=['admin','consultant'];
-  var MFA_ENROLL=null, MFA_MODE=null, MFA_REQ=false;
+  var MFA_ENROLL=null, MFA_MODE=null, MFA_REQ=false, MFA_SWITCH=false;
   function mfaRequiredFor(role){ return MFA_REQUIRED_ROLES.indexOf(role)>=0; }
   async function mfaNeedsChallenge(){
     try{
@@ -2059,8 +2059,9 @@
     }
     return m;
   }
-  function showMfa(mode, required){
-    MFA_MODE=mode; MFA_REQ=!!required;
+  //  switching=true は「スマホを替える」。新しいスマホで設定できたら、前のスマホの設定を外す
+  function showMfa(mode, required, switching){
+    MFA_MODE=mode; MFA_REQ=!!required; MFA_SWITCH=!!switching;
     ['gate','onb','app'].forEach(function(id){ var e=$(id); if(e) e.classList.add('hidden'); });
     try{ knvHideAll(); }catch(e){}
     try{ bootDone(); }catch(e){}
@@ -2087,19 +2088,23 @@
         +'<div class="field">'+mfaCodeInput('mfaChallengeVerify')+'</div>'
         +'<button class="btn" id="mfa-go" onclick="mfaChallengeVerify()">確認する</button>'
         +'<div id="mfa-msg" class="msg"></div>'
-        +'<div style="font-size:11px;color:var(--muted);line-height:1.8;margin-top:12px;">スマホを替えた・なくしたときは、'
-        +'<b>担当パートナー</b>（パートナーの方は<b>運営</b>）にご連絡ください。ご本人の確認のうえで、設定をやり直せるようにします。</div>'
+        +'<div style="font-size:11px;color:var(--muted);line-height:1.8;margin-top:12px;">'
+        +'<b>前のスマホがまだ手元にある</b>ときは、そのスマホのコードでログインしてから、<b>設定 → 🔐 二段階認証 →「📱 スマホを替える」</b>で新しいスマホに移せます。<br>'
+        +'<b>スマホをなくした・壊れた</b>ときは、経営者の方は<b>担当パートナー</b>、パートナーの方は<b>運営</b>にご連絡ください。'
+        +'ご本人であることを確かめてから、設定をやり直せるようにします（メールだけのご依頼では外しません）。</div>'
         +out;
       setTimeout(function(){ var i=$('mfa-code'); if(i) i.focus(); }, 50);
       return;
     }
     //  設定（はじめて）
-    var why=MFA_REQ
+    var why=MFA_SWITCH
+      ? '<b>新しいスマホ</b>で読み取ってください。新しいスマホのコードで設定できたら、<b>前のスマホの設定は外れます</b>（前のスマホのコードでは入れなくなります）。'
+      : MFA_REQ
       ? '運営とパートナーの方は、たくさんの会社の情報を見られるため、<b>二段階認証が必須</b>です。パスワードが漏れても、あなたのスマホが無ければ入れなくなります。'
       : 'パスワードが漏れても、あなたのスマホが無ければ入れなくなります。';
     var e=MFA_ENROLL;
     var qr=(e && e.qr)?'<div style="text-align:center;margin:8px 0;"><img src="'+escA(e.qr)+'" alt="設定用のQRコード" style="width:180px;height:180px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px;"></div>':'<div style="text-align:center;font-size:12px;color:var(--muted);margin:16px 0;">準備しています…</div>';
-    c.innerHTML=mfaHead('二段階認証を設定します', why)
+    c.innerHTML=mfaHead(MFA_SWITCH?'新しいスマホに移します':'二段階認証を設定します', why)
       +'<ol style="font-size:12.5px;line-height:1.85;padding-left:20px;margin:0 0 10px;color:var(--ink);">'
         +'<li>スマホに<b>認証アプリ</b>を入れます（<b>Google Authenticator</b> か <b>Microsoft Authenticator</b>。無料。iPhone は「パスワード」アプリでも使えます）。</li>'
         +'<li>アプリで<b>下のQRコードを読み取ります</b>。このスマホで開いている方は「<b>認証アプリで開く</b>」を押すか、下の英数字をアプリに入れてください。</li>'
@@ -2107,7 +2112,8 @@
       +'</ol>'
       +qr
       +((e && e.uri)?'<div style="text-align:center;margin-bottom:6px;"><a href="'+escA(e.uri)+'" style="font-size:12px;color:var(--blue);">📲 認証アプリで開く</a></div>':'')
-      +((e && e.secret)?'<div style="font-size:11px;color:var(--muted);text-align:center;word-break:break-all;margin-bottom:10px;">手で入れるとき：<code style="font-size:12px;color:var(--ink);user-select:all;">'+esc(e.secret)+'</code></div>':'')
+      +((e && e.secret)?'<div style="font-size:11px;color:var(--muted);text-align:center;word-break:break-all;margin-bottom:4px;">手で入れるとき：<code style="font-size:12px;color:var(--ink);user-select:all;">'+esc(e.secret)+'</code></div>'
+        +'<div style="font-size:10.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">スマホをなくしたときに備えて、この英数字を<b>紙に書いて、人の目に触れない場所</b>に控えておくと、新しいスマホでご自身で設定し直せます（写真やメールには残さないでください）。</div>':'')
       +'<div class="field">'+mfaCodeInput('mfaEnrollVerify')+'</div>'
       +'<button class="btn" id="mfa-go" onclick="mfaEnrollVerify()"'+(e?'':' disabled')+'>設定する</button>'
       +'<div id="mfa-msg" class="msg"></div>'
@@ -2145,7 +2151,20 @@
     var r=await sb.auth.mfa.challengeAndVerify({ factorId:MFA_ENROLL.id, code:code });
     if(b) b.disabled=false;
     if(r.error){ mfaMsg('コードが合いませんでした。アプリの最新の6桁を入れてください（'+r.error.message+'）'); return; }
+    var newId=MFA_ENROLL.id;
     MFA_ENROLL=null;
+    if(MFA_SWITCH){
+      //  前のスマホの設定を外す（新しいスマホのコードで確かめたあとなので、外せる）
+      try{
+        var l=await sb.auth.mfa.listFactors();
+        var olds=((l.data && l.data.totp)||[]).filter(function(f){ return f.id!==newId; });
+        for(var i=0;i<olds.length;i++){ await sb.auth.mfa.unenroll({ factorId:olds[i].id }); }
+      }catch(e){}
+      MFA_SWITCH=false;
+      mfaMsg('新しいスマホに移しました。前のスマホのコードでは、もう入れません。', true);
+      setTimeout(mfaAfterVerify, 1200);
+      return;
+    }
     mfaMsg('設定しました。次のログインから、6桁のコードを入れていただきます。', true);
     setTimeout(mfaAfterVerify, 900);
   }
@@ -2181,9 +2200,13 @@
       box.innerHTML='<div style="font-size:12.5px;color:#27684A;font-weight:700;">✅ 有効です</div>'
         +'<div style="font-size:11px;color:#94A2B6;line-height:1.7;margin-top:4px;">ログインのたびに、認証アプリの6桁のコードを入れていただきます。'
         +(f.created_at?'（'+esc(String(f.created_at).slice(0,10))+' に設定）':'')+'</div>'
-        +(mfaRequiredFor(role)
-          ? '<div style="font-size:11px;color:#94A2B6;line-height:1.7;margin-top:4px;">運営とパートナーの方は必須のため、外せません。スマホを替えるときは運営へご連絡ください。</div>'
-          : '<button class="ghost" style="font-size:12px;margin-top:8px;border:1px solid var(--line);border-radius:8px;padding:6px 12px;" onclick="mfaRemove(\''+escA(f.id)+'\')">二段階認証を外す</button>');
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">'
+          +'<button class="btn2" style="font-size:12px;padding:7px 12px;" onclick="showMfa(\'enroll\', false, true)">📱 スマホを替える</button>'
+          +(mfaRequiredFor(role)?'':'<button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:8px;padding:6px 12px;" onclick="mfaRemove(\''+escA(f.id)+'\')">二段階認証を外す</button>')
+        +'</div>'
+        +'<div style="font-size:11px;color:#94A2B6;line-height:1.7;margin-top:6px;">機種変更は、<b>前のスマホが手元にあるうちに</b>「📱 スマホを替える」から。新しいスマホで読み取って6桁を入れると、前のスマホの設定は外れます。'
+        +(mfaRequiredFor(role)?'運営とパートナーの方は必須のため、外すことはできません。':'')
+        +'スマホをなくしたときは、'+(role==='customer'?'担当パートナー':'運営')+'へご連絡ください。</div>';
     }else{
       box.innerHTML='<div style="font-size:12.5px;color:#8A6A12;font-weight:700;">まだ設定していません</div>'
         +'<div style="font-size:11px;color:#94A2B6;line-height:1.7;margin-top:4px;">パスワードに加えて、スマホの認証アプリのコードでも確かめます。<b style="color:var(--navy);">パスワードが漏れても入れなくなる</b>ので、おすすめです。</div>'
@@ -16516,12 +16539,12 @@
       + '添付は非公開の置き場で、開くたびに10分だけ有効な鍵。PDF・画像・Office・CSV・テキスト、10MBまで。'
       + 'AI(Anthropic社のClaude)に渡すのは回答に必要なものだけで、同社の商用の利用規約によりAIの学習には使われない。継ナビくんが説明書を読むときに渡すのは公開の説明書の本文だけ。'
       + 'ログアウトすると、その端末の相談の控え・入力途中の内容・通知の登録を消す(共用の端末では必ずログアウトを)。退会したら、アカウント・数字・相談に加えて添付ファイルまで消す(法律で保存が必要な取引の記録を除く)。'
-      + '二段階認証=ログインのたびにスマホの認証アプリ(Google Authenticator・Microsoft Authenticator・iPhoneの「パスワード」アプリなど)の6桁のコードでも確かめる。運営とパートナーは必須(設定するまでアプリに入れない)、経営者は任意で設定→🔐 二段階認証から(おすすめ)。設定した方は、コードを入れたログインでなければデータベースが1行も返さない。スマホを替えた・なくしたときは、経営者は担当パートナーへ・パートナーは運営へ(ご本人の確認のうえで運営の代表が設定をやり直せるようにする)。'
+      + '二段階認証=ログインのたびにスマホの認証アプリ(Google Authenticator・Microsoft Authenticator・iPhoneの「パスワード」アプリなど)の6桁のコードでも確かめる。運営とパートナーは必須(設定するまでアプリに入れない)、経営者は任意で設定→🔐 二段階認証から(おすすめ)。設定した方は、コードを入れたログインでなければデータベースが1行も返さない。機種変更(前のスマホが手元にある)は、ご本人が 設定→🔐 二段階認証→「📱 スマホを替える」で新しいスマホのQRを読み取り6桁を入れる(前のスマホの設定は自動で外れる。運営への連絡は不要。前のスマホを手放す前に)。なくした・壊れたときは、経営者は担当パートナーへ・パートナーは運営へ連絡。運営が2つ以上の方法(ビデオ通話で身分証・登録の電話へ運営から折り返し・ご本人しか知らないこと)でご本人を確かめてから代表が設定を外し、すべての端末からログアウトさせ、記録を残す。メールだけの依頼では外さない。やり直したらパスワードも変えて、新しいスマホで設定し直す。備え=設定のときに出る英数字を紙に控えておけば、ご自身で新しいスマホに設定し直せる(写真・メールには残さない)。説明書の「スマホを替える・なくしたとき」の頁。'
       + '詳しくは資料「お客様の情報を守る仕組み」(サポートタブ。お客様・金融機関にそのまま見せられる)。これから=パスワードの強さ・提供先のプライバシーポリシーへの明記。'
       + ((aisecPortal()==='consultant')
           ? 'パートナーに伝えること=お客様の試算表・決算書・画面の写しを、TsuguAiの外のAI(無料の生成AIなど)・個人のLINE・私用のメールに貼らない。やり取りはアプリのメッセージで。説明書「パートナー向け操作説明書」の「お客様の情報を守る」の頁。'
           : (aisecPortal()==='admin')
-            ? '運営の手順=SQL 20261010000000_security_hardening.sql(確かめがすべて1で完了)と 20261010010000_mfa_required.sql(守りの無い表=0。新しい表を足したら流し直す。スマホをなくした方は代表が auth.mfa_factors の行を消す)と、Edge Function(push-reminders・agent-heartbeat・contract-send・ai-proxy・admin-delete-user)の再デプロイ。Dashboard の Authentication でパスワードの最低文字数・漏れたパスワードの拒否・二段階認証(TOTP)。説明書「運営向け操作説明書」の「情報の守り（運営の手順）」の頁。'
+            ? '運営の手順=SQL 20261010000000_security_hardening.sql(確かめがすべて1で完了)と 20261010010000_mfa_required.sql(守りの無い表=0。新しい表を足したら流し直す)と、スマホをなくした方のやり直しは MFA_RESET.sql(代表だけ。ご本人を2つ以上の方法で確かめてから。メール・理由・確かめかたを書き換えて Run。設定を外し全端末ログアウト、mfa_resets に記録。説明書「二段階認証のやり直し（紛失のとき）」)と、Edge Function(push-reminders・agent-heartbeat・contract-send・ai-proxy・admin-delete-user)の再デプロイ。Dashboard の Authentication でパスワードの最低文字数・漏れたパスワードの拒否・二段階認証(TOTP)。説明書「運営向け操作説明書」の「情報の守り（運営の手順）」の頁。'
             : '');
     if(aisecPortal()==='consultant'){
       return common

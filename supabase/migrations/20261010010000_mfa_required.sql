@@ -14,11 +14,13 @@
 --    この SQL をもう一度流してください（何度流しても同じ結果になります）。
 --    いちばん下の確かめで「守りの無い表」が 0 なら、全部の表に入っています。
 --
---  ■ スマホをなくした方がいるとき（運営の代表だけが行う）
---    ご本人であることを確かめたうえで、SQL Editor で次を実行すると、
---    その方の二段階認証が外れ、次のログインで設定し直せます。
---      delete from auth.mfa_factors
---       where user_id = (select id from auth.users where email = 'その方のメール');
+--  ■ 機種変更（前のスマホが手元にある）
+--    ご本人が 設定 → 🔐 二段階認証 →「📱 スマホを替える」で移せます（運営の手は要りません）。
+--
+--  ■ スマホをなくした・壊れた方がいるとき（運営の代表だけが行う）
+--    ご本人であることを確かめたうえで、MFA_RESET.sql（同じフォルダ）を使います。
+--    二段階認証を外し、すべての端末からログアウトさせ、mfa_resets に記録を残します。
+--    やり直しの記録は、この SQL が作る mfa_resets 表に残ります（運営だけが読める）。
 --
 -- 実行方法: Supabase Dashboard → SQL Editor に貼り付けて Run
 --   先に Authentication → Multi-Factor で「TOTP」が有効か確かめてください（既定で有効）
@@ -51,6 +53,27 @@ do $do$ begin
   end if;
 end $do$;
 
+--  スマホをなくした方の設定をやり直した記録（誰の・いつ・なぜ・どう本人を確かめたか）。
+--  書くのは MFA_RESET.sql（SQL Editor）だけ。運営は読めるが、画面からは書き換えも消去もできない
+create table if not exists public.mfa_resets (
+  id           bigint generated always as identity primary key,
+  user_id      uuid,
+  email        text not null,
+  reason       text not null,           -- 紛失／故障／盗難 など
+  verified_how text not null,           -- 本人の確かめかた（ビデオ通話で身分証、登録の電話へ折り返し など）
+  factors_removed int not null default 0,
+  sessions_removed int not null default 0,
+  done_at      timestamptz not null default now()
+);
+alter table public.mfa_resets enable row level security;
+revoke all on public.mfa_resets from anon, authenticated;
+grant select on public.mfa_resets to authenticated;
+drop policy if exists "mfa resets admin read" on public.mfa_resets;
+create policy "mfa resets admin read" on public.mfa_resets
+  for select to authenticated
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+comment on table public.mfa_resets is '二段階認証をやり直した記録（スマホの紛失など）。MFA_RESET.sql からだけ書く';
+
 --  行単位の権限（RLS）を入れている public の表、すべてに足す
 do $do$
 declare t text;
@@ -79,7 +102,7 @@ end $do$;
 
 
 -- 確かめる -----------------------------------------------------
---  守りの無い表 = 0、置き場 = 1 なら完了
+--  守りの無い表 = 0、置き場 = 1、やり直しの記録 = 1 なら完了
 select
   (select count(*)
      from pg_class c join pg_namespace n on n.oid = c.relnamespace
@@ -87,4 +110,5 @@ select
       and not exists (select 1 from pg_policies p
                        where p.schemaname = 'public' and p.tablename = c.relname and p.policyname = 'mfa required')) as "守りの無い表",
   (select count(*) from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'mfa required') as "置き場",
+  (select count(*) from information_schema.tables where table_schema = 'public' and table_name = 'mfa_resets')      as "やり直しの記録",
   (select count(*) from pg_policies where schemaname = 'public' and policyname = 'mfa required')                         as "守りを入れた表の数";

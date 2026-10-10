@@ -85,3 +85,4 @@ alter table storage.objects enable row level security;
 grant select, insert on storage.objects to authenticated;
 grant usage on schema storage to authenticated;
 create policy obj_own on storage.objects for select to authenticated using (owner = auth.uid());
+create table auth.sessions (id uuid primary key default gen_random_uuid(), user_id uuid);

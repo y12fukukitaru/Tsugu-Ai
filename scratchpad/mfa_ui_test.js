@@ -19,7 +19,7 @@ ok('コード：6桁', /autocomplete="one-time-code" maxlength="6"/.test(SRC) &&
 ok('必須の方は閉じられない（ログアウトだけ）', /\(MFA_REQ\?out:'<div class="link" onclick="mfaCancel\(\)"/.test(SRC));
 ok('ログイン画面に戻るときは隠す', /function showAuth\(\)\{ mfaHide\(\);/.test(SRC));
 ok('設定の画面に欄', /<div id="set-mfa"/.test(SRC) && /renderAvatar\(\);\s*mfaSettingsPaint\(\);/.test(SRC));
-ok('必須の方は外せない', /運営とパートナーの方は必須のため、外せません/.test(SRC));
+ok('必須の方は外せない', /運営とパートナーの方は必須のため、外すことはできません。/.test(SRC) && /\(mfaRequiredFor\(role\)\?'':'<button[^\n]*mfaRemove/.test(SRC));
 ok('経営者は外せる', /onclick="mfaRemove\(/.test(SRC) && /sb\.auth\.mfa\.unenroll\(\{ factorId:id \}\)/.test(SRC));
 ok('継ナビくん：二段階認証を答えられる', /二段階認証=ログインのたびにスマホの認証アプリ/.test(SRC));
 const SQL = R('supabase/migrations/20261010010000_mfa_required.sql');
@@ -27,10 +27,23 @@ ok('SQL：設定済みなら aal2 だけ', /coalesce\(auth\.jwt\(\) ->> 'aal', '
 ok('SQL：すべての表に止める側の決まり', /as restrictive for all to authenticated/.test(SQL) && /c\.relrowsecurity/.test(SQL));
 ok('SQL：(select 関数()) にしない（無限の読み返しになる）', !/\(select public\.tsugu_aal_ok\(\)\)/.test(SQL));
 ok('SQL：置き場にも', /on storage\.objects as restrictive/.test(SQL));
-ok('SQL：スマホをなくしたとき', /delete from auth\.mfa_factors/.test(SQL));
-ok('資料：二段階認証の頁', /data-t="二段階認証"/.test(R('security.html')) && /電話やメールだけでは外しません/.test(R('security.html')));
+ok('SQL：スマホをなくしたとき（手順は MFA_RESET.sql）', /MFA_RESET\.sql/.test(SQL));
+ok('資料：二段階認証の頁', /data-t="二段階認証"/.test(R('security.html')) && /メールだけでは外しません/.test(R('security.html')));
 ok('説明書：経営者（任意）', /🔐 二段階認証（おすすめ）/.test(R('manual-customer.html')));
 ok('説明書：パートナー（必須）', /はじめに、二段階認証を設定します（必須）/.test(R('manual-partner.html')));
 ok('説明書：運営（SQL とやり直し）', /20261010010000_mfa_required\.sql/.test(R('manual-admin.html')) && /delete from auth\.mfa_factors/.test(R('manual-admin.html')));
+// スマホを替える・なくしたとき
+ok('スマホを替える：ボタン', /onclick="showMfa\(\\'enroll\\', false, true\)">📱 スマホを替える<\/button>/.test(SRC));
+ok('スマホを替える：新しいスマホで確かめてから前の設定を外す', /if\(MFA_SWITCH\)\{[\s\S]{0,400}\.filter\(function\(f\)\{ return f\.id!==newId; \}\)[\s\S]{0,200}sb\.auth\.mfa\.unenroll\(\{ factorId:olds\[i\]\.id \}\)/.test(SRC));
+ok('コードの画面：なくしたときの連絡先・メールだけでは外さない', /メールだけのご依頼では外しません/.test(SRC));
+ok('設定：英数字を紙に控える', /紙に書いて、人の目に触れない場所/.test(SRC));
+const RESET = R('supabase/migrations/MFA_RESET.sql');
+ok('やり直し：本人確認2つ以上', /2つ以上/.test(RESET) && /メールだけのご依頼では外さない/.test(RESET));
+ok('やり直し：設定を外し・全端末ログアウト・記録', /delete from auth\.mfa_factors/.test(RESET) && /delete from auth\.sessions/.test(RESET) && /insert into public\.mfa_resets/.test(RESET));
+ok('記録の表', /create table if not exists public\.mfa_resets/.test(SQL) && /"mfa resets admin read"/.test(SQL));
+['manual-customer.html', 'manual-partner.html'].forEach((f) => ok(f + '：スマホを替える・なくしたとき', /data-t="スマホを替える・なくしたとき"/.test(R(f)) && /📱 スマホを替える/.test(R(f))));
+ok('運営：やり直しの手順', /data-t="二段階認証のやり直し（紛失のとき）"/.test(R('manual-admin.html')) && /MFA_RESET\.sql/.test(R('manual-admin.html')));
+ok('継ナビくん：機種変更・紛失を答えられる', /機種変更\(前のスマホが手元にある\)は/.test(SRC) && /MFA_RESET\.sql\(代表だけ/.test(SRC));
+
 if (bad.length) { console.log(bad.join('\n')); console.log(n + ' 件中 ' + bad.length + ' 件 不合格'); process.exit(1); }
 console.log(n + ' 件 ぜんぶ通りました');
