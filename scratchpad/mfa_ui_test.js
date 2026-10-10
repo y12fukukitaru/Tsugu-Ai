@@ -31,7 +31,7 @@ ok('SQL：スマホをなくしたとき（手順は MFA_RESET.sql）', /MFA_RES
 ok('資料：二段階認証の頁', /data-t="二段階認証"/.test(R('security.html')) && /メールだけでは外しません/.test(R('security.html')));
 ok('説明書：経営者（任意）', /🔐 二段階認証（おすすめ）/.test(R('manual-customer.html')));
 ok('説明書：パートナー（必須）', /はじめに、二段階認証を設定します（必須）/.test(R('manual-partner.html')));
-ok('説明書：運営（SQL とやり直し）', /20261010010000_mfa_required\.sql/.test(R('manual-admin.html')) && /delete from auth\.mfa_factors/.test(R('manual-admin.html')));
+ok('説明書：運営（SQL とやり直し）', /20261010010000_mfa_required\.sql/.test(R('manual-admin.html')) && /サポート管理の<b>「🔐 二段階認証のやり直し」<\/b>で/.test(R('manual-admin.html')) && !/delete from auth\.mfa_factors where user_id = \(select id/.test(R('manual-admin.html')));
 // スマホを替える・なくしたとき
 ok('スマホを替える：ボタン', /onclick="showMfa\(\\'enroll\\', false, true\)">📱 スマホを替える<\/button>/.test(SRC));
 ok('スマホを替える：新しいスマホで確かめてから前の設定を外す', /if\(MFA_SWITCH\)\{[\s\S]{0,400}\.filter\(function\(f\)\{ return f\.id!==newId; \}\)[\s\S]{0,200}sb\.auth\.mfa\.unenroll\(\{ factorId:olds\[i\]\.id \}\)/.test(SRC));

@@ -60,6 +60,7 @@ ok('退会：添付を先に消す・消せなければ止める', /storage\.fro
 // ③ 画面
 ok('ログアウト：通知の登録を先に外す', /try\{ await Promise\.race\(\[pushForgetDevice\(\), new Promise\(function\(r\)\{ setTimeout\(r, 2000\); \}\)\]\); \}catch\(e\)\{\}\n\s*await sb\.auth\.signOut\(\);/.test(SRC));
 ok('ログアウト：端末から消す（見た目の好みだけ残す）', /function signOutWipe\(\)/.test(SRC) && /var WIPE_KEEP=\['tsugu_boot_dark','tsugu_knv_max','tsugu_swipe_hint_v2','tsugu_push_ask_until'\];/.test(SRC) && /sessionStorage\.clear\(\)/.test(SRC) && /caches\.delete\('tsugu-badge'\)/.test(SRC));
+ok('ログアウト：表示の設定（tsugu_prefs_）は残す', /WIPE_KEEP\.indexOf\(k\)<0 && !\/\^tsugu_prefs_\/\.test\(k\)/.test(SRC));
 ok('ログアウト：通知の登録を外す中身', /sb\.from\('push_subscriptions'\)\.delete\(\)\.eq\('user_id',ME\)\.eq\('subscription->>endpoint', j\.endpoint\)/.test(SRC) && /await sub\.unsubscribe\(\)/.test(SRC));
 const csp = (SRC.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)">/) || [])[1] || '';
 ok('CSP：ある', !!csp);
