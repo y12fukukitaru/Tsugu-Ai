@@ -68,7 +68,7 @@ ok('今日やること：件数は期限切れ＋今日', /var dueN=cnt\.over\+c
 ok('今日やること：済んだ割合の帯', /class="todo-bar"/.test(paint) && /var pct=tot\?Math\.round\(doneN\/tot\*100\):0;/.test(paint));
 ok('今日やること：束へ飛ぶ札', /onclick="todoJump\(\\''\+g\[0\]\+'\\'\)"/.test(paint) && /id="todo-g-'\+g\[0\]\+'"/.test(paint));
 ok('1行で足す：Enter で入る（変換中は入れない）', /event\.key===\\'Enter\\'&&!event\.isComposing/.test(paint));
-ok('1行で足す：詳しくは開いたときだけ（直すときは開く）', /var more=TODO_MORE \|\| !!ed;/.test(paint) && /<div class="more'\+\(more\?'':' hidden'\)\+'">/.test(paint));
+ok('1行で足す：詳しくは開いたときだけ（直すときは開く）', /var more=TODO_MORE \|\| !!ed;/.test(paint) && /<div class="more todo-more'\+\(more\?'':' hidden'\)\+'">/.test(paint));
 ok('1行で足す：期限の札に印', /class="todo-chip'\+\(curDue===q\[1\]\?' on':''\)\+'" data-due="'\+q\[1\]\+'"/.test(paint));
 ok('今日の分が済んだら、ねぎらう', /🎉 今日の分はぜんぶ済みました/.test(paint));
 const tog = takeFn('todoMoreToggle');
@@ -115,7 +115,7 @@ const slide = (h, t) => (h.match(new RegExp('<section class="slide" data-t="' + 
 [['経営者', MANC], ['パートナー', MANP]].forEach(([who, M]) => {
   const td = slide(M, 'TODO（やること）'), ca = slide(M, '予定（カレンダー）');
   ok('説明書（' + who + '）：今日やること・6つの束・札', /「今日やること ◯件」/.test(td) && /期限切れ・今日・明日・今週（日曜まで）・それ以降・期限なし/.test(td) && /「3日超過」「今日 15:00」「明日」「金曜」/.test(td));
-  ok('説明書（' + who + '）：1行で足す・詳しく', /<b>Enter<\/b>/.test(td) && /<b>「詳しく」を開いたときだけ<\/b>/.test(td));
+  ok('説明書（' + who + '）：1行で足す・詳しく', /<b>Enter<\/b>/.test(td) && /<b>「🗓 日時・メモ ▾」<\/b>のボタンを押すと出ます/.test(td));
   ok('説明書（' + who + '）：今日済んだこと', /<b>「✓ 今日済んだこと」<\/b>/.test(td) && /<b>「それより前に済んだもの（◯件）を見る」<\/b>/.test(td));
   ok('説明書（' + who + '）：月表示に予定そのもの', /<b>各日のマスに予定そのもの<\/b>/.test(ca) && /スマホや小窓では<b>点<\/b>/.test(ca));
 });
@@ -131,5 +131,17 @@ ok('知識：月表示に予定そのもの（両方）', (SRC.match(/月表示�
   ok('＋：空なら欄にカーソル、書いてあれば追加', /if\(i && !String\(i\.value\|\|''\)\.trim\(\)\)\{ try\{ i\.focus\(\); \}catch\(e\)\{\} todoMsg\(/.test(tp) && /todoSave\(\);/.test(tp));
   ok('スマホでは短い案内文（切れないように）', /window\.innerWidth<=600\?'やることを入力':'やることを入力（例：◯◯社に見積を送る）'/.test(paint));
 }
+//  2026-10-10：日時・メモのボタンが小さい・開いたとき日付と時刻が白い箱 → 枠のあるボタン、名前つきの欄、いまの日時
+{
+  const paint = (() => { const i = SRC.indexOf('\n  function todoPaint('); return SRC.slice(i, SRC.indexOf('\n  }\n', i)); })();
+  ok('日時・メモは枠のあるボタン（スマホ38px）', /class="todo-more-btn'\+\(more\?' on':''\)\+'"/.test(paint) && /\.todo-more-btn\{font-size:13px;min-height:38px;/.test(SRC));
+  ok('日付・時刻・顧客・メモに名前', /<label class="tf"[^>]*><span>日付<\/span><input id="td-date"/.test(paint) && /<span>時刻（任意）<\/span><input id="td-time"/.test(paint) && /<span>メモ（任意）<\/span><textarea id="td-note"/.test(paint));
+  ok('スマホの欄は44px・文字16px（拡大しない）', /\.todo-more input\[type=date\],\.todo-more input\[type=time\],\.todo-more select,\.todo-more textarea\{min-height:44px;font-size:16px;\}/.test(SRC));
+  ok('スマホの期限の札も大きく', /\.todo-chip\{font-size:12\.5px;padding:0 13px;min-height:36px;\}/.test(SRC));
+  const tg = takeFn('todoMoreToggle');
+  ok('開いたとき、日付が空ならいまの日時（時刻は次の15分）', /if\(TODO_MORE && !TODO_EDIT\)\{/.test(tg) && /d\.value=todoYmd\(now\);/.test(tg) && /Math\.ceil\(\(now\.getHours\(\)\*60\+now\.getMinutes\(\)\+1\)\/15\)\*15/.test(tg));
+  ok('「なし」で日付と時刻を消せる（これまでどおり）', /if\(!v\)\{ var tm=\$\('td-time'\); if\(tm\) tm\.value=''; \}/.test(SRC));
+}
+ok('説明書：日時・メモのボタンと、いまの日時', ['manual-customer.html', 'manual-partner.html'].every((f) => /<b>「🗓 日時・メモ ▾」<\/b>のボタンを押すと出ます/.test(fs.readFileSync(__dirname + '/../' + f, 'utf8')) && /<b>いまの日時<\/b>（時刻は次の15分の区切り）が入ります/.test(fs.readFileSync(__dirname + '/../' + f, 'utf8'))));
 if (bad.length) { bad.forEach((b) => console.log('NG ' + b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK ' + n + ' checks, 0 failed');

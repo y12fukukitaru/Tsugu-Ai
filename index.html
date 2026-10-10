@@ -777,6 +777,24 @@
   .todo-chip:hover{background:rgba(20,122,110,.12);}
   .todo-chip.on{background:#147A6E;border-color:#147A6E;color:#fff;}
   .todo-link{border:none;background:none;color:var(--muted);font:inherit;font-size:11px;cursor:pointer;padding:3px 4px;text-decoration:underline;text-underline-offset:2px;}
+  /* 日時・メモ（2026-10-10）：小さな下線の文字で見えにくかった → 枠のあるボタンに。
+     開いた中の日付・時刻・メモも、名前つきの大きな欄に（スマホは指で押せる44px・文字16pxで拡大しない） */
+  .todo-more-btn{display:inline-flex;align-items:center;gap:5px;border:1.5px solid #9CCFC6;background:#fff;color:#0F6559;border-radius:99px;
+    font:700 12px 'Noto Sans JP',sans-serif;padding:0 12px;min-height:30px;cursor:pointer;}
+  .todo-more-btn.on{background:#147A6E;border-color:#147A6E;color:#fff;}
+  .todo-more .tf{display:flex;flex-direction:column;gap:3px;min-width:0;}
+  .todo-more .tf>span{font-size:11px;font-weight:700;color:#0F6559;letter-spacing:.04em;}
+  .todo-more input[type=date],.todo-more input[type=time],.todo-more select,.todo-more textarea{
+    width:100%;min-height:40px;border:1.5px solid #BFD9D3;border-radius:10px;background:#fff;color:var(--ink);font:inherit;font-size:14px;padding:6px 10px;box-sizing:border-box;}
+  .todo-more input[type=date],.todo-more input[type=time]{-webkit-appearance:none;appearance:none;display:block;}
+  .todo-more .tf-hint{font-size:11px;color:var(--muted);line-height:1.6;margin-top:6px;}
+  @media (max-width:600px){
+    .todo-chip{font-size:12.5px;padding:0 13px;min-height:36px;}
+    .todo-more-btn{font-size:13px;min-height:38px;padding:0 14px;}
+    .todo-more input[type=date],.todo-more input[type=time],.todo-more select,.todo-more textarea{min-height:44px;font-size:16px;}
+    .todo-more input[type=date],.todo-more input[type=time]{padding:6px 8px;}
+  }
+  body.dark .todo-more-btn,body.dark .todo-more input,body.dark .todo-more select,body.dark .todo-more textarea{background:var(--card);}
   .todo-grp{margin:14px 0 4px;}
   .todo-gh{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;letter-spacing:.04em;margin:0 2px 6px;color:var(--gc,var(--navy));}
   .todo-gh::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--gc,var(--navy));flex:none;}
@@ -1896,7 +1914,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261010-14';
+  var APP_BUILD='20261010-15';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -21052,18 +21070,19 @@
         +'<span style="font-size:11px;color:var(--muted);">期限</span>'
         +todoQuick().map(function(q){ return '<button type="button" class="todo-chip'+(curDue===q[1]?' on':'')+'" data-due="'+q[1]+'" onclick="todoSetDue(\''+q[1]+'\')">'+esc(q[0])+'</button>'; }).join('')
         +'<button type="button" class="todo-chip'+(!curDue?' on':'')+'" data-due="" onclick="todoSetDue(\'\')">なし</button>'
-        +'<button type="button" class="todo-link" onclick="todoMoreToggle()">'+(more?'詳しくを閉じる':'日時・'+(cl.length?'顧客・':'')+'メモ ▾')+'</button>'
+        +'<button type="button" class="todo-more-btn'+(more?' on':'')+'" aria-expanded="'+(more?'true':'false')+'" onclick="todoMoreToggle()">'+(more?'▴ 詳しくを閉じる':'🗓 日時・'+(cl.length?'顧客・':'')+'メモ ▾')+'</button>'
       +'</div>'
-      +'<div class="more'+(more?'':' hidden')+'">'
-        +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'
-          +'<input id="td-date" type="date" class="inp2" style="flex:1 1 130px;min-width:0;" value="'+escA(curDue)+'" onchange="todoDueMark()">'
-          +'<input id="td-time" type="time" class="inp2" style="flex:0 1 100px;min-width:0;" title="時刻（任意）" value="'+escA(ed&&ed.due_time?String(ed.due_time).slice(0,5):'')+'">'
+      +'<div class="more todo-more'+(more?'':' hidden')+'">'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+          +'<label class="tf" style="flex:1.3 1 140px;"><span>日付</span><input id="td-date" type="date" value="'+escA(curDue)+'" onchange="todoDueMark()"></label>'
+          +'<label class="tf" style="flex:1 1 120px;"><span>時刻（任意）</span><input id="td-time" type="time" value="'+escA(ed&&ed.due_time?String(ed.due_time).slice(0,5):'')+'"></label>'
         +'</div>'
+        +(ed?'':'<div class="tf-hint">日付が空のときは、開くといまの日時が入ります。期限を付けないときは上の「なし」。</div>')
         +(cl.length
-          ? '<select id="td-cust" class="inp2" style="width:100%;margin-top:6px;"><option value="">顧客にひも付けない</option>'
-            +cl.map(function(c){ return '<option value="'+escA(c.id)+'"'+(ed&&ed.customer_id===c.id?' selected':'')+'>'+esc(c.company_name||'顧客')+'</option>'; }).join('')+'</select>'
+          ? '<label class="tf" style="margin-top:8px;"><span>顧客</span><select id="td-cust"><option value="">顧客にひも付けない</option>'
+            +cl.map(function(c){ return '<option value="'+escA(c.id)+'"'+(ed&&ed.customer_id===c.id?' selected':'')+'>'+esc(c.company_name||'顧客')+'</option>'; }).join('')+'</select></label>'
           : '')
-        +'<textarea id="td-note" class="inp2" rows="2" style="width:100%;margin-top:6px;" placeholder="メモ（任意）">'+esc(ed&&ed.note?ed.note:'')+'</textarea>'
+        +'<label class="tf" style="margin-top:8px;"><span>メモ（任意）</span><textarea id="td-note" rows="2" placeholder="メモ（任意）">'+esc(ed&&ed.note?ed.note:'')+'</textarea></label>'
         +(ed?'<div style="margin-top:6px;"><button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:6px 13px;" onclick="todoEdit(null)">やめる</button></div>':'')
       +'</div>'
       +'<div id="td-msg" class="td-msg"></div>'
@@ -21137,7 +21156,19 @@
     ids.forEach(function(k){ var e=$(k); if(e) keep[k]=e.value; });
     TODO_MORE=!TODO_MORE; todoPaint();
     ids.forEach(function(k){ var e=$(k); if(e && keep[k]!=null) e.value=keep[k]; });
-    var i=$('td-title'); if(i) i.focus();
+    //  開いたとき、日付・時刻が空なら、いまの日時を入れる（スマホでは空の欄が白い箱にしか見えない）。
+    //  時刻は次の15分の区切り。期限を付けないときは「なし」で消せる
+    if(TODO_MORE && !TODO_EDIT){
+      var d=$('td-date'), tm=$('td-time');
+      if(d && !d.value){
+        var now=new Date(); d.value=todoYmd(now);
+        if(tm && !tm.value){
+          var m=Math.ceil((now.getHours()*60+now.getMinutes()+1)/15)*15;
+          if(m<24*60) tm.value=('0'+Math.floor(m/60)).slice(-2)+':'+('0'+(m%60)).slice(-2);
+        }
+      }
+    }
+    var i=$('td-title'); if(i && !TODO_MORE) i.focus();
     todoDueMark();
   }
   //  いま選んでいる期限の札に印を付ける
