@@ -1914,7 +1914,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261010-15';
+  var APP_BUILD='20261010-16';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -17534,15 +17534,14 @@
       setTimeout(function(){ fab.classList.remove('back'); }, 520);
     }
   }
-  // ===== 下か横に払って閉じる（2026-10-10）=====
-  //  指で、パネルを下へ、または左右へ払うと閉じる。指についてパネルが動き、
+  // ===== 横に払って閉じる（2026-10-10）=====
+  //  指で、パネルを左右へ払うと閉じる。指についてパネルが動き、
   //  離したところで「十分に動いた／素早く払った」なら閉じる。足りなければ元の位置へ戻る。
+  //  縦（上下）の払いでは閉じない。中身を読み進める・戻すスクロールと同じ動きなので、
+  //  いちばん上で引っぱっただけで閉じてしまうのを避ける（はじめは下払いでも閉じていた）。
   //  ぶつからないように：
   //   ・入力欄（文字を打つところ）から始めた動きは使わない
-  //   ・中身が縦に送れる場所では、いちばん上まで戻っているときだけ下払いで閉じる
-  //     （途中なら、ふつうに上へ送る）
   //   ・横に送れるもの（週の予定・表）の上では、端まで送り切っているときだけ横払いで閉じる
-  //   ・上への払いは使わない（中身を下へ送る動きと同じなので）
   var KNV_SW=null;
   function knvSwScroller(el, root, axis){
     for(var e=el; e && e!==root; e=e.parentElement){
@@ -17560,19 +17559,15 @@
       var tg=ev.target;
       if(tg && tg.closest && tg.closest('input,textarea,select,[contenteditable="true"],.knv-szmenu')) return;
       var t=ev.touches[0];
-      KNV_SW={ x0:t.clientX, y0:t.clientY, t0:Date.now(), dx:0, dy:0, axis:null, dead:false,
-               sy:knvSwScroller(tg, p, 'y'), sx:knvSwScroller(tg, p, 'x') };
+      KNV_SW={ x0:t.clientX, y0:t.clientY, t0:Date.now(), dx:0, axis:null, dead:false,
+               sx:knvSwScroller(tg, p, 'x') };
     }, { passive:true });
     p.addEventListener('touchmove', function(ev){
       var s=KNV_SW; if(!s || s.dead) return;
       var t=ev.touches[0], dx=t.clientX-s.x0, dy=t.clientY-s.y0;
       if(!s.axis){
         if(Math.abs(dx)<10 && Math.abs(dy)<10) return;
-        if(Math.abs(dy)>Math.abs(dx)*1.2){
-          //  下へ。中身が途中まで送られていれば、ふつうのスクロールに任せる
-          if(dy<0 || (s.sy && s.sy.scrollTop>0)){ s.dead=true; return; }
-          s.axis='y';
-        } else if(Math.abs(dx)>Math.abs(dy)*1.2){
+        if(Math.abs(dx)>Math.abs(dy)*1.2){
           //  横へ。横に送れるものは、その向きの端まで送り切っているときだけ
           if(s.sx){
             var atL=s.sx.scrollLeft<=0, atR=s.sx.scrollLeft+s.sx.clientWidth>=s.sx.scrollWidth-1;
@@ -17583,24 +17578,21 @@
         p.classList.add('knv-dragging');
       }
       if(ev.cancelable) ev.preventDefault();
-      s.dx=dx; s.dy=dy;
-      var d=(s.axis==='y') ? Math.max(0, dy) : dx;
-      p.style.transform=(s.axis==='y') ? 'translateY('+d+'px)' : 'translateX('+d+'px)';
-      var span=(s.axis==='y') ? p.offsetHeight : p.offsetWidth;
-      p.style.opacity=String(Math.max(.35, 1-Math.abs(d)/(span||1)*0.9));
+      s.dx=dx;
+      p.style.transform='translateX('+dx+'px)';
+      p.style.opacity=String(Math.max(.35, 1-Math.abs(dx)/(p.offsetWidth||1)*0.9));
     }, { passive:false });
     function end(cancel){
       var s=KNV_SW; KNV_SW=null;
       if(!s || !s.axis) return;
-      var d=(s.axis==='y') ? Math.max(0, s.dy) : s.dx, dist=Math.abs(d);
-      var span=(s.axis==='y') ? p.offsetHeight : p.offsetWidth;
+      var d=s.dx, dist=Math.abs(d), span=p.offsetWidth;
       var fast=dist>50 && (Date.now()-s.t0)<260;
       var ok=!cancel && (fast || dist > Math.min(140, span*0.28));
       p.classList.remove('knv-dragging');
       p.classList.add('knv-snap');
       if(ok){
         //  払った向きへそのまま抜けてから閉じる
-        p.style.transform=(s.axis==='y') ? 'translateY('+span+'px)' : 'translateX('+(d<0?-1:1)*span+'px)';
+        p.style.transform='translateX('+(d<0?-1:1)*span+'px)';
         p.style.opacity='0';
         setTimeout(function(){
           p.classList.add('knv-swiped');
