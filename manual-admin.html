@@ -736,7 +736,8 @@ ul.dots li{font-size:14.5px;}
   <p class="sub">仕組みの説明は資料<b>「お客様の情報を守る仕組み」</b>（お客様・金融機関にそのまま見せられる形）。ここは運営の手順です。</p>
   <table class="kv tight">
     <tr><th>入れておくもの</th><td>SQL <code style="word-break:break-all;">20261010000000_security_hardening.sql</code>（権限の列の固定・法人の権限・枠の受け取り・担当替え・ログイン前の関数・添付の上限・通知の中身）。最後の確かめで<b>すべて 1</b> なら完了。Edge Function は push-reminders・agent-heartbeat・contract-send・ai-proxy・admin-delete-user を新しい中身で再デプロイ</td></tr>
-    <tr><th>Dashboard の設定</th><td>Authentication → パスワードの最低文字数（10文字以上）と<b>漏れたパスワードの拒否</b>（Pro プラン以上）をオン。<b>二段階認証（TOTP）</b>をオンにし、運営アカウントから使い始める</td></tr>
+    <tr><th>二段階認証</th><td>運営とパートナーは<b>必須</b>（設定するまでアプリに入れない）。経営者は任意。SQL <code style="word-break:break-all;">20261010010000_mfa_required.sql</code> で、設定した方はコードを入れたログインでなければ<b>データベースが1行も返さない</b>。新しい表を足したら同じ SQL をもう一度流す。<b>スマホをなくした方</b>は、ご本人と確かめてから代表が SQL Editor で <code style="word-break:break-all;">delete from auth.mfa_factors where user_id = (select id from auth.users where email = '…');</code></td></tr>
+    <tr><th>Dashboard の設定</th><td>Authentication → Multi-Factor の <b>TOTP が有効</b>か確認（既定で有効）。パスワードの最低文字数（10文字以上）と<b>漏れたパスワードの拒否</b>（Pro プラン以上）をオン</td></tr>
     <tr><th>ふだん</th><td>運営メンバーの権限は必要な画面だけ。口座の閲覧・削除・総合振込の記録を月次の締めで見る。パートナーが契約を終えたら、その日のうちに停止と引き継ぎ</td></tr>
     <tr><th>疑いがあったら</th><td>①止める（該当アカウントの停止・鍵の差し替え）②調べる（<code style="word-break:break-all;">cron.job_run_details</code>・各記録）③知らせる（個人情報保護法に沿って委員会とご本人へ）④塞いで、試験を足す</td></tr>
     <tr><th>お客様への答え方</th><td>「相談は運営も読めません」「AI の学習には使われません」「通知・メール・LINE には、はじめは中身を載せません」。迷ったら資料をそのまま見せる</td></tr>

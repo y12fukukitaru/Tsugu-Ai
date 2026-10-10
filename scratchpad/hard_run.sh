@@ -10,3 +10,7 @@ su postgres -c "psql -q -d hard -c 'grant select,insert,update on all tables in 
 su postgres -c "$P -d hard -f supabase/migrations/20261010000000_security_hardening.sql" 2>&1 | grep -v NOTICE | grep -v '^$' | tail -3
 su postgres -c "$P -d hard -f supabase/migrations/20261010000000_security_hardening.sql" 2>&1 | grep -v NOTICE | grep -v '^$' | tail -1
 su postgres -c "psql -q -d hard -f scratchpad/hard_test.sql" 2>&1 | grep -v NOTICE | grep -v '^ *$'
+#  二段階認証（同じ土台の上で。表を足したあとに流す想定で2回）
+su postgres -c "$P -d hard -f supabase/migrations/20261010010000_mfa_required.sql" 2>&1 | grep -v NOTICE | grep -v '^$' | tail -3
+su postgres -c "$P -d hard -f supabase/migrations/20261010010000_mfa_required.sql" 2>&1 | grep -v NOTICE | grep -v '^$' | tail -1
+su postgres -c "psql -q -d hard -f scratchpad/mfa_test.sql" 2>&1 | grep -v NOTICE | grep -v '^ *$'
