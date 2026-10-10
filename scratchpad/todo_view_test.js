@@ -78,7 +78,11 @@ ok('済みにした瞬間に見た目を変え、動きを控える設定なら�
 const item = takeFn('todoItemHtml');
 ok('行：左の○で済み・期限の札・顧客の札・メモ1行', /todoTick\(this,/.test(item) && /todoDuePill\(t\)/.test(item) && /class="todo-cu"/.test(item) && /class="todo-note1"/.test(item));
 ok('行：✎と🗑に読み上げの名前', /aria-label="直す"/.test(item) && /aria-label="消す"/.test(item));
-ok('CSS：操作はカーソルを置いたとき、指の端末では常に', /\.todo-it:hover \.todo-acts/.test(SRC) && /@media \(hover:none\)\{[^}]*\.todo-acts\{opacity:1/.test(SRC));
+//  2026-10-10：直す・消すは小さくて押しにくく、カーソルを置かないと出なかった → いつも見せ、大きく
+ok('CSS：直す・消すはいつも見せる（カーソルを置かなくても）', !/\.todo-acts\{[^}]*opacity:0/.test(SRC) && !/\.todo-it:hover \.todo-acts/.test(SRC));
+ok('CSS：パソコンは絵＋文字で高さ34px、スマホは44pxの絵だけ', /\.todo-ic\{flex:none;display:inline-flex;align-items:center;gap:5px;min-height:34px;/.test(SRC) && /@media \(max-width:600px\)\{\n    \.todo-ic\{min-width:44px;min-height:44px;/.test(SRC) && /\.todo-ic \.lb\{display:none;\}/.test(SRC));
+ok('直す・消すは線の絵と文字（文字の絵 ✎🗑 は使わない）', /'<span class="lb">直す<\/span><\/button>'/.test(SRC) && /'<span class="lb">消す<\/span><\/button>'/.test(SRC) && /var TODO_IC_EDIT='<svg/.test(SRC) && /var TODO_IC_DEL='<svg/.test(SRC) && !/class="todo-ic"[^>]*>✎/.test(SRC));
+ok('消すは赤で、直すと見分けられる', /\.todo-ic\.del\{color:#A9403D;\}/.test(SRC) && /class="todo-ic del"/.test(SRC));
 ok('CSS：束の色は左の線', /\.todo-it::before\{[^}]*background:var\(--gc/.test(SRC));
 ok('CSS：暗い画面の色', /\[data-theme="dark"\] \.todo-sum/.test(SRC) || /\.dark \.todo-sum/.test(SRC) || /prefers-color-scheme: dark\)[\s\S]{0,4000}\.todo-sum/.test(SRC));
 
