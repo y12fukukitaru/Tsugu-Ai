@@ -753,10 +753,26 @@
   .todo-add:focus-within{border-color:#9CCFC6;box-shadow:0 0 0 3px rgba(20,122,110,.10);}
   .todo-add.edit{border-color:#147A6E;box-shadow:0 0 0 3px rgba(20,122,110,.14);}
   .todo-add .row1{display:flex;gap:6px;align-items:center;}
-  .todo-add .row1 input{flex:1;min-width:0;border:none;background:transparent;font:inherit;font-size:13.5px;color:var(--ink);padding:6px 4px;outline:none;}
-  .todo-add .plus{flex:none;width:28px;height:28px;border-radius:50%;border:2px dashed #9CCFC6;color:#147A6E;display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;}
-  .todo-add .row2{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:6px;padding-left:34px;}
-  .todo-add .more{margin-top:8px;padding-left:34px;}
+  /* 書く欄（2026-10-10）：枠のない入力で、どこに書くのか分からなかった → 枠のある欄に。
+     左の＋は飾りだったので、押せるボタンに（空なら欄にカーソル、書いてあれば追加） */
+  .todo-add .row1 input{flex:1;min-width:0;border:1.5px solid #BFD9D3;border-radius:10px;background:#fff;font:inherit;font-size:14px;color:var(--ink);
+    padding:0 12px;min-height:42px;outline:none;transition:border-color .15s,box-shadow .15s;}
+  .todo-add .row1 input::placeholder{color:#94A2B6;}
+  .todo-add .row1 input:focus{border-color:#147A6E;box-shadow:0 0 0 3px rgba(20,122,110,.14);}
+  .todo-add .plus{flex:none;width:42px;height:42px;border-radius:50%;border:none;background:#147A6E;color:#fff;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;line-height:1;box-shadow:0 2px 8px rgba(20,122,110,.28);transition:transform .12s,background .15s;}
+  .todo-add .plus:hover{background:#0F6559;}
+  .todo-add .plus:active{transform:scale(.92);}
+  .todo-add .row1 .btn2{min-height:42px;}
+  .todo-add .row2{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:8px;padding-left:48px;}
+  .todo-add .more{margin-top:8px;padding-left:48px;}
+  .todo-add .td-msg{font-size:11.5px;padding-left:48px;}
+  @media (max-width:600px){
+    .todo-add .row1 input,.todo-add .plus,.todo-add .row1 .btn2{min-height:44px;}
+    .todo-add .plus{width:44px;height:44px;}
+    .todo-add .row2,.todo-add .more,.todo-add .td-msg{padding-left:0;}
+  }
+  body.dark .todo-add .row1 input{background:var(--card);border-color:rgba(156,207,198,.45);}
   .todo-chip{border:1px solid #BFE0DA;background:rgba(20,122,110,.06);color:#147A6E;border-radius:99px;font-size:11px;font-weight:600;padding:3px 10px;cursor:pointer;font-family:inherit;}
   .todo-chip:hover{background:rgba(20,122,110,.12);}
   .todo-chip.on{background:#147A6E;border-color:#147A6E;color:#fff;}
@@ -1880,7 +1896,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261010-13';
+  var APP_BUILD='20261010-14';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -21027,9 +21043,9 @@
     var more=TODO_MORE || !!ed;
     var curDue=ed&&ed.due_date?ed.due_date:'';
     h+='<div class="todo-add'+(ed?' edit':'')+'">'
-      +(ed?'<div style="font-size:11px;font-weight:700;color:#147A6E;letter-spacing:.06em;margin:0 0 4px 34px;">TODO を直す</div>':'')
-      +'<div class="row1"><span class="plus" aria-hidden="true">＋</span>'
-        +'<input id="td-title" maxlength="200" placeholder="やることを書いて Enter（例：◯◯社に見積を送る）" aria-label="やること" value="'+escA(ed?ed.title:'')+'" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){event.preventDefault();todoSave();}">'
+      +(ed?'<div style="font-size:11px;font-weight:700;color:#147A6E;letter-spacing:.06em;margin:0 0 6px 48px;">TODO を直す</div>':'')
+      +'<div class="row1"><button type="button" class="plus" title="'+(ed?'保存する':'追加する')+'" aria-label="'+(ed?'保存する':'追加する')+'" onclick="todoPlus()">'+(ed?'✓':'＋')+'</button>'
+        +'<input id="td-title" maxlength="200" placeholder="'+(window.innerWidth<=600?'やることを入力':'やることを入力（例：◯◯社に見積を送る）')+'" aria-label="やること" value="'+escA(ed?ed.title:'')+'" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){event.preventDefault();todoSave();}">'
         +'<button class="btn2" style="font-size:12px;padding:6px 14px;flex:none;" onclick="todoSave()">'+(ed?'保存':'追加')+'</button>'
       +'</div>'
       +'<div class="row2">'
@@ -21050,7 +21066,7 @@
         +'<textarea id="td-note" class="inp2" rows="2" style="width:100%;margin-top:6px;" placeholder="メモ（任意）">'+esc(ed&&ed.note?ed.note:'')+'</textarea>'
         +(ed?'<div style="margin-top:6px;"><button class="ghost" style="font-size:12px;border:1px solid var(--line);border-radius:9px;padding:6px 13px;" onclick="todoEdit(null)">やめる</button></div>':'')
       +'</div>'
-      +'<div id="td-msg" style="font-size:11.5px;padding-left:34px;"></div>'
+      +'<div id="td-msg" class="td-msg"></div>'
     +'</div>';
     //  ③ 期限ごとの束
     if(!open.length && !done.length){
@@ -21136,6 +21152,12 @@
   function todoMsg(t, ok){ var m=$('td-msg'); if(m){ m.style.color=ok?'#147A6E':'#A9403D'; m.textContent=t; } }
   //  変えたら、暦と相談の予定の控えも取り直す
   function todoChanged(){ knvAgendaReset(); todoBadge(); }
+  //  左の＋：書いてあれば追加（直しているときは保存）、空なら書く欄にカーソルを置く
+  function todoPlus(){
+    var i=$('td-title');
+    if(i && !String(i.value||'').trim()){ try{ i.focus(); }catch(e){} todoMsg('ここに、やることを書いてください。'); return; }
+    todoSave();
+  }
   async function todoSave(){
     var title=((($('td-title')||{}).value)||'').trim();
     if(!title){ todoMsg('やることを書いてください。'); return; }
