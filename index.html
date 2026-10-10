@@ -1851,7 +1851,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261010-09';
+  var APP_BUILD='20261010-10';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2865,6 +2865,16 @@
     h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 6px;">🔐 二段階認証</div>';
     h+='<div id="set-mfa" style="font-size:11.5px;color:var(--muted);">確かめています…</div>';
     if(r==='consultant'){
+      //  電話番号（2026-10-10）。社長にお渡しする一枚紙の右下「担当・連絡先」に自動で入る
+      h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 4px;">電話番号</div>';
+      h+='<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">'
+        +'社長にお渡しする<b style="color:var(--navy);">一枚紙</b>の右下「担当・連絡先」に、お名前・メールと一緒に自動で入ります。'
+        +'お名刺と同じく、お渡しした社長にお伝えする番号をご登録ください。</div>';
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'
+        +'<input type="tel" id="set-phone" class="inp2" placeholder="例：090-1234-5678" maxlength="20" inputmode="tel" autocomplete="tel" style="flex:1;min-width:200px;">'
+        +'<button class="btn2" style="padding:9px 16px;" onclick="savePhone()">保存</button>'
+      +'</div>';
+      h+='<div id="set-phone-msg" style="font-size:11.5px;margin-top:6px;min-height:16px;"></div>';
       h+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 4px;">個人・法人の区別</div>';
       h+='<div style="font-size:11px;color:#94A2B6;margin-bottom:8px;line-height:1.6;">'
         +'源泉徴収の要否が変わるため、ご登録をお願いします。'
@@ -2901,7 +2911,7 @@
     box.innerHTML=h;
     renderAvatar();
     mfaSettingsPaint();
-    if(r==='consultant'){ loadInvoiceNo(); renderEntityType(); loadPayAcct(); }
+    if(r==='consultant'){ loadPhone(); loadInvoiceNo(); renderEntityType(); loadPayAcct(); }
   }
 
   // ===== お振込先（口座）=====
@@ -3110,6 +3120,37 @@
       msg.textContent=(v==='individual'
         ? '個人として保存しました。報酬から源泉徴収を差し引いてお振込みします。'
         : '法人として保存しました。源泉徴収は差し引きません。'); }
+  }
+
+  // ===== 電話番号（パートナー本人の profiles.phone）=====
+  //  全角の数字・ハイフンは半角に。使える文字は 数字・＋・ハイフン・かっこ・空白（20文字まで。SQL の決まりと同じ）
+  function phoneNorm(v){
+    return String(v||'').replace(/[０-９]/g,function(c){ return String.fromCharCode(c.charCodeAt(0)-0xFEE0); })
+      .replace(/[ー－‐−―]/g,'-').replace(/[（]/g,'(').replace(/[）]/g,')').replace(/[＋]/g,'+').replace(/　/g,' ').trim();
+  }
+  function phoneOk(v){ return !v || (v.length<=20 && /^[0-9+() -]+$/.test(v) && /[0-9]/.test(v)); }
+  async function loadPhone(){
+    var inp=$('set-phone'); if(!inp||!ME) return;
+    try{
+      var res=await sb.from('profiles').select('phone').eq('id',ME).single();
+      if(!res.error && res.data && res.data.phone) inp.value=res.data.phone;
+    }catch(e){}
+  }
+  async function savePhone(){
+    var inp=$('set-phone'), msg=$('set-phone-msg'); if(!inp||!ME) return;
+    var v=phoneNorm(inp.value);
+    if(!phoneOk(v)){
+      if(msg){ msg.style.color='#A9403D'; msg.textContent='使えるのは数字・ハイフン・かっこ・＋だけです（20文字まで）。例：090-1234-5678'; }
+      return;
+    }
+    inp.value=v;
+    var res=await sb.from('profiles').update({ phone:(v||null) }).eq('id',ME).select('id');
+    if(res.error){
+      if(msg){ msg.style.color='#A9403D'; msg.textContent='保存エラー：'+res.error.message+'（Supabaseで「20261010020000_partner_phone.sql」が未実行の可能性があります）'; }
+      return;
+    }
+    if(window.__prof) window.__prof.phone=v||null;
+    if(msg){ msg.style.color='#27684A'; msg.textContent=v?'保存しました。一枚紙の「担当・連絡先」に入ります。':'電話番号を消しました。'; }
   }
 
   // ===== インボイス登録番号（パートナー本人のprofilesに保存）=====
@@ -17960,7 +18001,8 @@
       localStorage.setItem('tsugu_sheet_me', JSON.stringify({
         n: c.n || me.full_name || me.contact_name || '',
         co: c.co || (EP_ME && EP_ME.org && EP_ME.org.name) || '',
-        tel: c.tel || '',
+        //  電話は設定の「電話番号」（profiles.phone）を先に。未登録なら一枚紙で入れたもの
+        tel: me.phone || c.tel || '',
         mail: c.mail || window.__email || '',
         key: prefKey()
       }));
