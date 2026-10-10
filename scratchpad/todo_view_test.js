@@ -122,5 +122,14 @@ const slide = (h, t) => (h.match(new RegExp('<section class="slide" data-t="' + 
 ok('知識：TODO の見え方（両方）', (SRC.match(/期限切れ・今日・明日・今週\(日曜まで\)・それ以降・期限なしに分けて並び/g) || []).length === 2);
 ok('知識：月表示に予定そのもの（両方）', (SRC.match(/月表示は、ブラウザでパネルが広いとき\(右半分・左半分・中央に大きく\)は各日のマスに予定そのもの/g) || []).length === 2);
 
+//  2026-10-10：書く欄に枠がなく分かりにくい・左の＋が押せない → 枠のある欄と、押せる＋
+{
+  const paint = (() => { const i = SRC.indexOf('\n  function todoPaint('); return SRC.slice(i, SRC.indexOf('\n  }\n', i)); })();
+  ok('書く欄：枠と高さ（スマホは44px）', /\.todo-add \.row1 input\{flex:1;min-width:0;border:1\.5px solid #BFD9D3;border-radius:10px;/.test(SRC) && /min-height:42px;/.test(SRC) && /\.todo-add \.row1 input,\.todo-add \.plus,\.todo-add \.row1 \.btn2\{min-height:44px;\}/.test(SRC));
+  ok('左の＋は押せるボタン（todoPlus）', /<button type="button" class="plus"[^>]*onclick="todoPlus\(\)">/.test(paint) && !/<span class="plus"/.test(paint));
+  const tp = (() => { const i = SRC.indexOf('\n  function todoPlus('); return SRC.slice(i, SRC.indexOf('\n  }\n', i)); })();
+  ok('＋：空なら欄にカーソル、書いてあれば追加', /if\(i && !String\(i\.value\|\|''\)\.trim\(\)\)\{ try\{ i\.focus\(\); \}catch\(e\)\{\} todoMsg\(/.test(tp) && /todoSave\(\);/.test(tp));
+  ok('スマホでは短い案内文（切れないように）', /window\.innerWidth<=600\?'やることを入力':'やることを入力（例：◯◯社に見積を送る）'/.test(paint));
+}
 if (bad.length) { bad.forEach((b) => console.log('NG ' + b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK ' + n + ' checks, 0 failed');
