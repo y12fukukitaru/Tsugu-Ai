@@ -104,6 +104,13 @@ ok('サポートAI：ボタン', /srefs=knvRefsUsed\(sout, man\.refs\)/.test(src
 ok('3秒で打ち切る', /function knvManualRag\(q\)\{\n\s*var to=new Promise\(function\(res\)\{ setTimeout\(function\(\)\{ res\(null\); \}, 3000\); \}\);/.test(src));
 ok('CSS', /\.knv-ref\{/.test(src));
 
+// ⑨' 情報の守り（security.html も経営者の索引に入る）
+const CUS2 = CUS.concat(pages('security.html', 'お客様の情報を守る仕組み', 'manual'));
+['私の試算表は他の会社に見られませんか', '継ナビくんへの相談は運営に読まれる？', 'AIに送った試算表は学習に使われる？', '退会したらデータは消えますか'].forEach(function (q) {
+  const t = lib.knvManualPick(CUS2, q, 3).map((h) => h.p.dn);
+  ok('情報の守り「' + q + '」→ 資料が上位3つに（実際: ' + t.join(' / ') + '）', t.indexOf('お客様の情報を守る仕組み') >= 0);
+});
+
 // ⑩ 説明書にも書く
 ok('経営者の説明書：説明書を読んでから答える', /使い方の質問には、この説明書を読んでから答えます。/.test(R('manual-customer.html')) && /使い方を継ナビくんに聞ける？/.test(R('manual-customer.html')));
 ok('パートナーの説明書：同上', /使い方の質問には、説明書（この説明書・経営者向け説明書・商談スライド）から関係する頁を探して読んでから答えます。/.test(R('manual-partner.html')));

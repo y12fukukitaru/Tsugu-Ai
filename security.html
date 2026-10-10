@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>お客様の情報を守る仕組み | TsuguAi -継-</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Shippori+Mincho:wght@500;600;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1E3A66;--blue:#2C5DA8;--gold:#C39B3F;--ink:#18202E;--muted:#5A6981;
+  --line:#E2E7EF;--soft:#F8F9FC;--softline:#EDF1F6;--deep:#0E1B33;--green:#27684A;--red:#A9403D;}
+*{box-sizing:border-box;}
+body{margin:0;background:#0B1220;font-family:'Noto Sans JP',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;}
+.deck{padding:26px 16px 96px;}
+.slide{position:relative;width:100%;max-width:1120px;aspect-ratio:16/9;margin:0 auto 22px;background:#fff;
+  border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.42);padding:44px 54px 54px;overflow:hidden;display:none;}
+.slide.on{display:block;}
+/* .cover の display:flex が .slide の display:none を上書きしてしまうため、
+   表示中でないスライドは明示的に隠す（印刷時は !important の指定が優先される） */
+.slide:not(.on){display:none;}
+.slide::after{content:attr(data-n);position:absolute;right:26px;bottom:18px;font-family:'DM Sans',sans-serif;
+  font-size:12px;color:#B7C4D6;letter-spacing:.08em;}
+.eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.14em;color:var(--gold);margin-bottom:10px;}
+h1{font-size:42px;font-weight:500;color:var(--navy);margin:0 0 14px;line-height:1.35;letter-spacing:.01em;}
+h2{font-size:29px;font-weight:600;color:var(--navy);margin:0 0 8px;line-height:1.4;letter-spacing:.01em;}
+.sub{font-size:15px;color:var(--muted);line-height:1.85;margin:0 0 22px;max-width:78ch;}
+.lead{font-size:17px;color:var(--ink);line-height:1.9;max-width:74ch;}
+.grid{display:grid;gap:14px;}
+.g2{grid-template-columns:1fr 1fr;} .g3{grid-template-columns:repeat(3,1fr);}
+.card{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:#fff;}
+.card.soft{background:var(--soft);}
+.card.g{border-color:#CFE3D6;background:rgba(39,104,74,.06);}
+.card.w{border-color:#EBDDB4;background:rgba(195,155,63,.09);}
+.card h3{font-size:15.5px;font-weight:700;color:var(--navy);margin:0 0 6px;line-height:1.5;}
+.card p{font-size:13.5px;color:var(--muted);line-height:1.85;margin:0;}
+.card p b{color:var(--ink);}
+.steps{counter-reset:s;list-style:none;padding:0;margin:0;}
+.steps li{counter-increment:s;position:relative;padding:0 0 0 44px;margin-bottom:15px;font-size:15px;line-height:1.85;color:var(--ink);}
+.steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:28px;height:28px;border-radius:50%;
+  background:var(--navy);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;}
+.steps li b{color:var(--navy);}
+.steps li span{display:block;font-size:13px;color:var(--muted);line-height:1.8;margin-top:2px;}
+ul.dots{margin:0;padding-left:20px;} ul.dots li{font-size:14.5px;line-height:1.95;color:var(--ink);margin-bottom:4px;}
+ul.dots li b{color:var(--navy);}
+.kv{width:100%;border-collapse:collapse;font-size:14px;}
+.kv th,.kv td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--softline);vertical-align:top;line-height:1.8;}
+.kv th{width:30%;color:var(--navy);font-weight:700;background:var(--soft);}
+.pill{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 11px;border-radius:99px;background:var(--softline);color:var(--blue);margin-right:6px;}
+.pill.g{background:rgba(39,104,74,.13);color:var(--green);}
+.pill.w{background:rgba(195,155,63,.16);color:#8A6A12;}
+.note{border-left:3px solid var(--gold);background:var(--soft);border-radius:0 10px 10px 0;padding:13px 17px;
+  font-size:13.5px;color:var(--muted);line-height:1.9;}
+.note b{color:var(--navy);}
+.calc{border:1.5px solid #E7C9C7;background:#FCF4F3;border-radius:11px;padding:13px 15px;font-size:13.5px;line-height:1.9;color:#18202E;}
+.big{font-family:'DM Sans',sans-serif;font-size:34px;font-weight:500;color:var(--green);line-height:1.2;}
+.cover{background:linear-gradient(140deg,#0E1B33 0%,#1E3A66 62%,#2C5DA8 100%);color:#fff;display:flex;flex-direction:column;justify-content:center;}
+.cover h1{color:#fff;font-size:50px;margin-bottom:18px;}
+.cover .sub{color:rgba(255,255,255,.82);font-size:17px;}
+.cover .mark{font-family:'DM Sans',sans-serif;font-size:22px;letter-spacing:.14em;color:var(--gold);margin-bottom:26px;}
+.cover::after{color:rgba(255,255,255,.35);}
+.bar{position:fixed;left:0;right:0;bottom:0;height:60px;background:rgba(14,27,51,.94);backdrop-filter:blur(10px);
+  display:flex;align-items:center;gap:10px;padding:0 18px;z-index:20;}
+.bar button{font-family:inherit;font-size:13px;background:rgba(255,255,255,.1);color:#E7ECF4;border:none;
+  border-radius:9px;padding:9px 15px;cursor:pointer;}
+.bar button:hover{background:rgba(255,255,255,.2);}
+.bar .pos{font-family:'DM Sans',sans-serif;color:#B7C4D6;font-size:13px;min-width:74px;text-align:center;}
+.bar .ttl{color:#fff;font-size:13.5px;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.toc{position:fixed;inset:0;background:rgba(8,13,25,.9);z-index:30;display:none;overflow-y:auto;padding:40px 20px 90px;}
+.toc.on{display:block;}
+.toc .in{max-width:820px;margin:0 auto;background:#fff;border-radius:14px;padding:26px 30px;}
+.toc h3{font-size:19px;color:var(--navy);margin:0 0 14px;}
+.toc a{display:block;padding:10px 12px;border-radius:9px;font-size:14.5px;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--softline);}
+.toc a:hover{background:var(--soft);color:var(--blue);}
+.toc a i{font-family:'DM Sans',sans-serif;font-style:normal;color:#B7C4D6;margin-right:12px;}
+
+/* ===== 継ナビくん（丸窓 + 吹き出し） ===== */
+.tsg-mado{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;
+  background:#0E2038;border:2px solid var(--gold);box-shadow:0 6px 20px rgba(14,32,56,.22);flex:0 0 auto;}
+.tsg-mado.xl{width:112px;height:112px;} .tsg-mado.xl svg{width:76px;height:76px;}
+.tsg-mado.lg{width:80px;height:80px;} .tsg-mado.lg svg{width:54px;height:54px;}
+.tsg-mado.md{width:56px;height:56px;} .tsg-mado.md svg{width:38px;height:38px;}
+.tsg-mado.sm{width:42px;height:42px;} .tsg-mado.sm svg{width:29px;height:29px;}
+.tsg-say{display:flex;gap:13px;align-items:flex-start;margin-top:18px;}
+.tsg-say .bb{position:relative;flex:1;min-width:0;background:#FFFDF7;border:1px solid #EBDDB4;
+  border-radius:4px 14px 14px 14px;padding:13px 17px;font-size:13.5px;line-height:1.9;color:var(--ink);
+  box-shadow:inset 0 2px 0 var(--gold);}
+.tsg-say .bb b{color:var(--navy);}
+.tsg-say .bb .who{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;color:#8A6A12;margin-bottom:3px;}
+.cover .tsg-mado{align-self:flex-start;border-color:var(--gold);background:rgba(255,255,255,.06);
+  animation:tsg-float 3.6s ease-in-out infinite;}
+@keyframes tsg-float{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
+@media(prefers-reduced-motion:reduce){.cover .tsg-mado{animation:none;}}
+@media(max-width:820px){.tsg-mado.xl{width:82px;height:82px;} .tsg-mado.xl svg{width:56px;height:56px;}}
+
+@media(max-width:820px){
+  .slide{aspect-ratio:auto;min-height:70vh;padding:28px 22px 44px;}
+  h1{font-size:30px;} .cover h1{font-size:34px;} h2{font-size:22px;}
+  .g2,.g3{grid-template-columns:1fr;} .sub{font-size:14px;} .lead{font-size:15px;}
+}
+@media print{
+  body{background:#fff;} .bar,.toc{display:none!important;} .deck{padding:0;}
+  .slide{display:block!important;box-shadow:none;border-radius:0;margin:0;max-width:none;
+    width:100%;aspect-ratio:auto;height:100vh;page-break-after:always;border:none;}
+  @page{size:A4 landscape;margin:0;}
+}
+</style>
+
+<style>
+/* ===== 読みやすさ改善：スライドを縦スクロールの文書として全表示 ===== */
+.slide{display:block!important;aspect-ratio:auto;min-height:0;height:auto;padding:34px 44px 40px;margin:0 auto 18px;}
+.slide::after{display:none;}
+.bar{display:none!important;}
+.toc{display:none!important;}
+.deck{padding:66px 14px 50px;}
+h1{font-size:34px;}
+h2{font-size:24px;margin-bottom:10px;}
+.sub{font-size:15px;line-height:1.9;}
+.card h3{font-size:16px;}
+.card p{font-size:14px;line-height:1.9;}
+.kv{font-size:14.5px;}
+.kv.tight th,.kv.tight td{font-size:14px;padding:9px 12px;line-height:1.8;}
+.steps li{font-size:15px;}
+.steps li span{font-size:13.5px;}
+ul.dots li{font-size:14.5px;}
+.note{font-size:14px;line-height:1.95;}
+.lv .c{font-size:12.5px;}
+.lv .t{font-size:14.5px;}
+.flow div{font-size:13px;}
+.pill{font-size:12px;}
+.cover{min-height:0;padding:46px 44px;}
+.cover h1{font-size:38px;}
+.cover .sub{font-size:15.5px;}
+/* 上部固定バー：プラットフォームに戻る（別ページは開かない） */
+.mnv-top{position:fixed;top:0;left:0;right:0;z-index:60;background:rgba(14,27,51,.96);backdrop-filter:blur(8px);display:flex;align-items:center;gap:10px;padding:10px 14px;}
+.mnv-top .t{color:#fff;font-size:13.5px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mnv-top button{font-family:inherit;font-size:13px;font-weight:700;background:#C39B3F;color:#0E1B33;border:none;border-radius:9px;padding:9px 16px;cursor:pointer;}
+.mnv-top button:hover{opacity:.9;}
+/* 目次（ページ内ジャンプ） */
+.mnv-toc{max-width:1120px;margin:0 auto 18px;background:#fff;border-radius:14px;padding:18px 22px;}
+.mnv-toc b{display:block;font-size:14.5px;color:#1E3A66;margin-bottom:9px;}
+.mnv-toc a{display:inline-block;font-size:13px;color:#2C5DA8;text-decoration:none;background:#F8F9FC;border:1px solid #E2E7EF;border-radius:99px;padding:6px 13px;margin:0 6px 7px 0;}
+.mnv-toc a:hover{border-color:#2C5DA8;}
+.slide{scroll-margin-top:64px;}
+@media(max-width:820px){ .slide{padding:24px 18px 30px;} h1{font-size:27px;} h2{font-size:20px;} .cover h1{font-size:30px;} }
+@media print{ .mnv-top,.mnv-toc{display:none!important;} .slide{margin:0;} }
+</style>
+<link rel="stylesheet" href="tsugu-wa.css">
+<link rel="stylesheet" href="manual-wa.css">
+<link rel="stylesheet" href="pitch-demo.css">
+</head>
+<body>
+<div class="deck" id="deck">
+
+<section class="slide cover on" data-t="表紙">
+  <span class="tsg-mado xl cover-navi" style="margin-bottom:22px;"><svg viewBox="0 -4 64 64" aria-hidden="true" focusable="false"><path d="M32 3 L34.6 10.4 L42 13 L34.6 15.6 L32 23 L29.4 15.6 L22 13 L29.4 10.4 Z" fill="#cfa860"/><rect x="9.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="49.5" y="32" width="5" height="12" rx="2.5" fill="#cfa860"/><rect x="14" y="23" width="36" height="30" rx="10" fill="#fff" stroke="#cfa860" stroke-width="1.6"/><circle cx="25" cy="36" r="3.1" fill="#1E3A66"/><circle cx="39" cy="36" r="3.1" fill="#1E3A66"/><circle cx="20.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><circle cx="43.5" cy="43" r="2.4" fill="#cfa860" opacity=".35"/><path d="M26.5 43.5 Q32 47.5 37.5 43.5" fill="none" stroke="#1E3A66" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+  <div class="mark">TsuguAi -継-</div>
+  <h1>お客様の情報を<br>守る仕組み</h1>
+  <p class="sub">試算表・ご入力いただいた内容・計算した結果・M&amp;Aの情報を、どうやって守っているか。<br>経営者さま・パートナー・金融機関などの方に、そのままお見せいただける説明です。<br>2026年10月版</p>
+</section>
+<section class="slide" data-t="5つの約束" data-g="はじめに" data-q="情報は漏れない？|どうやって守っている？|セキュリティの考え方は？|誰が見られる？">
+<div class="eyebrow">結論から</div>
+  <h2>お預かりした情報を守るための、5つの約束</h2>
+  <p class="sub">「画面に出さない」だけでは守れません。ブラウザの開発者ツールを使えば、画面を通さずにデータベースへ問い合わせられるからです。TsuguAi は<b>データベースそのものが「見てよい人か」を1行ずつ判定する</b>作りにしています。</p>
+  <div class="grid g3">
+    <div class="card g"><h3>① 見てよい人だけ</h3><p>見られるのは<b>ご本人・担当パートナー・ご本人が招いた方・運営</b>だけ。判定は画面ではなく<b>データベースが行います</b>。</p></div>
+    <div class="card g"><h3>② アプリの外へ持ち出させない</h3><p>画面からデータを送れる先は<b>TsuguAi のデータベースだけ</b>とブラウザに約束させています。外部の部品も読み込みません。</p></div>
+    <div class="card g"><h3>③ 通知に中身を書かない</h3><p>スマホ通知・メール・LINE は、はじめは<b>「届いたこと」だけ</b>。会社名・数字・文面は、アプリを開いてから読みます。</p></div>
+    <div class="card"><h3>④ AIは学習に使わない</h3><p>AI（Anthropic 社の Claude）に渡すのは、その回答に必要なものだけ。<b>AIの学習には使われません</b>（同社の商用の利用規約）。</p></div>
+    <div class="card"><h3>⑤ 消すときは、ファイルまで</h3><p>退会されたときは、数字・相談の記録に加えて、<b>添付いただいた試算表などのファイルも消します</b>。</p></div>
+    <div class="card w"><h3>確かめ続ける</h3><p>情報を盗もうとする側の目線で点検し、見つかった道を塞ぎました。<b>「よその会社の情報を見よう・権限を書き換えよう」とする36通りの試験</b>を、本番と同じ権限の仕組みを組んだデータベースで実際に行い、すべて止まることを確かめています。</p></div>
+  </div>
+</section>
+<section class="slide" data-t="守っている情報" data-g="はじめに" data-q="どんな情報を預けている？|試算表は誰が見られる？|M&Aの情報は誰が見られる？|計算の結果は誰が見られる？|担当パートナーは何を見られる？">
+<div class="eyebrow">何を・誰が</div>
+  <h2>お預かりしている情報と、見られる人</h2>
+  <table class="kv tight">
+    <tr><th>試算表・決算の数字</th><td>ご本人／担当パートナー／ご本人が招いた閲覧メンバー（顧問税理士など）／運営</td></tr>
+    <tr><th>計算した結果</th><td>企業価値・資金繰りの見通し・月次レポートなど。<b>元の数字と同じ範囲</b>の方だけ</td></tr>
+    <tr><th>M&amp;A の情報</th><td>出口の設計・買いたい条件・準備度・案件。ご本人と担当パートナー・運営だけ。<b>案件を公開しても、会社が分かる情報は出しません</b></td></tr>
+    <tr><th>メッセージと添付</th><td>ご本人と担当パートナー（2名体制なら副担当）・運営。添付は<b>鍵のかかった置き場</b>に入り、開くたびに10分だけ有効な鍵を発行</td></tr>
+    <tr><th>継ナビくんへの相談</th><td><b>ご本人だけ</b>。担当パートナーにも運営にも見えません。「担当に伝える」を押したぶんだけ、写しが届きます</td></tr>
+    <tr><th>パートナーの口座</th><td>ご本人と運営の振込担当だけ。<b>運営が見た記録が残ります</b></td></tr>
+  </table>
+  <div class="note" style="margin-top:12px;"><b>「見てよい人」はデータベースが決めます。</b>担当でないパートナーが、他社の会社名やIDを知っていても、データは1行も返りません。</div>
+</section>
+<section class="slide" data-t="データベースの扉" data-g="しくみ" data-q="RLSとは？|画面を隠すだけで大丈夫？|開発者ツールで見られない？|他社のデータを見られない仕組みは？">
+<div class="eyebrow">しくみ ①</div>
+  <h2>1行ずつ「見てよい人か」を判定する扉（RLS）</h2>
+  <p class="sub">TsuguAi のデータは、Supabase（世界で広く使われているデータベースのサービス）に保存しています。すべての表に<b>行単位の権限（Row Level Security）</b>をかけ、問い合わせのたびに「この人は、この行を見てよいか」を判定します。</p>
+  <div class="grid g3">
+    <div class="card"><h3>画面の外からでも同じ</h3><p>開発者ツールで直接問い合わせても、<b>判定は同じ</b>。見てよくない行は、はじめから存在しないものとして扱われます。</p></div>
+    <div class="card"><h3>書き換えも判定する</h3><p>「読めるか」だけでなく、<b>「書けるか」「どの列を変えてよいか」</b>まで決めています。</p></div>
+    <div class="card"><h3>ログインの確かめ</h3><p>ログインは Supabase の認証を使います。<b>パスワードは TsuguAi の運営にも見えない形</b>（ハッシュ化）で保存されます。</p></div>
+  </div>
+  <div class="note" style="margin-top:12px;"><b>通信は、すべて暗号化（HTTPS）しています。</b>画面とデータベースの間、データベースと AI・メールなどの間、どこも暗号化された通信だけを使います。</div>
+</section>
+<section class="slide" data-t="権限の書き換えを止める" data-g="しくみ" data-q="自分を運営に変えられない？|担当を勝手に変えられない？|プランを勝手に変えられない？|新規登録でパートナーになれない？">
+<div class="eyebrow">しくみ ②</div>
+  <h2>「誰が・何の役割か」は、画面から変えさせない</h2>
+  <p class="sub">役割（経営者・パートナー・運営）や担当の付け替えを、画面から書き換えられてしまうと、扉の判定そのものが崩れます。そこで、権限に関わる列は<b>データベースの側で固定</b>しています。</p>
+  <table class="kv tight">
+    <tr><th>役割・運営の権限・担当</th><td>変えられるのは<b>代表だけ</b>。それ以外の方が変えようとしても、元の値のまま戻ります</td></tr>
+    <tr><th>プラン・ランク</th><td>請求や報酬に関わるので、<b>運営だけ</b></td></tr>
+    <tr><th>新規登録</th><td>画面からの登録は、<b>いつも「経営者」として作られます</b>。パートナーになるのは、運営が発行した登録コードか、契約の手続きを通ったときだけ</td></tr>
+    <tr><th>メールアドレス</th><td>招待の照合に使うため、<b>ログインに使っているメールと必ず一致</b>させます</td></tr>
+    <tr><th>手続きを通したときだけ</th><td>招待の受け取り・契約・担当の割当は、運営が用意した<b>決まった手続き（関数）</b>の中でだけ行われ、その中で条件を確かめます</td></tr>
+  </table>
+</section>
+<section class="slide" data-t="招いた方・2名体制・法人" data-g="しくみ" data-q="顧問税理士を招くと何が見える？|副担当は誰でもなれる？|担当が替わったら前の担当は？|法人の管理者は何を見られる？">
+<div class="eyebrow">しくみ ③</div>
+  <h2>人を増やすときも、見える範囲は広げすぎない</h2>
+  <div class="grid g2">
+    <div class="card"><h3>閲覧メンバー（顧問税理士など）</h3><p>ご本人がメールで指名した枠は、<b>そのメールでログインした本人だけ</b>が受け取れます。ほかの方が空き枠を取ることはできません。</p></div>
+    <div class="card"><h3>2名体制（副担当）</h3><p>申請できるのは、<b>その会社の担当パートナーだけ</b>。承認は<b>運営だけ</b>が行います。</p></div>
+    <div class="card"><h3>担当が替わったとき</h3><p>担当を付け替えると、前の担当の2名体制は<b>自動で終わり</b>、前の担当からは見えなくなります。</p></div>
+    <div class="card"><h3>法人（エンタープライズ）</h3><p>法人の管理者が顧問先・担当者を増やせるのは、<b>自分の法人の担当者がすでに担当している会社だけ</b>。それ以外は運営が確認してから入れます。</p></div>
+  </div>
+</section>
+<section class="slide" data-t="継ナビくんへの相談" data-g="情報の種類ごとに" data-q="継ナビくんへの相談は誰が読める？|運営は相談を読める？|相談を担当に伝えたい">
+<div class="eyebrow">いちばん大切に扱うもの</div>
+  <h2>継ナビくんへの相談は、ご本人だけのもの</h2>
+  <p class="sub">夜中に弱音を書ける場所であることが、継ナビくんの価値そのものです。全部が見えると分かった瞬間、本音は書かれなくなります。</p>
+  <div class="grid g3">
+    <div class="card g"><h3>読めるのはご本人だけ</h3><p>担当パートナーにも、<b>運営にも見えません</b>。データベースの扉で、運営も例外にしていません。</p></div>
+    <div class="card"><h3>伝えるのは、押したぶんだけ</h3><p>「✉️ 担当パートナーに伝える」を押すと、その質問と回答の<b>写し</b>が担当に届きます。押さないかぎり、誰にも届きません。</p></div>
+    <div class="card"><h3>この端末からも消える</h3><p>ログアウトすると、この端末に残っている相談の控えを消します。<b>次にログインすれば、アカウントから戻ります</b>。</p></div>
+  </div>
+</section>
+<section class="slide" data-t="添付ファイル" data-g="情報の種類ごとに" data-q="添付した試算表は安全？|添付ファイルのURLを知られたら？|どんなファイルを送れる？">
+<div class="eyebrow">試算表・決算書の写し</div>
+  <h2>添付ファイルは、鍵のかかった置き場に</h2>
+  <table class="kv tight">
+    <tr><th>置き場は非公開</th><td>URL を知っていても開けません。開くたびに<b>10分だけ有効な鍵</b>を発行し、その方が見てよい会社のファイルかを、データベースが確かめます</td></tr>
+    <tr><th>ファイル名は推測できない形</th><td>置き場の中の名前は「会社のID／時刻_乱数」。元のファイル名は表示のためだけに持ちます</td></tr>
+    <tr><th>種類と大きさの上限</th><td>PDF・画像・Excel・Word・PowerPoint・CSV・テキストだけ、<b>10MBまで</b>。Web ページ（HTML）や SVG は置けません</td></tr>
+    <tr><th>あとから差し替えられない</th><td>送ったファイルの差し替え・削除はできません。やり取りの記録として残ります</td></tr>
+    <tr><th>退会したら消す</th><td>アカウントを消すときは、<b>先にファイルを消し</b>、消しきれなければアカウントも消しません</td></tr>
+  </table>
+</section>
+<section class="slide" data-t="通知・メール・LINE" data-g="アプリの外に出るもの" data-q="通知に会社名が出ない？|ロック画面に何が出る？|メールやLINEに数字は載る？|通知に中身を出したい">
+<div class="eyebrow">アプリの外に出るもの ①</div>
+  <h2>通知・メール・LINE には、中身を載せない</h2>
+  <p class="sub">スマホのロック画面は、机に置いておくと横から見えます。メールや LINE は、それぞれの会社のサーバーに残ります。そこで<b>はじめは「届いたこと」だけ</b>をお知らせし、中身はアプリを開いてから読む形にしています。</p>
+  <div class="grid g2">
+    <div class="card g"><h3>はじめの設定（おすすめ）</h3><p>「✉️ 新しいメッセージが届きました」「☀️ 今日の予定とTODOがあります」のように、<b>種類だけ</b>。会社名・数字・メッセージの文・面談の場所は出ません。</p></div>
+    <div class="card"><h3>中身も出したい方は</h3><p>継ナビくんの「連携」タブの<b>「🔒 中身をどこまで出すか」</b>で、通知とメール・LINE を別々に選べます。選んだご本人のぶんだけが変わります。</p></div>
+  </div>
+  <div class="note" style="margin-top:12px;"><b>スマホ通知そのものは暗号化して送っています。</b>通知の中継（Apple・Google など）からは中身が読めない形です。それでもロック画面に出る文字は守れないので、中身を出さないのを基本にしています。</div>
+</section>
+<section class="slide" data-t="外部のサービス" data-g="アプリの外に出るもの" data-q="AIに試算表を送って大丈夫？|AIの学習に使われる？|どの会社のサービスを使っている？|Googleカレンダーには何が出る？">
+<div class="eyebrow">アプリの外に出るもの ②</div>
+  <h2>使っている外部のサービスと、渡すもの</h2>
+  <table class="kv tight">
+    <tr><th>Supabase（データベース・認証）</th><td>すべての情報の保存先。通信も保存も暗号化。上の「扉」はここで動いています</td></tr>
+    <tr><th>Anthropic（AI・Claude）</th><td>診断・相談・レポートの作成のときに、<b>その回答に必要な数字や文だけ</b>を渡します。同社の商用の利用規約により、<b>AIの学習には使われません</b>。継ナビくんが説明書を読むときに渡すのは、公開している説明書の本文だけです</td></tr>
+    <tr><th>Resend（メール）・LINE</th><td>はじめは<b>「届いたこと」だけ</b>を送ります（前の頁）</td></tr>
+    <tr><th>Google（カレンダー）</th><td>ご本人が連携を選んだときだけ。予定の題と時刻を、ご本人の Google カレンダーに出します</td></tr>
+    <tr><th>GitHub Pages（画面の配信）</th><td>アプリの画面（プログラム）を配っているだけで、<b>お客様の情報は置いていません</b></td></tr>
+  </table>
+  <div class="note" style="margin-top:12px;">Anthropic・Resend などは海外の会社のため、個人情報保護法の「外国にある第三者への提供」にあたる場合があります。提供先と目的は、専門家の確認を経て、利用規約・プライバシーポリシーに明記します。</div>
+</section>
+<section class="slide" data-t="端末での守り" data-g="アプリの外に出るもの" data-q="共用のパソコンで使っても大丈夫？|ログアウトしたら何が消える？|悪いプログラムが紛れ込んだら？">
+<div class="eyebrow">お使いのパソコン・スマホで</div>
+  <h2>端末に残さない・外へ送らせない</h2>
+  <div class="grid g2">
+    <div class="card"><h3>ログアウトで消すもの</h3><p>この端末に残っている<b>相談の控え・入力途中の試算・開いていた会社の情報</b>、そして<b>この端末の通知の登録</b>。次にこの端末でログインした別の方に、前の方の通知が届くこともありません。</p></div>
+    <div class="card"><h3>送れる先を決めている（CSP）</h3><p>画面から通信できる先は <b>TsuguAi のデータベースだけ</b>。万一おかしな文字列が画面に紛れ込んでも、ほかのサイトへ情報を持ち出せません。</p></div>
+    <div class="card"><h3>部品は同梱して照合</h3><p>画面が使う部品（データベースの接続・Excel の読み取り・PDF 作成）は、外部の配信網から読まず、<b>このサイトに同梱</b>。読み込むたびに<b>中身が改ざんされていないか照合</b>します。</p></div>
+    <div class="card"><h3>文字は必ず無害にしてから表示</h3><p>メッセージや会社名など、入力された文字は、画面に出す前に必ず<b>命令として動かない形</b>に直しています。</p></div>
+  </div>
+</section>
+<section class="slide" data-t="運営の中での扱い" data-g="運営" data-q="運営は何でも見られる？|口座情報は誰が見られる？|記録は残る？">
+<div class="eyebrow">運営（TsuguAi）</div>
+  <h2>運営も「必要な範囲で・記録を残して」</h2>
+  <table class="kv tight">
+    <tr><th>相談は読めない</th><td>継ナビくんへの相談は、運営も読めません（「継ナビくんへの相談」の頁）</td></tr>
+    <tr><th>口座の情報</th><td>パートナーの振込先は、振込のときだけ取り出し、<b>誰がいつ見たかを記録</b>します。運営の口座以外の口座情報は、プラットフォームに置いていません</td></tr>
+    <tr><th>消すときの記録</th><td>アカウントを消すときは、<b>先に「誰が・いつ・どの会社を」消したかを残し</b>、記録が残せないときは消しません</td></tr>
+    <tr><th>AIの利用の記録</th><td>AI 診断・試算・レポートの利用は、監査ログに残ります</td></tr>
+    <tr><th>運営の操作の権限</th><td>役割の変更は代表だけ。運営メンバーごとに使える画面を分けています</td></tr>
+  </table>
+</section>
+<section class="slide" data-t="退会とデータの削除" data-g="運営" data-q="退会したらデータは消える？|解約したら情報はどうなる？">
+<div class="eyebrow">最後まで</div>
+  <h2>退会されたら、ファイルまで消します</h2>
+  <ol class="steps">
+    <li><b>ご依頼を受ける</b><span>解約のご依頼をいただき、お話をうかがいます。</span></li>
+    <li><b>消す記録を先に残す</b><span>誰が・いつ・どの会社を消したか。記録が残せないときは消しません。</span></li>
+    <li><b>添付ファイルを消す</b><span>試算表・決算書などの写し。消しきれなければ、ここで止めます。</span></li>
+    <li><b>アカウントと、紐づく情報を消す</b><span>試算表の数字・資金繰り・相談の記録・手元資金・面談の記録などは、アカウントと一緒に消えます。</span></li>
+  </ol>
+  <div class="note" style="margin-top:6px;">法律で保存が必要な取引の記録（請求・入金など）は、法律の定める期間、別に保管することがあります。</div>
+</section>
+<section class="slide" data-t="万一のとき" data-g="運営" data-q="情報が漏れたらどうなる？|事故のときの連絡は？">
+<div class="eyebrow">備え</div>
+  <h2>万一のときの動き方</h2>
+  <ol class="steps">
+    <li><b>止める</b><span>疑いのある道（アカウント・鍵・機能）を、まず止めます。</span></li>
+    <li><b>調べる</b><span>データベースの記録・関数の実行記録から、何が・いつ・どこまでかを確かめます。</span></li>
+    <li><b>お知らせする</b><span>個人情報保護法に沿って、個人情報保護委員会への報告と、影響のある方へのご連絡を行います。</span></li>
+    <li><b>塞ぐ</b><span>原因を直し、同じ道を使った試験を足して、再び起きないことを確かめます。</span></li>
+  </ol>
+</section>
+<section class="slide" data-t="さらに固めること" data-g="これから" data-q="これからのセキュリティ対策は？|二段階認証はある？">
+<div class="eyebrow">これから</div>
+  <h2>さらに固めていくこと</h2>
+  <p class="sub">守りに終わりはありません。いま進めている、次の強化です。</p>
+  <div class="grid g3">
+    <div class="card"><h3>二段階認証</h3><p>運営とパートナーのログインに、パスワードに加えて<b>スマホのワンタイムコード</b>を求める形にします。</p></div>
+    <div class="card"><h3>パスワードの強さ</h3><p>短いパスワードや、<b>過去に漏れたことのあるパスワード</b>を登録できないようにします。</p></div>
+    <div class="card"><h3>Google 連携の結び付け</h3><p>連携を始めた端末と、許可した方が同じであることを、より厳しく確かめます。</p></div>
+    <div class="card"><h3>提供先の明記</h3><p>AI・メールなど、情報が通る外部の会社と目的を、<b>利用規約・プライバシーポリシーに明記</b>します（専門家の確認ののち）。</p></div>
+    <div class="card"><h3>定期的な点検</h3><p>機能を足すたびに、権限の試験を足して確かめます。盗もうとする側の目線での点検も続けます。</p></div>
+  </div>
+</section>
+<section class="slide" data-t="よくあるご質問" data-g="これから" data-q="担当パートナーは何を見られる？|運営は相談を読める？|AIに送った試算表は学習に使われる？|LINEで届く内容は？|退会したらデータは？|他社に自社の情報を見られない？">
+<div class="eyebrow">Q&amp;A</div>
+  <h2>よくあるご質問</h2>
+  <table class="kv tight">
+    <tr><th>担当パートナーは何を見られる？</th><td>担当している会社の数字・計算の結果・メッセージ・面談の記録。<b>継ナビくんへの相談は見られません</b>（伝えたぶんを除く）</td></tr>
+    <tr><th>運営は相談を読める？</th><td><b>読めません。</b>データベースの扉で、運営も例外にしていません</td></tr>
+    <tr><th>AIに送った試算表は学習に使われる？</th><td><b>使われません。</b>AI の会社（Anthropic）の商用の利用規約によります</td></tr>
+    <tr><th>LINE やメールで届く内容は？</th><td>はじめは<b>「届いたこと」だけ</b>。中身を載せるかは、ご本人が選べます</td></tr>
+    <tr><th>退会したらデータは？</th><td>アカウント・数字・相談・<b>添付ファイルまで</b>消します（法律で保存が必要な取引の記録を除く）</td></tr>
+    <tr><th>ほかの会社に見られない？</th><td>ほかの会社の方には、データベースが<b>1行も返しません</b>。会社名やIDを知っていても同じです</td></tr>
+  </table>
+</section>
+
+</div>
+
+<nav class="bar">
+  <button onclick="go(-1)">‹ 前へ</button>
+  <button onclick="go(1)">次へ ›</button>
+  <span class="pos" id="pos">1 / 1</span>
+  <span class="ttl" id="ttl"></span>
+  <button onclick="toggleToc()">目次</button>
+  <button onclick="window.print()">印刷 / PDF</button>
+</nav>
+<div class="toc" id="toc" onclick="if(event.target===this)toggleToc()"><div class="in"><h3>目次</h3><div id="toclist"></div></div></div>
+
+<script>
+var S=[].slice.call(document.querySelectorAll('.slide')), i=0;
+S.forEach(function(s,n){ s.setAttribute('data-n', (n+1)+' / '+S.length); });
+function show(n){
+  i=Math.max(0,Math.min(S.length-1,n));
+  S.forEach(function(s,k){ s.classList.toggle('on',k===i); });
+  document.getElementById('pos').textContent=(i+1)+' / '+S.length;
+  document.getElementById('ttl').textContent=S[i].getAttribute('data-t')||'';
+  // #t=（題）・#q=（ことば）で開かれたときは、doc-reader.js が読むので上書きしない
+  try{ if(!/^#(t|q|view)=/.test(location.hash)) history.replaceState(null,'','#'+(i+1)); }catch(e){}
+  window.scrollTo({top:0,behavior:'instant'});
+}
+function go(d){ show(i+d); }
+function toggleToc(){ document.getElementById('toc').classList.toggle('on'); }
+document.getElementById('toclist').innerHTML=S.map(function(s,n){
+  return '<a href="#'+(n+1)+'" onclick="show('+n+');toggleToc();return false;"><i>'+String(n+1).padStart(2,'0')+'</i>'+(s.getAttribute('data-t')||'')+'</a>';
+}).join('');
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ') { go(1); e.preventDefault(); }
+  else if(e.key==='ArrowLeft'||e.key==='PageUp') { go(-1); e.preventDefault(); }
+  else if(e.key==='Home') show(0);
+  else if(e.key==='End') show(S.length-1);
+  else if(e.key==='Escape') document.getElementById('toc').classList.remove('on');
+});
+var h=parseInt((location.hash||'').replace('#',''),10);
+show(isFinite(h)&&h>0 ? h-1 : 0);
+</script>
+
+<script>
+/* 読みやすさ改善：戻るバーと目次（新しいページは開かない） */
+(function(){
+  var bar=document.createElement('div'); bar.className='mnv-top';
+  bar.innerHTML='<span class="t">'+(document.title||'操作説明書')+'</span><button type="button" id="mnv-back">プラットフォームに戻る ✕</button>';
+  document.body.appendChild(bar);
+  document.getElementById('mnv-back').onclick=function(){
+    if(window.self!==window.top){ try{ parent.postMessage({tsugu:'closeManual'},'*'); return; }catch(e){} }
+    if(history.length>1) history.back(); else location.href='./index.html';
+  };
+  var slides=document.querySelectorAll('.slide'); var links='', lastG=null, n=0;
+  Array.prototype.forEach.call(slides,function(s,i){
+    s.id=s.id||('mnv-s'+i);
+    var t=s.getAttribute('data-t')||'';
+    if(!t||t==='表紙') return;
+    // 組が変わったら見出しを挟む。平らに並べると、どこに何があるか読めない。
+    var g=s.getAttribute('data-g')||'';
+    if(g!==lastG){ if(lastG!==null) links+='</div>'; links+='<div class="mnv-g"><i>'+g+'</i>'; lastG=g; }
+    n++;
+    links+='<a href="#'+s.id+'"><em>'+(n<10?'0':'')+n+'</em>'+t+'</a>';
+  });
+  if(links){
+    if(lastG!==null) links+='</div>';
+    var toc=document.createElement('div'); toc.className='mnv-toc';
+    toc.innerHTML='<b>目次</b><p class="lead">全'+n+'項目。押すとその場所へ移動します。'
+      +'上から順に読んでも、必要なところだけ拾っても構いません。</p>'+links;
+    var first=document.querySelector('.slide');
+    if(first&&first.parentNode) first.parentNode.insertBefore(toc, first.nextSibling);
+  }
+})();
+</script>
+<script src="doc-reader.js"></script>
+</body>
+</html>

@@ -1010,6 +1010,22 @@ async function composeMeetingBrief(ctx: any, meeting: { meet_at: string; place?:
 // 宛先はパートナーとは限らない（経営者にも届く）ので userId と呼ぶ。
 // kind は本文ではなく「見出しと結びの一文」を選ぶために使う。
 async function deliver(sb: any, userId: string, brief: { title: string; body: string }, kind = "daily_brief") {
+  //  ---- アプリの外に、中身をどこまで出すか（2026-10-10 情報の守り）----
+  //  メール（Resend）・LINE・スマホの通知は、TsuguAi の外のしくみを通ります。
+  //  ロック画面は横から見えますし、メールや LINE は相手の会社のサーバーに残ります。
+  //  そこで既定では「届いたこと」だけを知らせ、中身（会社名・数字・面談の内容）は
+  //  アプリを開いてから読む形にします。ご本人が連携タブで選んだときだけ中身も載せます。
+  //    preview_on … スマホの通知（ロック画面）に中身を出す
+  //    ext_full   … メール・LINE に本文を載せる
+  //  アンケートの依頼は、問いそのものが本文で中身を含まないので、そのまま送ります。
+  let preview = false, extFull = false;
+  try {
+    const { data: np, error } = await sb.from("notify_prefs").select("preview_on, ext_full").eq("user_id", userId).maybeSingle();
+    if (!error && np) { preview = np.preview_on === true; extFull = np.ext_full === true; }
+  } catch (_) { /* 列がまだ無い環境では、中身を出さない（安全な側） */ }
+  if (kind === "survey") { preview = true; extFull = true; }
+  const safe = safeBrief(kind);
+  const mailBrief = extFull ? brief : safe;
   // メール（Resend）
   if (RESEND_KEY) {
     try {
@@ -1021,8 +1037,8 @@ async function deliver(sb: any, userId: string, brief: { title: string; body: st
           body: JSON.stringify({
             from: MAIL_FROM,
             to: [prof.email],
-            subject: `【継ナビくん】${brief.title}`,
-            html: emailHtml(brief, kind),
+            subject: `【継ナビくん】${mailBrief.title}`,
+            html: emailHtml(mailBrief, kind),
           }),
         });
         if (!res.ok) console.error("email send failed:", res.status, await res.text());
@@ -1036,11 +1052,9 @@ async function deliver(sb: any, userId: string, brief: { title: string; body: st
       const { data: subs } = await sb.from("push_subscriptions").select("id, subscription").eq("user_id", userId);
       for (const s of subs ?? []) {
         try {
-          await webpush.sendNotification(s.subscription, JSON.stringify({
-            title: `継ナビくん｜${brief.title}`,
-            body: excerpt(brief.body, 120),
-            url: APP_URL,
-          }));
+          await webpush.sendNotification(s.subscription, JSON.stringify(preview
+            ? { title: `継ナビくん｜${brief.title}`, body: excerpt(brief.body, 120), url: APP_URL }
+            : { title: `継ナビくん｜${safe.title}`, body: "内容はアプリを開いてご確認ください", url: APP_URL }));
         } catch (e: any) {
           // 端末側で購読が解除された購読は掃除する
           if (e?.statusCode === 404 || e?.statusCode === 410) {
@@ -1064,7 +1078,9 @@ async function deliver(sb: any, userId: string, brief: { title: string; body: st
             to: link.line_user_id,
             messages: [{
               type: "text",
-              text: `✦ ${brief.title}\n\n${excerpt(brief.body, 1400)}\n\nアプリで詳しく → ${APP_URL}`,
+              text: extFull
+                ? `✦ ${brief.title}\n\n${excerpt(brief.body, 1400)}\n\nアプリで詳しく → ${APP_URL}`
+                : `✦ ${safe.title}\n\n${safe.body}\n\nアプリで読む → ${APP_URL}`,
             }],
           }),
         });
@@ -1072,6 +1088,26 @@ async function deliver(sb: any, userId: string, brief: { title: string; body: st
       }
     } catch (e) { console.error("line failed:", e); }
   }
+}
+
+//  中身を載せないときの見出しと本文。会社名・数字・面談の内容は入れない
+function safeBrief(kind: string) {
+  const t: Record<string, string> = {
+    daily_brief: "今日の一手が届きました",
+    weekly_brief: "今週のお便りが届きました",
+    meeting_eve: "明日の面談のお知らせです",
+    meeting_prep: "面談の準備メモが届きました",
+    knowledge_digest: "今週のナレッジ便りが届きました",
+    mentor: "次の一歩のご案内が届きました",
+    ma_match: "M&Aの候補についてのお知らせです",
+    succession: "事業承継についてのお知らせです",
+    cancel_alert: "解約のご依頼が届いています",
+    partner_exit_alert: "契約の終了のお申し出が届いています",
+  };
+  return {
+    title: t[kind] ?? "新しいお知らせが届きました",
+    body: "内容は TsuguAi を開いてご確認ください。\n（お客様の情報を守るため、メール・LINE には中身を載せていません。載せるかどうかは、継ナビくんの「連携」タブで選べます）",
+  };
 }
 
 //  LINE や通知に出す用に、飾り記号を落として素の文にする。
@@ -1174,7 +1210,7 @@ function emailHtml(brief: { title: string; body: string }, kind = "daily_brief")
   const link = note.link ?? APP_URL;
   return `<div style="font-family:'Hiragino Sans','Noto Sans JP',sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#18202E;">
     <div style="font-size:13px;color:#C39B3F;font-weight:bold;">${note.eyebrow}</div>
-    <h2 style="font-size:17px;color:#1E3A66;margin:8px 0 14px;">${brief.title}</h2>
+    <h2 style="font-size:17px;color:#1E3A66;margin:8px 0 14px;">${String(brief.title || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</h2>
     <div style="font-size:14px;line-height:1.9;background:#F8F9FC;border:1px solid #E2E7EF;border-radius:10px;padding:16px 18px;">${body}</div>
     <div style="margin:18px 0;"><a href="${link}" style="display:inline-block;background:#1E3A66;color:#fff;text-decoration:none;font-size:13px;font-weight:bold;padding:11px 22px;border-radius:9px;">${cta}</a></div>
     <div style="font-size:11px;color:#5A6981;line-height:1.7;">このメールは TsuguAi -継- の継ナビくんが、${note.foot}</div>

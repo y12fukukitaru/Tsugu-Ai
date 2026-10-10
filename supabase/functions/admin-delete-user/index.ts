@@ -211,6 +211,28 @@ Deno.serve(async (req: Request) => {
     } catch { /* 表がまだ無い環境 */ }
   }
 
+  // ---- メッセージの添付ファイルを消す（2026-10-10 情報の守り）----
+  //  試算表や決算書の写しは、データベースではなくファイル置き場（chat-attach/<顧客ID>/）に
+  //  入っている。アカウントを消しても外部キーでは消えないので、ここで先に消す。
+  //  消しきれなかったら止める。「アカウントは消えたのにファイルだけ残る」を作らない。
+  let filesRemoved = 0;
+  try {
+    for (let round = 0; round < 50; round++) {
+      const ls = await sb.storage.from("chat-attach").list(targetId, { limit: 1000 });
+      if (ls.error) {
+        if (/not.?found|bucket/i.test(ls.error.message)) break;   // 置き場がまだ無い環境
+        throw new Error(ls.error.message);
+      }
+      const names = (ls.data ?? []).filter((f: any) => f.name).map((f: any) => targetId + "/" + f.name);
+      if (!names.length) break;
+      const rm = await sb.storage.from("chat-attach").remove(names);
+      if (rm.error) throw new Error(rm.error.message);
+      filesRemoved += names.length;
+    }
+  } catch (e) {
+    return json({ ok: false, error: "添付ファイルを消せませんでした。アカウントはまだ消していません：" + String((e as Error)?.message || e) }, 500);
+  }
+
   // ---- 本体を削除 ----
   //  profiles・試算表・相談・手元資金など、紐づくものは外部キーで一緒に消える。
   const del = await sb.auth.admin.deleteUser(targetId);
@@ -220,6 +242,6 @@ Deno.serve(async (req: Request) => {
 
   return json({
     ok: true,
-    deleted: { email: t.data.email, company_name: expected },
+    deleted: { email: t.data.email, company_name: expected, files: filesRemoved },
   });
 });

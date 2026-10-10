@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- 情報の守り（2026-10-10）：このページが読み込める先・データを送れる先を、ブラウザに約束させる（CSP）。
+     送れる先は TsuguAi のデータベース（Supabase）だけ。万一おかしな文字列が画面に紛れ込んでも、
+     ほかのサイトへ情報を持ち出せない。外部の配信網からのスクリプトも読まない（vendor/ に同梱）。 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://yaururnkxjhtiowkpvyu.supabase.co; connect-src 'self' https://yaururnkxjhtiowkpvyu.supabase.co wss://yaururnkxjhtiowkpvyu.supabase.co; media-src 'self' blob: https:; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<!-- よそのサイトへ移るとき、URL の中身（契約のトークンなど）を渡さない -->
+<meta name="referrer" content="strict-origin">
 <!-- Phase 35（PMI年間対応・経営課題PDCA） -->
 <title>TsuguAi -継- | AIと人で、会社の未来を継ぐ</title>
 <meta name="description" content="TsuguAi -継-（ツグエーアイ）は、事業承継・M&Aを中枢に据えた経営プラットフォーム。「この会社を買ったら？」「いま譲るなら？」をAIが30秒で試算し、認定パートナーと専門家が実行まで伴走。資金繰り改善・業務の自動化もひとつの場所で。">
@@ -1466,7 +1472,8 @@
 <div id="boot" role="status" aria-live="polite"><div class="bt">TsuguAi<span> -継-</span></div><div class="bd" aria-hidden="true"><i></i><i></i><i></i></div><div class="bm">読み込んでいます…</div></div>
 <script id="boot-theme">try{ if(localStorage.getItem('tsugu_boot_dark')==='1') document.getElementById('boot').classList.add('dark'); }catch(e){}</script>
 <!-- Supabase は幕を描いたあとに読む（head で読むと、届くまで画面が真っ白になる） -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Supabase は版を固定してこのサイトに同梱する（外部の配信網が書き換えられても、別物が読み込まれない。integrity で中身も照合）-->
+<script src="vendor/supabase-js@2.117.2.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok"></script>
 
 <!-- ===== AUTH GATE（ログイン専用のシンプルな画面） ===== -->
 <!-- ===== 契約ページ（?c=トークン で開く。ログイン前に読む・同意する） ===== -->
@@ -1844,7 +1851,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261009-05';
+  var APP_BUILD='20261010-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -1981,11 +1988,39 @@
   }
 
   async function signOut(){
+    //  この端末の通知の登録を外す。外さないと、同じスマホで次にログインした方
+    //  （あるいはログアウトしたまま置いた端末）に、前の方の通知が届き続ける。
+    //  ログアウトの前に消す（消すにはログインしている必要がある）。2秒で打ち切る
+    try{ await Promise.race([pushForgetDevice(), new Promise(function(r){ setTimeout(r, 2000); })]); }catch(e){}
     await sb.auth.signOut();
+    signOutWipe();
     appBadgeSet(0);   // ログアウトしたら、アイコンの数字も消す（別の方の件数を残さない）
     ['login-pw','signup-email','signup-pw','signup-pw2','reset-email','rec-pw','rec-pw2'].forEach(function(id){ var e=$(id); if(e)e.value=''; });
     pushAskClose();
     ME=null; showAuth();
+  }
+
+  async function pushForgetDevice(){
+    if(!ME || !('serviceWorker' in navigator)) return;
+    var reg=await navigator.serviceWorker.getRegistration(); if(!reg || !reg.pushManager) return;
+    var sub=await reg.pushManager.getSubscription(); if(!sub) return;
+    var j=sub.toJSON?sub.toJSON():{};
+    if(j.endpoint){ try{ await sb.from('push_subscriptions').delete().eq('user_id',ME).eq('subscription->>endpoint', j.endpoint); }catch(e){} }
+    try{ await sub.unsubscribe(); }catch(e){}
+  }
+  //  ログアウトしたら、この端末に残っているものを消す（共用のパソコン・家族のスマホを想定）。
+  //  相談の履歴はアカウント（サーバー）に残っているので、次にログインすれば戻る。
+  //  残すのは、画面の見た目の好み（暗い表示・窓の大きさ・案内を見たか）だけ。
+  var WIPE_KEEP=['tsugu_boot_dark','tsugu_knv_max','tsugu_swipe_hint_v2','tsugu_push_ask_until'];
+  function signOutWipe(){
+    try{
+      var ks=[];
+      for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k && /^tsugu[_.]/.test(k) && WIPE_KEEP.indexOf(k)<0) ks.push(k); }
+      ks.forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+    }catch(e){}
+    try{ sessionStorage.clear(); }catch(e){}
+    try{ if(window.caches) caches.delete('tsugu-badge'); }catch(e){}
+    try{ SEC_MSGS=[]; SUP_MSGS=[]; KNV_DOCIDX=null; KNV_RAG_PREP=null; }catch(e){}
   }
 
   async function getProfile(session){
@@ -5442,7 +5477,8 @@
     return new Promise(function(resolve,reject){
       if(window.XLSX) return resolve(window.XLSX);
       var s=document.createElement('script');
-      s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+      //  外部の配信網からではなく、このサイトに同梱した版を、中身を照合してから読む
+      s.src='vendor/xlsx@0.18.5.full.min.js'; s.integrity='sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw';
       s.onload=function(){ resolve(window.XLSX); };
       s.onerror=function(){ reject(new Error('解析ライブラリの読み込みに失敗しました')); };
       document.head.appendChild(s);
@@ -12850,12 +12886,13 @@
     return new Promise(function(resolve,reject){
       if(window.html2canvas && window.jspdf) return resolve();
       var srcs=[];
-      if(!window.html2canvas) srcs.push('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js');
-      if(!window.jspdf) srcs.push('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
+      //  このサイトに同梱した版を、中身を照合してから読む（外部の配信網は使わない）
+      if(!window.html2canvas) srcs.push(['vendor/html2canvas@1.4.1.min.js','sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H']);
+      if(!window.jspdf) srcs.push(['vendor/jspdf@2.5.1.umd.min.js','sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk']);
       var left=srcs.length, failed=false;
       srcs.forEach(function(src){
         var s=document.createElement('script');
-        s.src=src;
+        s.src=src[0]; s.integrity=src[1];
         s.onload=function(){ if(--left===0 && !failed) resolve(); };
         s.onerror=function(){ failed=true; reject(new Error('PDF作成ライブラリの読み込みに失敗しました')); };
         document.head.appendChild(s);
@@ -16089,7 +16126,9 @@
     var box=$('notify-prefs-box'); if(!box) return;
     var p=NOTIFY_DEF, ok=true;
     try{
-      var r=await sb.from('notify_prefs').select('event_on,event_before_min,todo_on,msg_on,act_on').eq('user_id',ME).maybeSingle();
+      var r=await sb.from('notify_prefs').select('event_on,event_before_min,todo_on,msg_on,act_on,preview_on,ext_full').eq('user_id',ME).maybeSingle();
+      //  中身の出し方の列（preview_on・ext_full）をまだ足していない環境
+      if(r.error) r=await sb.from('notify_prefs').select('event_on,event_before_min,todo_on,msg_on,act_on').eq('user_id',ME).maybeSingle();
       //  メッセージの列をまだ足していない環境では、予定とTODOだけ読む
       if(r.error) r=await sb.from('notify_prefs').select('event_on,event_before_min,todo_on').eq('user_id',ME).maybeSingle();
       if(r.error) ok=false; else if(r.data) p=r.data;
@@ -16110,6 +16149,17 @@
       +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;"><span style="font-size:12px;min-width:6.2em;">📌 対応</span>'
         +'<select id="np-ac" class="inp2" style="flex:1;width:auto;font-size:12px;" onchange="notifyPrefsSave()">'
         +opt('on','対応が必要なことを知らせる',p.act_on===false?'off':'on')+opt('off','知らせない',p.act_on===false?'off':'on')+'</select></div>'
+      +'<div style="border-top:1px dashed var(--line);margin:9px 0 8px;padding-top:8px;">'
+        +'<div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:5px;">🔒 中身をどこまで出すか</div>'
+        +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;"><span style="font-size:12px;min-width:6.2em;">📲 通知</span>'
+          +'<select id="np-pv" class="inp2" style="flex:1;width:auto;font-size:12px;" onchange="notifyPrefsSave()">'
+          +opt('off','届いたことだけ（おすすめ）',p.preview_on===true?'on':'off')+opt('on','中身も出す（ロック画面に見えます）',p.preview_on===true?'on':'off')+'</select></div>'
+        +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span style="font-size:12px;min-width:6.2em;">📧 メール・LINE</span>'
+          +'<select id="np-ex" class="inp2" style="flex:1;width:auto;font-size:12px;" onchange="notifyPrefsSave()">'
+          +opt('off','届いたことだけ（おすすめ）',p.ext_full===true?'on':'off')+opt('on','本文も載せる（外部のサービスを通ります）',p.ext_full===true?'on':'off')+'</select></div>'
+        +'<div style="font-size:11px;color:var(--muted);line-height:1.7;">はじめは<b>「届いたことだけ」</b>です。会社名・数字・メッセージの文・面談の内容は、<b>アプリを開いてから</b>読む形にしています。'
+          +'ロック画面は横から見えることがあり、メールやLINEは<b>それぞれの会社のサーバーに残る</b>ためです。</div>'
+      +'</div>'
       +'<div style="font-size:11px;color:var(--muted);line-height:1.7;">予定タブの予定と面談、TODOタブの期限が対象です。<b>終日の予定と、時刻のない今日のTODO</b>は、朝8時にまとめて1通。'
         +notifyWhatHtml()+'<br>アプリのアイコンには、右下のボタンと同じ<b>未確認の数（バッジ）</b>が出ます。<br>'
         +'<div id="np-badge">'+appBadgeStatusHtml()+'</div>'
@@ -16129,9 +16179,16 @@
   async function notifyPrefsSave(){
     var ev=($('np-ev')||{}).value||'30', td=($('np-td')||{}).value||'on', msg=$('np-msg');
     var mg=($('np-mg')||{}).value||'on', ac=($('np-ac')||{}).value||'on';
-    var row={ user_id:ME, event_on:ev!=='off', event_before_min:(ev==='off'?30:Number(ev)), todo_on:td!=='off', msg_on:mg!=='off', act_on:ac!=='off' };
+    var pv=($('np-pv')||{}).value||'off', ex=($('np-ex')||{}).value||'off';
+    var row={ user_id:ME, event_on:ev!=='off', event_before_min:(ev==='off'?30:Number(ev)), todo_on:td!=='off', msg_on:mg!=='off', act_on:ac!=='off',
+      preview_on:pv==='on', ext_full:ex==='on' };
     try{
       var r=await sb.from('notify_prefs').upsert(row,{ onConflict:'user_id' });
+      //  中身の出し方の列をまだ足していない環境では、それ以外を保存する（中身は出さないまま）
+      if(r.error && /preview_on|ext_full/.test(r.error.message||'')){
+        delete row.preview_on; delete row.ext_full;
+        r=await sb.from('notify_prefs').upsert(row,{ onConflict:'user_id' });
+      }
       //  メッセージの列をまだ足していない環境では、予定とTODOだけ保存する
       if(r.error && /msg_on|act_on/.test(r.error.message||'')){
         delete row.msg_on; delete row.act_on;
@@ -16264,7 +16321,23 @@
       //  行き先がありません。知らないことは知らないと言うほうが親切です
       + ((aisecPortal()==='admin')
           ? 'ガイドにない機能は推測で説明せず、「その機能はこちらでは分かりかねます」と正直にお伝えください。'
-          : 'ガイドにない機能は推測で説明せず「運営サポートへ」と案内します。');
+          : 'ガイドにない機能は推測で説明せず「運営サポートへ」と案内します。')
+      //  情報の守り（2026-10-10）。「情報は大丈夫？」はいちばん問われる質問なので、
+      //  どの役割にも同じ事実で答えられるようにしておく。誇張（絶対・100%など）はしない
+      + '【情報の守り(聞かれたら事実だけを簡潔に。「絶対」「100%」とは言わない)】'
+      + '見てよい人の判定は画面ではなくデータベースが1行ずつ行う(Supabase の行単位の権限=RLS)。画面を通さず開発者ツールで問い合わせても同じで、担当でない会社は会社名やIDを知っていても1行も返らない。'
+      + '見られる人=試算表・計算の結果(企業価値・資金繰り・月次レポート)・M&Aの情報(出口の設計・買いたい条件・案件)・メッセージと添付は、ご本人・担当パートナー(2名体制なら運営が承認した副担当)・ご本人がメールで招いた閲覧メンバー・運営。継ナビくんへの相談はご本人だけ(運営も読めない。「担当パートナーに伝える」を押したぶんだけ写しが届く)。'
+      + '権限の列(役割・担当・プラン・ランク・メール)は画面から書き換えられない(代表・運営・決まった手続きだけ)。新規登録はいつも経営者として作られる。担当が替わると前の担当の2名体制は自動で終わる。法人の管理者が顧問先・席を足せるのは自法人の担当者がすでに担当している会社・ほかに顧客を持たない人だけ。閲覧メンバーの枠は指名されたメールの本人だけが受け取れる。'
+      + 'アプリの外=スマホ通知・メール・LINEは、はじめは「届いたことだけ」で会社名・数字・文面は出さない(連携タブの「🔒 中身をどこまで出すか」でご本人が選べる)。画面から通信できる先はTsuguAiのデータベースだけ(CSP)。画面の部品は外部の配信網から読まず同梱し中身を照合。通信はすべて暗号化(HTTPS)、パスワードはハッシュ化され運営にも見えない。'
+      + '添付は非公開の置き場で、開くたびに10分だけ有効な鍵。PDF・画像・Office・CSV・テキスト、10MBまで。'
+      + 'AI(Anthropic社のClaude)に渡すのは回答に必要なものだけで、同社の商用の利用規約によりAIの学習には使われない。継ナビくんが説明書を読むときに渡すのは公開の説明書の本文だけ。'
+      + 'ログアウトすると、その端末の相談の控え・入力途中の内容・通知の登録を消す(共用の端末では必ずログアウトを)。退会したら、アカウント・数字・相談に加えて添付ファイルまで消す(法律で保存が必要な取引の記録を除く)。'
+      + '詳しくは資料「お客様の情報を守る仕組み」(サポートタブ。お客様・金融機関にそのまま見せられる)。これから=二段階認証・パスワードの強さ・提供先のプライバシーポリシーへの明記。'
+      + ((aisecPortal()==='consultant')
+          ? 'パートナーに伝えること=お客様の試算表・決算書・画面の写しを、TsuguAiの外のAI(無料の生成AIなど)・個人のLINE・私用のメールに貼らない。やり取りはアプリのメッセージで。説明書「パートナー向け操作説明書」の「お客様の情報を守る」の頁。'
+          : (aisecPortal()==='admin')
+            ? '運営の手順=SQL 20261010000000_security_hardening.sql(確かめがすべて1で完了)と、Edge Function(push-reminders・agent-heartbeat・contract-send・ai-proxy・admin-delete-user)の再デプロイ。Dashboard の Authentication でパスワードの最低文字数・漏れたパスワードの拒否・二段階認証(TOTP)。説明書「運営向け操作説明書」の「情報の守り（運営の手順）」の頁。'
+            : '');
     if(aisecPortal()==='consultant'){
       return common
         +'【パートナーポータルの画面ガイド】'
@@ -17457,7 +17530,7 @@
       var r=await sb.storage.from('chat-attach').createSignedUrl(p, 600);
       var u=r && r.data && r.data.signedUrl;
       if(!u) throw new Error((r&&r.error&&r.error.message)||'URLを発行できませんでした');
-      window.open(u,'_blank');
+      window.open(u,'_blank','noopener');
     }catch(e){ alert('ファイルを開けませんでした：'+String((e&&e.message)||e)); }
   }
   // パネル内で使う共通の行カード（アイコン＋タイトル＋説明＋→）。連携・サポートで共用し、
@@ -17503,6 +17576,7 @@
     { f:'manual-partner.html', i:'🤝', n:'パートナー向け 操作説明書', d:'画面の使い方・日々の業務の流れを1本のドキュメントで', who:{ consultant:'', admin:'パートナーに案内するときの確認用' }, sec:'manual' },
     { f:'manual-ep.html', i:'🏢', n:'エンタープライズ 操作説明書', d:'席の配りかた・担当の割当／担当表・配分とご利用料・担当交代のときの手順', who:{ consultant:'ep', admin:'法人パートナー（EP-I／EP-II）に案内するときの確認用' }, sec:'manual' },
     { f:'manual-admin.html', i:'🗂️', n:'運営向け 操作説明書', d:'コンソールの全機能・月次の運営業務', who:{ admin:'' }, sec:'manual' },
+    { f:'security.html', i:'🔒', n:'お客様の情報を守る仕組み', d:'試算表・入力・計算の結果・M&Aの情報を、どう守っているか。5つの約束・見られる人・外部のサービス・退会のときまで。お客様・金融機関にそのまま見せられる形', who:{ customer:'情報の守り（誰が見られるか・AI・通知・退会のとき）', consultant:'お客様に「情報は大丈夫？」と聞かれたとき、そのまま見せる', admin:'お客様・金融機関に説明するとき、そのまま見せる' }, sec:'manual' },
     { f:'pitch-customer.html', i:'🎤', n:'顧客候補向け プロダクト説明', d:'「社長、会社の値段をご存知ですか」——3つの問いかけで始まる15分の商談スライド。→キーで進み、そのまま画面共有・印刷もOK', who:{ consultant:'', admin:'パートナーが経営者に見せる商談スライド。内容確認・研修用に' }, sec:'pitch' },
     { f:'pitch-partner.html', i:'🤝', n:'パートナー候補向け プロダクト説明', d:'「顧問先に承継という未来を売れる人へ」——収入の波・一度きりの関係への問いかけから始まる説明スライド', who:{ admin:'' }, sec:'pitch' },
     { f:'webinar-partner.html', i:'📡', n:'認定パートナー説明会（ウェビナー）', d:'保険・士業の方向け、Zoom 60分（本編40分・ご質問15分・ご案内5分）。役割・収入の仕組み・<b>ご負担（費用）</b>・ご契約の流れ（概要書面はメール、契約はスタート画面で同意・登録）まで。各頁に時間と話す内容つき。告知文・メール・チェックリストは docs/webinar-partner-kit.md', who:{ admin:'' }, sec:'pitch' },
