@@ -59,7 +59,7 @@ function load(now) {
   ok('札：今週は曜日', />金曜</.test(p(2)));
   ok('札：それ以降は日付と曜日', />10\/5（月）</.test(p(5)));
   ok('札：期限が無ければ出さない', G.todoDuePill({ title: 'x' }) === '');
-  ok('札：押さなくても日付が分かる（title）', /title="期限 10\/2（金）"/.test(p(2)));
+  ok('札：押さなくても日付が分かる（title）', /title="期限 10\/2（金）（終日）"/.test(p(2)));
 }
 
 // ③ 画面
@@ -135,13 +135,25 @@ ok('知識：月表示に予定そのもの（両方）', (SRC.match(/月表示�
 {
   const paint = (() => { const i = SRC.indexOf('\n  function todoPaint('); return SRC.slice(i, SRC.indexOf('\n  }\n', i)); })();
   ok('日時・メモは枠のあるボタン（スマホ38px）', /class="todo-more-btn'\+\(more\?' on':''\)\+'"/.test(paint) && /\.todo-more-btn\{font-size:13px;min-height:38px;/.test(SRC));
-  ok('日付・時刻・顧客・メモに名前', /<label class="tf"[^>]*><span>日付<\/span><input id="td-date"/.test(paint) && /<span>時刻（任意）<\/span><input id="td-time"/.test(paint) && /<span>メモ（任意）<\/span><textarea id="td-note"/.test(paint));
+  ok('日付・時刻・顧客・メモに名前', /<label class="tf"[^>]*><span>日付<\/span><input id="td-date"/.test(paint) && /<span>時刻<\/span><div class="tf-time">'\n\s*\+'<input id="td-time"/.test(paint) && /<span>メモ（任意）<\/span><textarea id="td-note"/.test(paint));
   ok('スマホの欄は44px・文字16px（拡大しない）', /\.todo-more input\[type=date\],\.todo-more input\[type=time\],\.todo-more select,\.todo-more textarea\{min-height:44px;font-size:16px;\}/.test(SRC));
   ok('スマホの期限の札も大きく', /\.todo-chip\{font-size:12\.5px;padding:0 13px;min-height:36px;\}/.test(SRC));
   const tg = takeFn('todoMoreToggle');
-  ok('開いたとき、日付が空ならいまの日時（時刻は次の15分）', /if\(TODO_MORE && !TODO_EDIT\)\{/.test(tg) && /d\.value=todoYmd\(now\);/.test(tg) && /Math\.ceil\(\(now\.getHours\(\)\*60\+now\.getMinutes\(\)\+1\)\/15\)\*15/.test(tg));
-  ok('「なし」で日付と時刻を消せる（これまでどおり）', /if\(!v\)\{ var tm=\$\('td-time'\); if\(tm\) tm\.value=''; \}/.test(SRC));
+  ok('開いたとき、日付が空ならいまの日時（時刻は次の15分）', /if\(TODO_MORE && !TODO_EDIT\)\{/.test(tg) && /d\.value=todoYmd\(new Date\(\)\);/.test(tg) && /if\(tm && !tm\.value && !TODO_ALLDAY\) tm\.value=todoNext15\(\);/.test(tg) && /Math\.ceil\(\(now\.getHours\(\)\*60\+now\.getMinutes\(\)\+1\)\/15\)\*15/.test(takeFn('todoNext15')));
+  ok('「なし」で日付と時刻を消せる（これまでどおり）', /if\(!v\)\{ todoAllDay\(false\); var tm=\$\('td-time'\); if\(tm\) tm\.value=''; \}/.test(SRC));
 }
 ok('説明書：日時・メモのボタンと、いまの日時', ['manual-customer.html', 'manual-partner.html'].every((f) => /<b>「🗓 日時・メモ ▾」<\/b>のボタンを押すと出ます/.test(fs.readFileSync(__dirname + '/../' + f, 'utf8')) && /<b>いまの日時<\/b>（時刻は次の15分の区切り）が入ります/.test(fs.readFileSync(__dirname + '/../' + f, 'utf8'))));
+//  2026-10-10：時刻に「終日」
+{
+  const paint = (() => { const i = SRC.indexOf('\n  function todoPaint('); return SRC.slice(i, SRC.indexOf('\n  }\n', i)); })();
+  ok('時刻の横に「終日」（押すと時刻の欄が止まる）', /<button type="button" id="td-allday" class="todo-allday'\+\(TODO_ALLDAY\?' on':''\)\+'"/.test(paint) && /onclick="todoAllDay\(\)">'\+\(TODO_ALLDAY\?'✓ ':''\)\+'終日<\/button>'/.test(paint) && /\(TODO_ALLDAY\?' disabled':''\)/.test(paint));
+  const ad = takeFn('todoAllDay');
+  ok('終日：時刻を空にして止める／外すと次の15分', /tm\.disabled=TODO_ALLDAY; if\(TODO_ALLDAY\) tm\.value=''; else if\(pressed && !tm\.value\) tm\.value=todoNext15\(\);/.test(ad));
+  const sv = takeFn('todoSave');
+  ok('保存：終日なら時刻は空', /tm=TODO_ALLDAY \? null : /.test(sv) && /TODO_EDIT=null; TODO_MORE=false; TODO_ALLDAY=false;/.test(sv));
+  ok('直す：期限があって時刻が無いものは終日で開く', /TODO_ALLDAY=!!\(t && t\.due_date && !t\.due_time\);/.test(takeFn('todoEdit')));
+  ok('スマホの終日ボタンは44px', /\.todo-allday\{min-height:44px;/.test(SRC));
+}
+ok('説明書：時刻の横の「終日」', ['manual-customer.html', 'manual-partner.html'].every((f) => /時刻を決めないときは時刻の横の<b>「終日」<\/b>/.test(fs.readFileSync(__dirname + '/../' + f, 'utf8'))) && /時刻を決めないときは「終日」/.test(fs.readFileSync(__dirname + '/../manual-admin.html', 'utf8')));
 if (bad.length) { bad.forEach((b) => console.log('NG ' + b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK ' + n + ' checks, 0 failed');
