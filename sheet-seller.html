@@ -13,7 +13,7 @@
 <body>
 <div class="bar"><button type="button" class="bk" onclick="sheetClose()">← 閉じる</button><button type="button" onclick="sheetPrint()">🖨 印刷する（A4・1枚）</button><button type="button" class="bk" onclick="sheetMeEdit()">✏ 担当・連絡先</button><span>社長にお渡しする一枚紙（売り手向け）です。</span></div>
 <div class="who-edit" id="who-edit">
-  <p>右下の「担当・連絡先」に入る内容です。アプリから開くと、お名前・メールは自動で入ります。直したところはこの端末に覚えます。</p>
+  <p>右下の「担当・連絡先」に入る内容です。アプリから開くと、お名前・メール・電話番号（アプリの「⚙️ 設定」で登録したもの）が自動で入ります。ここで直したところはこの端末に覚えます。</p>
   <label>お名前<input data-k="n" oninput="sheetMeInput(this)" placeholder="山田 太郎"></label>
   <label>所属<input data-k="co" oninput="sheetMeInput(this)" placeholder="（任意）〇〇保険事務所"></label>
   <label>電話<input data-k="tel" oninput="sheetMeInput(this)" placeholder="090-0000-0000" inputmode="tel"></label>
