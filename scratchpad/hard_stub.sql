@@ -76,3 +76,13 @@ insert into public.profiles(id,role,email,consultant_id,admin_role) values
  ('00000000-0000-0000-0000-0000000000c3','customer','c3@x','00000000-0000-0000-0000-0000000000b3',null);
 insert into auth.users(id,email) select id,email from public.profiles;
 insert into auth.users(id,email) values ('00000000-0000-0000-0000-0000000000d1','d1@x'),('00000000-0000-0000-0000-0000000000d2','tax@x');
+--  二段階認証（20261010010000_mfa_required.sql）の試験用
+create table auth.mfa_factors (id uuid primary key default gen_random_uuid(), user_id uuid, factor_type text default 'totp', status text);
+alter table public.__me add column aal text;
+create or replace function auth.jwt() returns jsonb language sql stable as $$ select jsonb_build_object('email', email, 'aal', coalesce(aal,'aal1')) from public.__me limit 1 $$;
+create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid);
+alter table storage.objects enable row level security;
+grant select, insert on storage.objects to authenticated;
+grant usage on schema storage to authenticated;
+create policy obj_own on storage.objects for select to authenticated using (owner = auth.uid());
+create table auth.sessions (id uuid primary key default gen_random_uuid(), user_id uuid);
