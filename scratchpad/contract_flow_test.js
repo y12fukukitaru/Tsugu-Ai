@@ -67,5 +67,11 @@ ok('説明書：契約の内容が入った状態で始まる', ['manual-custome
   ok('記入済みの所属本部は残す', /所属本部：本部A/.test(P.ctBody({ body: '■ 契約者\n  所属本部：本部A\n  お名前：＿＿＿', status: 'sent' })));
 }
 ok('説明書：同意前の契約者の欄', ['manual-customer.html', 'manual-buyer.html', 'manual-seller.html'].every((f) => /<b>メールアドレスと顧問料だけ<\/b>が出ます/.test(R(f))));
+// 解約で消した方は新規扱い（v3）と、説明書（2026-10-11 その4）
+const cv3 = R('supabase/migrations/20261011020000_contract_claim_v3.sql');
+ok('SQL v3：Supabase の画面で消したアカウントの契約は受け取れる／解約の手続きで消した方の契約は受け取らない', /not exists \(select 1 from auth\.users u where u\.id = c\.claimed_user_id\)\s*\n[\s\S]{0,300}and not exists \(select 1 from public\.account_deletions d\s*\n\s*where d\.deleted_user_id = c\.claimed_user_id\)/.test(cv3) && /onboarded = true/.test(cv3) && /grant execute on function public\.contract_claim\(\) to authenticated;/.test(cv3));
+const adm = R('manual-admin.html');
+ok('説明書（運営）：契約から登録までの頁（流れと止まったときの確かめ）', /data-t="契約から登録まで（流れと確かめ）"/.test(adm) && /URL Configuration/.test(adm) && /20261011020000_contract_claim_v3\.sql/.test(adm) && /同意済みの顧問契約も、登録し直した方には引き継がれません/.test(adm));
+ok('説明書（パートナー）：相手に見える契約書・解約で消した方は新規扱い', /同意する前は「契約者」の欄に<b>メールアドレスと顧問料だけ<\/b>が出て/.test(R('manual-partner.html')) && /解約の手続きで運営が消した方は新規扱い/.test(R('manual-partner.html')));
 if (bad.length) { console.log(JSON.stringify(bad, null, 1)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK', n, 'checks, 0 failed');
