@@ -1620,6 +1620,10 @@
   /* 研修の自動再生ガイドと同じ見た目（ゴールドの枠＋周囲を暗く）だが、
      疑似UIではなく実際の画面要素を指すため、座標はビューポート基準で計算する */
   #ct-layer{position:fixed;inset:0;z-index:60;}
+  /* 使い方ガイドのあいだは、右下の継ナビくんを止めて、ガイドの層の下に置く。
+     上に重なったままだと吹き出しの「次へ」が押せず、ふわふわ浮き沈みする動きに
+     枠と吹き出しが付いていって、ガイド全体が揺れて見える */
+  body.ct-on .knv-fab{animation:none !important;z-index:59;}
   #ct-layer.hidden{display:none;}
   #ct-block{position:absolute;inset:0;}
   #ct-ring{position:absolute;border:2px solid var(--gold);border-radius:10px;pointer-events:none;
@@ -2026,7 +2030,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261011-06';
+  var APP_BUILD='20261011-07';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -25891,8 +25895,9 @@
     var back=CURRENT_SEC;
     var steps=ctBuild();
     if(!steps.length) return;
-    CT={ steps:steps, i:-1, back:back, anim:false };
+    CT={ steps:steps, i:-1, back:back, anim:false, side:null, sideFor:-1 };
     $('ct-layer').classList.remove('hidden');
+    document.body.classList.add('ct-on');
     window.addEventListener('resize', ctReposition);
     window.addEventListener('scroll', ctReposition, true);
     document.addEventListener('keydown', ctKey);
@@ -25915,6 +25920,13 @@
   //  を同じ時間・同じ緩急で一度に動かす。三つが同時に着く。
   var CT_EASE='cubic-bezier(.65,0,.35,1)';
   function ctEase(k){ return k<.5 ? 4*k*k*k : 1-Math.pow(-2*k+2,3)/2; }
+  //  画面の高さ。iPhone ではスクロールのたびにアドレスバーが出入りして innerHeight が
+  //  伸び縮みし、そのたびに吹き出しの置き場所（上か下か）が入れ替わって揺れていた。
+  //  いつも見えている小さいほうの高さで計算する
+  function ctVH(){
+    var a=window.innerHeight||0, b=(document.documentElement&&document.documentElement.clientHeight)||0;
+    return (a && b) ? Math.min(a,b) : (a||b||600);
+  }
   function ctReduced(){ try{ return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } }
   //  上に貼り付く見出しの帯（.topbar2）の下端。そこより上に対象を入れると隠れる
   function ctTopInset(){
@@ -25927,7 +25939,7 @@
   function ctTargetY(el){
     var y=window.scrollY||window.pageYOffset||0;
     if(ctIsFixed(el)) return y;
-    var r=el.getBoundingClientRect(), vh=window.innerHeight;
+    var r=el.getBoundingClientRect(), vh=ctVH();
     var inset=ctTopInset(), ph=($('ct-pop')&&$('ct-pop').offsetHeight)||170;
     var room=vh-inset-8, block=r.height+14+ph, t;
     if(block<=room) t=y+r.top-inset-(room-block)/2;
@@ -25961,11 +25973,18 @@
     ring.style.left=(r.left-pad)+'px'; ring.style.top=(r.top-pad)+'px';
     ring.style.width=(r.width+pad*2)+'px'; ring.style.height=(r.height+pad*2)+'px';
     var pw=pop.offsetWidth||310, ph=pop.offsetHeight||170;
-    var vw=window.innerWidth, vh=window.innerHeight, bottom=r.top+r.height;
-    var top;
-    if(bottom+14+ph<=vh-8) top=bottom+14;                  // 下に置ける
-    else if(r.top-14-ph>=8) top=r.top-14-ph;               // 上に置ける
-    else top=Math.max(8, vh-ph-8);                         // 収まらないので画面下端
+    var vw=window.innerWidth, vh=ctVH(), bottom=r.top+r.height;
+    var fitBelow=(bottom+14+ph<=vh-8), fitAbove=(r.top-14-ph>=8);
+    //  置き場所（下・上・画面下端）は、その段で一度決めたら、収まるかぎり変えない。
+    //  貼り付けのたびに選び直すと、数pxの揺れで上下が入れ替わってフラフラ動く
+    var side=null;
+    if(CT && CT.sideFor===CT.i && CT.side){
+      side=CT.side;
+      if((side==='below' && !fitBelow) || (side==='above' && !fitAbove)) side=null;
+    }
+    if(!side) side = fitBelow ? 'below' : (fitAbove ? 'above' : 'edge');
+    if(CT){ CT.side=side; CT.sideFor=CT.i; }
+    var top = side==='below' ? bottom+14 : (side==='above' ? r.top-14-ph : Math.max(8, vh-ph-8));
     var left=Math.min(Math.max(8, r.left+r.width/2-pw/2), vw-pw-8);
     pop.style.top=top+'px'; pop.style.left=left+'px';
   }
@@ -26060,8 +26079,8 @@
       var d=to-from;
       if(Math.abs(d)<2){
         ctPlace(el.getBoundingClientRect(), 380);
-        //  右下の継ナビくんのように固定された対象は、小さく跳ねる動きがあるので、この段のあいだは貼り付けておく
-        setTimeout(function(){ ctFollow(tok, ctIsFixed(el) ? 6e5 : 200); }, 400);
+        //  右下の継ナビくんは、ガイドのあいだ浮き沈みを止めているので、ほかと同じく少しだけ貼り付ける
+        setTimeout(function(){ ctFollow(tok, 200); }, 400);
         return;
       }
       var dur=ctReduced() ? 0 : Math.round(Math.min(900, Math.max(420, 320+Math.abs(d)*0.2)));
@@ -26085,6 +26104,7 @@
     var back=CT.back;
     CT=null; CT_TOK++; CT_SCROLL_TOK++;
     $('ct-layer').classList.add('hidden');
+    document.body.classList.remove('ct-on');
     window.removeEventListener('resize', ctReposition);
     window.removeEventListener('scroll', ctReposition, true);
     document.removeEventListener('keydown', ctKey);

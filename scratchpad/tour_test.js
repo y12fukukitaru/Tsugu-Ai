@@ -62,7 +62,12 @@ ok('右下・メニューの段は画面を切り替えない', (stepsSrc.match(
 const vis = takeFn('ctVisible');
 ok('固定の要素（右下の継ナビくん）を見えないと判定しない', /return el\.offsetParent!==null \|\| cs\.position==='fixed';/.test(vis) && /cs\.display==='none' \|\| cs\.visibility==='hidden'/.test(vis));
 ok('固定の要素ではスクロールしない', /if\(ctIsFixed\(el\)\) return y;/.test(takeFn('ctTargetY')));
-ok('固定の要素には、その段のあいだ貼り付く', /ctFollow\(tok, ctIsFixed\(el\) \? 6e5 : 200\)/.test(SRC));
+//  2026-10-11：右下の継ナビくんを追い続けると、浮き沈みに枠と吹き出しが付いていって揺れた。
+//  ガイドのあいだは浮き沈みを止め、ガイドの層の下に置く（「次へ」が押せなかった）
+ok('ガイドのあいだ、右下の継ナビくんは浮き沈みを止めて、ガイドの層の下に', /body\.ct-on \.knv-fab\{animation:none !important;z-index:59;\}/.test(SRC) && /#ct-layer\{position:fixed;inset:0;z-index:60;\}/.test(SRC) && /document\.body\.classList\.add\('ct-on'\)/.test(takeFn('ctStart')) && /document\.body\.classList\.remove\('ct-on'\)/.test(takeFn('ctEnd')));
+ok('固定の要素も、ほかと同じく少しだけ貼り付ける（追い続けない）', /setTimeout\(function\(\)\{ ctFollow\(tok, 200\); \}, 400\);/.test(SRC) && !/6e5/.test(SRC));
+ok('画面の高さは、いつも見えている小さいほう（iPhone のアドレスバーの出入りで揺れない）', /Math\.min\(a,b\)/.test(takeFn('ctVH')) && /vh=ctVH\(\)/.test(takeFn('ctPlace')) && /vh=ctVH\(\)/.test(takeFn('ctTargetY')));
+ok('吹き出しの置き場所（上・下）は、その段で一度決めたら収まるかぎり変えない', /if\(CT && CT\.sideFor===CT\.i && CT\.side\)\{/.test(takeFn('ctPlace')) && /CT\.side=side; CT\.sideFor=CT\.i;/.test(takeFn('ctPlace')));
 
 // ③ 動き
 const tourSrc = SRC.slice(SRC.indexOf('  var CT_STEPS=['), SRC.indexOf('  // ---- パートナー成長ロードマップ')).replace(/\/\/.*$/gm, '');
