@@ -58,7 +58,7 @@ ok('説明書：サポート管理から', /サポート管理 →「🔐 二段
 
 // 別の端末で設定したあと、この端末の控えが古いまま（2026-10-10 スマホで運営に「はじめの設定」が出た）
 ok('コードが要るかは、サーバーに確かめる（listFactors）', /async function mfaNeedsChallenge\(\)\{[\s\S]{0,300}if\(d && d\.currentLevel==='aal2'\) return false;\s*var l=await sb\.auth\.mfa\.listFactors\(\);/.test(SRC));
-ok('プロフィールが読めないとき、経営者とみなさない', /if\(up\.error \|\| !up\.data\) return \{ __unreadable:true, role:null, email:email \};/.test(SRC) && !/prof=up\.data \|\| \{ role:'customer'/.test(SRC));
+ok('プロフィールが読めないとき、経営者とみなさない', /if\(up\.error \|\| !up\.data\) return \{ __unreadable:true, role:null, email:email, why:/.test(SRC) && !/prof=up\.data \|\| \{ role:'customer'/.test(SRC));
 ok('読めないときは、コードの画面か、止めて知らせる', /if\(prof && prof\.__unreadable\)\{\s*\/\/[^\n]*\n\s*if\(await mfaNeedsChallenge\(\)\)\{ showMfa\('challenge'\); return; \}/.test(SRC));
 
 if (bad.length) { console.log(bad.join('\n')); console.log(n + ' 件中 ' + bad.length + ' 件 不合格'); process.exit(1); }
