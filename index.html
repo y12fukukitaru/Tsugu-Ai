@@ -70,6 +70,16 @@
   *{box-sizing:border-box;}
   /* 横スクロールの抑止は body 側のみ（html に overflow を付けると iOS で上部タップのスクロール復帰が無効化されるため） */
   body{overflow-x:clip;}
+  /* iPhone（LINE・Gmail の中のブラウザを含む）は、body だけ止めても、画面の外に
+     出ている部品（閉じたメニューなど）の分まで横に動かせてしまう。根元（html）でも止める */
+  html{overflow-x:hidden;}
+  /* 契約書：本文の「──────」や長い英数字も枠の中で折り返す（枠の中で横に動かない） */
+  .ct-text{overflow-wrap:anywhere;word-break:break-word;overflow-x:hidden;}
+  @media(max-width:600px){
+    .ct-page{padding:16px 10px !important;}
+    .ct-card{padding:16px 14px !important;}
+    .ct-text{padding:12px 12px !important;font-size:13px !important;line-height:1.9 !important;}
+  }
   body{margin:0;font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:var(--bg);max-width:100vw;-webkit-font-smoothing:antialiased;}
   /* ===== 書体の役割分担（継ナビくんの世界観）=====
        見出し   … 明朝（承継＝受け継ぐ重み・格式）
@@ -1641,10 +1651,10 @@
 
 <!-- ===== AUTH GATE（ログイン専用のシンプルな画面） ===== -->
 <!-- ===== 契約ページ（?c=トークン で開く。ログイン前に読む・同意する） ===== -->
-<div id="contract" class="hidden" style="min-height:100vh;background:#F4F6FA;padding:24px 16px;">
+<div id="contract" class="hidden ct-page" style="min-height:100vh;background:#F4F6FA;padding:24px 16px;">
   <div style="max-width:760px;margin:0 auto;">
     <div style="text-align:center;font-size:15px;font-weight:700;color:#1E3A66;margin-bottom:14px;">TsuguAi<span style="color:#C8A24B;">-継-</span></div>
-    <div id="ct-body" style="background:#fff;border:1px solid #E2E7EF;border-radius:14px;padding:22px 24px;">読み込み中…</div>
+    <div id="ct-body" class="ct-card" style="background:#fff;border:1px solid #E2E7EF;border-radius:14px;padding:22px 24px;">読み込み中…</div>
   </div>
 </div>
 
@@ -2016,7 +2026,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261010-19';
+  var APP_BUILD='20261011-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2097,6 +2107,21 @@
     if(document.body) document.body.classList.remove('knv-open');
   }
 
+  //  確認メールのリンクが古い・使用済みのとき、Supabase は #error_code=… を付けて戻す。
+  //  何も言わずにログイン画面だけ出すと、押したのに何も起きないように見える
+  function authLinkError(){
+    var h=String(location.hash||'');
+    if(!/error_code=|error=/.test(h)) return;
+    var code=(/error_code=([^&]+)/.exec(h)||[])[1]||'';
+    setMsg('login', /otp_expired/.test(code)
+      ? '確認のリンクの期限が切れているか、すでに使われています。まずはログインしてみてください。入れないときは「新規登録」から同じメールアドレスで登録し直すと、新しい確認メールが届きます。'
+      : 'リンクを開けませんでした。まずはログインしてみてください。続くときは運営にお知らせください。');
+    try{ history.replaceState(null, '', location.pathname+location.search); }catch(e){}
+  }
+  //  確認メール・パスワードの再設定のリンクの戻り先（このアプリの URL）
+  function authReturnUrl(){
+    return /^https?:$/.test(location.protocol) ? location.origin+location.pathname : 'https://y12fukukitaru.github.io/Tsugu-Ai/';
+  }
   async function doSignup(){
     var em=($('signup-email').value||'').trim().toLowerCase();
     var pw=$('signup-pw').value||'', pw2=$('signup-pw2').value||'';
@@ -2104,12 +2129,15 @@
     if(!validPw(pw)){ setMsg('signup','パスワードは大文字・小文字・数字を含む8文字以上にしてください'); return; }
     if(pw!==pw2){ setMsg('signup','パスワード（確認）が一致しません'); return; }
     var btn=$('signup-btn'); btn.disabled=true;
-    var res=await sb.auth.signUp({ email:em, password:pw });
+    //  戻り先を渡さないと、Supabase の「Site URL」に戻る。そこが違っていると 404 になる
+    var res=await sb.auth.signUp({ email:em, password:pw, options:{ emailRedirectTo: authReturnUrl() } });
     btn.disabled=false;
     if(res.error){ setMsg('signup','登録エラー：'+res.error.message); return; }
     if(res.data && res.data.session){ await routeFromSession(res.data.session); return; }
-    setMsg('signup','確認メールを送信しました。メール内のリンクを開いてから、こちらの画面でログインしてください。', true);
+    //  タブを切り替えると知らせが消えるので、切り替えたあとのログインの欄に出す
     showTab('login'); $('login-email').value=em;
+    setMsg('login','確認メールを '+em+' に送りました。メールの中のリンク（Confirm your mail）を押すと、登録が済んでこの画面に戻ります。'
+      +'届かないときは、迷惑メールのフォルダもご覧ください。', true);
   }
 
   async function doLogin(){
@@ -2408,7 +2436,7 @@
       var up=await sb.from('profiles').upsert({ id:uid, email:email, role:'customer' }).select('role,full_name,email').maybeSingle();
       //  読めない・作れない＝権限で止まっている（二段階認証のコードがまだ、など）。
       //  ここで「経営者」とみなすと、運営やパートナーに「はじめの設定」が出てしまう
-      if(up.error || !up.data) return { __unreadable:true, role:null, email:email };
+      if(up.error || !up.data) return { __unreadable:true, role:null, email:email, why:(up.error&&up.error.message)||(q.error&&q.error.message)||'' };
       prof=up.data;
     }
     return prof;
@@ -2425,7 +2453,17 @@
       //  コードがまだなら、コードの画面へ。それ以外は、はじめの設定に進ませず止める
       if(await mfaNeedsChallenge()){ showMfa('challenge'); return; }
       try{ bootDone(); }catch(e){}
-      alert('アカウントの情報を読み込めませんでした。通信の状態を確かめて、もう一度ログインしてください。続くときは運営にお知らせください。');
+      //  この端末に残っていたログインが、もう使えない（アカウントを消した・別の方の古いログイン）。
+      //  サーバーに確かめて、そうなら知らせずに外してログイン画面へ
+      var gu=null; try{ gu=await sb.auth.getUser(); }catch(e){ gu=null; }
+      if(!gu || gu.error || !gu.data || !gu.data.user){
+        try{ await sb.auth.signOut({ scope:'local' }); }catch(e){}
+        showAuth();
+        if(!ctSignupHandoff()) setMsg('login','前回のログインは使えなくなっていました。もう一度ログインしてください（はじめての方は「新規登録」から）。');
+        return;
+      }
+      alert('アカウントの情報を読み込めませんでした。通信の状態を確かめて、もう一度ログインしてください。続くときは運営にお知らせください。'
+        +(prof.why?'\n（詳細：'+prof.why+'）':''));
       await signOut();
       return;
     }
@@ -26573,9 +26611,39 @@
       +'お心当たりがない場合は、送り主にお問い合わせください。</div>'
       +'<button class="ghost" style="font-size:12px;border:1px solid #E2E7EF;border-radius:8px;padding:7px 14px;margin-top:12px;" onclick="ctToLogin()">ログイン画面へ</button>';
   }
-  function ctToLogin(){
+  async function ctToLogin(){
+    //  同意が済んだ契約から来たときは、そのメールで登録してもらう。
+    //  この端末に別の方（前に試したアカウントなど）のログインが残っていると、
+    //  そちらで開いてしまい「アカウントの情報を読み込めませんでした」になる。外してから進む
+    var em=(CT_DATA && CT_DATA.status==='agreed' && CT_DATA.email) ? String(CT_DATA.email).toLowerCase() : '';
+    if(em){
+      try{
+        var s=await sb.auth.getSession(), cur=s && s.data && s.data.session;
+        if(cur && String((cur.user&&cur.user.email)||'').toLowerCase()!==em) await sb.auth.signOut({ scope:'local' });
+      }catch(e){}
+      try{ sessionStorage.setItem('tsugu_ct_signup', em); }catch(e){}
+    }
     //  トークンを URL から外してから戻る。戻るたびに契約画面が出ると煩わしい
     location.href = location.pathname;
+  }
+  //  契約から来た方：新規登録の画面を開き、メールアドレスを入れておく
+  function ctSignupHandoff(){
+    var em=''; try{ em=sessionStorage.getItem('tsugu_ct_signup')||''; sessionStorage.removeItem('tsugu_ct_signup'); }catch(e){}
+    if(!em) return false;
+    showTab('signup');
+    var a=$('signup-email'), b=$('login-email');
+    if(a) a.value=em; if(b) b.value=em;
+    setMsg('signup','ご契約ありがとうございます。続けて、このメールアドレス（'+em+'）でパスワードを決めて登録してください。すでに登録がお済みなら「ログイン」へ。', true);
+    return true;
+  }
+  //  プランの名前（同意のときに本文へ入るものと同じ言い方）
+  function ctPlanName(pl){ return pl==='seller'?'売り手プラン（譲渡準備）':(pl==='buyer'?'買い手プラン（成長）':''); }
+  //  本文の {{プラン}} は、データベースの側で埋めて返す（20261011000000_contract_open_plan.sql）。
+  //  その SQL がまだのときに、差し込み口の記号がそのまま読まれないよう、画面でも埋める
+  function ctBody(d){
+    var b=String((d&&d.body)||'');
+    if(b.indexOf('{{プラン}}')<0) return b;
+    return b.split('{{プラン}}').join(ctPlanName(d.plan)||'お申し込みのプラン');
   }
   function ctHtml(d){
     var done=(d.status==='agreed');
@@ -26585,12 +26653,13 @@
     if(d.monthly_fee!=null){
       h+='<div style="border:1.5px solid #C8A24B;background:#FBF7EE;border-radius:10px;padding:11px 14px;margin-top:12px;">'
         +'<div style="font-size:11.5px;color:#8A6D2F;font-weight:700;">ご契約の条件</div>'
+        +(ctPlanName(d.plan)?'<div style="font-size:14px;font-weight:700;color:#1E3A66;margin-top:3px;">プラン　'+esc(ctPlanName(d.plan))+'</div>':'')
         +'<div style="font-size:14px;font-weight:700;color:#1E3A66;margin-top:3px;">顧問料　月額 '
         +Number(d.monthly_fee).toLocaleString('ja-JP')+'円（税別）</div></div>';
     }
-    h+='<div style="border:1px solid #E2E7EF;background:#FBFCFE;border-radius:10px;padding:16px 18px;margin-top:12px;'
+    h+='<div class="ct-text" style="border:1px solid #E2E7EF;background:#FBFCFE;border-radius:10px;padding:16px 18px;margin-top:12px;'
       +'max-height:46vh;overflow-y:auto;font-size:12.5px;color:#18202E;line-height:2;white-space:pre-wrap;">'
-      +esc(d.body)+'</div>';
+      +esc(ctBody(d))+'</div>';
     if(done){
       var dt=(d.agreed_at||'').slice(0,10).replace(/-/g,'/');
       h+='<div style="border:1.5px solid #BFE2CD;background:#EFF6F0;border-radius:10px;padding:13px 16px;margin-top:14px;">'
@@ -29172,6 +29241,17 @@
       +'<div style="border:1.5px solid #C39B3F;background:#FDFAF2;border-radius:8px;padding:8px 12px;font-size:10.5px;color:#1E3A66;line-height:1.85;white-space:pre-wrap;break-inside:avoid;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'+esc(d.summary)+'</div>';
   }
 
+  //  何かの拍子にページが横へ動いたら、左端へ戻す。指で拡大して見ているときは動かさない
+  (function(){
+    function fixX(){
+      if(!(window.scrollX>0)) return;
+      if(window.visualViewport && window.visualViewport.scale>1.01) return;
+      window.scrollTo(0, window.scrollY);
+    }
+    window.addEventListener('scroll', fixX, { passive:true });
+    window.addEventListener('resize', fixX);
+    window.addEventListener('orientationchange', function(){ setTimeout(fixX, 300); });
+  })();
   (async function init(){
     appVerCheck();
     avatarRestore();
@@ -29182,7 +29262,8 @@
       if(ctToken()){ await ctOpen(); return; }
       if(RECOVERING){ showRecovery(); return; }
       var s=await sb.auth.getSession();
-      if(s.data && s.data.session){ await routeFromSession(s.data.session); appResumeRestore(); } else { showAuth(); }
+      if(s.data && s.data.session){ await routeFromSession(s.data.session); appResumeRestore(); }
+      else { showAuth(); if(!ctSignupHandoff()) authLinkError(); }
     } finally { bootDone(); }
   })();
 
