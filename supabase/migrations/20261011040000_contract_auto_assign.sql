@@ -16,6 +16,16 @@
 --      ・運営の画面から（contract_apply_for）…運営だけ。「契約の内容で整える」ボタン
 --   ③ いま登録済みで担当が空の顧客に、同意済みの契約があれば、この SQL を流した時点で当てる
 --      （本人のログインを待たない）
+--   ⓪ 古い見張り（Dashboard で以前に作られたトリガー2つ）を外す
+--      ・trg_protect_profile_admin_columns … 運営以外が役割・担当・ランクを変えるとエラーで止める
+--      ・trg_prevent_role_change            … 運営以外が役割を変えると黙って元に戻す
+--      どちらも「運営が用意した関数（契約・招待・登録コード）の中から」の変更まで止めていた。
+--      そのため契約から担当が付かず（エラーで全部取り消し＝会社名も入らない）、
+--      パートナー契約で役割が変わらなかった。
+--      同じ守り（役割・担当は代表だけ、ランクは運営だけ、新規はいつも顧客）は
+--      profiles_freeze_privileged（20261010000000_security_hardening.sql）が受け持っている。
+--      そちらは運営が用意した関数の中からの変更だけを通す。古い2つを外しても守りは減らない。
+--      profiles_freeze_privileged が無い環境では、外さずに止まる（何も変えない）。
 --  当てる中身（これまでと同じ）
 --    顧問契約：担当（契約を送ったパートナー。記録が無ければ送った人がパートナーならその方）・
 --              プラン・会社名・お名前・電話番号、はじめの設定を済みに。すでにある値は上書きしない
@@ -24,6 +34,18 @@
 -- 実行方法: Supabase Dashboard → SQL Editor に貼り付けて Run
 --   何度流しても同じ結果になります。
 -- =============================================================
+
+-- ⓪ 古い見張りを外す（新しい見張りがあることを確かめてから）
+do $do$
+begin
+  if not exists (select 1 from pg_trigger
+                  where tgrelid = 'public.profiles'::regclass and tgname = 'profiles_freeze_privileged'
+                    and not tgisinternal) then
+    raise exception '新しい見張り（profiles_freeze_privileged）がありません。先に 20261010000000_security_hardening.sql を流してください。何も変えずに止めました';
+  end if;
+end $do$;
+drop trigger if exists trg_protect_profile_admin_columns on public.profiles;
+drop trigger if exists trg_prevent_role_change on public.profiles;
 
 -- ① 当てる中身（内側の関数。画面からは直接呼べない）
 create or replace function public.contract_apply(p_user uuid, p_email text)
@@ -146,8 +168,13 @@ begin
   raise notice '担当が空だった顧客のうち、契約を当てた数: %', n;
 end $do$;
 
--- 確かめ
+-- 確かめ（古い見張り＝0、新しい見張り＝1、運営の画面から＝1、解約のご依頼だけ除く＝1、
+--          担当が空のまま残った顧客＝0 が目安。残るのは解約のご依頼で消した方・メール確認前の方だけ）
 select
+  (select count(*) from pg_trigger where tgrelid = 'public.profiles'::regclass
+    and tgname in ('trg_protect_profile_admin_columns','trg_prevent_role_change'))                  as "古い見張り（0なら外れた）",
+  (select count(*) from pg_trigger where tgrelid = 'public.profiles'::regclass
+    and tgname = 'profiles_freeze_privileged' and not tgisinternal)                                 as "新しい見張り（1）",
   (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'contract_apply_for')                                as "運営の画面から当てる",
   (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
@@ -156,4 +183,4 @@ select
   (select count(*) from public.profiles p
     where p.role = 'customer' and p.consultant_id is null
       and exists (select 1 from public.contract_offers c
-                   where lower(c.email) = lower(p.email) and c.kind = 'customer' and c.status = 'agreed')) as "契約があるのに担当が空の顧客（解約で消した方・メール確認前の方だけが残る）";
+                   where lower(c.email) = lower(p.email) and c.kind = 'customer' and c.status = 'agreed')) as "担当が空のまま残った顧客";

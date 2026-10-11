@@ -94,6 +94,7 @@ ok('説明書（パートナー）：相手に見える契約書・解約で消�
 {
   const aa = R('supabase/migrations/20261011040000_contract_auto_assign.sql');
   ok('SQL：解約のご依頼にもとづいて消した方の契約だけ除く（ご依頼なしで消したテスト用は受け取れる）', /and d\.cancel_request_id is not null/.test(aa));
+  ok('SQL：古い見張り2つを外す（新しい見張りがあることを確かめてから。無ければ何も変えずに止める）', /drop trigger if exists trg_protect_profile_admin_columns on public\.profiles;/.test(aa) && /drop trigger if exists trg_prevent_role_change on public\.profiles;/.test(aa) && aa.indexOf("tgname = 'profiles_freeze_privileged'") < aa.indexOf('drop trigger if exists trg_protect_profile_admin_columns') && /raise exception '新しい見張り（profiles_freeze_privileged）がありません/.test(aa));
   ok('SQL：中身を contract_apply にまとめ、画面からは直接呼べない', /create or replace function public\.contract_apply\(p_user uuid, p_email text\)/.test(aa) && /revoke all on function public\.contract_apply\(uuid, text\) from public, anon, authenticated;/.test(aa) && /return public\.contract_apply\(auth\.uid\(\), my_email\);/.test(aa));
   ok('SQL：運営の画面から（運営だけ・確認済みのメールで）', /if not public\.tsugu_is_admin\(\) then return 'error: 運営のみ実行できます'/.test(aa) && /email_confirmed_at is not null/.test(aa));
   ok('SQL：いま担当が空の顧客に、流した時点で当てる', /where p\.role = 'customer' and p\.consultant_id is null/.test(aa) && /res := public\.contract_apply\(r\.id, r\.em\);/.test(aa));
