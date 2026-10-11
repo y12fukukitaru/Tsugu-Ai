@@ -2026,7 +2026,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261011-03';
+  var APP_BUILD='20261011-04';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -26248,7 +26248,15 @@
       +(o.agreed_org?('　'+esc(o.agreed_org)):'')
       +(o.agreed_name?('　'+esc(o.agreed_name)):'')
       +(showWho&&o.claimed_user_id?'　<span class="tag blue" style="font-size:10px;">登録済み</span>':'')
-      +'</div></div>'
+      +'</div>'
+      //  同じ名前の会社と見分けるための所在地・電話番号・法人番号（運営と送った人にだけ見える）
+      +((o.agreed_address||o.agreed_tel||o.agreed_corp_no)
+        ?'<div style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.7;word-break:break-all;">'
+          +(o.agreed_address?'📍 '+esc(o.agreed_address):'')
+          +(o.agreed_tel?'　☎ '+esc(o.agreed_tel):'')
+          +(o.agreed_corp_no?'　法人番号 '+esc(o.agreed_corp_no):'')
+        +'</div>':'')
+      +'</div>'
       +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'
       +'<button class="ghost" style="font-size:11px;border:1px solid #E2E7EF;border-radius:7px;padding:3px 9px;" onclick="ctCopy(\''+o.token+'\',this)">URLをコピー</button>'
       +(o.status==='agreed'
@@ -26646,6 +26654,18 @@
     setMsg('signup','ご契約ありがとうございます。続けて、このメールアドレス（'+em+'）でパスワードを決めて登録してください。すでに登録がお済みなら「ログイン」へ。', true);
     return true;
   }
+  //  全角の数字・記号を半角に（電話番号・法人番号）
+  function ctNorm(v){
+    return String(v||'').replace(/[０-９]/g,function(c){ return String.fromCharCode(c.charCodeAt(0)-0xFEE0); })
+      .replace(/[－ー‐―]/g,'-').replace(/（/g,'(').replace(/）/g,')').replace(/＋/g,'+').replace(/　/g,' ');
+  }
+  //  法人番号の検査（国税庁の計算方法）。先頭1桁が検査用の数字で、残り12桁を右から数えて
+  //  奇数番目は×1・偶数番目は×2 で足し、9 −（合計を9で割った余り）になる
+  function ctCorpOk(n){
+    if(!/^[0-9]{13}$/.test(n)) return false;
+    var s=0; for(var i=1;i<=12;i++){ var d=+n.charAt(13-i); s+=d*(i%2?1:2); }
+    return +n.charAt(0)===9-(s%9);
+  }
   //  プランの名前（同意のときに本文へ入るものと同じ言い方）
   function ctPlanName(pl){ return pl==='seller'?'売り手プラン（譲渡準備）':(pl==='buyer'?'買い手プラン（成長）':''); }
   //  本文の {{プラン}} は、データベースの側で埋めて返す（20261011000000_contract_open_plan.sql）。
@@ -26705,7 +26725,7 @@
     h+='<div style="border-top:1px solid #EDF1F6;margin-top:16px;padding-top:14px;">'
       +'<div style="font-size:12.5px;color:#18202E;line-height:1.9;">'
       +'上記の内容をご確認のうえ、'
-      +(needOrg?'<b>法人名とご担当者さまのお名前をご記入ください。</b>':'<b>お名前をご記入ください。</b>')
+      +(needOrg?'<b>法人名・ご担当者さまのお名前・所在地・電話番号をご記入ください。</b>':'<b>お名前・ご住所・電話番号をご記入ください。</b>')
       +'記入して「同意して契約する」を押すと、この契約が成立します。</div>'
       +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:4px;">'
       +'契約日はご同意いただいた日が自動で入ります。</div>'
@@ -26716,6 +26736,20 @@
       +'<label class="fl" style="margin-top:10px;display:block;">'
       +(needOrg?'ご担当者さまのお名前':'お名前')+'<span style="color:#A9403D;">＊必須</span></label>'
       +'<input id="ct-name" class="inp" placeholder="例：継 太郎" autocomplete="name">'
+      //  同じ名前の会社と見分けるため、所在地（住所）と電話番号もいただく。法人番号は任意
+      +'<label class="fl" style="margin-top:10px;display:block;">'
+      +(needOrg?'所在地（会社の住所）':'ご住所')+'<span style="color:#A9403D;">＊必須</span></label>'
+      +'<input id="ct-addr" class="inp" placeholder="'+(needOrg?'例：広島県広島市中区〇〇町1-2-3':'例：東京都千代田区〇〇1-2-3')+'" autocomplete="street-address" maxlength="200">'
+      +'<label class="fl" style="margin-top:10px;display:block;">電話番号<span style="color:#A9403D;">＊必須</span></label>'
+      +'<input id="ct-tel" class="inp" type="tel" inputmode="tel" placeholder="例：082-123-4567" autocomplete="tel" maxlength="20">'
+      +(needOrg
+        ?'<label class="fl" style="margin-top:10px;display:block;">法人番号（13桁・任意）</label>'
+          +'<input id="ct-corp" class="inp" inputmode="numeric" placeholder="例：1234567890123" maxlength="16">'
+          +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:4px;">国税庁の「法人番号公表サイト」で、会社名から調べられます。わからなければ空欄で構いません。</div>'
+        :'')
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:8px;background:#F6F8FB;border-radius:8px;padding:7px 10px;">'
+      +'所在地・電話番号は、<b>契約の相手を確かめることと、ご連絡にだけ</b>使います。所在地は同意した控えに入ります。'
+      +'<b>電話番号は控え（このURL）には載りません</b>（送り主・運営だけが見られます）。</div>'
       +'<button class="btn" id="ct-btn" style="margin-top:12px;" onclick="ctAgree()">同意して契約する</button>'
       +'<div id="ct-msg" style="font-size:12px;margin-top:8px;line-height:1.8;"></div></div>';
     return h;
@@ -26730,12 +26764,24 @@
     //  サーバー側でも同じ判定をしている（画面だけの縛りは素通りできる）
     if(needOrg && !og) return say('法人名（会社名）をご記入ください。');
     if(!nm) return say(needOrg?'ご担当者さまのお名前をご記入ください。':'お名前をご記入ください。');
+    var adr=(($('ct-addr')||{}).value||'').trim();
+    var tel=ctNorm((($('ct-tel')||{}).value||'')).trim();
+    var cno=ctNorm((($('ct-corp')||{}).value||'')).replace(/[^0-9]/g,'');
+    if(!adr) return say(needOrg?'所在地（会社の住所）をご記入ください。':'ご住所をご記入ください。');
+    if(!/^[0-9+() -]+$/.test(tel) || tel.replace(/[^0-9]/g,'').length<10 || tel.length>20)
+      return say('電話番号は、数字10桁以上でご記入ください（ハイフンはあってもなくても構いません）。');
+    if(cno && !ctCorpOk(cno)) return say('法人番号（13桁）をお確かめください。わからないときは空欄のままで構いません。');
     if(!confirm('この内容で契約します。よろしいですか？\n\nご同意いただいた記録（お名前・日時・契約書の全文）が残ります。')) return;
     if(btn){ btn.disabled=true; btn.textContent='送信しています…'; }
     var r;
-    try{ r=await sb.rpc('contract_agree',{ p_token: ctToken(), p_name: nm, p_org: og||null,
-      p_ua: (navigator&&navigator.userAgent)||'' }); }
+    var base={ p_token: ctToken(), p_name: nm, p_org: og||null, p_ua: (navigator&&navigator.userAgent)||'' };
+    try{ r=await sb.rpc('contract_agree', Object.assign({ p_address: adr, p_tel: tel, p_corp_no: cno||null }, base)); }
     catch(e){ r={ error:{ message:String((e&&e.message)||e) } }; }
+    //  住所・電話番号を受け取る SQL（20261011030000_contract_contact.sql）がまだの環境では、
+    //  前の形で同意だけは記録する（同意そのものを止めない）
+    if(r && r.error && /PGRST202|Could not find the function|function .*does not exist/i.test(String(r.error.code||'')+' '+String(r.error.message||''))){
+      try{ r=await sb.rpc('contract_agree', base); }catch(e){ r={ error:{ message:String((e&&e.message)||e) } }; }
+    }
     if(r.error || !r.data || !r.data.ok){
       say((r.error&&r.error.message) || (r.data&&r.data.error) || '同意を記録できませんでした。');
       if(btn){ btn.disabled=false; btn.textContent='同意して契約する'; }

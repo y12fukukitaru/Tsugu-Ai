@@ -73,5 +73,22 @@ ok('SQL v3：Supabase の画面で消したアカウントの契約は受け取�
 const adm = R('manual-admin.html');
 ok('説明書（運営）：契約から登録までの頁（流れと止まったときの確かめ）', /data-t="契約から登録まで（流れと確かめ）"/.test(adm) && /URL Configuration/.test(adm) && /20261011020000_contract_claim_v3\.sql/.test(adm) && /同意済みの顧問契約も、登録し直した方には引き継がれません/.test(adm));
 ok('説明書（パートナー）：相手に見える契約書・解約で消した方は新規扱い', /同意する前は「契約者」の欄に<b>メールアドレスと顧問料だけ<\/b>が出て/.test(R('manual-partner.html')) && /解約の手続きで運営が消した方は新規扱い/.test(R('manual-partner.html')));
+// 契約のときに所在地・電話番号・法人番号もいただく（2026-10-11 その5）
+{
+  const H = takeFn('ctHtml');
+  ok('入力欄：所在地（住所）・電話番号は必須、法人番号は法人の契約だけ（任意）', /id="ct-addr"/.test(H) && /id="ct-tel" class="inp" type="tel" inputmode="tel"/.test(H) && /\(needOrg\s*\n?\s*\?'<label[^']*>法人番号（13桁・任意）/.test(H));
+  ok('入力欄の下に使い道と、電話番号は控えに載らないこと', /契約の相手を確かめることと、ご連絡にだけ/.test(H) && /電話番号は控え（このURL）には載りません/.test(H));
+  const N = new Function(takeFn('ctNorm') + takeFn('ctCorpOk') + 'return { ctNorm, ctCorpOk };')();
+  is('全角の電話番号を半角に', N.ctNorm('０８２－１２３ー４５６７'), '082-123-4567');
+  is('法人番号の検査（国税庁 7000012050002 は正しい・先頭を変えると誤り）', [N.ctCorpOk('7000012050002'), N.ctCorpOk('1000012050002'), N.ctCorpOk('700001205000')], [true, false, false]);
+  const ag = takeFn('ctAgree');
+  ok('同意：所在地・電話番号・法人番号を送る（足りなければ送る前に止める）', /p_address: adr, p_tel: tel, p_corp_no: cno\|\|null/.test(ag) && ag.indexOf("say(needOrg?'所在地") < ag.indexOf("sb.rpc('contract_agree'") && /tel\.replace\(\/\[\^0-9\]\/g,''\)\.length<10/.test(ag));
+  ok('SQL がまだの環境では、前の形で同意だけは記録する', /PGRST202\|Could not find the function/.test(ag) && /r=await sb\.rpc\('contract_agree', base\)/.test(ag));
+  ok('一覧（運営・送った人）に所在地・電話番号・法人番号', /'📍 '\+esc\(o\.agreed_address\)/.test(takeFn('ctRowHtml')) && /'　☎ '\+esc\(o\.agreed_tel\)/.test(takeFn('ctRowHtml')));
+  const cc = R('supabase/migrations/20261011030000_contract_contact.sql');
+  ok('SQL：列と検査・前の形を消して作り直す・控えに所在地と法人番号（電話番号は入れない）', /add column if not exists agreed_tel/.test(cc) && /drop function if exists public\.contract_agree\(text, text, text, text\);/.test(cc) && /create or replace function public\.tsugu_corp_no_ok/.test(cc) && /placing mail_line \|\| extra/.test(cc) && !/extra := [^;]*tel/.test(cc));
+  ok('SQL：受け取りで電話番号をプロフィールへ・EP-II 所属をパートナー契約として扱う', /phone = coalesce\(nullif\(btrim\(phone\),''\), nullif\(btrim\(o\.agreed_tel\),''\)\)/.test(cc) && /'partner','partner_ep1','partner_ep2','partner_ep2_member'/.test(cc) && /public\.account_deletions/.test(cc));
+  ok('説明書・情報の守り：所在地・電話番号', ['manual-customer.html', 'manual-buyer.html', 'manual-seller.html'].every((f) => /所在地（会社の住所）・電話番号<\/b>をご記入ください/.test(R(f))) && /所在地・電話番号を記入<\/b>し、同意すると成立/.test(R('manual-partner.html')) && /20261011030000_contract_contact\.sql/.test(R('manual-admin.html')) && /契約のときの所在地・電話番号/.test(R('security.html')));
+}
 if (bad.length) { console.log(JSON.stringify(bad, null, 1)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK', n, 'checks, 0 failed');
