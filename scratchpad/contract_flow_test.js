@@ -45,5 +45,15 @@ ok('横に動いたら左端へ戻す（拡大して見ているときは除く�
 // 説明書
 ok('説明書（経営者・買い手・売り手）：登録へ進む・確認メール', ['manual-customer.html', 'manual-buyer.html', 'manual-seller.html'].every((f) => /新規登録の画面にメールアドレスが入った状態<\/b>で開きます/.test(R(f)) && /<b>確認メール<\/b>が届くので/.test(R(f))));
 ok('説明書（パートナー）：登録へ進む', /新規登録の画面がメールアドレス入りで<\/b>開きます/.test(R('manual-partner.html')));
+// 契約から登録した方を、そのまま中へ（2026-10-11 その2）
+const cl = takeFn('claimLinks');
+ok('契約を受け取ったかを返す', /var cc=null; try\{ cc=await sb\.rpc\('contract_claim'\); \}/.test(cl) && /return !!\(cc && !cc\.error && \/\^claimed:\/\.test/.test(cl));
+ok('受け取ったら読み直してから「はじめの設定」を判断する（空のプロフィールで聞き直さない）', /if\(await claimLinks\(session\.user\.email\)\)\{[\s\S]{0,200}select\('\*'\)\.eq\('id',ME\)\.maybeSingle\(\);[\s\S]{0,120}prof=q2\.data;/.test(rs) && rs.indexOf('claimLinks(') < rs.indexOf('needsOnboard(prof)'));
+const cv2 = R('supabase/migrations/20261011010000_contract_claim_v2.sql');
+ok('SQL：消したアカウントが受け取った契約も、新しいアカウントで受け取れる', /or not exists \(select 1 from auth\.users u where u\.id = c\.claimed_user_id\)/.test(cv2) && /or c\.claimed_user_id = me/.test(cv2) && /order by c\.agreed_at desc/.test(cv2));
+ok('SQL：会社名・お名前を入れて、はじめの設定を済みに（すでにある値は上書きしない）', /contact_name = coalesce\(nullif\(btrim\(contact_name\),''\), nullif\(btrim\(o\.agreed_name\),''\)\)/.test(cv2) && /onboarded = true/.test(cv2));
+ok('SQL：担当の記録が無ければ、送った人がパートナーならその方', /if sender_role = 'consultant' then cons := o\.offered_by; end if;/.test(cv2));
+ok('SQL：本人のメール（確認済み）でだけ受け取れる', /lower\(c\.email\) = my_email/.test(cv2) && /grant execute on function public\.contract_claim\(\) to authenticated;/.test(cv2));
+ok('説明書：契約の内容が入った状態で始まる', ['manual-customer.html', 'manual-buyer.html', 'manual-seller.html'].every((f) => /お名前などをもう一度聞く画面は出ません/.test(R(f))) && /そのままダッシュボードへ<\/b>入ります/.test(R('manual-partner.html')));
 if (bad.length) { console.log(JSON.stringify(bad, null, 1)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK', n, 'checks, 0 failed');

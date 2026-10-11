@@ -2026,7 +2026,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261011-01';
+  var APP_BUILD='20261011-02';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2468,7 +2468,15 @@
       return;
     }
     MYROLE=prof.role||'customer';
-    await claimLinks(session.user.email);   // メールで指名された枠を本人と結びつける
+    //  メールで指名された枠を本人と結びつける。契約から来た方は、ここで
+    //  会社名・お名前・担当・プランが入る。読み直さないと、入る前の空の
+    //  プロフィールで「はじめの設定」（経営者／パートナーを選ぶ画面）を出してしまう
+    if(await claimLinks(session.user.email)){
+      try{
+        var q2=await sb.from('profiles').select('*').eq('id',ME).maybeSingle();
+        if(q2 && !q2.error && q2.data){ prof=q2.data; MYROLE=prof.role||'customer'; }
+      }catch(e){}
+    }
     await resolveScope();                   // 閲覧メンバーなら、招かれた会社を見る
     await epBoot();                         // 法人（エンタープライズ）に属しているか
     // 初回ログイン（お名前・会社名が未設定）は、先に「はじめの設定」を出す。
@@ -24390,7 +24398,9 @@
     //  Web上で同意ずみの契約があれば、ここで結びつく。
     //  パートナー契約なら役割が、顧客契約なら担当が付く。
     //  関数がまだ無い環境では黙って何もしない
-    try{ await sb.rpc('contract_claim'); }catch(e){}
+    var cc=null; try{ cc=await sb.rpc('contract_claim'); }catch(e){}
+    //  契約を受け取ったか（受け取ったら、会社名・お名前・担当が入っている）
+    return !!(cc && !cc.error && /^claimed:/.test(String(cc.data||'')));
   }
   // いま見る会社を決める。閲覧メンバーとして招かれている場合はその会社を、
   // そうでなければ自分自身を指す。招かれていても自分が経営者なら自社を優先する。
