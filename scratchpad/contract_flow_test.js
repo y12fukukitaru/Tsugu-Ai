@@ -55,5 +55,17 @@ ok('SQL：会社名・お名前を入れて、はじめの設定を済みに（�
 ok('SQL：担当の記録が無ければ、送った人がパートナーならその方', /if sender_role = 'consultant' then cons := o\.offered_by; end if;/.test(cv2));
 ok('SQL：本人のメール（確認済み）でだけ受け取れる', /lower\(c\.email\) = my_email/.test(cv2) && /grant execute on function public\.contract_claim\(\) to authenticated;/.test(cv2));
 ok('説明書：契約の内容が入った状態で始まる', ['manual-customer.html', 'manual-buyer.html', 'manual-seller.html'].every((f) => /お名前などをもう一度聞く画面は出ません/.test(R(f))) && /そのままダッシュボードへ<\/b>入ります/.test(R('manual-partner.html')));
+// 同意する前は、契約者の欄の空欄の行とプランの行を出さない（2026-10-11 その3）
+{
+  const body = '■ 契約者\n  法人名：＿＿＿＿＿＿＿＿＿＿＿＿\n  ご担当者名：＿＿＿＿＿＿＿＿\n  メールアドレス：a@b.jp\n  契約日：＿＿＿年＿＿月＿＿日\n  プラン：{{プラン}}\n  顧問料：月額 45,000円（税別）\n\n第2条（顧問料）\n  乙は甲に対し、契約時のプラン（{{プラン}}）の月額を払う。';
+  const pre = P.ctBody({ body, plan: 'buyer', status: 'sent' });
+  ok('同意前：契約者の欄はメールアドレスと顧問料だけ（空欄とプランの行は出さない）', !/法人名：|ご担当者名：|契約日：|  プラン：/.test(pre) && /メールアドレス：a@b\.jp/.test(pre) && /顧問料：月額 45,000円/.test(pre));
+  ok('同意前：お名前などは下の欄に書く案内を1行', (pre.match(/※ お名前などは、下の欄にご記入ください/g) || []).length === 1);
+  ok('同意前：条文の中のプランは埋めて残す', /契約時のプラン（買い手プラン（成長））/.test(pre));
+  const done = P.ctBody({ body: body.replace('＿＿＿＿＿＿＿＿＿＿＿＿', '株式会社継'), plan: 'buyer', status: 'agreed' });
+  ok('同意後の控えは全文のまま', /法人名：株式会社継/.test(done) && /契約日：/.test(done) && /  プラン：/.test(done));
+  ok('記入済みの所属本部は残す', /所属本部：本部A/.test(P.ctBody({ body: '■ 契約者\n  所属本部：本部A\n  お名前：＿＿＿', status: 'sent' })));
+}
+ok('説明書：同意前の契約者の欄', ['manual-customer.html', 'manual-buyer.html', 'manual-seller.html'].every((f) => /<b>メールアドレスと顧問料だけ<\/b>が出ます/.test(R(f))));
 if (bad.length) { console.log(JSON.stringify(bad, null, 1)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK', n, 'checks, 0 failed');

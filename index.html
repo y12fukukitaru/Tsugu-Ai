@@ -2026,7 +2026,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261011-02';
+  var APP_BUILD='20261011-03';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -26650,10 +26650,24 @@
   function ctPlanName(pl){ return pl==='seller'?'売り手プラン（譲渡準備）':(pl==='buyer'?'買い手プラン（成長）':''); }
   //  本文の {{プラン}} は、データベースの側で埋めて返す（20261011000000_contract_open_plan.sql）。
   //  その SQL がまだのときに、差し込み口の記号がそのまま読まれないよう、画面でも埋める
+  //  同意する前は、契約者の欄のうち空欄（＿＿）の行と、プランの行を出さない。
+  //  お名前・法人名は下の入力欄で書いていただき、契約日は同意した日が入る。
+  //  プランは上の「ご契約の条件」の枠に出ている。同意したあとの控えは、全部埋まった全文のまま
   function ctBody(d){
     var b=String((d&&d.body)||'');
-    if(b.indexOf('{{プラン}}')<0) return b;
-    return b.split('{{プラン}}').join(ctPlanName(d.plan)||'お申し込みのプラン');
+    if(b.indexOf('{{プラン}}')>=0) b=b.split('{{プラン}}').join(ctPlanName(d.plan)||'お申し込みのプラン');
+    if(d && d.status==='agreed') return b;
+    var out=[], noted=false;
+    b.split('\n').forEach(function(ln){
+      var m=/^(\s+)([^：\s][^：]{0,15})：(.*)$/.exec(ln);
+      var blank=m && (/^[＿_\s年月日]*$/.test(m[3]) || /^\{\{.+\}\}$/.test(m[3].trim()));
+      if(m && (blank || m[2]==='プラン')){
+        if(!noted && m[2]!=='プラン'){ out.push(m[1]+'※ お名前などは、下の欄にご記入ください（契約日は、ご同意の日が入ります）。'); noted=true; }
+        return;
+      }
+      out.push(ln);
+    });
+    return out.join('\n');
   }
   function ctHtml(d){
     var done=(d.status==='agreed');
