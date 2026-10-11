@@ -2026,7 +2026,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261011-05';
+  var APP_BUILD='20261011-06';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -4273,7 +4273,15 @@
           epOf[r.user_id]={ id:r.ep_id, name:r.ep_name, kind:r.ep_kind, seat:r.seat_role }; });
       }
     }catch(e){}
-    ADM_CACHE={all:rows,fdes:fdes,admins:admins,custs:custs,nameOf:nameOf,clientCount:clientCount,kn:kn,scoreOf:scoreOf,lastMsg:lastMsg,lastActBy:lastActBy,diagCount:diagCount,epOf:epOf};
+    //  同意済みの顧問契約（メールごとに一番新しいもの）。担当が空の顧客に
+    //  「契約を送った人」を出し、ボタン一つで担当・会社名・プランを整えられるように
+    var ctAgreed={};
+    try{
+      var co=await sb.from('contract_offers').select('email,consultant_id,offered_by,agreed_org,agreed_at')
+        .eq('kind','customer').eq('status','agreed').order('agreed_at',{ascending:false}).limit(1000);
+      if(!co.error) (co.data||[]).forEach(function(o){ var k=String(o.email||'').toLowerCase(); if(k && !ctAgreed[k]) ctAgreed[k]=o; });
+    }catch(e){}
+    ADM_CACHE={all:rows,fdes:fdes,admins:admins,custs:custs,nameOf:nameOf,clientCount:clientCount,kn:kn,scoreOf:scoreOf,lastMsg:lastMsg,lastActBy:lastActBy,diagCount:diagCount,epOf:epOf,ctAgreed:ctAgreed};
     var unassigned=custs.filter(function(c){ return !c.consultant_id; }).length;
     var sum=$('adm-sum');
     if(sum){
@@ -4446,9 +4454,32 @@
             +'<option value="buyer"'+(planOf(u)==='buyer'?' selected':'')+'>買い手（成長）</option>'
             +'<option value="seller"'+(planOf(u)==='seller'?' selected':'')+'>売り手（譲渡準備）</option></select>'
         +'</div>'
+        +admCtHint(u)
       +'</div>';
     });
     cb.innerHTML=h;
+  }
+  //  担当が空なのに、同意済みの顧問契約がある顧客。ふだんは登録した瞬間に
+  //  契約を送ったパートナーが担当になるので、ここに出るのは取りこぼしだけ
+  function admCtHint(u){
+    if(!u || u.consultant_id) return '';
+    var o=((ADM_CACHE.ctAgreed||{})[String(u.email||'').toLowerCase()]); if(!o) return '';
+    var cid=o.consultant_id||o.offered_by, nm=cid?(ADM_CACHE.nameOf[cid]||'パートナー'):'（記録なし）';
+    var dt=String(o.agreed_at||'').slice(0,10).replace(/-/g,'/');
+    return '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;padding:8px 10px;border-radius:9px;background:#FBF7EE;border:1px solid #EAD9AC;font-size:12px;color:#5A4A1F;">'
+      +'<span>📄 '+esc(dt)+' に顧問契約に同意'+(o.agreed_org?'（'+esc(o.agreed_org)+'）':'')+'。契約を送った人：<b>'+esc(nm)+'</b></span>'
+      +'<button class="btn2" style="font-size:12px;padding:6px 12px;" onclick="admContractApply(\''+escJ(u.id)+'\',\''+escJ(cid||'')+'\')">契約の内容で整える（担当・会社名・プラン）</button>'
+    +'</div>';
+  }
+  async function admContractApply(uid, cid){
+    var r=null; try{ r=await sb.rpc('contract_apply_for',{ p_user:uid }); }catch(e){ r={ error:{ message:String((e&&e.message)||e) } }; }
+    var d=r && !r.error ? String(r.data||'') : '';
+    if(/^claimed:/.test(d)){ loadAdmin(); return; }
+    //  関数がまだ無い環境（SQL 20261011040000 の前）では、担当だけ付ける
+    if(r && r.error && cid && /PGRST202|Could not find the function|does not exist/i.test(String(r.error.code||'')+' '+String(r.error.message||''))){
+      await assignConsultant(uid, cid); return;
+    }
+    alert('整えられませんでした：'+(d||(r&&r.error&&r.error.message)||'不明')+'\n担当の欄から選んでください。');
   }
   async function assignConsultant(custId, fdeId){
     var res=await sb.from('profiles').update({ consultant_id:(fdeId||null) }).eq('id',custId);

@@ -72,7 +72,7 @@ const cv3 = R('supabase/migrations/20261011020000_contract_claim_v3.sql');
 ok('SQL v3：Supabase の画面で消したアカウントの契約は受け取れる／解約の手続きで消した方の契約は受け取らない', /not exists \(select 1 from auth\.users u where u\.id = c\.claimed_user_id\)\s*\n[\s\S]{0,300}and not exists \(select 1 from public\.account_deletions d\s*\n\s*where d\.deleted_user_id = c\.claimed_user_id\)/.test(cv3) && /onboarded = true/.test(cv3) && /grant execute on function public\.contract_claim\(\) to authenticated;/.test(cv3));
 const adm = R('manual-admin.html');
 ok('説明書（運営）：契約から登録までの頁（流れと止まったときの確かめ）', /data-t="契約から登録まで（流れと確かめ）"/.test(adm) && /URL Configuration/.test(adm) && /20261011020000_contract_claim_v3\.sql/.test(adm) && /同意済みの顧問契約も、登録し直した方には引き継がれません/.test(adm));
-ok('説明書（パートナー）：相手に見える契約書・解約で消した方は新規扱い', /同意する前は「契約者」の欄に<b>メールアドレスと顧問料だけ<\/b>が出て/.test(R('manual-partner.html')) && /解約の手続きで運営が消した方は新規扱い/.test(R('manual-partner.html')));
+ok('説明書（パートナー）：相手に見える契約書・解約で消した方は新規扱い', /同意する前は「契約者」の欄に<b>メールアドレスと顧問料だけ<\/b>が出て/.test(R('manual-partner.html')) && /解約のご依頼にもとづいて運営が消した方は新規扱い/.test(R('manual-partner.html')));
 // 契約のときに所在地・電話番号もいただく（2026-10-11 その5。法人番号は聞かない＝その6）
 {
   const H = takeFn('ctHtml');
@@ -89,6 +89,18 @@ ok('説明書（パートナー）：相手に見える契約書・解約で消�
   ok('SQL：列・前の形を消して作り直す・控えに所在地（電話番号は入れない）', /add column if not exists agreed_tel/.test(cc) && /drop function if exists public\.contract_agree\(text, text, text, text\);/.test(cc) && /placing mail_line \|\| extra/.test(cc) && !/extra := [^;]*tel/.test(cc));
   ok('SQL：受け取りで電話番号をプロフィールへ・EP-II 所属をパートナー契約として扱う', /phone = coalesce\(nullif\(btrim\(phone\),''\), nullif\(btrim\(o\.agreed_tel\),''\)\)/.test(cc) && /'partner','partner_ep1','partner_ep2','partner_ep2_member'/.test(cc) && /public\.account_deletions/.test(cc));
   ok('説明書・情報の守り：所在地・電話番号（法人番号は書かない）', ['manual-customer.html', 'manual-buyer.html', 'manual-seller.html'].every((f) => /所在地（会社の住所）・電話番号<\/b>をご記入ください/.test(R(f)) && !/法人番号/.test(R(f))) && /所在地・電話番号を記入<\/b>し、同意すると成立/.test(R('manual-partner.html')) && !/法人番号/.test(R('manual-partner.html') + R('manual-admin.html')) && /契約のときの所在地・電話番号/.test(R('security.html')));
+}
+// 契約を送ったパートナーを必ず最初の担当に（2026-10-11 その7）
+{
+  const aa = R('supabase/migrations/20261011040000_contract_auto_assign.sql');
+  ok('SQL：解約のご依頼にもとづいて消した方の契約だけ除く（ご依頼なしで消したテスト用は受け取れる）', /and d\.cancel_request_id is not null/.test(aa));
+  ok('SQL：古い見張り2つを外す（新しい見張りがあることを確かめてから。無ければ何も変えずに止める）', /drop trigger if exists trg_protect_profile_admin_columns on public\.profiles;/.test(aa) && /drop trigger if exists trg_prevent_role_change on public\.profiles;/.test(aa) && aa.indexOf("tgname = 'profiles_freeze_privileged'") < aa.indexOf('drop trigger if exists trg_protect_profile_admin_columns') && /raise exception '新しい見張り（profiles_freeze_privileged）がありません/.test(aa));
+  ok('SQL：中身を contract_apply にまとめ、画面からは直接呼べない', /create or replace function public\.contract_apply\(p_user uuid, p_email text\)/.test(aa) && /revoke all on function public\.contract_apply\(uuid, text\) from public, anon, authenticated;/.test(aa) && /return public\.contract_apply\(auth\.uid\(\), my_email\);/.test(aa));
+  ok('SQL：運営の画面から（運営だけ・確認済みのメールで）', /if not public\.tsugu_is_admin\(\) then return 'error: 運営のみ実行できます'/.test(aa) && /email_confirmed_at is not null/.test(aa));
+  ok('SQL：いま担当が空の顧客に、流した時点で当てる', /where p\.role = 'customer' and p\.consultant_id is null/.test(aa) && /res := public\.contract_apply\(r\.id, r\.em\);/.test(aa));
+  ok('運営の顧客一覧：担当が空で同意済みの契約がある顧客に「契約の内容で整える」', /\+admCtHint\(u\)/.test(takeFn('renderAdmCust')) && /契約の内容で整える（担当・会社名・プラン）/.test(takeFn('admCtHint')) && /sb\.rpc\('contract_apply_for',\{ p_user:uid \}\)/.test(takeFn('admContractApply')) && /\.eq\('kind','customer'\)\.eq\('status','agreed'\)/.test(takeFn('loadAdmin')));
+  ok('関数がまだ無い環境では担当だけ付ける', /await assignConsultant\(uid, cid\)/.test(takeFn('admContractApply')));
+  ok('説明書：契約を送ったパートナーが自動で担当・整えるボタン', /契約を送ったパートナーが自動で担当になります/.test(R('manual-admin.html')) && /20261011040000_contract_auto_assign\.sql/.test(R('manual-admin.html')) && /担当はあなた（契約を送った人）が自動で付きます/.test(R('manual-partner.html')));
 }
 if (bad.length) { console.log(JSON.stringify(bad, null, 1)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK', n, 'checks, 0 failed');
