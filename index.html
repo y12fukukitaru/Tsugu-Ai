@@ -1619,7 +1619,7 @@
   /* ===== 使い方ガイド（実画面ツアー・Phase65）===== */
   /* 研修の自動再生ガイドと同じ見た目（ゴールドの枠＋周囲を暗く）だが、
      疑似UIではなく実際の画面要素を指すため、座標はビューポート基準で計算する */
-  #ct-layer{position:fixed;inset:0;z-index:60;}
+  #ct-layer{position:fixed;inset:0;z-index:61;}   /* 枠（60・ページに貼り付け）より上に吹き出しを */
   /* 使い方ガイドのあいだは、右下の継ナビくんを止めて、ガイドの層の下に置く。
      上に重なったままだと吹き出しの「次へ」が押せず、ふわふわ浮き沈みする動きに
      枠と吹き出しが付いていって、ガイド全体が揺れて見える */
@@ -1641,6 +1641,19 @@
   #ct-pop .ct-f .bk{font-size:12px;color:var(--blue);background:var(--card);border:1px solid var(--line);
     border-radius:8px;padding:7px 13px;cursor:pointer;font-family:inherit;}
   #ct-pop .ct-f .nx{font-size:12.5px;padding:8px 17px;}
+  /* 枠はページに貼り付ける（ページと一緒にスクロールする）。指でスクロールしたときに
+     プログラムで追いかけると、iPhone では遅れて歪んで見えたため */
+  #ct-ring{z-index:60;}
+  #ct-ring.off{display:none;}
+  /* 吹き出しは指で上下に動かせる。下に払うと小さく（題名とボタンだけ）、上に払うか
+     つまみを押すと元に戻る。対象の下のほうが吹き出しに隠れて読めないときのため */
+  #ct-pop{touch-action:none;}
+  #ct-pop .ct-grip{display:flex;flex-direction:column;align-items:center;gap:2px;margin:-9px -10px 6px;padding:2px 0 4px;cursor:grab;}
+  #ct-pop .ct-grip i{display:block;width:38px;height:4px;border-radius:2px;background:#C9D1DD;}
+  #ct-pop .ct-grip span{font-size:10px;color:var(--muted);letter-spacing:.02em;}
+  #ct-pop.min .ct-b,#ct-pop.min .tsg-mado,#ct-pop.min .ct-grip span{display:none;}
+  #ct-pop.min .ct-t{margin-bottom:0;font-size:13.5px;}
+  #ct-pop.min .ct-f{margin-top:8px;}
   @media(max-width:760px){ #ct-pop{width:calc(100vw - 24px);} }
 </style>
 </head>
@@ -2030,7 +2043,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261011-07';
+  var APP_BUILD='20261012-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -25895,11 +25908,15 @@
     var back=CURRENT_SEC;
     var steps=ctBuild();
     if(!steps.length) return;
-    CT={ steps:steps, i:-1, back:back, anim:false, side:null, sideFor:-1 };
+    CT={ steps:steps, i:-1, back:back, anim:false, side:null, sideFor:-1, min:false, userTop:null };
     $('ct-layer').classList.remove('hidden');
     document.body.classList.add('ct-on');
+    //  枠はページに貼り付ける（ガイドの層の外、body の直下へ）。ページと一緒に動く
+    var ring=$('ct-ring'); if(ring){ if(ring.parentNode!==document.body) document.body.appendChild(ring); ring.classList.remove('off'); }
+    ctDragBind();
+    //  指でスクロールしたときは何もしない（枠はページと一緒に動き、吹き出しはその場に残る）。
+    //  画面の大きさが変わったときだけ置き直す
     window.addEventListener('resize', ctReposition);
-    window.addEventListener('scroll', ctReposition, true);
     document.addEventListener('keydown', ctKey);
     ctGo(0);
   }
@@ -25961,19 +25978,38 @@
       if(k<1) requestAnimationFrame(step); else if(done) done();
     });
   }
-  //  枠と吹き出しを rect の位置に置く。dur=0 は即座に（スクロールに貼り付ける）
-  function ctPlace(r, dur){
-    var ring=$('ct-ring'), pop=$('ct-pop'); if(!ring||!pop) return;
-    var tr = dur>0
+  //  枠と吹き出しを置く。r は対象のいまの画面上の位置。popR は吹き出しを合わせる位置
+  //  （スクロールして着いたときの位置。省けば r）。dur=0 は即座に
+  function ctPlace(r, dur, popR){
+    ctPlaceRing(r, dur);
+    ctPlacePop(popR||r, dur);
+  }
+  //  枠：ページに貼り付ける（ページ座標）。ページと一緒にスクロールするので、
+  //  指でスクロールしても追いかけなくてよい。右下の継ナビくんのような固定の対象だけは画面座標
+  function ctPlaceRing(r, dur){
+    var ring=$('ct-ring'); if(!ring) return;
+    var fixed = !!(CT && CT.el && ctIsFixed(CT.el));
+    var sx = fixed ? 0 : (window.scrollX||window.pageXOffset||0);
+    var sy = fixed ? 0 : (window.scrollY||window.pageYOffset||0);
+    ring.style.position = fixed ? 'fixed' : 'absolute';
+    ring.style.transition = dur>0
       ? ['left','top','width','height'].map(function(k){ return k+' '+dur+'ms '+CT_EASE; }).join(',')
       : 'none';
-    ring.style.transition=tr;
-    pop.style.transition = dur>0 ? ('left '+dur+'ms '+CT_EASE+',top '+dur+'ms '+CT_EASE+',opacity .2s ease') : 'opacity .2s ease';
     var pad=6;
-    ring.style.left=(r.left-pad)+'px'; ring.style.top=(r.top-pad)+'px';
+    ring.style.left=(r.left+sx-pad)+'px'; ring.style.top=(r.top+sy-pad)+'px';
     ring.style.width=(r.width+pad*2)+'px'; ring.style.height=(r.height+pad*2)+'px';
+  }
+  //  吹き出し：画面に置く（画面座標）。指で動かした段は、その位置のまま
+  function ctPlacePop(r, dur){
+    var pop=$('ct-pop'); if(!pop) return;
+    pop.style.transition = dur>0 ? ('left '+dur+'ms '+CT_EASE+',top '+dur+'ms '+CT_EASE+',opacity .2s ease') : 'opacity .2s ease';
     var pw=pop.offsetWidth||310, ph=pop.offsetHeight||170;
     var vw=window.innerWidth, vh=ctVH(), bottom=r.top+r.height;
+    var left=Math.min(Math.max(8, r.left+r.width/2-pw/2), vw-pw-8);
+    pop.style.left=left+'px';
+    //  小さくしているときは画面の下に。指で動かしたときは、その位置（画面からはみ出さない範囲）
+    if(CT && CT.min){ pop.style.top=Math.max(8, vh-ph-8)+'px'; return; }
+    if(CT && CT.userTop!=null){ pop.style.top=Math.min(Math.max(8, CT.userTop), Math.max(8, vh-ph-8))+'px'; return; }
     var fitBelow=(bottom+14+ph<=vh-8), fitAbove=(r.top-14-ph>=8);
     //  置き場所（下・上・画面下端）は、その段で一度決めたら、収まるかぎり変えない。
     //  貼り付けのたびに選び直すと、数pxの揺れで上下が入れ替わってフラフラ動く
@@ -25985,9 +26021,54 @@
     if(!side) side = fitBelow ? 'below' : (fitAbove ? 'above' : 'edge');
     if(CT){ CT.side=side; CT.sideFor=CT.i; }
     var top = side==='below' ? bottom+14 : (side==='above' ? r.top-14-ph : Math.max(8, vh-ph-8));
-    var left=Math.min(Math.max(8, r.left+r.width/2-pw/2), vw-pw-8);
-    pop.style.top=top+'px'; pop.style.left=left+'px';
+    pop.style.top=top+'px';
   }
+  //  吹き出しを指で動かす・小さくする
+  //    ・つまみ（上の短い線）や本文を上下にドラッグ … その段のあいだ、その位置に置く
+  //    ・すばやく下に払う … 小さく（題名とボタンだけ）。上に払う・つまみを押す … 元に戻す
+  function ctDragBind(){
+    var pop=$('ct-pop'); if(!pop || pop.__drag) return; pop.__drag=1;
+    var id=null, y0=0, top0=0, t0=0, moved=false, onGrip=false;
+    pop.addEventListener('pointerdown', function(e){
+      if(!CT || (e.target.closest && e.target.closest('button'))) return;
+      id=e.pointerId; y0=e.clientY; top0=parseFloat(pop.style.top)||0; t0=Date.now(); moved=false;
+      //  指を離したときの的は、捕まえた吹き出しそのものになる。どこを押したかは押した時に覚える
+      onGrip=!!(e.target.closest && e.target.closest('.ct-grip'));
+      try{ pop.setPointerCapture(id); }catch(_){}
+    });
+    pop.addEventListener('pointermove', function(e){
+      if(id===null || e.pointerId!==id || !CT) return;
+      var dy=e.clientY-y0;
+      if(!moved && Math.abs(dy)<6) return;
+      if(!moved){ moved=true; pop.style.transition='opacity .2s ease'; }
+      var vh=ctVH(), ph=pop.offsetHeight||170;
+      var t=Math.min(Math.max(8, top0+dy), Math.max(8, vh-ph-8));
+      pop.style.top=t+'px';
+      CT.userTop=t;
+      if(e.cancelable) e.preventDefault();
+    });
+    var end=function(e){
+      if(id===null || e.pointerId!==id) return;
+      id=null;
+      if(!CT) return;
+      var dy=e.clientY-y0, fast=(Date.now()-t0)<350;
+      if(!moved){ if(onGrip) ctMinToggle(); return; }
+      if(fast && dy>40 && !CT.min) ctMinToggle(true);
+      else if(fast && dy<-40 && CT.min) ctMinToggle(false);
+    };
+    pop.addEventListener('pointerup', end);
+    pop.addEventListener('pointercancel', end);
+  }
+  function ctMinToggle(v){
+    if(!CT) return;
+    CT.min = (v===undefined) ? !CT.min : !!v;
+    CT.userTop=null;
+    var pop=$('ct-pop'); if(!pop) return;
+    pop.classList.toggle('min', CT.min);
+    var g=pop.querySelector('.ct-grip span'); if(g) g.textContent=ctGripText();
+    if(CT.el) ctPlacePop(CT.el.getBoundingClientRect(), 220);
+  }
+  function ctGripText(){ return (CT && CT.i===0) ? '指で上下に動かせます・下に払うと小さく' : ''; }
   //  着いたあとも少しのあいだ対象に貼り付ける。切り替えた画面のパネルは
   //  下から少し浮き上がって現れる（入場の動き）ので、置いた瞬間の位置のままだと
   //  枠が数px下にずれて残る。
@@ -25997,15 +26078,23 @@
     requestAnimationFrame(function f(ts){
       if(!CT || tok!==CT_TOK || CT.anim) return;
       if(t0===null) t0=ts;
-      ctPlace(CT.el.getBoundingClientRect(), 0);
+      var r=CT.el.getBoundingClientRect();
+      ctPlaceRing(r, 0);
+      if(CT.userTop==null && !CT.min && !ctTouching) ctPlacePop(r, 0);
       if(ts-t0<ms) requestAnimationFrame(f);
     });
   }
-  //  利用者が自分でスクロールしたとき・画面の大きさが変わったときは、その場で貼り付ける
+  //  画面の大きさが変わったとき（回転・キーボード）だけ置き直す。
+  //  指でスクロールしたときは何もしない：枠はページと一緒に動き、吹き出しはその場に残る
   function ctReposition(){
     if(!CT||!CT.el||CT.anim) return;
     ctPlace(CT.el.getBoundingClientRect(), 0);
   }
+  //  指で画面に触れているあいだは、吹き出しを動かさない（着いた直後の貼り付けも止める）
+  var ctTouching=false;
+  document.addEventListener('touchstart', function(){ ctTouching=true; }, { passive:true });
+  document.addEventListener('touchend', function(){ ctTouching=false; }, { passive:true });
+  document.addEventListener('touchcancel', function(){ ctTouching=false; }, { passive:true });
   //  画面（セクション）を切り替えるときは、本文をいったん薄くしてから入れ替える。
   //  入れ替えた瞬間はページの長さが変わり、スクロール位置が勝手に飛ぶ（長い画面の
   //  いちばん下から短い画面へ移ると、途中の位置で止まって見える）。
@@ -26049,9 +26138,12 @@
       return;
     }
     CT.el=el;
+    CT.min=false; CT.userTop=null;
+    $('ct-pop').classList.remove('min');
     var last=(i===CT.steps.length-1);
     $('ct-pop').innerHTML=
-       '<div style="display:flex;gap:10px;align-items:flex-start;">'
+       '<div class="ct-grip" title="上下にドラッグで動かせます。押すと小さく／元に"><i></i><span>'+ctGripText()+'</span></div>'
+      +'<div style="display:flex;gap:10px;align-items:flex-start;">'
       +'<span class="tsg-mado sm" style="margin-top:2px;">'+tsgNaviSvg()+'</span>'
       +'<div style="flex:1;min-width:0;">'
       +'<div class="ct-n">継ナビくん　'+(i+1)+' / '+CT.steps.length+'</div>'
@@ -26087,7 +26179,8 @@
       var r=el.getBoundingClientRect();
       //  スクロールが終わったときに対象がいる場所へ、枠と吹き出しを同じ時間で動かす
       CT.anim=true;
-      ctPlace({ left:r.left, top:r.top-d, width:r.width, height:r.height }, dur);
+      //  枠はページ座標なので、スクロールしても行き先は同じ。吹き出しは着いたときの画面上の位置へ
+      ctPlace(r, dur, { left:r.left, top:r.top-d, width:r.width, height:r.height });
       ctScrollAnim(to, dur, function(){
         if(!CT || tok!==CT_TOK) return;
         CT.anim=false;
@@ -26105,8 +26198,9 @@
     CT=null; CT_TOK++; CT_SCROLL_TOK++;
     $('ct-layer').classList.add('hidden');
     document.body.classList.remove('ct-on');
+    var ring=$('ct-ring'); if(ring) ring.classList.add('off');
+    var pop=$('ct-pop'); if(pop) pop.classList.remove('min');
     window.removeEventListener('resize', ctReposition);
-    window.removeEventListener('scroll', ctReposition, true);
     document.removeEventListener('keydown', ctKey);
     ctFade(false);
     try{ var p=loadPrefs(); p[CT_KEY]=new Date().toISOString(); savePrefs(p); }catch(e){}
