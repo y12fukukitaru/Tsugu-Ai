@@ -64,10 +64,10 @@ ok('固定の要素（右下の継ナビくん）を見えないと判定しな�
 ok('固定の要素ではスクロールしない', /if\(ctIsFixed\(el\)\) return y;/.test(takeFn('ctTargetY')));
 //  2026-10-11：右下の継ナビくんを追い続けると、浮き沈みに枠と吹き出しが付いていって揺れた。
 //  ガイドのあいだは浮き沈みを止め、ガイドの層の下に置く（「次へ」が押せなかった）
-ok('ガイドのあいだ、右下の継ナビくんは浮き沈みを止めて、ガイドの層の下に', /body\.ct-on \.knv-fab\{animation:none !important;z-index:59;\}/.test(SRC) && /#ct-layer\{position:fixed;inset:0;z-index:60;\}/.test(SRC) && /document\.body\.classList\.add\('ct-on'\)/.test(takeFn('ctStart')) && /document\.body\.classList\.remove\('ct-on'\)/.test(takeFn('ctEnd')));
+ok('ガイドのあいだ、右下の継ナビくんは浮き沈みを止めて、ガイドの層の下に', /body\.ct-on \.knv-fab\{animation:none !important;z-index:59;\}/.test(SRC) && /#ct-layer\{position:fixed;inset:0;z-index:61;\}/.test(SRC) && /document\.body\.classList\.add\('ct-on'\)/.test(takeFn('ctStart')) && /document\.body\.classList\.remove\('ct-on'\)/.test(takeFn('ctEnd')));
 ok('固定の要素も、ほかと同じく少しだけ貼り付ける（追い続けない）', /setTimeout\(function\(\)\{ ctFollow\(tok, 200\); \}, 400\);/.test(SRC) && !/6e5/.test(SRC));
-ok('画面の高さは、いつも見えている小さいほう（iPhone のアドレスバーの出入りで揺れない）', /Math\.min\(a,b\)/.test(takeFn('ctVH')) && /vh=ctVH\(\)/.test(takeFn('ctPlace')) && /vh=ctVH\(\)/.test(takeFn('ctTargetY')));
-ok('吹き出しの置き場所（上・下）は、その段で一度決めたら収まるかぎり変えない', /if\(CT && CT\.sideFor===CT\.i && CT\.side\)\{/.test(takeFn('ctPlace')) && /CT\.side=side; CT\.sideFor=CT\.i;/.test(takeFn('ctPlace')));
+ok('画面の高さは、いつも見えている小さいほう（iPhone のアドレスバーの出入りで揺れない）', /Math\.min\(a,b\)/.test(takeFn('ctVH')) && /vh=ctVH\(\)/.test(takeFn('ctPlacePop')) && /vh=ctVH\(\)/.test(takeFn('ctTargetY')));
+ok('吹き出しの置き場所（上・下）は、その段で一度決めたら収まるかぎり変えない', /if\(CT && CT\.sideFor===CT\.i && CT\.side\)\{/.test(takeFn('ctPlacePop')) && /CT\.side=side; CT\.sideFor=CT\.i;/.test(takeFn('ctPlacePop')));
 
 // ③ 動き
 const tourSrc = SRC.slice(SRC.indexOf('  var CT_STEPS=['), SRC.indexOf('  // ---- パートナー成長ロードマップ')).replace(/\/\/.*$/gm, '');
@@ -83,7 +83,7 @@ ok('行き先はページの端で止める', /Math\.min\(max, Math\.max\(0, t\)
 const anim = takeFn('ctScrollAnim');
 ok('スクロールは1枚ずつ自分で描く（割り込まれたら止まる）', /requestAnimationFrame\(function step\(ts\)/.test(anim) && /if\(tok!==CT_SCROLL_TOK\) return;/.test(anim) && /window\.scrollTo\(0, Math\.round\(from\+d\*ctEase\(k\)\)\)/.test(anim));
 const step = takeFn('ctStep');
-ok('枠と吹き出しは「スクロールの終点での位置」へ同じ時間で動く', /ctPlace\(\{ left:r\.left, top:r\.top-d, width:r\.width, height:r\.height \}, dur\);\s*ctScrollAnim\(to, dur,/.test(step));
+ok('枠と吹き出しは「スクロールの終点での位置」へ同じ時間で動く', /ctPlace\(r, dur, \{ left:r\.left, top:r\.top-d, width:r\.width, height:r\.height \}\);\s*ctScrollAnim\(to, dur,/.test(step));
 ok('動いているあいだは、スクロールのたびに置き直さない', /if\(!CT\|\|!CT\.el\|\|CT\.anim\) return;/.test(takeFn('ctReposition')) && /CT\.anim=true;/.test(step));
 ok('時間は距離に応じて 0.42〜0.9秒', /Math\.min\(900, Math\.max\(420, 320\+Math\.abs\(d\)\*0\.2\)\)/.test(step));
 ok('動きを減らす設定なら動かさない', /ctReduced\(\) \? 0/.test(step) && /prefers-reduced-motion: reduce/.test(takeFn('ctReduced')));
@@ -114,5 +114,17 @@ ok('ボタンの名前は「使い方ガイド（2分）」', /使い方ガイ�
 ok('説明書：名前と、指す順・操作', !/使い方ガイド（1分）/.test(MANC) && /<tr><th>使い方ガイド（2分）<\/th><td>[^<]*はじめてログインしたときは自動で始まります。/.test(MANC) && /キーボードの ← → でも送れ、Esc で閉じます/.test(MANC));
 ok('提案資料の画面の写しも 2分', /使い方ガイド（2分）/.test(PITCH) && !/使い方ガイド（1分）/.test(PITCH));
 
+// 2026-10-12：指でスクロールすると枠が遅れて歪む／下に被ると読めない
+ok('枠はページに貼り付ける（ページ座標。固定の対象だけ画面座標）', /ring\.style\.position = fixed \? 'fixed' : 'absolute';/.test(takeFn('ctPlaceRing')) && /r\.top\+sy-pad/.test(takeFn('ctPlaceRing')) && /document\.body\.appendChild\(ring\)/.test(takeFn('ctStart')) && /#ct-ring\{z-index:60;\}/.test(SRC));
+ok('指でスクロールしても追いかけない（scroll を聞かない。大きさが変わったときだけ置き直す）', !/addEventListener\('scroll', ctReposition/.test(SRC) && /window\.addEventListener\('resize', ctReposition\);/.test(takeFn('ctStart')));
+ok('動かしながら着くとき：枠はいまの位置、吹き出しは着いたときの位置', /ctPlace\(r, dur, \{ left:r\.left, top:r\.top-d, width:r\.width, height:r\.height \}\);/.test(SRC));
+ok('吹き出しは指で上下に動かせる（その段のあいだ、その位置）', /CT\.userTop=t;/.test(takeFn('ctDragBind')) && /if\(CT && CT\.userTop!=null\)\{ pop\.style\.top=/.test(takeFn('ctPlacePop')) && /#ct-pop\{touch-action:none;\}/.test(SRC));
+ok('下に払うと小さく・上に払うかつまみを押すと元に', /if\(fast && dy>40 && !CT\.min\) ctMinToggle\(true\);/.test(takeFn('ctDragBind')) && /else if\(fast && dy<-40 && CT\.min\) ctMinToggle\(false\);/.test(takeFn('ctDragBind')) && /if\(!moved\)\{ if\(onGrip\) ctMinToggle\(\); return; \}/.test(takeFn('ctDragBind')) && /#ct-pop\.min \.ct-b/.test(SRC));
+ok('次の段では元の大きさ・自動の置き場所に戻す', /CT\.min=false; CT\.userTop=null;/.test(takeFn('ctStep')) && /class="ct-grip"/.test(takeFn('ctStep')));
+ok('着いた直後の貼り付けは、動かした・小さくした・触れているあいだは吹き出しを動かさない', /if\(CT\.userTop==null && !CT\.min && !ctTouching\) ctPlacePop\(r, 0\);/.test(takeFn('ctFollow')));
+ok('終わったら枠を隠す', /ring\.classList\.add\('off'\)/.test(takeFn('ctEnd')));
+ok('説明書：吹き出しは指で動かせる・小さくできる', /吹き出しは指で上下に動かせ/.test(MANC));
+ok('ページの下に吹き出しぶんの余白（いちばん下の行も隠れない）・終わったら外す', /sp\.id='ct-spacer'/.test(takeFn('ctStart')) && /sp\.style\.height=\(ph\+16\)\+'px'/.test(takeFn('ctPlacePop')) && /\$\('ct-spacer'\); if\(sp\) sp\.remove\(\);/.test(takeFn('ctEnd')));
+ok('説明書：長い欄も最後の行まで読める', /最後の行が吹き出しに隠れずに読めます/.test(MANC));
 if (bad.length) { bad.forEach((b) => console.log('NG ' + b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK ' + n + ' checks, 0 failed');
