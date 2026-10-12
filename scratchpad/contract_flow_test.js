@@ -40,7 +40,7 @@ ok('確認メールの戻り先をこのアプリに（Site URL が違ってい�
 ok('「確認メールを送りました」はタブを切り替えたあとに出す（消えない）', su.indexOf("showTab('login')") < su.indexOf("setMsg('login','確認メールを "));
 ok('確認リンクの期限切れ（otp_expired）を案内', /otp_expired/.test(takeFn('authLinkError')) && /history\.replaceState/.test(takeFn('authLinkError')));
 // 横にずれない
-ok('根元（html）でも横に動かさない', /\n  html\{overflow-x:hidden;\}/.test(SRC) && /\n  body\{overflow-x:clip;\}/.test(SRC));
+ok('横に動かさない：body は clip・根元（html）には付けない（iPhone で固定の部品がずれる）・ずれたら左端へ戻す', !/\n  html\{overflow-x:hidden;\}/.test(SRC) && /\n  body\{overflow-x:clip;\}/.test(SRC) && /window\.addEventListener\('scroll', fixX, \{ passive:true \}\);/.test(SRC));
 ok('横に動いたら左端へ戻す（拡大して見ているときは除く）', /if\(window\.visualViewport && window\.visualViewport\.scale>1\.01\) return;\s*\n\s*window\.scrollTo\(0, window\.scrollY\);/.test(SRC));
 // 説明書
 ok('説明書（経営者・買い手・売り手）：登録へ進む・確認メール', ['manual-customer.html', 'manual-buyer.html', 'manual-seller.html'].every((f) => /新規登録の画面にメールアドレスが入った状態<\/b>で開きます/.test(R(f)) && /<b>確認メール<\/b>が届くので/.test(R(f))));
