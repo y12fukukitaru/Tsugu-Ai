@@ -2043,7 +2043,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261012-03';
+  var APP_BUILD='20261012-04';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -11591,20 +11591,40 @@
     loadAdmDeletions();
     if(typeof knvAdminBadge==='function') knvAdminBadge();   // 右下の件数も減らす
   }
-  //  削除の控え。消えたあとに「いつ、誰が、どなたを」を辿れるのはここだけ
-  async function loadAdmDeletions(){
+  //  削除の控え。消えたあとに「いつ、誰が、どなたを」を辿れるのはここだけ。
+  //  増えていくので、ふだんは畳んで件数だけ。開くと新しい順に少しずつ（検索付き）
+  var DEL_PAGE=20;
+  var DEL={ q:'', rows:[], total:0, seq:0, timer:null, open:false };
+  async function loadAdmDeletions(more){
     var box=$('adm-deletions'); if(!box) return;
+    var seq=++DEL.seq, from=more?DEL.rows.length:0;
     var r;
     try{
-      r=await sb.from('account_deletions').select('*').order('deleted_at',{ascending:false}).limit(30);
+      var q=sb.from('account_deletions').select('*',{ count:'exact' });
+      var t=ctlTerm(DEL.q);
+      if(t) q=q.or(['email','company_name','contact_name','consultant_email','reason']
+        .map(function(c){ return c+'.ilike.%'+t+'%'; }).join(','));
+      r=await q.order('deleted_at',{ascending:false}).range(from, from+DEL_PAGE-1);
     }catch(e){ r={error:1}; }
+    if(seq!==DEL.seq) return;
     if(!r || r.error){ box.innerHTML=''; return; }
-    var rows=r.data||[];
-    if(!rows.length){ box.innerHTML=''; return; }
-    var h='<div style="border:1px solid #E2E7EF;background:#F8F9FC;border-radius:11px;padding:12px 15px;margin:0 0 14px;">'
-      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">削除したアカウント（'+rows.length+'件）</div>'
-      +'<div style="font-size:11px;color:var(--muted);margin-top:3px;">元には戻せません。この控えだけが記録として残ります。</div>';
-    rows.forEach(function(x){
+    var got=r.data||[];
+    DEL.rows=more?DEL.rows.concat(got):got;
+    DEL.total=(typeof r.count==='number')?r.count:DEL.rows.length;
+    if(!DEL.total && !ctlTerm(DEL.q)){ box.innerHTML=''; return; }
+    if(!$('del-body')){
+      box.innerHTML='<details id="del-box" style="border:1px solid #E2E7EF;background:#F8F9FC;border-radius:11px;padding:12px 15px;margin:0 0 14px;"'
+        +(DEL.open?' open':'')+' ontoggle="DEL.open=this.open">'
+        +'<summary style="cursor:pointer;font-size:12.5px;font-weight:700;color:var(--navy);">削除したアカウント（<span id="del-n"></span>件）</summary>'
+        +'<div style="font-size:11px;color:var(--muted);margin-top:3px;">元には戻せません。この控えだけが記録として残ります。</div>'
+        +'<input class="inp2" style="width:100%;margin-top:7px;" value="'+escA(DEL.q)+'" '
+          +'placeholder="メール・会社名などで探す" oninput="delSearch(this.value)">'
+        +'<div id="del-body"></div></details>';
+    }
+    $('del-n').textContent=DEL.total;
+    var h='';
+    if(!DEL.rows.length) h='<div style="font-size:11.5px;color:var(--muted);padding:10px 0 2px;">当てはまる控えはありません。</div>';
+    DEL.rows.forEach(function(x){
       h+='<div style="border-top:1px solid #EDF1F6;padding:7px 0;font-size:11.5px;line-height:1.75;">'
         +'<span style="color:#94A2B6;">'+esc(jstDay(x.deleted_at))+'</span>　'
         +'<b>'+esc(x.company_name||x.contact_name||x.email||'')+'</b>'
@@ -11614,7 +11634,15 @@
         +'<div style="color:#94A2B6;">操作：'+esc(x.deleted_by_email||'—')+'</div>'
       +'</div>';
     });
-    box.innerHTML=h+'</div>';
+    var rest=DEL.total-DEL.rows.length;
+    if(DEL.rows.length) h+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid #EDF1F6;padding-top:8px;font-size:11px;color:var(--muted);">'
+      +'<span>全 '+DEL.total+' 件のうち '+DEL.rows.length+' 件を表示（新しい順）</span>'
+      +(rest>0?'<button class="ghost" style="font-size:11.5px;border:1px solid #E2E7EF;border-radius:7px;padding:4px 12px;" onclick="loadAdmDeletions(true)">さらに '+Math.min(rest,DEL_PAGE)+' 件を表示</button>':'')
+      +'</div>';
+    $('del-body').innerHTML=h;
+  }
+  function delSearch(v){
+    DEL.q=v; clearTimeout(DEL.timer); DEL.timer=setTimeout(function(){ loadAdmDeletions(); }, 300);
   }
 
   // ===== 二段階認証のやり直し（スマホの紛失・故障）=====
@@ -26407,17 +26435,37 @@
           +(o.agreed_tel?'　☎ '+esc(o.agreed_tel):'')
         +'</div>':'')
       +'</div>'
-      +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'
-      +'<button class="ghost" style="font-size:11px;border:1px solid #E2E7EF;border-radius:7px;padding:3px 9px;" onclick="ctCopy(\''+o.token+'\',this)">URLをコピー</button>'
-      +(o.status==='agreed'
-        ? '<button class="ghost" style="font-size:11px;border:1px solid #E2E7EF;border-radius:7px;padding:3px 9px;" onclick="ctShow(\''+o.id+'\')">契約書を見る</button>'
-        : '<button class="ghost" style="font-size:11px;border:1px solid #E8C4C2;color:#A9403D;border-radius:7px;padding:3px 9px;" onclick="ctCancel(\''+o.id+'\')">取り消す</button>')
-      +'</div></div>';
+      +ctRowBtns(o)
+      +'</div>';
   }
+  //  行のボタンは、契約の状態で変える。開けない URL（取り消し・期限切れ）はコピーさせない
+  //    お返事待ち … 「URLをコピー」：メールが届かない・迷惑メールに入ったときに、同じ契約書を
+  //                 LINE・SMS などで送り直すため。「取り消す」
+  //    同意済み   … 「契約書を見る」（同意した書面そのもの）。「控えのURLをコピー」：
+  //                 相手から「控えをもう一度」と言われたときに送るため（開くと同意した控えが出る）
+  //    期限切れ・取り消し … ボタンなし。もう一度結ぶときは、新しく送る
+  function ctIsExpired(o){ return o.status==='sent' && o.expires_at && new Date(o.expires_at)<new Date(); }
+  function ctRowBtns(o){
+    var bs='font-size:11px;border:1px solid #E2E7EF;border-radius:7px;padding:3px 9px;';
+    var h='';
+    if(o.status==='agreed'){
+      h='<button class="ghost" style="'+bs+'" onclick="ctShow(\''+o.id+'\')">契約書を見る</button>'
+        +'<button class="ghost" style="'+bs+'" title="相手に、同意した控えをもう一度お送りするときに" onclick="ctCopy(\''+o.token+'\',this)">控えのURLをコピー</button>';
+    }else if(o.status==='sent' && !ctIsExpired(o)){
+      h='<button class="ghost" style="'+bs+'" title="メールが届かないときに、LINE・SMS などで同じ契約書を送るために" onclick="ctCopy(\''+o.token+'\',this)">URLをコピー</button>'
+        +'<button class="ghost" style="font-size:11px;border:1px solid #E8C4C2;color:#A9403D;border-radius:7px;padding:3px 9px;" onclick="ctCancel(\''+o.id+'\')">取り消す</button>';
+    }else if(ctIsExpired(o)){
+      h='<span style="font-size:10.5px;color:var(--muted);">もう一度結ぶときは、新しく送ってください</span>';
+    }
+    return h?('<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'+h+'</div>'):'';
+  }
+  //  一覧の上に出す、URLをコピーの使いみち（一度だけ書く）
+  var CT_COPY_NOTE='<b>URLをコピー</b>：メールが届かないときに、同じ契約書を LINE・SMS で送るため（お返事待ちだけ）。'
+    +'<b>控えのURL</b>：同意した控えを相手に送り直すため。URL を知る人は誰でも開けるので、本人以外には送らないでください。';
   function ctCopy(tok, el){
     var u=ctUrl(tok);
     try{ navigator.clipboard.writeText(u); }catch(e){ window.prompt('このURLをお送りください', u); return; }
-    if(el){ var t=el.textContent; el.textContent='コピーしました'; setTimeout(function(){ el.textContent=t; },1400); }
+    if(el){ var t=el.textContent; el.textContent='コピーしました（LINE などに貼り付けて送れます）'; setTimeout(function(){ el.textContent=t; },2200); }
   }
   var CT_CACHE={};
   function ctShow(id){
@@ -26536,13 +26584,6 @@
   async function loadMyContracts(){
     var box=$('cl-contracts'); if(!box) return;
     await loadPlanRates();   // 契約書に入れる月額（買い手・売り手）
-    var r;
-    try{ r=await sb.from('contract_offers').select('*').eq('offered_by',ME)
-      .order('created_at',{ascending:false}).limit(50); }
-    catch(e){ r={error:1}; }
-    if(!r || r.error){ box.innerHTML=''; return; }   // 表がまだ無い環境
-    var rows=r.data||[];
-    rows.forEach(function(o){ CT_CACHE[o.id]=o; });
     var ep1staff=ctIsEp1Staff();
     var h='<div style="border:1px solid #E2E7EF;background:#F8F9FC;border-radius:11px;padding:12px 15px;margin:10px 0 0;">'
       +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">📄 顧問契約を送る</div>';
@@ -26569,11 +26610,10 @@
         +'<button class="btn2" style="font-size:12px;padding:7px 14px;" onclick="ctSend(\'customer\',\'ctp\')">契約書を送る</button>'
         +'</div><div id="ctp-msg" style="font-size:11.5px;margin-top:6px;line-height:1.8;"></div>';
     }
-    if(rows.length){
-      h+='<div style="font-size:12px;font-weight:700;color:var(--navy);margin-top:12px;">送った契約（'+rows.length+'件）</div>'
-        +rows.map(function(o){ return ctRowHtml(o,true); }).join('');
-    }
+    //  送った契約は増えていくので、全部は読まない。新しい順に少しずつ（検索・絞り込み付き）
+    h+=ctlFrameHtml('mine','送った契約');
     box.innerHTML=h+'</div>';
+    ctlLoad('mine');
   }
 
 
@@ -26699,11 +26739,6 @@
   //  運営：パートナー契約を送る／すべての契約を確かめる
   async function loadAdmContracts(){
     var box=$('adm-contracts'); if(!box) return;
-    var r;
-    try{ r=await sb.from('contract_offers').select('*')
-      .order('created_at',{ascending:false}).limit(200); }
-    catch(e){ r={error:1}; }
-    if(!r || r.error){ box.innerHTML=''; return; }
     //  EP-II の所属パートナー契約には、書面に差し込む本部名が要る（{{本部名}}）。
     //  どの本部かを選ばずに送ると、契約書の本部名が空欄のまま相手に届く
     var ep2Orgs=[];
@@ -26712,12 +26747,8 @@
       if(!eo.error) ep2Orgs=eo.data||[];
     }catch(e){}
     CT_EP2_ORGS=ep2Orgs;
-    var rows=r.data||[];
-    rows.forEach(function(o){ CT_CACHE[o.id]=o; });
-    var agreed=rows.filter(function(o){ return o.status==='agreed'; }).length;
-    var waiting=rows.filter(function(o){ return o.status==='sent'; }).length;
     var h='<div style="border:1px solid #E2E7EF;background:#F8F9FC;border-radius:11px;padding:12px 15px;margin:0 0 14px;">'
-      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">📄 契約（'+rows.length+'件・同意済み '+agreed+'／お返事待ち '+waiting+'）</div>'
+      +'<div style="font-size:12.5px;font-weight:700;color:var(--navy);">📄 契約</div>'
       +'<div style="font-size:11.5px;color:var(--muted);line-height:1.8;margin-top:3px;">'
       +'パートナー契約はここから送ります。顧問契約はパートナーが送ったものも含めて、すべてここに並びます。</div>'
       +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:9px;">'
@@ -26743,11 +26774,116 @@
       +(ep2Orgs.length?'':'<br><b style="color:#A9403D;">EP-II の法人がまだ登録されていません。</b>'
         +'「エンタープライズ」で法人を作ってから、所属パートナー契約をお送りください。')
       +'</div>';
-    if(rows.length){
-      h+='<div style="max-height:340px;overflow-y:auto;margin-top:10px;">'
-        +rows.map(function(o){ return ctRowHtml(o,true); }).join('')+'</div>';
-    }
+    //  契約は増えていくので、全部は読まない。新しい順に少しずつ（検索・絞り込み付き）。
+    //  件数は状態ごとにデータベースで数える（読み込んだ分ではなく、全体の件数）
+    h+=ctlFrameHtml('adm','すべての契約');
     box.innerHTML=h+'</div>';
+    ctlLoad('adm');
+  }
+
+  // ===== 契約の一覧（運営：すべて／パートナー：自分が送ったもの）=====
+  //  増えても重くならないように
+  //   ・一度に読むのは CTL_PAGE 件だけ。「さらに表示」で続きを読む
+  //   ・検索（メール・法人名・お名前・所在地・電話番号）と、状態・種類の絞り込みは
+  //     データベース側で行う（読み込んだ分の中だけを探すのではない）
+  //   ・件数（全体・状態ごと）もデータベースで数える
+  //   ・入れ子のスクロール枠は使わない（スマホで指が引っかかる）。長くなったら「さらに表示」
+  var CTL_PAGE=20;
+  var CTL={};
+  var CTL_ST=[['all','すべて'],['wait','お返事待ち'],['agreed','同意済み'],['expired','期限切れ'],['cancelled','取り消し']];
+  function ctlState(key){
+    return CTL[key]||(CTL[key]={ q:'', st:'all', kind:'all', rows:[], total:0, counts:{}, seq:0, timer:null });
+  }
+  //  検索語：PostgREST の or() の区切り（, ( ) " \）と、ワイルドカード（% *）は外す
+  function ctlTerm(q){ return String(q||'').replace(/[,()"\\%*]/g,' ').trim().slice(0,60); }
+  function ctlQuery(key, st, sel, opt){
+    var s=ctlState(key), q=sb.from('contract_offers').select(sel, opt);
+    if(key==='mine') q=q.eq('offered_by',ME);
+    if(s.kind==='customer') q=q.eq('kind','customer');
+    else if(s.kind==='partner') q=q.neq('kind','customer');
+    var t=ctlTerm(s.q);
+    if(t) q=q.or(['email','agreed_org','agreed_name','agreed_address','agreed_tel']
+      .map(function(c){ return c+'.ilike.%'+t+'%'; }).join(','));
+    var now=new Date().toISOString();
+    if(st==='wait') q=q.eq('status','sent').gte('expires_at',now);
+    else if(st==='agreed') q=q.eq('status','agreed');
+    else if(st==='expired') q=q.eq('status','sent').lt('expires_at',now);
+    else if(st==='cancelled') q=q.eq('status','cancelled');
+    return q;
+  }
+  function ctlFrameHtml(key, title){
+    var s=ctlState(key);
+    return '<div id="ctl-'+key+'" class="hidden" style="margin-top:12px;">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--navy);">'+title+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);line-height:1.8;margin-top:2px;">'+CT_COPY_NOTE+'</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:7px;">'
+      +'<input id="ctl-'+key+'-q" class="inp2" style="flex:1 1 180px;min-width:0;" value="'+escA(s.q)+'" '
+        +'placeholder="メール・法人名・電話などで探す" oninput="ctlSearch(\''+key+'\',this.value)">'
+      +(key==='adm'
+        ? '<select class="inp2" onchange="ctlKind(\'adm\',this.value)">'
+          +[['all','種類：すべて'],['customer','顧問契約'],['partner','パートナー契約']].map(function(k){
+              return '<option value="'+k[0]+'"'+(s.kind===k[0]?' selected':'')+'>'+k[1]+'</option>'; }).join('')
+          +'</select>'
+        : '')
+      +'</div>'
+      +'<div id="ctl-'+key+'-body"></div></div>';
+  }
+  function ctlSearch(key, v){
+    var s=ctlState(key); s.q=v;
+    clearTimeout(s.timer); s.timer=setTimeout(function(){ ctlLoad(key); }, 300);
+  }
+  function ctlKind(key, v){ ctlState(key).kind=v; ctlLoad(key); }
+  function ctlSt(key, v){ ctlState(key).st=v; ctlLoad(key); }
+  async function ctlLoad(key, more){
+    var s=ctlState(key), wrap=$('ctl-'+key); if(!wrap) return;
+    var seq=++s.seq, from=more?s.rows.length:0;
+    var r;
+    try{ r=await ctlQuery(key, s.st, '*', { count:'exact' })
+      .order('created_at',{ascending:false}).range(from, from+CTL_PAGE-1); }
+    catch(e){ r={error:e}; }
+    if(seq!==s.seq) return;              // あとから打った検索の結果を優先
+    if(!r || r.error){ wrap.classList.add('hidden'); return; }   // 表がまだ無い環境
+    var got=r.data||[];
+    got.forEach(function(o){ CT_CACHE[o.id]=o; });
+    s.rows=more?s.rows.concat(got):got;
+    s.total=(typeof r.count==='number')?r.count:s.rows.length;
+    if(!more) await ctlCount(key, seq);
+    if(seq!==s.seq) return;
+    ctlRender(key);
+  }
+  //  状態ごとの件数（いまの検索・種類の中で）。1件ずつ数えるだけで、行は読まない
+  async function ctlCount(key, seq){
+    var s=ctlState(key), out={};
+    await Promise.all(CTL_ST.map(function(x){
+      return Promise.resolve(ctlQuery(key, x[0], 'id', { count:'exact', head:true }))
+        .then(function(r){ out[x[0]]=(r && !r.error && typeof r.count==='number')?r.count:null; })
+        .catch(function(){ out[x[0]]=null; });
+    }));
+    if(seq===s.seq) s.counts=out;
+  }
+  function ctlRender(key){
+    var s=ctlState(key), wrap=$('ctl-'+key), body=$('ctl-'+key+'-body'); if(!wrap || !body) return;
+    var none=!s.total && !ctlTerm(s.q) && s.st==='all' && s.kind==='all';
+    wrap.classList.toggle('hidden', none);
+    if(none){ body.innerHTML=''; return; }
+    var h='<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:7px;">'
+      +CTL_ST.map(function(x){
+        var n=s.counts[x[0]], on=(s.st===x[0]);
+        return '<button class="ghost" style="font-size:11px;border-radius:99px;padding:3px 10px;'
+          +(on?'background:var(--navy);color:#fff;border:1px solid var(--navy);':'border:1px solid #E2E7EF;')
+          +'" onclick="ctlSt(\''+key+'\',\''+x[0]+'\')">'+x[1]+(n!=null?' '+n:'')+'</button>';
+      }).join('')+'</div>';
+    if(!s.rows.length){
+      h+='<div style="font-size:11.5px;color:var(--muted);padding:12px 0 2px;">当てはまる契約はありません。</div>';
+    }else{
+      h+='<div style="margin-top:6px;">'+s.rows.map(function(o){ return ctRowHtml(o,true); }).join('')+'</div>';
+      var rest=s.total-s.rows.length;
+      h+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid #EDF1F6;padding-top:8px;font-size:11px;color:var(--muted);">'
+        +'<span>全 '+s.total+' 件のうち '+s.rows.length+' 件を表示（新しい順）</span>'
+        +(rest>0?'<button class="ghost" style="font-size:11.5px;border:1px solid #E2E7EF;border-radius:7px;padding:4px 12px;" onclick="ctlLoad(\''+key+'\',true)">さらに '+Math.min(rest,CTL_PAGE)+' 件を表示</button>':'')
+        +'</div>';
+    }
+    body.innerHTML=h;
   }
 
   // ===== Web上での契約締結 =====

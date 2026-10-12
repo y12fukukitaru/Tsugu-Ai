@@ -102,5 +102,16 @@ ok('説明書（パートナー）：相手に見える契約書・解約で消�
   ok('関数がまだ無い環境では担当だけ付ける', /await assignConsultant\(uid, cid\)/.test(takeFn('admContractApply')));
   ok('説明書：契約を送ったパートナーが自動で担当・整えるボタン', /契約を送ったパートナーが自動で担当になります/.test(R('manual-admin.html')) && /20261011040000_contract_auto_assign\.sql/.test(R('manual-admin.html')) && /担当はあなた（契約を送った人）が自動で付きます/.test(R('manual-partner.html')));
 }
+// 2026-10-12：契約の一覧が増えても重くならない／URLをコピーの使いみち
+ok('一覧は20件ずつ・続きは「さらに表示」（全部は読まない）', /var CTL_PAGE=20;/.test(SRC) && /\.range\(from, from\+CTL_PAGE-1\)/.test(takeFn('ctlLoad')) && /さらに '\+Math\.min\(rest,CTL_PAGE\)\+' 件を表示/.test(takeFn('ctlRender')));
+ok('検索・状態・種類はデータベースで（読み込んだ分の中だけではない）', /'agreed_address','agreed_tel'\]/.test(takeFn('ctlQuery')) && /eq\('status','sent'\)\.lt\('expires_at',now\)/.test(takeFn('ctlQuery')) && /neq\('kind','customer'\)/.test(takeFn('ctlQuery')) && /if\(key==='mine'\) q=q\.eq\('offered_by',ME\);/.test(takeFn('ctlQuery')));
+ok('件数は状態ごとにデータベースで数える（行は読まない）', /count:'exact', head:true/.test(takeFn('ctlCount')));
+ok('検索語から区切り・ワイルドカードを外す', /replace\(\/\[,\(\)"\\\\%\*\]\/g,' '\)/.test(takeFn('ctlTerm')));
+ok('あとから打った検索を優先・入れ子のスクロール枠は使わない', /if\(seq!==s\.seq\) return;/.test(takeFn('ctlLoad')) && !/max-height:340px;overflow-y:auto/.test(takeFn('loadAdmContracts')));
+ok('運営・パートナーの両方の一覧で使う', /ctlFrameHtml\('adm'/.test(takeFn('loadAdmContracts')) && /ctlFrameHtml\('mine'/.test(takeFn('loadMyContracts')) && !/limit\(200\)/.test(takeFn('loadAdmContracts')));
+ok('URLをコピーはお返事待ちだけ・同意済みは「控えのURLをコピー」・期限切れと取り消しは出さない', /else if\(o\.status==='sent' && !ctIsExpired\(o\)\)/.test(takeFn('ctRowBtns')) && />控えのURLをコピー</.test(takeFn('ctRowBtns')) && /もう一度結ぶときは、新しく送ってください/.test(takeFn('ctRowBtns')));
+ok('使いみちを一覧の上に書く', /メールが届かないときに、同じ契約書を LINE・SMS で送るため/.test(SRC) && /CT_COPY_NOTE/.test(takeFn('ctlFrameHtml')));
+ok('削除したアカウント：畳む・20件ずつ・検索', /<details id="del-box"/.test(takeFn('loadAdmDeletions')) && /\.range\(from, from\+DEL_PAGE-1\)/.test(takeFn('loadAdmDeletions')) && /var DEL_PAGE=20;/.test(SRC));
+ok('説明書：運営・パートナー', /一覧は<b>新しい順に20件ずつ<\/b>/.test(fs.readFileSync(__dirname+'/../manual-admin.html','utf8')) && /控えのURLをコピー/.test(fs.readFileSync(__dirname+'/../manual-partner.html','utf8')));
 if (bad.length) { console.log(JSON.stringify(bad, null, 1)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK', n, 'checks, 0 failed');
