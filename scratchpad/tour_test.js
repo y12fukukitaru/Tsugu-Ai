@@ -124,5 +124,7 @@ ok('次の段では元の大きさ・自動の置き場所に戻す', /CT\.min=f
 ok('着いた直後の貼り付けは、動かした・小さくした・触れているあいだは吹き出しを動かさない', /if\(CT\.userTop==null && !CT\.min && !ctTouching\) ctPlacePop\(r, 0\);/.test(takeFn('ctFollow')));
 ok('終わったら枠を隠す', /ring\.classList\.add\('off'\)/.test(takeFn('ctEnd')));
 ok('説明書：吹き出しは指で動かせる・小さくできる', /吹き出しは指で上下に動かせ/.test(MANC));
+ok('ページの下に吹き出しぶんの余白（いちばん下の行も隠れない）・終わったら外す', /sp\.id='ct-spacer'/.test(takeFn('ctStart')) && /sp\.style\.height=\(ph\+16\)\+'px'/.test(takeFn('ctPlacePop')) && /\$\('ct-spacer'\); if\(sp\) sp\.remove\(\);/.test(takeFn('ctEnd')));
+ok('説明書：長い欄も最後の行まで読める', /最後の行が吹き出しに隠れずに読めます/.test(MANC));
 if (bad.length) { bad.forEach((b) => console.log('NG ' + b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK ' + n + ' checks, 0 failed');

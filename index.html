@@ -2043,7 +2043,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261012-01';
+  var APP_BUILD='20261012-02';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -25913,6 +25913,9 @@
     document.body.classList.add('ct-on');
     //  枠はページに貼り付ける（ガイドの層の外、body の直下へ）。ページと一緒に動く
     var ring=$('ct-ring'); if(ring){ if(ring.parentNode!==document.body) document.body.appendChild(ring); ring.classList.remove('off'); }
+    //  ページの下に吹き出しの高さぶんの余白。いちばん下までスクロールしても、
+    //  最後の行が吹き出しの下に隠れたままにならない
+    if(!$('ct-spacer')){ var sp=document.createElement('div'); sp.id='ct-spacer'; sp.setAttribute('aria-hidden','true'); document.body.appendChild(sp); }
     ctDragBind();
     //  指でスクロールしたときは何もしない（枠はページと一緒に動き、吹き出しはその場に残る）。
     //  画面の大きさが変わったときだけ置き直す
@@ -26005,6 +26008,8 @@
     pop.style.transition = dur>0 ? ('left '+dur+'ms '+CT_EASE+',top '+dur+'ms '+CT_EASE+',opacity .2s ease') : 'opacity .2s ease';
     var pw=pop.offsetWidth||310, ph=pop.offsetHeight||170;
     var vw=window.innerWidth, vh=ctVH(), bottom=r.top+r.height;
+    //  下の余白は、ふだんの大きさの吹き出しに合わせる（小さくしても縮めない。縮めると画面が跳ねる）
+    var sp=$('ct-spacer'); if(sp && !(CT && CT.min)) sp.style.height=(ph+16)+'px';
     var left=Math.min(Math.max(8, r.left+r.width/2-pw/2), vw-pw-8);
     pop.style.left=left+'px';
     //  小さくしているときは画面の下に。指で動かしたときは、その位置（画面からはみ出さない範囲）
@@ -26199,6 +26204,7 @@
     $('ct-layer').classList.add('hidden');
     document.body.classList.remove('ct-on');
     var ring=$('ct-ring'); if(ring) ring.classList.add('off');
+    var sp=$('ct-spacer'); if(sp) sp.remove();
     var pop=$('ct-pop'); if(pop) pop.classList.remove('min');
     window.removeEventListener('resize', ctReposition);
     document.removeEventListener('keydown', ctKey);
