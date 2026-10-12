@@ -70,9 +70,9 @@
   *{box-sizing:border-box;}
   /* 横スクロールの抑止は body 側のみ（html に overflow を付けると iOS で上部タップのスクロール復帰が無効化されるため） */
   body{overflow-x:clip;}
-  /* iPhone（LINE・Gmail の中のブラウザを含む）は、body だけ止めても、画面の外に
-     出ている部品（閉じたメニューなど）の分まで横に動かせてしまう。根元（html）でも止める */
-  html{overflow-x:hidden;}
+  /* 根元（html）には overflow を付けない。付けると iPhone で、右下の継ナビくんのような
+     画面に固定した部品が、指でスクロールしたときにページと一緒に動いてずれる（2026-10-12）。
+     横に動いてしまったときは、下の fixX（左端へ戻す）で受ける */
   /* 契約書：本文の「──────」や長い英数字も枠の中で折り返す（枠の中で横に動かない） */
   .ct-text{overflow-wrap:anywhere;word-break:break-word;overflow-x:hidden;}
   @media(max-width:600px){
@@ -2043,7 +2043,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261012-02';
+  var APP_BUILD='20261012-03';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
