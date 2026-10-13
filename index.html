@@ -1494,6 +1494,7 @@
   /* 端末の「視差効果を減らす」設定を尊重する */
   @media(prefers-reduced-motion:reduce){
     .knv-fab,.knv-fab.hop,.knv-fab.back,.knv-fab.leaving,.tsg-svg .tsg-eye,.tsg-svg .tsg-star,.tsg-svg .tsg-ear{animation:none!important;}
+    .knv-fab,body.knv-tuck .knv-fab{transition:opacity .2s,visibility .2s!important;rotate:0deg!important;}
     .knv-panel,.knv-panel.closing{animation:none!important;}
   }
   .tsg-name{font-size:.65625rem;font-weight:700;color:#8A6A12;letter-spacing:.05em;margin-bottom:3px;}
@@ -1639,10 +1640,21 @@
   body:has(#cl-dback:not(.hidden)) .knv-fab,
   body:has(.cl-sheet-back:not(.hidden)) .knv-fab,
   body:has(.modal-back:not(.hidden):not(#cl-modal)) .knv-fab{opacity:0;visibility:hidden;pointer-events:none;}
-  .knv-fab{transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s,opacity .2s,visibility .2s;}
+  /*  引っ込む・出てくるときの動き（2026-10-13）。transform はふわふわ（knv-float）と押したときに
+      使っているので、ここでは別の性質の translate・rotate を動かす（重ねて効く。ふわふわも止めない）。
+        引っ込む … いったん少し伸び上がってから、首をかしげて画面の下へもぐる
+        出てくる … 下から跳ね上がり、少し行き過ぎて戻る（ぴょこん）。かしげた首も戻す
+      transition は「行き先の側」に書いたものが使われるので、引っ込む動きは knv-tuck の側に書く */
+  .knv-fab{translate:0 0;rotate:0deg;
+    transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s,
+      translate .6s cubic-bezier(.34,1.7,.5,1),rotate .7s cubic-bezier(.34,2.2,.5,1),
+      opacity .22s ease-out,visibility .2s;}
   @media(max-width:600px){
-    body.knv-tuck:not(.ct-on) .knv-fab{transform:translateY(calc(100% + 30px));opacity:0;pointer-events:none;animation:none;}
-    body.knv-fab-rt.knv-tuck:not(.ct-on) .knv-fab,body.knv-fab-lt.knv-tuck:not(.ct-on) .knv-fab{transform:translateY(calc(-100% - 80px));}
+    body.knv-tuck:not(.ct-on) .knv-fab{translate:0 calc(100% + 30px);rotate:-16deg;opacity:0;pointer-events:none;
+      transition:transform .2s,box-shadow .2s,
+        translate .42s cubic-bezier(.55,-0.55,.75,.3),rotate .42s cubic-bezier(.55,-0.55,.75,.3),
+        opacity .2s ease-in .2s,visibility 0s linear .42s;}
+    body.knv-fab-rt.knv-tuck:not(.ct-on) .knv-fab,body.knv-fab-lt.knv-tuck:not(.ct-on) .knv-fab{translate:0 calc(-100% - 80px);rotate:16deg;}
     body:not(.knv-fab-rt):not(.knv-fab-lt) .wrap{padding-bottom:110px;}
     body:not(.knv-fab-rt):not(.knv-fab-lt) #cl-modal .modal-body{padding-bottom:110px;}
   }
@@ -2065,7 +2077,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261013-01';
+  var APP_BUILD='20261013-02';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
