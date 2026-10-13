@@ -388,7 +388,7 @@ function takeFn(name) {
   ok('窓は小窓より上に重なる', /\.cfm-bg\{[^}]*z-index:82;/.test(SRC) && /\.cpk-bg\{[^}]*z-index:80;/.test(SRC));
   ok('なぜ別の窓かを書き残す', /上に貼り付いた操作列と、下から\s*\n\s*上がってくるスマホの文字入力の板に挟まれて/.test(SRC));
   //  iPhone の拡大（16px 未満の欄に触れると起きる）を止める
-  ok('スマホでは入力欄をぜんぶ 16px に', /@media\(max-width:760px\)\{\s*\n\s*\.cfm-bg\{[^}]*\}\s*\n\s*\.cfm\{[^}]*\}[\s\S]{0,200}input,select,textarea\{font-size:16px!important;\}/.test(SRC));
+  ok('スマホでは入力欄をぜんぶ 16px に', /@media\(max-width:760px\)\{\s*\n\s*\.cfm-bg\{[^}]*\}\s*\n\s*\.cfm\{[^}]*\}[\s\S]{0,200}input,select,textarea\{font-size:max\(16px,1rem\)!important;\}/.test(SRC));
   ok('なぜ 16px かを書き残す', /iPhone が画面を拡大し、そのまま横に/.test(SRC));
   //  入力の窓は body 直下に出す。継ナビくんの「外側を押したら閉じる」に
   //  外側と見なされないよう、閉じなくてよい側の一覧に入っていること
@@ -402,7 +402,7 @@ function takeFn(name) {
   ok('横幅の下限を外す', /\.wk\{min-width:0;\}/.test(mob));
   ok('目盛りの幅を詰める', /\.wk-row\{grid-template-columns:40px repeat\(7,minmax\(0,1fr\)\);\}/.test(mob));
   ok('罫線と今の線も詰めた幅に合わせる', /\.wk-line,\.wk-now\{left:40px;\}/.test(mob));
-  ok('曜日の文字を少し小さく', /\.wk-hcell\{font-size:9\.5px;\}/.test(mob));
+  ok('曜日の文字を少し小さく', /\.wk-hcell\{font-size:.59375rem;\}/.test(mob));
   ok('なぜ横スクロールをなくすかを書き残す', /指の動きに一拍遅れて見えた/.test(mob));
   //  パソコンの幅では今までどおり（514px の下限）
   ok('広い画面の下限はそのまま', /\n  \.wk\{min-width:514px;\}/.test(SRC));
@@ -414,8 +414,8 @@ function takeFn(name) {
   ok('枠を種類の色で塗り、白い字に（明るい色は濃い字）', /\.wk-ev\{background:var\(--fg\)!important;color:var\(--fgtxt,#fff\)!important;/.test(mob));
   ok('題名は折り返す（行数は JS が決める）', /\.wk-ev b\{white-space:normal;word-break:break-all;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;/.test(mob));
   ok('枠の中の時刻は出さない（目盛りで分かる）', /\.wk-ev span\{display:none;\}/.test(mob));
-  ok('横に3文字入る大きさ（10px・余白 2px）', /\.wk-ev\{[^}]*font-size:10px;line-height:1\.25;padding:2px 2px;/.test(mob) && /横に3文字は入る大きさに/.test(mob));
-  ok('終日の札も3文字入る余白', /\.wk-chip\{[^}]*font-size:9\.5px;padding:1px 2px;/.test(mob));
+  ok('横に3文字入る大きさ（10px・余白 2px）', /\.wk-ev\{[^}]*font-size:.625rem;line-height:1\.25;padding:2px 2px;/.test(mob) && /横に3文字は入る大きさに/.test(mob));
+  ok('終日の札も3文字入る余白', /\.wk-chip\{[^}]*font-size:.59375rem;padding:1px 2px;/.test(mob));
   ok('終日の札も塗る', /\.wk-chip\{background:var\(--fg\)!important;color:var\(--fgtxt,#fff\)!important;/.test(mob));
   ok('塗る色を枠に持たせる（自分の予定は青）', /'--fg:'\+\(kk\?kk\.fg:'#2C5DA8'\)\+';--fgtxt:/.test(wv) && /style="--fg:'\+\(k\?k\.fg:'#2C5DA8'\)\+';--fgtxt:/.test(wv));
   ok('何行まで折り返すかは枠の高さから', /var lines=Math\.max\(1, Math\.floor\(\(hgt-4\)\/12\.5\)\);/.test(wv) && /-webkit-line-clamp:'\+lines\+';/.test(wv));
@@ -481,7 +481,7 @@ function takeFn(name) {
   ok('種類の色は CAL_KINDS の fg', /CAL_KINDS\[k\]\.fg\+'/.test(lg) && /esc\(CAL_KINDS\[k\]\.label\)/.test(lg));
   ok('Google のカレンダーは色と名前（重複なし）', /if\(!gcal\[x\.calId\]\)\{ gcal\[x\.calId\]=\{ color:x\.color, name:x\.calName\|\|'Google' \}; gorder\.push\(x\.calId\); \}/.test(lg));
   ok('Google の色は文字を無害化して出す', /background:'\+esc\(gcal\[id\]\.color\)\+'/.test(lg));
-  ok('暦の下に並ぶ', /h\+=calLegend\(CAL_ROWS\.rows\);\s*\n\s*h\+=koyoLegend\(\);\s*\n\s*h\+='<div style="font-size:11px;color:#94A2B6;line-height:1\.7;margin-top:6px;">'/.test(takeFn('knvRenderCal')));
+  ok('暦の下に並ぶ', /h\+=calLegend\(CAL_ROWS\.rows\);\s*\n\s*h\+=koyoLegend\(\);\s*\n\s*h\+='<div style="font-size:.6875rem;color:#94A2B6;line-height:1\.7;margin-top:6px;">'/.test(takeFn('knvRenderCal')));
   ok('凡例の CSS', /\.cal-lg\{display:flex;flex-wrap:wrap;gap:4px 11px;/.test(SRC) && /\.cal-lg i\{width:9px;height:9px;border-radius:50%;/.test(SRC));
   //  実際に動かして確かめる
   const F = new Function('esc', 'CAL_KINDS', lg + '\nreturn calLegend;');
@@ -522,7 +522,7 @@ function takeFn(name) {
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261012-04', '20261012-04']);
+  is('版が揃う', [build, VER.build], ['20261013-01', '20261013-01']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

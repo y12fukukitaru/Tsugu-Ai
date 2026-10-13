@@ -50,7 +50,7 @@ const M = new Function(base + 'return {Q:SURVEY_Q, label:surveyPeriodLabel, html
   ok('見出しに「匿名」と期と締め切り', /3分アンケート（匿名）/.test(h) && /2026年7〜9月/.test(h) && /2026-10-21 まで/.test(h));
   ok('匿名の説明が枠の中に', /🔒 /.test(h) && h.indexOf('誰が答えたかは記録されず') > 0);
   is('5問 × 5つのボタン', (h.match(/onclick="surveyPick\('q\d',\d\)"/g) || []).length, 25);
-  ok('ボタンに数字と言葉（1=そう思わない … 5=そう思う）', /<b style="font-size:14px;display:block;">1<\/b>そう思わない/.test(h) && /<b style="font-size:14px;display:block;">5<\/b>そう思う/.test(h));
+  ok('ボタンに数字と言葉（1=そう思わない … 5=そう思う）', /<b style="font-size:.875rem;display:block;">1<\/b>そう思わない/.test(h) && /<b style="font-size:.875rem;display:block;">5<\/b>そう思う/.test(h));
   ok('ひとこと欄は任意・匿名', /id="sv-comment"/.test(h) && /（任意）/.test(h) && /匿名です/.test(h));
   ok('送るボタンは「匿名で送る」', /onclick="surveySubmit\(\)">匿名で送る</.test(h));
   const hp = M.html('consultant', w, false);
@@ -75,7 +75,7 @@ const M = new Function(base + 'return {Q:SURVEY_Q, label:surveyPeriodLabel, html
   const h = M.adm(w, rows, { '2026-Q3': 3, '2026-Q2': 1 });
   ok('受付中の表示と「いま受付を開く」', /受付中：2026年7〜9月/.test(h) && /admSurveyOpen\(\)/.test(h));
   ok('答えた人数は印の表から', /答えた人 3名/.test(h));
-  ok('平均と分布と文章', /<b style="color:#8A6A12;font-size:13px;">3\.0<\/b>/.test(h) && /1:0 2:1 3:0 4:1 5:0/.test(h) && /台本が良い/.test(h));
+  ok('平均と分布と文章', /<b style="color:#8A6A12;font-size:.8125rem;">3\.0<\/b>/.test(h) && /1:0 2:1 3:0 4:1 5:0/.test(h) && /台本が良い/.test(h));
   ok('LINE の答え方を運営にも案内', /4 5 3 4 5/.test(h));
   const hm = M.adm({ open: true, period: '2026-Q3', until: '2026-10-05', manual: true }, [], {});
   ok('手動で開いているときは閉じるボタン', /admSurveyClose\(\)/.test(hm) && /手動/.test(hm));
@@ -131,7 +131,7 @@ const M = new Function(base + 'return {Q:SURVEY_Q, label:surveyPeriodLabel, html
   ok('パートナー説明書：初期導入費の説明のしかた', /初期導入費の説明は/.test(MANP) && /第2条の2/.test(MANP));
   ok('経営者向け pitch と説明書：初期導入費の定義', /はじめの90日（土台づくり）で担当パートナーと運営が動くぶんの費用/.test(PITC) && /はじめの90日（土台づくり）で担当パートナーと運営が動くぶんの費用/.test(MANC));
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261012-04', '20261012-04']);
+  is('版が揃う', [build, VER.build], ['20261013-01', '20261013-01']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

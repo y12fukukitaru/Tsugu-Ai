@@ -76,7 +76,7 @@ const S = new Function(base + 'return {paths:SCALE_PATHS, st:SCALE_STATUS, nums:
   ok('可否は断定しないと書く', /借入・出資・上場の可否は金融機関・投資家・J-Adviser が決めます/.test(h0));
   const h1 = S.html({ main: 'debt', target_year: 2029, targets: { revY: 36000, opY: 2000 }, items: { debt: { status: 'doing', note: '公庫に相談中' }, list: { status: 'skip' } } }, ctx, 'partner', true);
   ok('パートナーには「経営者と同じもの」', /経営者の画面「スケールの設計」と<b>同じもの<\/b>です/.test(h1));
-  ok('主軸の道に印と、向く状況', /<span class="tag" style="font-size:10px;background:var\(--navy\);color:#fff;">主軸<\/span>/.test(h1) && /返済原資（営業利益＋減価償却）に余裕がある／債務償還年数が短い/.test(h1));
+  ok('主軸の道に印と、向く状況', /<span class="tag" style="font-size:.625rem;background:var\(--navy\);color:#fff;">主軸<\/span>/.test(h1) && /返済原資（営業利益＋減価償却）に余裕がある／債務償還年数が短い/.test(h1));
   ok('目標との差（届いていなければ赤）', /color:#A9403D;font-weight:600;">\+12,000万円/.test(h1) && /\+1,100万円/.test(h1));
   ok('札とメモ', /取り組み中/.test(h1) && /公庫に相談中/.test(h1) && /scaleNote\('debt'/.test(h1));
   ok('パートナーには道具の名前だけ（リンクなし）', !/goSec\(/.test(h1) && /デットナビ・資金調達ロードマップ・銀行提出パッケージ/.test(h1));
@@ -119,7 +119,7 @@ const S = new Function(base + 'return {paths:SCALE_PATHS, st:SCALE_STATUS, nums:
 // ⑥ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261012-04', '20261012-04']);
+  is('版が揃う', [build, VER.build], ['20261013-01', '20261013-01']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
