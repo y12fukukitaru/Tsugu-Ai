@@ -134,10 +134,10 @@ ok('知識：月表示に予定そのもの（両方）', (SRC.match(/月表示�
 //  2026-10-10：日時・メモのボタンが小さい・開いたとき日付と時刻が白い箱 → 枠のあるボタン、名前つきの欄、いまの日時
 {
   const paint = (() => { const i = SRC.indexOf('\n  function todoPaint('); return SRC.slice(i, SRC.indexOf('\n  }\n', i)); })();
-  ok('日時・メモは枠のあるボタン（スマホ38px）', /class="todo-more-btn'\+\(more\?' on':''\)\+'"/.test(paint) && /\.todo-more-btn\{font-size:13px;min-height:38px;/.test(SRC));
+  ok('日時・メモは枠のあるボタン（スマホ38px）', /class="todo-more-btn'\+\(more\?' on':''\)\+'"/.test(paint) && /\.todo-more-btn\{font-size:.8125rem;min-height:38px;/.test(SRC));
   ok('日付・時刻・顧客・メモに名前', /<div class="tf"><span>日付　<b id="td-date-lab" class="td-date-lab"><\/b><\/span>'\n\s*\+'<input id="td-date" type="hidden"/.test(paint) && /<span>時刻<\/span><div class="tf-time">'\n\s*\+'<input id="td-time"/.test(paint) && /<span>メモ（任意）<\/span><textarea id="td-note"/.test(paint));
-  ok('スマホの欄は44px・文字16px（拡大しない）', /\.todo-more input\[type=date\],\.todo-more input\[type=time\],\.todo-more select,\.todo-more textarea\{min-height:44px;font-size:16px;\}/.test(SRC));
-  ok('スマホの期限の札も大きく', /\.todo-chip\{font-size:12\.5px;padding:0 13px;min-height:36px;\}/.test(SRC));
+  ok('スマホの欄は44px・文字16px（拡大しない）', /\.todo-more input\[type=date\],\.todo-more input\[type=time\],\.todo-more select,\.todo-more textarea\{min-height:44px;font-size:max\(16px,1rem\);\}/.test(SRC));
+  ok('スマホの期限の札も大きく', /\.todo-chip\{font-size:.78125rem;padding:0 13px;min-height:36px;\}/.test(SRC));
   const tg = takeFn('todoMoreToggle');
   ok('開いたとき、日付が空ならいまの日時（時刻は次の15分）', /if\(TODO_MORE && !TODO_EDIT\)\{/.test(tg) && /d\.value=todoYmd\(new Date\(\)\);/.test(tg) && /if\(tm && !tm\.value && !TODO_ALLDAY\) tm\.value=todoNext15\(\);/.test(tg) && /Math\.ceil\(\(now\.getHours\(\)\*60\+now\.getMinutes\(\)\+1\)\/15\)\*15/.test(takeFn('todoNext15')));
   ok('「なし」で日付と時刻を消せる（これまでどおり）', /if\(!v\)\{ todoAllDay\(false\); var tm=\$\('td-time'\); if\(tm\) tm\.value=''; \}/.test(SRC));

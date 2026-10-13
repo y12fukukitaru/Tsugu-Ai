@@ -79,7 +79,7 @@ const M = new Function(base + 'return {cats:AFTER_CATS, ind:AFTER_IND, topics:AF
   ok('想定の3つの選択と、進み具合', /想定する形/.test(h) && /責任者の想定/.test(h) && /対象の業種/.test(h) && /準備した 1／学んだ 0／全/.test(h));
   ok('分類の切替と「自社に効く」', /afterCat\('flag'\)/.test(h) && /自社に効く \d+</.test(h) && M.cats.every((x) => h.indexOf("afterCat('" + x.k + "')") > 0));
   ok('項目に待ち受けること・準備・自社では・学ぶ・状態・メモ', /待ち受けること：/.test(h) && /いま準備できること：/.test(h) && /<b>自社では：<\/b>/.test(h) && /afterAsk\('admin_license'\)/.test(h) && /afterStatus\('admin_license','ready'\)/.test(h) && /行政書士に確認済み/.test(h));
-  ok('準備した項目は緑の印', /<span class="tag green" style="font-size:10px;">準備した<\/span>/.test(h));
+  ok('準備した項目は緑の印', /<span class="tag green" style="font-size:.625rem;">準備した<\/span>/.test(h));
   ok('1年を想像するボタンと保存', /onclick="afterScenario\(\)"/.test(h) && /onclick="afterSave\(\)"/.test(h));
   const hf = M.html(e, c, 'customer', 'flag');
   ok('「自社に効く」だけに絞れる', (hf.match(/待ち受けること：/g) || []).length === M.flags(e, c).length);
@@ -104,7 +104,7 @@ const M = new Function(base + 'return {cats:AFTER_CATS, ind:AFTER_IND, topics:AF
   ok('SQL：表と RLS', /create table if not exists public\.buyer_prep/.test(SQL) && /customer_may\(customer_id\)/.test(SQL) && /期待値：表=1/.test(SQL));
   ok('説明書：経営者・パートナー', /<h3>買った後に備える<\/h3>/.test(MANC) && /<h3>買った後に備える<\/h3>/.test(MANP));
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261012-04', '20261012-04']);
+  is('版が揃う', [build, VER.build], ['20261013-01', '20261013-01']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
