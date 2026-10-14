@@ -507,15 +507,16 @@ function takeFn(name) {
   no('パートナー：古い「入力欄は暦の上」が残っていない', /入力欄は暦の上にあるので/.test(MANP));
   ok('運営：Google 連携と Workspace の注意', /「Googleでつなぐ」で Google カレンダーと双方向/.test(MANA) && /カレンダーが使えません/.test(MANA));
   //  継ナビくんの案内（サポートの受け答え）にも入っている。両ロール分
-  const guide = SRC.match(/横に払う\(スワイプ\)と前後の月・週へ。操作列/g) || [];
-  is('継ナビくんの案内にスワイプと上に残る操作列（2ロール）', guide.length, 2);
+  const guide = SRC.match(/前後の月・週へは日付の両脇の紺の「‹ 前の週」「次の週 ›」\(月表示は前の月・次の月\)で送る\(左右に払うと継ナビくん自体が閉じるので、払いでは送らない\)。週の始まりは設定の「予定の週の始まり」/g) || [];
+  is('継ナビくんの案内に前後のボタン・払いでは送らない・週の始まり（2ロール）', guide.length, 2);
+  no('継ナビくんの案内に古い「横に払う」が残っていない', /横に払う\(スワイプ\)と前後の月・週へ/.test(SRC));
   is('継ナビくんの案内に色と入力の窓（2ロール）', (SRC.match(/色は青=自分の予定・金=面談・橙=課題の期日/g) || []).length, 2);
   is('継ナビくんの案内に Workspace の注意（2ロール）', (SRC.match(/「カレンダーが使えません」と出るときは、そのアカウントにカレンダーの機能が付いていない/g) || []).length, 2);
 }
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261014-06', '20261014-06']);
+  is('版が揃う', [build, VER.build], ['20261014-07', '20261014-07']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

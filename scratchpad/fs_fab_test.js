@@ -42,5 +42,11 @@ ok('⑧ 本体の縦のスクロールバーの幅だけ帯の右の余白を広
 ok('⑧ 大きなパネルでは年月・曜日・予定の数と内訳を添える（小さな画面は日付だけ）', /\.knv-calbar\{container-type:inline-size;\}/.test(SRC) && /@container \(min-width:560px\)\{/.test(SRC) && /function calHeadLab\(view, cur, byDay\)/.test(SRC) && /'<div class="cl-eye">'\+eye\+'<\/div><div class="cl-main">'\+main\+'<\/div><div class="cl-stats">'\+st\+'<\/div>'/.test(SRC) && /\.cal-nav \.cal-lab \.cl-eye,\.cal-nav \.cal-lab \.cl-stats,\.cal-nav \.cal-lab \.wd\{display:none;\}/.test(SRC));
 ok('⑧ 更新は紺の縁の札・回る矢印・終わると ✓', /class="cb-sync" onclick="calRefresh\(this\)"/.test(SRC) && /\.knv-calbar \.cb-sync\.busy svg\{animation:cbSpin \.8s linear infinite;\}/.test(SRC) && /t\.textContent='✓ 更新しました'/.test(SRC) && /@container \(min-width:400px\)\{ \.knv-calbar \.cb-sync \.t\{display:inline;\} \}/.test(SRC) && /紺の縁の「更新」/.test(R('manual-customer.html')));
 ok('⑨ 月/週/一覧の囲いは中身の幅（スマホ用の width:100% を打ち消す）・大きな文字でも段からはみ出さない', /\.knv-calbar \.vaseg\{display:inline-flex;width:auto;flex:0 0 auto;/.test(SRC) && /\.knv-calbar \.vaseg button\{width:auto;flex:0 0 auto;min-width:2\.9em;/.test(SRC) && /\.knv-calbar \.cb-top\{display:flex;align-items:center;flex-wrap:wrap;/.test(SRC));
+// 2026-10-14：M&A の優遇を「顧問料の控除（直近36か月分まで）」に（年10%・最大50%の割引はやめた）
+ok('⑩ 顧問料の控除：36か月まで・0円を下回らない・画面と契約書・説明書と資料', /var FA_CREDIT_MAX_MONTHS=36;/.test(SRC) && /function faAfterCredit\(fee, credit\)\{ return Math\.max\(0,/.test(SRC) && !/function faPerk\(/.test(SRC)
+  && /直近36か月分を上限として、/.test(R('supabase/migrations/20261014000000_fa_fee_credit.sql')) && /控除後のFA報酬は0円を下回りません/.test(R('supabase/migrations/20261014000000_fa_fee_credit.sql'))
+  && /差し引いた後の報酬を、運営と担当パートナーで折半/.test(SRC)
+  && ['manual-customer.html','manual-buyer.html','manual-seller.html','manual-partner.html','manual-admin.html','pitch-customer.html','pitch-seller.html','pitch-buyer.html','pitch-partner.html','pitch-bank.html','sheet-buyer.html','sheet-seller.html','pitch-ep1.html','pitch-ep2.html','pitch-ep2-member.html'].every((f) => !/最大50%|10%ずつ|継続年数×10%|117万/.test(R(f)))
+  && /36か月/.test(R('manual-customer.html')) && /差し引いた後の報酬を折半/.test(R('manual-partner.html')));
 if (bad.length) { bad.forEach((b) => console.log('NG ' + b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK ' + n + ' checks, 0 failed');
