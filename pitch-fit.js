@@ -72,11 +72,18 @@
     //  前に決めた高さが残っていると、全部がその高さで返ってきてしまう
     deck.style.removeProperty('--slideh');
     var w=(cur&&cur.offsetWidth)||BASE_W;
+    //  倍率をかけると、紙は横に広がって基準幅（max-width）に戻る。
+    //  画面が基準幅より狭いまま測ると、紙の高さを低く見積もり、
+    //  スマホの横向きや小さな窓で紙が下の操作バーの下にはみ出していた。
+    //  倍率をかける画面（821px以上）では、いま出ている一枚も含めて基準幅で測る
+    var mw=cur ? parseFloat(getComputedStyle(cur).maxWidth) : NaN;
+    var atBase=window.innerWidth>820 && mw>0 && Math.abs(w-mw)>1;
+    if(atBase) w=mw;
     var disp=cur ? (getComputedStyle(cur).display||'flex') : 'flex';
     if(disp==='none') disp='flex';
     var tall=0;
     all.forEach(function(s){
-      var h=(s===cur) ? (s.offsetHeight||0) : natH(s, w, disp);
+      var h=(s===cur && !atBase) ? (s.offsetHeight||0) : natH(s, w, disp);
       if(h>tall) tall=h;
     });
     if(tall<=0) tall=1;
@@ -84,7 +91,8 @@
     var vw=document.documentElement.clientWidth, vh=window.innerHeight;
     var z=Math.min((vw-28)/BASE_W, (vh-barH()-PAD)/tall);
     if(!isFinite(z)||z<=0) z=1;
-    return Math.max(0.6, Math.min(z, 2.6));
+    //  下限は、スマホの横向き（高さ390px前後）でも一枚が丸ごと入る倍率まで
+    return Math.max(0.4, Math.min(z, 2.6));
   }
   function apply(){
     var deck=document.querySelector('.deck'); if(!deck) return;
@@ -178,17 +186,24 @@
   }
 
   // ===== ③ スワイプ =====
-  var tx=0, ty=0, swiped=false;
+  var tx=0, ty=0, swiped=false, inWide=false;
+  //  横に送れる表・画面の写しの上で指を動かしたときは、頁を送らない（表を横に送る）
+  function wideAt(t){
+    var w=t && t.closest ? t.closest('.dr-wide,.scr') : null;
+    return !!(w && w.scrollWidth>w.clientWidth+1);
+  }
   function bindSwipe(){
     document.addEventListener('touchstart', function(e){
       if(e.touches.length!==1) return;
       tx=e.touches[0].clientX; ty=e.touches[0].clientY; swiped=false;
+      inWide=wideAt(e.target);
       //  指の端末には hover が無いので、下のほうを触ったときだけバーを出す。
       //  どこを触っても出ると、送るたびに操作が現れることになる
       if(ty>window.innerHeight-110) showUi(true);
     }, {passive:true});
     document.addEventListener('touchend', function(e){
       var t=e.changedTouches&&e.changedTouches[0]; if(!t) return;
+      if(inWide){ inWide=false; return; }
       var dx=t.clientX-tx, dy=t.clientY-ty;
       //  横に 45px 以上、かつ縦より横のほうが大きいときだけ「送った」とみなす。
       //  斜めや縦の指の動きで頁が飛ぶと、読んでいる人が迷子になる

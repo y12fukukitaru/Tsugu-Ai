@@ -236,7 +236,16 @@
   '.dr-slide table{max-width:100%;}',
   '.dr-slide .nt,.dr-slide .kv{display:table;}',
   '.dr-slide .nt th:first-child,.dr-slide .nt td:first-child{min-width:7.5em;}',
-  '.dr-wide{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;}',
+  '.dr-slide .dr-wide{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;}',
+  /* スライドで見る（スマホ・820px以下）：横に長い表と画面の写しは、紙の中でだけ横に送る。
+     紙は横にはみ出すと切れて見えなくなる（紙の外は隠している）。
+     表の1列目（項目名）は、1〜2文字ずつ縦に折れないよう幅を残す */
+  '@media screen and (max-width:820px){',
+  '  .slide .grid > *,.slide [style*="grid-template-columns"] > *,.slide .duo > *{min-width:0;}',
+  '  .slide .dr-wide,.slide .scr{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;}',
+  '  .slide .dr-wide th:first-child,.slide .dr-wide td:first-child{min-width:7.5em;}',
+  '  .slide code{overflow-wrap:anywhere;}',
+  '}',
   '.dr-foot{font-size:12.5px;color:var(--dr-muted);text-align:center;padding:10px 0 0;}',
   /* 幕（スマホで目次を開いたときの後ろ） */
   '.dr-scrim{display:none;}',
@@ -283,6 +292,18 @@
   '}'
   ].join('\n');
   var st=el('style'); st.id='dr-style'; st.textContent=CSS; D.head.appendChild(st);
+
+  //  スライドで見るときも、表を「横に送れる枠」に入れておく（枠は狭い画面でだけ効く）。
+  //  画面の写し（.scr）の中の表は、写しごと横に送るので入れない
+  function wrapWide(root){
+    [].forEach.call(root.querySelectorAll('table'),function(tb){
+      if(tb.closest && (tb.closest('.scr') || tb.closest('.talk'))) return;
+      if(tb.parentNode && !tb.parentNode.classList.contains('dr-wide')){
+        var w=el('div','dr-wide'); tb.parentNode.insertBefore(w,tb); w.appendChild(tb);
+      }
+    });
+  }
+  S.forEach(wrapWide);
   //  印刷の紙の向き。資料は A4 横で作ってあるので、目次から読むのときだけ縦にする
   var pageSt=el('style'); pageSt.id='dr-page'; pageSt.media='not all';
   pageSt.textContent='@page{size:A4 portrait;margin:12mm;}';
@@ -499,12 +520,7 @@
       sec.className=(' '+c.className+' ').replace(/ slide | on /g,' ').trim()+' dr-slide';
       sec.innerHTML=c.innerHTML;
       //  横に長い表は、札の中でだけ横に送れるようにする（頁全体を横に動かさない）
-      [].forEach.call(sec.querySelectorAll('table'),function(tb){
-        if(tb.closest && tb.closest('.scr')) return;
-        if(tb.parentNode && !tb.parentNode.classList.contains('dr-wide')){
-          var w=el('div','dr-wide'); tb.parentNode.insertBefore(w,tb); w.appendChild(tb);
-        }
-      });
+      wrapWide(sec);
       card.appendChild(sec);
       mainEl.appendChild(card);
       cards[i]=card;
