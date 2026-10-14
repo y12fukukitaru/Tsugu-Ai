@@ -26,11 +26,14 @@ ok('④ 動きを控える設定の方には、ふっと消える・出るだけ
 ok('④ ページとカルテの下に余白（右下・左下のときだけ）', /body:not\(\.knv-fab-rt\):not\(\.knv-fab-lt\) \.wrap\{padding-bottom:110px;\}/.test(SRC) && /#cl-modal \.modal-body\{padding-bottom:110px;\}/.test(SRC));
 ok('⑤ 説明書（経営者・パートナー）', /スマホでもパソコンでも<\/b>、表や数字・ボタンの文字も一緒に大きくなります/.test(R('manual-customer.html')) && /下へスクロールしているあいだは右下にもぐって引っ込み<\/b>、少し上へ戻すとぴょこんと出てきます/.test(R('manual-customer.html')) && /下へスクロールしているあいだ引っ込み/.test(R('manual-partner.html')));
 
-// 2026-10-14：予定の前後へ送るボタンを大きく・払いを iPhone でも確実に
+// 2026-10-14：予定の操作を本体の外の帯に・下へ読むと畳む・前後の札の中心・週の始まり
 const calFn = SRC.slice(SRC.indexOf('  async function knvRenderCal('), SRC.indexOf('// .cal-stick', SRC.indexOf('  async function knvRenderCal(')));
-ok('⑥ 前後へ送る札：紺に金の矢印・「前の週／次の週」（月は「前の月／次の月」）', /class="cal-arw prev" onclick="calMove\(-1\)" aria-label="前の'\+unit\+'へ"/.test(calFn) && /class="cal-arw next" onclick="calMove\(1\)"/.test(calFn) && /var unit=\(view==='month'\)\?'月':'週';/.test(calFn) && /\.cal-arw\{[^}]*min-height:40px;[^}]*border:1\.5px solid #CFA860;background:linear-gradient\(160deg,#24426E 0%,#0E2038 100%\)/.test(SRC));
-ok('⑥ 押すと矢印が進む向きへ・札が沈む・狭い画面では丸い札だけ', /\.cal-arw\.next:active svg\{transform:translateX\(3px\);\}/.test(SRC) && /\.cal-arw:active\{transform:translateY\(1px\) scale\(\.95\);/.test(SRC) && /@media\(max-width:380px\)\{ \.cal-arw\{padding:0 10px;\} \.cal-arw \.t\{display:none;\}/.test(SRC));
-ok('⑥ 払い：横の指の動きをブラウザに取らせない・touchcancel でも判定', /#knv-cal\{touch-action:pan-y pinch-zoom;\}/.test(SRC) && /box\.addEventListener\('touchcancel', end, \{ passive:true \}\);/.test(SRC) && /CAL_SW\.lx=e\.touches\[0\]\.clientX;/.test(SRC));
-ok('⑥ 説明書', /紺の「‹ 前の週」「次の週 ›」/.test(R('manual-customer.html')) && /紺の「‹ 前の週」「次の週 ›」/.test(R('manual-partner.html')));
+ok('⑥ 前後の札：紺に金の矢印・「前の週／次の週」（月は「前の月／次の月」）', /class="cal-arw prev" onclick="calMove\(-1\)" aria-label="前の'\+unit\+'へ"/.test(calFn) && /class="cal-arw next" onclick="calMove\(1\)"/.test(calFn) && /var unit=\(view==='month'\)\?'月':'週'/.test(calFn) && /\.cal-arw\{[^}]*height:34px;[^}]*border:1\.5px solid #CFA860;background:linear-gradient\(160deg,#24426E 0%,#0E2038 100%\)/.test(SRC));
+ok('⑥ 札の中身を真ん中に（矢印の側の余白を詰める）', /\.cal-arw\.prev\{padding:0 13px 0 8px;\}/.test(SRC) && /\.cal-arw\.next\{padding:0 8px 0 13px;\}/.test(SRC) && /justify-content:center;gap:3px;height:34px;/.test(SRC));
+ok('⑥ 操作はスクロールする本体の外の帯に', /<div id="knv-calbar" class="knv-calbar hidden"><\/div>\n  <div id="knv-cal" class="knv-body hidden"><\/div>/.test(SRC) && /cbar\.classList\.toggle\('hidden', t!=='cal'\);/.test(SRC) && /bar\.innerHTML=bh;/.test(calFn));
+ok('⑥ 下へ読むと上段・内訳・副題を畳み、上へ戻すと出す（行ったり来たりしない）', /\.knv-panel\.knv-compact \.knv-calbar \.cb-top\{max-height:0;opacity:0;/.test(SRC) && /\.knv-panel\.knv-compact \.knv-summary\{max-height:0;/.test(SRC) && /KNV_CPT\.lock=Date\.now\(\)\+400;/.test(SRC) && /if\(d>14\)\{ knvCompact\(true\);/.test(SRC) && /else if\(d<-14\)\{ knvCompact\(false\);/.test(SRC) && /knvCompact\(false\);   \/\/ 畳んだ見出しは、タブを替えたら出し直す/.test(SRC));
+ok('⑥ 暦の払いはやめた（横の払いは継ナビくんを閉じる）', !/calSwipeBind/.test(SRC) && !/#knv-cal\{touch-action/.test(SRC) && !/左右に払っても送れます/.test(SRC));
+ok('⑦ 週の始まり：日曜／月曜（週表示・月表示・TODO の暦）', /function calWeekStart\(\)\{ var p=loadPrefs\(\); return p\.weekStart===1\?1:0; \}/.test(SRC) && /ws=calWeekStartOf\(cur\);/.test(SRC) && /var start=calWeekStartOf\(first\), wEnd=\(calWeekStart\(\)\+6\)%7;/.test(SRC) && /for\(var i=0;i<\(first\.getDay\(\)-calWeekStart\(\)\+7\)%7;i\+\+\)/.test(SRC) && /onclick="setWeekStart\('\+o\[1\]\+'\)">'\+o\[0\]\+'から/.test(SRC));
+ok('⑥⑦ 説明書', /紺の「‹ 前の週」「次の週 ›」/.test(R('manual-customer.html')) && /予定の週の始まり/.test(R('manual-customer.html')) && /予定の週の始まり/.test(R('manual-partner.html')));
 if (bad.length) { bad.forEach((b) => console.log('NG ' + b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK ' + n + ' checks, 0 failed');

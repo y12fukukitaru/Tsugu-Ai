@@ -336,12 +336,13 @@ function takeFn(name) {
 // ⑮ 予定タブの操作列は、下へ送っても上に残す
 {
   const rc = takeFn('knvRenderCal');
-  ok('操作列を包む', /h\+='<div class="cal-stick'\+\(wk\?' week':''\)\+'">';/.test(rc) && /h\+='<\/div>';   \/\/ \.cal-stick/.test(rc));
+  ok('週の見出しを包んで貼り付ける', /if\(wk\) h\+='<div class="cal-stick week">'\+wk\.head\+'<\/div>';   \/\/ \.cal-stick/.test(rc));
   //  印を「wk」にすると .wk{min-width} に当たって操作列が広がる（実際になった）
   no('印は .wk と同じ名前にしない', /class="cal-stick'\+\(wk\?' wk':''\)/.test(rc) || /\.cal-stick\.wk\{/.test(SRC));
   //  包みの中に、切り替え・前後・今日・＋予定がぜんぶ入っていること
-  const inside = rc.slice(rc.indexOf('<div class="cal-stick'), rc.indexOf('// .cal-stick'));
-  ok('切り替えと前後・今日・＋予定が中に入る', /class="vaseg"/.test(inside) && /calMove\(-1\)/.test(inside) && /calToday\(\)/.test(inside) && /calOpenForm\(\)">＋ 予定/.test(inside));
+  //  2026-10-14：操作はスクロールする本体の外の帯（#knv-calbar）へ移した
+  const inside = rc.slice(rc.indexOf("var bar=$('knv-calbar');"), rc.indexOf('bar.innerHTML=bh;'));
+  ok('切り替えと前後・今日・＋予定は本体の外の帯に', /class="vaseg"/.test(inside) && /calMove\(-1\)/.test(inside) && /calToday\(\)/.test(inside) && /calOpenForm\(\)">＋ 予定/.test(inside));
   ok('入力の窓は暦の中に置かない', !/id="cal-form"/.test(rc) && /別の窓（calOpenForm → \.cfm-bg）で開く/.test(rc));
   ok('貼り付けの CSS', /\.cal-stick\{position:sticky;top:-12px;z-index:8;background:var\(--bg\);margin:-12px -12px 6px;/.test(SRC));
   ok('週の目盛りより上に', /z-index は週表示の左の目盛り/.test(SRC));
@@ -349,8 +350,7 @@ function takeFn(name) {
   const wv = takeFn('calWeekVertical');
   ok('曜日の見出しは別の箱で返す', /var head='<div class="wk-head"><div class="wk">';/.test(wv) && /return \{ head:head, body:h \};/.test(wv));
   ok('本体は上の罫線を落とす印を持つ', /var h='<div class="wk-wrap under"><div class="wk">';/.test(wv));
-  ok('見出しは操作列の中に入れる', /if\(wk\) h\+=wk\.head;/.test(inside) || /if\(wk\) h\+=wk\.head;/.test(rc));
-  ok('週表示のときだけ包みに印を付ける', /'<div class="cal-stick'\+\(wk\?' week':''\)\+'">'/.test(rc));
+  ok('週表示のときだけ見出しを貼り付ける', /if\(wk\) h\+='<div class="cal-stick week">'/.test(rc));
   ok('見出しは先に作る', /wk=calWeekVertical\(byDay, ws\);/.test(rc) && rc.indexOf('wk=calWeekVertical(byDay, ws);') < rc.indexOf('<div class="cal-stick'));
   ok('横スクロールを本体に合わせる', /wrap\.addEventListener\('scroll', function\(\)\{ whead\.scrollLeft=wrap\.scrollLeft; \}\);/.test(rc));
   ok('見出しの CSS', /\.wk-head\{overflow-x:hidden;border:1px solid var\(--softline\);border-bottom:0;border-radius:10px 10px 0 0;/.test(SRC));
@@ -425,18 +425,11 @@ function takeFn(name) {
   ok('空き枠を押したときの時刻も wkPx で', /\/wkPx\(\)\)\)\);/.test(takeFn('calWkSlot')));
   ok('なぜ Google と同じ読み方にするかを書き残す', /淡い色に細い罫線では、狭い枠が格子に溶けて見えない/.test(mob));
 }
-// ⑲ 横に払って前後の月・週へ
+// ⑲ 横に払って前後の月・週へ … 2026-10-14 にやめた（左右に払うと継ナビくん自体が閉じるため。前後の札で送る）
 {
-  const sw = takeFn('calSwipeBind');
-  ok('暦の箱に一度だけ結ぶ', /if\(!box \|\| box\.__swipe\) return;/.test(sw) && /box\.__swipe=1;/.test(sw));
-  ok('指の始まり・動き・終わり（とちゅうで取られたとき）を見る（passive）', /addEventListener\('touchstart'/.test(sw) && /addEventListener\('touchend', end/.test(sw) && /addEventListener\('touchcancel', end/.test(sw) && (sw.match(/\{ passive:true \}/g)||[]).length===4);
-  ok('縦のスクロールと見分ける（横 50px 以上・縦の2倍以上・0.8秒以内）', /Math\.abs\(dx\)<50 \|\| Math\.abs\(dx\)<Math\.abs\(dy\)\*2 \|\| Date\.now\(\)-s\.at>800/.test(sw));
-  ok('一覧の表示では何もしない', /if\(calViewGet\(\)==='list'\) return;/.test(sw));
-  ok('週の枠が横にはみ出すときは、そちらを優先', /wrap\.scrollWidth>wrap\.clientWidth\+2\) return;/.test(sw));
-  ok('左へ払うと次へ、右へ払うと前へ', /calMove\(dx<0\?1:-1\);/.test(sw));
-  ok('描き直しのたびに結び直しを試みる（重複はしない）', /calSwipeBind\(\);      \/\/ 横に払って前後へ/.test(takeFn('knvRenderCal')));
+  no('暦の払いは結ばない', /function calSwipeBind\(/.test(SRC) || /calSwipeBind\(\)/.test(SRC));
   //  動いたことが分かる滑り込み
-  ok('‹ › と払いで向きを覚える', /CAL_CUR=d; CAL_PICK=null; CAL_SLIDE=n; knvRenderCal\(\);/.test(takeFn('calMove')));
+  ok('前後の札で向きを覚える', /CAL_CUR=d; CAL_PICK=null; CAL_SLIDE=n; knvRenderCal\(\);/.test(takeFn('calMove')));
   const si = takeFn('calSlideIn');
   ok('次へは右から、前へは左から', /el\.classList\.add\(n>0\?'cal-in-r':'cal-in-l'\);/.test(si));
   ok('週の枠か、月の升目に掛ける', /box\.querySelector\('\.wk-wrap'\) \|\| box\.querySelector\('\.cal-grid \+ \.cal-grid'\)/.test(si));
@@ -468,7 +461,7 @@ function takeFn(name) {
   ok('課題は橙', /task:  \{ label:'課題',   bd:'#EFD3BE', bg:'rgba\(200,104,33,\.08\)',   fg:'#C86821' \},/.test(SRC));
   no('課題と自分の予定が同じ青ではない', /task:  \{[^}]*fg:'#2C5DA8'/.test(SRC));
   //  ＋予定は金
-  ok('＋予定は金のボタン', /class="btn2 btn-gold"[^>]*onclick="calOpenForm\(\)">＋ 予定<\/button>/.test(SRC));
+  ok('＋予定は金のボタン', /class="btn2 btn-gold[^"]*"[^>]*onclick="calOpenForm\(\)">＋ 予定<\/button>/.test(SRC));
   ok('金のボタンの CSS（字は濃紺）', /\.btn2\.btn-gold\{background:var\(--gold\);color:#0E1B33;font-weight:700;/.test(SRC));
 }
 // ㉑ 色の見分け（凡例）。自分の予定・面談・課題・支払・調達・補助金・週次と
@@ -503,8 +496,8 @@ function takeFn(name) {
 {
   const MANA = R('manual-admin.html');
   [['経営者', MANC], ['パートナー', MANP]].forEach(([w, M]) => {
-    ok(w + '：横スワイプで前後へ', /横にスワイプ<\/b>すると前の月・次の月/.test(M));
-    ok(w + '：操作列・曜日・終日が上に残る', /曜日の見出し・終日の帯<\/b>は、下へ送っても<b>上に貼り付いたまま<\/b>/.test(M));
+    ok(w + '：前後はボタンで（払いでは送らない）・週の始まり', /紺の「‹ 前の週」「次の週 ›」/.test(M) && /払いでは週を送りません/.test(M) && /予定の週の始まり/.test(M));
+    ok(w + '：下へ読むと畳む・前後と曜日・終日は上に残る', /下へ読み進めるとすっと畳まれ<\/b>/.test(M) && /曜日の見出し・終日の帯<\/b>は上に残る/.test(M));
     ok(w + '：入力は別の窓、✕で継ナビくんは閉じない', /入力の窓だけを閉じ、継ナビくんはそのまま開いています/.test(M));
     ok(w + '：スマホの週表示は7日が幅に収まる', /スマホでも7日が画面の幅に収まり、予定は色で塗られて題名が折り返されます/.test(M));
     ok(w + '：＋予定は金色', /金色の<b>「＋ 予定」<\/b>/.test(M));
@@ -522,7 +515,7 @@ function takeFn(name) {
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261014-01', '20261014-01']);
+  is('版が揃う', [build, VER.build], ['20261014-02', '20261014-02']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
