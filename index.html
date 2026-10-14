@@ -679,9 +679,8 @@
       ・下へ読み進めると、帯の上段・お知らせの内訳・副題を畳む（.knv-compact）。上へ戻すと出す。
         前後の札と日付の段、週表示の曜日の見出しは残す
       ・左右に払うと継ナビくん自体が閉じるので、暦の払いで週を送るのはやめた（ボタンで送る） */
-  .knv-calbar{flex-shrink:0;background:var(--bg);padding:8px 10px 6px;border-bottom:1px solid var(--line);}
-  .knv-calbar .cb-top{display:flex;align-items:center;gap:6px;overflow:hidden;max-height:44px;opacity:1;margin-bottom:6px;
-    transition:max-height .28s cubic-bezier(.4,0,.2,1),opacity .2s ease,margin .28s cubic-bezier(.4,0,.2,1),transform .28s cubic-bezier(.4,0,.2,1);}
+  .knv-calbar{flex-shrink:0;background:var(--bg);padding:8px 12px 6px;border-bottom:1px solid var(--line);}
+  .knv-calbar .cb-top{display:flex;align-items:center;gap:6px;padding-bottom:6px;}
   .knv-calbar .vaseg{padding:3px;gap:2px;border-radius:9px;}
   .knv-calbar .vaseg button{width:auto;flex:0 0 auto;padding:5px 12px;font-size:.75rem;border-radius:7px;}
   .knv-calbar .cb-sm{flex:0 0 auto;font-family:inherit;font-size:.71875rem;font-weight:600;color:var(--navy);background:var(--card);
@@ -708,15 +707,24 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   body.dark .cal-arw{background:linear-gradient(160deg,#2C4E80 0%,#16294A 100%);}
   @media(max-width:360px){ .cal-arw .t{display:none;} .cal-arw.prev,.cal-arw.next{width:38px;padding:0;} }
-  /*  畳むときの動き（下へ読み進めたとき） */
-  .knv-head .knv-sub{overflow:hidden;max-height:16px;transition:max-height .28s cubic-bezier(.4,0,.2,1),opacity .2s;}
-  .knv-head{transition:padding .28s cubic-bezier(.4,0,.2,1);}
-  .knv-summary{transition:max-height .28s cubic-bezier(.4,0,.2,1),padding .28s cubic-bezier(.4,0,.2,1),opacity .2s;max-height:90px;overflow:hidden;}
-  .knv-panel.knv-compact .knv-head{padding-top:7px;padding-bottom:7px;}
-  .knv-panel.knv-compact .knv-head .knv-sub{max-height:0;opacity:0;}
-  .knv-panel.knv-compact .knv-summary{max-height:0;padding-top:0;padding-bottom:0;opacity:0;border-bottom-width:0;}
-  .knv-panel.knv-compact .knv-calbar .cb-top{max-height:0;opacity:0;margin-bottom:0;transform:translateY(-8px);}
-  @media(prefers-reduced-motion:reduce){ .knv-calbar .cb-top,.knv-head,.knv-head .knv-sub,.knv-summary{transition:none;} }
+  /*  畳むときの動き（下へ読み進めたとき・2026-10-14 作り直し）
+      はじめは高さ（max-height・padding）を縮めていたが、毎コマ並べ直しが起き、スクロールの枠の
+      大きさも変わるので、指の動きと合わずにガタついた。
+      いまは、予定タブのあいだだけ「お知らせの内訳」と操作の帯を本体の上に重ね（position:absolute）、
+      本体には重ねたぶんの上の余白を固定で取っておく（calLayout が測って入れる）。
+      畳むのは translateY だけ（並べ直しなし・GPU で動く）。下から来る予定が帯の下をくぐって見える */
+  .knv-panel.knv-caltab .knv-head,.knv-panel.knv-caltab .knv-tabs{position:relative;z-index:7;}
+  .knv-panel.knv-caltab .knv-summary,.knv-panel.knv-caltab .knv-calbar{position:absolute;left:0;right:0;z-index:6;
+    transform:translate3d(0,0,0);transition:transform .34s cubic-bezier(.22,.8,.24,1);will-change:transform;}
+  .knv-panel.knv-caltab .knv-summary{top:var(--cal-t0,0px);}
+  .knv-panel.knv-caltab .knv-calbar{top:calc(var(--cal-t0,0px) + var(--cal-sum,0px));}
+  .knv-panel.knv-caltab.knv-compact .knv-summary,
+  .knv-panel.knv-caltab.knv-compact .knv-calbar{transform:translate3d(0,calc(-1 * (var(--cal-sum,0px) + var(--cal-top,0px))),0);}
+  .knv-calbar .cb-top{transition:opacity .22s ease;}
+  .knv-panel.knv-compact .knv-calbar .cb-top{opacity:0;pointer-events:none;}
+  .knv-calbar.week{border-bottom:0;padding-bottom:0;}
+  .knv-calbar .wk-head{margin-top:8px;}
+  @media(prefers-reduced-motion:reduce){ .knv-panel.knv-caltab .knv-summary,.knv-panel.knv-caltab .knv-calbar,.knv-calbar .cb-top{transition:none;} }
   .cal-stick{position:sticky;top:-12px;z-index:8;background:var(--bg);margin:-12px -12px 6px;padding:12px 12px 2px;}
   /* 週表示では曜日の見出し（.wk-head）も操作列と一緒に貼り付ける。
      見出しは本体（.wk-wrap）と別の箱なので、上の角だけ丸め、本体は上の
@@ -2121,7 +2129,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261014-02';
+  var APP_BUILD='20261014-03';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -18297,6 +18305,7 @@
     var foot=document.querySelector('.knv-foot');
     if(foot) foot.classList.toggle('hidden', t!=='chat');
     var cbar=$('knv-calbar'); if(cbar) cbar.classList.toggle('hidden', t!=='cal');
+    var kp=$('knv-panel'); if(kp) kp.classList.toggle('knv-caltab', t==='cal');
     knvCompact(false);   // 畳んだ見出しは、タブを替えたら出し直す
     if(t==='cal') knvRenderCal();
     if(t==='todo') knvRenderTodo();
@@ -19671,26 +19680,48 @@
     if($('knv-cal') && !$('knv-cal').classList.contains('hidden')) knvRenderCal();
     if($('td-cal')) todoCalPaint(true);
   }
-  //  下へ読み進めると見出しを畳み、上へ戻すと出す（予定タブ）。
-  //  畳むとスクロールの枠が広がり、いちばん下では位置が押し戻される（scroll が起きる）。
-  //  それを「上へ戻した」と取り違えて開閉を繰り返さないよう、切り替えたあと 0.4 秒は見ない
-  var KNV_CPT={ last:0, lock:0 };
+  //  下へ読み進めると見出し（お知らせの内訳・操作の上段）を畳み、上へ戻すと出す（予定タブ）。
+  //  畳むのは translateY だけで、本体の大きさも中身の位置も変わらない。なので、
+  //  畳んだことでスクロールの位置が押し戻されることもなく、開閉を繰り返さない
+  var KNV_CPT={ last:0, acc:0 };
   function knvCompact(on){
     var p=$('knv-panel'); if(!p) return;
     if(p.classList.contains('knv-compact')===!!on) return;
     p.classList.toggle('knv-compact', !!on);
-    KNV_CPT.lock=Date.now()+400;
+    KNV_CPT.acc=0;
+  }
+  //  重ねた帯の高さを測る。お知らせの内訳・帯の中身が変わったときと、パネルの大きさが
+  //  変わったときに測り直す（ResizeObserver）。畳む動き（transform）では測り直さない
+  function calLayout(){
+    var p=$('knv-panel'), tabs=p&&p.querySelector('.knv-tabs'), sum=$('knv-summary'),
+        bar=$('knv-calbar'), box=$('knv-cal');
+    if(!p || !tabs || !bar || !box || !p.classList.contains('knv-caltab')) return;
+    var top=bar.querySelector('.cb-top');
+    var t0=tabs.offsetTop+tabs.offsetHeight;
+    var sumH=(sum && !sum.classList.contains('hidden'))?sum.offsetHeight:0;
+    var barH=bar.offsetHeight, topH=top?top.offsetHeight:0;
+    p.style.setProperty('--cal-t0', t0+'px');
+    p.style.setProperty('--cal-sum', sumH+'px');
+    p.style.setProperty('--cal-top', topH+'px');
+    //  週表示は見出しと本体をつなげて一つの枠に見せるので、すき間を空けない
+    var pad=sumH+barH+(bar.classList.contains('week')?0:10);
+    if(box.style.paddingTop!==pad+'px') box.style.paddingTop=pad+'px';
+    if(!calLayout.ro && window.ResizeObserver){
+      calLayout.ro=new ResizeObserver(function(){ calLayout(); });
+      [sum, bar, p].forEach(function(el){ if(el) calLayout.ro.observe(el); });
+    }
   }
   function calCompactBind(){
     var box=$('knv-cal'); if(!box || box.__cpt) return;
     box.__cpt=1;
     box.addEventListener('scroll', function(){
-      var y=box.scrollTop;
-      if(Date.now()<KNV_CPT.lock){ KNV_CPT.last=y; return; }
-      var d=y-KNV_CPT.last;
-      if(y<24){ knvCompact(false); KNV_CPT.last=y; return; }
-      if(d>14){ knvCompact(true); KNV_CPT.last=y; }
-      else if(d<-14){ knvCompact(false); KNV_CPT.last=y; }
+      var y=box.scrollTop, d=y-KNV_CPT.last; KNV_CPT.last=y;
+      if(y<30){ knvCompact(false); return; }
+      //  向きが変わったら数え直す。同じ向きに 16px 進んだら切り替える（小さな揺れでは動かない）
+      if((d>0)!==(KNV_CPT.acc>0)) KNV_CPT.acc=0;
+      KNV_CPT.acc+=d;
+      if(KNV_CPT.acc>16) knvCompact(true);
+      else if(KNV_CPT.acc<-16) knvCompact(false);
     }, { passive:true });
   }
   //  切り替わったことが分かるよう、暦を横から滑り込ませる。
@@ -20956,10 +20987,12 @@
         bh+='<div class="cal-nav"><div class="cal-lab">'
           +today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日（'+'日月火水木金土'.charAt(today.getDay())+'）からの予定</div></div>';
       }
+      //  週表示は、曜日の見出し（と終日の帯）も帯に入れる。本体の上に重なり、いっしょに残る
+      if(wk) bh+=wk.head;
+      bar.classList.toggle('week', !!wk);
       bar.innerHTML=bh;
     }
-    //  週表示は、曜日の見出し（と終日の帯）を本体の上に貼り付ける
-    if(wk) h+='<div class="cal-stick week">'+wk.head+'</div>';   // .cal-stick
+    // .cal-stick（本体の中に貼り付ける箱）は使わなくなった。見出しは帯の中
     //  入力の窓はここには置かない。別の窓（calOpenForm → .cfm-bg）で開く
 
     if(CAL_ROWS.err){
@@ -21055,11 +21088,12 @@
     calRichWatch(box);   // パネルの幅が変わったら、月表示の並べ方を合わせ直す
     calCompactBind();    // 下へ読み進めると見出しを畳む（一度だけ結ぶ）
     calSlideIn(box);     // 前後の札で動いたときの滑り込み
+    calLayout();         // 重ねた帯の高さを測り、本体の上の余白を合わせる
     // 狭い画面では週表示が横スクロールになる。開いた時点で今日が見えるように寄せる。
     // 曜日の見出しは別の箱（.wk-head）なので、本体の横スクロールに合わせて動かす
     try{
       var wrap=box.querySelector('.wk-wrap'), td=box.querySelector('.wk-col.today');
-      var whead=box.querySelector('.wk-head');
+      var whead=($('knv-calbar')||box).querySelector('.wk-head');
       if(wrap && whead){
         wrap.addEventListener('scroll', function(){ whead.scrollLeft=wrap.scrollLeft; });
       }
