@@ -673,16 +673,31 @@
      .knv-body の余白（12px）ぶんを負の余白で食い、端まで背景を敷いて、
      下から来る予定が透けないようにする。z-index は週表示の左の目盛り
      （.wk-corner=6）より上に */
-  /*  暦の前後へ送るボタン（2026-10-14）。小さな ‹ › では押しにくく、目にも留まらなかった。
-      紺の丸みのある札に金の矢印。「前の週／次の週」と言葉も添える（月表示は「前の月／次の月」）。
-      押すと矢印が進む向きへ少し動き、札が沈む */
-  .cal-nav{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
-  .cal-arw{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;min-height:40px;padding:0 13px;border-radius:999px;
+  /*  予定タブの操作（2026-10-14 見直し）
+      ・操作（月/週/一覧・今日・↺・＋予定／前後の札と日付）は、スクロールする本体の外の帯（#knv-calbar）に置く。
+        本体の中に貼り付けると、場所を取るうえに、隠すたびに中身の高さが変わって画面が跳ねる
+      ・下へ読み進めると、帯の上段・お知らせの内訳・副題を畳む（.knv-compact）。上へ戻すと出す。
+        前後の札と日付の段、週表示の曜日の見出しは残す
+      ・左右に払うと継ナビくん自体が閉じるので、暦の払いで週を送るのはやめた（ボタンで送る） */
+  .knv-calbar{flex-shrink:0;background:var(--bg);padding:8px 10px 6px;border-bottom:1px solid var(--line);}
+  .knv-calbar .cb-top{display:flex;align-items:center;gap:6px;overflow:hidden;max-height:44px;opacity:1;margin-bottom:6px;
+    transition:max-height .28s cubic-bezier(.4,0,.2,1),opacity .2s ease,margin .28s cubic-bezier(.4,0,.2,1),transform .28s cubic-bezier(.4,0,.2,1);}
+  .knv-calbar .vaseg{padding:3px;gap:2px;border-radius:9px;}
+  .knv-calbar .vaseg button{width:auto;flex:0 0 auto;padding:5px 12px;font-size:.75rem;border-radius:7px;}
+  .knv-calbar .cb-sm{flex:0 0 auto;font-family:inherit;font-size:.71875rem;font-weight:600;color:var(--navy);background:var(--card);
+    border:1px solid var(--line);border-radius:8px;height:30px;padding:0 10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;}
+  .knv-calbar .cb-add{flex:0 0 auto;height:30px;padding:0 12px;font-size:.75rem;display:inline-flex;align-items:center;}
+  .cal-nav{display:flex;align-items:center;gap:8px;}
+  .cal-arw{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:3px;height:34px;border-radius:999px;
     border:1.5px solid #CFA860;background:linear-gradient(160deg,#24426E 0%,#0E2038 100%);color:#fff;
-    font:700 .75rem/1 'Noto Sans JP',sans-serif;letter-spacing:.02em;cursor:pointer;
-    box-shadow:0 4px 12px rgba(14,32,56,.28),inset 0 1px 0 rgba(255,255,255,.18);
+    font-family:'Noto Sans JP',sans-serif;font-size:.71875rem;font-weight:700;line-height:1;letter-spacing:.02em;cursor:pointer;
+    box-shadow:0 3px 10px rgba(14,32,56,.26),inset 0 1px 0 rgba(255,255,255,.18);
     transition:transform .15s cubic-bezier(.34,1.56,.64,1),box-shadow .15s,filter .15s;-webkit-tap-highlight-color:transparent;}
-  .cal-arw svg{width:16px;height:16px;flex:0 0 auto;stroke:#E9C97A;stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round;
+  /*  矢印の絵は箱の中で片側に寄っている。矢印の側の余白を詰めて、見た目の中心を札の真ん中に合わせる */
+  .cal-arw.prev{padding:0 13px 0 8px;}
+  .cal-arw.next{padding:0 8px 0 13px;}
+  .cal-arw .t{display:block;padding-top:1px;}
+  .cal-arw svg{width:15px;height:15px;flex:0 0 auto;display:block;stroke:#E9C97A;stroke-width:2.8;fill:none;stroke-linecap:round;stroke-linejoin:round;
     transition:transform .2s cubic-bezier(.34,1.56,.64,1);}
   .cal-arw:hover{filter:brightness(1.12);}
   .cal-arw:active{transform:translateY(1px) scale(.95);box-shadow:0 1px 4px rgba(14,32,56,.3),inset 0 1px 0 rgba(255,255,255,.1);}
@@ -691,14 +706,18 @@
   .cal-arw:focus-visible{outline:2px solid #CFA860;outline-offset:2px;}
   .cal-nav .cal-lab{flex:1;min-width:0;text-align:center;font-size:.875rem;font-weight:700;color:var(--navy);font-family:var(--f-head);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .cal-nav .cal-lab small{display:block;font-size:.65625rem;font-weight:400;color:var(--muted);font-family:'Noto Sans JP',sans-serif;margin-top:2px;}
   body.dark .cal-arw{background:linear-gradient(160deg,#2C4E80 0%,#16294A 100%);}
-  @media(max-width:380px){ .cal-arw{padding:0 10px;} .cal-arw .t{display:none;} .cal-arw{min-width:44px;justify-content:center;} }
-  /*  横に払って前後へ送れるように、暦の上では横向きの指の動きをブラウザに取らせない。
-      取られると iPhone は touchend の代わりに touchcancel を送り、払っても週が変わらなかった */
-  #knv-cal{touch-action:pan-y pinch-zoom;}
-  .cal-stick{position:sticky;top:-12px;z-index:8;background:var(--bg);margin:-12px -12px 6px;padding:12px 12px 2px;
-    box-shadow:0 1px 0 var(--line);}
+  @media(max-width:360px){ .cal-arw .t{display:none;} .cal-arw.prev,.cal-arw.next{width:38px;padding:0;} }
+  /*  畳むときの動き（下へ読み進めたとき） */
+  .knv-head .knv-sub{overflow:hidden;max-height:16px;transition:max-height .28s cubic-bezier(.4,0,.2,1),opacity .2s;}
+  .knv-head{transition:padding .28s cubic-bezier(.4,0,.2,1);}
+  .knv-summary{transition:max-height .28s cubic-bezier(.4,0,.2,1),padding .28s cubic-bezier(.4,0,.2,1),opacity .2s;max-height:90px;overflow:hidden;}
+  .knv-panel.knv-compact .knv-head{padding-top:7px;padding-bottom:7px;}
+  .knv-panel.knv-compact .knv-head .knv-sub{max-height:0;opacity:0;}
+  .knv-panel.knv-compact .knv-summary{max-height:0;padding-top:0;padding-bottom:0;opacity:0;border-bottom-width:0;}
+  .knv-panel.knv-compact .knv-calbar .cb-top{max-height:0;opacity:0;margin-bottom:0;transform:translateY(-8px);}
+  @media(prefers-reduced-motion:reduce){ .knv-calbar .cb-top,.knv-head,.knv-head .knv-sub,.knv-summary{transition:none;} }
+  .cal-stick{position:sticky;top:-12px;z-index:8;background:var(--bg);margin:-12px -12px 6px;padding:12px 12px 2px;}
   /* 週表示では曜日の見出し（.wk-head）も操作列と一緒に貼り付ける。
      見出しは本体（.wk-wrap）と別の箱なので、上の角だけ丸め、本体は上の
      罫線と角を落として、つなげて一つの枠に見せる。横スクロールは
@@ -1941,7 +1960,7 @@
     <span class="tsg-face" style="background:transparent;border:1.5px solid #cfa860;border-radius:10px;"></span>
     <div style="flex:1;min-width:0;">
       <div style="font-size:.875rem;font-weight:700;color:#fff;letter-spacing:.02em;">継ナビくん</div>
-      <div style="font-size:.65625rem;color:#CFAD62;">困ったときは、いつでもどうぞ</div>
+      <div class="knv-sub" style="font-size:.65625rem;color:#CFAD62;">困ったときは、いつでもどうぞ</div>
     </div>
     <button class="knv-max" id="knv-max-btn" onclick="knvSizeMenu()" title="大きさを変える" aria-label="大きさを変える">⤢</button>
     <button class="knv-close" onclick="knvToggle(false)" aria-label="閉じる">×</button>
@@ -1961,6 +1980,7 @@
   <div id="knv-body" class="knv-body">
     <div id="knv-log"></div>
   </div>
+  <div id="knv-calbar" class="knv-calbar hidden"></div>
   <div id="knv-cal" class="knv-body hidden"></div>
   <div id="knv-todo" class="knv-body hidden"></div>
   <div id="knv-msg" class="knv-body hidden"></div>
@@ -2101,7 +2121,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261014-01';
+  var APP_BUILD='20261014-02';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -3083,6 +3103,15 @@
     // 継ナビくん：画面の大きさと、ボタンの場所
     var kl=knvLayout();
     h+='<div style="font-size:.8125rem;font-weight:700;color:var(--navy);margin:16px 0 8px;">継ナビくん</div>';
+    //  予定の週の始まり（日曜／月曜）。週表示・月表示・TODO の小さな暦に効く
+    var wsv=calWeekStart();
+    h+='<div style="padding:4px 0 12px;border-bottom:1px solid var(--softline);">'
+      +'<div style="font-size:.8125rem;">予定の週の始まり</div>'
+      +'<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">'
+      +[['日曜日',0],['月曜日',1]].map(function(o){
+          return '<button class="sbtn'+(wsv===o[1]?' on':'')+'" onclick="setWeekStart('+o[1]+')">'+o[0]+'から</button>';
+        }).join('')
+      +'</div></div>';
     h+='<div style="padding:4px 0 12px;border-bottom:1px solid var(--softline);">'
       +'<div style="font-size:.8125rem;">画面の大きさ（パソコン）</div>'
       +'<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">'
@@ -18267,6 +18296,8 @@
     });
     var foot=document.querySelector('.knv-foot');
     if(foot) foot.classList.toggle('hidden', t!=='chat');
+    var cbar=$('knv-calbar'); if(cbar) cbar.classList.toggle('hidden', t!=='cal');
+    knvCompact(false);   // 畳んだ見出しは、タブを替えたら出し直す
     if(t==='cal') knvRenderCal();
     if(t==='todo') knvRenderTodo();
     if(t==='msg') knvRenderMsg();
@@ -19621,37 +19652,46 @@
     CAL_CUR=d; CAL_PICK=null; CAL_SLIDE=n; knvRenderCal();
   }
   function calToday(){ CAL_CUR=new Date(); CAL_PICK=null; knvRenderCal(); }
-  //  月・週の表示で、横に払うと前後へ（スマホでは ‹ › を押すより自然）。
-  //  縦のスクロールと見分けるため、横に 50px 以上、かつ縦の2倍以上、
-  //  0.8秒以内に動いたときだけ。一覧の表示では何もしない
-  var CAL_SW=null;
-  function calSwipeBind(){
-    var box=$('knv-cal'); if(!box || box.__swipe) return;
-    box.__swipe=1;
-    box.addEventListener('touchstart', function(e){
-      if(!e.touches || e.touches.length!==1){ CAL_SW=null; return; }
-      var t=e.touches[0]; CAL_SW={ x:t.clientX, y:t.clientY, at:Date.now() };
+  //  週の始まり（設定）：0＝日曜（いままでどおり）、1＝月曜。端末と利用者ごとに覚える
+  function calWeekStart(){ var p=loadPrefs(); return p.weekStart===1?1:0; }
+  function calWeekStartOf(d){
+    var x=new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    x.setDate(x.getDate()-((x.getDay()-calWeekStart()+7)%7));
+    return x;
+  }
+  //  曜日の並び（[文字, 曜日の番号]）。週の始まりに合わせて回す
+  function calWeekLabels(){
+    var W=calWeekStart(), out=[];
+    for(var i=0;i<7;i++){ var k=(W+i)%7; out.push(['日月火水木金土'.charAt(k), k]); }
+    return out;
+  }
+  function setWeekStart(v){
+    var p=loadPrefs(); p.weekStart=(v===1?1:0); savePrefs(p);
+    renderSettings();
+    if($('knv-cal') && !$('knv-cal').classList.contains('hidden')) knvRenderCal();
+    if($('td-cal')) todoCalPaint(true);
+  }
+  //  下へ読み進めると見出しを畳み、上へ戻すと出す（予定タブ）。
+  //  畳むとスクロールの枠が広がり、いちばん下では位置が押し戻される（scroll が起きる）。
+  //  それを「上へ戻した」と取り違えて開閉を繰り返さないよう、切り替えたあと 0.4 秒は見ない
+  var KNV_CPT={ last:0, lock:0 };
+  function knvCompact(on){
+    var p=$('knv-panel'); if(!p) return;
+    if(p.classList.contains('knv-compact')===!!on) return;
+    p.classList.toggle('knv-compact', !!on);
+    KNV_CPT.lock=Date.now()+400;
+  }
+  function calCompactBind(){
+    var box=$('knv-cal'); if(!box || box.__cpt) return;
+    box.__cpt=1;
+    box.addEventListener('scroll', function(){
+      var y=box.scrollTop;
+      if(Date.now()<KNV_CPT.lock){ KNV_CPT.last=y; return; }
+      var d=y-KNV_CPT.last;
+      if(y<24){ knvCompact(false); KNV_CPT.last=y; return; }
+      if(d>14){ knvCompact(true); KNV_CPT.last=y; }
+      else if(d<-14){ knvCompact(false); KNV_CPT.last=y; }
     }, { passive:true });
-    //  指の位置を追っておく。iPhone がとちゅうで指の動きを取ったとき（touchcancel）も、
-    //  そこまでの動きで判定できるように
-    box.addEventListener('touchmove', function(e){
-      if(CAL_SW && e.touches && e.touches[0]){ CAL_SW.lx=e.touches[0].clientX; CAL_SW.ly=e.touches[0].clientY; }
-    }, { passive:true });
-    function end(e){
-      var s=CAL_SW; CAL_SW=null; if(!s) return;
-      var t=e.changedTouches && e.changedTouches[0];
-      var ex=(e.type==='touchcancel' || !t) ? s.lx : t.clientX, ey=(e.type==='touchcancel' || !t) ? s.ly : t.clientY;
-      if(ex==null || ey==null) return;
-      var dx=ex-s.x, dy=ey-s.y;
-      if(Math.abs(dx)<50 || Math.abs(dx)<Math.abs(dy)*2 || Date.now()-s.at>800) return;
-      if(calViewGet()==='list') return;
-      //  週の枠が横にはみ出してスクロールできるときは、そちらを優先する
-      var wrap=box.querySelector('.wk-wrap');
-      if(wrap && wrap.scrollWidth>wrap.clientWidth+2) return;
-      calMove(dx<0?1:-1);
-    }
-    box.addEventListener('touchend', end, { passive:true });
-    box.addEventListener('touchcancel', end, { passive:true });
   }
   //  切り替わったことが分かるよう、暦を横から滑り込ませる。
   //  次へ進んだら右から、前へ戻ったら左から
@@ -20882,51 +20922,44 @@
     //  別の箱で返ってくるので、先に作っておく
     var wk=null, ws=null;
     if(view==='week'){
-      ws=new Date(cur); ws.setDate(ws.getDate()-ws.getDay());
+      ws=calWeekStartOf(cur);
       wk=calWeekVertical(byDay, ws);
     }
 
-    // 上段：表示の切り替えと操作。下へ送っても上に残す（.cal-stick）。
-    // 週表示は縦に長く、切り替えるたびに上まで戻るのは手間なため
-    //  印は week。「wk」だと週表示の枠の CSS（.wk{min-width}）に当たって
-    //  操作列まで広がってしまう（実際になった）
-    h+='<div class="cal-stick'+(wk?' week':'')+'">';
-    h+='<div class="vaseg" style="margin-bottom:9px;">'
-      +[['month','月'],['week','週'],['list','一覧']].map(function(o){
-          return '<button class="'+(view===o[0]?'on':'')+'" onclick="calViewSet(\''+o[0]+'\')">'+o[1]+'</button>';
-        }).join('')
-    +'</div>';
-    //  前後へ送る札は、日付の両脇に大きく（.cal-nav）。今日・更新・＋予定は次の段へ
-    if(view!=='list'){
-      var unit=(view==='month')?'月':'週';
-      h+='<div class="cal-nav">'
-        +'<button class="cal-arw prev" onclick="calMove(-1)" aria-label="前の'+unit+'へ">'
-          +'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span class="t">前の'+unit+'</span></button>'
-        +'<div class="cal-lab">'
-          +(view==='month'
-             ? cur.getFullYear()+'年'+(cur.getMonth()+1)+'月'
-             : (function(){ var st=new Date(cur); st.setDate(st.getDate()-st.getDay());
-                            var en=new Date(st); en.setDate(en.getDate()+6);
-                            return (st.getMonth()+1)+'/'+st.getDate()+' 〜 '+(en.getMonth()+1)+'/'+en.getDate(); })())
-          +'<small>左右に払っても送れます</small>'
-        +'</div>'
-        +'<button class="cal-arw next" onclick="calMove(1)" aria-label="次の'+unit+'へ">'
-          +'<span class="t">次の'+unit+'</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>'
-      +'</div>';
+    //  操作はスクロールする本体の外の帯（#knv-calbar）へ。上段＝月/週/一覧・今日・↺・＋予定、
+    //  下段＝前後の札と日付（一覧のときは今日の日付）。下へ読み進めると上段だけ畳む（knvCompact）
+    var bar=$('knv-calbar');
+    if(bar){
+      var unit=(view==='month')?'月':'週', bh='';
+      bh+='<div class="cb-top"><div class="vaseg">'
+        +[['month','月'],['week','週'],['list','一覧']].map(function(o){
+            return '<button class="'+(view===o[0]?'on':'')+'" onclick="calViewSet(\''+o[0]+'\')">'+o[1]+'</button>';
+          }).join('')
+        +'</div><div style="flex:1;"></div>'
+        +(view!=='list'?'<button class="cb-sm" onclick="calToday()">今日</button>':'')
+        +'<button class="cb-sm" onclick="knvRenderCal(true)" title="読み込み直す" aria-label="読み込み直す">↺</button>'
+        +'<button class="btn2 btn-gold cb-add" onclick="calOpenForm()">＋ 予定</button></div>';
+      if(view!=='list'){
+        bh+='<div class="cal-nav">'
+          +'<button class="cal-arw prev" onclick="calMove(-1)" aria-label="前の'+unit+'へ">'
+            +'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span class="t">前の'+unit+'</span></button>'
+          +'<div class="cal-lab">'
+            +(view==='month'
+               ? cur.getFullYear()+'年'+(cur.getMonth()+1)+'月'
+               : (function(){ var st=calWeekStartOf(cur), en=new Date(st); en.setDate(en.getDate()+6);
+                              return (st.getMonth()+1)+'/'+st.getDate()+' 〜 '+(en.getMonth()+1)+'/'+en.getDate(); })())
+          +'</div>'
+          +'<button class="cal-arw next" onclick="calMove(1)" aria-label="次の'+unit+'へ">'
+            +'<span class="t">次の'+unit+'</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>'
+        +'</div>';
+      }else{
+        bh+='<div class="cal-nav"><div class="cal-lab">'
+          +today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日（'+'日月火水木金土'.charAt(today.getDay())+'）からの予定</div></div>';
+      }
+      bar.innerHTML=bh;
     }
-    h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:9px;flex-wrap:wrap;">';
-    if(view!=='list'){
-      h+='<button class="ghost" style="font-size:.71875rem;border:1px solid var(--line);border-radius:8px;padding:4px 9px;" onclick="calToday()">今日</button>'
-        +'<div style="flex:1;"></div>';
-    }else{
-      h+='<div style="flex:1;min-width:120px;font-size:.8125rem;font-weight:700;color:var(--navy);font-family:var(--f-head);">'
-        +today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日（'+'日月火水木金土'.charAt(today.getDay())+'）</div>';
-    }
-    h+='<button class="ghost" style="font-size:.71875rem;border:1px solid var(--line);border-radius:8px;padding:4px 9px;" onclick="knvRenderCal(true)">↺</button>'
-      +'<button class="btn2 btn-gold" style="font-size:.75rem;padding:6px 13px;" onclick="calOpenForm()">＋ 予定</button>'
-    +'</div>';
-    if(wk) h+=wk.head;   // 曜日の見出し（週表示だけ）
-    h+='</div>';   // .cal-stick
+    //  週表示は、曜日の見出し（と終日の帯）を本体の上に貼り付ける
+    if(wk) h+='<div class="cal-stick week">'+wk.head+'</div>';   // .cal-stick
     //  入力の窓はここには置かない。別の窓（calOpenForm → .cfm-bg）で開く
 
     if(CAL_ROWS.err){
@@ -20936,11 +20969,11 @@
 
     if(view==='month'){
       var first=new Date(cur.getFullYear(), cur.getMonth(), 1);
-      var start=new Date(first); start.setDate(1-first.getDay());
+      var start=calWeekStartOf(first), wEnd=(calWeekStart()+6)%7;
       var rich=calRichOk(box); CAL_RICH=rich;
       h+='<div class="cal-grid">'
-        +['日','月','火','水','木','金','土'].map(function(w,i){
-            return '<div class="cal-hd'+(i===0?' sun':(i===6?' sat':''))+'">'+w+'</div>'; }).join('')
+        +calWeekLabels().map(function(x){
+            return '<div class="cal-hd'+(x[1]===0?' sun':(x[1]===6?' sat':''))+'">'+x[0]+'</div>'; }).join('')
       +'</div><div class="cal-grid'+(rich?' rich':'')+'" style="margin-top:2px;">';
       for(var i=0;i<42;i++){
         var d=new Date(start); d.setDate(start.getDate()+i);
@@ -20958,7 +20991,7 @@
               +(its.length>showN?'<button type="button" class="cal-evmore" onclick="event.stopPropagation();calPickMore(\''+key+'\')">＋'+(its.length-showN)+'件</button>':'')
             +'</div>'
           +'</div>';
-          if(i>=34 && d.getMonth()!==cur.getMonth() && d.getDay()===6) break;
+          if(i>=34 && d.getMonth()!==cur.getMonth() && d.getDay()===wEnd) break;
           continue;
         }
         h+='<div class="'+cls+'" onclick="calPick(\''+key+'\')">'
@@ -20971,7 +21004,7 @@
           +'</span>'
           +(items.length>4?'<span class="cal-more">+'+(items.length-4)+'</span>':'')
         +'</div>';
-        if(i>=34 && d.getMonth()!==cur.getMonth() && d.getDay()===6) break;
+        if(i>=34 && d.getMonth()!==cur.getMonth() && d.getDay()===wEnd) break;
       }
       h+='</div>';
       var pick=CAL_PICK||tKey;
@@ -21020,8 +21053,8 @@
 
     box.innerHTML=h;
     calRichWatch(box);   // パネルの幅が変わったら、月表示の並べ方を合わせ直す
-    calSwipeBind();      // 横に払って前後へ（一度だけ結ぶ）
-    calSlideIn(box);     // ‹ › や払いで動いたときの滑り込み
+    calCompactBind();    // 下へ読み進めると見出しを畳む（一度だけ結ぶ）
+    calSlideIn(box);     // 前後の札で動いたときの滑り込み
     // 狭い画面では週表示が横スクロールになる。開いた時点で今日が見えるように寄せる。
     // 曜日の見出しは別の箱（.wk-head）なので、本体の横スクロールに合わせて動かす
     try{
@@ -21946,8 +21979,8 @@
       +'<button type="button" onclick="todoCalMove(-1)" aria-label="前の月">‹</button>'
       +'<b>'+y+'年'+(mo+1)+'月</b>'
       +'<button type="button" onclick="todoCalMove(1)" aria-label="次の月">›</button></div>'
-      +'<div class="todo-cal-g">'+'日月火水木金土'.split('').map(function(w,i){ return '<span class="wd'+(i===0?' su':i===6?' sa':'')+'">'+w+'</span>'; }).join('');
-    for(var i=0;i<first.getDay();i++) h+='<span></span>';
+      +'<div class="todo-cal-g">'+calWeekLabels().map(function(x){ return '<span class="wd'+(x[1]===0?' su':x[1]===6?' sa':'')+'">'+x[0]+'</span>'; }).join('');
+    for(var i=0;i<(first.getDay()-calWeekStart()+7)%7;i++) h+='<span></span>';
     for(var dd=1; dd<=days; dd++){
       var v=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(dd).padStart(2,'0'), n=cnt[v]||0;
       var cls=['d'];
