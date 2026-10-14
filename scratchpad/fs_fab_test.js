@@ -26,5 +26,11 @@ ok('④ 動きを控える設定の方には、ふっと消える・出るだけ
 ok('④ ページとカルテの下に余白（右下・左下のときだけ）', /body:not\(\.knv-fab-rt\):not\(\.knv-fab-lt\) \.wrap\{padding-bottom:110px;\}/.test(SRC) && /#cl-modal \.modal-body\{padding-bottom:110px;\}/.test(SRC));
 ok('⑤ 説明書（経営者・パートナー）', /スマホでもパソコンでも<\/b>、表や数字・ボタンの文字も一緒に大きくなります/.test(R('manual-customer.html')) && /下へスクロールしているあいだは右下にもぐって引っ込み<\/b>、少し上へ戻すとぴょこんと出てきます/.test(R('manual-customer.html')) && /下へスクロールしているあいだ引っ込み/.test(R('manual-partner.html')));
 
+// 2026-10-14：予定の前後へ送るボタンを大きく・払いを iPhone でも確実に
+const calFn = SRC.slice(SRC.indexOf('  async function knvRenderCal('), SRC.indexOf('// .cal-stick', SRC.indexOf('  async function knvRenderCal(')));
+ok('⑥ 前後へ送る札：紺に金の矢印・「前の週／次の週」（月は「前の月／次の月」）', /class="cal-arw prev" onclick="calMove\(-1\)" aria-label="前の'\+unit\+'へ"/.test(calFn) && /class="cal-arw next" onclick="calMove\(1\)"/.test(calFn) && /var unit=\(view==='month'\)\?'月':'週';/.test(calFn) && /\.cal-arw\{[^}]*min-height:40px;[^}]*border:1\.5px solid #CFA860;background:linear-gradient\(160deg,#24426E 0%,#0E2038 100%\)/.test(SRC));
+ok('⑥ 押すと矢印が進む向きへ・札が沈む・狭い画面では丸い札だけ', /\.cal-arw\.next:active svg\{transform:translateX\(3px\);\}/.test(SRC) && /\.cal-arw:active\{transform:translateY\(1px\) scale\(\.95\);/.test(SRC) && /@media\(max-width:380px\)\{ \.cal-arw\{padding:0 10px;\} \.cal-arw \.t\{display:none;\}/.test(SRC));
+ok('⑥ 払い：横の指の動きをブラウザに取らせない・touchcancel でも判定', /#knv-cal\{touch-action:pan-y pinch-zoom;\}/.test(SRC) && /box\.addEventListener\('touchcancel', end, \{ passive:true \}\);/.test(SRC) && /CAL_SW\.lx=e\.touches\[0\]\.clientX;/.test(SRC));
+ok('⑥ 説明書', /紺の「‹ 前の週」「次の週 ›」/.test(R('manual-customer.html')) && /紺の「‹ 前の週」「次の週 ›」/.test(R('manual-partner.html')));
 if (bad.length) { bad.forEach((b) => console.log('NG ' + b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK ' + n + ' checks, 0 failed');

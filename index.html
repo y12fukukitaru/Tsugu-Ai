@@ -673,6 +673,30 @@
      .knv-body の余白（12px）ぶんを負の余白で食い、端まで背景を敷いて、
      下から来る予定が透けないようにする。z-index は週表示の左の目盛り
      （.wk-corner=6）より上に */
+  /*  暦の前後へ送るボタン（2026-10-14）。小さな ‹ › では押しにくく、目にも留まらなかった。
+      紺の丸みのある札に金の矢印。「前の週／次の週」と言葉も添える（月表示は「前の月／次の月」）。
+      押すと矢印が進む向きへ少し動き、札が沈む */
+  .cal-nav{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+  .cal-arw{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;min-height:40px;padding:0 13px;border-radius:999px;
+    border:1.5px solid #CFA860;background:linear-gradient(160deg,#24426E 0%,#0E2038 100%);color:#fff;
+    font:700 .75rem/1 'Noto Sans JP',sans-serif;letter-spacing:.02em;cursor:pointer;
+    box-shadow:0 4px 12px rgba(14,32,56,.28),inset 0 1px 0 rgba(255,255,255,.18);
+    transition:transform .15s cubic-bezier(.34,1.56,.64,1),box-shadow .15s,filter .15s;-webkit-tap-highlight-color:transparent;}
+  .cal-arw svg{width:16px;height:16px;flex:0 0 auto;stroke:#E9C97A;stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round;
+    transition:transform .2s cubic-bezier(.34,1.56,.64,1);}
+  .cal-arw:hover{filter:brightness(1.12);}
+  .cal-arw:active{transform:translateY(1px) scale(.95);box-shadow:0 1px 4px rgba(14,32,56,.3),inset 0 1px 0 rgba(255,255,255,.1);}
+  .cal-arw.prev:active svg{transform:translateX(-3px);}
+  .cal-arw.next:active svg{transform:translateX(3px);}
+  .cal-arw:focus-visible{outline:2px solid #CFA860;outline-offset:2px;}
+  .cal-nav .cal-lab{flex:1;min-width:0;text-align:center;font-size:.875rem;font-weight:700;color:var(--navy);font-family:var(--f-head);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cal-nav .cal-lab small{display:block;font-size:.65625rem;font-weight:400;color:var(--muted);font-family:'Noto Sans JP',sans-serif;margin-top:2px;}
+  body.dark .cal-arw{background:linear-gradient(160deg,#2C4E80 0%,#16294A 100%);}
+  @media(max-width:380px){ .cal-arw{padding:0 10px;} .cal-arw .t{display:none;} .cal-arw{min-width:44px;justify-content:center;} }
+  /*  横に払って前後へ送れるように、暦の上では横向きの指の動きをブラウザに取らせない。
+      取られると iPhone は touchend の代わりに touchcancel を送り、払っても週が変わらなかった */
+  #knv-cal{touch-action:pan-y pinch-zoom;}
   .cal-stick{position:sticky;top:-12px;z-index:8;background:var(--bg);margin:-12px -12px 6px;padding:12px 12px 2px;
     box-shadow:0 1px 0 var(--line);}
   /* 週表示では曜日の見出し（.wk-head）も操作列と一緒に貼り付ける。
@@ -2077,7 +2101,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261013-02';
+  var APP_BUILD='20261014-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -19608,17 +19632,26 @@
       if(!e.touches || e.touches.length!==1){ CAL_SW=null; return; }
       var t=e.touches[0]; CAL_SW={ x:t.clientX, y:t.clientY, at:Date.now() };
     }, { passive:true });
-    box.addEventListener('touchend', function(e){
+    //  指の位置を追っておく。iPhone がとちゅうで指の動きを取ったとき（touchcancel）も、
+    //  そこまでの動きで判定できるように
+    box.addEventListener('touchmove', function(e){
+      if(CAL_SW && e.touches && e.touches[0]){ CAL_SW.lx=e.touches[0].clientX; CAL_SW.ly=e.touches[0].clientY; }
+    }, { passive:true });
+    function end(e){
       var s=CAL_SW; CAL_SW=null; if(!s) return;
-      var t=e.changedTouches && e.changedTouches[0]; if(!t) return;
-      var dx=t.clientX-s.x, dy=t.clientY-s.y;
+      var t=e.changedTouches && e.changedTouches[0];
+      var ex=(e.type==='touchcancel' || !t) ? s.lx : t.clientX, ey=(e.type==='touchcancel' || !t) ? s.ly : t.clientY;
+      if(ex==null || ey==null) return;
+      var dx=ex-s.x, dy=ey-s.y;
       if(Math.abs(dx)<50 || Math.abs(dx)<Math.abs(dy)*2 || Date.now()-s.at>800) return;
       if(calViewGet()==='list') return;
       //  週の枠が横にはみ出してスクロールできるときは、そちらを優先する
       var wrap=box.querySelector('.wk-wrap');
       if(wrap && wrap.scrollWidth>wrap.clientWidth+2) return;
       calMove(dx<0?1:-1);
-    }, { passive:true });
+    }
+    box.addEventListener('touchend', end, { passive:true });
+    box.addEventListener('touchcancel', end, { passive:true });
   }
   //  切り替わったことが分かるよう、暦を横から滑り込ませる。
   //  次へ進んだら右から、前へ戻ったら左から
@@ -20863,18 +20896,28 @@
           return '<button class="'+(view===o[0]?'on':'')+'" onclick="calViewSet(\''+o[0]+'\')">'+o[1]+'</button>';
         }).join('')
     +'</div>';
-    h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:9px;flex-wrap:wrap;">';
+    //  前後へ送る札は、日付の両脇に大きく（.cal-nav）。今日・更新・＋予定は次の段へ
     if(view!=='list'){
-      h+='<button class="ghost" style="font-size:.9375rem;padding:2px 8px;border:1px solid var(--line);border-radius:8px;" onclick="calMove(-1)" aria-label="前へ">‹</button>'
-        +'<div style="flex:1;min-width:110px;text-align:center;font-size:.8125rem;font-weight:700;color:var(--navy);font-family:var(--f-head);">'
+      var unit=(view==='month')?'月':'週';
+      h+='<div class="cal-nav">'
+        +'<button class="cal-arw prev" onclick="calMove(-1)" aria-label="前の'+unit+'へ">'
+          +'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span class="t">前の'+unit+'</span></button>'
+        +'<div class="cal-lab">'
           +(view==='month'
              ? cur.getFullYear()+'年'+(cur.getMonth()+1)+'月'
              : (function(){ var st=new Date(cur); st.setDate(st.getDate()-st.getDay());
                             var en=new Date(st); en.setDate(en.getDate()+6);
                             return (st.getMonth()+1)+'/'+st.getDate()+' 〜 '+(en.getMonth()+1)+'/'+en.getDate(); })())
+          +'<small>左右に払っても送れます</small>'
         +'</div>'
-        +'<button class="ghost" style="font-size:.9375rem;padding:2px 8px;border:1px solid var(--line);border-radius:8px;" onclick="calMove(1)" aria-label="次へ">›</button>'
-        +'<button class="ghost" style="font-size:.71875rem;border:1px solid var(--line);border-radius:8px;padding:4px 9px;" onclick="calToday()">今日</button>';
+        +'<button class="cal-arw next" onclick="calMove(1)" aria-label="次の'+unit+'へ">'
+          +'<span class="t">次の'+unit+'</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>'
+      +'</div>';
+    }
+    h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:9px;flex-wrap:wrap;">';
+    if(view!=='list'){
+      h+='<button class="ghost" style="font-size:.71875rem;border:1px solid var(--line);border-radius:8px;padding:4px 9px;" onclick="calToday()">今日</button>'
+        +'<div style="flex:1;"></div>';
     }else{
       h+='<div style="flex:1;min-width:120px;font-size:.8125rem;font-weight:700;color:var(--navy);font-family:var(--f-head);">'
         +today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日（'+'日月火水木金土'.charAt(today.getDay())+'）</div>';
