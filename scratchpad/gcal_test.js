@@ -429,7 +429,7 @@ function takeFn(name) {
 {
   const sw = takeFn('calSwipeBind');
   ok('暦の箱に一度だけ結ぶ', /if\(!box \|\| box\.__swipe\) return;/.test(sw) && /box\.__swipe=1;/.test(sw));
-  ok('指の始まりと終わりを見る（passive）', /addEventListener\('touchstart'/.test(sw) && /addEventListener\('touchend'/.test(sw) && (sw.match(/\{ passive:true \}/g)||[]).length===2);
+  ok('指の始まり・動き・終わり（とちゅうで取られたとき）を見る（passive）', /addEventListener\('touchstart'/.test(sw) && /addEventListener\('touchend', end/.test(sw) && /addEventListener\('touchcancel', end/.test(sw) && (sw.match(/\{ passive:true \}/g)||[]).length===4);
   ok('縦のスクロールと見分ける（横 50px 以上・縦の2倍以上・0.8秒以内）', /Math\.abs\(dx\)<50 \|\| Math\.abs\(dx\)<Math\.abs\(dy\)\*2 \|\| Date\.now\(\)-s\.at>800/.test(sw));
   ok('一覧の表示では何もしない', /if\(calViewGet\(\)==='list'\) return;/.test(sw));
   ok('週の枠が横にはみ出すときは、そちらを優先', /wrap\.scrollWidth>wrap\.clientWidth\+2\) return;/.test(sw));
@@ -522,7 +522,7 @@ function takeFn(name) {
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261013-02', '20261013-02']);
+  is('版が揃う', [build, VER.build], ['20261014-01', '20261014-01']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
