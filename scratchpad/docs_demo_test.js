@@ -113,6 +113,21 @@ const IDX = R('index.html');
   ok('pitch-wa.css：高さをそろえ、余りは上下に分ける',
     /\.deck \.slide,\.deck \.slide\.dm\{[\s\S]{0,200}min-height:var\(--slideh,0\);/.test(WA)
     && /justify-content:center;/.test(WA));
+  //  倍率をかけると紙は基準幅に戻る。狭い画面の幅のまま測ると、スマホ横向きで紙がバーの下にはみ出す
+  ok('pitch-fit.js：倍率をかける画面では基準幅で測る（スマホ横向きでも一枚が丸ごと入る）',
+    /var atBase=window\.innerWidth>820 && mw>0 && Math\.abs\(w-mw\)>1;/.test(FIT)
+    && /\(s===cur && !atBase\) \? \(s\.offsetHeight\|\|0\) : natH\(s, w, disp\)/.test(FIT)
+    && /return Math\.max\(0\.4, Math\.min\(z, 2\.6\)\);/.test(FIT));
+  ok('pitch-fit.js：横に送れる表・画面の写しの上では頁を送らない',
+    /function wideAt\(t\)/.test(FIT) && /closest\('\.dr-wide,\.scr'\)/.test(FIT) && /if\(inWide\)\{ inWide=false; return; \}/.test(FIT));
+  {
+    const DR = R('doc-reader.js');
+    ok('doc-reader.js：スライドで見るときも表を横に送れる枠に入れる（スマホだけ効く）',
+      /function wrapWide\(root\)/.test(DR) && /S\.forEach\(wrapWide\);/.test(DR) && /wrapWide\(sec\);/.test(DR)
+      && /@media screen and \(max-width:820px\)\{/.test(DR)
+      && /\.slide \.dr-wide,\.slide \.scr\{overflow-x:auto;/.test(DR)
+      && /'\.dr-slide \.dr-wide\{overflow-x:auto;/.test(DR) && !/'\.dr-wide\{overflow-x:auto;/.test(DR));
+  }
   ok('pitch-fit.js：全画面ではバーの出入りで大きさを変えない',
     /if\(body\.classList\.contains\('pf-on'\)\) return 8;/.test(FIT));
   ok('pitch-wa.css：deck は中央寄せ、slide は zoom var(--fit)', /\.deck\{[^}]*justify-content:center/.test(WA) && /\.slide\{zoom:var\(--fit,1\);\}/.test(WA) && /@media print\{ \.deck\{[^}]*\} \.slide\{zoom:1;\} \}/.test(WA));
