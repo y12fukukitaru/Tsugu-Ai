@@ -680,9 +680,11 @@
         前後の札と日付の段、週表示の曜日の見出しは残す
       ・左右に払うと継ナビくん自体が閉じるので、暦の払いで週を送るのはやめた（ボタンで送る） */
   .knv-calbar{flex-shrink:0;background:var(--bg);padding:8px 12px 6px;border-bottom:1px solid var(--line);}
-  .knv-calbar .cb-top{display:flex;align-items:center;gap:6px;padding-bottom:6px;}
-  .knv-calbar .vaseg{padding:3px;gap:2px;border-radius:9px;}
-  .knv-calbar .vaseg button{width:auto;flex:0 0 auto;padding:5px 12px;font-size:.75rem;border-radius:7px;}
+  .knv-calbar .cb-top{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding-bottom:6px;}
+  /*  月/週/一覧の囲いは中身の幅に合わせる。スマホ用の .vaseg{width:100%} がここにも当たって、
+      囲いだけが横に伸び、「一覧」の右に空きができていた（2026-10-14） */
+  .knv-calbar .vaseg{display:inline-flex;width:auto;flex:0 0 auto;padding:3px;gap:2px;border-radius:9px;}
+  .knv-calbar .vaseg button{width:auto;flex:0 0 auto;min-width:2.9em;padding:5px 9px;font-size:.75rem;border-radius:7px;}
   .knv-calbar .cb-sm{flex:0 0 auto;font-family:inherit;font-size:.71875rem;font-weight:600;color:var(--navy);background:var(--card);
     border:1px solid var(--line);border-radius:8px;height:30px;padding:0 10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;}
   .knv-calbar .cb-add{flex:0 0 auto;height:30px;padding:0 12px;font-size:.75rem;display:inline-flex;align-items:center;}
@@ -2159,7 +2161,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261014-05';
+  var APP_BUILD='20261014-06';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
