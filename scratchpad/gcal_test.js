@@ -336,7 +336,7 @@ function takeFn(name) {
 // ⑮ 予定タブの操作列は、下へ送っても上に残す
 {
   const rc = takeFn('knvRenderCal');
-  ok('週の見出しを包んで貼り付ける', /if\(wk\) h\+='<div class="cal-stick week">'\+wk\.head\+'<\/div>';   \/\/ \.cal-stick/.test(rc));
+  ok('週の見出しは操作の帯に入れる（本体の上に重なって残る）', /if\(wk\) bh\+=wk\.head;/.test(rc) && /bar\.classList\.toggle\('week', !!wk\);/.test(rc));
   //  印を「wk」にすると .wk{min-width} に当たって操作列が広がる（実際になった）
   no('印は .wk と同じ名前にしない', /class="cal-stick'\+\(wk\?' wk':''\)/.test(rc) || /\.cal-stick\.wk\{/.test(SRC));
   //  包みの中に、切り替え・前後・今日・＋予定がぜんぶ入っていること
@@ -350,8 +350,8 @@ function takeFn(name) {
   const wv = takeFn('calWeekVertical');
   ok('曜日の見出しは別の箱で返す', /var head='<div class="wk-head"><div class="wk">';/.test(wv) && /return \{ head:head, body:h \};/.test(wv));
   ok('本体は上の罫線を落とす印を持つ', /var h='<div class="wk-wrap under"><div class="wk">';/.test(wv));
-  ok('週表示のときだけ見出しを貼り付ける', /if\(wk\) h\+='<div class="cal-stick week">'/.test(rc));
-  ok('見出しは先に作る', /wk=calWeekVertical\(byDay, ws\);/.test(rc) && rc.indexOf('wk=calWeekVertical(byDay, ws);') < rc.indexOf('<div class="cal-stick'));
+  ok('見出しの横送りは本体に合わせる（見出しは帯の中）', /var whead=\(\$\('knv-calbar'\)\|\|box\)\.querySelector\('\.wk-head'\);/.test(rc));
+  ok('見出しは先に作る', /wk=calWeekVertical\(byDay, ws\);/.test(rc) && rc.indexOf('wk=calWeekVertical(byDay, ws);') < rc.indexOf('if(wk) bh+=wk.head;'));
   ok('横スクロールを本体に合わせる', /wrap\.addEventListener\('scroll', function\(\)\{ whead\.scrollLeft=wrap\.scrollLeft; \}\);/.test(rc));
   ok('見出しの CSS', /\.wk-head\{overflow-x:hidden;border:1px solid var\(--softline\);border-bottom:0;border-radius:10px 10px 0 0;/.test(SRC));
   ok('本体は上の角を落とす', /\.wk-wrap\.under\{border-top:0;border-radius:0 0 10px 10px;\}/.test(SRC));
@@ -515,7 +515,7 @@ function takeFn(name) {
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261014-02', '20261014-02']);
+  is('版が揃う', [build, VER.build], ['20261014-03', '20261014-03']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
