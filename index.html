@@ -686,6 +686,34 @@
   .knv-calbar .cb-sm{flex:0 0 auto;font-family:inherit;font-size:.71875rem;font-weight:600;color:var(--navy);background:var(--card);
     border:1px solid var(--line);border-radius:8px;height:30px;padding:0 10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;}
   .knv-calbar .cb-add{flex:0 0 auto;height:30px;padding:0 12px;font-size:.75rem;display:inline-flex;align-items:center;}
+  /*  更新：目立つ枠の札（紺の縁・回る矢印・「更新」）。押すと矢印が回り、終わると ✓ を一瞬出す */
+  .knv-calbar .cb-sync{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:5px;height:30px;padding:0 11px;
+    border-radius:999px;border:1.5px solid var(--navy);background:var(--card);color:var(--navy);font-family:inherit;font-size:.71875rem;font-weight:700;
+    cursor:pointer;transition:background .15s,color .15s,transform .15s;-webkit-tap-highlight-color:transparent;}
+  .knv-calbar .cb-sync svg{width:15px;height:15px;display:block;stroke:currentColor;stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+  .knv-calbar .cb-sync:hover{background:var(--navy);color:#fff;}
+  .knv-calbar .cb-sync:active{transform:scale(.95);}
+  .knv-calbar .cb-sync.busy svg{animation:cbSpin .8s linear infinite;}
+  .knv-calbar .cb-sync.done{background:#E7F3EC;border-color:#27684A;color:#27684A;}
+  @keyframes cbSpin{to{transform:rotate(360deg);}}
+  .knv-calbar .cb-sync .t{display:none;}
+  /*  帯の幅で中身を変える（パネルの幅＝コンテナで判断。パソコンの大きなパネルでは情報を足す） */
+  .knv-calbar{container-type:inline-size;}
+  @container (min-width:400px){ .knv-calbar .cb-sync .t{display:inline;} }
+  .cal-nav .cal-lab .cl-eye,.cal-nav .cal-lab .cl-stats,.cal-nav .cal-lab .wd{display:none;}
+  @container (min-width:560px){
+    .knv-calbar .cal-nav{background:linear-gradient(135deg,#FBF7EC 0%,var(--card) 55%);border:1px solid #EADFC2;border-radius:14px;padding:10px 12px;
+      box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 2px 10px rgba(14,32,56,.05);}
+    .cal-nav .cal-lab .cl-eye{display:block;font-size:.6875rem;font-weight:700;letter-spacing:.12em;color:#A0802F;font-family:'Noto Sans JP',sans-serif;}
+    .cal-nav .cal-lab .cl-main{font-size:1.125rem;letter-spacing:.02em;margin-top:1px;}
+    .cal-nav .cal-lab .wd{display:inline;font-size:.75rem;font-weight:400;color:var(--muted);}
+    .cal-nav .cal-lab .cl-stats{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 12px;margin-top:4px;font-size:.6875rem;font-weight:400;
+      color:var(--muted);font-family:'Noto Sans JP',sans-serif;}
+    .cal-nav .cal-lab .cl-stats b{color:var(--navy);font-size:.8125rem;}
+    .cal-nav .cal-lab .cl-stats i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:0;}
+    .cal-arw{height:38px;}
+  }
+  body.dark .knv-calbar .cal-nav{background:var(--card);border-color:var(--line);}
   .cal-nav{display:flex;align-items:center;gap:8px;}
   .cal-arw{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:3px;height:34px;border-radius:999px;
     border:1.5px solid #CFA860;background:linear-gradient(160deg,#24426E 0%,#0E2038 100%);color:#fff;
@@ -703,8 +731,8 @@
   .cal-arw.prev:active svg{transform:translateX(-3px);}
   .cal-arw.next:active svg{transform:translateX(3px);}
   .cal-arw:focus-visible{outline:2px solid #CFA860;outline-offset:2px;}
-  .cal-nav .cal-lab{flex:1;min-width:0;text-align:center;font-size:.875rem;font-weight:700;color:var(--navy);font-family:var(--f-head);
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cal-nav .cal-lab{flex:1;min-width:0;text-align:center;font-size:.875rem;font-weight:700;color:var(--navy);font-family:var(--f-head);}
+  .cal-nav .cal-lab .cl-main{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   body.dark .cal-arw{background:linear-gradient(160deg,#2C4E80 0%,#16294A 100%);}
   @media(max-width:360px){ .cal-arw .t{display:none;} .cal-arw.prev,.cal-arw.next{width:38px;padding:0;} }
   /*  畳むときの動き（下へ読み進めたとき・2026-10-14 作り直し）
@@ -2131,7 +2159,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261014-04';
+  var APP_BUILD='20261014-05';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -19663,6 +19691,54 @@
     CAL_CUR=d; CAL_PICK=null; CAL_SLIDE=n; knvRenderCal();
   }
   function calToday(){ CAL_CUR=new Date(); CAL_PICK=null; knvRenderCal(); }
+  //  帯の真ん中（日付）。小さな画面は日付だけ。パソコンの大きなパネルでは、上に年月、
+  //  日付に曜日、下にその期間の予定の数と種類の内訳を添える（.cl-eye / .wd / .cl-stats）
+  function calHeadLab(view, cur, byDay){
+    var W='日月火水木金土', eye='', main='', from, to, unitLab;
+    function md(d){ return (d.getMonth()+1)+'/'+d.getDate(); }
+    function wd(d){ return '<span class="wd">（'+W.charAt(d.getDay())+'）</span>'; }
+    if(view==='month'){
+      from=new Date(cur.getFullYear(), cur.getMonth(), 1); to=new Date(cur.getFullYear(), cur.getMonth()+1, 0);
+      eye=cur.getFullYear()+'年'; main=cur.getFullYear()+'年'+(cur.getMonth()+1)+'月'; unitLab='この月';
+    }else if(view==='week'){
+      from=calWeekStartOf(cur); to=new Date(from); to.setDate(to.getDate()+6);
+      eye=from.getFullYear()+'年'+(from.getMonth()+1)+'月'+(to.getMonth()!==from.getMonth()?'〜'+(to.getMonth()+1)+'月':'');
+      main=md(from)+wd(from)+' 〜 '+md(to)+wd(to); unitLab='この週';
+    }else{
+      from=new Date(cur.getFullYear(), cur.getMonth(), cur.getDate()); to=new Date(from); to.setDate(to.getDate()+30);
+      eye='これからの予定'; main=cur.getFullYear()+'年'+(cur.getMonth()+1)+'月'+cur.getDate()+'日（'+W.charAt(cur.getDay())+'）から'; unitLab='30日間';
+    }
+    //  期間の予定を数え、種類ごとの内訳（多い順に4つまで）
+    var n=0, kinds={}, order=[], tk=calDkey(new Date()), today=0;
+    for(var d=new Date(from); d<=to; d.setDate(d.getDate()+1)){
+      var k=calDkey(d);
+      (byDay[k]||[]).forEach(function(x){
+        n++; if(k===tk) today++;
+        var kk=calKindOf(x), lab=(kk&&kk.label)||(x.calName)||'自分の予定', col=(kk&&kk.fg)||'#2C5DA8';
+        if(!kinds[lab]){ kinds[lab]={ n:0, col:col }; order.push(lab); }
+        kinds[lab].n++;
+      });
+    }
+    order.sort(function(a,b){ return kinds[b].n-kinds[a].n; });
+    var st='<span>'+unitLab+'の予定 <b>'+n+'</b>件</span>'
+      +(today?'<span>今日 <b>'+today+'</b>件</span>':'')
+      +order.slice(0,4).map(function(l){ return '<span><i style="background:'+kinds[l].col+';"></i>'+esc(l)+' '+kinds[l].n+'</span>'; }).join('');
+    return '<div class="cl-eye">'+eye+'</div><div class="cl-main">'+main+'</div><div class="cl-stats">'+st+'</div>';
+  }
+  //  更新：矢印を回しながら読み込み直し、終わったら ✓ を一瞬出す
+  async function calRefresh(btn){
+    if(btn){ if(btn.classList.contains('busy')) return; btn.classList.add('busy'); }
+    var t0=Date.now();
+    try{ await knvRenderCal(true); }catch(e){}
+    var nb=document.querySelector('#knv-calbar .cb-sync');
+    if(nb){
+      var wait=Math.max(0, 500-(Date.now()-t0));   // 一瞬で終わっても、回ったことが分かるように
+      if(wait){ nb.classList.add('busy'); await new Promise(function(r){ setTimeout(r, wait); }); nb.classList.remove('busy'); }
+      var t=nb.querySelector('.t'); var was=t?t.textContent:'';
+      nb.classList.add('done'); if(t) t.textContent='✓ 更新しました';
+      setTimeout(function(){ nb.classList.remove('done'); if(t) t.textContent=was; }, 1400);
+    }
+  }
   //  週の始まり（設定）：0＝日曜（いままでどおり）、1＝月曜。端末と利用者ごとに覚える
   function calWeekStart(){ var p=loadPrefs(); return p.weekStart===1?1:0; }
   function calWeekStartOf(d){
@@ -19720,6 +19796,11 @@
     KNV_CPT.D=sumH+topH; KNV_CPT.topH=topH;
     if(KNV_CPT.off>KNV_CPT.D) calSetOff(KNV_CPT.D);
     //  週表示は見出しと本体をつなげて一つの枠に見せるので、すき間を空けない
+    //  本体には縦のスクロールバーがある（パソコン）。帯の右の余白をその幅だけ広げ、
+    //  曜日の見出しの列と本体の列の線をそろえる（そろえないとバーの幅だけ列がずれる）
+    var sbw=Math.max(0, box.offsetWidth-box.clientWidth);
+    var pr=(12+sbw)+'px'; if(bar.style.paddingRight!==pr) bar.style.paddingRight=pr;
+    barH=bar.offsetHeight;
     var pad=sumH+barH+(bar.classList.contains('week')?0:10);
     if(box.style.paddingTop!==pad+'px') box.style.paddingTop=pad+'px';
     if(!calLayout.ro && window.ResizeObserver){
@@ -21005,24 +21086,21 @@
           }).join('')
         +'</div><div style="flex:1;"></div>'
         +(view!=='list'?'<button class="cb-sm" onclick="calToday()">今日</button>':'')
-        +'<button class="cb-sm" onclick="knvRenderCal(true)" title="読み込み直す" aria-label="読み込み直す">↺</button>'
+        +'<button class="cb-sync" onclick="calRefresh(this)" title="予定を読み込み直す（Google の予定も取り直す）" aria-label="予定を更新">'
+          +'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 21v-5h-5"/></svg>'
+          +'<span class="t">更新</span></button>'
         +'<button class="btn2 btn-gold cb-add" onclick="calOpenForm()">＋ 予定</button></div>';
       if(view!=='list'){
         bh+='<div class="cal-nav">'
           +'<button class="cal-arw prev" onclick="calMove(-1)" aria-label="前の'+unit+'へ">'
             +'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span class="t">前の'+unit+'</span></button>'
-          +'<div class="cal-lab">'
-            +(view==='month'
-               ? cur.getFullYear()+'年'+(cur.getMonth()+1)+'月'
-               : (function(){ var st=calWeekStartOf(cur), en=new Date(st); en.setDate(en.getDate()+6);
-                              return (st.getMonth()+1)+'/'+st.getDate()+' 〜 '+(en.getMonth()+1)+'/'+en.getDate(); })())
+          +'<div class="cal-lab">'+calHeadLab(view, cur, byDay)
           +'</div>'
           +'<button class="cal-arw next" onclick="calMove(1)" aria-label="次の'+unit+'へ">'
             +'<span class="t">次の'+unit+'</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>'
         +'</div>';
       }else{
-        bh+='<div class="cal-nav"><div class="cal-lab">'
-          +today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日（'+'日月火水木金土'.charAt(today.getDay())+'）からの予定</div></div>';
+        bh+='<div class="cal-nav"><div class="cal-lab">'+calHeadLab('list', today, byDay)+'</div></div>';
       }
       //  週表示は、曜日の見出し（と終日の帯）も帯に入れる。本体の上に重なり、いっしょに残る
       if(wk) bh+=wk.head;
