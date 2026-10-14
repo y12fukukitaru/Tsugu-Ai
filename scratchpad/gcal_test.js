@@ -497,7 +497,7 @@ function takeFn(name) {
   const MANA = R('manual-admin.html');
   [['経営者', MANC], ['パートナー', MANP]].forEach(([w, M]) => {
     ok(w + '：前後はボタンで（払いでは送らない）・週の始まり', /紺の「‹ 前の週」「次の週 ›」/.test(M) && /払いでは週を送りません/.test(M) && /予定の週の始まり/.test(M));
-    ok(w + '：下へ読むと畳む・前後と曜日・終日は上に残る', /下へ読み進めるとすっと畳まれ<\/b>/.test(M) && /曜日の見出し・終日の帯<\/b>は上に残る/.test(M));
+    ok(w + '：下へ読むと畳む・前後と曜日・終日は上に残る', /下へ読み進めると、指の動きに合わせて少しずつ畳まれ<\/b>/.test(M) && /曜日の見出し・終日の帯<\/b>は上に残る/.test(M));
     ok(w + '：入力は別の窓、✕で継ナビくんは閉じない', /入力の窓だけを閉じ、継ナビくんはそのまま開いています/.test(M));
     ok(w + '：スマホの週表示は7日が幅に収まる', /スマホでも7日が画面の幅に収まり、予定は色で塗られて題名が折り返されます/.test(M));
     ok(w + '：＋予定は金色', /金色の<b>「＋ 予定」<\/b>/.test(M));
@@ -515,7 +515,7 @@ function takeFn(name) {
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261014-03', '20261014-03']);
+  is('版が揃う', [build, VER.build], ['20261014-04', '20261014-04']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
