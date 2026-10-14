@@ -29,11 +29,11 @@ const base =
   'function yen(v){ return "¥"+Math.round(Number(v)||0).toLocaleString("ja-JP"); }' +
   'var EP_STD_FEE=45000; var EP_SELLER_FEE=35000; var EP_SETUP_FEE=100000; var EP_SETUP_SELLER=50000; var ME="me"; var SHINDAN_CHECKS=[["deputy","右腕"],["manual","手順"],["sales_dep","偏り"],["successor","方向性"],["shares","株主"],["will","遺言"],["contracts","契約書"],["offbalance","簿外"],["guarantee","保証"]];' +
   'var EXIT={ scope:"c1", who:"customer", row:null, ctx:null, edit:{} };' +
-  takeObj('PLANS') + takeVar('PLAN_RATES') + takeFn('planOf') + takeFn('planName') + takeFn('planFee') + takeFn('planTag') + takeFn('faPerk') +
+  takeObj('PLANS') + takeVar('PLAN_RATES') + takeFn('planOf') + takeFn('planName') + takeFn('planFee') + takeFn('planTag') + takeVar('FA_CREDIT_MAX_MONTHS') + takeFn('faCredit') + takeFn('faAfterCredit') +
   takeArr('EXIT_TYPES') + takeObj('EXIT_TARGETS') + takeObj('EXIT_CHECKS') + takeObj('EXIT_NOTES') + takeFn('exitPathNote') + takeFn('exitCheckLabel') + takeFn('exitTypeOf') +
   takeFn('holdingSignals') + takeFn('exitFmt') + takeFn('exitHtml') +
   takeArr('JOURNEY_Q') + takeArr('JOURNEY_Q_SELLER') + takeFn('journeyPhase') + takeFn('karteOpt');
-const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:planName, planFee:planFee, planTag:planTag, faPerk:faPerk, types:EXIT_TYPES, targets:EXIT_TARGETS, checks:EXIT_CHECKS, signals:holdingSignals, html:exitHtml, phase:journeyPhase, QS:JOURNEY_Q_SELLER, Q:JOURNEY_Q, karteOpt:karteOpt};')();
+const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:planName, planFee:planFee, planTag:planTag, faCredit:faCredit, faAfterCredit:faAfterCredit, types:EXIT_TYPES, targets:EXIT_TARGETS, checks:EXIT_CHECKS, signals:holdingSignals, html:exitHtml, phase:journeyPhase, QS:JOURNEY_Q_SELLER, Q:JOURNEY_Q, karteOpt:karteOpt};')();
 
 // ① プラン
 {
@@ -43,11 +43,13 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
 }
 // ② M&A の優遇
 {
-  is('1年未満は対象外', M.faPerk('2026-01-01', '2026-09-12'), { years: 0, rate: 0, eligible: false });
-  is('1年で10%', M.faPerk('2025-09-01', '2026-09-12'), { years: 1, rate: 10, eligible: true });
-  is('3年で30%', M.faPerk('2023-06-01', '2026-09-12'), { years: 3, rate: 30, eligible: true });
-  is('7年でも上限50%', M.faPerk('2019-01-01', '2026-09-12'), { years: 7, rate: 50, eligible: true });
-  is('日付が無ければ対象外', M.faPerk(null, '2026-09-12'), { years: 0, rate: 0, eligible: false });
+  //  2026-10-14 改定：顧問料（税別）を直近36か月分まで FA 報酬から控除（目安＝月額×月数）
+  is('始めた月は1か月分', M.faCredit('2026-09-01', 45000, '2026-09-12'), { months: 1, capped: false, amount: 45000 });
+  is('12か月で54万（買い手）', M.faCredit('2025-10-01', 45000, '2026-09-12'), { months: 12, capped: false, amount: 540000 });
+  is('24か月で84万（売り手）', M.faCredit('2024-10-01', 35000, '2026-09-12'), { months: 24, capped: false, amount: 840000 });
+  is('36か月が上限', M.faCredit('2019-01-01', 45000, '2026-09-12'), { months: 36, capped: true, amount: 1620000 });
+  is('日付が無ければ0', M.faCredit(null, 45000, '2026-09-12'), { months: 0, capped: false, amount: 0 });
+  is('控除後は0円を下回らない', [M.faAfterCredit(1300000, 540000), M.faAfterCredit(1300000, 1620000)], [760000, 0]);
 }
 // ③ 出口の設計
 {
@@ -59,7 +61,7 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
   is('保証と株主が整っていれば2つ', M.signals(Object.assign({}, ctx, { ans: { guarantee: true, shares: true } }), { exit_type: 'employee' }).length, 2);
   ok('合図に税額は出ない', !/相続税|税額/.test(M.signals(ctx, { exit_type: 'family' }).join('')));
   const h0 = M.html({ exit_type: null, targets: {} }, ctx, 'customer');
-  ok('プランと優遇の箱', /いまの顧問プラン/.test(h0) && /売り手プラン（譲渡準備）/.test(h0) && /FA報酬 20% 割引</.test(h0) && !/最低報酬なし/.test(h0));
+  ok('プランと優遇の箱', /いまの顧問プラン/.test(h0) && /売り手プラン（譲渡準備）/.test(h0) && /FA報酬から控除できる顧問料 ¥[\d,]+/.test(h0) && /直近36か月分まで<\/b>/.test(h0) && !/最低報酬なし/.test(h0) && !/% 割引/.test(h0));
   ok('経営者には「担当パートナーへ」', /プランの切替は担当パートナーにお申し出ください/.test(h0) && !/planRequest/.test(h0));
   is('出口のボタンは8つ', (h0.match(/onclick="exitPick\('/g) || []).length, 8);
   ok('出口を選ぶ前は案内だけ（経営者は「決まると」）', /出口が決まると、目標の年と、その出口で見る数字が出ます。四半期ごとに担当パートナーと見直します。/.test(h0) && !/id="ex-year"/.test(h0));
@@ -224,13 +226,13 @@ const M = new Function(base + 'return {PLANS:PLANS, planOf:planOf, planName:plan
   ok('SQL：登録時にプランを引き継ぐ', /update public\.profiles set plan = o\.plan, plan_from = null, plan_prev = null/.test(SQL));
   ok('SQL：出口の設計は相続税評価額を持たない', /相続税評価額は持たない/.test(SQL) && !/inheritance|相続税評価額 integer/.test(SQL));
   ok('SQL の期待値', /期待値：列=4、表=2、関数=6、契約書にプラン=1/.test(SQL));
-  ok('pitch：2つのプランと優遇', /買い手プラン（成長）45,000円/.test(PITC) && /売り手プラン（譲渡準備）35,000円/.test(PITC) && /最大50%/.test(PITC));
+  ok('pitch：2つのプランと優遇', /買い手プラン（成長）45,000円/.test(PITC) && /売り手プラン（譲渡準備）35,000円/.test(PITC) && /M&amp;Aの優遇<\/b>：お支払いの顧問料を手数料から差し引き（直近36か月分まで）/.test(PITC) && !/最大50%/.test(PITC));
   ok('経営者説明書：プラン・優遇・出口の設計', /2つのプラン/.test(MANC) && /<h3>出口の設計<\/h3>/.test(MANC) && /持株会社などは、出口とは別に検討できます/.test(MANC));
   ok('パートナー説明書：プランを選ぶ・切替依頼・出口の設計', /金額ではなく<b>プラン<\/b>を選びます/.test(MANP) && /運営に依頼し、運営が切り替えます/.test(MANP) && /<h3>出口の設計<\/h3>/.test(MANP));
   ok('運営説明書：2プラン・切替は運営だけ・契約書の条文', /顧問料（2プラン）/.test(MANA) && /切替は運営だけ/.test(MANA) && /第2条の3/.test(MANA));
   ok('税額は出さないと明記', /税額は計算しません/.test(MANC) && /税額を計算しません/.test(SRC));
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261014-06', '20261014-06']);
+  is('版が揃う', [build, VER.build], ['20261014-07', '20261014-07']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
