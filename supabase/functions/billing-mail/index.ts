@@ -1,7 +1,12 @@
 // =============================================================
 // billing-mail: お支払いのご案内をメールで届ける
 //
-//  いまは「初回のお振込みのご案内」（action:"setup"）だけ。
+//  2つのご案内を送る。
+//    ・初回のお振込みのご案内（action:"setup"）
+//    ・お振込みのお願い（action:"dunning"）… 引き落とせなかった・期日を過ぎた分を、
+//      運営か担当パートナーが「お振込みのお願いを送る」で送る（下の ③）
+//
+//  初回のお振込みのご案内：
 //    顧客が顧問契約を受け取った最初の一度に、DB の引き金（setup_fee_on_claim）が
 //    初期導入費と、ご登録の翌月分の顧問料の請求、ご案内の記録（setup_fee_notices）を作る。
 //    ここは、その記録のうちまだ送っていないものを、登録のメールアドレスへ送る。
@@ -15,6 +20,11 @@
 //         { action:"setup", invoice_id }
 //       → その請求（初期導入費か、初回に入れた顧問料）のご案内を送る（再送も）。
 //         手で立てた初期導入費にも使える
+//
+//    ③ 運営・担当パートナーの画面（未収の「お振込みのお願いを送る」）
+//         { action:"dunning", notice_id }
+//       → DB の dunning_prepare が作った記録（dunning_notices）の請求を、まとめて案内する。
+//         送れるのは、その記録を作った本人か運営。送るのは一度だけ
 //
 //  二重に送らない：①は「未送信 → 送信中」を1行ずつ取ってから送る。
 //  同じ方が2台で同時にログインしても、送るのは一度だけ。
@@ -30,6 +40,7 @@
 //
 // 先に実行しておく SQL:
 //   supabase/migrations/20261015000000_debit_mandate_setup_fee.sql
+//   supabase/migrations/20261015010000_dunning.sql（お振込みのお願い）
 // =============================================================
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -209,6 +220,149 @@ async function sendOne(sb: ReturnType<typeof createClient>, customerId: string, 
   }
 }
 
+//  ---- お振込みのお願い（引き落とせなかった・期日を過ぎた分）----
+type DInv = Inv & { paid_amount?: number | null };
+export function dunningHtml(o: {
+  company: string; contact: string; invs: DInv[]; bank: string; payBy: string;
+  debitContinues: boolean; ask: string;
+}): string {
+  const to = [o.company ? `${esc(o.company)} 御中` : "", o.contact ? `${esc(o.contact)} 様` : ""]
+    .filter(Boolean).join("<br>") || "ご担当者様";
+  const bank = o.bank.trim()
+    ? `<div style="white-space:pre-wrap;background:#F8F9FC;border:1px solid #E2E7EF;border-radius:10px;padding:12px 14px;font-size:13px;color:#18202E;line-height:1.9;">${esc(o.bank.trim())}</div>`
+    : `<div style="font-size:13px;color:#18202E;line-height:1.9;">お振込先は、アプリの「お支払い」でご確認ください。</div>`;
+  const tr = (k: string, v: string, top = false, strong = false) =>
+    `<tr><td style="padding:6px 0;color:${strong ? "#1E3A66;font-weight:700" : "#5A6981"};${top ? "border-top:1px solid #E2E7EF;" : ""}">${k}</td><td style="padding:6px 0;color:#18202E;text-align:right;${top ? "border-top:1px solid #E2E7EF;" : ""}">${v}</td></tr>`;
+  //  内訳：〇月分（税別）→ 小計（税別）→ 消費税（10%）→ 合計（税込）→ お支払い済みの分 → お振込みのお願い額
+  const sub = o.invs.reduce((t, x) => t + (Number(x.amount_ex) || 0), 0);
+  const tax = o.invs.reduce((t, x) => t + (Number(x.tax) || 0), 0);
+  const total = o.invs.reduce((t, x) => t + (Number(x.amount) || 0), 0);
+  const paid = o.invs.reduce((t, x) => t + (Number(x.paid_amount) || 0), 0);
+  const lines = o.invs.map((x) => tr(esc(x.title), yen(x.amount_ex))).join("");
+  const months = o.invs.map((x) => monthLabel(x)).filter(Boolean);
+  return `<!doctype html><html><body style="margin:0;padding:0;background:#F4F6FA;">
+<div style="max-width:600px;margin:0 auto;padding:28px 20px;font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Noto Sans JP',sans-serif;">
+  <div style="text-align:center;font-size:15px;font-weight:700;color:#1E3A66;margin-bottom:18px;">
+    TsuguAi<span style="color:#C8A24B;">-継-</span></div>
+  <div style="background:#fff;border:1px solid #E2E7EF;border-radius:14px;padding:24px;">
+    <div style="font-size:11px;color:#A9403D;font-weight:700;">💴 お振込みのお願い</div>
+    <div style="font-size:13px;color:#18202E;line-height:2;margin-top:10px;">${to}</div>
+    <div style="font-size:13px;color:#18202E;line-height:2;margin-top:10px;">
+      いつも TsuguAi -継- をご利用いただき、ありがとうございます。<br>
+      <b>${esc(months.join("・"))}</b>のお支払いが、まだ確認できておりません（口座振替でお引き落としができなかった分を含みます）。
+      お手数ですが、下記のとおり<b>お振込み</b>をお願いいたします。<br>
+      <span style="color:#5A6981;">行き違いでお支払いいただいている場合は、申し訳ありません。このメールは破棄してください。</span></div>
+    <div style="font-size:12px;color:#8A6D2F;font-weight:700;margin:14px 0 2px;">ご請求の内訳</div>
+    <table style="width:100%;font-size:13px;border-collapse:collapse;border-top:1px solid #EDF1F6;">
+      <tr><td style="padding:6px 0;color:#94A2B6;font-size:11.5px;">品目</td><td style="padding:6px 0;color:#94A2B6;font-size:11.5px;text-align:right;">金額（税別）</td></tr>
+      ${lines}
+      ${tr("小計（税別）", yen(sub), true)}
+      ${tr("消費税（10%）", yen(tax))}
+      ${tr("合計（税込）", yen(total), true)}
+      ${paid > 0 ? tr("お支払い済みの分", `−${yen(paid)}`) : ""}
+      <tr><td style="padding:9px 0;color:#A9403D;font-weight:700;border-top:1px solid #E2E7EF;">お振込みのお願い額</td>
+        <td style="padding:9px 0;text-align:right;border-top:1px solid #E2E7EF;"><b style="color:#A9403D;font-size:16px;">${yen(total - paid)}</b></td></tr>
+      ${tr("お支払期日", `<b>${esc(jaDate(o.payBy))}</b>`)}
+      ${tr("お支払い方法", "銀行振込（まとめて一度に）")}
+    </table>
+    <div style="font-size:12px;color:#8A6D2F;font-weight:700;margin:16px 0 6px;">お振込先</div>
+    ${bank}
+    <div style="font-size:12.5px;color:#18202E;line-height:1.95;margin-top:12px;">
+      お振込の際は、<b>ご依頼人名をご契約の会社名</b>にしてください（入金の確認に使います）。振込手数料はご負担をお願いしております。<br>
+      ${o.debitContinues
+        ? "<b>今回の分は、口座からのお引き落としはいたしません</b>（二重のお支払いにならないよう、お振込みでお願いします）。これからの月の顧問料は、これまでどおり口座振替です。ご口座の残高のご確認をお願いします。<br>"
+        : ""}
+      ご不明な点は、${o.ask}までお問い合わせください。</div>
+    <div style="text-align:center;margin:20px 0 6px;">
+      <a href="${APP_URL}" style="display:inline-block;background:#1E3A66;color:#fff;text-decoration:none;
+        font-size:14px;font-weight:700;padding:12px 28px;border-radius:9px;">アプリの「お支払い」で確かめる →</a></div>
+    <div style="font-size:11.5px;color:#A9403D;line-height:1.85;margin-top:14px;background:#FBF3F2;border-radius:9px;padding:10px 12px;">
+      TsuguAi から、メールだけでお振込先の変更をお願いすることはありません。
+      お振込先の違うメールが届いたときは、お振り込みにならず、担当パートナーか運営へご連絡ください。</div>
+  </div>
+  <div style="text-align:center;font-size:11px;color:#94A2B6;margin-top:16px;line-height:1.8;">
+    株式会社福來　TsuguAi -継-　継ぐ、を身近な経営判断に<br>${APP_URL}</div>
+</div></body></html>`;
+}
+//  「2026年9月分」。月のない請求（初期導入費など）は件名で
+function monthLabel(x: Inv): string {
+  const m = /^(\d{4})-(\d{2})$/.exec(String(x.period ?? ""));
+  if (x.kind === "advisory" || x.kind === "direct") return m ? `${Number(m[1])}年${Number(m[2])}月分の顧問料` : x.title;
+  return x.title;
+}
+
+async function sendDunning(sb: ReturnType<typeof createClient>, uid: string, noticeId: string): Promise<Response> {
+  const me = await sb.from("profiles").select("role").eq("id", uid).maybeSingle();
+  const isAdmin = me.data?.role === "admin";
+  const nq = await sb.from("dunning_notices")
+    .select("id, customer_id, sent_by, invoice_ids, pay_by, mailed_at").eq("id", noticeId).maybeSingle();
+  const n = nq.data as { id: string; customer_id: string; sent_by: string; invoice_ids: string[]; pay_by: string; mailed_at: string | null } | null;
+  if (!n) return json({ ok: false, error: "お振込みのお願いの記録が見つかりません" });
+  if (n.sent_by !== uid && !isAdmin) return json({ ok: false, error: "用意した本人か運営だけが送れます" }, 403);
+  //  送るのは一度だけ（「送信中」を取ってから送る）
+  const took = await sb.from("dunning_notices").update({ mailed_at: new Date().toISOString(), mail_error: null })
+    .eq("id", n.id).is("mailed_at", null).select("id");
+  if (!took.data?.length) return json({ ok: false, error: "このお願いはもう送っています" });
+
+  const fail = async (msg: string) => {
+    await sb.from("dunning_notices").update({ mailed_at: null, mail_error: msg }).eq("id", n.id);
+    return json({ ok: false, error: msg });
+  };
+  const invs: DInv[] = [];
+  for (const id of n.invoice_ids ?? []) {
+    const r = await sb.from("invoices").select(INV_COLS + ", paid_amount").eq("id", id).maybeSingle();
+    const x = r.data as DInv | null;
+    if (x && (x.status === "open" || x.status === "partial")) invs.push(x);
+  }
+  if (!invs.length) return fail("お支払いの済んでいない請求がありません（入金済み・取り消し）");
+
+  const u = await sb.auth.admin.getUserById(n.customer_id);
+  const email = u.data?.user?.email ?? "";
+  if (!email) return fail("登録のメールアドレスがありません");
+  const p = await sb.from("profiles").select("company_name, contact_name, full_name, consultant_id")
+    .eq("id", n.customer_id).maybeSingle();
+  const s = await sb.from("app_settings").select("value").eq("key", "billing_rates").maybeSingle();
+  const bank = String((s.data?.value as Record<string, unknown> | null)?.["bl-bank"] ?? "");
+  const dm = await sb.from("debit_mandates").select("status").eq("customer_id", n.customer_id).maybeSingle();
+  //  問い合わせ先：担当パートナー（お名前とメール）。いなければ運営
+  let ask = "運営（082-548-2224）";
+  const cid = p.data?.consultant_id as string | null | undefined;
+  if (cid) {
+    const c = await sb.from("profiles").select("full_name, company_name").eq("id", cid).maybeSingle();
+    const cu = await sb.auth.admin.getUserById(cid);
+    const nm = c.data?.full_name || c.data?.company_name || "";
+    const ce = cu.data?.user?.email ?? "";
+    if (nm || ce) ask = `担当パートナー（${esc(nm)}${ce ? `・${esc(ce)}` : ""}）`;
+  }
+  const months = invs.map(monthLabel);
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${RESEND_KEY}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        from: MAIL_FROM,
+        to: [email],
+        subject: `【TsuguAi -継-】お振込みのお願い（${months.join("・")}）`,
+        html: dunningHtml({
+          company: p.data?.company_name ?? "",
+          contact: p.data?.contact_name || p.data?.full_name || "",
+          invs, bank, payBy: n.pay_by,
+          debitContinues: dm.data?.status === "registered",
+          ask,
+        }),
+      }),
+    });
+    if (!res.ok) {
+      console.error("dunning mail failed:", res.status, await res.text());
+      return fail(`メールを送れませんでした（${res.status}）`);
+    }
+  } catch (e) {
+    console.error("dunning mail error:", e);
+    return fail("メールを送れませんでした");
+  }
+  return json({ ok: true, sent: 1 });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ ok: false, error: "POST のみ" }, 405);
@@ -218,9 +372,15 @@ Deno.serve(async (req) => {
   if (!uid) return json({ ok: false, error: "ログインが必要です" }, 401);
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch { /* 空でよい */ }
-  if (body.action !== "setup") return json({ ok: false, error: "action が正しくありません" }, 400);
+  if (body.action !== "setup" && body.action !== "dunning") return json({ ok: false, error: "action が正しくありません" }, 400);
 
   const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+
+  // ③ お振込みのお願い（運営・担当パートナー）
+  if (body.action === "dunning") {
+    if (!body.notice_id) return json({ ok: false, error: "お振込みのお願いが指定されていません" }, 400);
+    return await sendDunning(sb, uid, String(body.notice_id));
+  }
   const N_COLS = "offer_id, invoice_id, advisory_invoice_id, mail_count";
 
   // ② 運営：指定の請求のご案内を送る（再送も）
