@@ -402,7 +402,7 @@ function takeFn(name) {
   ok('横幅の下限を外す', /\.wk\{min-width:0;\}/.test(mob));
   ok('目盛りの幅を詰める', /\.wk-row\{grid-template-columns:40px repeat\(7,minmax\(0,1fr\)\);\}/.test(mob));
   ok('罫線と今の線も詰めた幅に合わせる', /\.wk-line,\.wk-now\{left:40px;\}/.test(mob));
-  ok('曜日の文字を少し小さく', /\.wk-hcell\{font-size:.59375rem;\}/.test(mob));
+  ok('曜日の文字を少し小さく', /\.wk-hcell\{font-size:.59375rem;/.test(mob));
   ok('なぜ横スクロールをなくすかを書き残す', /指の動きに一拍遅れて見えた/.test(mob));
   //  パソコンの幅では今までどおり（514px の下限）
   ok('広い画面の下限はそのまま', /\n  \.wk\{min-width:514px;\}/.test(SRC));
@@ -450,8 +450,8 @@ function takeFn(name) {
   //  描く側はぜんぶ calKindOf を通す
   const wv = takeFn('calWeekVertical');
   ok('週の枠', /var kk=calKindOf\(x\);/.test(wv) && /--fgtxt:'\+\(\(kk&&kk\.txt\)\|\|'#fff'\)/.test(wv));
-  ok('終日の札', /var k=calKindOf\(x\);\s*\n\s*head\+='<span class="wk-chip"/.test(wv) && /--fgtxt:'\+\(\(k&&k\.txt\)\|\|'#fff'\)/.test(wv));
-  ok('月の点', /var k=calKindOf\(x\);\s*\n\s*return '<span class="cal-dot"/.test(takeFn('knvRenderCal')));
+  ok('終日の札', /var k=calKindOf\(x\);\s*\n\s*head\+='<span class="wk-chip'\+\(calIsTodo\(x\)\?' td':''\)/.test(wv) && /--fgtxt:'\+\(\(k&&k\.txt\)\|\|'#fff'\)/.test(wv));
+  ok('月の点', /var k=calKindOf\(x\), c=\(k\?k\.fg:'#2C5DA8'\);\s*\n\s*return calIsTodo\(x\) \? '<span class="cal-dot td"[^\n]*\n\s*: '<span class="cal-dot"/.test(takeFn('knvRenderCal')));
   ok('一覧の札', /var own=\(x\.kind==='own'\), k=calKindOf\(x\);/.test(takeFn('calCard')));
   const pk = takeFn('calPeek');
   ok('小窓の札', /var k=calKindOf\(x\), own=\(x\.kind==='own'\);/.test(pk));
@@ -516,7 +516,7 @@ function takeFn(name) {
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261015-13', '20261015-13']);
+  is('版が揃う', [build, VER.build], ['20261015-14', '20261015-14']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

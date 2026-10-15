@@ -21,7 +21,7 @@ const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</
 const calDkey = (d) => d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
 // ① 予定の札（実際に描かせる）
 {
-  const Card = new Function('esc', 'escJ', 'calKindOf', 'calDkey', takeFn('calCard') + 'return calCard;')(esc, (s) => String(s), (x) => (x.kind === 'meet' ? { fg: '#8A6A12', bg: '#FBF5E6', bd: '#EAD9AC', label: '面談' } : null), calDkey);
+  const Card = new Function('esc', 'escJ', 'calKindOf', 'calDkey', 'calIsTodo', takeFn('calCard') + 'return calCard;')(esc, (s) => String(s), (x) => (x.kind === 'meet' ? { fg: '#8A6A12', bg: '#FBF5E6', bd: '#EAD9AC', label: '面談' } : null), calDkey, (x) => !!(x && (x.kind === 'todo' || x.kind === 'task')));
   const now = new Date();
   const iso = (mins) => new Date(now.getTime() + mins * 60000).toISOString();
   const own = Card({ kind: 'own', id: 'e1', _ri: 3, title: '<b>銀行</b>', when: iso(120), ends: iso(180), place: '本店', note: 'メモ', allDay: false });

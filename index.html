@@ -638,13 +638,22 @@
      区切りは border ではなく box-shadow。枠の外側に描くので、隣の列がもともと
      持つ左の罫線と重なり、境目が二重線にならない */
   .wk-corner{position:sticky;left:0;z-index:6;background:var(--card);box-shadow:1px 0 0 var(--line);}
-  .wk-hcell{text-align:center;font-size:.625rem;color:var(--muted);padding:5px 0 6px;line-height:1.35;border-left:1px solid var(--softline);}
-  .wk-hcell .n{display:block;font-size:.78125rem;color:var(--ink);font-feature-settings:'tnum';}
-  .wk-hcell.sun,.wk-hcell.sun .n{color:#A9403D;} .wk-hcell.sat,.wk-hcell.sat .n{color:#2C5DA8;}
-  .wk-hcell.today{background:rgba(195,155,63,.12);}
-  .wk-hcell.today .n{font-weight:700;}
+  /* 週の見出し（2026-10-15）：上に曜日の小さな字、下に丸の中の日付。今日は紺の丸に金の数字 */
+  .wk-hcell{text-align:center;font-size:.625rem;color:var(--muted);padding:6px 0 6px;line-height:1.35;border-left:1px solid var(--softline);cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:2px;transition:background .15s;}
+  .wk-hcell:hover{background:var(--soft);}
+  .wk-hcell .w{font-weight:700;letter-spacing:.14em;text-indent:.14em;font-size:.625rem;}
+  .wk-hcell .n{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;
+    font:600 .9375rem/1 'DM Sans','Noto Sans JP',sans-serif;font-variant-numeric:tabular-nums;color:var(--ink);transition:background .15s;}
+  .wk-hcell.sun,.wk-hcell.sun .n{color:#C0453F;} .wk-hcell.sat,.wk-hcell.sat .n{color:#2C5DA8;}
+  .wk-hcell.today{background:rgba(195,155,63,.08);}
+  .wk-hcell.today .w{color:#8A6A12;}
+  .wk-hcell.today .n{background:linear-gradient(160deg,#1E3A66,#0E1B33);color:#F6E3B4;font-weight:700;box-shadow:0 3px 8px rgba(14,27,51,.25);}
   .wk-sep{border-bottom:1px solid var(--line);}
   .wk-ad{min-height:20px;border-left:1px solid var(--softline);padding:2px;}
+  /* TODO・課題には白抜きの丸（済ませる前のチェックの丸）を付けて、予定と見分ける */
+  .wk-chip.td::before,.wk-ev.td b::before,.cal-ev.td::before{content:"";display:inline-block;box-sizing:border-box;width:.8em;height:.8em;margin-right:3px;
+    border:1.5px solid currentColor;border-radius:50%;vertical-align:-.08em;}
   .wk-chip{display:block;font-size:.59375rem;line-height:1.35;border-radius:4px;padding:1px 3px;margin-bottom:2px;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;}
   .wk-body{position:relative;}
@@ -714,7 +723,8 @@
     .cal-nav .cal-lab .cl-stats{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 12px;margin-top:4px;font-size:.6875rem;font-weight:400;
       color:var(--muted);font-family:'Noto Sans JP',sans-serif;}
     .cal-nav .cal-lab .cl-stats b{color:var(--navy);font-size:.8125rem;}
-    .cal-nav .cal-lab .cl-stats i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:0;}
+    .cal-nav .cal-lab .cl-stats i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:0;box-sizing:border-box;}
+    .cal-nav .cal-lab .cl-stats i.td{border:2px solid;background:transparent;}
     .cal-arw{height:38px;}
   }
   body.dark .knv-calbar .cal-nav{background:var(--card);border-color:var(--line);}
@@ -776,19 +786,26 @@
   /* 終日の帯で 3件を超えたぶんの札。押すとその日の一覧が下に開く */
   .wk-more{background:var(--soft);color:var(--muted);border:1px dashed var(--line);text-align:center;font-weight:700;}
   /* 継ナビくんの月カレンダー。パネルの幅でも読めるよう、日付は点で示す */
-  .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;}
-  .cal-hd{text-align:center;font-size:.65625rem;color:var(--muted);padding:3px 0;letter-spacing:.04em;}
-  .cal-hd.sun{color:#A9403D;} .cal-hd.sat{color:#2C5DA8;}
-  .cal-cell{min-height:46px;border:1px solid var(--softline);border-radius:8px;background:var(--card);
-    padding:3px 2px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;
-    transition:background .15s,border-color .15s;}
-  .cal-cell:hover{background:var(--soft);}
-  .cal-cell.out{opacity:.38;}
-  .cal-cell.today{border-color:var(--gold);box-shadow:inset 0 0 0 1px rgba(195,155,63,.35);}
-  .cal-cell.on{background:rgba(44,93,168,.09);border-color:var(--blue);}
-  .cal-cell .d{font-size:.71875rem;color:var(--ink);font-feature-settings:'tnum';line-height:1.2;}
-  .cal-cell.sun .d{color:#A9403D;} .cal-cell.sat .d{color:#2C5DA8;}
-  .cal-dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;}
+  /* 曜日の帯（2026-10-15）：淡い帯の上に太めの字。日曜は赤、土曜は青 */
+  .cal-grid.cal-hds{background:var(--soft);border:1px solid var(--softline);border-radius:10px;padding:6px 0;gap:4px;}
+  .cal-hd{text-align:center;font-size:.6875rem;font-weight:700;color:#5A6981;padding:0;line-height:1.2;letter-spacing:.14em;text-indent:.14em;}
+  .cal-hd.sun{color:#C0453F;} .cal-hd.sat{color:#2C5DA8;}
+  /* 日のます：角を丸く、日付は丸の中に。今日は紺の丸に金の数字、選んだ日は青い輪 */
+  .cal-cell{min-height:54px;border:1px solid var(--softline);border-radius:12px;background:var(--card);
+    padding:4px 2px 5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;
+    box-shadow:0 1px 2px rgba(14,27,51,.04);transition:background .15s,border-color .15s,box-shadow .15s;}
+  .cal-cell:hover{background:var(--soft);box-shadow:0 3px 10px rgba(14,27,51,.08);}
+  .cal-cell.out{opacity:.4;background:transparent;box-shadow:none;border-style:dashed;}
+  .cal-cell.today{border-color:#EAD9AC;background:linear-gradient(rgba(195,155,63,.07),rgba(195,155,63,.07)) var(--card);box-shadow:none;}
+  .cal-cell.on{background:linear-gradient(rgba(44,93,168,.07),rgba(44,93,168,.07)) var(--card);border-color:var(--blue);box-shadow:0 0 0 2px rgba(44,93,168,.16);}
+  .cal-cell .d{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 4px;box-sizing:border-box;border-radius:99px;
+    font:600 .8125rem/1 'DM Sans','Noto Sans JP',sans-serif;font-variant-numeric:tabular-nums;color:var(--ink);}
+  .cal-cell.sun .d{color:#C0453F;} .cal-cell.sat .d{color:#2C5DA8;}
+  .cal-cell.today .d{background:linear-gradient(160deg,#1E3A66,#0E1B33);color:#F6E3B4;font-weight:700;box-shadow:0 3px 8px rgba(14,27,51,.22);}
+  .cal-cell.past .d{opacity:.55;font-weight:500;}
+  .cal-cell.past .cal-dots{opacity:.6;}
+  .cal-dots{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;align-items:center;margin-top:auto;min-height:8px;}
   /* 暦（六曜・天赦日・一粒万倍日）。目安なので控えめに、大安と吉日の札だけ色を付ける */
   .kyo{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:1px 2px;line-height:1.1;}
   .kyo-rk{font-size:.5625rem;color:#8A93A3;letter-spacing:-.02em;white-space:nowrap;}
@@ -813,7 +830,9 @@
   .kyo-lg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.6875rem;color:var(--muted);margin-top:6px;line-height:1.6;}
   .kyo-lg b{margin-right:4px;}
   .kyo-note{flex-basis:100%;font-size:.65625rem;color:#94A2B6;}
-  .cal-dot{width:7px;height:7px;border-radius:50%;display:block;box-shadow:0 0 0 1.5px var(--card);}
+  .cal-dot{width:7px;height:7px;border-radius:50%;display:block;box-sizing:border-box;}
+  /* TODO・課題は白抜きの丸。予定（塗った丸）と見分けられる */
+  .cal-dot.td{background:var(--card);border:2px solid #147A6E;}
   /* 予定の札（2026-10-15）：左の色の帯＝種類、時刻は大きく、絵のボタンで直す・消す */
   .cev{position:relative;display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:14px;
     padding:11px 10px 11px 16px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 3px rgba(14,27,51,.05);transition:box-shadow .15s,transform .12s,border-color .15s;}
@@ -823,6 +842,10 @@
   .cev-time{flex:none;min-width:50px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:1px 10px 1px 0;border-right:1px dashed var(--line);}
   .cev-time b{font:700 .96875rem/1.15 'DM Sans','Noto Sans JP',sans-serif;font-variant-numeric:tabular-nums;color:var(--kc);letter-spacing:.01em;}
   .cev-time b.all{font-size:.78125rem;background:var(--kb);border:1px solid var(--kbd);border-radius:7px;padding:3px 7px;}
+  /* TODO・課題：「期限」「期日」の札に白抜きの丸。時刻のあるものは「11:00 まで」 */
+  .cev-time b.due{display:inline-flex;align-items:center;gap:4px;background:var(--card);border-color:var(--kc);}
+  .cev-ring{display:inline-block;width:10px;height:10px;box-sizing:border-box;border:2px solid var(--kc);border-radius:50%;}
+  .cev.td .cev-time small{color:var(--kc);font-weight:700;}
   .cev-time small{font:600 .6875rem 'DM Sans','Noto Sans JP',sans-serif;font-variant-numeric:tabular-nums;color:var(--muted);}
   .cev-body{flex:1;min-width:0;}
   .cev-title{font-size:.875rem;font-weight:700;color:var(--ink);line-height:1.45;word-break:break-word;}
@@ -863,34 +886,36 @@
   .cdh-add:hover{background:#EAF0FA;}
   body.dark .cdh-d{background:var(--soft);}
   body.dark .cev-btn{background:var(--soft);}
-  .cal-more{font-size:.5625rem;color:var(--muted);line-height:1;}
+  .cal-more{font:700 .5625rem/1 'DM Sans','Noto Sans JP',sans-serif;color:var(--muted);letter-spacing:-.02em;}
   /* 月表示（広いとき）：点ではなく、予定そのもの（時刻＋題名）を色つきで並べる。
      狭い画面（スマホ・標準の小さいパネル）は点のまま。切り替えは幅で決める（calRichOk） */
-  .cal-grid.rich{gap:4px;}
-  .cal-grid.rich + .cal-grid, .cal-grid:has(+ .cal-grid.rich){gap:4px;}
-  .cal-cell.rich{min-height:96px;align-items:stretch;padding:4px 4px 5px;gap:3px;border-radius:9px;}
-  .cal-cell.rich .d{align-self:flex-start;font-size:.71875rem;font-weight:600;min-width:22px;height:22px;padding:0 4px;
-    display:inline-flex;align-items:center;justify-content:center;border-radius:99px;}
-  .cal-cell.rich.today{border-color:var(--softline);box-shadow:none;background:rgba(195,155,63,.05);}
-  .cal-cell.rich.today .d{background:var(--gold);color:#fff;}
-  .cal-cell.rich.on{background:rgba(44,93,168,.06);border-color:var(--blue);}
-  .cal-cell.rich.sun,.cal-cell.rich.sat{background:var(--soft);}
-  .cal-cell.rich.out{opacity:.5;}
+  .cal-grid.rich{gap:5px;}
+  .cal-cell.rich{min-height:100px;align-items:stretch;padding:5px 5px 6px;gap:4px;border-radius:12px;}
+  .cal-cell.rich .d{align-self:flex-start;}
+  /* 土日は、ほんのり赤・青を差す（灰色だと「休み」より「使えない日」に見える） */
+  .cal-cell.rich.sun{background:linear-gradient(rgba(192,69,63,.035),rgba(192,69,63,.035)) var(--card);}
+  .cal-cell.rich.sat{background:linear-gradient(rgba(44,93,168,.035),rgba(44,93,168,.035)) var(--card);}
+  .cal-cell.rich.today{border-color:#EAD9AC;box-shadow:0 0 0 2px rgba(195,155,63,.14);background:linear-gradient(rgba(195,155,63,.06),rgba(195,155,63,.06)) var(--card);}
+  .cal-cell.rich.on{background:linear-gradient(rgba(44,93,168,.05),rgba(44,93,168,.05)) var(--card);border-color:var(--blue);box-shadow:0 0 0 2px rgba(44,93,168,.16);}
+  .cal-cell.rich.out{opacity:.45;}
   /* 過ぎた日は少し控えめに。これからの予定が目に入るように */
-  .cal-cell.rich.past .d{color:var(--muted);font-weight:500;}
   .cal-cell.rich.past .cal-ev{opacity:.62;}
-  .cal-evs{display:flex;flex-direction:column;gap:2px;min-width:0;}
-  .cal-ev{display:block;width:100%;min-width:0;text-align:left;border:none;border-left:3px solid var(--ec,#2C5DA8);border-radius:4px;
-    background:var(--eb,rgba(44,93,168,.08));padding:1px 4px 1px 5px;font:inherit;font-size:.65625rem;line-height:1.45;color:var(--ink);
+  .cal-evs{display:flex;flex-direction:column;gap:3px;min-width:0;}
+  .cal-ev{display:block;width:100%;min-width:0;text-align:left;border:none;border-left:3px solid var(--ec,#2C5DA8);border-radius:6px;
+    background:var(--eb,rgba(44,93,168,.08));padding:2px 5px 2px 6px;font:inherit;font-size:.65625rem;line-height:1.45;color:var(--ink);
     overflow:hidden;cursor:pointer;transition:filter .12s,box-shadow .12s;
     /* 題名は2行まで（1行だと会社名だけで切れてしまう） */
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-all;}
   .cal-ev b{font-weight:700;margin-right:3px;font-feature-settings:'tnum';color:var(--ec,#2C5DA8);}
-  .cal-ev.all{border-left:none;border-radius:5px;background:var(--ec,#2C5DA8);color:var(--et,#fff);font-weight:600;padding-left:6px;}
+  .cal-ev.all{border-left:none;border-radius:6px;background:var(--ec,#2C5DA8);color:var(--et,#fff);font-weight:600;padding-left:6px;}
+  /* TODO・課題：塗らずに淡い地と枠、頭に白抜きの丸 */
+  .cal-ev.td{border:1px solid var(--ebd,#C9D7EE);padding-left:5px;color:var(--ec);font-weight:600;}
+  .cal-ev.td b{color:inherit;}
   .cal-ev:hover{filter:brightness(.97);box-shadow:0 1px 4px rgba(14,27,51,.15);}
   .cal-ev:focus-visible{outline:2px solid var(--blue);outline-offset:1px;}
-  .cal-evmore{align-self:flex-start;border:none;background:none;font:inherit;font-size:.65625rem;color:var(--blue);font-weight:700;padding:0 4px;cursor:pointer;}
-  .cal-evmore:hover{text-decoration:underline;}
+  .cal-evmore{align-self:flex-start;border:1px solid #C9D7EE;background:var(--card);font:inherit;font-size:.625rem;color:var(--blue);font-weight:700;
+    padding:1px 8px;border-radius:99px;cursor:pointer;}
+  .cal-evmore:hover{background:#EAF0FA;}
   body.dark .cal-ev{color:var(--ink);}
   /* 成長ロードマップ。横に並べた箱を、折り返しても左右・上下が揃うように格子で置く。
      flex で矢印を挟むと、段の終わりに来た矢印のぶんだけ段ごとに幅が変わり、
@@ -1129,7 +1154,8 @@
   .cal-lg{display:flex;flex-wrap:wrap;gap:4px 11px;margin-top:10px;font-size:.6875rem;color:var(--muted);align-items:center;line-height:1.5;}
   .cal-lg span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
   .cal-lg i{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none;}
-  @media(max-width:600px){ .cal-cell{min-height:40px;} .cal-cell .d{font-size:.6875rem;} }
+  .cal-lg i.td{box-sizing:border-box;border:2px solid;background:transparent;}
+  @media(max-width:600px){ .cal-cell{min-height:52px;border-radius:11px;} .cal-cell .d{min-width:23px;height:23px;font-size:.78125rem;} }
   /* 予定の中身をひと目で読むための小窓。月・週の枠は小さく、題名も切れるため、
      押したらここに開いて全部見せる。継ナビくんのパネル（71）より前に出す。 */
   .cpk-bg{position:fixed;inset:0;background:rgba(8,14,26,.5);z-index:80;display:flex;
@@ -1660,7 +1686,7 @@
     .wk-line,.wk-now{left:40px;}
     .wk-hh{font-size:.59375rem;right:3px;}
     .wk-nowt{font-size:.5625rem;right:2px;}
-    .wk-hcell{font-size:.59375rem;} .wk-hcell .n{font-size:.75rem;}
+    .wk-hcell{font-size:.59375rem;padding:5px 0;} .wk-hcell .n{width:24px;height:24px;font-size:.8125rem;}
     /* 予定の枠は Google カレンダーと同じ読み方にする：色を塗り、題名を折り返す。
        淡い色に細い罫線では、狭い枠が格子に溶けて見えない。時刻は左の目盛りで
        分かるので枠の中には出さず、そのぶん題名を大きく（10.5px）して
@@ -1674,6 +1700,11 @@
     .wk-ev b{white-space:normal;word-break:break-all;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;font-weight:600;-webkit-line-clamp:var(--l1,1);}
     .wk-ev span{display:none;}
     .wk-chip{background:var(--fg)!important;color:var(--fgtxt,#fff)!important;border-color:transparent!important;font-size:.59375rem;padding:1px 2px;letter-spacing:-.02em;}
+    /* スマホの TODO・課題は、塗らずに白地＋色の枠。予定（塗り）と見分けがつき、
+       狭い札でも丸のぶん字が削られない */
+    .wk-chip.td{background:var(--card)!important;color:var(--fg)!important;border:1px solid var(--fg)!important;font-weight:700;}
+    .wk-chip.td::before{display:none;}
+    .wk-ev.td{background:var(--card)!important;color:var(--fg)!important;border:1.5px solid var(--fg)!important;}
   }
   /* 継ナビくんの顔チップと名前ラベル（チャットの発言者表示） */
   .tsg-face{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:11px;background:#0e2038;flex:0 0 auto;margin-top:2px;}
@@ -2295,7 +2326,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261015-13';
+  var APP_BUILD='20261015-14';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -20406,6 +20437,9 @@
   function calKindOf(x){
     return (x && x.color && calTint(x.color, x.calName)) || (x && CAL_KINDS[x.kind]) || null;
   }
+  //  TODO と課題の期日は「済ませる用事」。予定（出かける・会う）と見分けられるよう、
+  //  どの表示でも白抜きの丸（チェックを入れる前の丸）を付ける
+  function calIsTodo(x){ return !!(x && (x.kind==='todo' || x.kind==='task')); }
   //  色の見分け（凡例）。読み込んだ予定に実際にある種類だけ並べる。
   //  自分の予定は青で固定。面談・課題・支払…は各画面から自動で並ぶもの。
   //  Google のカレンダー（家族・共有・祝日など）は、その色と名前
@@ -20417,7 +20451,7 @@
     });
     var out=['<span><i style="background:#2C5DA8;"></i>自分の予定</span>'];
     Object.keys(CAL_KINDS).forEach(function(k){
-      if(seen[k]) out.push('<span><i style="background:'+CAL_KINDS[k].fg+';"></i>'+esc(CAL_KINDS[k].label)+'</span>');
+      if(seen[k]) out.push('<span><i'+((k==='todo'||k==='task')?' class="td" style="border-color:':' style="background:')+CAL_KINDS[k].fg+';"></i>'+esc(CAL_KINDS[k].label)+'</span>');
     });
     gorder.forEach(function(id){
       out.push('<span><i style="background:'+esc(gcal[id].color)+';"></i>'+esc(gcal[id].name)+'</span>');
@@ -20558,14 +20592,15 @@
       (byDay[k]||[]).forEach(function(x){
         n++; if(k===tk) today++;
         var kk=calKindOf(x), lab=(kk&&kk.label)||(x.calName)||'自分の予定', col=(kk&&kk.fg)||'#2C5DA8';
-        if(!kinds[lab]){ kinds[lab]={ n:0, col:col }; order.push(lab); }
+        if(!kinds[lab]){ kinds[lab]={ n:0, col:col, td:calIsTodo(x) }; order.push(lab); }
         kinds[lab].n++;
       });
     }
     order.sort(function(a,b){ return kinds[b].n-kinds[a].n; });
     var st='<span>'+unitLab+'の予定 <b>'+n+'</b>件</span>'
       +(today?'<span>今日 <b>'+today+'</b>件</span>':'')
-      +order.slice(0,4).map(function(l){ return '<span><i style="background:'+kinds[l].col+';"></i>'+esc(l)+' '+kinds[l].n+'</span>'; }).join('');
+      +order.slice(0,4).map(function(l){
+        return '<span><i'+(kinds[l].td?' class="td" style="border-color:':' style="background:')+kinds[l].col+';"></i>'+esc(l)+' '+kinds[l].n+'</span>'; }).join('');
     return '<div class="cl-eye">'+eye+'</div><div class="cl-main">'+main+'</div><div class="cl-stats">'+st+'</div>';
   }
   //  更新：矢印を回しながら読み込み直し、終わったら ✓ を一瞬出す
@@ -20721,8 +20756,13 @@
     var PIN='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21Z"/><circle cx="12" cy="10" r="2.3"/></svg>';
     var PEN='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg>';
     var BIN='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 7h15"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 12.5h9l1-12.5"/><path d="M10 11v5M14 11v5"/></svg>';
-    return '<div class="cev'+(state?' '+state:'')+'" style="--kc:'+kc+';--kb:'+kb+';--kbd:'+kbd+';" onclick="calPeek('+(x._ri|0)+')">'
-      +'<div class="cev-time">'+(x.allDay?'<b class="all">終日</b>':'<b>'+esc(hm(x.when))+'</b>'+(tEnd?'<small>〜'+esc(tEnd)+'</small>':''))+'</div>'
+    //  TODO・課題は「終日」ではなく「期限」「期日」。時刻のある TODO は「11:00 まで」
+    var td=calIsTodo(x), dueLab=(x.kind==='task')?'期日':'期限';
+    var tcol=td
+      ? (x.allDay?'<b class="all due"><i class="cev-ring"></i>'+dueLab+'</b>':'<b>'+esc(hm(x.when))+'</b><small>まで</small>')
+      : (x.allDay?'<b class="all">終日</b>':'<b>'+esc(hm(x.when))+'</b>'+(tEnd?'<small>〜'+esc(tEnd)+'</small>':''));
+    return '<div class="cev'+(td?' td':'')+(state?' '+state:'')+'" style="--kc:'+kc+';--kb:'+kb+';--kbd:'+kbd+';" onclick="calPeek('+(x._ri|0)+')">'
+      +'<div class="cev-time">'+tcol+'</div>'
       +'<div class="cev-body">'
         +'<div class="cev-title">'+(state==='now'?'<span class="cev-now">いま</span>':'')+esc(x.title)+'</div>'
         +(x.place?'<div class="cev-meta">'+PIN+'<span>'+esc(x.place)+'</span></div>':'')
@@ -21794,7 +21834,7 @@
     head+='<div class="wk-row wk-sep"><div class="wk-corner"></div>';
     days.forEach(function(d){
       var k=calDkey(d), cls='wk-hcell'+(d.getDay()===0?' sun':(d.getDay()===6?' sat':''))+(k===tKey?' today':'');
-      head+='<div class="'+cls+'" onclick="calPick(\''+k+'\')">'+'日月火水木金土'.charAt(d.getDay())
+      head+='<div class="'+cls+'" onclick="calPick(\''+k+'\')"><span class="w">'+'日月火水木金土'.charAt(d.getDay())+'</span>'
         +'<span class="n">'+d.getDate()+'</span>'+koyoCell(d)+'</div>';
     });
     head+='</div>';
@@ -21810,7 +21850,7 @@
         head+='<div class="wk-ad">';
         ads.slice(0, AD_MAX).forEach(function(x){
           var k=calKindOf(x);
-          head+='<span class="wk-chip" style="--fg:'+(k?k.fg:'#2C5DA8')+';--fgtxt:'+((k&&k.txt)||'#fff')+';background:'+(k?k.bg:'var(--soft)')+';color:'+(k?k.fg:'var(--ink)')
+          head+='<span class="wk-chip'+(calIsTodo(x)?' td':'')+'" style="--fg:'+(k?k.fg:'#2C5DA8')+';--fgtxt:'+((k&&k.txt)||'#fff')+';background:'+(k?k.bg:'var(--soft)')+';color:'+(k?k.fg:'var(--ink)')
             +';border:1px solid '+(k?k.bd:'var(--line)')+';" title="'+escA(x.title)+'"'
             +' onclick="event.stopPropagation();calPeek('+(x._ri|0)+')">'+esc(x.title)+'</span>';
         });
@@ -21858,7 +21898,7 @@
         //  --fg はスマホで枠を塗る色（種類の色。自分の予定は青）。
         //  何行まで折り返すかは枠の高さから決める（1行 12.5px、上下の余白 4px）
         var lines=Math.max(1, Math.floor((hgt-4)/12.5));
-        h+='<div class="wk-ev" style="top:'+top+'px;height:'+hgt+'px;left:calc('+left+'% + 1px);width:calc('+w+'% - 3px);'
+        h+='<div class="wk-ev'+(calIsTodo(x)?' td':'')+'" style="top:'+top+'px;height:'+hgt+'px;left:calc('+left+'% + 1px);width:calc('+w+'% - 3px);'
           +'--fg:'+(kk?kk.fg:'#2C5DA8')+';--fgtxt:'+((kk&&kk.txt)||'#fff')+';'
           +'background:'+(kk?kk.bg:'rgba(44,93,168,.10)')+';border-color:'+(kk?kk.bd:'#CBD9EE')+';color:'+(kk?kk.fg:'#1E3A66')+';"'
           +' onclick="event.stopPropagation();calPeek('+(x._ri|0)+')"'
@@ -21911,7 +21951,9 @@
     var k=calKindOf(x), c=(k&&k.fg)||'#2C5DA8', bgc=(k&&k.bg)||'rgba(44,93,168,.08)', tx=(k&&k.txt)||'#fff';
     var t=x.allDay?'':(function(){ var d=new Date(x.when); return isNaN(d)?'':('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); })();
     var tip=(t?t+' ':'')+(x.title||'')+(x.place?'（'+x.place+'）':'');
-    return '<button type="button" class="cal-ev'+(x.allDay?' all':'')+'" style="--ec:'+c+';--eb:'+bgc+';--et:'+tx+';" title="'+escA(tip)+'"'
+    var bdc=(k&&k.bd)||'#C9D7EE', td=calIsTodo(x);
+    //  TODO・課題は塗らずに白抜きの丸を付ける（終日でも）。予定と用事が見分けられる
+    return '<button type="button" class="cal-ev'+(td?' td':(x.allDay?' all':''))+'" style="--ec:'+c+';--eb:'+bgc+';--et:'+tx+';--ebd:'+bdc+';" title="'+escA(tip)+'"'
       +' onclick="event.stopPropagation();calPeek('+(x._ri|0)+')">'+(t?'<b>'+t+'</b>':'')+esc(x.title||'')+'</button>';
   }
   //  「＋n件」を押したら、その日を選んで、下の一覧まで送る
@@ -21991,14 +22033,14 @@
       var first=new Date(cur.getFullYear(), cur.getMonth(), 1);
       var start=calWeekStartOf(first), wEnd=(calWeekStart()+6)%7;
       var rich=calRichOk(box); CAL_RICH=rich;
-      h+='<div class="cal-grid">'
+      h+='<div class="cal-grid cal-hds">'
         +calWeekLabels().map(function(x){
             return '<div class="cal-hd'+(x[1]===0?' sun':(x[1]===6?' sat':''))+'">'+x[0]+'</div>'; }).join('')
       +'</div><div class="cal-grid'+(rich?' rich':'')+'" style="margin-top:2px;">';
       for(var i=0;i<42;i++){
         var d=new Date(start); d.setDate(start.getDate()+i);
         var key=calDkey(d), items=byDay[key]||[];
-        var cls='cal-cell'+(rich?' rich':'')+(rich && key<tKey?' past':'')+(d.getMonth()!==cur.getMonth()?' out':'')
+        var cls='cal-cell'+(rich?' rich':'')+(key<tKey?' past':'')+(d.getMonth()!==cur.getMonth()?' out':'')
           +(key===tKey?' today':'')+(key===CAL_PICK?' on':'')
           +(d.getDay()===0?' sun':(d.getDay()===6?' sat':''));
         if(rich){
@@ -22017,12 +22059,14 @@
         h+='<div class="'+cls+'" onclick="calPick(\''+key+'\')">'
           +'<span class="d">'+d.getDate()+'</span>'
           +koyoCell(d)
+          //  予定は塗った丸、TODO・課題は白抜きの丸。3つまで並べ、残りは「+n」
           +'<span class="cal-dots">'
-          +items.slice(0,4).map(function(x){
-              var k=calKindOf(x);
-              return '<span class="cal-dot" style="background:'+(k?k.fg:'#2C5DA8')+';"></span>'; }).join('')
+          +items.slice(0,items.length>4?3:4).map(function(x){
+              var k=calKindOf(x), c=(k?k.fg:'#2C5DA8');
+              return calIsTodo(x) ? '<span class="cal-dot td" style="border-color:'+c+';"></span>'
+                : '<span class="cal-dot" style="background:'+c+';"></span>'; }).join('')
+          +(items.length>4?'<span class="cal-more">+'+(items.length-3)+'</span>':'')
           +'</span>'
-          +(items.length>4?'<span class="cal-more">+'+(items.length-4)+'</span>':'')
         +'</div>';
         if(i>=34 && d.getMonth()!==cur.getMonth() && d.getDay()===wEnd) break;
       }

@@ -93,13 +93,13 @@ const cal = takeFn('knvRenderCal');
 ok('月：1日3件まで、多い日は2件＋「＋n件」', /var MAXE=3, showN=its\.length>MAXE\?MAXE-1:its\.length;/.test(cal) && /calPickMore\(\\''\+key\+'\\'\)">＋'\+\(its\.length-showN\)\+'件<\/button>/.test(cal));
 ok('月：終日を先に、あとは時刻の順', /\(b\.allDay\?1:0\)-\(a\.allDay\?1:0\) \|\| new Date\(a\.when\)-new Date\(b\.when\)/.test(cal));
 ok('月：狭いときは点のまま', /class="cal-dots"/.test(cal) && /class="cal-dot"/.test(cal));
-ok('月：過ぎた日は薄く・1日は「M/1」', /\(rich && key<tKey\?' past':''\)/.test(cal) && /d\.getDate\(\)===1\?\(d\.getMonth\(\)\+1\)\+'\/1'/.test(cal));
+ok('月：過ぎた日は薄く・1日は「M/1」', /\(key<tKey\?' past':''\)/.test(cal) && /d\.getDate\(\)===1\?\(d\.getMonth\(\)\+1\)\+'\/1'/.test(cal));
 ok('月：大きさを変えたら並べ直す', /calRichWatch\(box\)/.test(cal) && /new ResizeObserver/.test(takeFn('calRichWatch')));
 ok('月：「＋n件」でその日の一覧へ送る', /scrollIntoView/.test(takeFn('calPickMore')) && /<div id="cal-pickday"><\/div>/.test(cal));
 {
   const chipSrc = takeFn('calChip');
-  const chip = new Function('calKindOf', 'esc', 'escA', chipSrc + '; return calChip;')(
-    () => ({ fg: '#B8923F', bg: 'rgba(184,146,63,.1)', txt: '#fff' }), esc, esc);
+  const chip = new Function('calKindOf', 'esc', 'escA', 'calIsTodo', chipSrc + '; return calChip;')(
+    () => ({ fg: '#B8923F', bg: 'rgba(184,146,63,.1)', txt: '#fff' }), esc, esc, (x) => !!(x && (x.kind === 'todo' || x.kind === 'task')));
   const w = new Date(2026, 8, 30, 14, 5).toISOString();
   const a = chip({ title: '◯◯社 面談', when: w, place: '本社', _ri: 7 });
   ok('札：時刻と題名・色・押すと小窓', /<b>14:05<\/b>◯◯社 面談<\/button>/.test(a) && /--ec:#B8923F;/.test(a) && /calPeek\(7\)/.test(a) && /event\.stopPropagation\(\)/.test(a));
