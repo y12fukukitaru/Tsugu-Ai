@@ -21,7 +21,7 @@ drop table if exists public.dunning_notices, public.setup_fee_notices, public.de
 drop sequence if exists public.debit_mandate_no_seq;
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
-  role text, plan text, plan_from date, plan_prev text, consultant_id uuid, company_name text, contact_name text, created_at timestamptz default now());
+  role text, plan text, plan_from date, plan_prev text, consultant_id uuid, company_name text, contact_name text, full_name text, email text, created_at timestamptz default now());
 create table public.app_settings (key text primary key, value jsonb);
 create table public.partner_assignments (customer_id uuid, main_id uuid, sub_id uuid, status text);
 create table public.account_deletions (deleted_user_id uuid);

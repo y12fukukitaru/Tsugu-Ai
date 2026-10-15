@@ -1884,6 +1884,23 @@
      このプラットフォームは、担当の認定パートナーが経営者へ成果物を納める形で
      運営する。担当がいないまま中に入ると、相手のいない「メッセージであいさつ」が
      並び、週の便りも届かない。担当が登録されるまでは、ここで待ってもらう。 -->
+<div id="sgate" class="gate hidden">
+ <div class="gatewrap">
+  <div class="card">
+    <div style="text-align:center;">
+      <div class="brand"><div class="name">TsuguAi<span class="logo-tsg">-継-</span></div></div>
+      <div style="font-size:.9375rem;font-weight:700;color:#A9403D;margin-top:10px;">ご利用を一時停止しています</div>
+    </div>
+    <div style="font-size:.8125rem;color:var(--ink);line-height:1.95;margin:14px 0 6px;">
+      顧問料のお支払いが3か月分確認できないため、<b id="sgate-since"></b>からご利用を一時停止しています。
+      <b>お振込みを確認しだい、すぐに再開します。</b>これまでのデータはそのまま残っています。</div>
+    <div id="sgate-body"></div>
+    <button class="btn" id="sgate-go" onclick="sgateRecheck()">入金を確かめて、もう一度開く</button>
+    <div id="sgate-msg" class="msg"></div>
+    <div class="link" onclick="signOut()">ログアウト</div>
+  </div>
+ </div>
+</div>
 <div id="pgate" class="gate hidden">
  <div class="gatewrap">
   <div class="card">
@@ -2161,7 +2178,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261015-05';
+  var APP_BUILD='20261015-06';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -2231,7 +2248,7 @@
     });
   }
   function showRecovery(){ $('gate').classList.remove('hidden'); $('app').classList.add('hidden'); knvHideAll(); tsgFill('gate-navi'); PANELS.forEach(function(t){ var p=$('panel-'+t); if(p)p.classList.toggle('hidden', t!=='recovery'); }); }
-  function showAuth(){ mfaHide(); $('app').classList.add('hidden'); $('gate').classList.remove('hidden'); knvHideAll(); tsgFill('gate-navi'); showTab('login'); }
+  function showAuth(){ mfaHide(); $('app').classList.add('hidden'); var sg=$('sgate'); if(sg) sg.classList.add('hidden'); $('gate').classList.remove('hidden'); knvHideAll(); tsgFill('gate-navi'); showTab('login'); }
   // ログイン前の画面には継ナビくんの窓口を出さない（相談はログインしてから）
   function knvHideAll(){
     if(typeof KNV_CLOSE_T!=='undefined' && KNV_CLOSE_T){ clearTimeout(KNV_CLOSE_T); KNV_CLOSE_T=null; }
@@ -2754,7 +2771,76 @@
     if(mfaRequiredFor(prof && prof.role) && !(await mfaHasFactor())){ showMfa('enroll', true); return; }
     window.__prof=prof; window.__email=email||'';
     if(await needsPartnerGate(prof)){ showPartnerGate(prof, email); return; }
+    //  顧問料が3か月分たまった方は、その月の1日からお支払いの画面だけ（データベースの側でも止めている）
+    var st=await suspendStatus(prof);
+    if(st){ showSuspendGate(st); return; }
     renderApp(prof, email);
+  }
+  //  ---- ご利用の一時停止（3か月分の滞納の翌月1日から）----
+  //  決めるのは DB（service_status）。入金を記録して3か月分を下回れば、その場で再開する。
+  //  閲覧メンバーは、見ている会社（SCOPE）が止まっていれば同じ画面
+  async function suspendStatus(prof){
+    if(!prof || (prof.role||'customer')!=='customer') return null;
+    var cid=SCOPE||ME;
+    try{
+      var r=await sb.rpc('service_status',{ p_customer:cid });
+      if(r.error || !r.data || !r.data.ok || !r.data.suspended) return null;
+      return r.data;
+    }catch(e){ return null; }
+  }
+  function sgateHtml(st, bank){
+    var items=st.items||[];
+    var m=function(x){
+      var mm=/^(\d{4})-(\d{2})$/.exec(String(x.period||''));
+      return (mm && /顧問料/.test(String(x.title||''))) ? (Number(mm[1])+'年'+Number(mm[2])+'月分の顧問料') : esc(x.title||'');
+    };
+    return '<div style="border:1.5px solid #E8C4C2;background:#FDF6F5;border-radius:11px;padding:12px 14px;margin:12px 0;">'
+      +'<div style="font-size:.75rem;font-weight:700;color:#A9403D;">未入金の内訳</div>'
+      +'<div style="font-size:.75rem;color:var(--ink);line-height:1.9;margin-top:4px;">'
+      +items.map(function(x){
+          var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
+          return m(x)+'　<b>'+yen(rest)+'</b>'
+            +(Number(x.tax)>0 && !(Number(x.paid_amount)>0)?'<span style="color:var(--muted);font-size:.6875rem;">（税別 '+yen(x.amount_ex)+'・消費税 '+yen(x.tax)+'）</span>':'')
+            +(Number(x.paid_amount)>0?'<span style="color:var(--muted);font-size:.6875rem;">（'+yen(x.paid_amount)+' は入金済み）</span>':''); }).join('<br>')
+      +'</div>'
+      +'<div style="font-size:.8125rem;font-weight:700;color:#A9403D;margin-top:6px;">お振込みのお願い額　'+yen(st.total)+'</div></div>'
+      +'<div style="border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin:0 0 12px;background:var(--soft);">'
+      +'<div style="font-size:.75rem;font-weight:700;color:var(--navy);">お振込先</div>'
+      +'<div style="font-size:.8125rem;color:var(--ink);line-height:1.85;margin-top:4px;white-space:pre-wrap;">'+(bank?esc(bank):'担当パートナーまでお問い合わせください。')+'</div>'
+      +'<div style="font-size:.6875rem;color:var(--muted);line-height:1.8;margin-top:4px;">ご依頼人名は<b>ご契約の会社名</b>でお願いします。振込手数料はご負担をお願いしております。</div></div>'
+      +'<div style="font-size:.75rem;color:var(--muted);line-height:1.85;margin:0 0 14px;">ご不明な点は、'
+      +(st.partner_name||st.partner_email
+        ? '担当パートナー（'+esc(st.partner_name||'')+(st.partner_email?'・'+esc(st.partner_email):'')+'）'
+        : '運営（082-548-2224）')
+      +'までお問い合わせください。行き違いでお支払いいただいている場合は、申し訳ありません。</div>';
+  }
+  async function showSuspendGate(st){
+    $('gate').classList.add('hidden'); $('app').classList.add('hidden');
+    var o=$('onb'); if(o) o.classList.add('hidden');
+    var pg=$('pgate'); if(pg) pg.classList.add('hidden');
+    try{ knvHideAll(); }catch(e){}
+    try{ bootDone(); }catch(e){}
+    var bank='';
+    try{ var pi=await sb.rpc('invoice_pay_info'); if(!pi.error) bank=((pi.data||{}).bank)||''; }catch(e){}
+    var since=String(st.since||'');
+    var sm=/^(\d{4})-(\d{2})-(\d{2})$/.exec(since);
+    if($('sgate-since')) $('sgate-since').textContent=sm?(Number(sm[1])+'年'+Number(sm[2])+'月'+Number(sm[3])+'日'):'';
+    if($('sgate-body')) $('sgate-body').innerHTML=sgateHtml(st, bank);
+    if($('sgate-msg')) $('sgate-msg').textContent='';
+    var w=$('sgate'); if(w) w.classList.remove('hidden');
+  }
+  //  運営が入金を記録すれば、ここで開く
+  async function sgateRecheck(){
+    var m=$('sgate-msg');
+    if(m){ m.style.color='#27684A'; m.textContent='確認しています…'; }
+    var prof=window.__prof||{ role:'customer' };
+    var st=await suspendStatus(prof);
+    if(!st){
+      var w=$('sgate'); if(w) w.classList.add('hidden');
+      renderApp(prof, window.__email||'');
+      return;
+    }
+    if(m){ m.style.color='#A9403D'; m.textContent='まだお振込みを確認できていません。運営が入金を確かめると、ここが開きます（数日かかることがあります）。'; }
   }
 
   function roleLabel(r){ return r==='consultant'?'パートナー':(r==='admin'?'運営':'顧客'); }
@@ -8900,6 +8986,7 @@
             +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
               +'<b style="font-size:.75rem;color:var(--ink);">'+esc(nm[c.id]||'')+'</b>'
               +(c.held?'<span class="tag red" style="font-size:.625rem;">3か月滞納・請求を止めています</span>':'')
+              +(dunSuspended(c)?'<span class="tag red" style="font-size:.625rem;">⏸ ご利用を一時停止中</span>':'')
               +'<span style="flex:1;"></span><b style="font-size:.75rem;color:#A9403D;">'+yen(c.rest)+'</b></div>'
             +'<div style="font-size:.71875rem;color:var(--muted);line-height:1.8;margin-top:2px;">'
               +c.rows.map(function(x){
@@ -9479,7 +9566,25 @@
   //  運営の未収と、パートナーの「担当先の未入金」から送る。中身は DB（dunning_preview）が
   //  決める：期日を過ぎた未入金を、お客様ごとにまとめる。顧問料が3か月分たまると、
   //  月の請求は止まる（billing_held）ので、まとめるのは最大で3か月分
-  var DUN_LAST={};
+  var DUN_LAST={}, SUS_LIFT={};
+  //  いま止めているか：今月の1日より前が期日の顧問料が3か月分以上入っていない（運営が今月解いていなければ）。
+  //  DB の判定（tsugu_suspended）と同じ数え方。画面の札にだけ使う
+  function dunSuspended(c){
+    var ms=jstToday().slice(0,8)+'01';
+    var n=(c.rows||[]).filter(function(x){ return /顧問料/.test(String(x.title||'')) && String(x.due_on||'')<ms; }).length;
+    return n>=3 && !SUS_LIFT[c.id];
+  }
+  async function susLift(cust, name){
+    var why=prompt((name||'')+' 様の一時停止を、今月だけ解きます（来月1日に、まだ3か月分たまっていれば、また止まります）。\n\n解く理由をご記入ください：', '振込のご連絡あり');
+    if(why===null) return;
+    if(!String(why).trim()){ alert('解く理由をご記入ください。'); return; }
+    var r;
+    try{ r=await sb.rpc('suspension_lift',{ p_customer:cust, p_reason:String(why).trim() }); }catch(e){ r={ error:{ message:String(e&&e.message||e) } }; }
+    if(r.error){ alert('できませんでした：'+r.error.message+'\n（「ご利用の一時停止」の SQL が入っているか確かめてください）'); return; }
+    if(!(r.data||{}).ok){ alert((r.data||{}).error||'できませんでした'); return; }
+    alert('今月の一時停止を解きました。');
+    loadInvOverdue();
+  }
   function dunGroups(rows){
     var by={}, order=[];
     (rows||[]).forEach(function(x){
@@ -9492,13 +9597,19 @@
     return order.map(function(id){ var c=by[id]; c.held=c.months>=3; return c; });
   }
   async function dunLoadLast(ids){
-    DUN_LAST={};
+    DUN_LAST={}; SUS_LIFT={};
     ids=(ids||[]).filter(function(v,i,a){ return v && a.indexOf(v)===i; });
     if(!ids.length) return;
     try{
       var r=await sb.from('dunning_notices').select('customer_id,mailed_at').in('customer_id',ids)
         .not('mailed_at','is',null).order('mailed_at',{ascending:false});
       (r.error?[]:(r.data||[])).forEach(function(n){ if(!DUN_LAST[n.customer_id]) DUN_LAST[n.customer_id]=n.mailed_at; });
+    }catch(e){}
+    SUS_LIFT={};
+    try{
+      var s2=await sb.from('service_suspensions').select('customer_id,lifted_at').in('customer_id',ids)
+        .eq('month', jstToday().slice(0,7)).not('lifted_at','is',null);
+      (s2.error?[]:(s2.data||[])).forEach(function(n){ SUS_LIFT[n.customer_id]=n.lifted_at; });
     }catch(e){}
   }
   function dunAddDays(ymd, n){
@@ -9571,13 +9682,15 @@
       +'期日を過ぎて入っていないぶんです。<b>放置すると、そのまま取りっぱぐれになります。</b>'
       +'担当パートナーからもお声がけいただくのがいちばん早い経路です。<br>'
       +'<b style="color:var(--navy);">「お振込みのお願いを送る」</b>で、〇月分・いくら（内訳つき）をメールでお知らせします。まとめた分は銀行振込に切り替わります（次の引き落としに載せないため）。'
-      +'<b style="color:#A9403D;">顧問料が3か月分たまった方には、次の月から請求を止めます</b>（お振込みで減れば自動で再開）。</div></div>';
+      +'<b style="color:#A9403D;">顧問料が3か月分たまった方には、次の月から請求を止め、その月の1日からご利用を一時停止します</b>（ログインするとお支払いの画面だけ。入金を記録して3か月分を下回れば自動で再開。止めた日にご本人と担当パートナーへメール）。</div></div>';
     h+=g.map(function(c){
       var x0=c.rows[0];
       return '<div style="border:1px solid '+(c.held?'#E8C4C2':'var(--line)')+';border-radius:11px;padding:10px 13px;margin-bottom:6px;">'
         +'<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">'
           +'<span class="tag red" style="font-size:.625rem;">'+c.late+'日 遅れ</span>'
           +(c.held?'<span class="tag red" style="font-size:.625rem;">3か月滞納・請求を止めています</span>':'')
+          +(dunSuspended(c)?'<span class="tag red" style="font-size:.625rem;">⏸ ご利用を一時停止中</span>':'')
+          +(SUS_LIFT[c.id]?'<span class="tag gold" style="font-size:.625rem;">今月は停止を解いています</span>':'')
           +'<b style="font-size:.8125rem;color:var(--ink);">'+esc(x0.customer_name||'')+'</b>'
           +'<span style="font-size:.6875rem;color:var(--muted);">'+esc(x0.customer_email||'')+'</span>'
           +'<span style="flex:1;"></span>'
@@ -9593,6 +9706,7 @@
         +'</div>'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;">'
           +'<button class="ghost" style="font-size:.6875rem;border:1px solid var(--line);border-radius:7px;padding:5px 10px;" onclick="dunSend(\''+esc(c.id)+'\',\''+esc(String(x0.customer_name||'').replace(/'/g,''))+'\')">💴 お振込みのお願いを送る</button>'
+          +(dunSuspended(c)?'<button class="ghost" style="font-size:.6875rem;border:1px solid var(--line);border-radius:7px;padding:5px 10px;color:#8A6A12;" onclick="susLift(\''+esc(c.id)+'\',\''+esc(String(x0.customer_name||'').replace(/'/g,''))+'\')">⏯ 今月だけ停止を解く</button>':'')
         +'</div>'
       +'</div>';
     }).join('');

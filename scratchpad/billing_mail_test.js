@@ -42,7 +42,7 @@ function fresh() {
 function make(db, mails, opts) {
   let handler = null;
   const Deno = {
-    env: { get: (k) => ({ SUPABASE_URL: 'https://sb', SUPABASE_ANON_KEY: 'anon', SUPABASE_SERVICE_ROLE_KEY: 'svc', RESEND_API_KEY: 'rk', MAIL_FROM: 'TsuguAi <m@x>', APP_URL: 'https://app/' })[k] },
+    env: { get: (k) => ({ SUPABASE_URL: 'https://sb', SUPABASE_ANON_KEY: 'anon', SUPABASE_SERVICE_ROLE_KEY: 'svc', RESEND_API_KEY: 'rk', MAIL_FROM: 'TsuguAi <m@x>', APP_URL: 'https://app/', CRON_SECRET: 'cs' })[k] },
     serve: (h) => { handler = h; },
   };
   function q(table) {
@@ -52,6 +52,8 @@ function make(db, mails, opts) {
       select() { return api; },
       eq(k, v) { f.push((r) => r[k] === v); return api; },
       is(k, v) { f.push((r) => (r[k] == null) === (v == null)); return api; },
+      in(k, arr) { f.push((r) => arr.indexOf(r[k]) >= 0); return api; },
+      lt(k, v) { f.push((r) => String(r[k]) < String(v)); return api; },
       update(o) { upd = o; return api; },
       insert(o) { rows.push(Object.assign({ mail_count: 0, mailed_at: null, mail_error: null }, o)); return Promise.resolve({ error: null }); },
       maybeSingle() { const r = rows.filter((x) => f.every((g) => g(x))); return Promise.resolve({ data: r[0] ? Object.assign({}, r[0]) : null }); },
@@ -83,6 +85,11 @@ function make(db, mails, opts) {
     return { status: res.status, body: JSON.parse(res.body) };
   };
   call.html = mod.exports.setupHtml;
+  call.stop = mod.exports.stopNoteFor;
+  call.cron = async (body, secret) => {
+    const res = await handler({ method: 'POST', headers: { get: (k) => (k === 'x-cron-secret' ? secret : null) }, json: async () => body });
+    return { status: res.status, body: JSON.parse(res.body) };
+  };
   return call;
 }
 
@@ -190,6 +197,7 @@ function make(db, mails, opts) {
     ok('お願い：送った記録', !!db.dunning_notices[0].mailed_at && db.dunning_notices[0].mail_error == null);
     const again = await call('tA', { action: 'dunning', notice_id: 'n1' });
     ok('お願い：同じものは二度送らない', !again.body.ok && /もう送っています/.test(again.body.error) && mails.length === 1);
+    ok('お願い：2か月分なら「もう1か月分たまると、その翌月1日から一時停止」', /このまま次の月の顧問料も確認できない場合は、その翌月1日からご利用を一時停止/.test(h));
   }
   {
     const db = dfresh(), mails = [];
@@ -210,6 +218,43 @@ function make(db, mails, opts) {
     const call = make(db, mails);
     const r = await call('tP', { action: 'dunning', notice_id: 'n1' });
     ok('お願い：もう入金済みなら送らない', !r.body.ok && mails.length === 0 && /お支払いの済んでいない請求がありません/.test(db.dunning_notices[0].mail_error));
+  }
+
+  // ⑥ 止めることの一文（お願いのメール）
+  {
+    const call = make(fresh(), []);
+    const A = (due) => ({ kind: 'advisory', due_on: due });
+    ok('止める一文：1か月分なら無し', call.stop([A('2026-09-27')], '2026-10-15', false) === '');
+    ok('止める一文：3か月分で今月1日にはもう3か月分 → 止めています', /一時停止しています/.test(call.stop([A('2026-07-27'), A('2026-08-27'), A('2026-09-27')], '2026-10-15', false)));
+    ok('止める一文：3か月分になったばかり → 来月1日から', /11月1日からご利用を一時停止/.test(call.stop([A('2026-08-27'), A('2026-09-27'), A('2026-10-05')], '2026-10-15', false)));
+    ok('止める一文：12月なら1月1日から', /1月1日から/.test(call.stop([A('2026-10-27'), A('2026-11-27'), A('2026-12-05')], '2026-12-15', false)));
+    ok('止める一文：運営が今月解いていれば「止めています」と書かない', !/一時停止しています/.test(call.stop([A('2026-07-27'), A('2026-08-27'), A('2026-09-27')], '2026-10-15', true)));
+  }
+  // ⑦ 止めた日のお知らせ（毎朝・pg_cron）
+  {
+    const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+    const ms = today.slice(0, 8) + '01';
+    const before = (k) => { const d = new Date(ms + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() - k); d.setUTCDate(27); return d.toISOString().slice(0, 10); };
+    const db = dfresh(), mails = [];
+    db.invoices = db.invoices.filter((x) => x.customer_id !== 'c1');
+    [3, 2, 1].forEach((k, i) => db.invoices.push({ id: 's' + i, customer_id: 'c1', kind: 'advisory', period: before(k).slice(0, 7), title: before(k).slice(0, 7) + ' 顧問料（買い手プラン）', status: 'open', amount_ex: 45000, tax: 4500, amount: 49500, paid_amount: 0, due_on: before(k) }));
+    db.service_suspensions = [];
+    const call = make(db, mails);
+    const bad = await call.cron({ action: 'suspend_notify' }, 'wrong');
+    ok('毎朝：合言葉が違えば動かない', bad.status === 401 && mails.length === 0);
+    const r = await call.cron({ action: 'suspend_notify' }, 'cs');
+    ok('毎朝：止めた方とその担当パートナーへ知らせる', r.body.ok && r.body.notified === 1 && mails.length === 2 && mails[0].to[0] === 'c1@x.jp' && mails[1].to[0] === 'p1@x.jp');
+    ok('毎朝：ご本人には内訳・お願い額・お振込先・再開のこと', /ご利用の一時停止のお知らせ/.test(mails[0].subject) && /148,500円/.test(mails[0].html) && /カ）フクキタル/.test(mails[0].html) && /お振込みを確認しだい、すぐに再開します/.test(mails[0].html));
+    ok('毎朝：担当パートナーには会社名・月数・金額', /担当先のご利用を一時停止しました/.test(mails[1].subject) && /一社/.test(mails[1].html) && /3か月分/.test(mails[1].html));
+    const rec = db.service_suspensions[0];
+    ok('毎朝：知らせた記録（ご本人・担当）', rec && !!rec.notified_at && !!rec.partner_notified_at && rec.month === today.slice(0, 7));
+    await call.cron({ action: 'suspend_notify' }, 'cs');
+    ok('毎朝：同じ月は二度知らせない', mails.length === 2);
+    const db2 = dfresh(), mails2 = [];
+    db2.invoices = db.invoices.map((x) => Object.assign({}, x));
+    db2.service_suspensions = [{ customer_id: 'c1', month: today.slice(0, 7), lifted_at: '2026-10-01T00:00:00Z', notified_at: null }];
+    await make(db2, mails2).cron({ action: 'suspend_notify' }, 'cs');
+    ok('毎朝：運営が今月解いた方には知らせない', mails2.length === 0);
   }
 
   // ④ 説明の書き方（デプロイ・SQL）
