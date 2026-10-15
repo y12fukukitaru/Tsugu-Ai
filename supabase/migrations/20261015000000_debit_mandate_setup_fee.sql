@@ -7,25 +7,37 @@
 --     （用紙は紙のまま集金代行へ。口座はこのシステムに置かない決まり）。
 --     「お客様番号」（数字6桁）を発行し、依頼書と集金代行のCSVをこれでひも付けます。
 --     登録完了の方だけを口座振替にする関数（invoice_apply_mandates）で、
---     切り替え忘れと二重のお支払いを防ぎます。
+--     切り替え忘れと二重のお支払いを防ぎます。初回のお振込みに入れた顧問料と、
+--     ご登録の翌月分までは口座振替にしません（口座振替はご登録の2か月後の分から）。
 --
---  ② 初期導入費
+--  ② 初回のお振込み（初期導入費＋翌月分の顧問料）
 --     顧客が顧問契約を受け取った最初の一度（contract_offers.claimed_user_id が
---     入った瞬間）に、初期導入費の請求を立て、ご案内メールの送り先を記録します。
+--     入った瞬間）に、次を立て、ご案内メールの送り先を記録します。
 --     メールは Edge Function「billing-mail」が送ります（送ったら mailed_at）。
---       金額  … 料金表（概要タブ）の初期導入費。空なら 買い手 100,000円／売り手 50,000円（税別）
---       期日  … 立てた月の翌月末
---       方法  … 銀行振込（口座振替は、登録が済むまで使えないため）
---     すでに初期導入費の請求（取り消し以外）があれば、新しくは立てずにそれを案内します。
---     料金表の「初期導入費を自動で請求する」を外すと、何もしません。
+--       ・初期導入費 … 料金表（概要タブ）の額。空なら 買い手 100,000円／売り手 50,000円（税別）
+--       ・顧問料     … ご登録の翌月分（プランの月額）
+--       期日  … どちらもご登録の翌月末
+--       方法  … 銀行振込（口座振替は、ご登録の2か月後の分から）
+--     ご登録の月の顧問料はいただきません（profiles.bill_from＝翌月1日。月の請求は
+--     この日より前の月を立てない）。すでに初期導入費・翌月分の顧問料の請求
+--     （取り消し以外）があれば、新しくは立てずにそれを案内します。
+--     料金表の「初期導入費の請求」を「自動では立てない」にすると、請求とメールは作りません
+--     （ご登録の月をいただかない決まりは同じ）。
 --     この SQL を流す前に契約した方には、さかのぼって立てません。
 --
 -- 実行方法: Supabase Dashboard → SQL Editor に貼り付けて Run
 --           何度流しても同じ結果になります。
 --           あわせて Edge Function「billing-mail」をデプロイしてください。
 --
--- 確かめかた（最後の select）: 表=2、関数=5、引き金=1
+-- 確かめかた（最後の select）: 表=2、関数=6、引き金=1、列=2
 -- =============================================================
+
+-- ---------------------------------------------------------------
+-- ⓪ 顧問料をいただく最初の月（ご登録の翌月1日。null は今までどおり登録の月から）
+-- ---------------------------------------------------------------
+alter table public.profiles add column if not exists bill_from date;
+comment on column public.profiles.bill_from is
+  '顧問料をいただく最初の月の1日。ご登録の月はいただかない（初回のお振込みに翌月分を入れる）。null は登録の月から';
 
 -- ---------------------------------------------------------------
 -- ① 口座振替の手続き
@@ -147,7 +159,13 @@ begin
      and i.status = 'open' and coalesce(i.paid_amount,0) = 0
      and coalesce(i.method,'bank') <> 'transfer'
      and exists (select 1 from public.debit_mandates m
-                  where m.customer_id = i.customer_id and m.status = 'registered');
+                  where m.customer_id = i.customer_id and m.status = 'registered')
+     --  初回のお振込みに入れた顧問料は、振込でご案内済み
+     and not exists (select 1 from public.setup_fee_notices n where n.advisory_invoice_id = i.id)
+     --  口座振替は、ご登録の2か月後の分から（bill_from はご登録の翌月1日）
+     and not exists (select 1 from public.profiles p
+                      where p.id = i.customer_id and p.bill_from is not null
+                        and i.period < to_char(p.bill_from + interval '1 month', 'YYYY-MM'));
   get diagnostics v_to_transfer = row_count;
 
   update public.invoices i set method = 'bank', updated_at = now()
@@ -196,6 +214,9 @@ create table if not exists public.setup_fee_notices (
 comment on table public.setup_fee_notices is
   '初期導入費のご案内メール。契約を受け取った最初の一度に作り、billing-mail が送る';
 create index if not exists setup_fee_notices_customer on public.setup_fee_notices(customer_id);
+--  初回のお振込みに一緒に入れた、ご登録の翌月分の顧問料
+alter table public.setup_fee_notices add column if not exists advisory_invoice_id uuid
+  references public.invoices(id) on delete set null;
 
 alter table public.setup_fee_notices enable row level security;
 drop policy if exists setup_fee_notices_admin on public.setup_fee_notices;
@@ -218,28 +239,36 @@ declare
   v_plan text;
   v_ex   integer;
   v_inv  uuid;
+  v_adv  uuid;
   v_now  date := (now() at time zone 'Asia/Tokyo')::date;
+  v_next date := (date_trunc('month', (now() at time zone 'Asia/Tokyo')::date) + interval '1 month')::date;
   v_due  date;
+  v_fee  integer;
 begin
   begin
-    select coalesce(s.value->>'bl-setup-auto', '1') into v_auto
-      from public.app_settings s where s.key = 'billing_rates';
-    if coalesce(v_auto, '1') = '0' then return new; end if;
     if exists (select 1 from public.setup_fee_notices n where n.offer_id = new.id) then return new; end if;
     if not exists (select 1 from public.profiles p where p.id = new.claimed_user_id and p.role = 'customer') then
       return new;
     end if;
+    --  ご登録の月の顧問料はいただかない（自動の請求を外していても同じ決まり）
+    update public.profiles set bill_from = v_next
+     where id = new.claimed_user_id and bill_from is null;
+
+    select coalesce(s.value->>'bl-setup-auto', '1') into v_auto
+      from public.app_settings s where s.key = 'billing_rates';
+    if coalesce(v_auto, '1') = '0' then return new; end if;
 
     --  運営が手で立てた初期導入費があれば、それを案内する（二本にしない）
     select i.id into v_inv from public.invoices i
      where i.customer_id = new.claimed_user_id and i.kind = 'setup' and i.status <> 'void'
      order by i.created_at desc limit 1;
 
+    select coalesce(new.plan, p.plan, 'buyer') into v_plan from public.profiles p where p.id = new.claimed_user_id;
+    v_plan := case when v_plan = 'seller' then 'seller' else 'buyer' end;
+    v_due  := (v_next + interval '1 month' - interval '1 day')::date;   -- ご登録の翌月末
+
     if v_inv is null then
-      select coalesce(new.plan, p.plan, 'buyer') into v_plan from public.profiles p where p.id = new.claimed_user_id;
-      v_plan := case when v_plan = 'seller' then 'seller' else 'buyer' end;
       v_ex   := public.setup_fee(v_plan);
-      v_due  := (date_trunc('month', v_now) + interval '2 month' - interval '1 day')::date;
       insert into public.invoices
         (customer_id, period, kind, title, amount_ex, tax, amount, due_on, method, note)
       values
@@ -250,8 +279,25 @@ begin
       returning id into v_inv;
     end if;
 
-    insert into public.setup_fee_notices (offer_id, customer_id, invoice_id)
-    values (new.id, new.claimed_user_id, v_inv)
+    --  ご登録の翌月分の顧問料。月の請求（invoice_generate）は同じ月・同じ方を二本立てない
+    select i.id into v_adv from public.invoices i
+     where i.customer_id = new.claimed_user_id and i.kind = 'advisory'
+       and i.period = to_char(v_next, 'YYYY-MM') and i.status <> 'void'
+     limit 1;
+    if v_adv is null then
+      v_fee := public.plan_fee(v_plan);
+      insert into public.invoices
+        (customer_id, period, kind, title, amount_ex, tax, amount, due_on, method, note)
+      values
+        (new.claimed_user_id, to_char(v_next, 'YYYY-MM'), 'advisory',
+         to_char(v_next, 'YYYY-MM') || case when v_plan = 'seller' then ' 顧問料（売り手プラン）' else ' 顧問料（買い手プラン）' end,
+         v_fee, v_fee * 10 / 100, v_fee + v_fee * 10 / 100, v_due, 'bank',
+         '初回のお振込み（初期導入費と一緒にご案内）')
+      returning id into v_adv;
+    end if;
+
+    insert into public.setup_fee_notices (offer_id, customer_id, invoice_id, advisory_invoice_id)
+    values (new.id, new.claimed_user_id, v_inv, v_adv)
     on conflict (offer_id) do nothing;
   exception when others then
     raise warning 'setup_fee_on_claim: %', sqlerrm;
@@ -279,6 +325,73 @@ revoke all on function public.setup_notice_pending() from public, anon;
 grant execute on function public.setup_notice_pending() to authenticated;
 
 -- ---------------------------------------------------------------
+-- ③ 月の請求：顧問料をいただく最初の月（bill_from）より前は立てない
+--    20260916010000_direct_to_plan.sql の invoice_generate に、その条件だけを足したもの
+-- ---------------------------------------------------------------
+create or replace function public.invoice_generate(
+  p_period text, p_due_day int default 27, p_method text default 'bank')
+returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  v_start  date;
+  v_end    date;
+  v_due    date;
+  v_made   int := 0;
+  v_skip   int := 0;
+  r        record;
+  v_ex     integer;
+  v_plan   text;
+  v_method text;
+begin
+  if not public.invoice_is_admin() then
+    return jsonb_build_object('ok', false, 'error', '運営のみが操作できます');
+  end if;
+  if coalesce(p_period,'') !~ '^[0-9]{4}-[0-9]{2}$' then
+    return jsonb_build_object('ok', false, 'error', '年月は YYYY-MM の形でご指定ください');
+  end if;
+  v_method := coalesce(p_method,'bank');
+  if v_method not in ('transfer','bank','card','other') then
+    return jsonb_build_object('ok', false, 'error', 'お支払い方法が正しくありません');
+  end if;
+
+  v_start := (p_period || '-01')::date;
+  v_end   := (v_start + interval '1 month')::date;
+  v_due   := least((v_start + interval '1 month' - interval '1 day')::date,
+                   (v_start + make_interval(days => greatest(p_due_day,1) - 1))::date);
+
+  for r in
+    select p.id
+      from public.profiles p
+     where p.role = 'customer'
+       and p.created_at < v_end
+       --  ご登録の月はいただかない（bill_from＝ご登録の翌月1日）
+       and (p.bill_from is null or p.bill_from <= v_start)
+       and not exists (select 1 from public.account_deletions d
+                        where d.deleted_user_id = p.id)
+  loop
+    v_plan := public.plan_effective(r.id, v_start);
+    v_ex   := public.plan_fee(v_plan);
+    begin
+      insert into public.invoices
+        (customer_id, period, kind, title, amount_ex, tax, amount, due_on, method)
+      values
+        (r.id, p_period, 'advisory',
+         case when v_plan = 'seller' then p_period || ' 顧問料（売り手プラン）'
+              else p_period || ' 顧問料（買い手プラン）' end,
+         v_ex, v_ex * 10 / 100, v_ex + v_ex * 10 / 100, v_due, v_method);
+      v_made := v_made + 1;
+    exception when unique_violation then
+      v_skip := v_skip + 1;
+    end;
+  end loop;
+
+  return jsonb_build_object('ok', true, 'made', v_made, 'skipped', v_skip,
+                            'due_on', v_due, 'period', p_period, 'method', v_method);
+end $$;
+comment on function public.invoice_generate(text, int, text) is
+  'その月の顧問料を顧客ごとに立てる。金額はプランだけで決まる。bill_from（ご登録の翌月）より前の月は立てない';
+
+-- ---------------------------------------------------------------
 -- 確かめ
 -- ---------------------------------------------------------------
 select
@@ -286,6 +399,9 @@ select
     where table_schema='public' and table_name in ('debit_mandates','setup_fee_notices'))              as "表",
   (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='public' and p.proname in
-      ('debit_mandate_set','invoice_apply_mandates','setup_fee','setup_fee_on_claim','setup_notice_pending')) as "関数",
-  (select count(*) from pg_trigger where tgname='setup_fee_on_claim')                                  as "引き金";
---  期待値：表=2、関数=5、引き金=1
+      ('debit_mandate_set','invoice_apply_mandates','setup_fee','setup_fee_on_claim','setup_notice_pending','invoice_generate')) as "関数",
+  (select count(*) from pg_trigger where tgname='setup_fee_on_claim')                                  as "引き金",
+  (select count(*) from information_schema.columns
+    where table_schema='public' and ((table_name='profiles' and column_name='bill_from')
+       or (table_name='setup_fee_notices' and column_name='advisory_invoice_id')))                      as "列";
+--  期待値：表=2、関数=6、引き金=1、列=2

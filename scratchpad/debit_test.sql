@@ -69,12 +69,21 @@ select public.chk('受け取った瞬間に初期導入費（料金表の額・�
   '120000/132000/setup/bank/初期導入費（買い手プラン）');
 select public.chk('期日は翌月末', (select due_on = (date_trunc('month', (now() at time zone 'Asia/Tokyo')::date) + interval '2 month' - interval '1 day')::date
   from public.invoices where customer_id='00000000-0000-0000-0000-0000000000c1' and kind='setup'), true);
+select public.chk('翌月分の顧問料も一緒に（同じ期日・銀行振込・プランの月額）',
+  (select period = to_char(date_trunc('month', (now() at time zone 'Asia/Tokyo')::date) + interval '1 month', 'YYYY-MM')
+      and amount_ex = 45000 and amount = 49500 and method = 'bank'
+      and due_on = (select due_on from public.invoices where customer_id='00000000-0000-0000-0000-0000000000c1' and kind='setup')
+     from public.invoices where customer_id='00000000-0000-0000-0000-0000000000c1' and kind='advisory' and period <> '2026-12'), true);
+select public.chk('ご案内に顧問料もひも付く', (select advisory_invoice_id is not null from public.setup_fee_notices where customer_id='00000000-0000-0000-0000-0000000000c1'), true);
+select public.chk('ご登録の月はいただかない（bill_from＝翌月1日）',
+  (select bill_from = (date_trunc('month', (now() at time zone 'Asia/Tokyo')::date) + interval '1 month')::date from public.profiles where id='00000000-0000-0000-0000-0000000000c1'), true);
 select public.chk('ご案内の記録（未送信）', (select count(*) from public.setup_fee_notices where customer_id='00000000-0000-0000-0000-0000000000c1' and mailed_at is null and invoice_id is not null), 1::bigint);
 --  ログインのたびに同じ値を書き直しても、増えない
 update public.contract_offers set claimed_user_id='00000000-0000-0000-0000-0000000000c1' where id='00000000-0000-0000-0000-0000000000f1';
-select public.chk('ログインのたびには立てない', (select count(*) from public.invoices where kind='setup' and customer_id='00000000-0000-0000-0000-0000000000c1'), 1::bigint);
+select public.chk('ログインのたびには立てない', (select count(*) from public.invoices where kind in ('setup','advisory') and period <> '2026-12' and customer_id='00000000-0000-0000-0000-0000000000c1'), 2::bigint);
 update public.contract_offers set claimed_user_id='00000000-0000-0000-0000-0000000000c2' where id='00000000-0000-0000-0000-0000000000f2';
 select public.chk('売り手は売り手の額（料金表が空なら50,000）', (select amount_ex from public.invoices where customer_id='00000000-0000-0000-0000-0000000000c2' and kind='setup'), 50000);
+select public.chk('売り手の翌月分は売り手の月額', (select amount_ex from public.invoices where customer_id='00000000-0000-0000-0000-0000000000c2' and kind='advisory' and period <> '2026-12'), 30000);
 update public.contract_offers set claimed_user_id='00000000-0000-0000-0000-00000000000b' where id='00000000-0000-0000-0000-0000000000f3';
 select public.chk('パートナーの契約には立てない', (select count(*) from public.invoices where customer_id='00000000-0000-0000-0000-00000000000b'), 0::bigint);
 --  運営が手で立てていた方：新しく立てず、それを案内する
@@ -90,6 +99,34 @@ insert into public.profiles(id, role, plan) values ('00000000-0000-0000-0000-000
 insert into public.contract_offers(id, kind, plan, email, status) values ('00000000-0000-0000-0000-0000000000f5','customer','buyer','c4@x','agreed');
 update public.contract_offers set claimed_user_id='00000000-0000-0000-0000-0000000000c4' where id='00000000-0000-0000-0000-0000000000f5';
 select public.chk('自動を外すと立てない', (select count(*) from public.invoices where customer_id='00000000-0000-0000-0000-0000000000c4'), 0::bigint);
+select public.chk('自動を外しても、ご登録の月はいただかない', (select bill_from is not null from public.profiles where id='00000000-0000-0000-0000-0000000000c4'), true);
+
+-- 月の請求：ご登録の月は立てない・初回に入れた翌月分は二本にしない
+--  c5＝この仕組みより前からの顧客（契約の受け取りが無い。bill_from は空）
+insert into auth.users values ('00000000-0000-0000-0000-0000000000c5','c5@x');
+insert into public.profiles(id, role, plan) values ('00000000-0000-0000-0000-0000000000c5','customer','buyer');
+select public.be('00000000-0000-0000-0000-00000000000a');
+select public.chk('ご登録の月：新しい方（c1〜c4）には立てず、前からの方（c5）だけ',
+  (select (r->>'made')::int from (select public.invoice_generate(to_char((now() at time zone 'Asia/Tokyo')::date,'YYYY-MM'), 27, 'bank') r) t), 1);
+select public.chk('ご登録の月：立ったのは c5 の1本',
+  (select string_agg(customer_id::text, ',') from public.invoices where kind='advisory' and period = to_char((now() at time zone 'Asia/Tokyo')::date,'YYYY-MM')), '00000000-0000-0000-0000-0000000000c5');
+select public.chk('翌月：初回に入れた方（c1〜c3）は二本にしない。自動を外した c4 と c5 は立つ',
+  (select (r->>'made')::text||'/'||(r->>'skipped') from (select public.invoice_generate(to_char((now() at time zone 'Asia/Tokyo')::date + interval '1 month','YYYY-MM'), 27, 'bank') r) t), '2/3');
+select public.chk('翌月：c1 の顧問料は1本だけ',
+  (select count(*) from public.invoices where customer_id='00000000-0000-0000-0000-0000000000c1' and kind='advisory' and period = to_char((now() at time zone 'Asia/Tokyo')::date + interval '1 month','YYYY-MM')), 1::bigint);
+
+-- 口座振替は、ご登録の2か月後の分から（初回に入れた翌月分は振込のまま）
+select public.chk('翌月分（初回）は、登録完了でも口座振替にしない',
+  (select (r->>'to_transfer') from (select public.invoice_apply_mandates(to_char((now() at time zone 'Asia/Tokyo')::date + interval '1 month','YYYY-MM')) r) t), '0');
+select public.chk('翌月分（初回）は銀行振込のまま',
+  (select method from public.invoices where customer_id='00000000-0000-0000-0000-0000000000c1' and kind='advisory' and period = to_char((now() at time zone 'Asia/Tokyo')::date + interval '1 month','YYYY-MM')), 'bank');
+select public.invoice_generate(to_char((now() at time zone 'Asia/Tokyo')::date + interval '2 month','YYYY-MM'), 27, 'bank');
+select public.invoice_apply_mandates(to_char((now() at time zone 'Asia/Tokyo')::date + interval '2 month','YYYY-MM'));
+select public.chk('2か月後の分：口座振替は登録完了の c1 だけ',
+  (select string_agg(customer_id::text, ',') from public.invoices where kind='advisory' and method='transfer'
+     and period = to_char((now() at time zone 'Asia/Tokyo')::date + interval '2 month','YYYY-MM')), '00000000-0000-0000-0000-0000000000c1');
+select public.chk('2か月後の c1 は口座振替',
+  (select method from public.invoices where customer_id='00000000-0000-0000-0000-0000000000c1' and kind='advisory' and period = to_char((now() at time zone 'Asia/Tokyo')::date + interval '2 month','YYYY-MM')), 'transfer');
 
 -- まだ送っていないご案内
 set role authenticated;

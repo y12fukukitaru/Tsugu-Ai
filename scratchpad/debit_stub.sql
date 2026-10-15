@@ -21,7 +21,7 @@ drop table if exists public.setup_fee_notices, public.debit_mandates, public.inv
 drop sequence if exists public.debit_mandate_no_seq;
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
-  role text, plan text, consultant_id uuid, company_name text, contact_name text, created_at timestamptz default now());
+  role text, plan text, plan_from date, plan_prev text, consultant_id uuid, company_name text, contact_name text, created_at timestamptz default now());
 create table public.app_settings (key text primary key, value jsonb);
 create table public.account_deletions (deleted_user_id uuid);
 create table public.invoices (
@@ -33,6 +33,16 @@ create table public.invoices (
 create table public.contract_offers (
   id uuid primary key default gen_random_uuid(), kind text, plan text, email text, status text,
   claimed_user_id uuid);
+--  本番にある料金の関数の写し（20260912000000_plan_exit.sql）
+create or replace function public.plan_fee(p_plan text) returns integer language sql stable security definer set search_path = public as $$
+  select case when p_plan = 'seller'
+    then coalesce(nullif(btrim(v->>'bl-seller'), '')::numeric, 30000)::integer
+    else coalesce(nullif(btrim(v->>'bl-adv'),    '')::numeric, 45000)::integer end
+  from (select coalesce((select s.value from public.app_settings s where s.key='billing_rates'), '{}'::jsonb) as v) t; $$;
+create or replace function public.plan_effective(p_customer uuid, p_on date) returns text language sql stable security definer set search_path = public as $$
+  select case when p.plan_from is null or p.plan_from <= p_on then p.plan else coalesce(p.plan_prev, 'buyer') end
+  from public.profiles p where p.id = p_customer; $$;
+create unique index if not exists invoices_uniq on public.invoices(customer_id, period, kind) where kind in ('advisory','direct');
 create or replace function public.invoice_is_admin() returns boolean language sql security definer stable
   set search_path = public as $$ select exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin') $$;
 

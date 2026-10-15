@@ -47,6 +47,7 @@ const M = new Function(base + 'return {label:dmLabel, of:dmOf, count:dmCount, cu
   ok('書き方：名義は通帳どおり・届出印は実印とは限らない・書き損じは新しい用紙', /一字一句同じ/.test(h) && /金融機関へ届け出た印鑑/.test(h) && /実印や角印とは限りません/.test(h) && /新しい用紙に書き直して/.test(h));
   ok('戻りの多い理由と、登録まで振込・二重払いの注意', /印鑑相違/.test(h) && /登録が済むまでの顧問料は、銀行振込/.test(h) && /二重にお支払いにならないよう/.test(h));
   ok('登録までのお振込先', /〇〇銀行 普通 1234567/.test(h));
+  ok('口座振替はご登録の2か月後の分から', /ご登録の2か月後の月の顧問料から<\/b>始まります/.test(h));
   ok('口座情報は持たない・写真を送らない', /システムには保存しません/.test(h) && /写真をアプリやメールで送らないでください/.test(h));
   ok('会社名は文字として出す', /株式会社&lt;一&gt;/.test(h) && !/株式会社<一>/.test(h));
   ok('日々の一行と連絡先', /継ぐ、を身近な経営判断に/.test(h) && /082-548-2224/.test(h));
@@ -77,8 +78,13 @@ const M = new Function(base + 'return {label:dmLabel, of:dmOf, count:dmCount, cu
   ok('顧問契約を受け取ったらご案内（顧客だけ）', /String\(cc\.data\|\|''\)==='claimed:customer'\) setupNoticeSend\(\)/.test(c));
   const s = takeFn('setupNoticeSend');
   ok('送っていないものがあるときだけ呼ぶ・待たない', /sb\.rpc\('setup_notice_pending'\)/.test(s) && /sb\.functions\.invoke\('billing-mail', \{ body:\{ action:'setup' \} \}\)\.catch/.test(s) && !/await sb\.functions/.test(s));
-  ok('運営：請求の行から送る・再送', /invoice_id:id/.test(takeFn('invSetupMail')) && /もう一度送る/.test(takeFn('invSetupMailHtml')) && /x\.kind==='setup' && x\.status!=='void'\) \? invSetupMailHtml\(x\)/.test(SRC));
+  ok('運営：請求の行から送る・再送', /invoice_id:id/.test(takeFn('invSetupMail')) && /もう一度送る/.test(takeFn('invSetupMailHtml')) && /x\.kind==='setup' \|\| x\.first\) && x\.status!=='void'\) \? invSetupMailHtml\(x\)/.test(SRC));
   ok('送れなかった理由を出す', /まだ届いていません/.test(takeFn('invSetupMailHtml')));
+  const li = takeFn('loadInvoices');
+  ok('初回に入れた顧問料も、ご案内の記録とひも付ける', /in\('advisory_invoice_id',sids\)/.test(li) && /x\.first=!!\(x\.notice && x\.notice\.advisory_invoice_id===x\.id\)/.test(li));
+  ok('初回に入れた顧問料の行にも札とメールの状態', /\(x\.kind==='setup' \|\| x\.first\) && x\.status!=='void'\) \? invSetupMailHtml\(x\)/.test(SRC) && /初回のお振込み（初期導入費と一緒）/.test(takeFn('invSetupMailHtml')));
+  ok('初回に入れた顧問料を口座振替にするときは止める', /\(to==='transfer' && row\.first\)/.test(takeFn('invMethod')) && /初回のお振込み（初期導入費と一緒）でご案内済みの顧問料です/.test(takeFn('invMethod')));
+  ok('料金表：初期導入費＋翌月分、ご登録の月はいただかない', /自動で立て（初期導入費＋翌月分の顧問料）/.test(SRC) && /ご登録の月の顧問料はいただきません。<\/b>口座振替はご登録の2か月後の分から/.test(SRC));
   ok('料金表：自動で立てるかを選べる（保存対象）', /<select id="bl-setup-auto"/.test(SRC) && /var BL_RATE_IDS=\[[^\]]*'bl-setup-auto'[^\]]*\]/.test(SRC));
 }
 // ⑤ SQL・Edge Function・説明書・版
@@ -88,12 +94,15 @@ const M = new Function(base + 'return {label:dmLabel, of:dmOf, count:dmCount, cu
   ok('SQL：引き金は顧客の契約を受け取った最初の一度', /when \(new\.kind = 'customer' and new\.claimed_user_id is not null\s+and new\.claimed_user_id is distinct from old\.claimed_user_id\)/.test(SQL));
   ok('SQL：失敗してもログインを止めない', /exception when others then\s+raise warning 'setup_fee_on_claim/.test(SQL));
   const EF = R('supabase/functions/billing-mail/index.ts');
-  ok('Edge Function：宛先は登録のアドレス', /auth\.admin\.getUserById\(inv\.customer_id\)/.test(EF) && !/body\.to|body\.email/.test(EF));
+  ok('Edge Function：宛先は登録のアドレス', /auth\.admin\.getUserById\(customerId\)/.test(EF) && /sendOne\(sb, uid, invs, adv\)/.test(EF) && !/body\.to|body\.email/.test(EF));
   const MA = R('manual-admin.html');
   ok('運営説明書：口座振替の手続き・お客様番号・添え状', /data-t="口座振替の手続き"/.test(MA) && /お客様番号/.test(MA) && /添え状を印刷/.test(MA));
   ok('運営説明書：初期導入費の自動請求とご案内メール', /初期導入費のご案内メール/.test(MA) && /billing-mail/.test(MA));
   const MC = R('manual-customer.html');
-  ok('経営者説明書：初期導入費のメールと、口座振替のお手続き', /初期導入費のご案内/.test(MC) && /口座振替のお手続き中です/.test(MC));
+  ok('経営者説明書：初回のお振込みのメールと、口座振替のお手続き', /「初回のお振込みのご案内」<\/b>がメールで届きます/.test(MC) && /口座振替のお手続き中です/.test(MC));
+  ok('経営者説明書：ご登録の月はいただかない・2か月後から口座振替', /ご登録の月の顧問料はいただきません。/.test(MC) && /その翌月の分から口座振替/.test(MC) && /10月ご登録 → 11月分は初回のお振込み、12月分から引き落とし/.test(MC));
+  ok('運営説明書：初回のお振込みと、口座振替は2か月後の分から', /初期導入費<\/b>（概要タブの額）と<b>ご登録の翌月分の顧問料<\/b>/.test(MA) && /ご登録の2か月後の分から。<\/b>/.test(MA));
+  ok('パートナー説明書：初回のお振込み', /初回のお振込み（初期導入費＋翌月分の顧問料）/.test(R('manual-partner.html')));
   is('版が揃う', [SRC.match(/var APP_BUILD='([^']+)'/)[1], VER.build], [VER.build, VER.build]);
 }
 

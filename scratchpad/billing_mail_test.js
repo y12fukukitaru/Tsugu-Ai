@@ -31,10 +31,11 @@ function fresh() {
       { id: 'i2', customer_id: 'c2', kind: 'setup', title: '初期導入費（売り手プラン）', status: 'void', amount_ex: 50000, tax: 5000, amount: 55000, due_on: '2026-11-30' },
       { id: 'i3', customer_id: 'c2', kind: 'setup', title: '初期導入費（手）', status: 'open', amount_ex: 50000, tax: 5000, amount: 55000, due_on: '2026-12-31' },
       { id: 'i4', customer_id: 'c2', kind: 'advisory', title: '顧問料', status: 'open', amount_ex: 35000, tax: 3500, amount: 38500, due_on: '2026-11-27' },
+      { id: 'a1', customer_id: 'c1', kind: 'advisory', period: '2026-11', title: '2026-11 顧問料（買い手プラン）', status: 'open', amount_ex: 45000, tax: 4500, amount: 49500, due_on: '2026-11-30' },
     ],
     setup_fee_notices: [
-      { offer_id: 'o1', customer_id: 'c1', invoice_id: 'i1', mailed_at: null, mail_count: 0, mail_error: null },
-      { offer_id: 'o2', customer_id: 'c2', invoice_id: 'i2', mailed_at: null, mail_count: 0, mail_error: null },
+      { offer_id: 'o1', customer_id: 'c1', invoice_id: 'i1', advisory_invoice_id: 'a1', mailed_at: null, mail_count: 0, mail_error: null },
+      { offer_id: 'o2', customer_id: 'c2', invoice_id: 'i2', advisory_invoice_id: null, mailed_at: null, mail_count: 0, mail_error: null },
     ],
   };
 }
@@ -92,15 +93,25 @@ function make(db, mails, opts) {
     const call = make(db, mails);
     const [a, b] = await Promise.all([call('tC', { action: 'setup' }), call('tC', { action: 'setup' })]);
     ok('ご本人：2台同時でも送るのは一度', mails.length === 1 && a.body.sent + b.body.sent === 1);
-    ok('宛先は登録のアドレス（画面から受け取らない）', mails[0].to[0] === 'c1@x.jp' && mails[0].subject === '【TsuguAi -継-】初期導入費のご案内');
+    ok('宛先は登録のアドレス（画面から受け取らない）', mails[0].to[0] === 'c1@x.jp' && mails[0].subject === '【TsuguAi -継-】初回のお振込みのご案内（初期導入費・顧問料）');
     const nt = db.setup_fee_notices.find((x) => x.offer_id === 'o1');
     ok('送った記録（日時・回数・エラーなし）', !!nt.mailed_at && nt.mail_count === 1 && nt.mail_error == null);
     const again = await call('tC', { action: 'setup' });
     ok('次のログインでは送らない', again.body.sent === 0 && mails.length === 1);
     const h = mails[0].html;
-    ok('文面：宛名・金額（税別・税・税込）・期日', /一社 御中/.test(h) && /山田 様/.test(h) && /100,000円（税別）＋ 消費税 10,000円/.test(h) && /110,000円（税込）/.test(h) && /2026年11月30日/.test(h));
+    ok('文面：宛名・初期導入費と翌月分の顧問料・合計・期日', /一社 御中/.test(h) && /山田 様/.test(h) && /100,000円（税別）＋ 消費税 10,000円/.test(h)
+      && /2026-11 顧問料（買い手プラン）/.test(h) && /45,000円（税別）＋ 消費税 4,500円/.test(h) && /合計（税込）[\s\S]{0,200}159,500円/.test(h) && /2026年11月30日/.test(h));
+    ok('文面：ご登録の月はいただかない・口座振替は2か月後（12月分）から', /ご登録の月の顧問料はいただきません/.test(h) && /2026年12月分の顧問料からは、口座振替/.test(h) && /まとめて一度に/.test(h));
+    ok('文面：初期導入費 → 顧問料 の順', h.indexOf('初期導入費（買い手プラン）') < h.indexOf('2026-11 顧問料'));
     ok('文面：お振込先・依頼人名・振込手数料', /〇〇銀行 本店 普通 1234567 カ）フクキタル/.test(h) && /ご依頼人名をご契約の会社名/.test(h) && /振込手数料はご負担/.test(h));
     ok('文面：なりすまし注意・日々の一行', /メールだけでお振込先の変更をお願いすることはありません/.test(h) && /継ぐ、を身近な経営判断に/.test(h));
+  }
+  {
+    const db = fresh(), mails = [];
+    const call = make(db, mails);
+    db.invoices.find((x) => x.id === 'i1').status = 'paid';
+    await call('tC', { action: 'setup' });
+    ok('初期導入費が払い済みなら、顧問料だけを案内する', mails.length === 1 && !/初期導入費（買い手プラン）/.test(mails[0].html) && /2026-11 顧問料/.test(mails[0].html));
   }
   {
     const db = fresh(), mails = [];
@@ -127,18 +138,22 @@ function make(db, mails, opts) {
     ok('運営：手で立てた請求にも送れる（記録を作る）', r.body.ok && mails.length === 1 && mails[0].to[0] === 'c2@x.jp' && nt && nt.mail_count === 1);
     await call('tA', { action: 'setup', invoice_id: 'i3' });
     ok('運営：再送は回数が増える', mails.length === 2 && db.setup_fee_notices.find((x) => x.invoice_id === 'i3').mail_count === 2);
+    ok('運営：手で立てた初期導入費だけなら、件名は初期導入費・顧問料の行なし', mails[1].subject === '【TsuguAi -継-】初期導入費のご案内' && !/顧問料（/.test(mails[1].html));
+    const ra = await call('tA', { action: 'setup', invoice_id: 'a1' });
+    ok('運営：初回に入れた顧問料の行からも、初期導入費と一緒に送れる', ra.body.ok && mails.length === 3 && /初期導入費（買い手プラン）/.test(mails[2].html) && /2026-11 顧問料/.test(mails[2].html));
     const v = await call('tA', { action: 'setup', invoice_id: 'i2' });
     const k = await call('tA', { action: 'setup', invoice_id: 'i4' });
-    ok('運営：取り消した請求・顧問料の請求には送らない', !v.body.ok && !k.body.ok && mails.length === 2);
+    ok('運営：取り消した請求・ふつうの月の顧問料には送らない', !v.body.ok && !k.body.ok && /初回のお振込みに入れた顧問料ではありません/.test(k.body.error) && mails.length === 3);
     const x = await call('nobody', { action: 'setup' });
     ok('ログインしていなければ送らない', x.status === 401);
   }
   // ③ お振込先が空のとき
   {
     const call = make(fresh(), []);
-    const h = call.html({ company: '', contact: '', inv: { title: 't', amount_ex: 1, tax: 0, amount: 1, due_on: '2026-01-31' }, bank: '' });
+    const h = call.html({ company: '', contact: '', invs: [{ title: 't', amount_ex: 1, tax: 0, amount: 1, due_on: '2026-01-31' }], bank: '' });
     ok('お振込先が空なら、アプリで確かめていただく', /お振込先は、アプリの「お支払い」でご確認ください/.test(h) && /ご担当者様/.test(h));
-    const e = call.html({ company: '<b>x</b>', contact: '', inv: { title: '<i>', amount_ex: 1, tax: 0, amount: 1, due_on: null }, bank: '<script>' });
+    const e = call.html({ company: '<b>x</b>', contact: '', invs: [{ title: '<i>', amount_ex: 1, tax: 0, amount: 1, due_on: null }], bank: '<script>' });
+    ok('顧問料が無ければ、口座振替の始まりは書かない', /担当パートナーから別にご案内します/.test(h));
     ok('会社名・件名・お振込先は文字として出す', !/<b>x<\/b>/.test(e) && !/<script>/.test(e) && /&lt;b&gt;x/.test(e));
   }
   // ④ 説明の書き方（デプロイ・SQL）

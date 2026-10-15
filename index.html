@@ -2161,7 +2161,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261015-02';
+  var APP_BUILD='20261015-03';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -4024,9 +4024,9 @@
           +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 2px;font-size:.71875rem;color:var(--ink);">'
             +'<label class="fl" style="margin:0;">初期導入費の請求</label>'
             +'<select id="bl-setup-auto" class="inp2" onchange="blRatesSave()">'
-              +'<option value="1">ご登録のとき自動で立て、メールでご案内する</option>'
+              +'<option value="1">ご登録のとき自動で立て（初期導入費＋翌月分の顧問料）、メールでご案内する</option>'
               +'<option value="0">自動では立てない（請求と未収から手で立てる）</option></select>'
-            +'<span style="font-size:.65625rem;color:var(--muted);line-height:1.6;">期日は翌月末・銀行振込。上の初期導入費の額で立てます。</span>'
+            +'<span style="font-size:.65625rem;color:var(--muted);line-height:1.6;">期日は翌月末・銀行振込（まとめて一度に）。<b>ご登録の月の顧問料はいただきません。</b>口座振替はご登録の2か月後の分から。</span>'
           +'</div>'
           +'<div class="bl-nt">運営が直接担当している顧客も、同じ額です。変えた額は、この先の請求の自動作成と契約書の月額に使われます。ボリュームディスカウント・HD化ボーナス・担当パートナーの階層付与は廃止しました（EP登録料・月額下限・法人管理料もありません）。</div>'
         +'</div>'
@@ -4179,6 +4179,7 @@
         //  引き落とす請求に「お振込ください」と書くと二重にいただいてしまう
         +'<div style="font-size:.6875rem;color:var(--muted);line-height:1.75;margin-bottom:10px;">'
           +'<b style="color:var(--navy);">「手続きに合わせる」</b>は、下の「口座振替の手続き」で<b>登録完了の方だけ口座振替</b>、ほかの方は銀行振込で立てます。'
+          +'<b>ご登録の月の顧問料はいただきません</b>（翌月分は初回のお振込みに入っているので、二重に立ちません）。口座振替は<b>ご登録の2か月後の分から</b>です。'
           +'お支払い方法は、顧客の画面の文言に出ます。'
           +'<b style="color:var(--navy);">口座振替なら「お引き落としになります。お振込は不要です」</b>と表示し、'
           +'銀行振込なら振込先をお見せします。あとから1件ずつ切り替えられます。</div>'
@@ -8959,13 +8960,21 @@
       }catch(e){}
       //  お客様番号（口座振替の依頼書に書いていただく番号）。集金代行の CSV に載せる
       INV_ROWS.forEach(function(x){ var d=dmOf(x.customer_id); x.ref_no=d?d.ref_no:''; });
-      //  初期導入費のご案内メール（送ったか）
-      var sids=INV_ROWS.filter(function(x){ return x.kind==='setup'; }).map(function(x){ return x.id; });
+      //  初回のお振込みのご案内メール（送ったか）。初期導入費と、一緒に入れた翌月分の顧問料
+      var sids=INV_ROWS.filter(function(x){ return x.kind==='setup'||x.kind==='advisory'; }).map(function(x){ return x.id; });
       if(sids.length){
         try{
-          var sn=await sb.from('setup_fee_notices').select('invoice_id,mailed_at,mail_count,mail_error').in('invoice_id',sids);
-          var byInv={}; (sn.error?[]:(sn.data||[])).forEach(function(n){ byInv[n.invoice_id]=n; });
-          INV_ROWS.forEach(function(x){ if(x.kind==='setup') x.notice=byInv[x.id]||null; });
+          var cols='invoice_id,advisory_invoice_id,mailed_at,mail_count,mail_error';
+          var s1=await sb.from('setup_fee_notices').select(cols).in('invoice_id',sids);
+          var s2=await sb.from('setup_fee_notices').select(cols).in('advisory_invoice_id',sids);
+          var byInv={};
+          (s1.error?[]:(s1.data||[])).forEach(function(n){ byInv[n.invoice_id]=n; });
+          (s2.error?[]:(s2.data||[])).forEach(function(n){ if(n.advisory_invoice_id) byInv[n.advisory_invoice_id]=n; });
+          INV_ROWS.forEach(function(x){
+            x.notice=byInv[x.id]||null;
+            //  初回のお振込みに入れた顧問料（口座振替にしない・二重払いの注意に使う）
+            x.first=!!(x.notice && x.notice.advisory_invoice_id===x.id);
+          });
         }catch(e){}
       }
     }
@@ -9074,7 +9083,7 @@
             +((x.method==='transfer')?'銀行振込に変える':'口座振替に変える')+'</button>'
           +'<button class="ghost" style="font-size:.6875rem;border:1px solid var(--line);border-radius:7px;padding:5px 10px;color:#A9403D;" onclick="invVoid(\''+esc(x.id)+'\')">取り消す</button>'
           +'</div>')
-        +((x.kind==='setup' && x.status!=='void') ? invSetupMailHtml(x) : '')
+        +(((x.kind==='setup' || x.first) && x.status!=='void') ? invSetupMailHtml(x) : '')
       +'</div>';
     }).join('');
     box.innerHTML=h;
@@ -9185,7 +9194,9 @@
     var row=INV_ROWS.filter(function(x){ return x.id===id; })[0]||{};
     var dm=dmOf(row.customer_id), reg=!!(dm && dm.status==='registered');
     //  手続きと合わない切り替えは、二重のお支払いか、引き落とせない未収になる
-    var warn=(to==='transfer' && !reg)
+    var warn=(to==='transfer' && row.first)
+      ? '\n\n⚠ これは初回のお振込み（初期導入費と一緒）でご案内済みの顧問料です。口座振替にすると、振込と引き落としの両方でお支払いいただく（二重払い）おそれがあります。'
+      : (to==='transfer' && !reg)
       ? '\n\n⚠ この方は口座振替の登録が済んでいません'+(dm?'（いま：'+dmLabel(dm.status)+'）':'')+'。引き落とせず、未収になります。'
       : (to==='bank' && reg)
         ? '\n\n⚠ この方は口座振替の登録が済んでいます。引き落としと振込の両方でお支払いいただく（二重払い）おそれがあります。'
@@ -9304,7 +9315,7 @@
       if(!String(reason).trim()){ dmMsg('戻ってきた理由をご記入ください。','#A9403D'); return; }
     }else if(!quiet){
       var msg={ sent:'依頼書を集金代行へ送ったと記録します。',
-                registered:'口座振替の登録が済んだと記録します。\n\n次に「手続きに合わせる」で立てる請求から、口座振替になります。\nいま銀行振込でご案内中の請求は、そのままにしてください（変えると二重払いのおそれ）。',
+                registered:'口座振替の登録が済んだと記録します。\n\n次に「手続きに合わせる」で立てる請求から、口座振替になります（ご登録の2か月後の分から。初回のお振込みに入れた翌月分は振込のまま）。\nいま銀行振込でご案内中の請求は、そのままにしてください（変えると二重払いのおそれ）。',
                 preparing:'用紙をお渡しした（記入待ち）と記録します。',
                 stopped:'口座振替をやめたと記録します。\n\n次に「手続きに合わせる」で立てる請求から、銀行振込になります。' }[status]||'';
       if(!confirm(msg+'\n\nよろしいですか？')) return;
@@ -9356,7 +9367,7 @@
       +'<h2>このあと</h2>'
       +'<ul>'
         +li('ご記入の依頼書は、<b>担当パートナーにお渡し</b>いただくか、運営までご返送ください。運営から集金代行会社へお送りします。')
-        +li('金融機関の登録が済むまで、ふつう<b>1〜2か月</b>かかります。<b>登録が済むまでの顧問料は、銀行振込</b>でお願いします。')
+        +li('口座振替は、<b>ご登録の2か月後の月の顧問料から</b>始まります。金融機関の登録には、ふつう<b>1〜2か月</b>かかります。<b>登録が済むまでの顧問料は、銀行振込</b>でお願いします。')
         +li('登録が済んだら、アプリの「お支払い」に「お引き落としになります」と出ます。<b>その月からは、お振込は不要</b>です（二重にお支払いにならないよう、ご注意ください）。')
       +'</ul>'
       +(o.bank ? '<h2>登録が済むまでのお振込先</h2><div class="box" style="white-space:pre-wrap;">'+esc(o.bank)+'</div>' : '')
@@ -9382,18 +9393,19 @@
   //  ---- 初期導入費のご案内メール ----
   function invSetupMailHtml(x){
     var n=x.notice;
+    var lead=x.first ? '<span class="tag gold" style="font-size:.625rem;">初回のお振込み（初期導入費と一緒）</span>' : '';
     var st=!n ? '<span style="color:var(--muted);">ご案内メール：まだ送っていません</span>'
       : n.mailed_at ? '<span style="color:#27684A;">ご案内メール：送りました（'+esc(String(n.mailed_at).slice(0,10))+(n.mail_count>1?'・'+n.mail_count+'回':'')+'）</span>'
       : '<span style="color:#A9403D;">ご案内メール：まだ届いていません'+(n.mail_error?'（'+esc(n.mail_error)+'）':'')+'</span>';
     var can=(x.status!=='paid');
-    return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.6875rem;margin-top:6px;">'+st
+    return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.6875rem;margin-top:6px;">'+lead+st
       +(can?'<button class="ghost" style="font-size:.6875rem;border:1px solid var(--line);border-radius:7px;padding:4px 9px;" onclick="invSetupMail(\''+esc(x.id)+'\')">'
         +((n&&n.mailed_at)?'もう一度送る':'案内メールを送る')+'</button>':'')
       +'</div>';
   }
   async function invSetupMail(id){
     var x=INV_ROWS.filter(function(r){ return r.id===id; })[0]||{};
-    if(!confirm((x.name||'')+' 様へ、初期導入費のご案内（金額・期日・お振込先）を登録のメールアドレスへ送ります。\n\nよろしいですか？')) return;
+    if(!confirm((x.name||'')+' 様へ、初回のお振込みのご案内（初期導入費・翌月分の顧問料・期日・お振込先）を登録のメールアドレスへ送ります。\n\nよろしいですか？')) return;
     invMsg('送っています…');
     var r;
     try{ r=await sb.functions.invoke('billing-mail', { body:{ action:'setup', invoice_id:id } }); }
