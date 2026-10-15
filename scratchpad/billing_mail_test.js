@@ -86,6 +86,8 @@ function make(db, mails, opts) {
   };
   call.html = mod.exports.setupHtml;
   call.stop = mod.exports.stopNoteFor;
+  call.inv = mod.exports.invoiceHtml;
+  call.iss = mod.exports.issuerOf;
   call.cron = async (body, secret) => {
     const res = await handler({ method: 'POST', headers: { get: (k) => (k === 'x-cron-secret' ? secret : null) }, json: async () => body });
     return { status: res.status, body: JSON.parse(res.body) };
@@ -255,6 +257,68 @@ function make(db, mails, opts) {
     db2.service_suspensions = [{ customer_id: 'c1', month: today.slice(0, 7), lifted_at: '2026-10-01T00:00:00Z', notified_at: null }];
     await make(db2, mails2).cron({ action: 'suspend_notify' }, 'cs');
     ok('毎朝：運営が今月解いた方には知らせない', mails2.length === 0);
+  }
+
+  // ⑤ 請求書（運営が、その月の銀行振込の請求をまとめて送る）
+  {
+    const ifresh = () => {
+      const db = fresh();
+      db.users.push({ id: 'p1', email: 'p1@x.jp' });
+      db.profiles.push({ id: 'p1', role: 'consultant', full_name: '担当 一郎' });
+      db.profiles[0].consultant_id = 'p1';
+      db.tokens.tP = 'p1';
+      db.app_settings[0].value['bl-iss-name'] = '株式会社福來';
+      db.app_settings[0].value['bl-iss-addr'] = '広島県広島市中区〇〇1-2-3';
+      db.invoices.push(
+        { id: 'm1', customer_id: 'c1', kind: 'advisory', period: '2026-12', title: '2026-12 顧問料（買い手プラン）', status: 'open', amount_ex: 45000, tax: 4500, amount: 49500, paid_amount: 0, due_on: '2026-12-27' },
+        { id: 'm2', customer_id: 'c1', kind: 'other', period: '2026-12', title: '<b>資料作成</b>', status: 'partial', amount_ex: 10000, tax: 1000, amount: 11000, paid_amount: 1000, due_on: '2026-12-31' },
+        { id: 'm3', customer_id: 'c1', kind: 'other', period: '2026-12', title: '取り消した', status: 'void', amount_ex: 1, tax: 0, amount: 1, paid_amount: 0, due_on: '2026-12-31' });
+      db.invoice_mails = [{ id: 'im1', customer_id: 'c1', period: '2026-12', invoice_no: '202612-0007', invoice_ids: ['m1', 'm2', 'm3'], issued_on: '2026-12-01', mail_count: 0, sending_at: null, mailed_at: null, mail_error: null }];
+      return db;
+    };
+    {
+      const db = ifresh(), mails = [];
+      const call = make(db, mails);
+      const rp = await call('tP', { action: 'invoice', mail_id: 'im1' });
+      ok('請求書：運営以外は送れない', rp.status === 403 && mails.length === 0);
+      const rn = await call('tA', { action: 'invoice' });
+      ok('請求書：請求書の指定が要る', rn.status === 400);
+      const r = await call('tA', { action: 'invoice', mail_id: 'im1' });
+      ok('請求書：運営が送れる・宛先は登録のアドレス', r.body.ok && mails.length === 1 && mails[0].to[0] === 'c1@x.jp');
+      const h = mails[0].html;
+      ok('請求書：件名に月と番号', /請求書（2026年12月分・No\.202612-0007）/.test(mails[0].subject));
+      ok('請求書：宛名・番号・発行日', /一社 御中/.test(h) && /請求書番号　202612-0007/.test(h) && /発行日　2026年12月1日/.test(h));
+      ok('請求書：品目（〇月分の顧問料・件名）と税率・取消は載せない', /2026年12月分の顧問料/.test(h) && /&lt;b&gt;資料作成&lt;\/b&gt;/.test(h) && !/取り消した/.test(h) && />10%</.test(h));
+      ok('請求書：小計・消費税・合計・入金済み・ご請求金額', /55,000円/.test(h) && /5,500円/.test(h) && /60,500円/.test(h) && /−1,000円/.test(h) && /59,500円/.test(h));
+      ok('請求書：お支払期日（いちばん早いもの）・お振込先・依頼人名', /お支払期日　<b style="color:#A9403D;">2026年12月27日/.test(h) && /カ）フクキタル/.test(h) && /ご依頼人名をご契約の会社名/.test(h));
+      ok('請求書：発行者（社名・所在地・電話）・登録番号は空なら載せない', /株式会社福來<\/b>/.test(h) && /広島県広島市中区〇〇1-2-3/.test(h) && /TEL 082-548-2224/.test(h) && !/登録番号/.test(h));
+      ok('請求書：問い合わせ先は担当パートナー', /担当パートナー（担当 一郎・p1@x\.jp）/.test(h));
+      const rec = db.invoice_mails[0];
+      ok('請求書：送った記録（日時・回数・送信中を外す）', !!rec.mailed_at && rec.mail_count === 1 && rec.sending_at === null && rec.mail_error === null);
+      await call('tA', { action: 'invoice', mail_id: 'im1' });
+      ok('請求書：もう一度送れる（回数が増える）', mails.length === 2 && db.invoice_mails[0].mail_count === 2);
+      db.invoice_mails[0].sending_at = new Date().toISOString();
+      const busy = await call('tA', { action: 'invoice', mail_id: 'im1' });
+      ok('請求書：送っている最中は二重に送らない', !busy.body.ok && /いま送っています/.test(busy.body.error) && mails.length === 2);
+    }
+    {
+      const db = ifresh(), mails = [];
+      const r = await make(db, mails, { mailFail: true })('tA', { action: 'invoice', mail_id: 'im1' });
+      ok('請求書：送れなかったら理由を残し、送信中を外す', !r.body.ok && db.invoice_mails[0].sending_at === null && /送れませんでした/.test(db.invoice_mails[0].mail_error) && !db.invoice_mails[0].mailed_at);
+      db.invoices.forEach((x) => { if (/^m/.test(x.id)) x.status = 'paid'; });
+      const r2 = await make(db, [])('tA', { action: 'invoice', mail_id: 'im1' });
+      ok('請求書：みな入金済みなら送らない', !r2.body.ok && /お支払いの済んでいない請求がありません/.test(r2.body.error));
+      const r3 = await make(db, [])('tA', { action: 'invoice', mail_id: 'nope' });
+      ok('請求書：無い請求書は送れない', !r3.body.ok && /見つかりません/.test(r3.body.error));
+    }
+    {
+      const call = make(fresh(), []);
+      ok('発行者：空なら社名と電話の既定', JSON.stringify(call.iss({})) === JSON.stringify({ name: '株式会社福來', addr: '', tel: '082-548-2224', tno: '' }));
+      ok('発行者：登録番号は T＋13桁のときだけ', call.iss({ 'bl-iss-tno': 'T1234567890123' }).tno === 'T1234567890123' && call.iss({ 'bl-iss-tno': '1234' }).tno === '');
+      const h = call.inv({ company: '', contact: '', invs: [{ kind: 'advisory', period: '2026-12', title: 'x', amount_ex: 45000, tax: 4500, amount: 49500, due_on: '2026-12-27' }], bank: '', no: '1', issued: '2026-12-01', period: '2026-12', issuer: call.iss({ 'bl-iss-tno': 'T1234567890123', 'bl-iss-addr': '<script>' }), ask: '運営' });
+      ok('請求書：登録番号があれば載せる・所在地は文字のまま', /登録番号 T1234567890123/.test(h) && /&lt;script&gt;/.test(h) && !/<script>/.test(h));
+      ok('請求書：お振込先が無ければアプリで', /お振込先は、アプリの「お支払い」でご確認ください/.test(h));
+    }
   }
 
   // ④ 説明の書き方（デプロイ・SQL）

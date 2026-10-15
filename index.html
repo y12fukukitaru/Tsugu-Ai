@@ -2178,7 +2178,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261015-06';
+  var APP_BUILD='20261015-07';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -4150,6 +4150,19 @@
           +'<input id="bl-bank" class="inp2" style="width:100%;max-width:520px;" placeholder="例）〇〇銀行 本店営業部 普通 1234567 カ）ツグアイ" oninput="blAcctDirty(\'recv\')">'
           +blAcctBar('recv')
         +'</div>'
+        //  請求書メールの右下に載せる発行者。登録番号（インボイス）は取れたら入れる
+        +'<div class="bl-card">'
+          +'<div class="bl-card-h"><b>請求書の発行者</b><span>「請求と未収」から送る請求書メールに載ります</span></div>'
+          +'<div style="font-size:.6875rem;color:#94A2B6;margin-bottom:7px;line-height:1.7;">'
+            +'空欄のときは、社名「株式会社福來」・電話「082-548-2224」で出します。'
+            +'<b style="color:var(--navy);">インボイスの登録番号</b>（Tから始まる13桁）は、取れたら入れてください。入れるまでは請求書に載りません。</div>'
+          +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
+            +'<div style="flex:1 1 200px;min-width:180px;"><label class="fl">社名</label><input id="bl-iss-name" class="inp2" style="width:100%;" placeholder="株式会社福來" oninput="blRatesSave()"></div>'
+            +'<div style="flex:2 1 280px;min-width:200px;"><label class="fl">所在地</label><input id="bl-iss-addr" class="inp2" style="width:100%;" placeholder="例）広島県広島市〇〇区〇〇 1-2-3" oninput="blRatesSave()"></div>'
+            +'<div><label class="fl">電話</label><input id="bl-iss-tel" class="inp2" style="width:150px;" placeholder="082-548-2224" oninput="blRatesSave()"></div>'
+            +'<div><label class="fl">登録番号（インボイス）</label><input id="bl-iss-tno" class="inp2" style="width:170px;" maxlength="14" placeholder="T1234567890123" oninput="blRatesSave()"></div>'
+          +'</div>'
+        +'</div>'
         //  総合振込ファイル（全銀フォーマット）の先頭に入る「委託者」。
         //  銀行から交付される委託者コードと、振込元にする継の口座。
         //  ここも当社の口座であって、お客様・パートナーの口座ではない
@@ -4935,7 +4948,8 @@
   //  bl-s*（委託者情報）は総合振込ファイルの先頭に入る「継の口座」。
   //  Edge Function（payout-file）が app_settings.billing_rates から読む
   var BL_RATE_IDS=['bl-pbase','bl-pclient','bl-adv','bl-init','bl-ai','bl-seat','bl-seatpack','bl-seatpackn','bl-bank',
-                   'bl-sc','bl-sname','bl-sbank','bl-sbranch','bl-stype','bl-sacct','bl-seller','bl-initseller','bl-setup-auto'];
+                   'bl-sc','bl-sname','bl-sbank','bl-sbranch','bl-stype','bl-sacct','bl-seller','bl-initseller','bl-setup-auto',
+                   'bl-iss-name','bl-iss-addr','bl-iss-tel','bl-iss-tno'];
   var BL_RATES_OK=false, BL_SAVE_T=null;
   //  口座の欄は「保存する」を押したときだけ保存する（料率のような自動保存はしない）。
   //  以前は料率と同じ一つの保存に乗っていたため、口座を打ちかけた途中の値が0.8秒後に
@@ -9004,7 +9018,7 @@
   //  入ってこなかったお金がどこにも出ないので、取りっぱぐれに気づけない。
   //  先に「請求した」を立てておけば、入金と引き算した残りが未収になる。
   //  見えれば、追える。
-  var INV_ROWS=[], INV_ERR=null, INV_OD=[], INV_OD_ERR=null;
+  var INV_ROWS=[], INV_ERR=null, INV_OD=[], INV_OD_ERR=null, INV_MAILS={}, INV_MAILS_ERR=null;
   function invStatusLabel(s){
     return { open:'未入金', partial:'一部入金', paid:'入金済み', void:'取消' }[s]||s;
   }
@@ -9077,6 +9091,13 @@
         }catch(e){}
       }
     }
+    //  請求書メール（お客様ごと・月ごとに1通）を送ったか
+    INV_MAILS={}; INV_MAILS_ERR=null;
+    try{
+      var im=await sb.from('invoice_mails').select('customer_id,invoice_no,issued_on,mailed_at,mail_count,mail_error').eq('period',ym);
+      if(im.error) INV_MAILS_ERR=im.error.message;
+      else (im.data||[]).forEach(function(m){ INV_MAILS[m.customer_id]=m; });
+    }catch(e){ INV_MAILS_ERR=String(e&&e.message||e); }
     renderInvoices();
   }
   //  集金の方式ごとに、未入金の残りを数える。取消は除く。
@@ -9155,7 +9176,8 @@
       +'<button class="ghost" style="font-size:.6875rem;border:1px solid var(--line);border-radius:7px;padding:6px 10px;" onclick="invCsv(\'transfer\')">口座振替の請求データ（CSV）</button>'
       +'<button class="ghost" style="font-size:.6875rem;border:1px solid var(--line);border-radius:7px;padding:6px 10px;" onclick="invCsv(\'bank\')">銀行振込の請求一覧（CSV）</button>'
       +'<span style="font-size:.65625rem;color:var(--muted);line-height:1.6;">未入金のぶんだけ出ます。口座振替は集金代行の請求データに、銀行振込はご案内と督促に。</span>'
-    +'</div>';
+    +'</div>'
+    +invMailBoxHtml();
     h+=INV_ROWS.map(function(x){
       var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
       return '<div style="border:1px solid var(--line);border-radius:11px;padding:10px 13px;margin-bottom:6px;">'
@@ -9495,6 +9517,106 @@
       +'<div style="font-size:.78125rem;font-weight:700;color:'+(d.status==='returned'?'#A9403D':'#8A6A12')+';">口座振替のお手続き中です</div>'
       +'<div style="font-size:.71875rem;color:var(--ink);line-height:1.85;margin-top:4px;">'+body
       +'<br><b>登録が済むまでの顧問料は、銀行振込でお願いします。</b>登録が済むと、ここに「お引き落としになります」と出ます。</div></div>';
+  }
+  //  ---- 請求書をメールで送る（その月の銀行振込の請求を、お客様ごとに1通）----
+  //  口座振替が始まるまでは、毎月の顧問料も振込でお願いする。載せる請求は DB
+  //  （invoice_mail_prepare）が決める。ここで数えるのは、ボタンに出す社数と金額だけ（同じ決まり）：
+  //  銀行振込・まだ入っていない・初回のお振込み（初期導入費と一緒）でご案内済みでないもの
+  function invMailTargets(rows){
+    var by={}, order=[];
+    (rows||[]).forEach(function(x){
+      if(x.status!=='open' && x.status!=='partial') return;
+      if(x.method==='transfer') return;
+      if(x.notice) return;
+      var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
+      if(rest<=0) return;
+      if(!by[x.customer_id]){ by[x.customer_id]={ id:x.customer_id, name:x.name||'', rows:[], rest:0 }; order.push(x.customer_id); }
+      by[x.customer_id].rows.push(x); by[x.customer_id].rest+=rest;
+    });
+    return order.map(function(id){ return by[id]; });
+  }
+  function invMailBoxHtml(){
+    var ts=invMailTargets(INV_ROWS);
+    var head='<div style="font-size:.75rem;font-weight:700;color:var(--navy);margin-bottom:3px;">📧 請求書をメールで送る（銀行振込の方へ）</div>';
+    if(INV_MAILS_ERR){
+      return '<div style="border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:12px;">'+head
+        +'<div style="font-size:.6875rem;color:#8A6A12;line-height:1.7;">請求書メールはまだ使えません。Supabaseで「請求書メール」のSQLを実行し、Edge Function「billing-mail」を入れ直してください。</div></div>';
+    }
+    var unsent=ts.filter(function(c){ var m=INV_MAILS[c.id]; return !(m&&m.mailed_at); });
+    var list=ts.map(function(c){
+      var m=INV_MAILS[c.id];
+      var st=(m&&m.mailed_at)
+        ? '<span style="color:#27684A;">送りました（'+esc(String(m.mailed_at).slice(0,10))+(m.mail_count>1?'・'+m.mail_count+'回':'')+'・No.'+esc(m.invoice_no||'')+'）</span>'
+        : (m&&m.mail_error)
+          ? '<span style="color:#A9403D;">送れませんでした（'+esc(m.mail_error)+'）</span>'
+          : '<span style="color:var(--muted);">まだ送っていません</span>';
+      return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.6875rem;padding:5px 0;border-top:1px solid var(--line);">'
+        +'<b style="color:var(--ink);font-size:.75rem;">'+esc(c.name)+'</b>'
+        +'<span style="color:var(--muted);">'+c.rows.length+' 件・'+yen(c.rest)+'</span>'+st
+        +'<span style="flex:1;"></span>'
+        +'<button class="ghost" style="font-size:.6875rem;border:1px solid var(--line);border-radius:7px;padding:4px 9px;" onclick="invMailOne(\''+esc(c.id)+'\')">'
+          +((m&&m.mailed_at)?'もう一度送る':'送る')+'</button>'
+      +'</div>';
+    }).join('');
+    return '<div style="border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:12px;">'+head
+      +'<div style="font-size:.6875rem;color:var(--muted);line-height:1.75;margin-bottom:6px;">'
+        +'この月の<b style="color:var(--navy);">銀行振込でまだ入っていない請求</b>を、お客様ごとに<b>1通の請求書</b>（請求書番号・品目・税率・小計・消費税・合計・お支払期日・お振込先・発行者）にまとめ、登録のメールアドレスへ送ります。'
+        +'口座振替の請求と、初回のお振込み（初期導入費と一緒）でご案内した分は載せません。発行者は「概要」タブの「請求書の発行者」から。</div>'
+      +(ts.length
+        ? '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px;">'
+            +'<button class="btn2" style="padding:7px 14px;" onclick="invMailAll()"'+(unsent.length?'':' disabled')+'>'
+              +(unsent.length?'まだ送っていない '+unsent.length+' 社へ送る':'みな送りました')+'</button>'
+            +'<span style="font-size:.6875rem;color:var(--muted);">対象 '+ts.length+' 社・'+yen(ts.reduce(function(t,c){ return t+c.rest; },0))+'</span>'
+          +'</div>'+list
+        : '<div style="font-size:.6875rem;color:var(--muted);">この月に、請求書をお送りする銀行振込の請求はありません。</div>')
+    +'</div>';
+  }
+  //  1社ぶん：用意（DB が中身と番号を決める）→ 送る（billing-mail invoice）。結果を返す
+  async function invMailSend(cust){
+    var ym=(($('inv-month')||{}).value)||'';
+    var r;
+    try{ r=await sb.rpc('invoice_mail_prepare',{ p_period:ym, p_customer:cust }); }
+    catch(e){ r={ error:{ message:String(e&&e.message||e) } }; }
+    if(r.error) return { ok:false, error:r.error.message+'（「請求書メール」の SQL が入っているか確かめてください）' };
+    var p=r.data||{};
+    if(!p.ok) return { ok:false, error:p.error||'用意できませんでした' };
+    var s;
+    try{ s=await sb.functions.invoke('billing-mail', { body:{ action:'invoice', mail_id:p.id } }); }
+    catch(e){ s={ error:{ message:String(e&&e.message||e) } }; }
+    if(s.error) return { ok:false, error:s.error.message+'（Edge Function「billing-mail」を入れ直してあるか確かめてください）' };
+    var d=s.data||{};
+    if(!d.ok) return { ok:false, error:d.error||'送れませんでした' };
+    return { ok:true, no:p.invoice_no, total:p.total };
+  }
+  async function invMailOne(cust){
+    var c=invMailTargets(INV_ROWS).filter(function(x){ return x.id===cust; })[0];
+    if(!c){ invMsg('この方に、請求書をお送りする請求はありません。','#A9403D'); return; }
+    var m=INV_MAILS[cust];
+    if(!confirm((c.name||'')+' 様へ、請求書（'+c.rows.length+' 件・'+yen(c.rest)+'）を登録のメールアドレスへ送ります。'
+      +((m&&m.mailed_at)?'\n\n※ '+String(m.mailed_at).slice(0,10)+' に送っています。もう一度送ります（請求書番号は同じです）。':'')
+      +'\n\nよろしいですか？')) return;
+    invMsg('送っています…');
+    var r=await invMailSend(cust);
+    if(!r.ok) invMsg('送れませんでした：'+esc(r.error),'#A9403D');
+    else invMsg('請求書（No.'+esc(r.no||'')+'・'+yen(r.total)+'）を送りました。','#27684A');
+    await loadInvoices();
+  }
+  async function invMailAll(){
+    var ts=invMailTargets(INV_ROWS).filter(function(c){ var m=INV_MAILS[c.id]; return !(m&&m.mailed_at); });
+    if(!ts.length){ invMsg('まだ送っていない方はいません。','#27684A'); return; }
+    var ym=(($('inv-month')||{}).value)||'';
+    if(!confirm(ym+' の請求書を、まだ送っていない '+ts.length+' 社へメールで送ります。\n\n'
+      +ts.map(function(c){ return '・'+(c.name||'')+'　'+yen(c.rest); }).join('\n')
+      +'\n\nよろしいですか？')) return;
+    var okN=0, ng=[];
+    for(var i=0;i<ts.length;i++){
+      invMsg('送っています…（'+(i+1)+' / '+ts.length+'）');
+      var r=await invMailSend(ts[i].id);
+      if(r.ok) okN++; else ng.push(esc(ts[i].name||'')+'：'+esc(r.error));
+    }
+    invMsg('<b>'+okN+' 社</b>へ請求書を送りました。'+(ng.length?'<br><b style="color:#A9403D;">送れなかった方（'+ng.length+' 社）</b><br>'+ng.join('<br>'):''),
+      ng.length?'#A9403D':'#27684A');
+    await loadInvoices();
   }
   //  ---- 初期導入費のご案内メール ----
   function invSetupMailHtml(x){
