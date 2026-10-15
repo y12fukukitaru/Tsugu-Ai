@@ -1504,14 +1504,26 @@
   /* ×印のズレ防止：閉じるボタンは常にflexで中央揃え */
   .modal-close{display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;}
   .knv-close:hover{background:rgba(255,255,255,.12);}
-  /* タブは「アイコン＋ラベル」の等幅ボタン。将来タブが増えても等分で収まり、タップ領域も広い */
-  .knv-tabs{display:flex;background:#0E1B33;padding:0 6px;gap:0;flex-shrink:0;}
-  .knv-tabs button{position:relative;flex:1;min-width:0;font-family:inherit;font-size:.625rem;font-weight:600;letter-spacing:.02em;color:#8FA3C4;background:transparent;border:none;border-bottom:2px solid transparent;padding:6px 2px 7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap;}
-  .knv-tabs button .ki{font-size:.9375rem;line-height:1.15;}
-  .knv-tabs button.on{color:#CFAD62;border-bottom-color:#cfa860;}
-  .knv-tabs button:hover{color:#C6D2E6;}
-  .knv-tabs button.on:hover{color:#CFAD62;}
-  .knv-tbadge{position:absolute;top:1px;left:calc(50% + 6px);min-width:15px;height:15px;border-radius:99px;background:#A9403D;color:#fff;font-size:.59375rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;border:1.5px solid #0E1B33;}
+  /* タブ（2026-10-15 作り直し）：押しやすい大きさのタイル。線の絵＋ラベル。
+     幅に合わせて、1段（パソコン）か2段（スマホ・狭い窓）に並べる（knvTabsFit が --kt-cols を決める）。
+     いまのタブは金のタイルで光らせ、どこにいるかを一目で分かるようにする */
+  .knv-tabs{--kt-cols:7;--kt-gap:6px;display:flex;flex-wrap:wrap;justify-content:center;gap:var(--kt-gap);background:#0E1B33;padding:6px 10px 12px;flex-shrink:0;}
+  .knv-tabs button{position:relative;flex:0 0 calc((100% - (var(--kt-cols) - 1) * var(--kt-gap)) / var(--kt-cols));min-width:0;min-height:60px;font-family:inherit;font-size:.75rem;font-weight:600;letter-spacing:.04em;color:#A9B8D1;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:8px 2px 7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;white-space:nowrap;transition:background .18s,border-color .18s,color .18s,transform .12s,box-shadow .18s;-webkit-tap-highlight-color:transparent;}
+  .knv-tabs button .ki{display:flex;align-items:center;justify-content:center;width:24px;height:24px;line-height:1;}
+  .knv-tabs button .ki svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+  .knv-tabs button .kl{display:block;max-width:100%;overflow:hidden;}
+  .knv-tabs button:hover{background:rgba(255,255,255,.09);color:#E2E9F4;}
+  .knv-tabs button:active{transform:scale(.96);}
+  .knv-tabs button.on{color:#F6E3B4;background:linear-gradient(160deg,rgba(207,168,96,.36),rgba(207,168,96,.10));border-color:rgba(207,168,96,.7);box-shadow:0 6px 18px rgba(207,168,96,.16),inset 0 1px 0 rgba(255,255,255,.14);}
+  .knv-tabs button.on .ki svg{stroke:#E9C97E;}
+  .knv-tabs button.on:hover{color:#F6E3B4;}
+  .knv-tabs button:focus-visible{outline:2px solid #E9C97E;outline-offset:2px;}
+  .knv-tabs.two{padding:6px 10px 10px;}
+  .knv-tabs.tight button{font-size:.6875rem;letter-spacing:0;}
+  .knv-tabs.two button{min-height:52px;padding:6px 2px 5px;gap:3px;}
+  .knv-tabs.two button .ki svg{width:21px;height:21px;}
+  .knv-tbadge{position:absolute;top:-6px;right:-3px;min-width:19px;height:19px;border-radius:99px;background:linear-gradient(180deg,#C8524E,#A13A37);color:#fff;font-size:.65625rem;font-weight:700;letter-spacing:0;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #0E1B33;box-shadow:0 2px 6px rgba(0,0,0,.28);}
+  @media (prefers-reduced-motion:reduce){ .knv-tabs button{transition:none;} .knv-tabs button:active{transform:none;} }
   .knv-body{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:12px;background:var(--bg);}
   /* 通知の内訳サマリー：何が何件あるかを開いた瞬間に見せる */
   .knv-summary{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--line);flex-shrink:0;}
@@ -2023,15 +2035,15 @@
     <button class="knv-close" onclick="knvToggle(false)" aria-label="閉じる">×</button>
   </div>
   <div id="knv-szmenu" class="knv-szmenu hidden"></div>
-  <div class="knv-tabs">
-    <button id="knv-tab-chat" class="on" onclick="knvShowTab('chat')"><span class="ki">💬</span>相談</button>
-    <button id="knv-tab-cal" onclick="knvShowTab('cal')"><span class="ki">📅</span>予定</button>
-    <button id="knv-tab-todo" onclick="knvShowTab('todo')"><span class="ki">✅</span>TODO<span id="knv-todobadge" class="knv-tbadge hidden">0</span></button>
-    <button id="knv-tab-msg" onclick="knvShowTab('msg')"><span class="ki">✉️</span>メッセージ<span id="knv-mbadge" class="knv-tbadge hidden">0</span></button>
-    <button id="knv-tab-kn" class="hidden" onclick="knvShowTab('kn')"><span class="ki">📚</span>ナレッジ</button>
-    <button id="knv-tab-notif" onclick="knvShowTab('notif')"><span class="ki">🔔</span>お知らせ<span id="knv-tbadge" class="knv-tbadge hidden">0</span></button>
-    <button id="knv-tab-setup" onclick="knvShowTab('setup')"><span class="ki">🔗</span>連携</button>
-    <button id="knv-tab-support" onclick="knvShowTab('support')"><span class="ki">📖</span>サポート</button>
+  <div class="knv-tabs" role="tablist" aria-label="継ナビくんのメニュー">
+    <button id="knv-tab-chat" class="on" onclick="knvShowTab('chat')"><span class="ki"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4.5 19.5l1.3-4.2A7.5 7.5 0 1 1 20 11.5Z"/><circle cx="9" cy="11.5" r=".9" fill="currentColor" stroke="none"/><circle cx="12.5" cy="11.5" r=".9" fill="currentColor" stroke="none"/><circle cx="16" cy="11.5" r=".9" fill="currentColor" stroke="none"/></svg></span><span class="kl">相談</span></button>
+    <button id="knv-tab-cal" onclick="knvShowTab('cal')"><span class="ki"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8 13.5h2M14 13.5h2M8 16.5h2"/></svg></span><span class="kl">予定</span></button>
+    <button id="knv-tab-todo" onclick="knvShowTab('todo')"><span class="ki"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="4" width="16" height="16" rx="4.5"/><path d="m8.5 12.2 2.4 2.4 4.8-5"/></svg></span><span class="kl">TODO</span><span id="knv-todobadge" class="knv-tbadge hidden">0</span></button>
+    <button id="knv-tab-msg" onclick="knvShowTab('msg')"><span class="ki"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="5.5" width="18" height="13" rx="3"/><path d="m4.5 8 7.5 5.5L19.5 8"/></svg></span><span class="kl">メッセージ</span><span id="knv-mbadge" class="knv-tbadge hidden">0</span></button>
+    <button id="knv-tab-kn" class="hidden" onclick="knvShowTab('kn')"><span class="ki"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6.5c-1.8-1.3-4.5-2-8-2v13c3.5 0 6.2.7 8 2 1.8-1.3 4.5-2 8-2v-13c-3.5 0-6.2.7-8 2Z"/><path d="M12 6.5v13"/></svg></span><span class="kl">ナレッジ</span></button>
+    <button id="knv-tab-notif" onclick="knvShowTab('notif')"><span class="ki"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 16.5V11a6 6 0 1 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></span><span class="kl">お知らせ</span><span id="knv-tbadge" class="knv-tbadge hidden">0</span></button>
+    <button id="knv-tab-setup" onclick="knvShowTab('setup')"><span class="ki"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9.5 14.5 14.5 9.5"/><path d="M11 6.5 12.4 5a4.2 4.2 0 0 1 6 6L17 12.4"/><path d="M13 17.5 11.6 19a4.2 4.2 0 0 1-6-6L7 11.6"/></svg></span><span class="kl">連携</span></button>
+    <button id="knv-tab-support" onclick="knvShowTab('support')"><span class="ki"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"/><path d="M9.7 9.6a2.4 2.4 0 1 1 3.3 2.2c-.6.3-1 .8-1 1.5v.5"/><circle cx="12" cy="16.8" r=".9" fill="currentColor" stroke="none"/></svg></span><span class="kl">サポート</span></button>
   </div>
   <div id="knv-summary" class="knv-summary hidden"></div>
   <div id="knv-body" class="knv-body">
@@ -2178,7 +2190,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261015-08';
+  var APP_BUILD='20261015-09';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -18626,6 +18638,7 @@
     // メッセージタブはパートナー・経営者のみ（運営は対象外）。ナレッジタブはパートナーのみ
     var mt=$('knv-tab-msg'); if(mt) mt.classList.toggle('hidden', (window.__eff||'')==='admin');
     var kt=$('knv-tab-kn'); if(kt) kt.classList.toggle('hidden', (window.__eff||'')!=='consultant');
+    knvTabsFit();
     knvShowTab('chat');
     knvApplyLayout();
     fab.classList.remove('hidden');
@@ -18837,6 +18850,7 @@
       knvLock(true);        // 背後の画面を留める（スマホと、中央に大きく）
       knvWheelGuard();      // 受け取れない送りを背後へ流さない（一度だけ掛ける）
       void p.offsetWidth;   // 開くアニメーションを毎回頭から再生する
+      knvTabsFit();         // タブを1段か2段に（閉じているあいだは幅が測れないので、開いたここで）
       renderSecLog(); renderAgentInsights();
       // お知らせに用があって開いた人を迷わせない：未読・期日があるときはお知らせタブから
       knvShowTab((window.__KNV_BELL||0)>0?'notif':'chat');
@@ -19004,10 +19018,27 @@
     var inp=$('knv-input');
     if(inp && q){ inp.value=q; try{ inp.setSelectionRange(q.length,q.length); }catch(e){} }
   }
+  //  タブの並び（2026-10-15）：1つ64px以上とれれば1段（パソコン）、とれなければ2段（スマホ・狭い窓。上の段に多く）。
+  //  タブの数は役割で変わる（メッセージ・ナレッジ）ので、数えてから決める。パネルの幅が変わったら測り直す
+  function knvTabsFit(){
+    var t=document.querySelector('.knv-tabs'); if(!t) return;
+    if(!knvTabsFit.ro && window.ResizeObserver){
+      knvTabsFit.ro=new ResizeObserver(function(){ knvTabsFit(); });
+      knvTabsFit.ro.observe(t);
+    }
+    var w=t.clientWidth; if(!w) return;            // 閉じているあいだは測れない（開いたときに測り直す）
+    var n=0; Array.prototype.forEach.call(t.children, function(b){ if(!b.classList.contains('hidden')) n++; });
+    if(!n) return;
+    var gap=6, inner=w-20;
+    var cols=((inner-(n-1)*gap)/n>=64) ? n : Math.ceil(n/2);
+    if(String(cols)!==t.style.getPropertyValue('--kt-cols')) t.style.setProperty('--kt-cols', String(cols));
+    t.classList.toggle('two', cols<n);
+    t.classList.toggle('tight', (inner-(cols-1)*gap)/cols<76);   // 狭いタイルは文字を少し詰める
+  }
   // パネル内タブ：相談／予定／TODO／メッセージ／ナレッジ／お知らせ／連携／サポート。
-  // 【タブを増やすときの手順】①knv-tabsにボタン（.ki アイコン＋短いラベル）と、knv-bodyの並びに
+  // 【タブを増やすときの手順】①knv-tabsにボタン（.ki 線の絵＋.kl 短いラベル）と、knv-bodyの並びに
   // 中身のdivを追加 ②下のtabsマップに キー:'div-id' を追加 ③必要ならレンダー関数を呼ぶ行を追加。
-  // タブは等幅で自動的に収まる。ロール限定タブは knvInit で hidden を切り替える（例:メッセージ）。
+  // タブは幅に合わせて1段か2段に収まる（knvTabsFit）。ロール限定タブは knvInit で hidden を切り替える（例:メッセージ）。
   function knvShowTab(t){
     var tabs={chat:'knv-body', cal:'knv-cal', todo:'knv-todo', msg:'knv-msg', kn:'knv-kn', notif:'knv-notif', setup:'knv-setup', support:'knv-support'};
     if(!tabs[t]) t='chat';

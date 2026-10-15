@@ -39,7 +39,7 @@ ok('SQL：本人だけが読み書き（運営も読めない）', /create polic
 ok('SQL：確かめかたを添える', /表=1/.test(SQL) && /権限（表）=1/.test(SQL) && /索引=2/.test(SQL));
 
 // ② 継ナビくんの TODO タブ
-ok('タブ：予定の次に ✅ TODO（数字つき）', /<button id="knv-tab-cal"[^\n]*\n\s*<button id="knv-tab-todo" onclick="knvShowTab\('todo'\)"><span class="ki">✅<\/span>TODO<span id="knv-todobadge" class="knv-tbadge hidden">0<\/span><\/button>/.test(SRC));
+ok('タブ：予定の次に TODO（数字つき）', /<button id="knv-tab-cal"[^\n]*\n\s*<button id="knv-tab-todo" onclick="knvShowTab\('todo'\)"><span class="ki"><svg[^\n]*<\/svg><\/span><span class="kl">TODO<\/span><span id="knv-todobadge" class="knv-tbadge hidden">0<\/span><\/button>/.test(SRC));
 ok('タブ：中身の入れ物', /<div id="knv-todo" class="knv-body hidden"><\/div>/.test(SRC));
 const show = takeFn('knvShowTab');
 ok('タブ：切り替えの表に todo', /todo:'knv-todo'/.test(show) && /if\(t==='todo'\) knvRenderTodo\(\);/.test(show));
@@ -164,7 +164,7 @@ ok('知識：パートナーは8タブ・経営者は7タブ', /パネルは8タ
 ok('知識：TODO の説明（両方）', (SRC.match(/／✅TODO\(自分用のやること控え。本人だけが見え/g) || []).length === 2);
 ok('知識：予定の色に青緑（両方）', (SRC.match(/紫=補助金の締切・青緑=TODO/g) || []).length === 2);
 const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-ok('版が揃う', build === VER.build && build === '20261015-08');
+ok('版が揃う', build === VER.build && build === '20261015-09');
 
 if (bad.length) { bad.forEach((b) => console.log('NG ' + b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK ' + n + ' checks, 0 failed');
