@@ -418,7 +418,7 @@ function takeFn(name) {
   ok('終日の札も3文字入る余白', /\.wk-chip\{[^}]*font-size:.59375rem;padding:1px 2px;/.test(mob));
   ok('終日の札も塗る', /\.wk-chip\{background:var\(--fg\)!important;color:var\(--fgtxt,#fff\)!important;/.test(mob));
   ok('塗る色を枠に持たせる（自分の予定は青）', /'--fg:'\+\(kk\?kk\.fg:'#2C5DA8'\)\+';--fgtxt:/.test(wv) && /style="--fg:'\+\(k\?k\.fg:'#2C5DA8'\)\+';--fgtxt:/.test(wv));
-  ok('何行まで折り返すかは枠の高さから', /var lines=Math\.max\(1, Math\.floor\(\(hgt-4\)\/12\.5\)\);/.test(wv) && /-webkit-line-clamp:'\+lines\+';/.test(wv));
+  ok('何行まで折り返すかは枠の高さから', /var lines=Math\.max\(1, Math\.floor\(\(hgt-4\)\/12\.5\)\);/.test(wv) && /--l1:'\+lines\+';/.test(wv));
   //  1時間の高さはスマホで 54px、パソコンは 42px のまま
   ok('1時間の高さは画面の幅で変える', /function wkPx\(\)/.test(SRC) && /matchMedia\('\(max-width:600px\)'\)\.matches\) \? 54 : WK_PX/.test(SRC));
   ok('週表示は wkPx を使う', /var PX=wkPx\(\);/.test(wv) && !/WK_PX/.test(wv));
@@ -516,7 +516,7 @@ function takeFn(name) {
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261015-12', '20261015-12']);
+  is('版が揃う', [build, VER.build], ['20261015-13', '20261015-13']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
