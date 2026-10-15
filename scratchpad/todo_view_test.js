@@ -65,7 +65,7 @@ function load(now) {
 // ③ 画面
 const paint = takeFn('todoPaint');
 ok('今日やること：件数は期限切れ＋今日', /var dueN=cnt\.over\+cnt\.today/.test(paint) && /<div class="lab">今日やること<\/div>/.test(paint));
-ok('今日やること：済んだ割合の帯', /class="todo-bar"/.test(paint) && /var pct=tot\?Math\.round\(doneN\/tot\*100\):0;/.test(paint));
+ok('今日やること：済んだ割合の輪', /class="todo-ring"/.test(paint) && /var pct=tot\?Math\.round\(doneN\/tot\*100\):0;/.test(paint));
 ok('今日やること：束へ飛ぶ札', /onclick="todoJump\(\\''\+g\[0\]\+'\\'\)"/.test(paint) && /id="todo-g-'\+g\[0\]\+'"/.test(paint));
 ok('1行で足す：Enter で入る（変換中は入れない）', /event\.key===\\'Enter\\'&&!event\.isComposing/.test(paint));
 ok('1行で足す：詳しくは開いたときだけ（直すときは開く）', /var more=TODO_MORE \|\| !!ed;/.test(paint) && /<div class="more todo-more'\+\(more\?'':' hidden'\)\+'">/.test(paint));
