@@ -70,6 +70,12 @@ const M = new Function(base + 'return {label:dmLabel, of:dmOf, count:dmCount, cu
   ok('登録完了のとき、いまの振込の請求はそのままと伝える', /いま銀行振込でご案内中の請求は、そのままにしてください/.test(takeFn('dmSet')));
   ok('用紙を準備したら添え状を開く', /dmSet\(cust, 'preparing', true\)/.test(takeFn('dmStart')) && /dmLetter\(cust\)/.test(takeFn('dmStart')));
   ok('口座番号・名義・届出印を入れない旨を画面に', /口座番号・名義・届出印は、このシステムに入れません。/.test(SRC));
+  {
+    const T = new Function('function yen(v){ return Math.round(Number(v)||0).toLocaleString("ja-JP")+"円"; }' + takeFn('invTaxNote') + 'return invTaxNote;')();
+    ok('ご本人：請求ごとに税別・消費税の内訳', /税別 45,000円・消費税 4,500円/.test(T({ amount_ex: 45000, tax: 4500, paid_amount: 0 })));
+    is('ご本人：一部入金・消費税なしには内訳を付けない', [T({ amount_ex: 45000, tax: 4500, paid_amount: 1000 }), T({ amount_ex: 1, tax: 0 })], ['', '']);
+    ok('お支払い画面は税別・消費税も読む', /select\('id,customer_id,period,title,amount,amount_ex,tax,paid_amount,due_on,status,method'\)/.test(takeFn('loadUnpaid')) && (takeFn('loadUnpaid').match(/invTaxNote\(x\)/g) || []).length === 2);
+  }
   ok('ご本人のお支払い画面に手続きの様子', /from\('debit_mandates'\)\.select\('status,ref_no,return_reason'\)\.eq\('customer_id',ME\)/.test(takeFn('loadUnpaid')) && /dmCustomerHtml\(dm\.data\)/.test(takeFn('loadUnpaid')));
 }
 // ④ 初期導入費のご案内

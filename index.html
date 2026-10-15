@@ -2161,7 +2161,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261015-03';
+  var APP_BUILD='20261015-04';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -8802,7 +8802,7 @@
     var all=[];
     try{
       var r=await sb.from('invoices')
-        .select('id,customer_id,period,title,amount,paid_amount,due_on,status,method')
+        .select('id,customer_id,period,title,amount,amount_ex,tax,paid_amount,due_on,status,method')
         .in('status',['open','partial']).order('due_on',{ascending:true}).limit(200);
       if(r.error) return;               // 表がまだ無い環境では黙って出さない
       all=r.data||[];
@@ -8834,7 +8834,7 @@
               var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
               return esc(x.title||'')+'　期日 '+esc(x.due_on||'')
                 +'　'+invMethodTag(x.method)
-                +'　<b style="color:#A9403D;">'+yen(rest)+'</b>'; }).join('<br>')
+                +'　<b style="color:#A9403D;">'+yen(rest)+'</b>'+invTaxNote(x); }).join('<br>')
           +'</div></div>';
       }
       if(soon.length){
@@ -8859,7 +8859,7 @@
               var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
               return esc(x.title||'')+'　期日 '+esc(x.due_on||'')
                 +'　'+invMethodTag(x.method)
-                +'　<b style="color:var(--ink);">'+yen(rest)+'</b>'; }).join('<br>')
+                +'　<b style="color:var(--ink);">'+yen(rest)+'</b>'+invTaxNote(x); }).join('<br>')
           +'</div>'
           +(anyDebit
             ? '<div style="font-size:.71875rem;color:#27684A;background:rgba(39,104,74,.08);border-radius:8px;padding:8px 10px;line-height:1.8;margin-top:8px;">'
@@ -9374,6 +9374,12 @@
       +'<div class="warn" style="margin-top:12px;font-size:9pt;">口座番号・お届け印などは、TsuguAi のシステムには保存しません。依頼書の写真をアプリやメールで送らないでください。</div>'
       +'<div class="ft">株式会社福來　TsuguAi -継-　継ぐ、を身近な経営判断に<br>ご不明な点は、担当パートナーまたは運営（082-548-2224）までお問い合わせください。</div>'
       +'</body></html>';
+  }
+  //  請求1件の内訳（税別・消費税）。まだ1円も入っていない請求だけに付ける
+  //  （一部入金のものは残りの額と内訳が合わないため）
+  function invTaxNote(x){
+    if(!x || !(Number(x.tax)>0) || Number(x.paid_amount)>0) return '';
+    return '<span style="font-size:.65625rem;color:var(--muted);">（税別 '+yen(x.amount_ex)+'・消費税 '+yen(x.tax)+'）</span>';
   }
   //  ご本人のお支払い画面に出す、口座振替のお手続きの様子
   function dmCustomerHtml(d){

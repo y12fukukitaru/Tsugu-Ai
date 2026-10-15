@@ -98,7 +98,7 @@ ok('invoice_set_method を呼ぶ',
 ok('請求の一覧で method を取ってくる',
   /select\('id,customer_id,period,kind,title,amount,paid_amount,due_on,status,paid_on,void_reason,method'\)/.test(SRC));
 ok('顧客側でも method を取ってくる',
-  /select\('id,customer_id,period,title,amount,paid_amount,due_on,status,method'\)/.test(SRC));
+  /select\('id,customer_id,period,title,amount,amount_ex,tax,paid_amount,due_on,status,method'\)/.test(SRC));
 
 // =============================================================
 // ⑥ 振込先の設定

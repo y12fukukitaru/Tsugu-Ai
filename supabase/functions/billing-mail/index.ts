@@ -105,10 +105,15 @@ export function setupHtml(o: {
     : `<div style="font-size:13px;color:#18202E;line-height:1.9;">お振込先は、アプリの「お支払い」でご確認ください。</div>`;
   const row = (k: string, v: string) =>
     `<tr><td style="padding:7px 0;color:#5A6981;width:46%;vertical-align:top;">${k}</td><td style="padding:7px 0;color:#18202E;text-align:right;">${v}</td></tr>`;
+  //  内訳：品目（税別）→ 小計（税別）→ 消費税（10%）→ 合計（税込）。
+  //  消費税は請求ごとに計算した額の合計（アプリの請求と同じ数字になる）
+  const sub = o.invs.reduce((t, x) => t + (Number(x.amount_ex) || 0), 0);
+  const tax = o.invs.reduce((t, x) => t + (Number(x.tax) || 0), 0);
   const total = o.invs.reduce((t, x) => t + (Number(x.amount) || 0), 0);
   const due = o.invs.map((x) => String(x.due_on ?? "")).filter(Boolean).sort().pop() ?? "";
-  const lines = o.invs.map((x) =>
-    row(esc(x.title), `${yen(x.amount_ex)}（税別）＋ 消費税 ${yen(x.tax)}<br><b>${yen(x.amount)}</b>`)).join("");
+  const lines = o.invs.map((x) => row(esc(x.title), `${yen(x.amount_ex)}`)).join("");
+  const line2 = (k: string, v: string, top = false) =>
+    `<tr><td style="padding:6px 0;color:#5A6981;${top ? "border-top:1px solid #E2E7EF;" : ""}">${k}</td><td style="padding:6px 0;color:#18202E;text-align:right;${top ? "border-top:1px solid #E2E7EF;" : ""}">${v}</td></tr>`;
   const debit = o.debitFrom
     ? `<b>${esc(o.debitFrom)}の顧問料からは、口座振替（お引き落とし）</b>になります。口座振替の依頼書は、担当パートナーからお渡しします（金融機関の登録が間に合わないときは、その月も銀行振込でご案内します）。<br>`
     : "毎月の顧問料のお支払い（口座振替・銀行振込）は、担当パートナーから別にご案内します。<br>";
@@ -122,8 +127,12 @@ export function setupHtml(o: {
     <div style="font-size:13px;color:#18202E;line-height:2;margin-top:10px;">
       このたびは TsuguAi -継- の顧問契約にご登録いただき、ありがとうございます。<br>
       初回のお振込み（初期導入費と、最初の月の顧問料）をお知らせします。<b>ご登録の月の顧問料はいただきません。</b></div>
-    <table style="width:100%;font-size:13px;margin-top:12px;border-collapse:collapse;border-top:1px solid #EDF1F6;">
+    <div style="font-size:12px;color:#8A6D2F;font-weight:700;margin:14px 0 2px;">ご請求の内訳</div>
+    <table style="width:100%;font-size:13px;border-collapse:collapse;border-top:1px solid #EDF1F6;">
+      <tr><td style="padding:6px 0;color:#94A2B6;font-size:11.5px;">品目</td><td style="padding:6px 0;color:#94A2B6;font-size:11.5px;text-align:right;">金額（税別）</td></tr>
       ${lines}
+      ${line2("小計（税別）", yen(sub), true)}
+      ${line2("消費税（10%）", yen(tax))}
       <tr><td style="padding:9px 0;color:#1E3A66;font-weight:700;border-top:1px solid #E2E7EF;">合計（税込）</td>
         <td style="padding:9px 0;text-align:right;border-top:1px solid #E2E7EF;"><b style="color:#1E3A66;font-size:16px;">${yen(total)}</b></td></tr>
       ${row("お支払期日", `<b>${esc(jaDate(due))}</b>`)}
