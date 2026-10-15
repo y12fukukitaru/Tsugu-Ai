@@ -92,7 +92,7 @@ ok('小さい画面の指定がある', mobile.length > 0);
 ok('小さい画面では72pxに戻る', /\.knv-fab\{[^}]*width:72px/.test(mobile));
 ok('小さい画面では端から18px', /\.knv-fab\{[^}]*right:18px/.test(mobile));
 ok('小さい画面では絵も42pxに戻る', /\.knv-fab svg\{[^}]*width:42px/.test(mobile));
-ok('小さい画面のパネルはほぼ全画面', /\.knv-panel\{[^}]*width:calc\(100vw - 16px\)/.test(mobile));
+ok('小さい画面のパネルはほぼ全画面（上下左右 8px）', /\.knv-panel\{left:8px;right:8px;top:calc\(8px \+ env\(safe-area-inset-top,0px\)\);bottom:calc\(8px \+ env\(safe-area-inset-bottom,0px\)\);/.test(mobile));
 
 // ---------------------------------------------------------------
 // ③ パネルが継ナビくんから膨らんで見えるか
