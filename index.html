@@ -1591,8 +1591,12 @@
     body.knv-fab-lb .knv-fab,body.knv-fab-lt .knv-fab{left:18px;right:auto;}
     body.knv-fab-rt .knv-fab,body.knv-fab-lt .knv-fab{top:64px;bottom:auto;}
     .knv-fab svg{width:42px;height:42px;}
-    .knv-panel{right:8px;bottom:8px;width:calc(100vw - 16px);height:calc(100vh - 60px);
-      transform-origin:calc(100% - 46px) calc(100% - 46px);}
+    /* スマホ（2026-10-15）：上下いっぱいに広げる。これまでは高さを 100vh−60px にしていたので、
+       上に 52px の空きができ、しかも iPhone の Safari では 100vh が「下の帯が隠れたときの高さ」のため、
+       帯が出ているあいだは上下がずれていた。高さを決めず、上と下の位置で決める（見えている高さに合う）。
+       ノッチのある端末は、上の余白に安全域を足す */
+    .knv-panel{left:8px;right:8px;top:calc(8px + env(safe-area-inset-top,0px));bottom:calc(8px + env(safe-area-inset-bottom,0px));
+      width:auto;height:auto;transform-origin:calc(100% - 46px) calc(100% - 46px);}
     /* 週表示は7日を幅に収め、横スクロールをなくす。
        見出し（.wk-head）と本体（.wk-wrap）は別の箱で、本体の横スクロールに
        合わせて見出しを動かしていたが、指の動きに一拍遅れて見えた
@@ -2240,7 +2244,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261015-11';
+  var APP_BUILD='20261015-12';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
