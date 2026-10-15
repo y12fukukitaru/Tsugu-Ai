@@ -84,7 +84,7 @@ ok('顧問料はここで立てないと書いてある',
 //  税抜で入れていただくので、税込がいくらになるか押す前に見せる
 ok('税込の下見せがある', /function ivaPreview/.test(SRC));
 ok('下見せを金額の入力でよぶ', /id="iva-amt"[^>]*oninput="ivaPreview\(\)"/.test(SRC));
-ok('タブを開いたときに請求先をそろえる', /invInitMonths\(\); ivaInit\(\);/.test(SRC));
+ok('タブを開いたときに請求先をそろえる（そのあと口座振替の手続き → 請求）', /invInitMonths\(\); ivaInit\(\)\.then\(loadMandates\)\.then\(loadInvoices\);/.test(SRC));
 
 // =============================================================
 // ⑤ 呼び出しの形（SQL側の引数と合っていること）
@@ -92,13 +92,13 @@ ok('タブを開いたときに請求先をそろえる', /invInitMonths\(\); iv
 ok('invoice_add を正しい引数で呼ぶ',
   /invoice_add',\{ p_customer:cust, p_kind:kind, p_title:title,\s*\n\s*p_amount_ex:ex, p_due_on:due, p_period:null, p_method:mth, p_note:null \}/.test(SRC));
 ok('invoice_generate に方法を渡す',
-  /invoice_generate',\{ p_period:ym, p_due_day:due, p_method:mth \}/.test(SRC));
+  /invoice_generate',\{ p_period:ym, p_due_day:due, p_method:\(auto\?'bank':mth\) \}/.test(SRC));
 ok('invoice_set_method を呼ぶ',
   /invoice_set_method',\{ p_id:id, p_method:to \}/.test(SRC));
 ok('請求の一覧で method を取ってくる',
   /select\('id,customer_id,period,kind,title,amount,paid_amount,due_on,status,paid_on,void_reason,method'\)/.test(SRC));
 ok('顧客側でも method を取ってくる',
-  /select\('id,customer_id,period,title,amount,paid_amount,due_on,status,method'\)/.test(SRC));
+  /select\('id,customer_id,period,title,amount,amount_ex,tax,paid_amount,due_on,status,method'\)/.test(SRC));
 
 // =============================================================
 // ⑥ 振込先の設定

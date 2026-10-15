@@ -2161,7 +2161,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261015-01';
+  var APP_BUILD='20261015-04';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -4020,6 +4020,14 @@
           //  「運営直接担当 30,000円・一律」はやめました。運営が担当していても
           //  買い手 45,000／売り手 35,000 の2つだけです。相手によって値段が
           //  違うと、この値段で続けてもらえるのかという本当の反応が読めません
+          //  初期導入費の請求：顧問契約を受け取った最初の一度に、自動で立ててメールでご案内する
+          +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 2px;font-size:.71875rem;color:var(--ink);">'
+            +'<label class="fl" style="margin:0;">初期導入費の請求</label>'
+            +'<select id="bl-setup-auto" class="inp2" onchange="blRatesSave()">'
+              +'<option value="1">ご登録のとき自動で立て（初期導入費＋翌月分の顧問料）、メールでご案内する</option>'
+              +'<option value="0">自動では立てない（請求と未収から手で立てる）</option></select>'
+            +'<span style="font-size:.65625rem;color:var(--muted);line-height:1.6;">期日は翌月末・銀行振込（まとめて一度に）。<b>ご登録の月の顧問料はいただきません。</b>口座振替はご登録の2か月後の分から。</span>'
+          +'</div>'
           +'<div class="bl-nt">運営が直接担当している顧客も、同じ額です。変えた額は、この先の請求の自動作成と契約書の月額に使われます。ボリュームディスカウント・HD化ボーナス・担当パートナーの階層付与は廃止しました（EP登録料・月額下限・法人管理料もありません）。</div>'
         +'</div>'
         +'<div class="bl-card">'
@@ -4160,13 +4168,18 @@
           +'<div><label class="fl">対象の年月</label><select id="inv-month" class="inp2" onchange="loadInvoices()"></select></div>'
           +'<div><label class="fl">支払期日（日）</label><input id="inv-due" type="number" class="inp2" style="width:90px;" min="1" max="31" value="27"></div>'
           +'<div><label class="fl">お支払い方法</label><select id="inv-method" class="inp2">'
-            +'<option value="bank">銀行振込</option><option value="transfer">口座振替（引き落とし）</option></select></div>'
+            //  既定は「手続きに合わせる」。口座振替の登録が済んだ方だけを引き落としにする。
+            //  全員を一度に口座振替にすると、手続き中の方の請求が引き落とせずに未収になる
+            +'<option value="auto">手続きに合わせる</option>'
+            +'<option value="bank">全員 銀行振込</option><option value="transfer">全員 口座振替（引き落とし）</option></select></div>'
           +'<button class="btn2" onclick="invGenerate()">この月の請求を立てる</button>'
           +'<button class="ghost" style="font-size:.75rem;border:1px solid var(--line);border-radius:8px;padding:9px 12px;" onclick="invReconcile()">入金と突き合わせる</button>'
         +'</div>'
         //  口座振替に載せ替える途中は、振込の方と引き落としの方が混ざる。
         //  引き落とす請求に「お振込ください」と書くと二重にいただいてしまう
         +'<div style="font-size:.6875rem;color:var(--muted);line-height:1.75;margin-bottom:10px;">'
+          +'<b style="color:var(--navy);">「手続きに合わせる」</b>は、下の「口座振替の手続き」で<b>登録完了の方だけ口座振替</b>、ほかの方は銀行振込で立てます。'
+          +'<b>ご登録の月の顧問料はいただきません</b>（翌月分は初回のお振込みに入っているので、二重に立ちません）。口座振替は<b>ご登録の2か月後の分から</b>です。'
           +'お支払い方法は、顧客の画面の文言に出ます。'
           +'<b style="color:var(--navy);">口座振替なら「お引き落としになります。お振込は不要です」</b>と表示し、'
           +'銀行振込なら振込先をお見せします。あとから1件ずつ切り替えられます。</div>'
@@ -4205,6 +4218,24 @@
           +'担当パートナーも出しているので、追う相手が分かります。'
           +'口座振替をお使いになる場合、振替不能の結果はここに残ります。</div>'
         +'<div id="inv-overdue">読み込み中...</div>'
+        //  ---- 口座振替の手続き ----
+        //  依頼書は紙のまま集金代行へ。ここに残すのは進み具合と「お客様番号」だけ。
+        //  口座番号・名義・届出印は持たない
+        +'<div class="ph" style="font-size:.8125rem;margin-top:22px;display:flex;align-items:center;justify-content:space-between;">口座振替の手続き'
+          +'<span class="ghost" style="font-size:.6875rem;font-weight:400;" onclick="loadMandates()">↺ 更新</span></div>'
+        +'<div style="font-size:.6875rem;color:var(--muted);margin-bottom:8px;line-height:1.75;">'
+          +'用紙をお渡し → 集金代行へ送付 → （不備で返却 → 送り直し）→ <b style="color:var(--navy);">登録完了</b>、の進み具合を記録します。'
+          +'<b style="color:var(--navy);">登録完了の方だけ</b>、「手続きに合わせる」で立てた請求が口座振替になります。'
+          +'依頼書には<b>お客様番号</b>を書いていただき、集金代行の請求データ（CSV）とひも付けます。<br>'
+          +'<b style="color:#A9403D;">口座番号・名義・届出印は、このシステムに入れません。</b>'
+          +'依頼書は紙のまま集金代行へ送り、写真をアプリ（書類スキャン・メッセージ）に上げないでください。</div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">'
+          +'<div style="flex:1 1 220px;min-width:180px;"><label class="fl">お客様</label>'
+            +'<select id="dm-cust" class="inp2" style="width:100%;"></select></div>'
+          +'<button class="btn2" onclick="dmStart()">用紙を準備する（お客様番号を出す）</button>'
+        +'</div>'
+        +'<div id="dm-msg" style="font-size:.71875rem;margin-bottom:8px;min-height:16px;line-height:1.7;"></div>'
+        +'<div id="dm-list">読み込み中...</div>'
         +'</div>'
         // ---- タブ6：売上目標・実績 ----
         +'<div id="bl-tab-revenue" class="hidden">'
@@ -4818,7 +4849,7 @@
   //  bl-s*（委託者情報）は総合振込ファイルの先頭に入る「継の口座」。
   //  Edge Function（payout-file）が app_settings.billing_rates から読む
   var BL_RATE_IDS=['bl-pbase','bl-pclient','bl-adv','bl-init','bl-ai','bl-seat','bl-seatpack','bl-seatpackn','bl-bank',
-                   'bl-sc','bl-sname','bl-sbank','bl-sbranch','bl-stype','bl-sacct','bl-seller','bl-initseller'];
+                   'bl-sc','bl-sname','bl-sbank','bl-sbranch','bl-stype','bl-sacct','bl-seller','bl-initseller','bl-setup-auto'];
   var BL_RATES_OK=false, BL_SAVE_T=null;
   //  口座の欄は「保存する」を押したときだけ保存する（料率のような自動保存はしない）。
   //  以前は料率と同じ一つの保存に乗っていたため、口座を打ちかけた途中の値が0.8秒後に
@@ -8771,7 +8802,7 @@
     var all=[];
     try{
       var r=await sb.from('invoices')
-        .select('id,customer_id,period,title,amount,paid_amount,due_on,status,method')
+        .select('id,customer_id,period,title,amount,amount_ex,tax,paid_amount,due_on,status,method')
         .in('status',['open','partial']).order('due_on',{ascending:true}).limit(200);
       if(r.error) return;               // 表がまだ無い環境では黙って出さない
       all=r.data||[];
@@ -8784,8 +8815,14 @@
     var t=0; rows.forEach(function(x){ t+=(Number(x.amount)||0)-(Number(x.paid_amount)||0); });
 
     if(where==='customer'){
-      if(!rows.length && !soon.length) return;
-      var h='';
+      //  口座振替のお手続き中なら、登録が済むまでは振込でお願いすることを先に書く
+      var dmh='';
+      try{
+        var dm=await sb.from('debit_mandates').select('status,ref_no,return_reason').eq('customer_id',ME).maybeSingle();
+        if(!dm.error && dm.data) dmh=dmCustomerHtml(dm.data);
+      }catch(e){}
+      if(!rows.length && !soon.length && !dmh) return;
+      var h=dmh;
       if(rows.length){
         h+='<div style="border:1.5px solid #E8C4C2;background:#FDF6F5;border-radius:11px;padding:12px 14px;margin-bottom:12px;">'
           +'<div style="font-size:.78125rem;font-weight:700;color:#A9403D;">お支払いの確認をお願いします</div>'
@@ -8797,7 +8834,7 @@
               var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
               return esc(x.title||'')+'　期日 '+esc(x.due_on||'')
                 +'　'+invMethodTag(x.method)
-                +'　<b style="color:#A9403D;">'+yen(rest)+'</b>'; }).join('<br>')
+                +'　<b style="color:#A9403D;">'+yen(rest)+'</b>'+invTaxNote(x); }).join('<br>')
           +'</div></div>';
       }
       if(soon.length){
@@ -8822,7 +8859,7 @@
               var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
               return esc(x.title||'')+'　期日 '+esc(x.due_on||'')
                 +'　'+invMethodTag(x.method)
-                +'　<b style="color:var(--ink);">'+yen(rest)+'</b>'; }).join('<br>')
+                +'　<b style="color:var(--ink);">'+yen(rest)+'</b>'+invTaxNote(x); }).join('<br>')
           +'</div>'
           +(anyDebit
             ? '<div style="font-size:.71875rem;color:#27684A;background:rgba(39,104,74,.08);border-radius:8px;padding:8px 10px;line-height:1.8;margin-top:8px;">'
@@ -8921,6 +8958,25 @@
           nm[p.id]=p.company_name||p.contact_name||p.email||''; });
         INV_ROWS.forEach(function(x){ x.name=nm[x.customer_id]||''; });
       }catch(e){}
+      //  お客様番号（口座振替の依頼書に書いていただく番号）。集金代行の CSV に載せる
+      INV_ROWS.forEach(function(x){ var d=dmOf(x.customer_id); x.ref_no=d?d.ref_no:''; });
+      //  初回のお振込みのご案内メール（送ったか）。初期導入費と、一緒に入れた翌月分の顧問料
+      var sids=INV_ROWS.filter(function(x){ return x.kind==='setup'||x.kind==='advisory'; }).map(function(x){ return x.id; });
+      if(sids.length){
+        try{
+          var cols='invoice_id,advisory_invoice_id,mailed_at,mail_count,mail_error';
+          var s1=await sb.from('setup_fee_notices').select(cols).in('invoice_id',sids);
+          var s2=await sb.from('setup_fee_notices').select(cols).in('advisory_invoice_id',sids);
+          var byInv={};
+          (s1.error?[]:(s1.data||[])).forEach(function(n){ byInv[n.invoice_id]=n; });
+          (s2.error?[]:(s2.data||[])).forEach(function(n){ if(n.advisory_invoice_id) byInv[n.advisory_invoice_id]=n; });
+          INV_ROWS.forEach(function(x){
+            x.notice=byInv[x.id]||null;
+            //  初回のお振込みに入れた顧問料（口座振替にしない・二重払いの注意に使う）
+            x.first=!!(x.notice && x.notice.advisory_invoice_id===x.id);
+          });
+        }catch(e){}
+      }
     }
     renderInvoices();
   }
@@ -8939,15 +8995,20 @@
   }
   //  集金代行へ渡す「誰に・いくら・いつ」。口座はここに無い
   function invCsvRows(rows, method){
-    var out=[['顧客ID','会社名','件名','対象月','金額（円・税込）','支払期日','状態']];
+    var head=['顧客ID','会社名','件名','対象月','金額（円・税込）','支払期日','状態'];
+    //  口座振替は、依頼書に書いていただいたお客様番号で集金代行とひも付ける
+    if(method==='transfer') head.push('お客様番号');
+    var out=[head];
     (rows||[]).forEach(function(x){
       if(x.status==='void' || x.status==='paid') return;
       var k=(x.method==='transfer')?'transfer':'bank';
       if(k!==method) return;
       var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
       if(rest<=0) return;
-      out.push([x.customer_id||'', x.name||'', x.title||'', x.period||'', String(Math.round(rest)), x.due_on||'',
-                x.status==='partial'?'一部入金':'未入金']);
+      var line=[x.customer_id||'', x.name||'', x.title||'', x.period||'', String(Math.round(rest)), x.due_on||'',
+                x.status==='partial'?'一部入金':'未入金'];
+      if(method==='transfer') line.push(x.ref_no||'');
+      out.push(line);
     });
     return out;
   }
@@ -8985,6 +9046,8 @@
       //  振込でお願いする相手が何件・いくらかが、ここで分かる
       +bizChip('口座振替', yen(m.transfer.amt), m.transfer.n+' 件（引き落とし）', 'var(--navy)')
       +bizChip('銀行振込', yen(m.bank.amt), m.bank.n+' 件（お振込み）', 'var(--navy)')
+      +(function(){ var c=dmCount(); return (c.wait||c.returned)
+          ? bizChip('口座振替の手続き中', c.wait+' 社', (c.returned?'うち不備で返却 '+c.returned+' 社・':'')+'登録まで銀行振込', c.returned?'#A9403D':'#8A6A12') : ''; })()
     +'</div>'
     //  集金代行（口座振替）へ渡す請求データと、振込のご案内に使う一覧。
     //  お客様の口座はこのシステムに無いので、渡すのは「誰に・いくら・いつ」だけ。
@@ -9020,6 +9083,7 @@
             +((x.method==='transfer')?'銀行振込に変える':'口座振替に変える')+'</button>'
           +'<button class="ghost" style="font-size:.6875rem;border:1px solid var(--line);border-radius:7px;padding:5px 10px;color:#A9403D;" onclick="invVoid(\''+esc(x.id)+'\')">取り消す</button>'
           +'</div>')
+        +(((x.kind==='setup' || x.first) && x.status!=='void') ? invSetupMailHtml(x) : '')
       +'</div>';
     }).join('');
     box.innerHTML=h;
@@ -9028,20 +9092,31 @@
   async function invGenerate(){
     var ym=(($('inv-month')||{}).value)||'';
     var due=Number((($('inv-due')||{}).value)||27);
-    var mth=(($('inv-method')||{}).value)||'bank';
+    var mth=(($('inv-method')||{}).value)||'auto';
     if(!ym){ invMsg('年月を選んでください。','#A9403D'); return; }
-    if(!confirm(ym+' の請求を立てます。よろしいですか？\n\nお支払い方法：'+invMethodLabel(mth)
+    var auto=(mth==='auto');
+    if(!confirm(ym+' の請求を立てます。よろしいですか？\n\nお支払い方法：'
+      +(auto?'手続きに合わせる（口座振替の登録が済んだ方は口座振替、ほかは銀行振込）':invMethodLabel(mth))
       +'\n（同じ月に二度立てても増えません）')) return;
     invMsg('立てています…');
     var r;
-    try{ r=await sb.rpc('invoice_generate',{ p_period:ym, p_due_day:due, p_method:mth }); }
+    try{ r=await sb.rpc('invoice_generate',{ p_period:ym, p_due_day:due, p_method:(auto?'bank':mth) }); }
     catch(e){ r={ error:{ message:String(e&&e.message||e) } }; }
     if(r.error){ invMsg('できませんでした：'+esc(r.error.message),'#A9403D'); return; }
     var d=r.data||{};
     if(!d.ok){ invMsg(esc(d.error||'できませんでした'),'#A9403D'); return; }
+    //  登録の済んだ方だけを口座振替に。まだ1円も入っていない請求だけを動かす
+    var a=null;
+    if(auto){
+      try{ var ra=await sb.rpc('invoice_apply_mandates',{ p_period:ym }); if(!ra.error) a=ra.data||null; }catch(e){}
+    }
     invMsg('<b>'+d.made+' 件</b>の請求を立てました'
       +(d.skipped>0?'（すでにある '+d.skipped+' 件はそのまま）':'')
-      +'。支払期日は '+esc(String(d.due_on||''))+'、お支払い方法は '+esc(invMethodLabel(d.method))+' です。', '#27684A');
+      +'。支払期日は '+esc(String(d.due_on||''))+'、'
+      +(auto
+        ? (a&&a.ok ? 'お支払い方法は手続きに合わせました（口座振替 '+a.to_transfer+' 件に変更'+(a.to_bank?'・銀行振込 '+a.to_bank+' 件に戻す':'')+'）。'
+                   : '<b style="color:#A9403D;">口座振替への切り替えができませんでした。</b>手続きの SQL が入っているか確かめ、1件ずつ切り替えてください。')
+        : 'お支払い方法は '+esc(invMethodLabel(d.method))+' です。'), (auto&&!(a&&a.ok))?'#A9403D':'#27684A');
     await loadInvoices(); loadInvOverdue();
   }
   //  ---- 単発の請求（FA手数料など）----
@@ -9116,7 +9191,17 @@
   }
   async function invMethod(id, cur){
     var to=(cur==='transfer')?'bank':'transfer';
-    if(!confirm('お支払い方法を「'+invMethodLabel(to)+'」に変えます。\n\n顧客の画面の文言も変わります。よろしいですか？')) return;
+    var row=INV_ROWS.filter(function(x){ return x.id===id; })[0]||{};
+    var dm=dmOf(row.customer_id), reg=!!(dm && dm.status==='registered');
+    //  手続きと合わない切り替えは、二重のお支払いか、引き落とせない未収になる
+    var warn=(to==='transfer' && row.first)
+      ? '\n\n⚠ これは初回のお振込み（初期導入費と一緒）でご案内済みの顧問料です。口座振替にすると、振込と引き落としの両方でお支払いいただく（二重払い）おそれがあります。'
+      : (to==='transfer' && !reg)
+      ? '\n\n⚠ この方は口座振替の登録が済んでいません'+(dm?'（いま：'+dmLabel(dm.status)+'）':'')+'。引き落とせず、未収になります。'
+      : (to==='bank' && reg)
+        ? '\n\n⚠ この方は口座振替の登録が済んでいます。引き落としと振込の両方でお支払いいただく（二重払い）おそれがあります。'
+        : '';
+    if(!confirm('お支払い方法を「'+invMethodLabel(to)+'」に変えます。\n\n顧客の画面の文言も変わります。よろしいですか？'+warn)) return;
     invMsg('変えています…');
     var r;
     try{ r=await sb.rpc('invoice_set_method',{ p_id:id, p_method:to }); }
@@ -9124,6 +9209,217 @@
     if(r.error){ invMsg('できませんでした：'+esc(r.error.message),'#A9403D'); return; }
     if(!(r.data||{}).ok){ invMsg(esc((r.data||{}).error||'できませんでした'),'#A9403D'); return; }
     invMsg('「'+esc(invMethodLabel(to))+'」に変えました。','#27684A');
+    await loadInvoices();
+  }
+  //  ---- 口座振替の手続き ----
+  //  進み具合とお客様番号だけ。口座番号・名義・届出印は持たない
+  var DM_ROWS=[], DM_ERR=null;
+  function dmLabel(s){
+    return { preparing:'用紙をお渡し（記入待ち）', sent:'集金代行へ送付済み', returned:'不備で返却',
+             registered:'登録完了', stopped:'口座振替をやめた' }[s]||s;
+  }
+  function dmTag(s){
+    var c={ preparing:'gold', sent:'blue', returned:'red', registered:'green', stopped:'gray' }[s]||'gray';
+    return '<span class="tag '+c+'" style="font-size:.625rem;">'+dmLabel(s)+'</span>';
+  }
+  function dmOf(id){ for(var i=0;i<DM_ROWS.length;i++){ if(DM_ROWS[i].customer_id===id) return DM_ROWS[i]; } return null; }
+  //  手続き中（登録完了の前）と、そのうち不備で戻ったもの
+  function dmCount(){
+    var c={ wait:0, returned:0 };
+    DM_ROWS.forEach(function(d){
+      if(d.status==='preparing'||d.status==='sent'||d.status==='returned') c.wait++;
+      if(d.status==='returned') c.returned++;
+    });
+    return c;
+  }
+  async function loadMandates(){
+    DM_ROWS=[]; DM_ERR=null;
+    try{
+      var r=await sb.from('debit_mandates').select('*').order('updated_at',{ascending:false});
+      if(r.error) DM_ERR=r.error.message; else DM_ROWS=r.data||[];
+    }catch(e){ DM_ERR=String(e&&e.message||e); }
+    if(DM_ROWS.length){
+      try{
+        var pr=await sb.from('profiles').select('id,company_name,contact_name,email').in('id',DM_ROWS.map(function(d){ return d.customer_id; }));
+        var nm={}; (pr.error?[]:(pr.data||[])).forEach(function(p){ nm[p.id]=p.company_name||p.contact_name||p.email||''; });
+        DM_ROWS.forEach(function(d){ d.name=nm[d.customer_id]||''; });
+      }catch(e){}
+    }
+    dmInitCust();
+    renderMandates();
+  }
+  function dmInitCust(){
+    var sel=$('dm-cust'); if(!sel) return;
+    var src=$('iva-cust');      // 単発の請求と同じ顧客の一覧を使う
+    var cur=sel.value;
+    sel.innerHTML=src ? src.innerHTML : '<option value="">選んでください</option>';
+    if(cur) sel.value=cur;
+  }
+  function dmBtn(label, on, color){
+    return '<button class="ghost" style="font-size:.6875rem;border:1px solid var(--line);border-radius:7px;padding:5px 10px;'
+      +(color?'color:'+color+';':'')+'" onclick="'+on+'">'+label+'</button>';
+  }
+  function renderMandates(){
+    var box=$('dm-list'); if(!box) return;
+    if(DM_ERR){
+      box.innerHTML='<div style="font-size:.71875rem;color:#8A6A12;background:rgba(195,155,63,.12);border:1px solid rgba(195,155,63,.4);border-radius:9px;padding:9px 12px;line-height:1.7;">'
+        +'口座振替の手続きの記録はまだ使えません。Supabaseで「口座振替の手続き・初期導入費」のSQLを実行してください。</div>';
+      return;
+    }
+    if(!DM_ROWS.length){
+      box.innerHTML='<div style="font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:11px;padding:12px 14px;line-height:1.8;">'
+        +'まだ手続きの記録はありません。口座振替をご希望のお客様を選んで「用紙を準備する」を押してください。</div>';
+      return;
+    }
+    //  手当ての要るもの（不備で返却）を上に
+    var ord={ returned:0, preparing:1, sent:2, registered:3, stopped:4 };
+    var rows=DM_ROWS.slice().sort(function(a,b){ return (ord[a.status]-ord[b.status]) || String(a.name||'').localeCompare(String(b.name||''),'ja'); });
+    box.innerHTML=rows.map(function(d){
+      var id=esc(d.customer_id);
+      var dates=[d.handed_on?'お渡し '+d.handed_on:'', d.sent_on?'送付 '+d.sent_on:'', d.returned_on?'返却 '+d.returned_on:'',
+                 d.registered_on?'登録 '+d.registered_on:'', d.stopped_on?'やめた '+d.stopped_on:''].filter(Boolean).join('　');
+      var btns=dmBtn('添え状を印刷', 'dmLetter(\''+id+'\')');
+      if(d.status==='preparing'||d.status==='returned') btns+=dmBtn('集金代行へ送った', 'dmSet(\''+id+'\',\'sent\')');
+      if(d.status==='sent') btns+=dmBtn('不備で戻った', 'dmSet(\''+id+'\',\'returned\')', '#A9403D')+dmBtn('登録が済んだ', 'dmSet(\''+id+'\',\'registered\')', '#27684A');
+      if(d.status==='returned') btns+=dmBtn('用紙を渡し直した', 'dmSet(\''+id+'\',\'preparing\')');
+      if(d.status==='stopped') btns+=dmBtn('もう一度始める', 'dmSet(\''+id+'\',\'preparing\')');
+      if(d.status!=='stopped') btns+=dmBtn('やめる', 'dmSet(\''+id+'\',\'stopped\')', '#94A2B6');
+      return '<div style="border:1px solid '+(d.status==='returned'?'#E8C4C2':'var(--line)')+';border-radius:11px;padding:10px 13px;margin-bottom:6px;">'
+        +'<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">'
+          +dmTag(d.status)
+          +'<b style="font-size:.8125rem;color:var(--ink);">'+esc(d.name||'')+'</b>'
+          +'<span style="font-size:.6875rem;color:var(--muted);">お客様番号 <b style="color:var(--navy);letter-spacing:.06em;">'+esc(d.ref_no||'')+'</b></span>'
+        +'</div>'
+        +(dates?'<div style="font-size:.6875rem;color:var(--muted);line-height:1.7;margin-top:3px;">'+esc(dates)+'</div>':'')
+        +(d.status==='returned'&&d.return_reason
+          ? '<div style="font-size:.71875rem;color:#A9403D;line-height:1.7;margin-top:3px;">戻った理由：'+esc(d.return_reason)
+            +'　→ 担当パートナーから伺い、用紙を書き直していただいてください。</div>' : '')
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;">'+btns+'</div>'
+      +'</div>';
+    }).join('');
+  }
+  function dmMsg(t,c){ var m=$('dm-msg'); if(m){ m.style.color=c||'var(--muted)'; m.innerHTML=t; } }
+  async function dmStart(){
+    var cust=(($('dm-cust')||{}).value)||'';
+    if(!cust){ dmMsg('お客様を選んでください。','#A9403D'); return; }
+    var cur=dmOf(cust);
+    if(cur && cur.status!=='stopped'){ dmMsg('この方はすでに手続きの記録があります（'+esc(dmLabel(cur.status))+'）。下の一覧からどうぞ。','#8A6A12'); return; }
+    await dmSet(cust, 'preparing', true);
+    if(dmOf(cust)) dmLetter(cust);
+  }
+  async function dmSet(cust, status, quiet){
+    var reason=null;
+    if(status==='returned'){
+      reason=prompt('戻ってきた理由をご記入ください（例：印鑑相違／口座名義の書き方が通帳と違う）','印鑑相違');
+      if(reason===null) return;
+      if(!String(reason).trim()){ dmMsg('戻ってきた理由をご記入ください。','#A9403D'); return; }
+    }else if(!quiet){
+      var msg={ sent:'依頼書を集金代行へ送ったと記録します。',
+                registered:'口座振替の登録が済んだと記録します。\n\n次に「手続きに合わせる」で立てる請求から、口座振替になります（ご登録の2か月後の分から。初回のお振込みに入れた翌月分は振込のまま）。\nいま銀行振込でご案内中の請求は、そのままにしてください（変えると二重払いのおそれ）。',
+                preparing:'用紙をお渡しした（記入待ち）と記録します。',
+                stopped:'口座振替をやめたと記録します。\n\n次に「手続きに合わせる」で立てる請求から、銀行振込になります。' }[status]||'';
+      if(!confirm(msg+'\n\nよろしいですか？')) return;
+    }
+    dmMsg('記録しています…');
+    var r;
+    try{ r=await sb.rpc('debit_mandate_set',{ p_customer:cust, p_status:status, p_on:null, p_reason:reason, p_note:null }); }
+    catch(e){ r={ error:{ message:String(e&&e.message||e) } }; }
+    if(r.error){ dmMsg('できませんでした：'+esc(r.error.message),'#A9403D'); return; }
+    var d=r.data||{};
+    if(!d.ok){ dmMsg(esc(d.error||'できませんでした'),'#A9403D'); return; }
+    dmMsg('「'+esc(dmLabel(status))+'」と記録しました（お客様番号 '+esc(d.ref_no||'')+'）。', '#27684A');
+    await loadMandates(); renderInvoices();
+  }
+  //  依頼書に添える案内（A4・1枚）。お客様番号と、書き方の注意。
+  //  口座番号などはここに出さない（そもそも持っていない）
+  async function dmLetter(cust){
+    var d=dmOf(cust); if(!d){ alert('先に「用紙を準備する」を押してください。'); return; }
+    var bank='';
+    try{ var pi=await sb.rpc('invoice_pay_info'); if(!pi.error) bank=((pi.data||{}).bank)||''; }catch(e){}
+    var w=window.open('', '_blank');
+    if(!w){ alert('印刷の画面を開けませんでした。ポップアップを許可してください。'); return; }
+    w.document.write(dmLetterHtml({ name:d.name||'', ref:d.ref_no||'', bank:bank, today:jstToday() }));
+    w.document.close();
+    setTimeout(function(){ try{ w.focus(); w.print(); }catch(e){} }, 400);
+  }
+  function dmLetterHtml(o){
+    var li=function(t){ return '<li>'+t+'</li>'; };
+    return '<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>口座振替のお手続きのお願い</title>'
+      +'<style>@page{size:A4;margin:18mm 18mm;}body{font-family:"Hiragino Sans","Noto Sans JP",sans-serif;color:#18202E;font-size:9.5pt;line-height:1.9;margin:0;}'
+      +'h1{font-size:14pt;color:#1E3A66;margin:18px 0 6px;}h2{font-size:10.5pt;color:#1E3A66;margin:16px 0 4px;border-left:3px solid #C39B3F;padding-left:8px;}'
+      +'.no{display:inline-block;border:2px solid #1E3A66;border-radius:8px;padding:6px 16px;font-size:16pt;font-weight:700;letter-spacing:.18em;color:#1E3A66;}'
+      +'.box{border:1px solid #E2E7EF;border-radius:8px;padding:10px 14px;background:#F8F9FC;}.warn{color:#A9403D;}ol,ul{margin:4px 0;padding-left:1.4em;}'
+      +'.ft{margin-top:22px;border-top:1px solid #E2E7EF;padding-top:8px;font-size:8.5pt;color:#5A6981;}.r{text-align:right;}</style></head><body>'
+      +'<div class="r">'+esc(o.today)+'</div>'
+      +'<div>'+esc(o.name||'')+'　御中</div>'
+      +'<h1>口座振替（顧問料のお引き落とし）のお手続きのお願い</h1>'
+      +'<div>いつも TsuguAi -継- をご利用いただき、ありがとうございます。同封の<b>預金口座振替依頼書</b>にご記入・ご捺印のうえ、ご返送ください。</div>'
+      +'<h2>お客様番号</h2>'
+      +'<div><span class="no">'+esc(o.ref||'')+'</span>　依頼書の<b>「お客様番号」（顧客番号）の欄</b>にご記入ください。欄が無いときは余白にお書きください。</div>'
+      +'<h2>ご記入のときに、お確かめください</h2>'
+      +'<ol>'
+        +li('<b>口座名義</b>は、通帳の名義と<b>一字一句同じ</b>にお書きください（例：株式会社〇〇 代表取締役 〇〇）。')
+        +li('<b>金融機関名・支店名・預金種目・口座番号</b>をお書きください。')
+        +li('<b>お届け印</b>は、その口座を開いたときに<b>金融機関へ届け出た印鑑</b>です。会社の実印や角印とは限りません。通帳の「お届け印」とお見比べください。')
+        +li('書き損じたときは、<b>新しい用紙に書き直して</b>ください。')
+      +'</ol>'
+      +'<div class="box"><b>いちばん多い戻りの理由は「印鑑相違」と「名義の書き方違い」です。</b>戻ると、登録がひと月ほど遅れます。</div>'
+      +'<h2>このあと</h2>'
+      +'<ul>'
+        +li('ご記入の依頼書は、<b>担当パートナーにお渡し</b>いただくか、運営までご返送ください。運営から集金代行会社へお送りします。')
+        +li('口座振替は、<b>ご登録の2か月後の月の顧問料から</b>始まります。金融機関の登録には、ふつう<b>1〜2か月</b>かかります。<b>登録が済むまでの顧問料は、銀行振込</b>でお願いします。')
+        +li('登録が済んだら、アプリの「お支払い」に「お引き落としになります」と出ます。<b>その月からは、お振込は不要</b>です（二重にお支払いにならないよう、ご注意ください）。')
+      +'</ul>'
+      +(o.bank ? '<h2>登録が済むまでのお振込先</h2><div class="box" style="white-space:pre-wrap;">'+esc(o.bank)+'</div>' : '')
+      +'<div class="warn" style="margin-top:12px;font-size:9pt;">口座番号・お届け印などは、TsuguAi のシステムには保存しません。依頼書の写真をアプリやメールで送らないでください。</div>'
+      +'<div class="ft">株式会社福來　TsuguAi -継-　継ぐ、を身近な経営判断に<br>ご不明な点は、担当パートナーまたは運営（082-548-2224）までお問い合わせください。</div>'
+      +'</body></html>';
+  }
+  //  請求1件の内訳（税別・消費税）。まだ1円も入っていない請求だけに付ける
+  //  （一部入金のものは残りの額と内訳が合わないため）
+  function invTaxNote(x){
+    if(!x || !(Number(x.tax)>0) || Number(x.paid_amount)>0) return '';
+    return '<span style="font-size:.65625rem;color:var(--muted);">（税別 '+yen(x.amount_ex)+'・消費税 '+yen(x.tax)+'）</span>';
+  }
+  //  ご本人のお支払い画面に出す、口座振替のお手続きの様子
+  function dmCustomerHtml(d){
+    if(!d || ['preparing','sent','returned'].indexOf(d.status)<0) return '';
+    var ref=d.ref_no?'（お客様番号 '+esc(d.ref_no)+'）':'';
+    var body={
+      preparing:'口座振替の依頼書のご記入・ご返送をお待ちしています'+ref+'。',
+      sent:'口座振替の依頼書をお預かりし、金融機関で登録の手続き中です'+ref+'。ふつう1〜2か月かかります。',
+      returned:'口座振替の依頼書が、金融機関から戻ってきました'+ref+'。'
+        +(d.return_reason?'理由：<b>'+esc(d.return_reason)+'</b>。':'')+'担当パートナーからご連絡し、書き直しをお願いします。'
+    }[d.status];
+    return '<div style="border:1px solid '+(d.status==='returned'?'#E8C4C2':'rgba(195,155,63,.45)')+';background:'+(d.status==='returned'?'#FDF6F5':'rgba(195,155,63,.08)')+';border-radius:11px;padding:11px 14px;margin-bottom:12px;">'
+      +'<div style="font-size:.78125rem;font-weight:700;color:'+(d.status==='returned'?'#A9403D':'#8A6A12')+';">口座振替のお手続き中です</div>'
+      +'<div style="font-size:.71875rem;color:var(--ink);line-height:1.85;margin-top:4px;">'+body
+      +'<br><b>登録が済むまでの顧問料は、銀行振込でお願いします。</b>登録が済むと、ここに「お引き落としになります」と出ます。</div></div>';
+  }
+  //  ---- 初期導入費のご案内メール ----
+  function invSetupMailHtml(x){
+    var n=x.notice;
+    var lead=x.first ? '<span class="tag gold" style="font-size:.625rem;">初回のお振込み（初期導入費と一緒）</span>' : '';
+    var st=!n ? '<span style="color:var(--muted);">ご案内メール：まだ送っていません</span>'
+      : n.mailed_at ? '<span style="color:#27684A;">ご案内メール：送りました（'+esc(String(n.mailed_at).slice(0,10))+(n.mail_count>1?'・'+n.mail_count+'回':'')+'）</span>'
+      : '<span style="color:#A9403D;">ご案内メール：まだ届いていません'+(n.mail_error?'（'+esc(n.mail_error)+'）':'')+'</span>';
+    var can=(x.status!=='paid');
+    return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.6875rem;margin-top:6px;">'+lead+st
+      +(can?'<button class="ghost" style="font-size:.6875rem;border:1px solid var(--line);border-radius:7px;padding:4px 9px;" onclick="invSetupMail(\''+esc(x.id)+'\')">'
+        +((n&&n.mailed_at)?'もう一度送る':'案内メールを送る')+'</button>':'')
+      +'</div>';
+  }
+  async function invSetupMail(id){
+    var x=INV_ROWS.filter(function(r){ return r.id===id; })[0]||{};
+    if(!confirm((x.name||'')+' 様へ、初回のお振込みのご案内（初期導入費・翌月分の顧問料・期日・お振込先）を登録のメールアドレスへ送ります。\n\nよろしいですか？')) return;
+    invMsg('送っています…');
+    var r;
+    try{ r=await sb.functions.invoke('billing-mail', { body:{ action:'setup', invoice_id:id } }); }
+    catch(e){ r={ error:{ message:String(e&&e.message||e) } }; }
+    if(r.error){ invMsg('送れませんでした：'+esc(r.error.message)+'（Edge Function「billing-mail」をデプロイしてあるか確かめてください）','#A9403D'); return; }
+    var d=r.data||{};
+    if(!d.ok){ invMsg('送れませんでした：'+esc(d.error||''),'#A9403D'); return; }
+    invMsg('ご案内メールを送りました。','#27684A');
     await loadInvoices();
   }
   async function invReconcile(){
@@ -9224,7 +9520,8 @@
     });
     if(t==='payments') loadAdmPayEvents();
     if(t==='revenue') loadAdmRevenue();
-    if(t==='invoices'){ invInitMonths(); ivaInit(); loadInvoices(); loadInvOverdue(); }
+    //  お客様の一覧（単発の請求）→ 口座振替の手続き（お客様番号）→ 請求の順に読む
+    if(t==='invoices'){ invInitMonths(); ivaInit().then(loadMandates).then(loadInvoices); loadInvOverdue(); }
   }
   // ===== 課金 Phase60：売上・入金履歴（記録）＋年間売上目標・実績 =====
   var RV_CATS={advisory:'顧問料・会費',ma:'M&A成約',shukatsu:'終活・相続',insurance:'保険関連',other:'その他'};
@@ -24779,8 +25076,20 @@
     //  パートナー契約なら役割が、顧客契約なら担当が付く。
     //  関数がまだ無い環境では黙って何もしない
     var cc=null; try{ cc=await sb.rpc('contract_claim'); }catch(e){}
+    //  顧問契約を受け取った方には、初期導入費のご案内をメールで（まだ送っていなければ一度だけ）
+    if(cc && !cc.error && String(cc.data||'')==='claimed:customer') setupNoticeSend();
     //  契約を受け取ったか（受け取ったら、会社名・お名前・担当が入っている）
     return !!(cc && !cc.error && /^claimed:/.test(String(cc.data||'')));
+  }
+  //  初期導入費のご案内メール。契約を受け取った最初の一度に DB が請求と記録を作り、
+  //  送るのは billing-mail（宛先は登録のアドレス。画面からは渡さない）。
+  //  送っていないものが無ければ呼ばない。待たない（ログインを遅らせない）
+  async function setupNoticeSend(){
+    try{
+      var r=await sb.rpc('setup_notice_pending');
+      if(r.error || !(Number(r.data)>0)) return;
+      sb.functions.invoke('billing-mail', { body:{ action:'setup' } }).catch(function(){});
+    }catch(e){}
   }
   // いま見る会社を決める。閲覧メンバーとして招かれている場合はその会社を、
   // そうでなければ自分自身を指す。招かれていても自分が経営者なら自社を優先する。
