@@ -7,6 +7,8 @@
 //      運営か担当パートナーが「お振込みのお願いを送る」で送る（下の ③）
 //    ・ご利用の一時停止のお知らせ（action:"suspend_notify"）… 毎朝 9:00 に pg_cron が呼ぶ（下の ④）。
 //      顧問料が3か月分たまって、その月の1日から止めた方と担当パートナーへ、月に一度だけ
+//    ・請求書（action:"invoice"）… 運営が「請求と未収」から、その月の銀行振込の請求を
+//      お客様ごとに1通の請求書にまとめて送る（下の ⑤）。口座振替が始まるまでの毎月の顧問料など
 //
 //  初回のお振込みのご案内：
 //    顧客が顧問契約を受け取った最初の一度に、DB の引き金（setup_fee_on_claim）が
@@ -31,6 +33,10 @@
 //    ④ 毎朝の呼び出し（pg_cron。合言葉 x-cron-secret が CRON_SECRET と一致したときだけ）
 //         { action:"suspend_notify" }
 //
+//    ⑤ 運営の画面（請求と未収の「請求書をメールで送る」）
+//         { action:"invoice", mail_id }
+//       → DB の invoice_mail_prepare が作った請求書（invoice_mails）を送る。運営だけ。再送もできる
+//
 //  二重に送らない：①は「未送信 → 送信中」を1行ずつ取ってから送る。
 //  同じ方が2台で同時にログインしても、送るのは一度だけ。
 //
@@ -47,6 +53,7 @@
 //   supabase/migrations/20261015000000_debit_mandate_setup_fee.sql
 //   supabase/migrations/20261015010000_dunning.sql（お振込みのお願い）
 //   supabase/migrations/20261015020000_suspension.sql（ご利用の一時停止）
+//   supabase/migrations/20261015030000_invoice_mail.sql（請求書）
 //   Secret の CRON_SECRET は、毎朝のブリーフ（agent-heartbeat）で設定済みのものを使う
 // =============================================================
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -462,6 +469,164 @@ async function sendDunning(sb: ReturnType<typeof createClient>, uid: string, not
   return json({ ok: true, sent: 1 });
 }
 
+//  ---- 請求書（その月の銀行振込の請求を、お客様ごとに1通）----
+//  発行者は概要タブの「請求書の発行者」。登録番号（インボイス）は入っているときだけ載せる
+export type Issuer = { name: string; addr: string; tel: string; tno: string };
+export function issuerOf(v: Record<string, unknown> | null | undefined): Issuer {
+  const g = (k: string) => String((v ?? {})[k] ?? "").trim();
+  return {
+    name: g("bl-iss-name") || "株式会社福來",
+    addr: g("bl-iss-addr"),
+    tel: g("bl-iss-tel") || "082-548-2224",
+    tno: /^T\d{13}$/.test(g("bl-iss-tno")) ? g("bl-iss-tno") : "",
+  };
+}
+export function invoiceHtml(o: {
+  company: string; contact: string; invs: DInv[]; bank: string; no: string; issued: string;
+  period: string; issuer: Issuer; ask: string;
+}): string {
+  const to = [o.company ? `${esc(o.company)} 御中` : "", o.contact ? `${esc(o.contact)} 様` : ""]
+    .filter(Boolean).join("<br>") || "ご担当者様";
+  const pm = /^(\d{4})-(\d{2})$/.exec(o.period);
+  const ym = pm ? `${Number(pm[1])}年${Number(pm[2])}月分` : "";
+  const sub = o.invs.reduce((t, x) => t + (Number(x.amount_ex) || 0), 0);
+  const tax = o.invs.reduce((t, x) => t + (Number(x.tax) || 0), 0);
+  const total = o.invs.reduce((t, x) => t + (Number(x.amount) || 0), 0);
+  const paid = o.invs.reduce((t, x) => t + (Number(x.paid_amount) || 0), 0);
+  const due = o.invs.map((x) => String(x.due_on ?? "")).filter(Boolean).sort()[0] ?? "";
+  const td = "padding:7px 0;border-bottom:1px solid #EDF1F6;";
+  const lines = o.invs.map((x) =>
+    `<tr><td style="${td}color:#18202E;">${esc(monthLabel(x))}</td>`
+    + `<td style="${td}color:#5A6981;text-align:center;">10%</td>`
+    + `<td style="${td}color:#18202E;text-align:right;">${yen(x.amount_ex)}</td></tr>`).join("");
+  const tr = (k: string, v: string, strong = false) =>
+    `<tr><td colspan="2" style="padding:6px 0;color:${strong ? "#1E3A66;font-weight:700" : "#5A6981"};">${k}</td><td style="padding:6px 0;text-align:right;color:#18202E;">${v}</td></tr>`;
+  const bank = o.bank.trim()
+    ? `<div style="white-space:pre-wrap;background:#F8F9FC;border:1px solid #E2E7EF;border-radius:10px;padding:12px 14px;font-size:13px;color:#18202E;line-height:1.9;">${esc(o.bank.trim())}</div>`
+    : `<div style="font-size:13px;color:#18202E;line-height:1.9;">お振込先は、アプリの「お支払い」でご確認ください。</div>`;
+  const iss = o.issuer;
+  return `<!doctype html><html><body style="margin:0;padding:0;background:#F4F6FA;">
+<div style="max-width:640px;margin:0 auto;padding:28px 20px;font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Noto Sans JP',sans-serif;">
+  <div style="text-align:center;font-size:15px;font-weight:700;color:#1E3A66;margin-bottom:18px;">
+    TsuguAi<span style="color:#C8A24B;">-継-</span></div>
+  <div style="background:#fff;border:1px solid #E2E7EF;border-radius:14px;padding:26px 24px;">
+    <div style="text-align:center;font-size:20px;font-weight:700;color:#1E3A66;letter-spacing:.4em;">請求書</div>
+    <table style="width:100%;font-size:12px;color:#5A6981;margin-top:10px;"><tr>
+      <td style="vertical-align:top;font-size:13.5px;color:#18202E;line-height:1.9;">${to}</td>
+      <td style="vertical-align:top;text-align:right;line-height:1.8;">請求書番号　${esc(o.no)}<br>発行日　${esc(jaDate(o.issued))}</td>
+    </tr></table>
+    <div style="font-size:13px;color:#18202E;line-height:1.95;margin-top:12px;">
+      いつも TsuguAi -継- をご利用いただき、ありがとうございます。<br>
+      ${esc(ym)}のご請求を、下記のとおりお送りします。お支払期日までに<b>お振込み</b>をお願いいたします。</div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;border:1.5px solid #1E3A66;border-radius:10px;padding:12px 16px;margin:16px 0 4px;">
+      <span style="font-size:13px;font-weight:700;color:#1E3A66;">ご請求金額（税込）</span>
+      <span style="font-size:22px;font-weight:700;color:#1E3A66;">${yen(total - paid)}</span></div>
+    <div style="font-size:12px;color:#5A6981;text-align:right;">お支払期日　<b style="color:#A9403D;">${esc(jaDate(due))}</b></div>
+    <table style="width:100%;font-size:13px;border-collapse:collapse;margin-top:12px;">
+      <tr><td style="padding:6px 0;color:#94A2B6;font-size:11.5px;border-bottom:1px solid #E2E7EF;">品目</td>
+        <td style="padding:6px 0;color:#94A2B6;font-size:11.5px;text-align:center;border-bottom:1px solid #E2E7EF;width:60px;">税率</td>
+        <td style="padding:6px 0;color:#94A2B6;font-size:11.5px;text-align:right;border-bottom:1px solid #E2E7EF;width:130px;">金額（税別）</td></tr>
+      ${lines}
+      ${tr("小計（10%対象・税別）", yen(sub))}
+      ${tr("消費税（10%）", yen(tax))}
+      ${tr("合計（税込）", yen(total), true)}
+      ${paid > 0 ? tr("お支払い済みの分", `−${yen(paid)}`) : ""}
+      <tr><td colspan="2" style="padding:9px 0;color:#1E3A66;font-weight:700;border-top:1px solid #E2E7EF;">ご請求金額</td>
+        <td style="padding:9px 0;text-align:right;border-top:1px solid #E2E7EF;"><b style="color:#1E3A66;font-size:16px;">${yen(total - paid)}</b></td></tr>
+    </table>
+    <div style="font-size:12px;color:#8A6D2F;font-weight:700;margin:16px 0 6px;">お振込先</div>
+    ${bank}
+    <div style="font-size:12.5px;color:#18202E;line-height:1.95;margin-top:12px;">
+      お振込の際は、<b>ご依頼人名をご契約の会社名</b>にしてください（入金の確認に使います）。振込手数料はご負担をお願いしております。<br>
+      ご不明な点は、${o.ask}までお問い合わせください。</div>
+    <div style="border-top:1px solid #E2E7EF;margin-top:16px;padding-top:12px;font-size:12px;color:#18202E;line-height:1.85;text-align:right;">
+      <b>${esc(iss.name)}</b><br>
+      ${iss.addr ? `${esc(iss.addr)}<br>` : ""}
+      ${iss.tel ? `TEL ${esc(iss.tel)}<br>` : ""}
+      ${iss.tno ? `登録番号 ${esc(iss.tno)}` : ""}</div>
+    <div style="text-align:center;margin:18px 0 6px;">
+      <a href="${APP_URL}" style="display:inline-block;background:#1E3A66;color:#fff;text-decoration:none;
+        font-size:14px;font-weight:700;padding:12px 28px;border-radius:9px;">アプリの「お支払い」で確かめる →</a></div>
+    <div style="font-size:11.5px;color:#A9403D;line-height:1.85;margin-top:14px;background:#FBF3F2;border-radius:9px;padding:10px 12px;">
+      TsuguAi から、メールだけでお振込先の変更をお願いすることはありません。
+      お振込先の違うメールが届いたときは、お振り込みにならず、担当パートナーか運営へご連絡ください。</div>
+  </div>
+  <div style="text-align:center;font-size:11px;color:#94A2B6;margin-top:16px;line-height:1.8;">
+    株式会社福來　TsuguAi -継-　継ぐ、を身近な経営判断に<br>${APP_URL}</div>
+</div></body></html>`;
+}
+
+async function sendInvoice(sb: ReturnType<typeof createClient>, uid: string, mailId: string): Promise<Response> {
+  const me = await sb.from("profiles").select("role").eq("id", uid).maybeSingle();
+  if (me.data?.role !== "admin") return json({ ok: false, error: "運営のみが送れます" }, 403);
+  const mq = await sb.from("invoice_mails")
+    .select("id, customer_id, period, invoice_no, invoice_ids, issued_on, mail_count").eq("id", mailId).maybeSingle();
+  const m = mq.data as { id: string; customer_id: string; period: string; invoice_no: string; invoice_ids: string[]; issued_on: string; mail_count: number | null } | null;
+  if (!m) return json({ ok: false, error: "請求書が見つかりません（先に用意してください）" });
+  //  同じ請求書を同時に二度送らない（「送信中」を取ってから送る）
+  const took = await sb.from("invoice_mails").update({ sending_at: new Date().toISOString(), mail_error: null })
+    .eq("id", m.id).is("sending_at", null).select("id");
+  if (!took.data?.length) return json({ ok: false, error: "この請求書は、いま送っています" });
+  const fail = async (msg: string) => {
+    await sb.from("invoice_mails").update({ sending_at: null, mail_error: msg }).eq("id", m.id);
+    return json({ ok: false, error: msg });
+  };
+  const invs: DInv[] = [];
+  for (const id of m.invoice_ids ?? []) {
+    const r = await sb.from("invoices").select(INV_COLS + ", paid_amount").eq("id", id).maybeSingle();
+    const x = r.data as DInv | null;
+    if (x && (x.status === "open" || x.status === "partial")) invs.push(x);
+  }
+  if (!invs.length) return fail("お支払いの済んでいない請求がありません（入金済み・取り消し）");
+  const u = await sb.auth.admin.getUserById(m.customer_id);
+  const email = u.data?.user?.email ?? "";
+  if (!email) return fail("登録のメールアドレスがありません");
+  const p = await sb.from("profiles").select("company_name, contact_name, full_name, consultant_id")
+    .eq("id", m.customer_id).maybeSingle();
+  const s = await sb.from("app_settings").select("value").eq("key", "billing_rates").maybeSingle();
+  const rates = (s.data?.value as Record<string, unknown> | null) ?? {};
+  const bank = String(rates["bl-bank"] ?? "");
+  let ask = "運営（082-548-2224）";
+  const cid = p.data?.consultant_id as string | null | undefined;
+  if (cid) {
+    const c = await sb.from("profiles").select("full_name, company_name").eq("id", cid).maybeSingle();
+    const cu = await sb.auth.admin.getUserById(cid);
+    const nm = c.data?.full_name || c.data?.company_name || "";
+    const ce = cu.data?.user?.email ?? "";
+    if (nm || ce) ask = `担当パートナー（${esc(nm)}${ce ? `・${esc(ce)}` : ""}）`;
+  }
+  const pm = /^(\d{4})-(\d{2})$/.exec(m.period);
+  const ym = pm ? `${Number(pm[1])}年${Number(pm[2])}月分` : m.period;
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${RESEND_KEY}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        from: MAIL_FROM,
+        to: [email],
+        subject: `【TsuguAi -継-】請求書（${ym}・No.${m.invoice_no}）`,
+        html: invoiceHtml({
+          company: p.data?.company_name ?? "",
+          contact: p.data?.contact_name || p.data?.full_name || "",
+          invs, bank, no: m.invoice_no, issued: m.issued_on, period: m.period,
+          issuer: issuerOf(rates), ask,
+        }),
+      }),
+    });
+    if (!res.ok) {
+      console.error("invoice mail failed:", res.status, await res.text());
+      return fail(`メールを送れませんでした（${res.status}）`);
+    }
+  } catch (e) {
+    console.error("invoice mail error:", e);
+    return fail("メールを送れませんでした");
+  }
+  await sb.from("invoice_mails").update({
+    sending_at: null, mailed_at: new Date().toISOString(), mail_count: Number(m.mail_count ?? 0) + 1, mail_error: null,
+  }).eq("id", m.id);
+  return json({ ok: true, sent: 1, to: email });
+}
+
 //  ④ 毎朝：今月の1日から止めた方へ、月に一度だけ知らせる（ご本人・担当パートナー）
 async function suspendNotify(sb: ReturnType<typeof createClient>): Promise<Response> {
   const today = jstToday(), ms = monthStart(today), month = today.slice(0, 7);
@@ -552,7 +717,7 @@ Deno.serve(async (req) => {
   if (!uid) return json({ ok: false, error: "ログインが必要です" }, 401);
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch { /* 空でよい */ }
-  if (body.action !== "setup" && body.action !== "dunning") return json({ ok: false, error: "action が正しくありません" }, 400);
+  if (body.action !== "setup" && body.action !== "dunning" && body.action !== "invoice") return json({ ok: false, error: "action が正しくありません" }, 400);
 
   const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
@@ -560,6 +725,11 @@ Deno.serve(async (req) => {
   if (body.action === "dunning") {
     if (!body.notice_id) return json({ ok: false, error: "お振込みのお願いが指定されていません" }, 400);
     return await sendDunning(sb, uid, String(body.notice_id));
+  }
+  // ⑤ 請求書（運営）
+  if (body.action === "invoice") {
+    if (!body.mail_id) return json({ ok: false, error: "請求書が指定されていません" }, 400);
+    return await sendInvoice(sb, uid, String(body.mail_id));
   }
   const N_COLS = "offer_id, invoice_id, advisory_invoice_id, mail_count";
 
