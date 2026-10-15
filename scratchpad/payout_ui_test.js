@@ -53,10 +53,12 @@ const M = new Function(base + 'return {due:payDueCount, sum:invMethodSummary, cs
   is('銀行振込：一部入金は残りで数え、method 無しは振込に寄せる', [s.bank.n, s.bank.amt], [2, 29500 + 33000]);
   const t = M.csv(rows, 'transfer');
   is('口座振替CSV：見出し＋1行', t.length, 2);
-  is('口座振替CSV：誰に・いくら・いつ（口座は無い）', t[1], ['c1', 'A社', '顧問料 9月', '2026-09', '49500', '2026-09-27', '未入金']);
+  is('口座振替CSV：誰に・いくら・いつ（口座は無い）・最後にお客様番号', t[1], ['c1', 'A社', '顧問料 9月', '2026-09', '49500', '2026-09-27', '未入金', '']);
+  is('口座振替CSV：見出しの最後はお客様番号', t[0][t[0].length - 1], 'お客様番号');
   no('見出しに口座の列は無い', /口座/.test(t[0].join(',')));
   const b = M.csv(rows, 'bank');
   is('銀行振込CSV：2行、一部入金は残額', [b.length, b[1][4], b[1][6]], [3, '29500', '一部入金']);
+  is('銀行振込CSV：お客様番号は付けない（7列のまま）', [b[0].length, b[1].length], [7, 7]);
 }
 // ③ 総合振込ファイルの箱
 {
@@ -100,7 +102,7 @@ const M = new Function(base + 'return {due:payDueCount, sum:invMethodSummary, cs
 // ⑤ 版・SQL・説明書
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261015-01', '20261015-01']);
+  is('版が揃う', [build, VER.build], ['20261015-02', '20261015-02']);
   ok('SQL は列を足すだけで期待値1', /add column if not exists notified_at timestamptz/.test(SQL) && /期待値：1/.test(SQL));
   ok('SQL にデプロイの手順', /supabase functions deploy contract-send --no-verify-jwt/.test(SQL));
   ok('運営説明書：総合振込ファイル', /総合振込ファイル/.test(MANA) && /委託者情報/.test(MANA) && /全銀フォーマット/.test(MANA));
