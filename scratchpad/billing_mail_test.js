@@ -159,6 +159,59 @@ function make(db, mails, opts) {
     ok('顧問料が無ければ、口座振替の始まりは書かない', /担当パートナーから別にご案内します/.test(h));
     ok('会社名・件名・お振込先は文字として出す', !/<b>x<\/b>/.test(e) && !/<script>/.test(e) && /&lt;b&gt;x/.test(e));
   }
+  // ⑤ お振込みのお願い（引き落とせなかった・期日を過ぎた分）
+  function dfresh() {
+    const db = fresh();
+    db.tokens.tP = 'p1'; db.tokens.tX = 'px';
+    db.users.push({ id: 'p1', email: 'p1@x.jp' }, { id: 'px', email: 'px@x.jp' });
+    db.profiles.find((x) => x.id === 'c1').consultant_id = 'p1';
+    db.profiles.push({ id: 'p1', role: 'consultant', full_name: '佐藤 花子' }, { id: 'px', role: 'consultant', full_name: 'ほか' });
+    db.invoices.push(
+      { id: 'd7', customer_id: 'c1', kind: 'advisory', period: '2026-07', title: '2026-07 顧問料（買い手プラン）', status: 'open', amount_ex: 45000, tax: 4500, amount: 49500, paid_amount: 0, due_on: '2026-07-27' },
+      { id: 'd8', customer_id: 'c1', kind: 'advisory', period: '2026-08', title: '2026-08 顧問料（買い手プラン）', status: 'partial', amount_ex: 45000, tax: 4500, amount: 49500, paid_amount: 9500, due_on: '2026-08-27' });
+    db.debit_mandates = [{ customer_id: 'c1', status: 'registered' }];
+    db.dunning_notices = [{ id: 'n1', customer_id: 'c1', sent_by: 'p1', invoice_ids: ['d7', 'd8'], pay_by: '2026-10-29', mailed_at: null, mail_error: null }];
+    return db;
+  }
+  {
+    const db = dfresh(), mails = [];
+    const call = make(db, mails);
+    const x = await call('tX', { action: 'dunning', notice_id: 'n1' });
+    ok('お願い：用意した本人か運営でなければ送れない', x.status === 403 && mails.length === 0);
+    const r = await call('tP', { action: 'dunning', notice_id: 'n1' });
+    ok('お願い：担当パートナーが送れる（宛先は登録のアドレス）', r.body.ok && mails.length === 1 && mails[0].to[0] === 'c1@x.jp');
+    ok('お願い：件名に〇月分', mails[0].subject === '【TsuguAi -継-】お振込みのお願い（2026年7月分の顧問料・2026年8月分の顧問料）');
+    const h = mails[0].html;
+    ok('お願い：内訳（税別・小計・消費税・合計）', /2026-07 顧問料（買い手プラン）<\/td><td[^>]*>45,000円/.test(h) && /小計（税別）<\/td><td[^>]*>90,000円/.test(h) && /消費税（10%）<\/td><td[^>]*>9,000円/.test(h) && /合計（税込）<\/td><td[^>]*>99,000円/.test(h));
+    ok('お願い：入金済みの分を引いたお願い額', /お支払い済みの分<\/td><td[^>]*>−9,500円/.test(h) && /お振込みのお願い額[\s\S]{0,200}89,500円/.test(h));
+    ok('お願い：期日・お振込先・依頼人名', /2026年10月29日/.test(h) && /カ）フクキタル/.test(h) && /ご依頼人名をご契約の会社名/.test(h));
+    ok('お願い：口座振替の方には「今回は引き落とさない・これからは口座振替」', /今回の分は、口座からのお引き落としはいたしません/.test(h));
+    ok('お願い：問い合わせ先は担当パートナー・行き違いのお詫び', /担当パートナー（佐藤 花子・p1@x\.jp）/.test(h) && /行き違いでお支払いいただいている場合は/.test(h));
+    ok('お願い：送った記録', !!db.dunning_notices[0].mailed_at && db.dunning_notices[0].mail_error == null);
+    const again = await call('tA', { action: 'dunning', notice_id: 'n1' });
+    ok('お願い：同じものは二度送らない', !again.body.ok && /もう送っています/.test(again.body.error) && mails.length === 1);
+  }
+  {
+    const db = dfresh(), mails = [];
+    db.debit_mandates = [];
+    const call = make(db, mails);
+    const r = await call('tA', { action: 'dunning', notice_id: 'n1' });
+    ok('お願い：運営も送れる。口座振替でない方には引き落としの文を出さない', r.body.ok && !/口座からのお引き落としはいたしません/.test(mails[0].html));
+  }
+  {
+    const db = dfresh(), mails = [];
+    const call = make(db, mails, { mailFail: true });
+    const r = await call('tP', { action: 'dunning', notice_id: 'n1' });
+    ok('お願い：送れなかったら記録を戻し、理由を残す（もう一度送れる）', !r.body.ok && db.dunning_notices[0].mailed_at === null && /送れませんでした/.test(db.dunning_notices[0].mail_error));
+  }
+  {
+    const db = dfresh(), mails = [];
+    db.invoices.filter((x) => x.id === 'd7' || x.id === 'd8').forEach((x) => { x.status = 'paid'; });
+    const call = make(db, mails);
+    const r = await call('tP', { action: 'dunning', notice_id: 'n1' });
+    ok('お願い：もう入金済みなら送らない', !r.body.ok && mails.length === 0 && /お支払いの済んでいない請求がありません/.test(db.dunning_notices[0].mail_error));
+  }
+
   // ④ 説明の書き方（デプロイ・SQL）
   ok('冒頭にデプロイと先に流す SQL', /Verify JWT）は外してよい/.test(SRC) && /20261015000000_debit_mandate_setup_fee\.sql/.test(SRC));
 

@@ -16,13 +16,14 @@ drop table if exists public.__me cascade;
 create table public.__me (id uuid);
 create or replace function auth.uid() returns uuid language sql stable as $$ select id from public.__me limit 1 $$;
 
-drop table if exists public.setup_fee_notices, public.debit_mandates, public.invoices, public.contract_offers,
-  public.profiles, public.app_settings, public.account_deletions cascade;
+drop table if exists public.dunning_notices, public.setup_fee_notices, public.debit_mandates, public.invoices, public.contract_offers,
+  public.partner_assignments, public.profiles, public.app_settings, public.account_deletions cascade;
 drop sequence if exists public.debit_mandate_no_seq;
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   role text, plan text, plan_from date, plan_prev text, consultant_id uuid, company_name text, contact_name text, created_at timestamptz default now());
 create table public.app_settings (key text primary key, value jsonb);
+create table public.partner_assignments (customer_id uuid, main_id uuid, sub_id uuid, status text);
 create table public.account_deletions (deleted_user_id uuid);
 create table public.invoices (
   id uuid primary key default gen_random_uuid(),
@@ -51,7 +52,7 @@ do $r$ begin
   if not exists (select 1 from pg_roles where rolname='anon') then create role anon; end if;
 end $r$;
 grant usage on schema public to authenticated, anon;
-grant select on public.profiles, public.app_settings, public.invoices, public.contract_offers to authenticated;
+grant select on public.profiles, public.app_settings, public.invoices, public.contract_offers, public.partner_assignments to authenticated;
 grant insert, update, delete on public.__me to authenticated;
 grant select on public.__me to authenticated;
 

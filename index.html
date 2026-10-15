@@ -2161,7 +2161,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261015-04';
+  var APP_BUILD='20261015-05';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -8879,6 +8879,7 @@
       return;
     }
     if(!rows.length) return;
+    await dunLoadLast(rows.map(function(x){ return x.customer_id; }));
     //  パートナー側。誰の未収かが分からないと動けないので、会社名を引く
     var nm={};
     try{
@@ -8892,12 +8893,23 @@
       +'<div style="font-size:.71875rem;color:var(--ink);line-height:1.85;margin-top:4px;">'
       +'期日を過ぎています。<b>次のご面談のときに、ひとことお声がけいただけると助かります。</b>'
       +'行き違いのことも多く、早く分かるほどお互いに楽になります。</div>'
-      +'<div style="font-size:.71875rem;color:var(--muted);line-height:1.8;margin-top:6px;">'
-      +rows.map(function(x){
-          var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
-          return esc(nm[x.customer_id]||'')+'　'+esc(x.title||'')+'　期日 '+esc(x.due_on||'')
-            +'　<b style="color:#A9403D;">'+yen(rest)+'</b>'; }).join('<br>')
-      +'</div></div>';
+      +'<div style="font-size:.71875rem;color:var(--ink);line-height:1.85;margin-top:4px;">'
+      +'<b>「お振込みのお願いを送る」</b>で、〇月分・いくら（内訳つき）を社長のメールへお送りできます。口座振替の分は銀行振込に切り替わります。顧問料が3か月分たまると、次の月から請求は止まります。</div>'
+      +dunGroups(rows).map(function(c){
+          return '<div style="border-top:1px solid #E8C4C2;margin-top:8px;padding-top:8px;">'
+            +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+              +'<b style="font-size:.75rem;color:var(--ink);">'+esc(nm[c.id]||'')+'</b>'
+              +(c.held?'<span class="tag red" style="font-size:.625rem;">3か月滞納・請求を止めています</span>':'')
+              +'<span style="flex:1;"></span><b style="font-size:.75rem;color:#A9403D;">'+yen(c.rest)+'</b></div>'
+            +'<div style="font-size:.71875rem;color:var(--muted);line-height:1.8;margin-top:2px;">'
+              +c.rows.map(function(x){
+                  var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
+                  return esc(x.title||'')+'　期日 '+esc(x.due_on||'')+'　'+yen(rest); }).join('<br>')
+              +(DUN_LAST[c.id]?'<br><span style="color:#27684A;">お振込みのお願い：'+esc(String(DUN_LAST[c.id]).replace('T',' ').slice(0,16))+' に送りました</span>':'')
+            +'</div>'
+            +'<button class="ghost" style="font-size:.6875rem;border:1px solid var(--line);border-radius:7px;padding:5px 10px;margin-top:6px;background:#fff;" onclick="dunSend(\''+esc(c.id)+'\',\''+esc(String(nm[c.id]||'').replace(/'/g,''))+'\')">💴 お振込みのお願いを送る</button>'
+          +'</div>'; }).join('')
+      +'</div>';
   }
 
   // ===== 請求と未収（運営）=====
@@ -9112,6 +9124,7 @@
     }
     invMsg('<b>'+d.made+' 件</b>の請求を立てました'
       +(d.skipped>0?'（すでにある '+d.skipped+' 件はそのまま）':'')
+      +(d.held>0?'（顧問料が3か月分たまっている <b style="color:#A9403D;">'+d.held+' 社</b>には立てていません）':'')
       +'。支払期日は '+esc(String(d.due_on||''))+'、'
       +(auto
         ? (a&&a.ok ? 'お支払い方法は手続きに合わせました（口座振替 '+a.to_transfer+' 件に変更'+(a.to_bank?'・銀行振込 '+a.to_bank+' 件に戻す':'')+'）。'
@@ -9462,6 +9475,71 @@
     invMsg('取り消しました（記録は残ります）。','#27684A');
     await loadInvoices(); loadInvOverdue();
   }
+  //  ---- お振込みのお願い（引き落とせなかった・期日を過ぎた分）----
+  //  運営の未収と、パートナーの「担当先の未入金」から送る。中身は DB（dunning_preview）が
+  //  決める：期日を過ぎた未入金を、お客様ごとにまとめる。顧問料が3か月分たまると、
+  //  月の請求は止まる（billing_held）ので、まとめるのは最大で3か月分
+  var DUN_LAST={};
+  function dunGroups(rows){
+    var by={}, order=[];
+    (rows||[]).forEach(function(x){
+      if(!by[x.customer_id]){ by[x.customer_id]={ id:x.customer_id, rows:[], rest:0, late:0, months:0 }; order.push(x.customer_id); }
+      var c=by[x.customer_id], rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
+      c.rows.push(x); c.rest+=rest;
+      c.late=Math.max(c.late, Number(x.days_late)||0);
+      if(/顧問料/.test(String(x.title||''))) c.months++;
+    });
+    return order.map(function(id){ var c=by[id]; c.held=c.months>=3; return c; });
+  }
+  async function dunLoadLast(ids){
+    DUN_LAST={};
+    ids=(ids||[]).filter(function(v,i,a){ return v && a.indexOf(v)===i; });
+    if(!ids.length) return;
+    try{
+      var r=await sb.from('dunning_notices').select('customer_id,mailed_at').in('customer_id',ids)
+        .not('mailed_at','is',null).order('mailed_at',{ascending:false});
+      (r.error?[]:(r.data||[])).forEach(function(n){ if(!DUN_LAST[n.customer_id]) DUN_LAST[n.customer_id]=n.mailed_at; });
+    }catch(e){}
+  }
+  function dunAddDays(ymd, n){
+    var d=new Date(ymd+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10);
+  }
+  function dunMonth(x){
+    var m=/^(\d{4})-(\d{2})$/.exec(String(x.period||''));
+    return (m && /顧問料/.test(String(x.title||''))) ? (Number(m[1])+'年'+Number(m[2])+'月分の顧問料') : String(x.title||'');
+  }
+  async function dunSend(cust, name){
+    var pv;
+    try{ pv=await sb.rpc('dunning_preview',{ p_customer:cust }); }catch(e){ pv={ error:{ message:String(e&&e.message||e) } }; }
+    if(pv.error){ alert('できませんでした：'+pv.error.message+'\n（「お振込みのお願い」の SQL が入っているか確かめてください）'); return; }
+    var d=pv.data||{};
+    if(!d.ok){ alert(d.error||'できませんでした'); return; }
+    var items=d.items||[];
+    if(!items.length){ alert('期日を過ぎた未入金はありません。'); return; }
+    var lines=items.map(function(x){ return '・'+dunMonth(x)+'　'+yen(x.rest)+(Number(x.paid_amount)>0?'（一部入金済み）':''); }).join('\n');
+    var msg=(name||'')+' 様へ、お振込みのお願いをメールで送ります。\n\n'+lines+'\n合計 '+yen(d.total)+'（税込・内訳つきで送ります）\n\n'
+      +(d.held?'⚠ 顧問料が3か月分たまっているため、次の月から請求を止めています。\n':'')
+      +'口座振替の分は銀行振込に切り替えます（次の引き落としに載せないため）。\n'
+      +(d.last_sent_at?'前回のお願い：'+String(d.last_sent_at).replace('T',' ').slice(0,16)+'\n':'')
+      +'\nお支払期日（YYYY-MM-DD）を確かめて OK を押してください：';
+    var pay=prompt(msg, dunAddDays(jstToday(),14));
+    if(pay===null) return;
+    pay=String(pay).trim();
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(pay)){ alert('お支払期日は 2026-11-30 のように入れてください。'); return; }
+    var pr;
+    try{ pr=await sb.rpc('dunning_prepare',{ p_customer:cust, p_pay_by:pay }); }catch(e){ pr={ error:{ message:String(e&&e.message||e) } }; }
+    if(pr.error){ alert('できませんでした：'+pr.error.message); return; }
+    var p=pr.data||{};
+    if(!p.ok){ alert(p.error||'できませんでした'); return; }
+    var r;
+    try{ r=await sb.functions.invoke('billing-mail',{ body:{ action:'dunning', notice_id:p.id } }); }
+    catch(e){ r={ error:{ message:String(e&&e.message||e) } }; }
+    var ok=!r.error && r.data && r.data.ok;
+    alert(ok ? 'お振込みのお願いを送りました（'+p.count+'件・'+yen(p.amount)+'）。'
+             : '送れませんでした：'+((r.data&&r.data.error)||(r.error&&r.error.message)||'')+'\n（請求は銀行振込に切り替わっています。時間をおいてもう一度お試しください）');
+    if($('inv-overdue')) loadInvOverdue();
+    if($('cl-unpaid')) loadUnpaid('partner');
+  }
   async function loadInvOverdue(){
     var box=$('inv-overdue'); if(!box) return;
     INV_OD=[]; INV_OD_ERR=null;
@@ -9469,6 +9547,7 @@
       var r=await sb.rpc('invoice_overdue',{ p_grace:0 });
       if(r.error) INV_OD_ERR=r.error.message; else INV_OD=r.data||[];
     }catch(e){ INV_OD_ERR=String(e&&e.message||e); }
+    await dunLoadLast(INV_OD.map(function(x){ return x.customer_id; }));
     renderInvOverdue();
   }
   function renderInvOverdue(){
@@ -9484,27 +9563,36 @@
       return;
     }
     var t=0; INV_OD.forEach(function(x){ t+=(Number(x.amount)||0)-(Number(x.paid_amount)||0); });
+    var g=dunGroups(INV_OD);
     var h='<div style="border:1.5px solid #E8C4C2;background:#FDF6F5;border-radius:11px;padding:12px 14px;margin-bottom:8px;">'
       +'<div style="font-size:.78125rem;font-weight:700;color:#A9403D;">'
-      +'未収 '+INV_OD.length+' 件　合計 '+yen(t)+'</div>'
+      +'未収 '+INV_OD.length+' 件（'+g.length+' 社）　合計 '+yen(t)+'</div>'
       +'<div style="font-size:.71875rem;color:var(--ink);line-height:1.8;margin-top:3px;">'
       +'期日を過ぎて入っていないぶんです。<b>放置すると、そのまま取りっぱぐれになります。</b>'
-      +'担当パートナーからもお声がけいただくのがいちばん早い経路です。</div></div>';
-    h+=INV_OD.map(function(x){
-      var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
-      var late=Number(x.days_late)||0;
-      return '<div style="border:1px solid var(--line);border-radius:11px;padding:10px 13px;margin-bottom:6px;">'
+      +'担当パートナーからもお声がけいただくのがいちばん早い経路です。<br>'
+      +'<b style="color:var(--navy);">「お振込みのお願いを送る」</b>で、〇月分・いくら（内訳つき）をメールでお知らせします。まとめた分は銀行振込に切り替わります（次の引き落としに載せないため）。'
+      +'<b style="color:#A9403D;">顧問料が3か月分たまった方には、次の月から請求を止めます</b>（お振込みで減れば自動で再開）。</div></div>';
+    h+=g.map(function(c){
+      var x0=c.rows[0];
+      return '<div style="border:1px solid '+(c.held?'#E8C4C2':'var(--line)')+';border-radius:11px;padding:10px 13px;margin-bottom:6px;">'
         +'<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">'
-          +'<span class="tag red" style="font-size:.625rem;">'+late+'日 遅れ</span>'
-          +'<b style="font-size:.8125rem;color:var(--ink);">'+esc(x.customer_name||'')+'</b>'
-          +'<span style="font-size:.6875rem;color:var(--muted);">'+esc(x.customer_email||'')+'</span>'
+          +'<span class="tag red" style="font-size:.625rem;">'+c.late+'日 遅れ</span>'
+          +(c.held?'<span class="tag red" style="font-size:.625rem;">3か月滞納・請求を止めています</span>':'')
+          +'<b style="font-size:.8125rem;color:var(--ink);">'+esc(x0.customer_name||'')+'</b>'
+          +'<span style="font-size:.6875rem;color:var(--muted);">'+esc(x0.customer_email||'')+'</span>'
           +'<span style="flex:1;"></span>'
-          +'<b style="font-size:.8125rem;color:#A9403D;">'+yen(rest)+'</b>'
+          +'<b style="font-size:.8125rem;color:#A9403D;">'+yen(c.rest)+'</b>'
         +'</div>'
         +'<div style="font-size:.71875rem;color:var(--muted);line-height:1.7;margin-top:3px;">'
-          +esc(x.title||'')+'　期日 '+esc(x.due_on||'')
-          +(x.paid_amount>0?'　（'+yen(x.paid_amount)+' は入金済み）':'')
-          +'<br>担当：'+(x.partner_name?esc(x.partner_name)+'（'+esc(x.partner_email||'')+'）':'<span style="color:#8A6A12;">担当パートナーなし</span>')
+          +c.rows.map(function(x){
+              var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
+              return esc(x.title||'')+'　期日 '+esc(x.due_on||'')+'　'+yen(rest)
+                +(x.paid_amount>0?'（'+yen(x.paid_amount)+' は入金済み）':''); }).join('<br>')
+          +'<br>担当：'+(x0.partner_name?esc(x0.partner_name)+'（'+esc(x0.partner_email||'')+'）':'<span style="color:#8A6A12;">担当パートナーなし</span>')
+          +(DUN_LAST[c.id]?'<br><span style="color:#27684A;">お振込みのお願い：'+esc(String(DUN_LAST[c.id]).replace('T',' ').slice(0,16))+' に送りました</span>':'')
+        +'</div>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;">'
+          +'<button class="ghost" style="font-size:.6875rem;border:1px solid var(--line);border-radius:7px;padding:5px 10px;" onclick="dunSend(\''+esc(c.id)+'\',\''+esc(String(x0.customer_name||'').replace(/'/g,''))+'\')">💴 お振込みのお願いを送る</button>'
         +'</div>'
       +'</div>';
     }).join('');
