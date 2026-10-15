@@ -10,13 +10,13 @@
 <!-- よそのサイトへ移るとき、URL の中身（契約のトークンなど）を渡さない -->
 <meta name="referrer" content="strict-origin">
 <!-- Phase 35（PMI年間対応・経営課題PDCA） -->
-<title>TsuguAi -継- | AIと人で、会社の未来を継ぐ</title>
+<title>TsuguAi -継- | 継ぐ、を身近な経営判断に</title>
 <meta name="description" content="TsuguAi -継-（ツグエーアイ）は、事業承継・M&Aを中枢に据えた経営プラットフォーム。「この会社を買ったら？」「いま譲るなら？」をAIが30秒で試算し、認定パートナーと専門家が実行まで伴走。資金繰り改善・業務の自動化もひとつの場所で。">
 
 <!-- OGP（LINE・SNSでのリンクプレビュー） -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="TsuguAi -継-">
-<meta property="og:title" content="TsuguAi -継- | AIと人で、会社の未来を継ぐ">
+<meta property="og:title" content="TsuguAi -継- | 継ぐ、を身近な経営判断に">
 <meta property="og:description" content="会社を、継ぐ。買う。譲る。その一歩手前から、AIと人で。承継・M&Aの「情報・判断・資金・統合」の壁を下げる経営プラットフォーム。">
 <meta property="og:url" content="https://y12fukukitaru.github.io/Tsugu-Ai/">
 <meta property="og:image" content="https://y12fukukitaru.github.io/Tsugu-Ai/ogp.png?v=2">
@@ -24,7 +24,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:locale" content="ja_JP">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="TsuguAi -継- | AIと人で、会社の未来を継ぐ">
+<meta name="twitter:title" content="TsuguAi -継- | 継ぐ、を身近な経営判断に">
 <meta name="twitter:description" content="会社を、継ぐ。買う。譲る。承継・M&Aの壁をAIと人で下げる経営プラットフォーム。">
 <meta name="twitter:image" content="https://y12fukukitaru.github.io/Tsugu-Ai/ogp.png?v=2">
 
@@ -1801,7 +1801,7 @@
         <div class="logo" data-av="gate"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div>
         <div class="name">TsuguAi<span class="logo-tsg">-継-</span></div>
       </div>
-      <div style="font-family:var(--f-head);font-size:.78125rem;color:#8A6A12;margin-top:6px;letter-spacing:.06em;">AIと人で、会社の未来を継ぐ。</div>
+      <div style="font-family:var(--f-head);font-size:.78125rem;color:#8A6A12;margin-top:6px;letter-spacing:.06em;">継ぐ、を身近な経営判断に。</div>
     </div>
 
     <div class="tabs">
@@ -2161,7 +2161,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261014-07';
+  var APP_BUILD='20261015-01';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -17453,7 +17453,9 @@
     '前提が足りず答えが大きく変わる場合は、決めつけずに要点を1〜2個だけ質問し直します。',
     '数字や制度を断定する前に、それが一般論なのか個別事情によるのかを明示します。',
     '次の分野は必ず専門家の確認を促してください：税額・申告の具体的判断は税理士、就業規則や社会保険の個別判断は社労士、融資の可否や条件は金融機関、M&Aの実行は専門家の関与を前提とします。',
-    '不確実なことを、確からしく語らないでください。'
+    '不確実なことを、確からしく語らないでください。',
+    //  TsuguAi の考え方（言葉の原本は docs/brand-statement.md）。聞かれたときだけ伝え、毎回の回答に差し込まない
+    'TsuguAiが目指すものを聞かれたら、次の言葉どおりに伝えます（言い換えない）：ビジョン「継ぐ、が当たり前の社会へ」、ミッション「継ぐ、を経営の常識に」、日々の一行「継ぐ、を身近な経営判断に」。考え方は「黒字でも、継ぐ人がいないまま閉じていく会社があります。継ぐことは、特別な日の大きな決断ではなく、毎月の数字から始められる身近な経営判断です。AIが材料をそろえ、人が社長の隣で伴走し、その判断を経営の常識にしていきます。継ぐ、が当たり前の社会へ。」です。'
   ].join('');
   // ===== 使い方ナビ：継ナビくんはTsuguAiの案内役でもある =====
   // 画面の場所・操作を聞かれたら、メニュー名を挙げて手順を短く案内できるよう、

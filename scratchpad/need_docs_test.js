@@ -59,7 +59,7 @@ ok('資料一覧：経営者には一枚紙を出さない', ['sheet-partner', '
 // ② 短いプロダクト説明
 for (const [f, first] of [['pitch-buyer.html', '買い手になるメリット'], ['pitch-seller.html', '価値のあるうちに']]) {
   const h = R(f), o = order(h);
-  ok(f + '：13頁', o.length === 13);
+  ok(f + '：14頁（最後から2枚目が目指す社会）', o.length === 14 && o[o.length - 2] === '目指す社会');
   ok(f + '：表紙 → 3つの問い → ' + first, o[0] === '表紙' && o[1] === '3つの問い' && o[2] === first);
   ok(f + '：最後は次の一歩', o[o.length - 1] === '次の一歩');
   ok(f + '：紙の高さ合わせ・目次から読む', /<script src="pitch-fit\.js"><\/script>/.test(h) && /<script src="doc-reader\.js"><\/script>/.test(h));
