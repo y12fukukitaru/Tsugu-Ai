@@ -54,6 +54,7 @@
 //   supabase/migrations/20261015010000_dunning.sql（お振込みのお願い）
 //   supabase/migrations/20261015020000_suspension.sql（ご利用の一時停止）
 //   supabase/migrations/20261015030000_invoice_mail.sql（請求書）
+//   supabase/migrations/20261015040000_party_numbers.sql（お客様番号。無くてもメールは送れる）
 //   Secret の CRON_SECRET は、毎朝のブリーフ（agent-heartbeat）で設定済みのものを使う
 // =============================================================
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -114,6 +115,24 @@ function jaDate(d: string | null): string {
   return m ? `${Number(m[1])}年${Number(m[2])}月${Number(m[3])}日` : "";
 }
 
+//  お客様番号（顧客番号）。C＋8桁＋検査数字を、読みやすく区切る（例：C-4827-1953-1）
+export function cnoFmt(no: string | null | undefined): string {
+  const m = /^([CP])(\d{4})(\d{4})(\d)$/.exec(String(no ?? ""));
+  return m ? `${m[1]}-${m[2]}-${m[3]}-${m[4]}` : String(no ?? "");
+}
+function cnoLine(no?: string | null): string {
+  return no ? `<div style="font-size:11.5px;color:#5A6981;margin-top:2px;">お客様番号　${esc(cnoFmt(no))}</div>` : "";
+}
+//  番号は別に読む（顧客番号の SQL がまだでも、メールは止めない）
+async function custNo(sb: ReturnType<typeof createClient>, id: string): Promise<string> {
+  try {
+    const r = await sb.from("profiles").select("customer_no").eq("id", id).maybeSingle();
+    return String((r.data as Record<string, unknown> | null)?.customer_no ?? "");
+  } catch {
+    return "";
+  }
+}
+
 type Inv = {
   id: string; customer_id: string; kind: string; title: string; status: string;
   amount_ex: number; tax: number; amount: number; due_on: string | null; period?: string | null;
@@ -131,10 +150,10 @@ function debitFrom(adv: Inv | null): string {
 //  初回のお振込みのご案内（初期導入費＋ご登録の翌月分の顧問料）。
 //  お振込先は、アプリのお支払い画面と同じ文をそのまま載せる
 export function setupHtml(o: {
-  company: string; contact: string; invs: Inv[]; bank: string; debitFrom?: string;
+  company: string; contact: string; invs: Inv[]; bank: string; debitFrom?: string; cno?: string;
 }): string {
-  const to = [o.company ? `${esc(o.company)} 御中` : "", o.contact ? `${esc(o.contact)} 様` : ""]
-    .filter(Boolean).join("<br>") || "ご担当者様";
+  const to = ([o.company ? `${esc(o.company)} 御中` : "", o.contact ? `${esc(o.contact)} 様` : ""]
+    .filter(Boolean).join("<br>") || "ご担当者様") + cnoLine(o.cno);
   const bank = o.bank.trim()
     ? `<div style="white-space:pre-wrap;background:#F8F9FC;border:1px solid #E2E7EF;border-radius:10px;padding:12px 14px;font-size:13px;color:#18202E;line-height:1.9;">${esc(o.bank.trim())}</div>`
     : `<div style="font-size:13px;color:#18202E;line-height:1.9;">お振込先は、アプリの「お支払い」でご確認ください。</div>`;
@@ -230,6 +249,7 @@ async function sendOne(sb: ReturnType<typeof createClient>, customerId: string, 
           invs,
           bank,
           debitFrom: debitFrom(adv),
+          cno: await custNo(sb, customerId),
         }),
       }),
     });
@@ -248,10 +268,10 @@ async function sendOne(sb: ReturnType<typeof createClient>, customerId: string, 
 type DInv = Inv & { paid_amount?: number | null };
 export function dunningHtml(o: {
   company: string; contact: string; invs: DInv[]; bank: string; payBy: string;
-  debitContinues: boolean; ask: string; stopNote?: string;
+  debitContinues: boolean; ask: string; stopNote?: string; cno?: string;
 }): string {
-  const to = [o.company ? `${esc(o.company)} 御中` : "", o.contact ? `${esc(o.contact)} 様` : ""]
-    .filter(Boolean).join("<br>") || "ご担当者様";
+  const to = ([o.company ? `${esc(o.company)} 御中` : "", o.contact ? `${esc(o.contact)} 様` : ""]
+    .filter(Boolean).join("<br>") || "ご担当者様") + cnoLine(o.cno);
   const bank = o.bank.trim()
     ? `<div style="white-space:pre-wrap;background:#F8F9FC;border:1px solid #E2E7EF;border-radius:10px;padding:12px 14px;font-size:13px;color:#18202E;line-height:1.9;">${esc(o.bank.trim())}</div>`
     : `<div style="font-size:13px;color:#18202E;line-height:1.9;">お振込先は、アプリの「お支払い」でご確認ください。</div>`;
@@ -332,10 +352,10 @@ export function stopNoteFor(invs: Inv[], today: string, liftedThisMonth: boolean
 
 //  ---- ご利用の一時停止のお知らせ（止めた日に、ご本人と担当パートナーへ）----
 export function suspendHtml(o: {
-  company: string; contact: string; invs: DInv[]; bank: string; ask: string; since: string;
+  company: string; contact: string; invs: DInv[]; bank: string; ask: string; since: string; cno?: string;
 }): string {
-  const to = [o.company ? `${esc(o.company)} 御中` : "", o.contact ? `${esc(o.contact)} 様` : ""]
-    .filter(Boolean).join("<br>") || "ご担当者様";
+  const to = ([o.company ? `${esc(o.company)} 御中` : "", o.contact ? `${esc(o.contact)} 様` : ""]
+    .filter(Boolean).join("<br>") || "ご担当者様") + cnoLine(o.cno);
   const rest = o.invs.reduce((t, x) => t + (Number(x.amount) || 0) - (Number(x.paid_amount) || 0), 0);
   const lines = o.invs.map((x) =>
     `<tr><td style="padding:6px 0;color:#5A6981;">${esc(monthLabel(x))}</td><td style="padding:6px 0;text-align:right;">${yen((Number(x.amount) || 0) - (Number(x.paid_amount) || 0))}（税込）</td></tr>`).join("");
@@ -374,11 +394,11 @@ export function suspendHtml(o: {
     株式会社福來　TsuguAi -継-　継ぐ、を身近な経営判断に<br>${APP_URL}</div>
 </div></body></html>`;
 }
-function partnerSuspendHtml(o: { partner: string; company: string; rest: number; months: number; since: string }): string {
+function partnerSuspendHtml(o: { partner: string; company: string; rest: number; months: number; since: string; cno?: string }): string {
   return `<div style="font-family:'Hiragino Sans','Noto Sans JP',sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#18202E;">
     <div style="font-size:13px;color:#A9403D;font-weight:bold;">⏸ 担当先のご利用を一時停止しました</div>
     <div style="font-size:14px;line-height:1.95;margin-top:10px;">${esc(o.partner)} 様<br>
-      担当先の <b>${esc(o.company)}</b> は、顧問料のお支払いが <b>${o.months}か月分</b> 確認できないため、
+      担当先の <b>${esc(o.company)}</b>${o.cno ? `（お客様番号 ${esc(cnoFmt(o.cno))}）` : ""} は、顧問料のお支払いが <b>${o.months}か月分</b> 確認できないため、
       <b>${esc(jaDate(o.since))}から TsuguAi のご利用を一時停止</b>しました（未入金 ${yen(o.rest)}）。<br>
       社長には、内訳とお振込先をお送りしています。お振込みを確認しだい、自動で再開します。
       次のご連絡のときに、ひとことお声がけをお願いします。</div>
@@ -455,6 +475,7 @@ async function sendDunning(sb: ReturnType<typeof createClient>, uid: string, not
           debitContinues: dm.data?.status === "registered",
           ask,
           stopNote,
+          cno: await custNo(sb, n.customer_id),
         }),
       }),
     });
@@ -483,10 +504,10 @@ export function issuerOf(v: Record<string, unknown> | null | undefined): Issuer 
 }
 export function invoiceHtml(o: {
   company: string; contact: string; invs: DInv[]; bank: string; no: string; issued: string;
-  period: string; issuer: Issuer; ask: string;
+  period: string; issuer: Issuer; ask: string; cno?: string;
 }): string {
-  const to = [o.company ? `${esc(o.company)} 御中` : "", o.contact ? `${esc(o.contact)} 様` : ""]
-    .filter(Boolean).join("<br>") || "ご担当者様";
+  const to = ([o.company ? `${esc(o.company)} 御中` : "", o.contact ? `${esc(o.contact)} 様` : ""]
+    .filter(Boolean).join("<br>") || "ご担当者様") + cnoLine(o.cno);
   const pm = /^(\d{4})-(\d{2})$/.exec(o.period);
   const ym = pm ? `${Number(pm[1])}年${Number(pm[2])}月分` : "";
   const sub = o.invs.reduce((t, x) => t + (Number(x.amount_ex) || 0), 0);
@@ -610,6 +631,7 @@ async function sendInvoice(sb: ReturnType<typeof createClient>, uid: string, mai
           contact: p.data?.contact_name || p.data?.full_name || "",
           invs, bank, no: m.invoice_no, issued: m.issued_on, period: m.period,
           issuer: issuerOf(rates), ask,
+          cno: await custNo(sb, m.customer_id),
         }),
       }),
     });
@@ -662,6 +684,7 @@ async function suspendNotify(sb: ReturnType<typeof createClient>): Promise<Respo
     }
     const u = await sb.auth.admin.getUserById(cid);
     const email = u.data?.user?.email ?? "";
+    const cno = await custNo(sb, cid);
     const send = async (to: string, subject: string, html: string) => {
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
@@ -674,7 +697,7 @@ async function suspendNotify(sb: ReturnType<typeof createClient>): Promise<Respo
       if (!email) throw new Error("登録のメールアドレスがありません");
       await send(email, "【TsuguAi -継-】ご利用の一時停止のお知らせ", suspendHtml({
         company: pr.data?.company_name ?? "", contact: pr.data?.contact_name || pr.data?.full_name || "",
-        invs, bank, ask, since: ms,
+        invs, bank, ask, since: ms, cno,
       }));
       sent++;
     } catch (e) {
@@ -687,7 +710,7 @@ async function suspendNotify(sb: ReturnType<typeof createClient>): Promise<Respo
       try {
         const rest = invs.reduce((t, x) => t + (Number(x.amount) || 0) - (Number(x.paid_amount) || 0), 0);
         await send(pMail, `【TsuguAi -継-】担当先のご利用を一時停止しました（${pr.data?.company_name ?? ""}）`,
-          partnerSuspendHtml({ partner: pName, company: pr.data?.company_name ?? "", rest, months: cnt[cid], since: ms }));
+          partnerSuspendHtml({ partner: pName, company: pr.data?.company_name ?? "", rest, months: cnt[cid], since: ms, cno }));
         await sb.from("service_suspensions").update({ partner_notified_at: new Date().toISOString() })
           .eq("customer_id", cid).eq("month", month);
       } catch (e) {

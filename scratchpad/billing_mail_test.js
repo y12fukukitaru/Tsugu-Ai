@@ -88,6 +88,7 @@ function make(db, mails, opts) {
   call.stop = mod.exports.stopNoteFor;
   call.inv = mod.exports.invoiceHtml;
   call.iss = mod.exports.issuerOf;
+  call.cno = mod.exports.cnoFmt;
   call.cron = async (body, secret) => {
     const res = await handler({ method: 'POST', headers: { get: (k) => (k === 'x-cron-secret' ? secret : null) }, json: async () => body });
     return { status: res.status, body: JSON.parse(res.body) };
@@ -247,6 +248,7 @@ function make(db, mails, opts) {
     const r = await call.cron({ action: 'suspend_notify' }, 'cs');
     ok('毎朝：止めた方とその担当パートナーへ知らせる', r.body.ok && r.body.notified === 1 && mails.length === 2 && mails[0].to[0] === 'c1@x.jp' && mails[1].to[0] === 'p1@x.jp');
     ok('毎朝：ご本人には内訳・お願い額・お振込先・再開のこと', /ご利用の一時停止のお知らせ/.test(mails[0].subject) && /148,500円/.test(mails[0].html) && /カ）フクキタル/.test(mails[0].html) && /お振込みを確認しだい、すぐに再開します/.test(mails[0].html));
+    ok('毎朝：お客様番号が無ければ載せない（番号の SQL がまだでも送る）', !/お客様番号/.test(mails[0].html));
     ok('毎朝：担当パートナーには会社名・月数・金額', /担当先のご利用を一時停止しました/.test(mails[1].subject) && /一社/.test(mails[1].html) && /3か月分/.test(mails[1].html));
     const rec = db.service_suspensions[0];
     ok('毎朝：知らせた記録（ご本人・担当）', rec && !!rec.notified_at && !!rec.partner_notified_at && rec.month === today.slice(0, 7));
@@ -267,6 +269,7 @@ function make(db, mails, opts) {
       db.profiles.push({ id: 'p1', role: 'consultant', full_name: '担当 一郎' });
       db.profiles[0].consultant_id = 'p1';
       db.tokens.tP = 'p1';
+      db.profiles[0].customer_no = 'C482719531';
       db.app_settings[0].value['bl-iss-name'] = '株式会社福來';
       db.app_settings[0].value['bl-iss-addr'] = '広島県広島市中区〇〇1-2-3';
       db.invoices.push(
@@ -293,6 +296,7 @@ function make(db, mails, opts) {
       ok('請求書：お支払期日（いちばん早いもの）・お振込先・依頼人名', /お支払期日　<b style="color:#A9403D;">2026年12月27日/.test(h) && /カ）フクキタル/.test(h) && /ご依頼人名をご契約の会社名/.test(h));
       ok('請求書：発行者（社名・所在地・電話）・登録番号は空なら載せない', /株式会社福來<\/b>/.test(h) && /広島県広島市中区〇〇1-2-3/.test(h) && /TEL 082-548-2224/.test(h) && !/登録番号/.test(h));
       ok('請求書：問い合わせ先は担当パートナー', /担当パートナー（担当 一郎・p1@x\.jp）/.test(h));
+      ok('請求書：お客様番号を宛名の下に（区切って）', /お客様番号　C-4827-1953-1/.test(h));
       const rec = db.invoice_mails[0];
       ok('請求書：送った記録（日時・回数・送信中を外す）', !!rec.mailed_at && rec.mail_count === 1 && rec.sending_at === null && rec.mail_error === null);
       await call('tA', { action: 'invoice', mail_id: 'im1' });
@@ -313,6 +317,7 @@ function make(db, mails, opts) {
     }
     {
       const call = make(fresh(), []);
+      ok('お客様番号の区切り', call.cno('C482719531') === 'C-4827-1953-1' && call.cno('P123456782') === 'P-1234-5678-2' && call.cno('') === '' && call.cno('x') === 'x');
       ok('発行者：空なら社名と電話の既定', JSON.stringify(call.iss({})) === JSON.stringify({ name: '株式会社福來', addr: '', tel: '082-548-2224', tno: '' }));
       ok('発行者：登録番号は T＋13桁のときだけ', call.iss({ 'bl-iss-tno': 'T1234567890123' }).tno === 'T1234567890123' && call.iss({ 'bl-iss-tno': '1234' }).tno === '');
       const h = call.inv({ company: '', contact: '', invs: [{ kind: 'advisory', period: '2026-12', title: 'x', amount_ex: 45000, tax: 4500, amount: 49500, due_on: '2026-12-27' }], bank: '', no: '1', issued: '2026-12-01', period: '2026-12', issuer: call.iss({ 'bl-iss-tno': 'T1234567890123', 'bl-iss-addr': '<script>' }), ask: '運営' });

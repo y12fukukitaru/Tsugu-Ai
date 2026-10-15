@@ -2178,7 +2178,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261015-07';
+  var APP_BUILD='20261015-08';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -3212,7 +3212,7 @@
     var labelOf={}; all.forEach(function(x){ labelOf[x[0]]=x[1]; });
     var roleName={customer:'顧客',consultant:'パートナー',admin:'運営'}[r]||r;
 
-    var h='<div style="font-size:.71875rem;color:#94A2B6;margin-bottom:12px;">この端末での表示設定です。ログインしている方ごとに保存されます。</div>';
+    var h=pnoMineHtml(r)+'<div style="font-size:.71875rem;color:#94A2B6;margin-bottom:12px;">この端末での表示設定です。ログインしている方ごとに保存されます。</div>';
     // 表示テーマ
     h+='<div style="font-size:.8125rem;font-weight:700;color:var(--navy);margin:4px 0 8px;">表示</div>';
     h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--softline);">'
@@ -4006,14 +4006,14 @@
         +'<div style="font-size:.75rem;color:#94A2B6;margin:0 0 10px;">資金繰りスコア低下・接触切れ・ステージ停滞・担当未割当を自動で抽出します。担当パートナーへの指示にお使いください。</div>'
         +'<div id="adm-risk">読み込み中...</div></div>'
       +'<div class="panel" id="sec-fde"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">パートナー 一覧・稼働モニタ<span class="ghost" style="font-size:.6875rem;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
-        +'<input id="adm-fde-search" class="searchbox" style="margin-top:8px;" placeholder="🔍 名前・メールアドレスで検索" oninput="renderAdmFde()">'
+        +'<input id="adm-fde-search" class="searchbox" style="margin-top:8px;" placeholder="🔍 名前・メールアドレス・パートナー番号で検索" oninput="renderAdmFde()">'
         +'<div id="adm-fde" style="margin-top:10px;">読み込み中...</div>'
         +'<div style="font-size:.6875rem;color:#94A2B6;margin-top:8px;line-height:1.7;">'
           +'役割（顧客／パートナー／運営）の変更は、<b>「運営メンバー」メニュー</b>の'
           +'「アカウントと役割の管理」から行えます。登録コードを使わずに、あとから切り替えられます。</div></div>'
       +(adminCanSee('sec-ep')?epPanelHtml(true):'')
       +'<div class="panel" id="sec-cust"><div class="ph" style="display:flex;align-items:center;justify-content:space-between;">顧客 一覧・管理<span class="ghost" style="font-size:.6875rem;font-weight:400;" onclick="loadAdmin()">↺ 更新</span></div>'
-        +'<input id="adm-cust-search" class="searchbox" style="margin-top:8px;" placeholder="🔍 会社名・メールアドレスで検索" oninput="renderAdmCust()">'
+        +'<input id="adm-cust-search" class="searchbox" style="margin-top:8px;" placeholder="🔍 会社名・メールアドレス・顧客番号で検索" oninput="renderAdmCust()">'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px;" id="adm-cust-filterbar">'
           +'<button class="sbtn on" data-f="all" onclick="setAdmCustFilter(\'all\',this)">すべて</button>'
           +'<button class="sbtn" data-f="unassigned" onclick="setAdmCustFilter(\'unassigned\',this)">担当未割当</button>'
@@ -4204,7 +4204,7 @@
         +'<div id="bl-tab-partners" class="hidden">'
         +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">'
           +'<div class="ph" style="font-size:.8125rem;margin:0;flex:1;">パートナー別 月額内訳</div>'
-          +'<input id="bl-p-search" class="inp2" style="width:200px;" placeholder="🔍 名前で絞り込み" oninput="renderAdmBilling()">'
+          +'<input id="bl-p-search" class="inp2" style="width:200px;" placeholder="🔍 名前・番号で絞り込み" oninput="renderAdmBilling()">'
         +'</div>'
         +'<div id="bl-detail" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
@@ -4212,7 +4212,7 @@
         +'<div id="bl-tab-customers" class="hidden">'
         +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">'
           +'<div class="ph" style="font-size:.8125rem;margin:0;flex:1;">顧客別 顧問料（プラン別）</div>'
-          +'<input id="bl-c-search" class="inp2" style="width:200px;" placeholder="🔍 会社名で絞り込み" oninput="renderAdmBilling()">'
+          +'<input id="bl-c-search" class="inp2" style="width:200px;" placeholder="🔍 会社名・番号で絞り込み" oninput="renderAdmBilling()">'
         +'</div>'
         +'<div id="bl-cust" style="margin-top:4px;">読み込み中...</div>'
         +'</div>'
@@ -4659,7 +4659,7 @@
     var q=(($('adm-fde-search')||{}).value||'').trim().toLowerCase();
     var rows=fdes.filter(function(u){
       if(!q) return true;
-      return (u.contact_name||'').toLowerCase().indexOf(q)>=0 || (u.company_name||'').toLowerCase().indexOf(q)>=0 || (u.email||'').toLowerCase().indexOf(q)>=0;
+      return (u.contact_name||'').toLowerCase().indexOf(q)>=0 || (u.company_name||'').toLowerCase().indexOf(q)>=0 || (u.email||'').toLowerCase().indexOf(q)>=0 || pnoHit(u.partner_no, q);
     });
     if(!rows.length){ fb.innerHTML='<div style="font-size:.75rem;color:#94A2B6;">該当するパートナーがありません。</div>'; return; }
     rows.sort(function(a,b){ return (ADM_CACHE.clientCount[b.id]||0)-(ADM_CACHE.clientCount[a.id]||0); });
@@ -4674,6 +4674,7 @@
       var stalledTag=stalled?'<span class="tag red">放置疑い '+stalled+'社</span>':'';
       h+='<div class="clcard" style="cursor:default;">'
         +'<div class="cl-top"><span class="cl-nm">'+esc(u.contact_name||u.company_name||u.email)+'</span>'
+        +pnoTag(u.partner_no)
         +(u.fde_rank?'<span class="tag blue">'+esc(u.fde_rank)+'</span>':'<span class="tag gray">ランク未設定</span>')
         +epBadgeOf(u.id, true)
         +'<span class="tag '+(nc?'green':'gray')+'">担当 '+nc+'社</span>'
@@ -4696,7 +4697,7 @@
     if(!custs.length){ cb.innerHTML='<div style="font-size:.75rem;color:#94A2B6;">顧客はまだいません。</div>'; return; }
     var q=(($('adm-cust-search')||{}).value||'').trim().toLowerCase();
     var rows=custs.filter(function(u){
-      if(q && (u.company_name||'').toLowerCase().indexOf(q)<0 && (u.contact_name||'').toLowerCase().indexOf(q)<0 && (u.email||'').toLowerCase().indexOf(q)<0) return false;
+      if(q && (u.company_name||'').toLowerCase().indexOf(q)<0 && (u.contact_name||'').toLowerCase().indexOf(q)<0 && (u.email||'').toLowerCase().indexOf(q)<0 && !pnoHit(u.customer_no, q)) return false;
       if(ADM_CUST_FILTER==='unassigned' && u.consultant_id) return false;
       return true;
     });
@@ -4719,7 +4720,7 @@
         +'</select>';
       h+='<div class="clcard" style="cursor:default;">'
         +'<div class="cl-top"><span class="cl-nm">'+esc(u.company_name||u.contact_name||u.email)+'</span>'
-        +'<span class="tag gray">ステージ'+(u.stage||1)+'</span>'+fdeTag+planTag(u)+'</div>'
+        +pnoTag(u.customer_no)+'<span class="tag gray">ステージ'+(u.stage||1)+'</span>'+fdeTag+planTag(u)+'</div>'
         +'<div class="cl-em">'+esc(u.email)+'</div>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;">'
           +'<span style="font-size:.6875rem;color:#5A6981;">担当</span>'+assignSel
@@ -5147,10 +5148,10 @@
       if(!fdes.length){ db.innerHTML='<div style="font-size:.75rem;color:#94A2B6;">パートナーがまだいません。</div>'; }
       else {
         var rows=fdes.map(function(f){ var n=cc[f.id]||0; var pi=partnerInfo[f.id]; var tp=partnerTierPct(pi.rank,pi.clients,cfg);
-          return {name:(f.contact_name||f.company_name||f.email), rank:pi.rank, n:n, hd:pi.hd, tp:tp, fee:pbase+pcl*n}; });
+          return {name:(f.contact_name||f.company_name||f.email), pno:f.partner_no||'', rank:pi.rank, n:n, hd:pi.hd, tp:tp, fee:pbase+pcl*n}; });
         rows.sort(function(a,b){ return b.fee-a.fee; });
         var pq=((($('bl-p-search')||{}).value)||'').trim().toLowerCase();
-        var shown=pq ? rows.filter(function(r){ return String(r.name||'').toLowerCase().indexOf(pq)>=0; }) : rows;
+        var shown=pq ? rows.filter(function(r){ return String(r.name||'').toLowerCase().indexOf(pq)>=0 || pnoHit(r.pno, pq); }) : rows;
         var h='<div style="font-size:.71875rem;color:#94A2B6;margin-bottom:2px;">'+(pq?('該当 '+shown.length+'名 / 全'+rows.length+'名'):('全'+rows.length+'名'))+'</div>';
         if(!shown.length){ h+='<div style="font-size:.75rem;color:#94A2B6;padding:8px 0;">この条件に該当するパートナーはいません。</div>'; }
         shown.forEach(function(r){
@@ -5170,7 +5171,7 @@
       else {
         custRows.sort(function(a,b){ return b.pct-a.pct; });
         var cq=((($('bl-c-search')||{}).value)||'').trim().toLowerCase();
-        var cshown=cq ? custRows.filter(function(r){ return String(r.c.company_name||r.c.email||'').toLowerCase().indexOf(cq)>=0; }) : custRows;
+        var cshown=cq ? custRows.filter(function(r){ return String(r.c.company_name||r.c.email||'').toLowerCase().indexOf(cq)>=0 || pnoHit(r.c.customer_no, cq); }) : custRows;
         var ch='<div style="font-size:.71875rem;color:#94A2B6;margin-bottom:2px;">'+(cq?('該当 '+cshown.length+'社 / 全'+custRows.length+'社'):('全'+custRows.length+'社'))+'</div>';
         if(!cshown.length){ ch+='<div style="font-size:.75rem;color:#94A2B6;padding:8px 0;">この条件に該当する顧客はいません。</div>'; }
         cshown.forEach(function(r){
@@ -5394,6 +5395,8 @@
           +'<div id="act-list" style="margin-top:6px;">読み込み中...</div>'
         +'</div>'
         +'<div class="panel" id="sec-billpay"><div class="ph"><span class="ph-t"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/><path d="M6.5 14.5h3"/></svg>お支払い</span></div>'
+          //  お客様番号（お振込み・お問い合わせのときに）
+          +pnoMineHtml('customer')
           //  未入金があることは、まずご本人が知るべき。督促の前に、
           //  ご自身の画面で気づいていただけるようにする
           +'<div id="my-unpaid"></div>'
@@ -5631,7 +5634,7 @@
           +'<div id="cl-contracts"></div>'
           +'<div id="cl-hero" class="sumchips"></div>'
           +'<div style="font-size:.71875rem;color:#94A2B6;margin:4px 0 6px;">💡 登録前のお客様との商談には <span style="color:#2C5DA8;font-weight:700;cursor:pointer;" onclick="salesGo()"><svg class="ico inl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8.5" y="2.5" width="7" height="4" rx="1.2"/><path d="M15.5 4.5H18a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2h2.5"/><path d="M8.5 11h7M8.5 15h4.5"/></svg>営業ツール（課題ヒアリング診断）→</span> が使えます。</div>'
-          +'<input id="cl-search" class="searchbox" placeholder="🔍 会社名・メールアドレスで検索" oninput="renderClientList()">'
+          +'<input id="cl-search" class="searchbox" placeholder="🔍 会社名・メールアドレス・顧客番号で検索" oninput="renderClientList()">'
           +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px;" id="cl-filterbar">'
             +'<button class="sbtn on" data-f="all" onclick="setClFilter(\'all\',this)">すべて</button>'
             +'<button class="sbtn" data-f="unread" onclick="setClFilter(\'unread\',this)">未読あり</button>'
@@ -7051,6 +7054,7 @@
     }
     var nextMeet={};
     meets.forEach(function(m){ if(!nextMeet[m.customer_id]) nextMeet[m.customer_id]=m; }); // 最も近い1件
+    await pnoLoad(clients.map(function(c){ return c.id; }));   // 顧客番号（列が無ければ出さないだけ）
     CL_CACHE={clients:clients,cnt:cnt,lastMsg:lastMsg,unread:unread,funding:funding,pays:pays,repDrafts:repDrafts,maDeals:maDeals,maPulses:maPulses,interests:interests,pdca:pdcaItems,nextMeet:nextMeet,acctFin:acctFin};
     var totalUnread=0; clients.forEach(function(c){ totalUnread+=(unread[c.id]||0); });
     UNREAD.total=totalUnread; UNREAD.perClient=unread; applyNotifBadges();
@@ -8357,7 +8361,7 @@
     if(!clients.length){ box.innerHTML='<div style="font-size:.75rem;color:#94A2B6;">まだ担当顧客がいません。右上の「＋ 顧客を追加」から、顧客のメールアドレスを登録してください。</div>'; return; }
     var q=(($('cl-search')||{}).value||'').trim().toLowerCase();
     var rows=clients.filter(function(c){
-      if(q && (c.company_name||'').toLowerCase().indexOf(q)<0 && (c.email||'').toLowerCase().indexOf(q)<0) return false;
+      if(q && (c.company_name||'').toLowerCase().indexOf(q)<0 && (c.email||'').toLowerCase().indexOf(q)<0 && !pnoHit(pnoOf(c.id,'c'), q)) return false;
       if(CL_FILTER==='unread' && !CL_CACHE.unread[c.id]) return false;
       if(CL_FILTER==='share' && !CL_CACHE.cnt[c.id]) return false;
       return true;
@@ -8373,7 +8377,7 @@
       var k=CL_CACHE.cnt[c.id]||{auto:0,mna:0,ins:0};
       var un=CL_CACHE.unread[c.id]||0;
       var lm=CL_CACHE.lastMsg[c.id];
-      var tags=(SUB_IDS[c.id]?'<span class="tag blue">サブ担当</span>':'')
+      var tags=pnoTag(pnoOf(c.id,'c'))+(SUB_IDS[c.id]?'<span class="tag blue">サブ担当</span>':'')
         +'<span class="tag gray">ステージ'+(c.stage||1)+'・'+(STAGE_NAMES[c.stage||1]||'')+'</span>';
       //  伴走の1年のどこにいるか。契約からの日数で決まる（経営者の画面と同じ言葉）
       tags+=planTag(c);
@@ -9013,6 +9017,53 @@
       +'</div>';
   }
 
+  // ===== 顧客番号・パートナー番号（2026-10-15）=====
+  //  C（顧客）と P（パートナー）は番号の帯から別。C＋8桁＋検査数字。8桁は乱数なので、
+  //  番号から登録の順番や件数は分からない。付けるのも守るのも DB（20261015040000_party_numbers.sql）。
+  //  画面は、見せることと探すことだけ。番号の列がまだ無い環境でも、ほかの読み込みは止めない
+  var PNO={};   // id → { c:顧客番号, p:パートナー番号 }
+  function pnoFmt(no){
+    var m=/^([CP])(\d{4})(\d{4})(\d)$/.exec(String(no||''));
+    return m ? m[1]+'-'+m[2]+'-'+m[3]+'-'+m[4] : String(no||'');
+  }
+  function pnoKey(v){ return String(v||'').toUpperCase().replace(/[^0-9A-Z]/g,''); }
+  //  探す欄に番号（の一部）が入っていれば当てる。ハイフン・空白・大小は気にしない。3文字から
+  function pnoHit(no, q){ var k=pnoKey(q); return k.length>=3 && !!no && pnoKey(no).indexOf(k)>=0; }
+  function pnoTag(no){
+    if(!no) return '';
+    return '<span class="tag gray" style="font-size:.625rem;letter-spacing:.03em;font-variant-numeric:tabular-nums;" title="'
+      +(String(no).charAt(0)==='P'?'パートナー番号':'顧客番号')+'">'+esc(pnoFmt(no))+'</span>';
+  }
+  function pnoOf(id, kind){
+    var x=PNO[id]; if(x && x[kind]) return x[kind];
+    var all=(typeof ADM_CACHE!=='undefined' && ADM_CACHE && ADM_CACHE.all)||[];
+    for(var i=0;i<all.length;i++){ if(all[i].id===id) return kind==='c'?(all[i].customer_no||''):(all[i].partner_no||''); }
+    return '';
+  }
+  async function pnoLoad(ids){
+    ids=(ids||[]).filter(function(id, i, a){ return id && a.indexOf(id)===i; });
+    for(var i=0;i<ids.length;i+=200){
+      try{
+        var r=await sb.from('profiles').select('id,customer_no,partner_no').in('id', ids.slice(i, i+200));
+        if(r.error) return;
+        (r.data||[]).forEach(function(x){ PNO[x.id]={ c:x.customer_no||'', p:x.partner_no||'' }; });
+      }catch(e){ return; }
+    }
+  }
+  //  ご本人の番号（設定・お支払いの画面）
+  function pnoMineHtml(role){
+    var me=window.__prof||{};
+    var no=(role==='consultant') ? me.partner_no : (role==='customer' ? me.customer_no : '');
+    if(!no || (me.role||'customer')!==role) return '';
+    var lbl=(role==='consultant')?'パートナー番号':'お客様番号';
+    return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:12px;background:var(--soft);">'
+      +'<span style="font-size:.71875rem;color:var(--muted);">'+lbl+'</span>'
+      +'<b style="font-size:.9375rem;color:var(--navy);letter-spacing:.06em;font-variant-numeric:tabular-nums;">'+esc(pnoFmt(no))+'</b>'
+      +'<span style="font-size:.65625rem;color:var(--muted);line-height:1.6;">'
+        +(role==='consultant'?'運営へのお問い合わせ・お振込みの照合に使います。':'お問い合わせ・お振込みのときにお伝えください。')+'</span>'
+    +'</div>';
+  }
+
   // ===== 請求と未収（運営）=====
   //  これまでは revenue_entries（入ってきたお金）しか記録していなかった。
   //  入ってこなかったお金がどこにも出ないので、取りっぱぐれに気づけない。
@@ -9073,6 +9124,9 @@
       }catch(e){}
       //  お客様番号（口座振替の依頼書に書いていただく番号）。集金代行の CSV に載せる
       INV_ROWS.forEach(function(x){ var d=dmOf(x.customer_id); x.ref_no=d?d.ref_no:''; });
+      //  顧客番号
+      await pnoLoad(ids);
+      INV_ROWS.forEach(function(x){ x.cno=pnoOf(x.customer_id,'c'); });
       //  初回のお振込みのご案内メール（送ったか）。初期導入費と、一緒に入れた翌月分の顧問料
       var sids=INV_ROWS.filter(function(x){ return x.kind==='setup'||x.kind==='advisory'; }).map(function(x){ return x.id; });
       if(sids.length){
@@ -9115,7 +9169,7 @@
   }
   //  集金代行へ渡す「誰に・いくら・いつ」。口座はここに無い
   function invCsvRows(rows, method){
-    var head=['顧客ID','会社名','件名','対象月','金額（円・税込）','支払期日','状態'];
+    var head=['顧客ID','顧客番号','会社名','件名','対象月','金額（円・税込）','支払期日','状態'];
     //  口座振替は、依頼書に書いていただいたお客様番号で集金代行とひも付ける
     if(method==='transfer') head.push('お客様番号');
     var out=[head];
@@ -9125,7 +9179,7 @@
       if(k!==method) return;
       var rest=(Number(x.amount)||0)-(Number(x.paid_amount)||0);
       if(rest<=0) return;
-      var line=[x.customer_id||'', x.name||'', x.title||'', x.period||'', String(Math.round(rest)), x.due_on||'',
+      var line=[x.customer_id||'', x.cno||'', x.name||'', x.title||'', x.period||'', String(Math.round(rest)), x.due_on||'',
                 x.status==='partial'?'一部入金':'未入金'];
       if(method==='transfer') line.push(x.ref_no||'');
       out.push(line);
@@ -9184,7 +9238,7 @@
         +'<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">'
           +invStatusTag(x.status)
           +(x.status==='void'?'':invMethodTag(x.method))
-          +'<b style="font-size:.8125rem;color:var(--ink);">'+esc(x.name||'')+'</b>'
+          +'<b style="font-size:.8125rem;color:var(--ink);">'+esc(x.name||'')+'</b>'+pnoTag(x.cno)
           +'<span style="font-size:.6875rem;color:var(--muted);">'+esc(x.title||'')+'　期日 '+esc(x.due_on||'')+'</span>'
           +'<span style="flex:1;"></span>'
           +'<b style="font-size:.8125rem;color:'+(x.status==='paid'?'#27684A':(x.status==='void'?'#94A2B6':'#A9403D'))+';">'
@@ -9551,7 +9605,7 @@
           ? '<span style="color:#A9403D;">送れませんでした（'+esc(m.mail_error)+'）</span>'
           : '<span style="color:var(--muted);">まだ送っていません</span>';
       return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.6875rem;padding:5px 0;border-top:1px solid var(--line);">'
-        +'<b style="color:var(--ink);font-size:.75rem;">'+esc(c.name)+'</b>'
+        +'<b style="color:var(--ink);font-size:.75rem;">'+esc(c.name)+'</b>'+pnoTag(c.rows[0]&&c.rows[0].cno)
         +'<span style="color:var(--muted);">'+c.rows.length+' 件・'+yen(c.rest)+'</span>'+st
         +'<span style="flex:1;"></span>'
         +'<button class="ghost" style="font-size:.6875rem;border:1px solid var(--line);border-radius:7px;padding:4px 9px;" onclick="invMailOne(\''+esc(c.id)+'\')">'
@@ -9781,6 +9835,7 @@
       if(r.error) INV_OD_ERR=r.error.message; else INV_OD=r.data||[];
     }catch(e){ INV_OD_ERR=String(e&&e.message||e); }
     await dunLoadLast(INV_OD.map(function(x){ return x.customer_id; }));
+    await pnoLoad(INV_OD.map(function(x){ return x.customer_id; }));
     renderInvOverdue();
   }
   function renderInvOverdue(){
@@ -9813,7 +9868,7 @@
           +(c.held?'<span class="tag red" style="font-size:.625rem;">3か月滞納・請求を止めています</span>':'')
           +(dunSuspended(c)?'<span class="tag red" style="font-size:.625rem;">⏸ ご利用を一時停止中</span>':'')
           +(SUS_LIFT[c.id]?'<span class="tag gold" style="font-size:.625rem;">今月は停止を解いています</span>':'')
-          +'<b style="font-size:.8125rem;color:var(--ink);">'+esc(x0.customer_name||'')+'</b>'
+          +'<b style="font-size:.8125rem;color:var(--ink);">'+esc(x0.customer_name||'')+'</b>'+pnoTag(pnoOf(c.id,'c'))
           +'<span style="font-size:.6875rem;color:var(--muted);">'+esc(x0.customer_email||'')+'</span>'
           +'<span style="flex:1;"></span>'
           +'<b style="font-size:.8125rem;color:#A9403D;">'+yen(c.rest)+'</b>'
@@ -15265,7 +15320,8 @@
     setTimeout(function(){ loadInsDiagList(custId); }, 300);
     var box=$('cl-detail'); if(!box)return;
     var titleTxt=(company && company.length)?(company+'（'+email+'）'):email;
-    var mt=$('cl-modal-title'); if(mt) mt.textContent=titleTxt;
+    var cno=pnoOf(custId,'c');
+    var mt=$('cl-modal-title'); if(mt) mt.textContent=titleTxt+(cno?'　'+pnoFmt(cno):'');
     openClientModal();
     // ---- 常時表示ヘッダー：ステージ＋レポート ----
     //  法人に所属している方には、この会社に同じ法人の誰が関わっているかを先に出す。
