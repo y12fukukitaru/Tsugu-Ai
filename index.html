@@ -857,20 +857,29 @@
   /* 継ナビくんの TODO（2026-09-30 作り直し）
      上から「今日やること」の要約 → 1行で足す欄 → 期限ごとの束 → 今日済んだこと。
      束は色で分ける：期限切れ=赤／今日=青緑／明日・今週=紺／それ以降・期限なし=灰 */
-  .todo-sum{display:flex;gap:14px;align-items:center;border-radius:14px;padding:13px 15px;margin-bottom:10px;
-    background:linear-gradient(135deg,#0F2F3A 0%,#147A6E 100%);color:#fff;box-shadow:0 8px 22px rgba(20,122,110,.22);}
-  .todo-sum .big{font-family:var(--f-head);font-size:2.125rem;font-weight:600;line-height:1;font-feature-settings:'tnum';}
-  .todo-sum .big small{font-size:.75rem;font-weight:500;margin-left:3px;opacity:.85;}
-  .todo-sum .lab{font-size:.6875rem;letter-spacing:.08em;opacity:.85;margin-bottom:5px;}
-  .todo-sum .sub{font-size:.6875rem;opacity:.9;margin-top:5px;}
-  .todo-sum .sub b{color:#FFD3CF;}
-  .todo-bar{height:6px;border-radius:99px;background:rgba(255,255,255,.22);overflow:hidden;margin-top:8px;}
-  .todo-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#E6C77E,#FFF1C9);transition:width .4s ease;}
-  .todo-sum .chips{display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end;flex:1;min-width:0;}
-  .todo-sum .chips button{border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);color:#fff;border-radius:99px;
-    font:inherit;font-size:.6875rem;padding:3px 10px;cursor:pointer;white-space:nowrap;}
+  .todo-sum{display:flex;gap:14px;align-items:center;border-radius:16px;padding:14px 15px;margin-bottom:10px;
+    background:radial-gradient(120% 140% at 100% 0%,rgba(230,199,126,.22),rgba(230,199,126,0) 55%),linear-gradient(135deg,#0F2F3A 0%,#147A6E 100%);color:#fff;
+    box-shadow:0 10px 26px rgba(20,122,110,.24),inset 0 1px 0 rgba(255,255,255,.12);}
+  /* 今日やることの輪（2026-10-15）：輪の伸びが済んだ割合、中の数が残り */
+  .todo-ring{position:relative;flex:none;width:72px;height:72px;}
+  .todo-ring svg{width:100%;height:100%;transform:rotate(-90deg);}
+  .todo-ring circle{fill:none;stroke-width:6;}
+  .todo-ring .bg{stroke:rgba(255,255,255,.18);}
+  .todo-ring .fg{stroke:url(#todo-ring-g);stroke-linecap:round;transition:stroke-dashoffset .5s ease;}
+  .todo-ring .num{position:absolute;inset:0;display:flex;align-items:baseline;justify-content:center;padding-top:20px;}
+  .todo-ring .num b{font-family:'DM Sans',var(--f-head);font-size:1.75rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
+  .todo-ring .num small{font-size:.65625rem;font-weight:600;margin-left:2px;opacity:.85;}
+  .todo-sum-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;}
+  .todo-sum .lab{font-size:.75rem;font-weight:700;letter-spacing:.1em;opacity:.92;}
+  .todo-sum .sub{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;font-size:.71875rem;opacity:.95;}
+  .todo-sum .sub b.done{font-family:'DM Sans',sans-serif;font-size:.875rem;color:#FFE6A8;}
+  .todo-sum .sub .warn{display:inline-flex;align-items:center;gap:5px;font-weight:700;color:#FFD9D4;}
+  .todo-sum .chips{display:flex;flex-wrap:wrap;gap:5px;min-width:0;}
+  .todo-sum .chips button{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.26);background:rgba(255,255,255,.1);color:#fff;border-radius:99px;
+    font:inherit;font-size:.71875rem;font-weight:600;padding:3px 4px 3px 10px;cursor:pointer;white-space:nowrap;transition:background .15s;}
+  .todo-sum .chips button .cnt{min-width:19px;height:19px;font-size:.65625rem;}
   .todo-sum .chips button:hover{background:rgba(255,255,255,.2);}
-  .todo-sum .chips button.over{border-color:rgba(255,160,150,.7);background:rgba(169,64,61,.35);}
+  .todo-sum .chips button.over{border-color:rgba(255,170,160,.75);background:rgba(169,64,61,.32);}
   .todo-add{border:1px solid var(--line);border-radius:12px;padding:8px 9px;margin-bottom:12px;background:var(--card);transition:border-color .15s,box-shadow .15s;}
   .todo-add:focus-within{border-color:#9CCFC6;box-shadow:0 0 0 3px rgba(20,122,110,.10);}
   .todo-add.edit{border-color:#147A6E;box-shadow:0 0 0 3px rgba(20,122,110,.14);}
@@ -912,8 +921,10 @@
   .todo-more .tf-hint{font-size:.6875rem;color:var(--muted);line-height:1.6;margin-top:6px;}
   .todo-more .tf-time{display:flex;gap:6px;align-items:stretch;}
   .todo-chip{position:relative;}
-  .todo-chip-n{font-style:normal;display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;border-radius:8px;background:#C39B3F;color:#fff;font-size:.625rem;font-weight:700;margin-left:4px;padding:0 4px;}
-  .todo-chip.on .todo-chip-n{background:#fff;color:#147A6E;}
+  .todo-chip-n{font-style:normal;display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:99px;
+    background:linear-gradient(180deg,#DDB862,#B38A2E);color:#fff;font:700 .625rem/1 'DM Sans','Noto Sans JP',sans-serif;font-variant-numeric:tabular-nums;margin-left:5px;padding:0 5px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.3);vertical-align:1px;}
+  .todo-chip.on .todo-chip-n{background:#fff;color:#147A6E;box-shadow:none;}
   .td-date-lab{color:var(--navy);font-size:.78125rem;letter-spacing:0;}
   /* 期限の暦：今日＝紺の枠／やることがある日＝緑／期限切れが残っている日＝赤／選んだ日＝塗りつぶし */
   .todo-cal{border:1.5px solid #BFD9D3;border-radius:12px;padding:8px;background:#fff;}
@@ -953,7 +964,7 @@
   .todo-grp{margin:14px 0 4px;}
   .todo-gh{display:flex;align-items:center;gap:7px;font-size:.71875rem;font-weight:700;letter-spacing:.04em;margin:0 2px 6px;color:var(--gc,var(--navy));}
   .todo-gh::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--gc,var(--navy));flex:none;}
-  .todo-gh .n{font-weight:600;color:var(--muted);font-size:.6875rem;}
+  .todo-gh .n{min-width:20px;height:20px;font-size:.6875rem;}
   .todo-gh .hint{margin-left:auto;font-weight:400;font-size:.65625rem;color:var(--muted);letter-spacing:0;}
   .todo-it{position:relative;display:flex;gap:10px;align-items:flex-start;padding:9px 10px 9px 12px;border:1px solid var(--softline);border-radius:11px;margin-bottom:6px;background:var(--card);
     transition:box-shadow .15s,transform .15s,opacity .25s,background .15s;}
@@ -1063,7 +1074,7 @@
   body.dark .todo-due.tomorrow{color:#9DB9E8;}
   body.dark .todo-cu{color:#E6C77E;}
   body.dark .todo-sum{background:linear-gradient(135deg,#0B1E24 0%,#0F5C53 100%);}
-  @media (prefers-reduced-motion: reduce){ .todo-it,.todo-ck,.todo-bar i{transition:none;} }
+  @media (prefers-reduced-motion: reduce){ .todo-it,.todo-ck,.todo-ring .fg{transition:none;} }
   .cal-lg{display:flex;flex-wrap:wrap;gap:4px 11px;margin-top:10px;font-size:.6875rem;color:var(--muted);align-items:center;line-height:1.5;}
   .cal-lg span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
   .cal-lg i{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none;}
@@ -1396,7 +1407,30 @@
   /* 呼びかけたいとき（未読・提案があるとき）はぴょこんと跳ねる */
   .knv-fab.hop{animation:knv-hop 1.1s cubic-bezier(.28,.84,.42,1) 2;}
   @keyframes knv-hop{0%,100%{transform:translateY(0) scale(1);}18%{transform:translateY(-14px) scale(1.06,.94);}36%{transform:translateY(0) scale(.96,1.04);}52%{transform:translateY(-6px) scale(1.02,.98);}70%{transform:translateY(0) scale(1);}}
-  .knv-badge{position:absolute;top:-4px;right:-4px;min-width:19px;height:19px;border-radius:99px;background:#A9403D;color:#fff;font-size:.6875rem;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #fff;}
+  /* 数字の札（2026-10-15 作り直し）：右下の継ナビくんの数字は、遠くからでも読めるよう大きく。
+     赤の濃淡と白い縁、やわらかい影。数が増えたときは、外へ広がる輪で2〜3回だけ知らせる */
+  .knv-badge{position:absolute;top:-5px;right:-5px;min-width:26px;height:26px;border-radius:99px;
+    background:linear-gradient(180deg,#F06A5F 0%,#C23B36 100%);color:#fff;font:700 .8125rem/1 'DM Sans','Noto Sans JP',sans-serif;font-variant-numeric:tabular-nums;letter-spacing:0;
+    display:flex;align-items:center;justify-content:center;padding:0 7px;border:2.5px solid #fff;
+    box-shadow:0 4px 12px rgba(194,59,54,.45),inset 0 1px 0 rgba(255,255,255,.35);text-shadow:0 1px 1px rgba(120,20,16,.35);}
+  .knv-badge::after{content:"";position:absolute;inset:-4px;border-radius:99px;border:2px solid rgba(240,106,95,.75);opacity:0;pointer-events:none;}
+  .knv-badge.ping::after{animation:knv-ping 1.6s cubic-bezier(.2,.6,.3,1) 3;}
+  @keyframes knv-ping{0%{opacity:.85;transform:scale(1);}80%,100%{opacity:0;transform:scale(1.7);}}
+  @media (max-width:600px){ .knv-badge{min-width:24px;height:24px;font-size:.75rem;top:-4px;right:-4px;} }
+  @media (prefers-reduced-motion:reduce){ .knv-badge.ping::after{animation:none;} }
+  /* 数の玉（TODO の束・内訳の札・期限の札でそろえる）。色で意味を分ける：
+     赤＝急ぎ（未読・期限切れ）／青緑＝今日・TODO／紺＝期日・対応／金＝提案・その日の数／灰＝それ以外 */
+  .cnt{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:99px;
+    font:700 .6875rem/1 'DM Sans','Noto Sans JP',sans-serif;font-variant-numeric:tabular-nums;letter-spacing:0;font-style:normal;color:#fff;
+    background:linear-gradient(180deg,#5A6981,#46546B);box-shadow:inset 0 1px 0 rgba(255,255,255,.25);}
+  .cnt.red{background:linear-gradient(180deg,#E0605A,#B63A35);box-shadow:0 1px 4px rgba(182,58,53,.35),inset 0 1px 0 rgba(255,255,255,.3);}
+  .cnt.teal{background:linear-gradient(180deg,#1C9A89,#0F6559);box-shadow:0 1px 4px rgba(15,101,89,.3),inset 0 1px 0 rgba(255,255,255,.25);}
+  .cnt.navy{background:linear-gradient(180deg,#2C4F86,#1E3A66);}
+  .cnt.blue{background:linear-gradient(180deg,#3E72BF,#2C5DA8);}
+  .cnt.gold{background:linear-gradient(180deg,#DDB862,#B38A2E);color:#fff;}
+  .cnt.gray{background:#E3E8EF;color:#46546B;box-shadow:none;}
+  .cnt.light{background:#fff;color:#0F6559;box-shadow:0 1px 3px rgba(0,0,0,.15);}
+  body.dark .cnt.gray{background:#2B3447;color:#C6D2E6;}
   /* PC版は余裕のある大きさで表示し、ヘッダーの⤢でさらに拡大できる。
      幅は「予定の週表示（7日ぶん）が横スクロール無しで収まること」で決めている。
      週表示の中身は 514px 必要で、枠線2＋余白24＋縦スクロールバー約15を足すと
@@ -1526,15 +1560,27 @@
   .knv-tabs.scroll::-webkit-scrollbar{display:none;}
   .knv-tabs.scroll button{flex:0 0 74px;scroll-snap-align:start;}
   .knv-tabs.scroll::after{content:"";flex:0 0 4px;}
-  .knv-tbadge{position:absolute;top:-6px;right:-3px;min-width:19px;height:19px;border-radius:99px;background:linear-gradient(180deg,#C8524E,#A13A37);color:#fff;font-size:.65625rem;font-weight:700;letter-spacing:0;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #0E1B33;box-shadow:0 2px 6px rgba(0,0,0,.28);}
+  .knv-tbadge{position:absolute;top:-7px;right:-4px;min-width:21px;height:21px;border-radius:99px;background:linear-gradient(180deg,#F06A5F 0%,#C23B36 100%);color:#fff;
+    font:700 .6875rem/1 'DM Sans','Noto Sans JP',sans-serif;font-variant-numeric:tabular-nums;letter-spacing:0;display:inline-flex;align-items:center;justify-content:center;padding:0 6px;
+    border:2px solid #0E1B33;box-shadow:0 3px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.3);}
+  /* TODO の数字は TODO の色（青緑）。お知らせ・メッセージの赤と見分ける */
+  #knv-todobadge{background:linear-gradient(180deg,#22A895 0%,#0F6559 100%);}
   @media (prefers-reduced-motion:reduce){ .knv-tabs button{transition:none;} .knv-tabs button:active{transform:none;} }
   .knv-body{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:12px;background:var(--bg);}
   /* 通知の内訳サマリー：何が何件あるかを開いた瞬間に見せる */
   .knv-summary{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--line);flex-shrink:0;}
-  .knv-summary button{font-family:inherit;font-size:.6875rem;font-weight:600;border-radius:99px;padding:4px 11px;cursor:pointer;border:1px solid var(--line);background:var(--soft);color:var(--muted);}
-  .knv-summary button b{color:#A9403D;}
-  .knv-summary button.gold{border-color:#EBDDB4;background:rgba(195,155,63,.09);color:#8A6A12;}
-  .knv-summary button.gold b{color:#8A6A12;}
+  /* 内訳の札（2026-10-15）：絵文字をやめ、色の点＋名前＋数の玉。押すとその場所へ */
+  .knv-summary button{display:inline-flex;align-items:center;gap:7px;font-family:inherit;font-size:.71875rem;font-weight:600;border-radius:99px;padding:4px 5px 4px 11px;cursor:pointer;
+    border:1px solid var(--line);background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(14,27,51,.06);transition:box-shadow .15s,transform .12s;}
+  .knv-summary button:hover{box-shadow:0 3px 10px rgba(14,27,51,.12);}
+  .knv-summary button:active{transform:scale(.97);}
+  .knv-summary button .dt{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none;}
+  .knv-summary button.k-red{border-color:#EFC9C5;color:#A9403D;}
+  .knv-summary button.k-amber{border-color:#EAD9AC;color:#8A6A12;}
+  .knv-summary button.k-navy .dt{background:#1E3A66;}
+  .knv-summary button.k-gold .dt{background:#C39B3F;}
+  .knv-summary button.k-teal{border-color:#BFE0DA;}
+  .knv-summary button.k-teal .dt{background:#147A6E;}
   .knv-foot{padding:10px 12px;border-top:1px solid var(--line);background:var(--card);flex-shrink:0;}
   .knv-foot .ai-sugrow{margin-bottom:8px;max-height:56px;overflow:hidden;}
   body.dark .knv-panel{background:var(--card);}
@@ -2194,7 +2240,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261015-10';
+  var APP_BUILD='20261015-11';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -11520,7 +11566,7 @@
     if(typeof knvBadgesRender==='function') knvBadgesRender();
     var nv=$('nav-unread'); if(nv){ nv.textContent=n>99?'99+':n; nv.classList.toggle('hidden', !n); }
     var nvd=$('nav-unread-d'); if(nvd){ nvd.textContent=n>99?'99+':n; nvd.classList.toggle('hidden', !n); }
-    var mb=$('knv-mbadge'); if(mb){ mb.textContent=n>9?'9+':n; mb.classList.toggle('hidden', !n); }
+    var mb=$('knv-mbadge'); if(mb){ mb.textContent=knvCnt(n); mb.classList.toggle('hidden', !n); }
     Object.keys(UNREAD.perClient||{}).forEach(function(id){
       var e=$('clb-'+id); if(!e)return; var c=UNREAD.perClient[id]||0;
       e.textContent=c?('未読 '+c):''; e.classList.toggle('hidden', !c);
@@ -19880,6 +19926,8 @@
     }catch(e){}
     renderNotifCenter();
   }
+  //  数の見せ方：99 までそのまま、それより多いと 99+（9+ では、10件と50件の違いが分からない）
+  function knvCnt(n){ n=Number(n)||0; return n>99 ? '99+' : String(n); }
   // 右下ボタンとお知らせタブのバッジ（未読・対応事項＋今日の一手の合計）
   function knvBadgesRender(){
     var bell=window.__KNV_BELL||0;
@@ -19888,9 +19936,14 @@
     //  右下のボタンには、期限が今日まで（期限切れを含む）の TODO も足す。忘れないため
     var fabN=total+(window.__KNV_MYTODO||0);
     var b=$('knv-badge');
-    if(b){ b.textContent=fabN>9?'9+':fabN; b.classList.toggle('hidden', !fabN); }
+    if(b){
+      b.textContent=knvCnt(fabN); b.classList.toggle('hidden', !fabN);
+      b.setAttribute('aria-label', fabN?('未確認 '+fabN+'件'):'');
+      //  数が増えたときだけ、外へ広がる輪で知らせる（2〜3回で止まる）
+      if(fabN>(window.__KNV_LAST||0)){ b.classList.remove('ping'); void b.offsetWidth; b.classList.add('ping'); }
+    }
     var tb=$('knv-tbadge');
-    if(tb){ tb.textContent=total>9?'9+':total; tb.classList.toggle('hidden', !total); }   // 提案もお知らせタブに居るので合計
+    if(tb){ tb.textContent=knvCnt(total); tb.classList.toggle('hidden', !total); }   // 提案もお知らせタブに居るので合計
     appBadgeSet(fabN);   // ホーム画面のアプリのアイコンにも、右下のボタンと同じ数を出す
     // 新しい知らせが増えたときだけ、右下の継ナビくんがぴょこんと跳ねて教えてくれる
     if(fabN>(window.__KNV_LAST||0)) knvHop();
@@ -19935,16 +19988,18 @@
     var h='', isAdmin=((window.__eff||'')==='admin');
     //  解約のご依頼はいちばん前に、赤で出す。問い合わせと同じ扱いにすると、
     //  件数の多い問い合わせに埋もれる。
-    if(cx && isAdmin) h+='<button style="border-color:#E8C4C2;color:#A9403D;font-weight:700;" '
-      +'onclick="knvToggle(false);goSec(\'sec-support\')">⚠ 解約のご依頼 <b>'+cx+'</b>件</button>';
-    if(px && isAdmin) h+='<button style="border-color:#EAD9AC;color:#8A6A12;font-weight:700;" '
-      +'onclick="knvToggle(false);goSec(\'sec-support\')">⚠ パートナーの契約の終了 <b>'+px+'</b>件</button>';
-    if(un)   h+='<button onclick="knvShowTab(\'notif\')">📩 未読 <b>'+un+'</b>件</button>';
+    //  札は「色の点＋名前＋数の玉」。数の玉の色で急ぎ具合が分かる（赤＝急ぎ）
+    function chip(cls, cnt, go, label, n){
+      return '<button class="'+cls+'" onclick="'+go+'"><i class="dt"></i>'+label+'<span class="cnt '+cnt+'">'+knvCnt(n)+'</span></button>';
+    }
+    if(cx && isAdmin) h+=chip('k-red', 'red', 'knvToggle(false);goSec(\'sec-support\')', '解約のご依頼', cx);
+    if(px && isAdmin) h+=chip('k-amber', 'gold', 'knvToggle(false);goSec(\'sec-support\')', 'パートナーの契約の終了', px);
+    if(un)   h+=chip('k-red', 'red', 'knvShowTab(\'notif\')', '未読', un);
     if(todo) h+=isAdmin
-      ? '<button onclick="knvToggle(false);goSec(\'sec-support\')">🛟 未対応の問い合わせ <b>'+todo+'</b>件</button>'
-      : '<button onclick="knvShowTab(\'notif\')">📌 期日・対応 <b>'+todo+'</b>件</button>';
-    if(ins)  h+='<button class="gold" onclick="knvShowTab(\'notif\')">✦ 継ナビくんの提案 <b>'+ins+'</b>件</button>';
-    if(my)   h+='<button style="border-color:#BFE0DA;color:#147A6E;font-weight:700;" onclick="knvShowTab(\'todo\')">✅ 今日までのTODO <b>'+my+'</b>件</button>';
+      ? chip('k-navy', 'navy', 'knvToggle(false);goSec(\'sec-support\')', '未対応の問い合わせ', todo)
+      : chip('k-navy', 'navy', 'knvShowTab(\'notif\')', '期日・対応', todo);
+    if(ins)  h+=chip('k-gold', 'gold', 'knvShowTab(\'notif\')', '継ナビくんの提案', ins);
+    if(my)   h+=chip('k-teal', 'teal', 'knvShowTab(\'todo\')', '今日までのTODO', my);
     box.innerHTML=h; box.classList.remove('hidden');
   }
   // 画面内の継ナビくん要素（チップ・バナー）は廃止。継ナビくんは右下に一本化。
@@ -22583,7 +22638,7 @@
   function todoBadge(){
     var n=todoDueCount();
     window.__KNV_MYTODO=n;
-    var b=$('knv-todobadge'); if(b){ b.textContent=n>9?'9+':n; b.classList.toggle('hidden', !n); }
+    var b=$('knv-todobadge'); if(b){ b.textContent=knvCnt(n); b.classList.toggle('hidden', !n); }
     if(typeof knvBadgesRender==='function') knvBadgesRender();
   }
   //  パートナーは担当顧客をひも付けられる（どの会社の用事か）
@@ -22685,17 +22740,27 @@
     //  ① 今日やること（要約）。数字は「期限切れ＋今日」の残り。済んだ割合を帯で
     var dueN=cnt.over+cnt.today, doneN=doneToday.length, tot=dueN+doneN;
     var pct=tot?Math.round(doneN/tot*100):0;
+    //  済んだ割合を輪で（2026-10-15）。輪の中に「残り」の数。期限切れは赤い玉で目立たせる
+    var R=27, C=2*Math.PI*R, off=C*(1-pct/100);
     h+='<div class="todo-sum">'
-      +'<div style="flex:none;min-width:128px;">'
-        +'<div class="lab">今日やること</div>'
-        +'<div class="big">'+dueN+'<small>件</small></div>'
-        +'<div class="todo-bar" title="今日の分 '+doneN+' / '+tot+' 件済み"><i style="width:'+pct+'%;"></i></div>'
-        +'<div class="sub">'+(tot?('今日 '+doneN+' / '+tot+' 件 済み'):'今日の期限はありません')+(cnt.over?'　<b>期限切れ '+cnt.over+'件</b>':'')+'</div>'
+      +'<div class="todo-ring" title="今日の分 '+doneN+' / '+tot+' 件済み">'
+        +'<svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">'
+          +'<defs><linearGradient id="todo-ring-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF1C9"/><stop offset="1" stop-color="#E0B85E"/></linearGradient></defs>'
+          +'<circle class="bg" cx="32" cy="32" r="'+R+'"/>'
+          +'<circle class="fg" cx="32" cy="32" r="'+R+'" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'"/>'
+        +'</svg>'
+        +'<div class="num"><b>'+dueN+'</b><small>件</small></div>'
       +'</div>'
-      +'<div class="chips">'
-        +TODO_GROUPS.filter(function(g){ return cnt[g[0]]; }).map(function(g){
-            return '<button type="button" class="'+(g[0]==='over'?'over':'')+'" onclick="todoJump(\''+g[0]+'\')">'+esc(g[1].replace(/（.*$/,''))+' '+cnt[g[0]]+'</button>';
-          }).join('')
+      +'<div class="todo-sum-main">'
+        +'<div class="lab">今日やること</div>'
+        +'<div class="sub">'+(tot?('<b class="done">'+doneN+'</b> / '+tot+' 件 済み'):'今日の期限はありません')
+          +(cnt.over?'<span class="warn"><span class="cnt red">'+cnt.over+'</span>期限切れ</span>':'')+'</div>'
+        +'<div class="chips">'
+          +TODO_GROUPS.filter(function(g){ return cnt[g[0]]; }).map(function(g){
+              return '<button type="button" class="'+(g[0]==='over'?'over':'')+'" onclick="todoJump(\''+g[0]+'\')">'+esc(g[1].replace(/（.*$/,''))
+                +'<span class="cnt '+(g[0]==='over'?'red':'light')+'">'+knvCnt(cnt[g[0]])+'</span></button>';
+            }).join('')
+        +'</div>'
       +'</div>'
     +'</div>';
     //  ② 1行で足す欄。期限の札はここで選ぶ。日付・時刻・顧客・メモは「詳しく」の中
@@ -22748,7 +22813,7 @@
       var list=open.filter(function(t){ return todoGroup(t)===g[0]; });
       if(!list.length) return;
       h+='<div class="todo-grp" id="todo-g-'+g[0]+'" style="--gc:'+g[2]+';">'
-        +'<div class="todo-gh">'+esc(g[1])+'<span class="n">'+list.length+'件</span>'+(g[3]?'<span class="hint">'+esc(g[3])+'</span>':'')+'</div>'
+        +'<div class="todo-gh">'+esc(g[1])+'<span class="cnt n" style="background:'+g[2]+';">'+knvCnt(list.length)+'</span>'+(g[3]?'<span class="hint">'+esc(g[3])+'</span>':'')+'</div>'
         +list.map(function(t){ return todoItemHtml(t, nm, g[2]); }).join('')
       +'</div>';
     });

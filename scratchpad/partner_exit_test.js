@@ -83,7 +83,7 @@ ok('パートナー一覧にも停止中の札と操作', /u\.partner_status==='
 ok('顧客の担当セレクタ：停止中の方は選べない', /\(f\.sus&&u\.consultant_id!==f\.id\?' disabled':''\)/.test(SRC) && /\(f\.sus\?'（停止中）':''\)/.test(SRC));
 const kb = takeFn('knvAdminBadge');
 ok('継ナビくんの件数に数える', /from\('partner_exit_requests'\)\.select\('id'\)\.eq\('status','open'\)/.test(kb) && /window\.__KNV_BELL=todo\+cx\+px\+ov;/.test(kb));
-ok('継ナビくん：内訳とサポートタブ', /⚠ パートナーの契約の終了 <b>'\+px\+'<\/b>件/.test(SRC) && /⚠ パートナーから契約の終了のお申し出が '\+pxn\+'件/.test(SRC));
+ok('継ナビくん：内訳とサポートタブ', /'パートナーの契約の終了', px\)/.test(SRC) && /⚠ パートナーから契約の終了のお申し出が '\+pxn\+'件/.test(SRC));
 ok('毎朝のメール（agent-heartbeat）', /const pexits = await adminPartnerExitAlerts\(sb\);/.test(HB) && /kind: "partner_exit_alert"/.test(HB) && /\.from\("partner_exit_requests"\)/.test(HB) && /partner_exit_alerts: pexits/.test(HB));
 
 // ④ 説明書・知識
