@@ -145,6 +145,7 @@ ok('pillarsOf も PMI_STAGE（7）と譲受で切る', /function pillarsOf[\s\S]
     'var CL_FILTER="all"; var SUB_IDS={}; var STAGE_NAMES={1:"導入"};' +
     'var els=arguments[0]; function $(id){ return els[id]||(els[id]={value:"",innerHTML:""}); }' +
     'function escJ(s){return String(s||"");} function jstMin(){return "";}' +
+    'function pnoTag(){return "";} function pnoOf(){return "";} function pnoHit(){return false;}' +
     f + 'renderClientList(); return els["cl-list"].innerHTML;'
   );
   const html = mod(els);

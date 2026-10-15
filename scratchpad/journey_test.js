@@ -179,6 +179,7 @@ ok('第4にはゴールの言葉（買いたい条件・関心・柱）', /買�
     'var CL_FILTER="all"; var SUB_IDS={}; var STAGE_NAMES={1:"導入"};' +
     'var els=arguments[0]; function $(id){ return els[id]||(els[id]={value:"",innerHTML:""}); }' +
     'function escJ(s){return String(s||"");} function jstMin(){return "";}' +
+    'function pnoTag(){return "";} function pnoOf(){return "";} function pnoHit(){return false;}' +
     'function pillarsOf(){ return {count:1,done:0,next:null}; }' +
     rl + 'renderClientList(); return els["cl-list"].innerHTML;'
   );
