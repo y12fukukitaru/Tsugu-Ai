@@ -90,7 +90,7 @@ ok('CSS：暗い画面の色', /\[data-theme="dark"\] \.todo-sum/.test(SRC) || /
 ok('月：列は同じ幅（中身で広がらない）', /\.cal-grid\{[^}]*grid-template-columns:repeat\(7,minmax\(0,1fr\)\)/.test(SRC));
 ok('月：広いときだけ予定を並べる（540px 以上）', /var CAL_RICH_W=540,/.test(SRC) && /return !!\(box && box\.clientWidth>=CAL_RICH_W\);/.test(takeFn('calRichOk')));
 const cal = takeFn('knvRenderCal');
-ok('月：1日3件まで、多い日は2件＋「＋n件」', /var MAXE=3, showN=its\.length>MAXE\?MAXE-1:its\.length;/.test(cal) && /calPickMore\(\\''\+key\+'\\'\)">＋'\+\(its\.length-showN\)\+'件<\/button>/.test(cal));
+ok('月：1日3件まで、多い日は2件＋「＋n件」', /var MAXE=3, showN=chips\.length>MAXE\?MAXE-1:chips\.length;/.test(cal) && /calPickMore\(\\''\+key\+'\\'\)">＋'\+\(chips\.length-showN\)\+'件<\/button>/.test(cal));
 ok('月：終日を先に、あとは時刻の順', /\(b\.allDay\?1:0\)-\(a\.allDay\?1:0\) \|\| new Date\(a\.when\)-new Date\(b\.when\)/.test(cal));
 ok('月：狭いときは点のまま', /class="cal-dots"/.test(cal) && /class="cal-dot"/.test(cal));
 ok('月：過ぎた日は薄く・1日は「M/1」', /\(key<tKey\?' past':''\)/.test(cal) && /d\.getDate\(\)===1\?\(d\.getMonth\(\)\+1\)\+'\/1'/.test(cal));
