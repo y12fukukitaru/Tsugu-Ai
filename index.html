@@ -842,6 +842,17 @@
   .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;}
   /* 曜日の帯（2026-10-15）：淡い帯の上に太めの字。日曜は赤、土曜は青 */
   .cal-grid.cal-hds{background:var(--soft);border:1px solid var(--softline);border-radius:10px;padding:6px 0;gap:4px;}
+  .knv-calbar .cal-hds{margin-top:8px;}
+  /* 選んだ日の一覧へ送る札（画面の下に浮かぶ。一覧が見えたら消える） */
+  .cal-peekw{position:sticky;bottom:14px;z-index:6;height:0;display:flex;justify-content:center;pointer-events:none;}
+  .cal-peek{pointer-events:auto;transform:translateY(-100%);display:inline-flex;align-items:center;border:0;cursor:pointer;
+    font:inherit;font-size:.78125rem;color:#E8EDF5;background:linear-gradient(160deg,#1E3A66,#0E1B33);border-radius:99px;padding:9px 14px 9px 16px;white-space:nowrap;
+    box-shadow:0 8px 22px rgba(14,27,51,.32),0 0 0 1px rgba(255,255,255,.08) inset;transition:opacity .25s,transform .25s;}
+  .cal-peek b{color:#F6E3B4;font-weight:700;}
+  .cal-peek em{font:800 .875rem/1 'DM Sans','Noto Sans JP',sans-serif;font-style:normal;color:#F6E3B4;margin:0 1px;}
+  .cal-peek svg{margin-left:6px;width:15px;height:15px;fill:none;stroke:#F6E3B4;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
+  .cal-peekw.off .cal-peek{opacity:0;transform:translateY(-60%);pointer-events:none;}
+  @media (prefers-reduced-motion:reduce){ .cal-peek{transition:none;} }
   .cal-hd{text-align:center;font-size:.6875rem;font-weight:700;color:#5A6981;padding:0;line-height:1.2;letter-spacing:.14em;text-indent:.14em;}
   .cal-hd.sun{color:#C0453F;} .cal-hd.sat{color:#2C5DA8;}
   /* 日のます：角を丸く、日付は丸の中に。今日は紺の丸に金の数字、選んだ日は青い輪 */
@@ -964,6 +975,14 @@
   /* TODO・課題：塗らずに淡い地と枠、頭に白抜きの丸 */
   .cal-ev.td{border:1px solid var(--ebd,#C9D7EE);padding-left:5px;color:var(--ec);font-weight:600;}
   .cal-ev.td b{color:inherit;}
+  /* 終日が2件以上の日は「終日 n件」の札1枚（週表示と同じ形）。押すとその日の一覧へ */
+  .cal-ev.cal-many{display:flex;align-items:center;gap:2px;background:var(--card);color:var(--navy);border:1px solid #C9D7EE;
+    border-left:1px solid #C9D7EE;font-weight:700;white-space:nowrap;padding:2px 6px;}
+  .cal-ev.cal-many:hover{background:#EAF0FA;}
+  .cal-many i{flex:none;width:6px;height:6px;border-radius:50%;box-sizing:border-box;}
+  .cal-many i.td{border:1.5px solid;background:transparent;}
+  .cal-many span{margin-left:1px;letter-spacing:-.02em;}
+  .cal-many b{font:800 .6875rem/1 'DM Sans','Noto Sans JP',sans-serif;margin:0 1px;}
   .cal-ev:hover{filter:brightness(.97);box-shadow:0 1px 4px rgba(14,27,51,.15);}
   .cal-ev:focus-visible{outline:2px solid var(--blue);outline-offset:1px;}
   .cal-evmore{align-self:flex-start;border:1px solid #C9D7EE;background:var(--card);font:inherit;font-size:.625rem;color:var(--blue);font-weight:700;
@@ -2408,7 +2427,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261017-4';
+  var APP_BUILD='20261017-5';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -20807,7 +20826,7 @@
       KNV_CPT.stale=false;
     }
     if(KNV_CPT.off>0 || KNV_CPT.loop || p.classList.contains('knv-cpt-anim')) barH=KNV_CPT.full;
-    var pad=sumH+barH+(bar.classList.contains('week')?0:10);
+    var pad=sumH+barH+(bar.classList.contains('week')?0:(bar.classList.contains('month')?6:10));
     if(box.style.paddingTop!==pad+'px') box.style.paddingTop=pad+'px';
     if(!calLayout.ro && window.ResizeObserver){
       calLayout.ro=new ResizeObserver(function(){ calLayout(); });
@@ -22149,7 +22168,16 @@
       }
       //  週表示は、曜日の見出し（と終日の帯）も帯に入れる。本体の上に重なり、いっしょに残る
       if(wk) bh+=wk.head;
+      //  月表示も、曜日の帯を上の帯に入れる（2026-10-17）。前は本体の中にあり、下へ読み進めると
+      //  流れて消え、何曜日の列かが分からなくなった
+      if(view==='month'){
+        bh+='<div class="cal-grid cal-hds">'
+          +calWeekLabels().map(function(x){
+              return '<div class="cal-hd'+(x[1]===0?' sun':(x[1]===6?' sat':''))+'">'+x[0]+'</div>'; }).join('')
+          +'</div>';
+      }
       bar.classList.toggle('week', !!wk);
+      bar.classList.toggle('month', view==='month');
       bar.innerHTML=bh;
       KNV_CPT.stale=true;   // 帯の中身が変わった。出ているときの高さを測り直す（calLayout）
     }
@@ -22165,10 +22193,7 @@
       var first=new Date(cur.getFullYear(), cur.getMonth(), 1);
       var start=calWeekStartOf(first), wEnd=(calWeekStart()+6)%7;
       var rich=calRichOk(box); CAL_RICH=rich;
-      h+='<div class="cal-grid cal-hds">'
-        +calWeekLabels().map(function(x){
-            return '<div class="cal-hd'+(x[1]===0?' sun':(x[1]===6?' sat':''))+'">'+x[0]+'</div>'; }).join('')
-      +'</div><div class="cal-grid'+(rich?' rich':'')+'" style="margin-top:2px;">';
+      h+='<div class="cal-grid'+(rich?' rich':'')+'">';
       for(var i=0;i<42;i++){
         var d=new Date(start); d.setDate(start.getDate()+i);
         var key=calDkey(d), items=byDay[key]||[];
@@ -22178,11 +22203,22 @@
         if(rich){
           //  終日の予定を先に、そのあと時刻の順。3件まで並べ、残りは「＋n件」
           var its=items.slice().sort(function(a,b){ return (b.allDay?1:0)-(a.allDay?1:0) || new Date(a.when)-new Date(b.when); });
-          var MAXE=3, showN=its.length>MAXE?MAXE-1:its.length;
+          //  終日が2件以上の日は「終日 n件」の札1枚にまとめる（週表示と同じ。2026-10-17）。
+          //  TODO・課題の期日が重なると、終日の札だけでますが埋まり、時刻のある予定が見えなかった
+          var ads=its.filter(function(x){ return x.allDay; }), chips=[];
+          if(ads.length>=2){
+            chips.push('<button type="button" class="cal-ev cal-many" title="終日の予定が '+ads.length+' 件あります。押すとこの日の一覧へ"'
+              +' onclick="event.stopPropagation();calPickMore(\''+key+'\')">'
+              +ads.slice(0,2).map(function(x){ var k=calKindOf(x), c=(k?k.fg:'#2C5DA8');
+                  return calIsTodo(x) ? '<i class="td" style="border-color:'+c+';"></i>' : '<i style="background:'+c+';"></i>'; }).join('')
+              +'<span>終日<b>'+ads.length+'</b>件</span></button>');
+          } else ads.forEach(function(x){ chips.push(calChip(x)); });
+          its.forEach(function(x){ if(!x.allDay) chips.push(calChip(x)); });
+          var MAXE=3, showN=chips.length>MAXE?MAXE-1:chips.length;
           h+='<div class="'+cls+'" onclick="calPick(\''+key+'\')" title="'+(d.getMonth()+1)+'/'+d.getDate()+'（'+its.length+'件）">'
             +'<div class="cal-dr"><span class="d">'+(d.getDate()===1?(d.getMonth()+1)+'/1':d.getDate())+'</span>'+koyoCell(d)+'</div>'
-            +'<div class="cal-evs">'+its.slice(0,showN).map(calChip).join('')
-              +(its.length>showN?'<button type="button" class="cal-evmore" onclick="event.stopPropagation();calPickMore(\''+key+'\')">＋'+(its.length-showN)+'件</button>':'')
+            +'<div class="cal-evs">'+chips.slice(0,showN).join('')
+              +(chips.length>showN?'<button type="button" class="cal-evmore" onclick="event.stopPropagation();calPickMore(\''+key+'\')">＋'+(chips.length-showN)+'件</button>':'')
             +'</div>'
           +'</div>';
           if(i>=34 && d.getMonth()!==cur.getMonth() && d.getDay()===wEnd) break;
@@ -22205,6 +22241,7 @@
       h+='</div>';
       var pick=CAL_PICK||tKey;
       var pd=new Date(pick+'T00:00:00');
+      h+=calPeekHtml(pd, (byDay[pick]||[]).length);
       h+='<div id="cal-pickday"></div>'+calDayHead(pd, calRel(pd), true, (byDay[pick]||[]).length);
       var pit=byDay[pick]||[];
       h+=pit.length ? calCardsAmpm(pit)
@@ -22220,6 +22257,7 @@
           ? calDkey(t5) : calDkey(ws);
       }
       var wpd=new Date(wkPick+'T00:00:00');
+      h+=calPeekHtml(wpd, (byDay[wkPick]||[]).length);
       h+='<div id="cal-pickday"></div>'+calDayHead(wpd, calRel(wpd), true, (byDay[wkPick]||[]).length);
       var wit=byDay[wkPick]||[];
       h+=wit.length ? calCardsAmpm(wit)
@@ -22253,6 +22291,7 @@
     calCompactBind();    // 下へ読み進めると見出しを畳む（一度だけ結ぶ）
     calSlideIn(box);     // 前後の札で動いたときの滑り込み
     calLayout();         // 重ねた帯の高さを測り、本体の上の余白を合わせる
+    calPeekBind(box);    // 選んだ日の一覧が画面の外にあるあいだ、下に札を出す
     // スマホの週表示は、平日の5日を幅いっぱいに。土日は横に送って見る（calWk5Bind）
     var wk5=(view==='week' && ws) ? calWk5Bind(box, ws) : false;
     if(view==='week') calAmpmBind();
@@ -22274,6 +22313,26 @@
     //  ここで開き直すと、打ちかけの文字が消えてしまう
   }
   function calPick(key){ CAL_PICK=key; knvRenderCal(); }
+  //  選んだ日の一覧は、月・週の表の下にある。スマホでは表だけで画面が埋まり、日を押しても
+  //  一覧が見えないので、押したことが伝わらなかった。一覧が画面の外にあるあいだだけ、
+  //  画面の下に「◯日の予定 n件」の札を出す（押すと一覧へ送る）。一覧が見えたら消える
+  function calPeekHtml(d, n){
+    var rel=calRel(d), md=(d.getMonth()+1)+'/'+d.getDate()+'（'+'日月火水木金土'.charAt(d.getDay())+'）';
+    return '<div class="cal-peekw off" id="cal-peekw"><button type="button" class="cal-peek" onclick="calPickMore(\''+calDkey(d)+'\')">'
+      +'<b>'+(rel && rel.length<=2 ? rel+' '+md : md)+'</b>'
+      +'<span>'+(n ? 'の予定 <em>'+n+'</em>件' : 'は予定なし')+'</span>'
+      +'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></div>';
+  }
+  function calPeekBind(box){
+    var w=$('cal-peekw'), tgt=$('cal-pickday'); if(!w || !tgt || !window.IntersectionObserver) return;
+    var head=tgt.nextElementSibling || tgt;
+    if(calPeekBind.io) calPeekBind.io.disconnect();
+    //  見出しの帯の下の線より下に一覧の見出しが入っていれば「見えている」
+    calPeekBind.io=new IntersectionObserver(function(es){
+      es.forEach(function(e){ w.classList.toggle('off', e.isIntersecting || e.boundingClientRect.top<e.rootBounds.top); });
+    }, { root:box, threshold:0 });
+    calPeekBind.io.observe(head);
+  }
   // ===== 午前・午後（2026-10-17）=====
   //  日の一覧は「終日」「午前」「午後」の小見出しで区切る。時刻を読まなくても、
   //  その日の前半・後半のどこに何があるかが分かる
