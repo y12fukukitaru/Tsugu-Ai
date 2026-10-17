@@ -675,7 +675,7 @@
   .wk-now{position:absolute;left:54px;right:0;border-top:2px solid #A9403D;pointer-events:none;z-index:3;}
   .wk-now::before{content:'';position:absolute;left:-4px;top:-4px;width:6px;height:6px;border-radius:50%;background:#A9403D;}
   /* 週の予定の枠（2026-10-15）：左に種類の色の帯、文字を 11px に。淡い地に細い線だと格子に溶けて見えにくかった */
-  .wk-ev{position:absolute;border-radius:6px;padding:3px 5px 3px 6px;font-size:.6875rem;line-height:1.3;overflow:hidden;cursor:pointer;
+  .wk-ev{position:absolute;z-index:2;border-radius:6px;padding:3px 5px 3px 6px;font-size:.6875rem;line-height:1.3;overflow:hidden;cursor:pointer;
     border:1px solid;border-left:3px solid var(--fg);box-sizing:border-box;box-shadow:0 1px 3px rgba(14,27,51,.10);transition:box-shadow .15s,transform .12s;}
   .wk-ev:hover{box-shadow:0 4px 12px rgba(14,27,51,.18);z-index:4;}
   .wk-ev b{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:var(--l2,1);font-weight:700;overflow:hidden;white-space:normal;word-break:break-all;line-height:1.25;}
@@ -1687,6 +1687,31 @@
     .wk-hh{font-size:.59375rem;right:3px;}
     .wk-nowt{font-size:.5625rem;right:2px;}
     .wk-hcell{font-size:.59375rem;padding:5px 0;} .wk-hcell .n{width:24px;height:24px;font-size:.8125rem;}
+    /* 平日の5日を幅いっぱいに、土日は横に送って見る（2026-10-17・calWk5Bind）。
+       .wk を7日ぶんの幅（目盛り＋1日×7）にし、JS が transform で左右に送る。
+       見出しと本体は同じ瞬間に動くので、ずれも遅れも出ない */
+    .wk-head.wk5,.wk-wrap.wk5{overflow:hidden;touch-action:pan-y;position:relative;}
+    .wk5 > .wk{width:calc(40px + (100% - 40px) * 1.4);will-change:transform;}
+    .wk5 .wk-corner,.wk5 .wk-gut{will-change:transform;}
+    .wk5-anim{transition:transform .34s cubic-bezier(.22,.8,.3,1);}
+    .wk5 .wk-hcell{font-size:.65625rem;padding:6px 0;} .wk5 .wk-hcell .n{width:28px;height:28px;font-size:.9375rem;}
+    .wk5 .wk-ev{font-size:.6875rem;line-height:1.2;padding:3px 4px;border-radius:6px;letter-spacing:0;}
+    .wk5 .wk-ev b{font-weight:700;line-height:1.2;}
+    .wk-head.wk5 .wk-chip{font-size:.65625rem;padding:2px 4px;letter-spacing:0;}
+    /* 端の札：隠れている曜日を縦に並べ、押すとそこまで送る。紺に金の字（今日の丸と同じ色） */
+    .wk5-edge{position:absolute;top:5px;z-index:8;display:none;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+      width:15px;height:52px;padding:0;border:0;cursor:pointer;color:#F6E3B4;font:700 .625rem/1.15 'Noto Sans JP',sans-serif;
+      background:linear-gradient(160deg,#1E3A66,#0E1B33);box-shadow:0 3px 10px rgba(14,27,51,.28);}
+    .wk5-edge.on{display:flex;}
+    .wk5-edge.l{left:40px;border-radius:0 9px 9px 0;}
+    .wk5-edge.r{right:0;border-radius:9px 0 0 9px;}
+    .wk5-edge i{font-style:normal;display:block;}
+    .wk5-edge svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;}
+    .wk-wrap.wk5::before,.wk-wrap.wk5::after{content:"";position:absolute;top:0;bottom:0;width:14px;z-index:5;pointer-events:none;opacity:0;transition:opacity .2s;}
+    .wk-wrap.wk5::before{left:40px;background:linear-gradient(90deg,rgba(14,27,51,.10),transparent);}
+    .wk-wrap.wk5::after{right:0;background:linear-gradient(270deg,rgba(14,27,51,.10),transparent);}
+    .wk-wrap.wk5.more-l::before,.wk-wrap.wk5.more-r::after{opacity:1;}
+    @media (prefers-reduced-motion:reduce){ .wk5-anim{transition:none;} }
     /* 予定の枠は Google カレンダーと同じ読み方にする：色を塗り、題名を折り返す。
        淡い色に細い罫線では、狭い枠が格子に溶けて見えない。時刻は左の目盛りで
        分かるので枠の中には出さず、そのぶん題名を大きく（10.5px）して
@@ -2326,7 +2351,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261015-14';
+  var APP_BUILD='20261017-1';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -19041,6 +19066,8 @@
       if(tg && tg.closest && tg.closest('input,textarea,select,[contenteditable="true"],.knv-szmenu')) return;
       //  タブの帯は横に送るところ。端まで送っても、ここからはパネルを閉じない
       if(tg && tg.closest && tg.closest('.knv-tabs')) return;
+      //  スマホの週表示も横に送るところ（土日を出す）。ここからも閉じない
+      if(tg && tg.closest && tg.closest('.wk5')) return;
       var t=ev.touches[0];
       KNV_SW={ x0:t.clientX, y0:t.clientY, t0:Date.now(), dx:0, axis:null, dead:false,
                sx:knvSwScroller(tg, p, 'x') };
@@ -20567,7 +20594,7 @@
     if(calViewGet()==='month') d.setMonth(d.getMonth()+n); else d.setDate(d.getDate()+7*n);
     CAL_CUR=d; CAL_PICK=null; CAL_SLIDE=n; knvRenderCal();
   }
-  function calToday(){ CAL_CUR=new Date(); CAL_PICK=null; knvRenderCal(); }
+  function calToday(){ CAL_CUR=new Date(); CAL_PICK=null; CAL_WK5=null; knvRenderCal(); }
   //  帯の真ん中（日付）。小さな画面は日付だけ。パソコンの大きなパネルでは、上に年月、
   //  日付に曜日、下にその期間の予定の数と種類の内訳を添える（.cl-eye / .wd / .cl-stats）
   function calHeadLab(view, cur, byDay){
@@ -21896,8 +21923,8 @@
         var kk=calKindOf(x);
         var w=100/x._n, left=x._i*w;
         //  --fg はスマホで枠を塗る色（種類の色。自分の予定は青）。
-        //  何行まで折り返すかは枠の高さから決める（1行 12.5px、上下の余白 4px）
-        var lines=Math.max(1, Math.floor((hgt-4)/12.5));
+        //  何行まで折り返すかは枠の高さから決める（1行 13.2px、上下の余白 4px）
+        var lines=Math.max(1, Math.floor((hgt-4)/13.2));
         h+='<div class="wk-ev'+(calIsTodo(x)?' td':'')+'" style="top:'+top+'px;height:'+hgt+'px;left:calc('+left+'% + 1px);width:calc('+w+'% - 3px);'
           +'--fg:'+(kk?kk.fg:'#2C5DA8')+';--fgtxt:'+((kk&&kk.txt)||'#fff')+';'
           +'background:'+(kk?kk.bg:'rgba(44,93,168,.10)')+';border-color:'+(kk?kk.bd:'#CBD9EE')+';color:'+(kk?kk.fg:'#1E3A66')+';"'
@@ -22120,15 +22147,17 @@
     calCompactBind();    // 下へ読み進めると見出しを畳む（一度だけ結ぶ）
     calSlideIn(box);     // 前後の札で動いたときの滑り込み
     calLayout();         // 重ねた帯の高さを測り、本体の上の余白を合わせる
+    // スマホの週表示は、平日の5日を幅いっぱいに。土日は横に送って見る（calWk5Bind）
+    var wk5=(view==='week' && ws) ? calWk5Bind(box, ws) : false;
     // 狭い画面では週表示が横スクロールになる。開いた時点で今日が見えるように寄せる。
     // 曜日の見出しは別の箱（.wk-head）なので、本体の横スクロールに合わせて動かす
     try{
       var wrap=box.querySelector('.wk-wrap'), td=box.querySelector('.wk-col.today');
       var whead=($('knv-calbar')||box).querySelector('.wk-head');
-      if(wrap && whead){
+      if(wrap && whead && !wk5){
         wrap.addEventListener('scroll', function(){ whead.scrollLeft=wrap.scrollLeft; });
       }
-      if(wrap && td && wrap.scrollWidth>wrap.clientWidth){
+      if(wrap && td && !wk5 && wrap.scrollWidth>wrap.clientWidth){
         wrap.scrollLeft=Math.max(0, td.offsetLeft-wrap.clientWidth/2+td.offsetWidth/2);
         if(whead) whead.scrollLeft=wrap.scrollLeft;
       }
@@ -22138,6 +22167,132 @@
     //  ここで開き直すと、打ちかけの文字が消えてしまう
   }
   function calPick(key){ CAL_PICK=key; knvRenderCal(); }
+  // ===== スマホの週表示：平日の5日を大きく、土日は横に送る（2026-10-17）=====
+  //  7日を390pxの画面に詰めると1日44pxで、題名が2〜3文字しか読めなかった。
+  //  平日の5日を幅いっぱい（1日60px強）に出し、土日は横に送ると見える。
+  //    日曜始まり … 月〜金を出す。右へ送ると土曜、左へ送ると日曜
+  //    月曜始まり … 月〜金を出す。右へ送ると土日
+  //  見出し（上の帯の中）と本体は別の箱。ネイティブの横スクロールを合わせると
+  //  iPhone では見出しが一拍遅れた（前に試した）ので、指の動きを JS で受け、
+  //  同じ瞬間に両方へ transform を書く。離すと1日ぶんの位置に吸い付き、
+  //  さっと払うと端（土日の見える位置）まで送る。時刻の目盛りは逆向きに動かして留める
+  var CAL_WK5=null;     // { ws:'週の初日', k:左へ送っている日数（0〜2）}
+  var WK5_MAX=2, WK5_GUT=40;
+  function calWk5On(){
+    try{ return !!(window.matchMedia && window.matchMedia('(max-width:600px)').matches); }catch(e){ return false; }
+  }
+  //  開いたときの位置。平日が見える位置を基本に、見たい日（選んだ日・今日）が
+  //  外れるときは、その日が入る位置へ
+  function calWk5Default(ws, focus){
+    var k=(calWeekStart()===0)?1:0;
+    for(var i=0;i<7;i++){
+      var d=new Date(ws); d.setDate(ws.getDate()+i);
+      if(calDkey(d)===focus){ if(i<k) k=i; else if(i>k+4) k=i-4; break; }
+    }
+    return Math.max(0, Math.min(WK5_MAX, k));
+  }
+  //  端の札に出す曜日（隠れている側の日）
+  function calWk5Hidden(ws, k, side){
+    var W='日月火水木金土', out='';
+    for(var i=0;i<7;i++){
+      if(side==='l' ? i<k : i>k+4){ var d=new Date(ws); d.setDate(ws.getDate()+i); out+=W.charAt(d.getDay()); }
+    }
+    return out;
+  }
+  function calWk5Bind(box, ws){
+    var head=($('knv-calbar')||box).querySelector('.wk-head'), wrap=box.querySelector('.wk-wrap');
+    if(!head || !wrap) return false;
+    var on=calWk5On();
+    head.classList.toggle('wk5', on); wrap.classList.toggle('wk5', on);
+    if(!on) return false;
+    var wsKey=calDkey(ws);
+    if(!CAL_WK5 || CAL_WK5.ws!==wsKey){
+      var we=new Date(ws); we.setDate(ws.getDate()+6);
+      var focus=(CAL_PICK && CAL_PICK>=wsKey && CAL_PICK<=calDkey(we)) ? CAL_PICK : calDkey(new Date());
+      CAL_WK5={ ws:wsKey, k:calWk5Default(ws, focus) };
+    }
+    var inners=[head.querySelector('.wk'), wrap.querySelector('.wk')].filter(Boolean);
+    var fixed=[].slice.call(head.querySelectorAll('.wk-corner')).concat([].slice.call(wrap.querySelectorAll('.wk-gut')));
+    head.insertAdjacentHTML('beforeend',
+      '<button type="button" class="wk5-edge l" onclick="event.stopPropagation();calWk5Go(0)"></button>'
+     +'<button type="button" class="wk5-edge r" onclick="event.stopPropagation();calWk5Go('+WK5_MAX+')"></button>');
+    var eL=head.querySelector('.wk5-edge.l'), eR=head.querySelector('.wk5-edge.r');
+    //  端の札は曜日の段の高さに合わせる（終日の段には掛けない）
+    var row0=head.querySelector('.wk-row');
+    if(row0 && row0.offsetHeight){ eL.style.height=eR.style.height=Math.max(28, row0.offsetHeight-10)+'px'; }
+    var off=0;
+    function colW(){ return Math.max(1, (wrap.clientWidth-WK5_GUT)/5); }
+    function put(px, anim){
+      off=px;
+      inners.forEach(function(e){ e.classList.toggle('wk5-anim', !!anim); e.style.transform='translate3d('+(-px)+'px,0,0)'; });
+      fixed.forEach(function(e){ e.classList.toggle('wk5-anim', !!anim); e.style.transform='translate3d('+px+'px,0,0)'; });
+    }
+    function edges(){
+      var k=CAL_WK5.k, l=calWk5Hidden(ws, k, 'l'), r=calWk5Hidden(ws, k, 'r');
+      function ch(t){ return t.split('').map(function(c){ return '<i>'+c+'</i>'; }).join(''); }
+      eL.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>'+ch(l);
+      eR.innerHTML=ch(r)+'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+      eL.setAttribute('aria-label', l+'曜日を見る'); eR.setAttribute('aria-label', r+'曜日を見る');
+      eL.classList.toggle('on', !!l); eR.classList.toggle('on', !!r);
+      //  隠れている側の端に薄い影。まだ先があることが分かる
+      wrap.classList.toggle('more-l', !!l); wrap.classList.toggle('more-r', !!r);
+      head.classList.toggle('more-l', !!l); head.classList.toggle('more-r', !!r);
+    }
+    function go(k, anim){
+      k=Math.max(0, Math.min(WK5_MAX, k)); CAL_WK5.k=k;
+      put(k*colW(), anim); edges();
+    }
+    window.calWk5Go=function(k){ go(k, true); };
+    go(CAL_WK5.k, false);
+    //  指で横へ。縦の動きはそのまま（touch-action:pan-y でブラウザが縦に送る）
+    var st=null, moved=false;
+    function ts(ev){
+      if(ev.touches.length!==1){ st=null; return; }
+      var t=ev.touches[0]; st={ x:t.clientX, y:t.clientY, o:off, t:Date.now(), ax:null }; moved=false;
+    }
+    function tm(ev){
+      if(!st) return;
+      var t=ev.touches[0], dx=t.clientX-st.x, dy=t.clientY-st.y;
+      if(!st.ax){
+        if(Math.abs(dx)<8 && Math.abs(dy)<8) return;
+        st.ax=(Math.abs(dx)>Math.abs(dy)) ? 'x' : 'y';
+      }
+      if(st.ax!=='x') return;
+      if(ev.cancelable) ev.preventDefault();
+      moved=true;
+      var max=WK5_MAX*colW(), o=st.o-dx;
+      if(o<0) o=o/3; else if(o>max) o=max+(o-max)/3;   // 端の先はゴムのように重く
+      put(o, false);
+    }
+    function te(){
+      var s=st; st=null;
+      if(!s || s.ax!=='x') return;
+      var v=(off-s.o)/Math.max(1, Date.now()-s.t);
+      go(Math.abs(v)>0.35 ? (v>0 ? WK5_MAX : 0) : Math.round(off/colW()), true);
+    }
+    [head, wrap].forEach(function(el){
+      el.addEventListener('touchstart', ts, { passive:true });
+      el.addEventListener('touchmove', tm, { passive:false });
+      el.addEventListener('touchend', te);
+      el.addEventListener('touchcancel', te);
+      //  横に送った指を離したときは、予定や空き枠を押したことにしない
+      el.addEventListener('click', function(ev){ if(moved){ moved=false; ev.stopPropagation(); ev.preventDefault(); } }, true);
+    });
+    calWk5Watch();
+    return true;
+  }
+  //  画面の幅が変わったら（横向き・縦向き）、描き直して位置と大きさを合わせる
+  var CAL_WK5_W=0;
+  function calWk5Watch(){
+    if(CAL_WK5_W) return;
+    CAL_WK5_W=window.innerWidth||1;
+    var tm=null;
+    window.addEventListener('resize', function(){
+      var w=window.innerWidth||1; if(w===CAL_WK5_W) return;   // 高さだけ（下の帯の出入り）は見ない
+      CAL_WK5_W=w; clearTimeout(tm);
+      tm=setTimeout(function(){ if(calViewGet()==='week' && $('knv-cal') && $('knv-cal').offsetParent) knvRenderCal(); }, 150);
+    });
+  }
   //  週表示で空いているところを押したら、その日のその時刻で新規作成を開く。
   //  日付も時刻も打ち直さずに済む。予定そのものを押した場合は小窓が開く
   //  （そちらで stopPropagation しているので、ここには来ない）。
