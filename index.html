@@ -1136,7 +1136,9 @@
   }
   body.dark .todo-more-btn,body.dark .todo-more input,body.dark .todo-more select,body.dark .todo-more textarea{background:var(--card);}
   .todo-grp{margin:14px 0 4px;}
-  .todo-gh{display:flex;align-items:center;gap:7px;font-size:.71875rem;font-weight:700;letter-spacing:.04em;margin:0 2px 6px;color:var(--gc,var(--navy));}
+  /* 束の見出しは上に貼り付く（2026-10-17）。下へ読み進めても、いまどの束（今日・明日…）かが分かる */
+  .todo-gh{display:flex;align-items:center;gap:7px;font-size:.71875rem;font-weight:700;letter-spacing:.04em;margin:0 -2px 6px;color:var(--gc,var(--navy));
+    position:sticky;top:-12px;z-index:3;background:var(--bg);padding:8px 4px 6px;}
   .todo-gh::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--gc,var(--navy));flex:none;}
   .todo-gh .n{min-width:20px;height:20px;font-size:.6875rem;}
   .todo-gh .hint{margin-left:auto;font-weight:400;font-size:.65625rem;color:var(--muted);letter-spacing:0;}
@@ -1162,6 +1164,9 @@
     background:var(--soft);color:var(--navy);border:1px solid var(--line);}
   .todo-due.over{background:#FBE9E7;color:#A9403D;border-color:#EFC4C0;}
   .todo-due.today{background:rgba(20,122,110,.10);color:#147A6E;border-color:#BFE0DA;}
+  .todo-due.today.late{background:#FDF1E8;color:#B5541B;border-color:#F0CDB4;}
+  .todo-nowl{margin:2px 0 8px;}
+  .todo-donel{color:#147A6E;font-weight:600;}
   .todo-due.tomorrow{background:rgba(44,93,168,.08);color:#2C5DA8;border-color:#C9D6EA;}
   .todo-cu{display:inline-flex;align-items:center;gap:3px;border-radius:6px;padding:1px 7px;background:rgba(195,155,63,.12);color:#8A6D2F;font-weight:600;font-size:.65625rem;}
   .todo-note1{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -2453,7 +2458,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261017-8';
+  var APP_BUILD='20261017-9';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -20729,7 +20734,8 @@
     }
   }
   //  週の始まり（設定）：0＝日曜（いままでどおり）、1＝月曜。端末と利用者ごとに覚える
-  function calWeekStart(){ var p=loadPrefs(); return p.weekStart===1?1:0; }
+  //  既定は月曜始まり（2026-10-17）。設定で日曜を選んだときだけ日曜から
+  function calWeekStart(){ var p=loadPrefs(); return p.weekStart===0?0:1; }
   function calWeekStartOf(d){
     var x=new Date(d.getFullYear(), d.getMonth(), d.getDate());
     x.setDate(x.getDate()-((x.getDay()-calWeekStart()+7)%7));
@@ -23252,10 +23258,13 @@
     var d=new Date(t.due_date+'T00:00:00'), now=new Date(), td=new Date(now.getFullYear(),now.getMonth(),now.getDate());
     var diff=Math.round((d-td)/86400000);
     if(diff===1) return 'tomorrow';
-    //  今週＝今日から日曜まで（日曜が今日なら、今週の残りは無い）
-    if(diff<=((7-td.getDay())%7)) return 'week';
+    //  今週＝今日から週の終わりまで。週の終わりは、予定の週の始まりの前の日
+    //  （月曜始まりなら日曜、日曜始まりなら土曜）。終わりの日が今日なら、今週の残りは無い
+    var wend=(calWeekStart()+6)%7;
+    if(diff<=((wend-td.getDay()+7)%7)) return 'week';
     return 'later';
   }
+  function todoWeekLab(){ return '今週（'+(calWeekStart()===0?'土曜':'日曜')+'まで）'; }
   var TODO_GROUPS=[
     ['over','期限切れ','#A9403D','先に片づけましょう'],
     ['today','今日','#147A6E',''],
@@ -23272,7 +23281,12 @@
     var md=(d.getMonth()+1)+'/'+d.getDate()+'（'+'日月火水木金土'.charAt(d.getDay())+'）';
     var txt, cls='';
     if(g==='over'){ txt=Math.round((td-d)/86400000)+'日超過'; cls='over'; }
-    else if(g==='today'){ txt='今日'+(tm?' '+tm:''); cls='today'; }
+    else if(g==='today'){
+      txt='今日'+(tm?' '+tm:''); cls='today';
+      //  時刻を過ぎたら「過ぎています」（赤みの札）。今日のうちは期限切れには入れない
+      var hm=('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2);
+      if(tm && tm<=hm){ txt+=' 過ぎています'; cls='today late'; }
+    }
     else if(g==='tomorrow'){ txt='明日'+(tm?' '+tm:''); cls='tomorrow'; }
     else if(g==='week'){ txt='日月火水木金土'.charAt(d.getDay())+'曜'+(tm?' '+tm:''); }
     else if(g==='done'){ txt=md; }
@@ -23384,9 +23398,18 @@
     TODO_GROUPS.forEach(function(g){
       var list=open.filter(function(t){ return todoGroup(t)===g[0]; });
       if(!list.length) return;
+      var glab=(g[0]==='week')?todoWeekLab():g[1];
+      //  今日の束は、時刻を過ぎたものとこれからのもののあいだに「いま」の線（予定の一覧と同じ赤）
+      var nowAt=-1;
+      if(g[0]==='today'){
+        var nm2=new Date(), hm=('0'+nm2.getHours()).slice(-2)+':'+('0'+nm2.getMinutes()).slice(-2);
+        var anyPast=list.some(function(t){ return t.due_time && String(t.due_time).slice(0,5)<=hm; });
+        if(anyPast){ nowAt=list.length; list.some(function(t,i){ if(!t.due_time || String(t.due_time).slice(0,5)>hm){ nowAt=i; return true; } return false; }); }
+      }
       h+='<div class="todo-grp" id="todo-g-'+g[0]+'" style="--gc:'+g[2]+';">'
-        +'<div class="todo-gh">'+esc(g[1])+'<span class="cnt n" style="background:'+g[2]+';">'+knvCnt(list.length)+'</span>'+(g[3]?'<span class="hint">'+esc(g[3])+'</span>':'')+'</div>'
-        +list.map(function(t){ return todoItemHtml(t, nm, g[2]); }).join('')
+        +'<div class="todo-gh">'+esc(glab)+'<span class="cnt n" style="background:'+g[2]+';">'+knvCnt(list.length)+'</span>'+(g[3]?'<span class="hint">'+esc(g[3])+'</span>':'')+'</div>'
+        +list.map(function(t, i){ return (i===nowAt?todoNowLine():'')+todoItemHtml(t, nm, g[2]); }).join('')
+        +(nowAt===list.length?todoNowLine():'')
       +'</div>';
     });
     //  ④ 今日済んだこと（残す＝進んだ実感）。それより前は開いたときだけ
@@ -23402,6 +23425,16 @@
     box.innerHTML=h;
     todoCalPaint();   // 期限の暦（「日時・メモ」を開いているときだけ在る）
   }
+  function todoNowLine(){
+    var n=new Date();
+    return '<div class="cev-nowl todo-nowl"><span>いま '+('0'+n.getHours()).slice(-2)+':'+('0'+n.getMinutes()).slice(-2)+'</span></div>';
+  }
+  //  済んだ日時：今日なら「今日 08:20 に済み」、それより前は「10/15（木）に済み」
+  function todoDoneLab(v){
+    var d=new Date(v); if(isNaN(d)) return '済み';
+    if(todoYmd(d)===todoToday()) return '今日 '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+' に済み';
+    return (d.getMonth()+1)+'/'+d.getDate()+'（'+'日月火水木金土'.charAt(d.getDay())+'）に済み';
+  }
   //  直す（鉛筆）・消す（ごみ箱）の絵。文字の絵（✎🗑）は端末で大きさ・形がそろわないので線の絵にする
   var TODO_IC_EDIT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
   var TODO_IC_DEL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
@@ -23410,7 +23443,7 @@
     var meta=[];
     if(!isDone && t.due_date) meta.push(todoDuePill(t));
     if(t.customer_id && nm[t.customer_id]) meta.push('<span class="todo-cu">'+esc(nm[t.customer_id])+'</span>');
-    if(isDone) meta.push('<span>済み '+esc(jstDay(t.done_at))+'</span>');
+    if(isDone) meta.push('<span class="todo-donel">'+esc(todoDoneLab(t.done_at))+'</span>');
     if(t.note) meta.push('<span class="todo-note1" title="'+escA(t.note)+'">'+esc(String(t.note).split('\n')[0])+'</span>');
     return '<div class="todo-it'+(isDone?' done':'')+(b==='over'?' over':'')+'"'+(gc?' style="--gc:'+gc+';"':'')+'>'
       +'<button type="button" class="todo-ck'+(isDone?' on':'')+'" aria-label="'+(isDone?'済みを取り消す':'済みにする')+'" onclick="todoTick(this,\''+escJ(t.id)+'\','+(!isDone)+')">'+(isDone?'✓':'')+'</button>'
