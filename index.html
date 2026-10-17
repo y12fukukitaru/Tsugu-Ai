@@ -1748,7 +1748,7 @@
   @media (prefers-reduced-motion:reduce){ .knv-tabs button{transition:none;} .knv-tabs button:active{transform:none;} }
   .knv-body{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:12px;background:var(--bg);}
   /* 通知の内訳サマリー：何が何件あるかを開いた瞬間に見せる */
-  .knv-summary{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--line);flex-shrink:0;}
+  .knv-summary{display:flex;gap:6px;flex-wrap:wrap;padding:6px 12px;background:var(--card);border-bottom:1px solid var(--line);flex-shrink:0;}
   /* 内訳の札（2026-10-15）：絵文字をやめ、色の点＋名前＋数の玉。押すとその場所へ */
   .knv-summary button{display:inline-flex;align-items:center;gap:7px;font-family:inherit;font-size:.71875rem;font-weight:600;border-radius:99px;padding:4px 5px 4px 11px;cursor:pointer;
     border:1px solid var(--line);background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(14,27,51,.06);transition:box-shadow .15s,transform .12s;}
@@ -2458,7 +2458,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261017-9';
+  var APP_BUILD='20261017-10';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -19321,6 +19321,7 @@
   // 【タブを増やすときの手順】①knv-tabsにボタン（.ki 線の絵＋.kl 短いラベル）と、knv-bodyの並びに
   // 中身のdivを追加 ②下のtabsマップに キー:'div-id' を追加 ③必要ならレンダー関数を呼ぶ行を追加。
   // タブは幅に合わせて、1段に並ぶか横に送れる1段になる（knvTabsFit）。ロール限定タブは knvInit で hidden を切り替える（例:メッセージ）。
+  var KNV_TAB='chat';   // いま開いているタブ（内訳の帯の出し分けに使う）
   function knvShowTab(t){
     var tabs={chat:'knv-body', cal:'knv-cal', todo:'knv-todo', msg:'knv-msg', kn:'knv-kn', notif:'knv-notif', setup:'knv-setup', support:'knv-support'};
     if(!tabs[t]) t='chat';
@@ -19335,6 +19336,7 @@
     if(foot) foot.classList.toggle('hidden', t!=='chat');
     var cbar=$('knv-calbar'); if(cbar) cbar.classList.toggle('hidden', t!=='cal');
     var kp=$('knv-panel'); if(kp) kp.classList.toggle('knv-caltab', t==='cal');
+    KNV_TAB=t; knvSummaryRender();
     knvCompact(false);   // 畳んだ見出しは、タブを替えたら出し直す
     if(t==='cal') knvRenderCal();
     if(t==='todo') knvRenderTodo();
@@ -20202,10 +20204,16 @@
   function knvSummaryRender(){
     var box=$('knv-summary'); if(!box) return;
     var un=window.__KNV_UNREAD||0, todo=window.__KNV_TODO||0;
-    var cx=window.__KNV_CANCEL||0, px=window.__KNV_PEXIT||0, my=window.__KNV_MYTODO||0;
+    var cx=window.__KNV_CANCEL||0, px=window.__KNV_PEXIT||0;
     var ins=(typeof agentInsightsUnread==='function')?agentInsightsUnread():0;
-    if(!un && !todo && !cx && !px && !ins && !my){ box.classList.add('hidden'); return; }
-    var h='', isAdmin=((window.__eff||'')==='admin');
+    var isAdmin=((window.__eff||'')==='admin');
+    //  タブの数の玉と同じことしか言わない札は出さない（2026-10-17）。
+    //  ・「今日までのTODO」は TODO タブの数の玉といつも同じ数なのでやめた（帯1段ぶんの場所が空く）
+    //  ・お知らせタブを開いているときは、お知らせへ送る札（未読・期日・対応・提案）も出さない
+    var onNotif=(KNV_TAB==='notif');
+    if(onNotif){ un=0; ins=0; if(!isAdmin) todo=0; }   // 運営の「未対応の問い合わせ」はサポートへ送るので残す
+    if(!un && !todo && !cx && !px && !ins){ box.classList.add('hidden'); return; }
+    var h='';
     //  解約のご依頼はいちばん前に、赤で出す。問い合わせと同じ扱いにすると、
     //  件数の多い問い合わせに埋もれる。
     //  札は「色の点＋名前＋数の玉」。数の玉の色で急ぎ具合が分かる（赤＝急ぎ）
@@ -20219,7 +20227,6 @@
       ? chip('k-navy', 'navy', 'knvToggle(false);goSec(\'sec-support\')', '未対応の問い合わせ', todo)
       : chip('k-navy', 'navy', 'knvShowTab(\'notif\')', '期日・対応', todo);
     if(ins)  h+=chip('k-gold', 'gold', 'knvShowTab(\'notif\')', '継ナビくんの提案', ins);
-    if(my)   h+=chip('k-teal', 'teal', 'knvShowTab(\'todo\')', '今日までのTODO', my);
     box.innerHTML=h; box.classList.remove('hidden');
   }
   // 画面内の継ナビくん要素（チップ・バナー）は廃止。継ナビくんは右下に一本化。

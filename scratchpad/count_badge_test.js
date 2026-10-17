@@ -37,10 +37,10 @@ function takeFn(name) {
 {
   const f = takeFn('knvSummaryRender');
   const box = { innerHTML: '', classList: { add() {}, remove() {} } };
-  const run = new Function('$', 'window', 'agentInsightsUnread', 'knvCnt', f + 'knvSummaryRender(); return box;'.replace('box', 'arguments[0]("knv-summary")'));
+  const run = new Function('$', 'window', 'agentInsightsUnread', 'knvCnt', 'var KNV_TAB="chat";' + f + 'knvSummaryRender(); return box;'.replace('box', 'arguments[0]("knv-summary")'));
   const html = run(() => box, { __KNV_UNREAD: 2, __KNV_TODO: 1, __KNV_MYTODO: 120, __eff: 'customer' }, () => 1, (x) => (x > 99 ? '99+' : String(x))).innerHTML;
   ok('絵文字をやめ、色の点＋名前＋数の玉', /<button class="k-red" onclick="knvShowTab\('notif'\)"><i class="dt"><\/i>未読<span class="cnt red">2<\/span><\/button>/.test(html) && !/[📩📌✦✅🛟⚠]/u.test(html));
-  ok('意味で色を分ける（期日・対応＝紺／提案＝金／TODO＝青緑・99+）', /<span class="cnt navy">1<\/span>/.test(html) && /継ナビくんの提案<span class="cnt gold">1<\/span>/.test(html) && /今日までのTODO<span class="cnt teal">99\+<\/span>/.test(html));
+  ok('意味で色を分ける（期日・対応＝紺／提案＝金）。TODO は TODO タブの数の玉と同じなので帯には出さない', /<span class="cnt navy">1<\/span>/.test(html) && /継ナビくんの提案<span class="cnt gold">1<\/span>/.test(html) && !/今日までのTODO/.test(html));
 }
 // ④ TODO の要約と束
 {

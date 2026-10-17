@@ -48,7 +48,7 @@ ok('鍵は横向きで刻みがある', /key:'<circle cx="7" cy="12" r="5"\/><pa
 // ⑥ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261017-9', '20261017-9']);
+  is('版が揃う', [build, VER.build], ['20261017-10', '20261017-10']);
 }
 
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');

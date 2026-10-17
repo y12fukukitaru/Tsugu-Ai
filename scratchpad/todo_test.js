@@ -74,7 +74,7 @@ ok('数字：TODO タブの数字（99より多いと 99+）', /window\.__KNV_MY
 const br = takeFn('knvBadgesRender');
 ok('数字：右下のボタンにも足す（お知らせタブの数字には足さない）', /var fabN=total\+\(window\.__KNV_MYTODO\|\|0\);/.test(br) && /b\.textContent=knvCnt\(fabN\);/.test(br) && /if\(fabN>\(window\.__KNV_LAST\|\|0\)\) knvHop\(\);/.test(br));
 const sum = takeFn('knvSummaryRender');
-ok('内訳の帯：「今日までのTODO」（青緑の数の玉）から TODO タブへ', /my=window\.__KNV_MYTODO\|\|0/.test(sum) && /!ins && !my\)/.test(sum) && /chip\('k-teal', 'teal', 'knvShowTab\(\\'todo\\'\)', '今日までのTODO', my\)/.test(sum));
+ok('内訳の帯に「今日までのTODO」は出さない（TODO タブの数の玉と同じ数・帯1段ぶんの場所が空く）', !/__KNV_MYTODO/.test(sum) && !/'今日までのTODO'/.test(sum));
 
 const paint = takeFn('todoPaint');
 ok('書く欄：題名（Enter で入る。変換中は入らない）', /id="td-title"[^>]*maxlength="200"/.test(paint) && /event\.key===\\'Enter\\'&&!event\.isComposing/.test(paint));
@@ -164,7 +164,7 @@ ok('知識：パートナーは8タブ・経営者は7タブ', /パネルは8タ
 ok('知識：TODO の説明（両方）', (SRC.match(/／✅TODO\(自分用のやること控え。本人だけが見え/g) || []).length === 2);
 ok('知識：予定の色に青緑（両方）', (SRC.match(/紫=補助金の締切・青緑=TODO/g) || []).length === 2);
 const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-ok('版が揃う', build === VER.build && build === '20261017-9');
+ok('版が揃う', build === VER.build && build === '20261017-10');
 
 if (bad.length) { bad.forEach((b) => console.log('NG ' + b)); console.log(n + ' checks, ' + bad.length + ' failed'); process.exit(1); }
 console.log('ALL OK ' + n + ' checks, 0 failed');
