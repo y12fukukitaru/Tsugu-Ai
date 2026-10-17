@@ -24,13 +24,15 @@ const rc = takeFn('knvRenderCal');
 ok('今日の0時から（昨日は出さない）', /var t0=new Date\(\); t0\.setHours\(0,0,0,0\);/.test(rc) && /filter\(function\(x\)\{ return new Date\(x\.when\)>=t0; \}\)/.test(rc) && !/Date\.now\(\)-24\*3600\*1000/.test(rc));
 
 // ② 日ごとにまとめて終日→午前→午後
-ok('日ごとにまとめてから並べる', /days2\.forEach\(function\(k2\)\{/.test(rc) && /'<div class="cal-dayk" data-k="'\+k2\+'"><\/div>'\+calDayHead\(d2, calRel\(d2\), false, \(byDay\[k2\]\|\|\[\]\)\.length\)\+calCardsAmpm\(byK\[k2\]\)/.test(rc));
+ok('日ごとにまとめてから並べる', /days2\.forEach\(function\(k2\)\{/.test(rc) && /'<div class="cal-dayk" data-k="'\+k2\+'"><\/div>'\+calDayHead\(d2, calRel\(d2\), false, \(byDay\[k2\]\|\|\[\]\)\.length, byDay\[k2\]\)\+calCardsAmpm\(byK\[k2\]\)/.test(rc));
 {
   const per = new Function(takeFn('calPer') + 'return calPer;')();
   const lab = new Function(takeFn('calPerLab') + 'return calPerLab;')();
   const kinds = { todo: { fg: '#147A6E', bg: '#eee', bd: '#BFE0DA', label: 'TODO' } };
   const grp = new Function('calKindOf', 'calIsTodo', 'esc', takeFn('calAllDayGroup') + 'return calAllDayGroup;')((x) => kinds[x.kind] || null, (x) => x.kind === 'todo' || x.kind === 'task', esc);
-  const cards = new Function('calPer', 'calPerLab', 'calCard', 'calAllDayGroup', takeFn('calCardsAmpm') + 'return calCardsAmpm;')(per, lab, (x) => '[' + x.title + ']', grp);
+  const dk = (d) => d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  const endOf = new Function(takeFn('calEndOf') + 'return calEndOf;')();
+  const cards = new Function('calPer', 'calPerLab', 'calCard', 'calAllDayGroup', 'calDkey', 'calEndOf', 'calNowLine', takeFn('calCardsAmpm') + 'return calCardsAmpm;')(per, lab, (x) => '[' + x.title + ']', grp, dk, endOf, () => '');
   const one = cards([{ title: 'A', when: '2026-10-17T09:00:00' }, { title: 'Z', when: '2026-10-17T09:00:00', allDay: true }]);
   is('終日1件はふつうの札・終日が先', one.replace(/<div class="cev-per (\w+)"><span>[^<]+<\/span><\/div>/g, '|$1|'), '|all|[Z]|am|[A]');
   const two = cards([{ title: 'B', when: '2026-10-17T14:00:00' }, { title: 'Y', kind: 'own', when: '2026-10-17T09:00:00', allDay: true, _ri: 4 }, { title: 'T<', kind: 'todo', when: '2026-10-17T09:00:00', allDay: true, _ri: 5 }]);
@@ -46,7 +48,7 @@ ok('日ごとにまとめてから並べる', /days2\.forEach\(function\(k2\)\{/
   ok('一覧のときだけ', /if\(calViewGet\(\)!=='list'\) return;/.test(f));
   ok('帯の下の線を越えた最後の日', /var line=bar\.getBoundingClientRect\(\)\.bottom\+24, cur=ks\[0\];/.test(f) && /if\(ks\[i\]\.getBoundingClientRect\(\)\.top<=line\) cur=ks\[i\]; else break;/.test(f));
   ok('日付・曜日・今日／明日', /日<span class="lwd">（'/.test(f) && /'<span class="cl-rel">'\+rel\+'<\/span>'/.test(f) && /if\(main\.__k===k\) return;/.test(f));
-  ok('縦に送るたびに書き換える', /function both\(\)\{ calAmpm\(\); calListNow\(\); \}/.test(takeFn('calAmpmBind')) && /if\(view==='week' \|\| view==='list'\) calAmpmBind\(\);/.test(SRC));
+  ok('縦に送るたびに書き換える', /function both\(\)\{ calAmpm\(\); calListNow\(\); calDayStrip\(\); \}/.test(takeFn('calAmpmBind')) && /\n    calAmpmBind\(\);   \/\/ 週は午前・午後の角/.test(SRC));
   ok('CSS：箱と行', /\.cev-adg\{/.test(SRC) && /\.cev-adr\.td \.cev-adk\{/.test(SRC) && /\.cal-lab \.cl-rel\{/.test(SRC));
 }
 
