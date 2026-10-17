@@ -30,7 +30,7 @@ function load(now) {
   const RealDate = Date;
   function FakeDate(...a) { return a.length ? new RealDate(...a) : new RealDate(now); }
   FakeDate.prototype = RealDate.prototype; FakeDate.now = () => now.getTime();
-  return new Function('Date', 'esc', 'escA', env + '; return { todoGroup, todoDuePill, TODO_GROUPS };')(FakeDate, esc, esc);
+  return new Function('Date', 'esc', 'escA', 'calWeekStart', env + '; return { todoGroup, todoDuePill, TODO_GROUPS };')(FakeDate, esc, esc, () => 1);   // 既定の月曜始まり
 }
 {
   const G = load(new Date(2026, 8, 30, 10, 0));   // 2026-09-30（水）
@@ -114,7 +114,7 @@ ok('CSS：札は2行まで', /\.cal-ev\{[^}]*-webkit-line-clamp:2/.test(SRC));
 const slide = (h, t) => (h.match(new RegExp('<section class="slide" data-t="' + t + '"[\\s\\S]*?</section>')) || [''])[0];
 [['経営者', MANC], ['パートナー', MANP]].forEach(([who, M]) => {
   const td = slide(M, 'TODO（やること）'), ca = slide(M, '予定（カレンダー）');
-  ok('説明書（' + who + '）：今日やること・6つの束・札', /「今日やること ◯件」/.test(td) && /期限切れ・今日・明日・今週（日曜まで）・それ以降・期限なし/.test(td) && /「3日超過」「今日 15:00」「明日」「金曜」/.test(td));
+  ok('説明書（' + who + '）：今日やること・6つの束・札', /「今日やること ◯件」/.test(td) && /期限切れ・今日・明日・今週（週の終わりまで）・それ以降・期限なし/.test(td) && /「3日超過」「今日 15:00」「明日」「金曜」/.test(td));
   ok('説明書（' + who + '）：1行で足す・詳しく', /<b>Enter<\/b>/.test(td) && /<b>「🗓 日時・メモ ▾」<\/b>のボタンを押すと出ます/.test(td));
   ok('説明書（' + who + '）：今日済んだこと', /<b>「✓ 今日済んだこと」<\/b>/.test(td) && /<b>「それより前に済んだもの（◯件）を見る」<\/b>/.test(td));
   ok('説明書（' + who + '）：月表示に予定そのもの', /<b>各日のマスに予定そのもの<\/b>/.test(ca) && /スマホや小窓では<b>点<\/b>/.test(ca));

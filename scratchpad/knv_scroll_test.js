@@ -87,7 +87,7 @@ function takeFn(name) {
 // ④ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261017-8', '20261017-8']);
+  is('版が揃う', [build, VER.build], ['20261017-9', '20261017-9']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
