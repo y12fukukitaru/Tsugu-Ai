@@ -81,7 +81,7 @@ ok('ほかは予定', !isTodo({ kind: 'own' }) && !isTodo({ kind: 'meet' }) && !
 
 // ⑥ 色の見分け（凡例）も白抜き
 ok('凡例：TODO・課題は白抜き', /\(k==='todo'\|\|k==='task'\)\?' class="td" style="border-color:'/.test(takeFn('calLegend')) && /\.cal-lg i\.td\{/.test(SRC));
-ok('内訳：TODO・課題は白抜き', /kinds\[l\]\.td\?' class="td" style="border-color:'/.test(takeFn('calHeadLab')));
+ok('帯の真ん中は日付の1段だけ（年・内訳の段はやめた）', /return '<div class="cl-main">'\+main\+'<\/div>';/.test(takeFn('calHeadLab')) && !/cl-stats|cl-eye/.test(SRC));
 
 // ⑦ 説明書
 for (const f of ['manual-customer.html', 'manual-partner.html']) {

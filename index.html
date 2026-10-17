@@ -763,19 +763,13 @@
   /*  帯の幅で中身を変える（パネルの幅＝コンテナで判断。パソコンの大きなパネルでは情報を足す） */
   .knv-calbar{container-type:inline-size;}
   @container (min-width:400px){ .knv-calbar .cb-sync .t{display:inline;} }
-  .cal-nav .cal-lab .cl-eye,.cal-nav .cal-lab .cl-stats,.cal-nav .cal-lab .wd{display:none;}
+  .cal-nav .cal-lab .wd{display:none;}
+  /*  大きなパネル：日付の1段だけの細い帯（2026-10-17。年の段と、予定の数・内訳の段はやめた） */
   @container (min-width:560px){
-    .knv-calbar .cal-nav{background:linear-gradient(135deg,#FBF7EC 0%,var(--card) 55%);border:1px solid #EADFC2;border-radius:14px;padding:10px 12px;
+    .knv-calbar .cal-nav{background:linear-gradient(135deg,#FBF7EC 0%,var(--card) 55%);border:1px solid #EADFC2;border-radius:14px;padding:6px 8px;
       box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 2px 10px rgba(14,32,56,.05);}
-    .cal-nav .cal-lab .cl-eye{display:block;font-size:.6875rem;font-weight:700;letter-spacing:.12em;color:#A0802F;font-family:'Noto Sans JP',sans-serif;}
-    .cal-nav .cal-lab .cl-main{font-size:1.125rem;letter-spacing:.02em;margin-top:1px;}
+    .cal-nav .cal-lab .cl-main{font-size:1.125rem;letter-spacing:.02em;}
     .cal-nav .cal-lab .wd{display:inline;font-size:.75rem;font-weight:400;color:var(--muted);}
-    .cal-nav .cal-lab .cl-stats{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 12px;margin-top:4px;font-size:.6875rem;font-weight:400;
-      color:var(--muted);font-family:'Noto Sans JP',sans-serif;}
-    .cal-nav .cal-lab .cl-stats b{color:var(--navy);font-size:.8125rem;}
-    .cal-nav .cal-lab .cl-stats i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:0;box-sizing:border-box;}
-    .cal-nav .cal-lab .cl-stats i.td{border:2px solid;background:transparent;}
-    .cal-arw{height:38px;}
   }
   body.dark .knv-calbar .cal-nav{background:var(--card);border-color:var(--line);}
   .cal-nav{display:flex;align-items:center;gap:8px;}
@@ -2459,7 +2453,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261017-7';
+  var APP_BUILD='20261017-8';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -20703,40 +20697,22 @@
     CAL_CUR=d; CAL_PICK=null; CAL_SLIDE=n; knvRenderCal();
   }
   function calToday(){ CAL_CUR=new Date(); CAL_PICK=null; CAL_WK5=null; knvRenderCal(); }
-  //  帯の真ん中（日付）。小さな画面は日付だけ。パソコンの大きなパネルでは、上に年月、
-  //  日付に曜日、下にその期間の予定の数と種類の内訳を添える（.cl-eye / .wd / .cl-stats）
-  function calHeadLab(view, cur, byDay){
-    var W='日月火水木金土', eye='', main='', from, to, unitLab;
+  //  帯の真ん中（日付）だけを出す。2026-10-17 まではパソコンの大きなパネルで、上に年、
+  //  下にその期間の予定の数と種類の内訳（Google のカレンダー名＝メールアドレスなど）も添えていたが、
+  //  帯が3段になって重く、情報も多すぎたのでやめた。週は日付に曜日を添える（.wd・大きなパネルのみ）
+  function calHeadLab(view, cur){
+    var W='日月火水木金土', main;
     function md(d){ return (d.getMonth()+1)+'/'+d.getDate(); }
     function wd(d){ return '<span class="wd">（'+W.charAt(d.getDay())+'）</span>'; }
     if(view==='month'){
-      from=new Date(cur.getFullYear(), cur.getMonth(), 1); to=new Date(cur.getFullYear(), cur.getMonth()+1, 0);
-      eye=cur.getFullYear()+'年'; main=cur.getFullYear()+'年'+(cur.getMonth()+1)+'月'; unitLab='この月';
+      main=cur.getFullYear()+'年'+(cur.getMonth()+1)+'月';
     }else if(view==='week'){
-      from=calWeekStartOf(cur); to=new Date(from); to.setDate(to.getDate()+6);
-      eye=from.getFullYear()+'年'+(from.getMonth()+1)+'月'+(to.getMonth()!==from.getMonth()?'〜'+(to.getMonth()+1)+'月':'');
-      main=md(from)+wd(from)+' 〜 '+md(to)+wd(to); unitLab='この週';
+      var from=calWeekStartOf(cur), to=new Date(from); to.setDate(to.getDate()+6);
+      main=md(from)+wd(from)+' 〜 '+md(to)+wd(to);
     }else{
-      from=new Date(cur.getFullYear(), cur.getMonth(), cur.getDate()); to=new Date(from); to.setDate(to.getDate()+30);
-      eye='これからの予定'; main=cur.getFullYear()+'年'+(cur.getMonth()+1)+'月'+cur.getDate()+'日（'+W.charAt(cur.getDay())+'）から'; unitLab='30日間';
+      main=cur.getFullYear()+'年'+(cur.getMonth()+1)+'月'+cur.getDate()+'日（'+W.charAt(cur.getDay())+'）から';
     }
-    //  期間の予定を数え、種類ごとの内訳（多い順に4つまで）
-    var n=0, kinds={}, order=[], tk=calDkey(new Date()), today=0;
-    for(var d=new Date(from); d<=to; d.setDate(d.getDate()+1)){
-      var k=calDkey(d);
-      (byDay[k]||[]).forEach(function(x){
-        n++; if(k===tk) today++;
-        var kk=calKindOf(x), lab=(kk&&kk.label)||(x.calName)||'自分の予定', col=(kk&&kk.fg)||'#2C5DA8';
-        if(!kinds[lab]){ kinds[lab]={ n:0, col:col, td:calIsTodo(x) }; order.push(lab); }
-        kinds[lab].n++;
-      });
-    }
-    order.sort(function(a,b){ return kinds[b].n-kinds[a].n; });
-    var st='<span>'+unitLab+'の予定 <b>'+n+'</b>件</span>'
-      +(today?'<span>今日 <b>'+today+'</b>件</span>':'')
-      +order.slice(0,4).map(function(l){
-        return '<span><i'+(kinds[l].td?' class="td" style="border-color:':' style="background:')+kinds[l].col+';"></i>'+esc(l)+' '+kinds[l].n+'</span>'; }).join('');
-    return '<div class="cl-eye">'+eye+'</div><div class="cl-main">'+main+'</div><div class="cl-stats">'+st+'</div>';
+    return '<div class="cl-main">'+main+'</div>';
   }
   //  更新：矢印を回しながら読み込み直し、終わったら ✓ を一瞬出す
   async function calRefresh(btn){
@@ -22193,13 +22169,13 @@
         bh+='<div class="cal-nav">'
           +'<button class="cal-arw prev" onclick="calMove(-1)" aria-label="前の'+unit+'へ">'
             +'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span class="t">前の'+unit+'</span></button>'
-          +'<div class="cal-lab">'+calHeadLab(view, cur, byDay)
+          +'<div class="cal-lab">'+calHeadLab(view, cur)
           +'</div>'
           +'<button class="cal-arw next" onclick="calMove(1)" aria-label="次の'+unit+'へ">'
             +'<span class="t">次の'+unit+'</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>'
         +'</div>';
       }else{
-        bh+='<div class="cal-nav"><div class="cal-lab">'+calHeadLab('list', today, byDay)+'</div></div>';
+        bh+='<div class="cal-nav"><div class="cal-lab">'+calHeadLab('list', today)+'</div></div>';
       }
       //  週表示は、曜日の見出し（と終日の帯）も帯に入れる。本体の上に重なり、いっしょに残る
       if(wk) bh+=wk.head;
