@@ -360,9 +360,8 @@ function takeFn(name) {
   const hd = wv.slice(wv.indexOf("var head='<div class=\"wk-head\">"), wv.indexOf("var h='<div class=\"wk-wrap under\">"));
   ok('終日の帯は見出しの箱の中', /head\+='<div class="wk-row wk-sep"><div class="wk-corner"[^>]*>終日<\/div>';/.test(hd));
   no('終日の帯は本体に残さない', /h\+='<div class="wk-row wk-sep"><div class="wk-corner"[^>]*>終日/.test(wv));
-  ok('1日 3件まで', /var AD_MAX=3;/.test(hd) && /ads\.slice\(0, AD_MAX\)/.test(hd));
-  ok('超えたぶんは +n の札', /if\(ads\.length>AD_MAX\)\{/.test(hd) && /class="wk-chip wk-more"/.test(hd));
-  ok('+n を押すとその日の一覧が開く', /calPick\(\\''\+k0\+'\\'\)">\+'\+\(ads\.length-AD_MAX\)\+'<\/span>'/.test(hd));
+  ok('終日は1日1段：2件以上は「n件あり」の札1枚', /if\(ads\.length>=2\)\{/.test(hd) && /class="wk-chip wk-many"/.test(hd) && !/AD_MAX/.test(hd));
+  ok('「n件あり」を押すとその日の一覧へ送る', /calPickMore\(\\''\+k0\+'\\'\)/.test(hd));
   ok('なぜ 3件までかを書き残す', /貼り付けたまま時間の枠が見えなくなる/.test(hd));
   ok('+n の札の CSS', /\.wk-more\{background:var\(--soft\);color:var\(--muted\);border:1px dashed var\(--line\);/.test(SRC));
 }
@@ -516,7 +515,7 @@ function takeFn(name) {
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261017-1', '20261017-1']);
+  is('版が揃う', [build, VER.build], ['20261017-2', '20261017-2']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
