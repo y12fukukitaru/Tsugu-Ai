@@ -64,11 +64,17 @@ const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</
   ok('CSS：スマホは「あり」を省く', /\.wk-many \.ari\{display:none;\}/.test(SRC));
 }
 
-// ⑤ 畳んだ見出し
+// ⑤ 畳んだ見出し（2026-10-17 その2：出し入れを滑らかに）
 {
-  ok('CSS：曜日と日付を横に・六曜を隠す', /\.knv-panel\.knv-compact \.wk-hcell\{flex-direction:row;/.test(SRC) && /\.knv-panel\.knv-compact \.wk-hcell \.kyo\{display:none;\}/.test(SRC));
-  ok('CSS：端の札も細く', /\.knv-panel\.knv-compact \.wk5-edge\{height:24px!important;/.test(SRC));
-  ok('本体の上の余白は畳む前の高さで（中身が動かない）', /p\.classList\.remove\('knv-compact'\); barH=bar\.offsetHeight; p\.classList\.add\('knv-compact'\);/.test(takeFn('calLayout')));
+  ok('指の 0.4倍の速さでついていく', /var KNV_CPT_RATE=0\.4;/.test(SRC) && /KNV_CPT\.off\+dd\*KNV_CPT_RATE/.test(SRC) && /off=Math\.min\(off, y2\*KNV_CPT_RATE\);/.test(SRC));
+  ok('畳み具合 --cpt（0〜1）を入れる', /p\.style\.setProperty\('--cpt', KNV_CPT\.D>0 \? Math\.max\(0, Math\.min\(1, off\/KNV_CPT\.D\)\)\.toFixed\(3\) : '0'\);/.test(takeFn('calSetOff')));
+  ok('CSS：曜日の段は --cpt に合わせて少しずつ細く（六曜・丸・余白）', /\.knv-panel\.knv-caltab \.wk-hcell \.kyo\{overflow:hidden;max-height:calc\(15px\*\(1 - var\(--cpt,0\)\)\);/.test(SRC) && /\.knv-panel\.knv-caltab \.wk-hcell \.n\{width:calc\(28px - 5px\*var\(--cpt,0\)\);/.test(SRC) && !/knv-compact \.wk-hcell\{flex-direction:row/.test(SRC));
+  ok('CSS：端の札も同じ割合で', /\.knv-panel\.knv-caltab \.wk5-edge\{height:calc\(var\(--wk5-eh,52px\) - \(var\(--wk5-eh,52px\) - 24px\)\*var\(--cpt,0\)\);/.test(SRC) && /head\.style\.setProperty\('--wk5-eh'/.test(SRC));
+  ok('CSS：指についている間は動きの時間なし・離したら 0.42秒', /\.knv-panel\.knv-caltab\.knv-cal-drag \.wk-hcell,/.test(SRC) && /transition-duration:\.42s;transition-timing-function:cubic-bezier\(\.4,0,\.2,1\);/.test(SRC));
+  const lay = takeFn('calLayout');
+  ok('本体の上の余白は、出ているときの高さで（中身が動かない）', /if\(KNV_CPT\.off<=0 && !p\.classList\.contains\('knv-cpt-anim'\)\)\{ KNV_CPT\.full=barH; KNV_CPT\.stale=false; \}/.test(lay) && /if\(KNV_CPT\.off>0 \|\| p\.classList\.contains\('knv-cpt-anim'\)\) barH=KNV_CPT\.full;/.test(lay));
+  ok('描き直した直後は、動きを止めて --cpt=0 で測る', /p\.classList\.add\('knv-cpt-measure'\); p\.style\.setProperty\('--cpt','0'\);/.test(lay) && /KNV_CPT\.stale=true;/.test(takeFn('knvRenderCal')));
+  ok('収まる動きの間は測り直さない', /p\.classList\.add\('knv-cpt-anim'\);/.test(SRC) && /setTimeout\(function\(\)\{ p\.classList\.remove\('knv-cpt-anim'\); calLayout\(\); \}, 480\)/.test(SRC));
 }
 
 // ⑥ 説明書

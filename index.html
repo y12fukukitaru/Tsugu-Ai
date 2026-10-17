@@ -649,16 +649,24 @@
   .wk-hcell.today{background:rgba(195,155,63,.08);}
   .wk-hcell.today .w{color:#8A6A12;}
   .wk-hcell.today .n{background:linear-gradient(160deg,#1E3A66,#0E1B33);color:#F6E3B4;font-weight:700;box-shadow:0 3px 8px rgba(14,27,51,.25);}
-  /* 見出しを畳んだとき（下へ読み進めたとき）は、曜日の段も細く：曜日と日付を横に並べ、
-     六曜を隠す。高さが約70px → 30px になり、そのぶん時間の枠が広く見える */
-  .knv-panel.knv-compact .wk-hcell{flex-direction:row;justify-content:center;gap:4px;padding:3px 0;}
-  .knv-panel.knv-compact .wk-hcell .kyo{display:none;}
-  .knv-panel.knv-compact .wk-hcell .n{width:24px;height:24px;font-size:.8125rem;}
-  .knv-panel.knv-compact .wk5 .wk-hcell{gap:3px;} .knv-panel.knv-compact .wk5 .wk-hcell .n{width:22px;height:22px;font-size:.78125rem;}
-  .knv-panel.knv-compact .wk-ampm{flex-direction:row;gap:3px;width:auto;padding:3px 6px;}
-  .knv-panel.knv-compact .wk-ampm small{display:none;}
-  .knv-panel.knv-compact .wk5-edge{height:24px!important;top:3px;width:12px;}
-  .knv-panel.knv-compact .wk5-edge i{display:none;}
+  /* 見出しを畳むとき（下へ読み進めたとき）は、曜日の段も細くする（2026-10-17）。
+     畳み具合 --cpt（0＝出ている〜1＝畳みきった。calSetOff が入れる）に合わせて、
+     六曜を少しずつ縮めて消し、日付の丸と上下の余白を小さくする。出し入れと同じ割合で
+     動くので、畳みきった瞬間に段がガクッと縮むことがない（前は並びを切り替えていて、
+     40px ほど一気に縮み、少し戻すと一気に戻った）。指を離したあとは同じ速さで収まる */
+  .knv-panel.knv-caltab .wk-hcell{padding-top:calc(6px - 3px*var(--cpt,0));padding-bottom:calc(6px - 3px*var(--cpt,0));}
+  .knv-panel.knv-caltab .wk-hcell .n{width:calc(28px - 5px*var(--cpt,0));height:calc(28px - 5px*var(--cpt,0));}
+  .knv-panel.knv-caltab .wk-hcell .kyo{overflow:hidden;max-height:calc(15px*(1 - var(--cpt,0)));opacity:calc(1 - 1.6*var(--cpt,0));}
+  .knv-panel.knv-caltab .wk-ampm small{overflow:hidden;max-height:calc(12px*(1 - var(--cpt,0)));opacity:calc(1 - 1.6*var(--cpt,0));}
+  .knv-panel.knv-caltab .wk-ampm{padding-top:calc(5px - 2px*var(--cpt,0));padding-bottom:calc(5px - 2px*var(--cpt,0));}
+  .knv-panel.knv-caltab .wk5-edge{height:calc(var(--wk5-eh,52px) - (var(--wk5-eh,52px) - 24px)*var(--cpt,0));overflow:hidden;}
+  .knv-panel.knv-caltab .wk5-edge i{overflow:hidden;max-height:calc(13px*(1 - var(--cpt,0)));opacity:calc(1 - 1.6*var(--cpt,0));}
+  .knv-panel.knv-caltab .wk-hcell,.knv-panel.knv-caltab .wk-hcell .n,.knv-panel.knv-caltab .wk-hcell .kyo,.knv-panel.knv-caltab .wk-ampm,.knv-panel.knv-caltab .wk-ampm small,.knv-panel.knv-caltab .wk5-edge,.knv-panel.knv-caltab .wk5-edge i{
+    transition-property:padding,width,height,max-height,opacity,background,color;transition-duration:.42s;transition-timing-function:cubic-bezier(.4,0,.2,1);}
+  .knv-panel.knv-caltab.knv-cal-drag .wk-hcell,.knv-panel.knv-caltab.knv-cal-drag .wk-hcell .n,.knv-panel.knv-caltab.knv-cal-drag .wk-hcell .kyo,.knv-panel.knv-caltab.knv-cal-drag .wk-ampm,
+  .knv-panel.knv-caltab.knv-cal-drag .wk-ampm small,.knv-panel.knv-caltab.knv-cal-drag .wk5-edge,.knv-panel.knv-caltab.knv-cal-drag .wk5-edge i,
+  .knv-panel.knv-caltab.knv-cpt-measure .wk-hcell,.knv-panel.knv-caltab.knv-cpt-measure .wk-hcell *,.knv-panel.knv-caltab.knv-cpt-measure .wk-ampm,.knv-panel.knv-caltab.knv-cpt-measure .wk-ampm *,
+  .knv-panel.knv-caltab.knv-cpt-measure .wk5-edge,.knv-panel.knv-caltab.knv-cpt-measure .wk5-edge *{transition:none!important;}
   .wk-sep{border-bottom:1px solid var(--line);}
   .wk-ad{min-height:20px;border-left:1px solid var(--softline);padding:2px;}
   /* TODO・課題には白抜きの丸（済ませる前のチェックの丸）を付けて、予定と見分ける */
@@ -798,15 +806,18 @@
       本体には重ねたぶんの上の余白を固定で取っておく（calLayout が測って入れる）。
       畳むのは translateY だけ（並べ直しなし・GPU で動く）。下から来る予定が帯の下をくぐって見える。
       2026-10-14：決まった時間で一気に動かすと「シュッ」と速すぎた。いまは指の動き（スクロールの量）に
-      そのままついて少しずつ隠れ・現れ、指を止めたところで、ゆっくり（0.45秒）近いほうへ収まる（calSetOff） */
+      そのままついて少しずつ隠れ・現れ、指を止めたところで、ゆっくり（0.45秒）近いほうへ収まる（calSetOff）
+      2026-10-17：1対1でついていくと、帯は40px ほどしかないので、ひと払いの2コマ（0.05秒）で消え・現れ、
+      「出し入れが速すぎる」と感じた。いまは指の動きの 0.4倍の速さでついていく（100px ほど送って畳みきる）。
+      曜日の段の縮み（--cpt）も同じ割合で進む。指を離したら 0.42秒で近いほうへ収まる */
   .knv-panel.knv-caltab .knv-head,.knv-panel.knv-caltab .knv-tabs{position:relative;z-index:7;}
   .knv-panel.knv-caltab .knv-summary,.knv-panel.knv-caltab .knv-calbar{position:absolute;left:0;right:0;z-index:6;
-    transform:translate3d(0,0,0);transition:transform .45s cubic-bezier(.25,.8,.25,1);will-change:transform;}
+    transform:translate3d(0,0,0);transition:transform .42s cubic-bezier(.4,0,.2,1);will-change:transform;}
   .knv-panel.knv-caltab .knv-summary{top:var(--cal-t0,0px);}
   .knv-panel.knv-caltab .knv-calbar{top:calc(var(--cal-t0,0px) + var(--cal-sum,0px));}
   /*  指についているあいだは動きの時間を付けない（指と同じだけ動く） */
   .knv-panel.knv-cal-drag .knv-summary,.knv-panel.knv-cal-drag .knv-calbar,.knv-panel.knv-cal-drag .knv-calbar .cb-top{transition:none;}
-  .knv-calbar .cb-top{transition:opacity .45s cubic-bezier(.25,.8,.25,1);}
+  .knv-calbar .cb-top{transition:opacity .42s cubic-bezier(.4,0,.2,1);}
   .knv-panel.knv-compact .knv-calbar .cb-top{pointer-events:none;}
   .knv-calbar.week{border-bottom:0;padding-bottom:0;}
   .knv-calbar .wk-head{margin-top:8px;}
@@ -2397,7 +2408,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261017-2';
+  var APP_BUILD='20261017-3';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -20712,7 +20723,8 @@
   //  下へ読み進めると見出し（お知らせの内訳・操作の上段）を畳み、上へ戻すと出す（予定タブ）。
   //  畳むのは translateY だけで、本体の大きさも中身の位置も変わらない。なので、
   //  畳んだことでスクロールの位置が押し戻されることもなく、開閉を繰り返さない
-  var KNV_CPT={ last:0, prevY:0, off:0, D:0, topH:0, t:null, raf:0 };
+  var KNV_CPT={ last:0, prevY:0, off:0, D:0, topH:0, t:null, raf:0, full:0, stale:true };
+  var KNV_CPT_RATE=0.4;   // 指の動きに対して、帯が動く速さ（1＝指と同じ）
   //  隠れている量（px）を入れる。0＝全部見えている、D＝内訳と上段が隠れきっている。
   //  上段は隠れるにつれて薄くする
   function calSetOff(off){
@@ -20723,12 +20735,18 @@
     bar.style.transform=tr;
     var top=bar.querySelector('.cb-top');
     if(top) top.style.opacity=KNV_CPT.topH ? String(Math.max(0, 1-off/KNV_CPT.topH)) : '';
+    //  畳み具合（0〜1）。曜日の段の縮み（CSS の --cpt）に使う
+    p.style.setProperty('--cpt', KNV_CPT.D>0 ? Math.max(0, Math.min(1, off/KNV_CPT.D)).toFixed(3) : '0');
     p.classList.toggle('knv-compact', KNV_CPT.D>0 && off>=KNV_CPT.D-1);
   }
   function knvCompact(on){
     var p=$('knv-panel'); if(!p) return;
     p.classList.remove('knv-cal-drag');
     var box=$('knv-cal'); if(box) KNV_CPT.prevY=KNV_CPT.last=box.scrollTop;
+    if(!!on !== (KNV_CPT.off>0)){
+      p.classList.add('knv-cpt-anim');
+      clearTimeout(KNV_CPT.at); KNV_CPT.at=setTimeout(function(){ p.classList.remove('knv-cpt-anim'); calLayout(); }, 480);
+    }
     calSetOff(on ? KNV_CPT.D : 0);
   }
   //  重ねた帯の高さを測る。お知らせの内訳・帯の中身が変わったときと、パネルの大きさが
@@ -20752,11 +20770,20 @@
     var sbw=Math.max(0, box.offsetWidth-box.clientWidth);
     var pr=(12+sbw)+'px'; if(bar.style.paddingRight!==pr) bar.style.paddingRight=pr;
     barH=bar.offsetHeight;
-    //  畳んだとき（knv-compact）は週の見出しも細くなる。本体の上の余白は畳む前の高さのまま
-    //  にして、中身の位置が動かない（押し戻されて開閉を繰り返さない）ようにする
-    if(p.classList.contains('knv-compact')){
-      p.classList.remove('knv-compact'); barH=bar.offsetHeight; p.classList.add('knv-compact');   // 描く前に測るだけ（ちらつかない）
+    //  畳んでいくと週の見出しも細くなる（--cpt）。本体の上の余白は畳む前（出ているとき）の
+    //  高さのままにして、中身の位置が動かない（押し戻されて開閉を繰り返さない）ようにする。
+    //  出ているときに測った高さを覚えておき、畳みかけ・縮む途中はそれを使う。描き直した直後
+    //  （stale）だけは、動きを止めて --cpt を 0 にして測り、すぐ戻す（画面には出ない）
+    if(KNV_CPT.off<=0 && !p.classList.contains('knv-cpt-anim')){ KNV_CPT.full=barH; KNV_CPT.stale=false; }
+    else if(KNV_CPT.stale || !KNV_CPT.full){
+      var cv=p.style.getPropertyValue('--cpt');
+      p.classList.add('knv-cpt-measure'); p.style.setProperty('--cpt','0');
+      KNV_CPT.full=bar.offsetHeight;
+      p.style.setProperty('--cpt', cv||'0'); void bar.offsetHeight;
+      p.classList.remove('knv-cpt-measure');
+      KNV_CPT.stale=false;
     }
+    if(KNV_CPT.off>0 || p.classList.contains('knv-cpt-anim')) barH=KNV_CPT.full;
     var pad=sumH+barH+(bar.classList.contains('week')?0:10);
     if(box.style.paddingTop!==pad+'px') box.style.paddingTop=pad+'px';
     if(!calLayout.ro && window.ResizeObserver){
@@ -20775,6 +20802,9 @@
       p.classList.remove('knv-cal-drag');
       var off=KNV_CPT.off, D=KNV_CPT.D;
       if(off<=0 || off>=D) return;
+      //  収まる動き（0.42秒）のあいだは、帯の高さが変わっても上の余白を測り直さない
+      p.classList.add('knv-cpt-anim');
+      clearTimeout(KNV_CPT.at); KNV_CPT.at=setTimeout(function(){ p.classList.remove('knv-cpt-anim'); calLayout(); }, 480);
       calSetOff((dir>0 ? off>D*0.35 : off>D*0.65) ? D : 0);
     }
     box.addEventListener('scroll', function(){
@@ -20791,8 +20821,9 @@
         if(!dd) return;
         p.classList.add('knv-cal-drag');
         dir=dd>0?1:-1;
-        var off=Math.max(0, Math.min(KNV_CPT.D, KNV_CPT.off+dd));
-        off=Math.min(off, y2);   // いちばん上では必ず全部見せる
+        //  指の 0.4倍の速さで隠れ・現れる（1対1だと、ひと払いで一瞬に消えた）
+        var off=Math.max(0, Math.min(KNV_CPT.D, KNV_CPT.off+dd*KNV_CPT_RATE));
+        off=Math.min(off, y2*KNV_CPT_RATE);   // いちばん上では必ず全部見せる
         calSetOff(off);
         clearTimeout(KNV_CPT.t); KNV_CPT.t=setTimeout(settle, 150);
       });
@@ -22114,6 +22145,7 @@
       if(wk) bh+=wk.head;
       bar.classList.toggle('week', !!wk);
       bar.innerHTML=bh;
+      KNV_CPT.stale=true;   // 帯の中身が変わった。出ているときの高さを測り直す（calLayout）
     }
     // .cal-stick（本体の中に貼り付ける箱）は使わなくなった。見出しは帯の中
     //  入力の窓はここには置かない。別の窓（calOpenForm → .cfm-bg）で開く
@@ -22326,7 +22358,7 @@
     var eL=head.querySelector('.wk5-edge.l'), eR=head.querySelector('.wk5-edge.r');
     //  端の札は曜日の段の高さに合わせる（終日の段には掛けない）
     var row0=head.querySelector('.wk-row');
-    if(row0 && row0.offsetHeight){ eL.style.height=eR.style.height=Math.max(28, row0.offsetHeight-10)+'px'; }
+    if(row0 && row0.offsetHeight){ head.style.setProperty('--wk5-eh', Math.max(28, row0.offsetHeight-10)+'px'); }
     var off=0;
     function colW(){ return Math.max(1, (wrap.clientWidth-WK5_GUT)/5); }
     function put(px, anim){
