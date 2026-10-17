@@ -60,7 +60,7 @@ function no(name, cond) { is(name, !!cond, false); }
 // ⑤ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261017-3', '20261017-3']);
+  is('版が揃う', [build, VER.build], ['20261017-4', '20261017-4']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);
