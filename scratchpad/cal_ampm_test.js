@@ -31,7 +31,7 @@ const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</
     { title: 'B', when: '2026-10-17T14:00:00' }, { title: 'A', when: '2026-10-17T09:00:00' },
     { title: 'Z', when: '2026-10-17T09:00:00', allDay: true }, { title: 'C', when: '2026-10-17T15:00:00' }]);
   is('終日→午前→午後の順に、区切りは1回ずつ', out.replace(/<div class="cev-per (\w+)"><span>[^<]+<\/span><\/div>/g, '|$1|'), '|all|[Z]|am|[A]|pm|[B][C]');
-  ok('一覧（月・週・これから）でも区切る', /h\+=pit\.length \? calCardsAmpm\(pit\)/.test(SRC) && /h\+=wit\.length \? calCardsAmpm\(wit\)/.test(SRC) && /var p2=calPer\(x\); if\(p2!==per\)\{ per=p2; h\+=calPerLab\(p2\); \}/.test(SRC));
+  ok('一覧（月・週・これから）でも区切る', /h\+=pit\.length \? calCardsAmpm\(pit\)/.test(SRC) && /h\+=wit\.length \? calCardsAmpm\(wit\)/.test(SRC) && /calDayHead\(d2, calRel\(d2\), false, \(byDay\[k2\]\|\|\[\]\)\.length\)\+calCardsAmpm\(byK\[k2\]\)/.test(SRC));
 }
 
 // ② 左上の角：いま見ている時間帯
@@ -41,8 +41,8 @@ const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</
   ok('午前◯時台・正午・午後◯時台', /lab=pm\?'午後':'午前'/.test(amp) && /\(hr===12\)\?'正午':\(\(pm\?hr-12:hr\)\+'時台'\)/.test(amp));
   ok('本体に何時から・1時間の高さを持たせる', /data-lo="'\+lo\+'" data-px="'\+PX\+'"/.test(SRC));
   ok('角に置く', /<div class="wk-corner wk-ampc"><span class="wk-ampm" id="wk-ampm"><\/span><\/div>/.test(SRC));
-  ok('縦に送るたびに・畳み終わってからも', /box\.addEventListener\('scroll', function\(\)\{ go\(\); clearTimeout\(tm\); tm=setTimeout\(calAmpm, 520\); \}/.test(takeFn('calAmpmBind')));
-  ok('週表示を描いたら結ぶ', /if\(view==='week'\) calAmpmBind\(\);/.test(SRC));
+  ok('縦に送るたびに・畳み終わってからも', /box\.addEventListener\('scroll', function\(\)\{ go\(\); clearTimeout\(tm\); tm=setTimeout\(both, 520\); \}/.test(takeFn('calAmpmBind')));
+  ok('週表示を描いたら結ぶ', /if\(view==='week' \|\| view==='list'\) calAmpmBind\(\);/.test(SRC));
   ok('CSS：午前は金・午後は紺', /\.wk-ampm\.am\{background:linear-gradient\(160deg,#FCF3DA,#F2DFA9\)/.test(SRC) && /\.wk-ampm\.pm\{background:linear-gradient\(160deg,#1E3A66,#0E1B33\);color:#F6E3B4/.test(SRC));
 }
 

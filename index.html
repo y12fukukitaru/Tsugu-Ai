@@ -930,6 +930,19 @@
   @keyframes cev-blink{0%,100%{opacity:1;}50%{opacity:.35;}}
   .cev.past{opacity:.72;}
   .cev.past .cev-title{color:var(--muted);}
+  /* 終日が2件以上の日：1枚の箱に1行ずつ（押すと小窓） */
+  .cev-adg{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px;margin-bottom:8px;box-shadow:0 1px 3px rgba(14,27,51,.05);}
+  .cev-adr{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;transition:background .15s;}
+  .cev-adr + .cev-adr{border-top:1px dashed var(--softline);border-radius:0 0 10px 10px;}
+  .cev-adr:hover{background:var(--soft);}
+  .cev-adr:focus-visible{outline:2px solid var(--blue);outline-offset:-2px;}
+  .cev-adk{flex:none;width:4px;height:18px;border-radius:3px;background:var(--kc);}
+  .cev-adr.td .cev-adk{width:12px;height:12px;box-sizing:border-box;border:2px solid var(--kc);border-radius:50%;background:transparent;}
+  .cev-adt{flex:1;min-width:0;font-size:.84375rem;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .cev-adr .cev-kind{padding:2px 8px;font-size:.625rem;}
+  /* 一覧表示の上の帯：いま見ている日と「今日・明日」 */
+  .cal-lab .cl-rel{display:inline-block;margin-left:6px;font-size:.6875rem;font-weight:800;letter-spacing:.06em;color:#8A6A12;
+    background:rgba(195,155,63,.13);border:1px solid #EAD9AC;border-radius:99px;padding:1px 8px;vertical-align:2px;font-family:'Noto Sans JP',sans-serif;}
   .cev-empty{font-size:.75rem;color:#94A2B6;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;margin-bottom:6px;line-height:1.7;}
   .cev-empty b{color:var(--navy);font-weight:600;}
   @media (max-width:600px){ .cev-btn{width:38px;height:38px;} .cev{padding:12px 9px 12px 15px;gap:10px;} }
@@ -2427,7 +2440,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261017-5';
+  var APP_BUILD='20261017-6';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -22264,16 +22277,20 @@
         : '<div class="cev-empty">この日の予定はありません。<b>「＋ この日」</b>から入れられます。</div>';
     }
     else{
-      var rows=(CAL_ROWS.rows||[]).filter(function(x){ return new Date(x.when)>=new Date(Date.now()-24*3600*1000); }).slice(0,80);
+      //  今日の0時から（2026-10-17）。前は「いまから24時間前」からで、見出しは「今日から」なのに
+      //  昨日の予定が先頭に出ていた。今日の済んだ予定は札が薄くなる（calCard の past）
+      var t0=new Date(); t0.setHours(0,0,0,0);
+      var rows=(CAL_ROWS.rows||[]).filter(function(x){ return new Date(x.when)>=t0; }).slice(0,80);
       if(!rows.length){
         h+=tsgSay('これからの予定はまだありません。<b>「＋ 予定」</b>から入れておくと、私がいつでもお答えします。<br>面談・課題の期日・支払い予定・資金調達・補助金の締切は、登録されると自動でここに並びます。');
       }else{
-        var last='', per='';
-        rows.forEach(function(x){
-          var d2=new Date(x.when), key2=calDkey(d2);
-          if(key2!==last){ last=key2; per=''; h+=calDayHead(d2, calRel(d2), false, (byDay[key2]||[]).length); }
-          var p2=calPer(x); if(p2!==per){ per=p2; h+=calPerLab(p2); }
-          h+=calCard(x);
+        //  日ごとにまとめてから、終日→午前→午後の順に並べる（calCardsAmpm）。
+        //  前は時刻の順に流していたので、終日（9時扱い）が午前の途中に挟まる日があった
+        var days2=[], byK={};
+        rows.forEach(function(x){ var k2=calDkey(new Date(x.when)); if(!byK[k2]){ byK[k2]=[]; days2.push(k2); } byK[k2].push(x); });
+        days2.forEach(function(k2){
+          var d2=new Date(k2+'T00:00:00');
+          h+='<div class="cal-dayk" data-k="'+k2+'"></div>'+calDayHead(d2, calRel(d2), false, (byDay[k2]||[]).length)+calCardsAmpm(byK[k2]);
         });
       }
     }
@@ -22294,7 +22311,7 @@
     calPeekBind(box);    // 選んだ日の一覧が画面の外にあるあいだ、下に札を出す
     // スマホの週表示は、平日の5日を幅いっぱいに。土日は横に送って見る（calWk5Bind）
     var wk5=(view==='week' && ws) ? calWk5Bind(box, ws) : false;
-    if(view==='week') calAmpmBind();
+    if(view==='week' || view==='list') calAmpmBind();   // 週は午前・午後の角、一覧は上の帯の日付
     // 狭い画面では週表示が横スクロールになる。開いた時点で今日が見えるように寄せる。
     // 曜日の見出しは別の箱（.wk-head）なので、本体の横スクロールに合わせて動かす
     try{
@@ -22345,9 +22362,39 @@
   }
   function calCardsAmpm(items){
     var out='', per='';
-    items.slice().sort(function(a,b){ return (b.allDay?1:0)-(a.allDay?1:0) || new Date(a.when)-new Date(b.when); })
-      .forEach(function(x){ var p=calPer(x); if(p!==per){ per=p; out+=calPerLab(p); } out+=calCard(x); });
+    var its=items.slice().sort(function(a,b){ return (b.allDay?1:0)-(a.allDay?1:0) || new Date(a.when)-new Date(b.when); });
+    //  終日が2件以上なら、大きな札を並べずに1枚の箱へ1行ずつ（calAllDayGroup）。
+    //  TODO・課題の期日が重なる日は、終日の札だけで画面が埋まっていた
+    var ads=its.filter(function(x){ return x.allDay; });
+    if(ads.length>=2){ out+=calPerLab('all')+calAllDayGroup(ads); per='all'; its=its.filter(function(x){ return !x.allDay; }); }
+    its.forEach(function(x){ var p=calPer(x); if(p!==per){ per=p; out+=calPerLab(p); } out+=calCard(x); });
     return out;
+  }
+  //  終日の予定を1行ずつ並べた箱。押すと小窓（直す・消す・済みにするはそこから）
+  function calAllDayGroup(items){
+    return '<div class="cev-adg">'+items.map(function(x){
+      var k=calKindOf(x), kc=(k&&k.fg)||'#2C5DA8', kb=(k&&k.bg)||'rgba(44,93,168,.07)', kbd=(k&&k.bd)||'#C9D7EE';
+      return '<div class="cev-adr'+(calIsTodo(x)?' td':'')+'" style="--kc:'+kc+';--kb:'+kb+';--kbd:'+kbd+';" role="button" tabindex="0"'
+        +' onclick="calPeek('+(x._ri|0)+')" onkeydown="if(event.key===\'Enter\')calPeek('+(x._ri|0)+')">'
+        +'<i class="cev-adk"></i><span class="cev-adt">'+esc(x.title)+'</span>'
+        +(x.kind!=='own' && k ? '<span class="cev-kind">'+esc(k.label)+'</span>' : '')
+        +'</div>';
+    }).join('')+'</div>';
+  }
+  //  一覧表示：上の帯の日付を「いま見ている日」に合わせて書き換える（2026-10-17）。
+  //  前は「10月17日（土）から」のままで、下へ読み進めると何日を見ているのか分からなかった
+  function calListNow(){
+    if(calViewGet()!=='list') return;
+    var box=$('knv-cal'), bar=$('knv-calbar'); if(!box || !bar) return;
+    var main=bar.querySelector('.cal-lab .cl-main'); if(!main) return;
+    var ks=box.querySelectorAll('.cal-dayk'); if(!ks.length) return;
+    var line=bar.getBoundingClientRect().bottom+24, cur=ks[0];
+    for(var i=0;i<ks.length;i++){ if(ks[i].getBoundingClientRect().top<=line) cur=ks[i]; else break; }
+    var k=cur.getAttribute('data-k'); if(main.__k===k) return;
+    main.__k=k;
+    var d=new Date(k+'T00:00:00'), rel=calRel(d);
+    main.innerHTML=(d.getMonth()+1)+'月'+d.getDate()+'日<span class="lwd">（'+'日月火水木金土'.charAt(d.getDay())+'）</span>'
+      +(rel?'<span class="cl-rel">'+rel+'</span>':'');
   }
   //  週表示の左上の角に、いま見えている時間帯のいちばん上（午前◯時台・正午・午後◯時台）を出す。
   //  見出しの帯の下の端を「見えているいちばん上」とし、そこが本体の何時に当たるかを数える
@@ -22364,12 +22411,13 @@
   }
   function calAmpmBind(){
     var box=$('knv-cal'); if(!box) return;
-    calAmpm();
+    calAmpm(); calListNow();
     if(box.__amp) return; box.__amp=1;
     var raf=0, tm=null;
-    function go(){ if(raf) return; raf=requestAnimationFrame(function(){ raf=0; calAmpm(); }); }
+    function both(){ calAmpm(); calListNow(); }
+    function go(){ if(raf) return; raf=requestAnimationFrame(function(){ raf=0; both(); }); }
     //  見出しを畳む動き（0.45秒）が終わってからも測り直す
-    box.addEventListener('scroll', function(){ go(); clearTimeout(tm); tm=setTimeout(calAmpm, 520); }, { passive:true });
+    box.addEventListener('scroll', function(){ go(); clearTimeout(tm); tm=setTimeout(both, 520); }, { passive:true });
   }
   // ===== スマホの週表示：平日の5日を大きく、土日は横に送る（2026-10-17）=====
   //  7日を390pxの画面に詰めると1日44pxで、題名が2〜3文字しか読めなかった。

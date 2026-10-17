@@ -51,7 +51,7 @@ const calDkey = (d) => d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(
   ok('その日の件数・この日に足す', /予定 <b>3<\/b>件/.test(h) && /class="cdh-add" onclick="calOpenForm\('','2026-10-18T09:00'\)">＋ この日<\/button>/.test(h));
   ok('件数0は「予定なし」・件数を渡さなければ出さない', /予定なし/.test(Head(sun, '', false, 0)) && !/cdh-n/.test(Head(sun, '', false)));
   ok('暦はこれまでどおり見出しの下', /<i>暦<\/i>$/.test(h));
-  ok('月・週・一覧から件数を渡す', /calDayHead\(pd, calRel\(pd\), true, \(byDay\[pick\]\|\|\[\]\)\.length\)/.test(SRC) && /calDayHead\(wpd, calRel\(wpd\), true, \(byDay\[wkPick\]\|\|\[\]\)\.length\)/.test(SRC) && /calDayHead\(d2, calRel\(d2\), false, \(byDay\[key2\]\|\|\[\]\)\.length\)/.test(SRC));
+  ok('月・週・一覧から件数を渡す', /calDayHead\(pd, calRel\(pd\), true, \(byDay\[pick\]\|\|\[\]\)\.length\)/.test(SRC) && /calDayHead\(wpd, calRel\(wpd\), true, \(byDay\[wkPick\]\|\|\[\]\)\.length\)/.test(SRC) && /calDayHead\(d2, calRel\(d2\), false, \(byDay\[k2\]\|\|\[\]\)\.length\)/.test(SRC));
   ok('予定の無い日は点線の枠で「＋ この日」へ案内', (SRC.match(/<div class="cev-empty">この日の予定はありません。<b>「＋ この日」<\/b>から入れられます。<\/div>/g) || []).length === 2);
 }
 // ③ 週の枠・月の点
