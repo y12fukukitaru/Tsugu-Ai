@@ -2408,7 +2408,7 @@
   //  GitHub Pages は HTML を最大10分キャッシュする。開いたままの画面や再訪問では
   //  古い版が動き続けるため、公開中の版（version.json）と突き合わせて知らせる。
   //  ※ index.html を直すときは、下の APP_BUILD と version.json の両方を同じ値にすること。
-  var APP_BUILD='20261017-3';
+  var APP_BUILD='20261017-4';
   var UPD_SEEN=false;
   function appReload(){ location.reload(); }
   function appUpdDismiss(){ var b=$('upd-bar'); if(b) b.classList.add('hidden'); }
@@ -20723,8 +20723,9 @@
   //  下へ読み進めると見出し（お知らせの内訳・操作の上段）を畳み、上へ戻すと出す（予定タブ）。
   //  畳むのは translateY だけで、本体の大きさも中身の位置も変わらない。なので、
   //  畳んだことでスクロールの位置が押し戻されることもなく、開閉を繰り返さない
-  var KNV_CPT={ last:0, prevY:0, off:0, D:0, topH:0, t:null, raf:0, full:0, stale:true };
+  var KNV_CPT={ last:0, off:0, tgt:0, D:0, topH:0, loop:0, full:0, stale:true };
   var KNV_CPT_RATE=0.4;   // 指の動きに対して、帯が動く速さ（1＝指と同じ）
+  var KNV_CPT_EASE=0.3;   // 1コマごとに、目標との差のどれだけ近づくか（小さいほどふんわり）
   //  隠れている量（px）を入れる。0＝全部見えている、D＝内訳と上段が隠れきっている。
   //  上段は隠れるにつれて薄くする
   function calSetOff(off){
@@ -20736,13 +20737,34 @@
     var top=bar.querySelector('.cb-top');
     if(top) top.style.opacity=KNV_CPT.topH ? String(Math.max(0, 1-off/KNV_CPT.topH)) : '';
     //  畳み具合（0〜1）。曜日の段の縮み（CSS の --cpt）に使う
-    p.style.setProperty('--cpt', KNV_CPT.D>0 ? Math.max(0, Math.min(1, off/KNV_CPT.D)).toFixed(3) : '0');
+    //  帯（#knv-calbar）にだけ入れる。パネル全体に入れると、毎コマ全部の見た目を計算し直す
+    bar.style.setProperty('--cpt', KNV_CPT.D>0 ? Math.max(0, Math.min(1, off/KNV_CPT.D)).toFixed(3) : '0');
     p.classList.toggle('knv-compact', KNV_CPT.D>0 && off>=KNV_CPT.D-1);
+  }
+  //  帯を目標の位置（KNV_CPT.tgt）へ、毎コマ少しずつ近づける。スクロールの知らせは
+  //  コマに対してばらばらに届くので、そのまま動かすと小刻みに揺れる。差の 3割ずつ寄せると、
+  //  指の速さの変化がならされて、ふんわり滑らかに動く。近づいたら止める
+  function calCptTick(){
+    var p=$('knv-panel'), c=KNV_CPT.off, t=KNV_CPT.tgt, d=t-c;
+    if(Math.abs(d)<0.4){
+      calSetOff(t); KNV_CPT.loop=0;
+      if(p) p.classList.remove('knv-cal-drag');
+      return;
+    }
+    calSetOff(c+d*KNV_CPT_EASE);
+    KNV_CPT.loop=requestAnimationFrame(calCptTick);
+  }
+  function calCptRun(){
+    if(KNV_CPT.loop) return;
+    var p=$('knv-panel'); if(p) p.classList.add('knv-cal-drag');   // JS が毎コマ動かすので、CSS の動きの時間は付けない
+    KNV_CPT.loop=requestAnimationFrame(calCptTick);
   }
   function knvCompact(on){
     var p=$('knv-panel'); if(!p) return;
+    if(KNV_CPT.loop){ cancelAnimationFrame(KNV_CPT.loop); KNV_CPT.loop=0; }
     p.classList.remove('knv-cal-drag');
-    var box=$('knv-cal'); if(box) KNV_CPT.prevY=KNV_CPT.last=box.scrollTop;
+    var box=$('knv-cal'); if(box) KNV_CPT.last=box.scrollTop;
+    KNV_CPT.tgt=on ? KNV_CPT.D : 0;
     if(!!on !== (KNV_CPT.off>0)){
       p.classList.add('knv-cpt-anim');
       clearTimeout(KNV_CPT.at); KNV_CPT.at=setTimeout(function(){ p.classList.remove('knv-cpt-anim'); calLayout(); }, 480);
@@ -20759,10 +20781,11 @@
     var t0=tabs.offsetTop+tabs.offsetHeight;
     var sumH=(sum && !sum.classList.contains('hidden'))?sum.offsetHeight:0;
     var barH=bar.offsetHeight, topH=top?top.offsetHeight:0;
-    p.style.setProperty('--cal-t0', t0+'px');
-    p.style.setProperty('--cal-sum', sumH+'px');
-    p.style.setProperty('--cal-top', topH+'px');
+    //  変わったときだけ入れる（同じ値でも入れ直すと、パネル全体の見た目を計算し直してしまう）
+    function sp(k, v){ if(p.style.getPropertyValue(k)!==v) p.style.setProperty(k, v); }
+    sp('--cal-t0', t0+'px'); sp('--cal-sum', sumH+'px'); sp('--cal-top', topH+'px');
     KNV_CPT.D=sumH+topH; KNV_CPT.topH=topH;
+    if(KNV_CPT.tgt>KNV_CPT.D) KNV_CPT.tgt=KNV_CPT.D;
     if(KNV_CPT.off>KNV_CPT.D) calSetOff(KNV_CPT.D);
     //  週表示は見出しと本体をつなげて一つの枠に見せるので、すき間を空けない
     //  本体には縦のスクロールバーがある（パソコン）。帯の右の余白をその幅だけ広げ、
@@ -20774,16 +20797,16 @@
     //  高さのままにして、中身の位置が動かない（押し戻されて開閉を繰り返さない）ようにする。
     //  出ているときに測った高さを覚えておき、畳みかけ・縮む途中はそれを使う。描き直した直後
     //  （stale）だけは、動きを止めて --cpt を 0 にして測り、すぐ戻す（画面には出ない）
-    if(KNV_CPT.off<=0 && !p.classList.contains('knv-cpt-anim')){ KNV_CPT.full=barH; KNV_CPT.stale=false; }
+    if(KNV_CPT.off<=0 && !KNV_CPT.loop && !p.classList.contains('knv-cpt-anim')){ KNV_CPT.full=barH; KNV_CPT.stale=false; }
     else if(KNV_CPT.stale || !KNV_CPT.full){
-      var cv=p.style.getPropertyValue('--cpt');
-      p.classList.add('knv-cpt-measure'); p.style.setProperty('--cpt','0');
+      var cv=bar.style.getPropertyValue('--cpt');
+      p.classList.add('knv-cpt-measure'); bar.style.setProperty('--cpt','0');
       KNV_CPT.full=bar.offsetHeight;
-      p.style.setProperty('--cpt', cv||'0'); void bar.offsetHeight;
+      bar.style.setProperty('--cpt', cv||'0'); void bar.offsetHeight;
       p.classList.remove('knv-cpt-measure');
       KNV_CPT.stale=false;
     }
-    if(KNV_CPT.off>0 || p.classList.contains('knv-cpt-anim')) barH=KNV_CPT.full;
+    if(KNV_CPT.off>0 || KNV_CPT.loop || p.classList.contains('knv-cpt-anim')) barH=KNV_CPT.full;
     var pad=sumH+barH+(bar.classList.contains('week')?0:10);
     if(box.style.paddingTop!==pad+'px') box.style.paddingTop=pad+'px';
     if(!calLayout.ro && window.ResizeObserver){
@@ -20794,39 +20817,22 @@
   function calCompactBind(){
     var box=$('knv-cal'); if(!box || box.__cpt) return;
     box.__cpt=1;
-    //  スクロールした量だけ、そのまま隠す・出す（指についてくる）。指を止めて 0.15 秒たったら、
-    //  途中で止まっているときだけ、近いほうへゆっくり収める（下へ進んでいたら隠す側へ寄せる）
-    var dir=0;
-    function settle(){
-      var p=$('knv-panel'); if(!p) return;
-      p.classList.remove('knv-cal-drag');
-      var off=KNV_CPT.off, D=KNV_CPT.D;
-      if(off<=0 || off>=D) return;
-      //  収まる動き（0.42秒）のあいだは、帯の高さが変わっても上の余白を測り直さない
-      p.classList.add('knv-cpt-anim');
-      clearTimeout(KNV_CPT.at); KNV_CPT.at=setTimeout(function(){ p.classList.remove('knv-cpt-anim'); calLayout(); }, 480);
-      calSetOff((dir>0 ? off>D*0.35 : off>D*0.65) ? D : 0);
-    }
+    //  スクロールした量の 0.4倍だけ隠す・出す（指についてくる）。指を止めたら、その位置で止まる。
+    //  前は指を止めて 0.15秒たつと、近いほうへ勝手に全部開く・全部閉じるようにしていたが、
+    //  少し動かしただけで開いたり閉じたりして、かえって使いにくかった（2026-10-17 にやめた）。
+    //  目標の位置（tgt）だけをここで決め、実際の動きは calCptTick が毎コマなめらかに寄せる
     box.addEventListener('scroll', function(){
       var max=Math.max(0, box.scrollHeight-box.clientHeight);
       var y=Math.min(max, Math.max(0, box.scrollTop));   // 端で弾む分（iPhone）は数えない
       var d=y-KNV_CPT.last; KNV_CPT.last=y;
       if(!KNV_CPT.D || !d) return;
-      if(KNV_CPT.raf) return;
-      KNV_CPT.raf=requestAnimationFrame(function(){
-        KNV_CPT.raf=0;
-        var p=$('knv-panel'); if(!p) return;
-        var y2=Math.min(max, Math.max(0, box.scrollTop)), dd=y2-KNV_CPT.prevY;
-        KNV_CPT.prevY=y2;
-        if(!dd) return;
-        p.classList.add('knv-cal-drag');
-        dir=dd>0?1:-1;
-        //  指の 0.4倍の速さで隠れ・現れる（1対1だと、ひと払いで一瞬に消えた）
-        var off=Math.max(0, Math.min(KNV_CPT.D, KNV_CPT.off+dd*KNV_CPT_RATE));
-        off=Math.min(off, y2*KNV_CPT_RATE);   // いちばん上では必ず全部見せる
-        calSetOff(off);
-        clearTimeout(KNV_CPT.t); KNV_CPT.t=setTimeout(settle, 150);
-      });
+      var t=Math.max(0, Math.min(KNV_CPT.D, KNV_CPT.tgt+d*KNV_CPT_RATE));
+      //  いちばん上へ戻ったときは必ず全部見せる。上端からの距離より多くは隠さない
+      //  （前は 0.4倍した距離で抑えていたので、上端から離れた所でも、戻し始めに帯が跳ねた）
+      t=Math.min(t, y);
+      if(t===KNV_CPT.tgt) return;
+      KNV_CPT.tgt=t;
+      calCptRun();
     }, { passive:true });
   }
   //  切り替わったことが分かるよう、暦を横から滑り込ませる。
