@@ -418,7 +418,7 @@ function takeFn(name) {
   ok('終日の札も3文字入る余白', /\.wk-chip\{[^}]*font-size:.59375rem;padding:1px 2px;/.test(mob));
   ok('終日の札も塗る', /\.wk-chip\{background:var\(--fg\)!important;color:var\(--fgtxt,#fff\)!important;/.test(mob));
   ok('塗る色を枠に持たせる（自分の予定は青）', /'--fg:'\+\(kk\?kk\.fg:'#2C5DA8'\)\+';--fgtxt:/.test(wv) && /style="--fg:'\+\(k\?k\.fg:'#2C5DA8'\)\+';--fgtxt:/.test(wv));
-  ok('何行まで折り返すかは枠の高さから', /var lines=Math\.max\(1, Math\.floor\(\(hgt-4\)\/12\.5\)\);/.test(wv) && /--l1:'\+lines\+';/.test(wv));
+  ok('何行まで折り返すかは枠の高さから', /var lines=Math\.max\(1, Math\.floor\(\(hgt-4\)\/13\.2\)\);/.test(wv) && /--l1:'\+lines\+';/.test(wv));
   //  1時間の高さはスマホで 54px、パソコンは 42px のまま
   ok('1時間の高さは画面の幅で変える', /function wkPx\(\)/.test(SRC) && /matchMedia\('\(max-width:600px\)'\)\.matches\) \? 54 : WK_PX/.test(SRC));
   ok('週表示は wkPx を使う', /var PX=wkPx\(\);/.test(wv) && !/WK_PX/.test(wv));
@@ -499,7 +499,7 @@ function takeFn(name) {
     ok(w + '：前後はボタンで（払いでは送らない）・週の始まり', /紺の「‹ 前の週」「次の週 ›」/.test(M) && /払いでは週を送りません/.test(M) && /予定の週の始まり/.test(M));
     ok(w + '：下へ読むと畳む・前後と曜日・終日は上に残る', /下へ読み進めると、指の動きに合わせて少しずつ畳まれ<\/b>/.test(M) && /曜日の見出し・終日の帯<\/b>は上に残る/.test(M));
     ok(w + '：入力は別の窓、✕で継ナビくんは閉じない', /入力の窓だけを閉じ、継ナビくんはそのまま開いています/.test(M));
-    ok(w + '：スマホの週表示は7日が幅に収まる', /スマホでも7日が画面の幅に収まり、予定は色で塗られて題名が折り返されます/.test(M));
+    ok(w + '：スマホの週表示は平日の5日を大きく・土日は横に払う', /スマホでは<b>平日の5日を画面いっぱいに大きく<\/b>出し[\s\S]*?予定は色で塗られて題名が折り返されます/.test(M));
     ok(w + '：＋予定は金色', /金色の<b>「＋ 予定」<\/b>/.test(M));
     ok(w + '：色の見分け', /暦の下に<b>色の見分け<\/b>/.test(M));
     ok(w + '：Workspace のカレンダー無しの注意', /「カレンダーが使えません」<\/b>と出るときは/.test(M) && /つなぎ直しても直りません/.test(M));
@@ -516,7 +516,7 @@ function takeFn(name) {
 // ⑨ 版
 {
   const build = SRC.match(/var APP_BUILD='([^']+)'/)[1];
-  is('版が揃う', [build, VER.build], ['20261015-14', '20261015-14']);
+  is('版が揃う', [build, VER.build], ['20261017-1', '20261017-1']);
 }
 console.log(bad.length ? JSON.stringify(bad, null, 1) : 'ALL OK', n, 'checks,', bad.length, 'failed');
 process.exit(bad.length ? 1 : 0);

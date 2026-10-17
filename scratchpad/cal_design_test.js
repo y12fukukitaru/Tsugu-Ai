@@ -56,7 +56,7 @@ const calDkey = (d) => d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(
 }
 // ③ 週の枠・月の点
 {
-  ok('週の枠：左に種類の色の帯・文字11px・影', /\.wk-ev\{position:absolute;border-radius:6px;padding:3px 5px 3px 6px;font-size:\.6875rem;[^}]*border-left:3px solid var\(--fg\);/.test(SRC));
+  ok('週の枠：左に種類の色の帯・文字11px・影', /\.wk-ev\{position:absolute;z-index:2;border-radius:6px;padding:3px 5px 3px 6px;font-size:\.6875rem;[^}]*border-left:3px solid var\(--fg\);/.test(SRC));
   ok('週の枠：パソコンは題名を2行まで（長い枠は下に時刻）・スマホはこれまでどおり', /-webkit-line-clamp:var\(--l2,1\)/.test(SRC) && /-webkit-line-clamp:var\(--l1,1\);\}/.test(SRC) && /--l2:'\+\(hgt>=56\?/.test(SRC));
   ok('月の点は少し大きく（7px）', /\.cal-dot\{width:7px;height:7px;/.test(SRC));
   ok('動きを減らす設定では「いま」の点滅を止める', /prefers-reduced-motion:reduce\)\{ \.cev-now::before\{animation:none;\}/.test(SRC));
